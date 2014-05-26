@@ -176,17 +176,6 @@ public abstract class ComboItemListener extends BasicActionState implements List
         return combo;
     }
 
-    @Deprecated
-    // TODO Remove this because quite the same as createUnregisteredRadioMenu
-    public JMenu createMenu(String title) {
-        JMenu menu = new JMenu(title);
-        GroupRadioMenu radioMenu = new GroupRadioMenu();
-        radioMenu.setModel(model);
-        radioMenu.fillMenu(menu);
-        // registerComponent(radioMenu);
-        return menu;
-    }
-
     public JMenu createUnregisteredRadioMenu(String title) {
         GroupRadioMenu radioMenu = new GroupRadioMenu();
         radioMenu.setModel(model);

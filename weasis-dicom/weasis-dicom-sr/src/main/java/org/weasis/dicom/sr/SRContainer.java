@@ -69,10 +69,10 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     protected SRView srview;
 
     public SRContainer() {
-        this(VIEWS_1x1);
+        this(VIEWS_1x1, null);
     }
 
-    public SRContainer(GridBagLayoutModel layoutModel) {
+    public SRContainer(GridBagLayoutModel layoutModel, String uid) {
         super(new ImageViewerEventManager<DicomImageElement>() {
 
             @Override
@@ -85,7 +85,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             public void resetDisplay() {
                 // Do nothing
             }
-        }, layoutModel, SRFactory.NAME, SRFactory.ICON, null);
+        }, layoutModel, uid, SRFactory.NAME, SRFactory.ICON, null);
         setSynchView(SynchView.NONE);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;

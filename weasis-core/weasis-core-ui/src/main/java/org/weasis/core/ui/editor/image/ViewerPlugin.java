@@ -14,6 +14,7 @@ package org.weasis.core.ui.editor.image;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.List;
+import java.util.UUID;
 
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -56,16 +57,16 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
     private final DefaultSingleCDockable dockable;
 
     public ViewerPlugin(String PluginName) {
-        this(PluginName, null, null);
+        this(null, PluginName, null, null);
     }
 
-    public ViewerPlugin(String pluginName, Icon icon, String tooltips) {
+    public ViewerPlugin(String uid, String pluginName, Icon icon, String tooltips) {
         setLayout(new BorderLayout());
         setName(pluginName);
         this.pluginName = pluginName;
         this.icon = icon;
         this.tooltips = tooltips;
-        this.dockableUID = "" + UIManager.dockableUIGenerator.getAndIncrement(); //$NON-NLS-1$
+        this.dockableUID = uid == null ? UUID.randomUUID().toString() : uid;
         this.dockable = new DefaultSingleCDockable(dockableUID, icon, pluginName);
         this.dockable.setTitleText(pluginName);
         this.dockable.setTitleToolTip(tooltips);

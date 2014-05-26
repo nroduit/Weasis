@@ -134,12 +134,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     private final MouseHandler mouseHandler;
 
     public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String PluginName) {
-        this(eventManager, VIEWS_1x1, PluginName, null, null);
+        this(eventManager, VIEWS_1x1, PluginName, null, null, null);
     }
 
-    public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, GridBagLayoutModel layoutModel,
+    public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, GridBagLayoutModel layoutModel, String uid,
         String pluginName, Icon icon, String tooltips) {
-        super(pluginName, icon, tooltips);
+        super(uid, pluginName, icon, tooltips);
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
@@ -544,7 +544,21 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     /** Return all the <code>ImagePanel</code>s. */
 
     public ArrayList<DefaultView2d<E>> getImagePanels() {
-        return new ArrayList<DefaultView2d<E>>(view2ds);
+        return getImagePanels(false);
+    }
+
+    public ArrayList<DefaultView2d<E>> getImagePanels(boolean selectedImagePaneLast) {
+        ArrayList<DefaultView2d<E>> viewList = new ArrayList<DefaultView2d<E>>(view2ds);
+        if (selectedImagePaneLast) {
+            DefaultView2d<E> selectedView = getSelectedImagePane();
+
+            if (selectedView != null && viewList.size() > 1) {
+                viewList.remove(selectedView);
+                viewList.add(selectedView);
+            }
+            return viewList;
+        }
+        return viewList;
     }
 
     public DefaultView2d<E> getNextSelectedImagePane() {

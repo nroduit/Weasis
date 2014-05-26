@@ -27,9 +27,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -55,6 +60,9 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.Base64;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomEncapDocElement;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -610,26 +618,25 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             return;
         }
 
-        synchronized (model) {
-            MediaSeriesGroup patientGroup = getParent(series, DicomModel.patient);
+        MediaSeriesGroup patientGroup = getParent(series, DicomModel.patient);
 
-            if (patientGroup == null) {
-                return;
-            }
+        if (patientGroup == null) {
+            return;
+        }
 
-            List<DicomSpecialElement> specialElementList =
-                (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+        List<DicomSpecialElement> specialElementList =
+            (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
 
-            if (specialElementList == null) {
-                patientGroup.setTag(TagW.DicomSpecialElementList, specialElementList =
-                    new ArrayList<DicomSpecialElement>());
-            }
-            for (DicomSpecialElement specialElement : specialElements) {
-                if (!specialElementList.contains(specialElement)) {
-                    specialElementList.add(specialElement);
-                }
+        if (specialElementList == null) {
+            patientGroup.setTag(TagW.DicomSpecialElementList, specialElementList =
+                new CopyOnWriteArrayList<DicomSpecialElement>());
+        }
+        for (DicomSpecialElement specialElement : specialElements) {
+            if (!specialElementList.contains(specialElement)) {
+                specialElementList.add(specialElement);
             }
         }
+
     }
 
     public static boolean isSpecialModality(Series series) {
@@ -676,6 +683,82 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
         }
         return null;
+    }
+
+    public static <E> List<E> getSpecialElements(MediaSeriesGroup group, Class<E> clazz) {
+        if (group != null && clazz != null && clazz.isAssignableFrom(clazz)) {
+            List<DicomSpecialElement> kos = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
+            if (kos != null) {
+                List<E> list = new ArrayList<E>();
+                for (DicomSpecialElement el : kos) {
+                    if (clazz.isInstance(el)) {
+                        list.add((E) el);
+                    }
+                }
+                return list;
+            }
+        }
+        return null;
+    }
+
+    public static <E> E getFirstSpecialElement(MediaSeriesGroup group, Class<E> clazz) {
+        if (group != null && clazz != null && clazz.isAssignableFrom(clazz)) {
+            List<DicomSpecialElement> kos = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
+            if (kos != null) {
+                for (DicomSpecialElement el : kos) {
+                    if (clazz.isInstance(el)) {
+                        return (E) el;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static boolean hasSpecialElements(MediaSeriesGroup group, Class<? extends DicomSpecialElement> clazz) {
+        if (group != null && clazz != null) {
+            List<DicomSpecialElement> kos = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
+            if (kos != null) {
+                for (DicomSpecialElement el : kos) {
+                    if (clazz.isInstance(el)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public void openrelatedSeries(KOSpecialElement koSpecialElement, MediaSeriesGroup patient) {
+        if (koSpecialElement != null && patient != null) {
+            SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
+            if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
+                Set<String> koSet = koSpecialElement.getReferencedSeriesInstanceUIDSet();
+                List<MediaSeries<? extends MediaElement<?>>> seriesList =
+                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+
+                for (MediaSeriesGroup st : this.getChildren(patient)) {
+                    for (MediaSeriesGroup s : this.getChildren(st)) {
+                        if (koSet.contains(s.getTagValue(TagW.SeriesInstanceUID))) {
+                            seriesList.add((MediaSeries<? extends MediaElement<?>>) s);
+                        }
+                    }
+                }
+                if (seriesList.size() > 0) {
+                    String uid = UUID.randomUUID().toString();
+                    Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+                    props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
+                    props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
+                    props.put(ViewerPluginBuilder.ICON,
+                        new ImageIcon(getClass().getResource("/icon/16x16/key-images.png")));
+                    props.put(ViewerPluginBuilder.UID, uid);
+                    ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, this, props);
+                    ViewerPluginBuilder.openSequenceInPlugin(builder);
+                    this.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, uid, null,
+                        koSpecialElement));
+                }
+            }
+        }
     }
 
     private void splitSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {
@@ -802,13 +885,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                     if (specialElementList == null) {
                         initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList =
-                            new ArrayList<DicomSpecialElement>());
+                            new CopyOnWriteArrayList<DicomSpecialElement>());
                     } else if ("SR".equals(dicomReader.getTagValue(TagW.Modality))) {
                         // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
-                        s.setTag(TagW.DicomSpecialElementList, specialElementList =
-                            new ArrayList<DicomSpecialElement>());
+                        specialElementList = new CopyOnWriteArrayList<DicomSpecialElement>();
                         specialElementList.add((DicomSpecialElement) media);
+                        s.setTag(TagW.DicomSpecialElementList, specialElementList);
                         return false;
                     }
                     specialElementList.add((DicomSpecialElement) media);

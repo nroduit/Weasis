@@ -21,7 +21,7 @@ import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.ui.util.WtoolBar;
-import org.weasis.dicom.viewer2d.KOManager.SelectedImageFilter;
+import org.weasis.dicom.viewer2d.KOComponentFactory.SelectedImageFilter;
 
 @SuppressWarnings("serial")
 public class KeyObjectToolBar<DicomImageElement> extends WtoolBar {
@@ -47,7 +47,7 @@ public class KeyObjectToolBar<DicomImageElement> extends WtoolBar {
         final EventManager evtMgr = EventManager.getInstance();
 
         // --------------------------------------------------------------------------------------------------
-        ToggleButtonListener koToggleAction = (ToggleButtonListener) evtMgr.getAction(ActionW.KO_STATE);
+        ToggleButtonListener koToggleAction = (ToggleButtonListener) evtMgr.getAction(ActionW.KO_TOOGLE_STATE);
         final JToggleButton toggleKOSelectionBtn = new JToggleButton();
 
         toggleKOSelectionBtn.setToolTipText("Toggle KO State");

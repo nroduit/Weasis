@@ -371,6 +371,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         node.setParam(ActionW.LUT_SHAPE.cmd(), lutShapeItem);
                     }
                     updateWindowLevelComponentsListener(image, view2d);
+
                 }
 
                 firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
@@ -378,6 +379,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
                         EVENT.SELECT));
                 }
+
+                updateKeyObjectComponentsListener(view2d);
 
             }
 
@@ -576,21 +579,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     private ToggleButtonListener newKOToggleAction() {
-        return new ToggleButtonListener(ActionW.KO_STATE, false) {
+        return new ToggleButtonListener(ActionW.KO_TOOGLE_STATE, false) {
             @Override
-            public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
-            }
-        };
-    }
+            public void actionPerformed(boolean newSelectedState) {
+                View2d selectedViewPane = (View2d) getSelectedViewPane();
 
-    private ToggleButtonListener newKOFilterAction() {
-        return new ToggleButtonListener(ActionW.KO_FILTER, false) {
-            @Override
-            public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                if (KOManager.setKeyObjectReference(newSelectedState, selectedViewPane) == false) {
+                    selectedViewPane.updateKOButtonVisibleState();
+                    updateKeyObjectComponentsListener(selectedViewPane);
+                }
             }
         };
     }
@@ -601,6 +598,34 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void itemStateChanged(Object object) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
                     object));
+
+                SynchView synchView = (SynchView) synchAction.getSelectedItem();
+                if (synchView != null && SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
+                    if (moveTroughSliceAction.getValue() == 1) {
+                        moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
+                    } else {
+                        moveTroughSliceAction.setValue(1);
+                    }
+                }
+            }
+        };
+    }
+
+    private ToggleButtonListener newKOFilterAction() {
+        return new ToggleButtonListener(ActionW.KO_FILTER, false) {
+            @Override
+            public void actionPerformed(boolean selected) {
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    selected));
+
+                SynchView synchView = (SynchView) synchAction.getSelectedItem();
+                if (synchView != null && SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
+                    if (moveTroughSliceAction.getValue() == 1) {
+                        moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
+                    } else {
+                        moveTroughSliceAction.setValue(1);
+                    }
+                }
             }
         };
     }
@@ -681,7 +706,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             break;
                         }
                     }
-                } else if (keyEvent == ActionW.KO_STATE.getKeyCode() && koToggleAction.isActionEnabled()) {
+                } else if (keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode() && koToggleAction.isActionEnabled()) {
                     koToggleAction.setSelected(!koToggleAction.isSelected());
                 } else if (presetAction.isActionEnabled()) {
                     DefaultComboBoxModel model = presetAction.getModel();
@@ -875,11 +900,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         sortStackAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SORTSTACK.cmd()));
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
-        koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_STATE.cmd()));
-        koFilterAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
-
-        koSelectionAction.setDataListWithoutTriggerAction(KOManager.getKOElementListWithNone(view2d).toArray());
-        koSelectionAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));
+        updateKeyObjectComponentsListener(view2d);
 
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
@@ -893,6 +914,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             }
         }
         return true;
+    }
+
+    public void updateKeyObjectComponentsListener(DefaultView2d<DicomImageElement> view2d) {
+        if (view2d != null) {
+            koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE
+                .cmd()));
+            koFilterAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
+
+            Object[] kos = KOManager.getKOElementListWithNone(view2d).toArray();
+            boolean enable = kos.length > 1;
+            if (enable) {
+                koSelectionAction.setDataListWithoutTriggerAction(kos);
+                koSelectionAction
+                    .setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));
+            }
+            koFilterAction.enableAction(enable);
+            koSelectionAction.enableAction(enable);
+        }
+
     }
 
     private void updateWindowLevelComponentsListener(DicomImageElement image, DefaultView2d<DicomImageElement> view2d) {
@@ -1018,7 +1058,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             oldSynch = synch;
                         }
                         pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
-                        pane.updateSynchState();
+                        // pane.updateSynchState();
                     }
                 } else {
                     // TODO if Pan is activated than rotation is required
@@ -1052,10 +1092,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                         } else {
                                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                                 oldSynch = synch.clone();
-                                                for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
+                                                for (Entry<String, Boolean> a : oldSynch.getActions().entrySet()) {
                                                     a.setValue(false);
                                                 }
-                                                synch.getActions().put(ActionW.SCROLL_SERIES.cmd(), true);
+                                                oldSynch.getActions().put(ActionW.SCROLL_SERIES.cmd(), true);
                                             }
                                         }
                                     } else {
@@ -1067,17 +1107,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                         } else {
                                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                                 oldSynch = synch.clone();
-                                                for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
+                                                for (Entry<String, Boolean> a : oldSynch.getActions().entrySet()) {
                                                     a.setValue(false);
                                                 }
-                                                synch.getActions().put(ActionW.SCROLL_SERIES.cmd(), true);
+                                                oldSynch.getActions().put(ActionW.SCROLL_SERIES.cmd(), true);
                                             }
                                         }
                                     }
                                     addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
                                 }
                                 pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
-                                pane.updateSynchState();
+                                // pane.updateSynchState();
                             }
                         }
                         // Force to draw crosslines without changing the slice position
@@ -1090,16 +1130,19 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                 oldSynch = synch.clone();
                             }
+                            oldSynch.getActions().put(ActionW.KO_SELECTION.cmd(), true);
+                            oldSynch.getActions().put(ActionW.KO_FILTER.cmd(), true);
+
                             pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                             addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
-                            pane.updateSynchState();
+                            // pane.updateSynchState();
                         }
                     }
                 }
             }
 
-            viewPane.updateSynchState();
+            // viewPane.updateSynchState();
         }
     }
 

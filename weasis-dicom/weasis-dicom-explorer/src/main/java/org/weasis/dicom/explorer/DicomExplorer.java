@@ -49,6 +49,7 @@ import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -78,6 +79,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.task.CircularProgressBar;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -107,8 +109,11 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -242,6 +247,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     private final JButton btnExport = new JButton(exportAction);
     private final JButton btnImport = new JButton(importAction);
+    private final JButton koOpen = new JButton("Open Key Images", new ImageIcon(
+        DicomExplorer.class.getResource("/icon/16x16/key-images.png")));
 
     private final JLabel globalLoadingLabel = new JLabel();
     private final JButton globalResumeButton = new JButton(new Icon() {
@@ -954,6 +961,55 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             studyCombobox.addItemListener(studyItemListener);
             JMVUtils.addTooltipToComboList(studyCombobox);
 
+            final GridBagConstraints gridBagConstraints_4 = new GridBagConstraints();
+            gridBagConstraints_4.anchor = GridBagConstraints.WEST;
+            gridBagConstraints_4.insets = new Insets(2, 2, 5, 0);
+            gridBagConstraints_4.gridx = 1;
+            gridBagConstraints_4.gridy = 2;
+
+            panel.add(koOpen, gridBagConstraints_4);
+            koOpen.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    final MediaSeriesGroup patient = selectedPatient == null ? null : selectedPatient.patient;
+                    if (patient != null && e.getSource() instanceof JButton) {
+                        List<KOSpecialElement> list = DicomModel.getSpecialElements(patient, KOSpecialElement.class);
+                        if (list != null && list.size() > 0) {
+                            JButton button = (JButton) e.getSource();
+
+                            if (list.size() == 1) {
+                                model.openrelatedSeries(list.get(0), patient);
+                            } else {
+                                Collections.sort(list, DicomSpecialElement.ORDER_BY_DATE);
+
+                                JPopupMenu popupMenu = new JPopupMenu();
+                                popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
+                                popupMenu.addSeparator();
+
+                                ButtonGroup group = new ButtonGroup();
+
+                                for (final KOSpecialElement koSpecialElement : list) {
+                                    final JMenuItem item = new JMenuItem(koSpecialElement.getShortLabel());
+                                    item.addActionListener(new ActionListener() {
+
+                                        @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                            model.openrelatedSeries(koSpecialElement, patient);
+                                        }
+                                    });
+                                    popupMenu.add(item);
+                                    group.add(item);
+                                }
+                                popupMenu.show(button, 5, 5);
+                            }
+                        }
+                    }
+                }
+
+            });
+            koOpen.setVisible(false);
+
             panel_1.setLayout(new BorderLayout());
             panel_1.add(panel, BorderLayout.NORTH);
 
@@ -961,7 +1017,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 GridBagConstraints gbc_btnMoreOptions = new GridBagConstraints();
                 gbc_btnMoreOptions.anchor = GridBagConstraints.EAST;
                 gbc_btnMoreOptions.gridx = 1;
-                gbc_btnMoreOptions.gridy = 2;
+                gbc_btnMoreOptions.gridy = 3;
                 btnMoreOptions.setFont(FontTools.getFont10());
                 btnMoreOptions.addActionListener(new ActionListener() {
 
@@ -1075,6 +1131,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 studyCombobox.addItemListener(studyItemListener);
                 selectStudy();
                 patientContainer.addPane(selectedPatient);
+                koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
                 // Send message for selecting related plug-ins window
                 model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, model, null, patient));
             }
@@ -1249,6 +1306,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         int[] positionSeries = new int[1];
         createSeriesPaneInstance(series, positionSeries);
         if (addSeries && positionSeries[0] != -1) {
+            koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
             // If new study
             if (positionStudy[0] != -1) {
                 if (modelStudy.getIndexOf(study) < 0) {

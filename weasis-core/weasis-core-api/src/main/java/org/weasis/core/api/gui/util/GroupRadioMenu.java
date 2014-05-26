@@ -52,14 +52,6 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
         }
     }
 
-    public JMenu fillMenu(JMenu menu) {
-        menu.removeAll();
-        for (int i = 0; i < itemList.size(); i++) {
-            menu.add(itemList.get(i));
-        }
-        return menu;
-    }
-
     public List<RadioMenuItem> getRadioMenuItemListCopy() {
         return new ArrayList<RadioMenuItem>(itemList);
     }

@@ -16,6 +16,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -47,14 +48,20 @@ public class MPRFactory implements SeriesViewerFactory {
     @Override
     public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = MPRContainer.VIEWS_2x1_mpr;
+        String uid = null;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
             if (obj instanceof GridBagLayoutModel) {
                 model = (GridBagLayoutModel) obj;
             }
+            // Set UID
+            Object val = properties.get(ViewerPluginBuilder.UID);
+            if (val instanceof String) {
+                uid = (String) val;
+            }
         }
 
-        MPRContainer instance = new MPRContainer(model);
+        MPRContainer instance = new MPRContainer(model, uid);
         if (properties != null) {
             Object obj = properties.get(DataExplorerModel.class.getName());
             if (obj instanceof DicomModel) {

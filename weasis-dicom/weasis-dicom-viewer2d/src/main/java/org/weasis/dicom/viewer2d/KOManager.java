@@ -1,82 +1,44 @@
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Component;
-import java.awt.Toolkit;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageFilter;
-import java.awt.image.ImageProducer;
-import java.awt.image.RGBImageFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 
 import org.dcm4che3.data.Attributes;
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.GroupRadioMenu;
-import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
-import org.weasis.core.ui.editor.image.ShowPopup;
-import org.weasis.core.ui.editor.image.ViewButton;
-import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
+import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadDicomObjects;
 
-public class KOManager {
-
-    public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/16x16/star_bw.png"));
-    public static final ImageIcon KO_STAR_ICON_SELECTED;
-    public static final ImageIcon KO_STAR_ICON_EXIST;
-
-    static {
-        ImageFilter imageFilter = new SelectedImageFilter(new float[] { 1.0f, 0.78f, 0.0f }); // ORANGE
-        ImageProducer imageProducer = new FilteredImageSource(KO_STAR_ICON.getImage().getSource(), imageFilter);
-        KO_STAR_ICON_SELECTED = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
-
-        imageFilter = new SelectedImageFilter(new float[] { 0.0f, 0.39f, 1.0f }); // BLUE
-        imageProducer = new FilteredImageSource(KO_STAR_ICON.getImage().getSource(), imageFilter);
-        KO_STAR_ICON_EXIST = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
-    }
-
-    public static class SelectedImageFilter extends RGBImageFilter {
-        private final float[] filter;
-
-        public SelectedImageFilter(float[] filter) {
-            this.filter = filter;
-            // Filter's operation doesn't depend on the pixel's location, so IndexColorModels can be filtered directly.
-            canFilterIndexColorModel = true;
-        }
-
-        @Override
-        public int filterRGB(int x, int y, int argb) {
-            int r = (int) (((argb >> 16) & 0xff) * filter[0]);
-            int g = (int) (((argb >> 8) & 0xff) * filter[1]);
-            int b = (int) (((argb) & 0xff) * filter[2]);
-            return (argb & 0xff000000) | (r << 16) | (g << 8) | (b);
-        }
-    }
+public final class KOManager {
 
     public static List<Object> getKOElementListWithNone(DefaultView2d<DicomImageElement> currentView) {
 
         Collection<KOSpecialElement> koElements =
             currentView != null ? DicomModel.getKoSpecialElements(currentView.getSeries()) : null;
 
-        int koElementNb = koElements == null ? 0 : koElements.size();
+        int koElementNb = (koElements == null) ? 0 : koElements.size();
 
         List<Object> koElementListWithNone = new ArrayList<Object>(koElementNb + 1);
         koElementListWithNone.add(ActionState.NONE);
@@ -87,262 +49,368 @@ public class KOManager {
         return koElementListWithNone;
     }
 
-    public static ViewButton buildKoSelectionButton(final View2d currentView) {
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        return new ViewButton(new ShowPopup() {
+    /**
+     * Test if current sopInstanceUID is referenced in the selected KEY_OBJECT of the given currentView. If not, search
+     * if there is a more suitable new KEY_OBJECT element. Ask the user if needed.
+     */
 
-            @Override
-            public void showPopup(Component invoker, int x, int y) {
+    public static KOSpecialElement getValidKOSelection(final DefaultView2d<DicomImageElement> view2d) {
 
-                final EventManager evtMgr = EventManager.getInstance();
+        KOSpecialElement currentSelectedKO = getCurrentKOSelection(view2d);
+        DicomImageElement currentImage = view2d.getImage();
 
-                ComboItemListener koSelectionAction = ((ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION));
+        KOSpecialElement newKOSelection = null;
+        Attributes newDicomKO = null;
 
-                JPopupMenu popupMenu = new JPopupMenu();
+        if (currentSelectedKO == null) {
 
-                popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
-                popupMenu.addSeparator();
+            KOSpecialElement validKOSelection = findValidKOSelection(view2d);
 
-                GroupRadioMenu groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
-                for (RadioMenuItem item : groupRadioMenu.getRadioMenuItemListCopy()) {
-                    popupMenu.add(item);
-                }
+            if (validKOSelection != null) {
 
-                ToggleButtonListener koFilterAction = (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
-
-                final JCheckBoxMenuItem menuItem =
-                    koFilterAction.createUnregiteredJCheckBoxMenuItem(ActionW.KO_FILTER.getTitle());
-
-                popupMenu.addSeparator();
-                popupMenu.add(menuItem);
-
-                popupMenu.setEnabled(koSelectionAction.isActionEnabled());
-
-                popupMenu.show(invoker, x, y);
-            }
-        }, View2d.KO_ICON);
-    }
-
-    public static KOViewButton buildKoStarButton(final View2d currentView) {
-
-        return new KOViewButton(new ShowPopup() {
-            @Override
-            public void showPopup(Component invoker, int x, int y) {
-
-                ToggleButtonListener koToggleAction =
-                    ((ToggleButtonListener) EventManager.getInstance().getAction(ActionW.KO_STATE));
-
-                koToggleAction.setSelected(!koToggleAction.isSelected());
-            }
-        });
-    }
-
-    public static void toogleKoState(final DefaultView2d<DicomImageElement> defaultView2d) {
-
-        /**
-         * Test if current studyInstanceUID is referenced in the selected KEY_OBJECT of this currentView. If not, search
-         * if there is a more suitable new KEY_OBJECT element. Ask the user if needed.
-         */
-
-        MediaSeries<DicomImageElement> currentDicomSeries = defaultView2d.getSeries();
-        DicomImageElement currentImage = defaultView2d.getImage();
-
-        String currentStudyInstanceUID = (String) currentImage.getTagValue(TagW.StudyInstanceUID);
-        String currentSeriesInstanceUID = (String) currentImage.getTagValue(TagW.SeriesInstanceUID);
-        String currentSOPInstanceUID = (String) currentImage.getTagValue(TagW.SOPInstanceUID);
-        String currentSOPClassUID = (String) currentImage.getTagValue(TagW.SOPClassUID);
-
-        DicomModel dicomModel = (DicomModel) currentDicomSeries.getTagValue(TagW.ExplorerModel);
-
-        KOSpecialElement selectedKO =
-            (defaultView2d.getActionValue(ActionW.KO_SELECTION.cmd()) instanceof KOSpecialElement)
-                ? (KOSpecialElement) defaultView2d.getActionValue(ActionW.KO_SELECTION.cmd()) : null;
-
-        // null is Default, it involves creating a new dicom KO and use it as the new selection
-        KOSpecialElement dicomKO = null;
-
-        // Is there a KO selected ?
-        if (selectedKO != null) {
-
-            // Is it a new created dicom KO ?
-            if (selectedKO.getMediaReader().isEditableDicom()) {
-
-                // Does this selected KO refers to this studyUID or is it empty?
-                if (selectedKO.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
-                    || selectedKO.getReferencedSOPInstanceUIDSet().size() == 0) {
-
-                    // continue with the selected KO
-                    dicomKO = selectedKO;
-
-                } else {
-                    // Ask the user whether it's better to use this selected KO with a new
-                    // study reference or to create a new KO for this study
-
-                    String message = "Be aware that selected KO doesn't have any reference on this study.\n";
-                    Object[] options = { "Use it anyway", "Create a new KeyObject" };
-
-                    int response =
-                        JOptionPane.showOptionDialog(null, message, "Key Object Selection", JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-
-                    if (response == 0) {
-                        dicomKO = selectedKO;
-                    } else if (response != 1) { // no option is chosen meaning operation is cancelled
-                        return;
-                    }
-                }
-
-            } else {
-                // Ask the user whether it's better to create a new KO from a copy of the selected
-                // one or to create a new KO for this study
-
-                String message = "Be aware that selected KO is Read Only.\n";
-                Object[] options = { "Create a new KeyObject from a copy", "Create an empty new KeyObject" };
+                String message = "No KO is selected but at least one is available.\n";
+                Object[] options = { "Select the latest KO", "New KO" };
 
                 int response =
-                    JOptionPane.showOptionDialog(null, message, "Key Object Selection", JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                    JOptionPane.showOptionDialog(view2d, message, "Key Object Selection (KO)",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                 if (response == 0) {
-                    dicomKO = selectedKO;
-                } else if (response != 1) { // no option is chosen meaning operation is cancelled
-                    return;
+                    newKOSelection = validKOSelection;
+                } else if (response == 1) {
+                    newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                } else if (response == JOptionPane.CLOSED_OPTION) {
+                    return null;
                 }
+            } else {
+                newDicomKO = createNewDicomKeyObject(currentImage, view2d);
             }
+
         } else {
+            if (currentSelectedKO.getMediaReader().isEditableDicom()) {
 
-            // Is there any new created dicom KO for this study or any empty one?
-            Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(currentDicomSeries);
+                String studyInstanceUID = (String) currentImage.getTagValue(TagW.StudyInstanceUID);
 
-            if (koElements != null) {
-                for (KOSpecialElement koElement : koElements) {
-                    if (koElement.getMediaReader().isEditableDicom()) {
-                        if (koElement.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
-                            || koElement.getReferencedSOPInstanceUIDSet().size() == 0) {
-                            dicomKO = koElement;
-                            break;
-                        }
+                if (currentSelectedKO.isEmpty()
+                    || currentSelectedKO.containsStudyInstanceUIDReference(studyInstanceUID)) {
+
+                    newKOSelection = currentSelectedKO;
+                } else {
+
+                    String message = "The selected KO doesn't have any reference on the current study.\n";
+                    Object[] options = { "Use it anyway", "New KO" };
+
+                    int response =
+                        JOptionPane.showOptionDialog(view2d, message, "Key Object Selection (KO)",
+                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+
+                    if (response == 0) {
+                        newKOSelection = currentSelectedKO;
+                    } else if (response == 1) {
+                        newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                    } else if (response == JOptionPane.CLOSED_OPTION) {
+                        return null;
                     }
-                }
-            }
-
-            if (dicomKO != null) {
-                // Ask the user whether it's better to switch to the most recent new created KO with a
-                // reference to this study or to create a new KO for this study
-
-                String message = "No KeyObject is selected but at least one is available.\n";
-                Object[] options = { "Switch to the most recent KeyObject", "Create an empty new KeyObject" };
-
-                int response =
-                    JOptionPane.showOptionDialog(null, message, "Key Object Selection", JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-
-                if (response == 1) {
-                    dicomKO = null;
-                } else if (response != 0) { // no option is chosen meaning operation is cancelled
-                    return;
-                }
-            }
-        }
-
-        if (dicomKO == null || !dicomKO.getMediaReader().isEditableDicom()) {
-
-            Attributes newDicomKO = null;
-
-            String message = "Set a description for the new KeyObject Selection";
-            String description =
-                (String) JOptionPane.showInputDialog(null, message, "Key Object Selection",
-                    JOptionPane.INFORMATION_MESSAGE, null, null, "new KO selection");
-
-            if (!StringUtil.hasText(description)) {
-                return; // no input is given meaning operation is cancelled
-            }
-
-            if (dicomKO == null) {
-                // create a new empty dicom KO
-                // String patientID = (String) currentImage.getTagValue(TagW.PatientID);
-                // String patientName = (String) currentImage.getTagValue(TagW.PatientName);
-                // Date patientBirthdate = (Date) currentImage.getTagValue(TagW.PatientBirthDate);
-
-                if (currentImage.getMediaReader() instanceof DicomMediaIO) {
-                    newDicomKO =
-                        DicomMediaUtils.createDicomKeyObject(
-                            ((DicomMediaIO) currentImage.getMediaReader()).getDicomObject(), description, null);
                 }
 
             } else {
-                // create a new dicom KO from the selected one by copying its content selection
 
-                // TODO should remove from the current procedure evidence any SOPInstanceUID references outside
-                // the scope of the current seriesInstanceUID or at least give the choice to the user
+                String message = "The selected KO is read only.\n";
+                Object[] options = { "New KO", "New KO from the current one" };
 
-                newDicomKO =
-                    DicomMediaUtils.createDicomKeyObject(dicomKO.getMediaReader().getDicomObject(), description, null);
-            }
+                int response =
+                    JOptionPane.showOptionDialog(view2d, message, "Key Object Selection (KO)",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
-            new LoadDicomObjects(dicomModel, newDicomKO).addSelectionAndnotify(); // must be executed in the EDT
-
-            // Find the new KOSpecialElement just loaded and set it as default for this view
-            for (KOSpecialElement ko : DicomModel.getKoSpecialElements(currentDicomSeries)) {
-                if (ko.getMediaReader().getDicomObject().equals(newDicomKO)) {
-                    dicomKO = ko;
-                    break;
+                if (response == 0) {
+                    newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                } else if (response == 1) {
+                    newDicomKO = createNewDicomKeyObject(currentSelectedKO, view2d);
+                } else if (response == JOptionPane.CLOSED_OPTION) {
+                    return null;
                 }
             }
-
-            // TODO if dicomKOCandidate is a copy just remove any SopInstanceUID outside currentSeriesUID
         }
 
-        dicomKO.toggleKeyObjectReference(currentStudyInstanceUID, currentSeriesInstanceUID, currentSOPInstanceUID,
-            currentSOPClassUID);
-
-        if (selectedKO != dicomKO) {
-            ((View2d) defaultView2d).setKeyObjectSelection(dicomKO);
-            selectedKO = dicomKO;
+        if (newDicomKO != null) {
+            newKOSelection = loadDicomObject(view2d.getSeries(), newDicomKO);
         }
 
-        ((View2d) defaultView2d).updateKOSelectionChange();
-
-        // Fire an event since any view in the View2dContainner may have its KO selected state changed
-        // dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, currentView, null,
-        // selectedKO));
+        return newKOSelection;
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    @SuppressWarnings("serial")
-    public static class KOViewButton extends ViewButton {
+    private static KOSpecialElement loadDicomObject(MediaSeries<DicomImageElement> dicomSeries, Attributes newDicomKO) {
 
-        protected eState state = eState.UNSELECTED;
+        DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
 
-        enum eState {
-            UNSELECTED, EXIST, SELECTED
-        }
+        new LoadDicomObjects(dicomModel, newDicomKO).addSelectionAndnotify(); // must be executed in the EDT
 
-        public KOViewButton(ShowPopup popup) {
-            super(popup, KO_STAR_ICON);
-        }
-
-        public eState getState() {
-            return state;
-        }
-
-        public void setState(eState state) {
-            this.state = state;
-        }
-
-        @Override
-        public Icon getIcon() {
-            switch (state) {
-                case UNSELECTED:
-                    return KO_STAR_ICON;
-                case EXIST:
-                    return KO_STAR_ICON_EXIST;
-                case SELECTED:
-                    return KO_STAR_ICON_SELECTED;
+        for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(dicomSeries)) {
+            if (koElement.getMediaReader().getDicomObject().equals(newDicomKO)) {
+                return koElement;
             }
-            return null;
         }
+
+        return null;
     }
 
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static Attributes createNewDicomKeyObject(MediaElement<?> dicomMediaElement,
+        final DefaultView2d<DicomImageElement> view2d) {
+
+        if (dicomMediaElement != null && dicomMediaElement.getMediaReader() instanceof DicomMediaIO) {
+            Attributes dicomSourceAttribute = ((DicomMediaIO) dicomMediaElement.getMediaReader()).getDicomObject();
+
+            String message = "Set a description for the new KO";
+            String defautDescription = "new KO";
+
+            String description =
+                (String) JOptionPane.showInputDialog(view2d, message, "Key Object Selection (KO)",
+                    JOptionPane.INFORMATION_MESSAGE, null, null, defautDescription);
+
+            // description==null means the user canceled the input
+            if (StringUtil.hasText(description)) {
+                Attributes ko = DicomMediaUtils.createDicomKeyObject(dicomSourceAttribute, description, null);
+                if (dicomMediaElement instanceof KOSpecialElement) {
+                    Collection<HierachicalSOPInstanceReference> referencedStudySequence =
+                        new KODocumentModule(dicomSourceAttribute).getCurrentRequestedProcedureEvidences();
+
+                    new KODocumentModule(ko).setCurrentRequestedProcedureEvidences(referencedStudySequence);
+                }
+                if (view2d != null) {
+                    // Deactivate filter for new KO
+                    ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
+                    if (koFilterAction instanceof ToggleButtonListener) {
+                        ((ToggleButtonListener) koFilterAction).setSelected(false);
+                    }
+                }
+                return ko;
+            }
+        }
+        return null;
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Get an editable Dicom KeyObject Selection suitable to handle current Dicom Image. A valid object should either
+     * reference the studyInstanceUID of the current Dicom Image or simply be empty ...
+     */
+
+    public static KOSpecialElement findValidKOSelection(final DefaultView2d<DicomImageElement> view2d) {
+
+        MediaSeries<DicomImageElement> dicomSeries = view2d.getSeries();
+        DicomImageElement currentImage = view2d.getImage();
+        if (currentImage != null && dicomSeries != null) {
+            String currentStudyInstanceUID = (String) currentImage.getTagValue(TagW.StudyInstanceUID);
+            Collection<KOSpecialElement> koElementsWithReferencedSeriesInstanceUID =
+                DicomModel.getKoSpecialElements(dicomSeries);
+
+            if (koElementsWithReferencedSeriesInstanceUID != null) {
+
+                for (KOSpecialElement koElement : koElementsWithReferencedSeriesInstanceUID) {
+                    if (koElement.getMediaReader().isEditableDicom()) {
+                        if (koElement.containsStudyInstanceUIDReference(currentStudyInstanceUID)) {
+                            return koElement;
+                        }
+                    }
+                }
+
+                for (KOSpecialElement koElement : koElementsWithReferencedSeriesInstanceUID) {
+                    if (koElement.getMediaReader().isEditableDicom()) {
+                        if (koElement.isEmpty()) {
+                            return koElement;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static KOSpecialElement getCurrentKOSelection(final DefaultView2d<DicomImageElement> view2d) {
+
+        Object actionValue = view2d.getActionValue(ActionW.KO_SELECTION.cmd());
+        if (actionValue instanceof KOSpecialElement) {
+            return (KOSpecialElement) actionValue;
+        }
+
+        return null;
+    }
+
+    public static boolean setKeyObjectReference(boolean selectedState, final DefaultView2d<DicomImageElement> view2d) {
+
+        KOSpecialElement validKOSelection = getValidKOSelection(view2d);
+
+        if (validKOSelection == null) {
+            return false; // canceled
+        }
+
+        KOSpecialElement currentSelectedKO = KOManager.getCurrentKOSelection(view2d);
+
+        boolean hasKeyObjectReferenceChanged = false;
+
+        if (validKOSelection != currentSelectedKO) {
+            ActionState koSelection = view2d.getEventManager().getAction(ActionW.KO_SELECTION);
+            if (koSelection instanceof ComboItemListener) {
+                ((ComboItemListener) koSelection).setSelectedItem(validKOSelection);
+            }
+        } else {
+            DicomImageElement currentImage = view2d.getImage();
+            hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, currentImage);
+
+            if (hasKeyObjectReferenceChanged) {
+                DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
+                // Fire an event since any view in any View2dContainer may have its KO selected state changed
+                if (dicomModel != null) {
+                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
+                        validKOSelection));
+                }
+            }
+        }
+
+        return hasKeyObjectReferenceChanged;
+    }
+
+    public static void setKeyObjectReferenceAllSeries(boolean selectedState,
+        final DefaultView2d<DicomImageElement> view2d) {
+
+        KOSpecialElement validKOSelection = getValidKOSelection(view2d);
+
+        if (validKOSelection == null) {
+            ((EventManager) view2d.getEventManager()).updateKeyObjectComponentsListener(view2d);
+            return; // canceled
+        }
+
+        KOSpecialElement currentSelectedKO = KOManager.getCurrentKOSelection(view2d);
+
+        if (validKOSelection != currentSelectedKO) {
+            ActionState koSelection = view2d.getEventManager().getAction(ActionW.KO_SELECTION);
+            if (koSelection instanceof ComboItemListener) {
+                ((ComboItemListener) koSelection).setSelectedItem(validKOSelection);
+            }
+        }
+
+        validKOSelection.setKeyObjectReference(selectedState, view2d.getSeries().getSortedMedias(null));
+
+        DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
+        if (dicomModel != null) {
+            dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
+                validKOSelection));
+        }
+
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static void updateKOFilter(DefaultView2d<DicomImageElement> view2D, Object newSelectedKO,
+        Boolean enableFilter, int imgSelectionIndex) {
+
+        if (view2D instanceof View2d) {
+            boolean tiledMode = imgSelectionIndex >= 0;
+            boolean koFilter = false;
+            KOSpecialElement selectedKO = null;
+            if (newSelectedKO == null) {
+                Object actionValue = view2D.getActionValue(ActionW.KO_SELECTION.cmd());
+                if (actionValue instanceof KOSpecialElement) {
+                    selectedKO = (KOSpecialElement) actionValue;
+                }
+            } else {
+                if (newSelectedKO instanceof KOSpecialElement) {
+                    selectedKO = (KOSpecialElement) newSelectedKO;
+                }
+                view2D.setActionsInView(ActionW.KO_SELECTION.cmd(), newSelectedKO);
+            }
+
+            if (enableFilter == null) {
+                koFilter = JMVUtils.getNULLtoFalse(view2D.getActionValue(ActionW.KO_FILTER.cmd()));
+            } else {
+                koFilter = enableFilter;
+            }
+
+            if (tiledMode && selectedKO == null) {
+                // Unselect the filter with the None KO selection
+                koFilter = false;
+            }
+
+            view2D.setActionsInView(ActionW.KO_FILTER.cmd(), koFilter);
+            view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), null);
+
+            if (selectedKO == null || view2D.getSeries() == null || (view2D.getImage() == null && !tiledMode)) {
+                if (newSelectedKO != null) {
+                    // Update the None KO selection
+                    ((View2d) view2D).updateKOButtonVisibleState();
+                }
+                return;
+            }
+
+            DicomSeries dicomSeries = (DicomSeries) view2D.getSeries();
+            String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+            Filter<DicomImageElement> sopInstanceUIDFilter = null;
+
+            if (koFilter && selectedKO.containsSeriesInstanceUIDReference(seriesInstanceUID)) {
+                sopInstanceUIDFilter = selectedKO.getSOPInstanceUIDFilter();
+            }
+            view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
+
+            /*
+             * The getFrameIndex() returns a valid index for the current image displayed according to the current
+             * FILTERED_SERIES and the current SortComparator
+             */
+            int newImageIndex = view2D.getFrameIndex();
+            if (tiledMode) {
+                newImageIndex = view2D.getTileOffset() + imgSelectionIndex;
+            }
+
+            if (koFilter && newImageIndex < 0) {
+                if (dicomSeries.size(sopInstanceUIDFilter) > 0 && view2D.getImage() != null) {
+
+                    double[] val = (double[]) view2D.getImage().getTagValue(TagW.SlicePosition);
+                    if (val != null) {
+                        double location = val[0] + val[1] + val[2];
+                        // Double offset = (Double) view2D.getActionValue(ActionW.STACK_OFFSET.cmd());
+                        // if (offset != null) {
+                        // location += offset;
+                        // }
+                        newImageIndex =
+                            dicomSeries.getNearestImageIndex(location, view2D.getTileOffset(), sopInstanceUIDFilter,
+                                view2D.getCurrentSortComparator());
+                    }
+                } else {
+                    // If there is no more image in KO series filtered then disable the KO_FILTER
+                    sopInstanceUIDFilter = null;
+                    view2D.setActionsInView(ActionW.KO_FILTER.cmd(), false);
+                    view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
+                    newImageIndex = view2D.getFrameIndex();
+                }
+            }
+
+            if (view2D == view2D.getEventManager().getSelectedViewPane()) {
+                /*
+                 * Update the sliceAction action according to nearest image when the filter hides the image of the
+                 * previous state.
+                 */
+                ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
+                if (seqAction instanceof SliderCineListener) {
+                    SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
+                    moveTroughSliceAction.setMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter), newImageIndex + 1);
+                }
+            } else {
+                DicomImageElement newImage =
+                    dicomSeries.getMedia(newImageIndex, sopInstanceUIDFilter, view2D.getCurrentSortComparator());
+                if (newImage != null && !newImage.isImageAvailable()) {
+                    newImage.getImage();
+                }
+                ((View2d) view2D).setImage(newImage);
+            }
+            ((View2d) view2D).updateKOButtonVisibleState();
+        }
+    }
 }

@@ -19,6 +19,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import javax.media.jai.PlanarImage;
+
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -27,14 +29,14 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public class DicomSpecialElement extends MediaElement {
+public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     protected String label;
     protected String shortLabel;
 
     public DicomSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO, null);
-        iniLabel();
+        initLabel();
     }
 
     protected String getLabelPrefix() {
@@ -53,7 +55,7 @@ public class DicomSpecialElement extends MediaElement {
         return buf.toString();
     }
 
-    protected void iniLabel() {
+    protected void initLabel() {
         StringBuilder buf = new StringBuilder(getLabelPrefix());
         String desc = (String) getTagValue(TagW.SeriesDescription);
         if (desc != null) {
@@ -160,8 +162,8 @@ public class DicomSpecialElement extends MediaElement {
 
                 Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
 
-                if (seriesUID == null || referencedSeriesInstanceUIDSet.contains(seriesUID) || //
-                    koElement.getMediaReader().isEditableDicom()) {
+                if (seriesUID == null || referencedSeriesInstanceUIDSet.contains(seriesUID)
+                    || koElement.getMediaReader().isEditableDicom()) {
 
                     if (koElementSet == null) {
                         // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DESCRIPTION);
@@ -225,10 +227,13 @@ public class DicomSpecialElement extends MediaElement {
                 // SeriesDate stands for "Date the Series started" and is optional parameter, don't use this to compare
                 // and prefer "Content Date And Time" Tags (date and time the document content creation started)
 
-                Date date1 = (Date) m1.getTagValue(TagW.ContentTime);
-                Date date2 = (Date) m2.getTagValue(TagW.ContentTime);
+                Date date1 =
+                    TagW.dateTime((Date) m1.getTagValue(TagW.ContentDate), (Date) m1.getTagValue(TagW.ContentTime));
+                Date date2 =
+                    TagW.dateTime((Date) m2.getTagValue(TagW.ContentDate), (Date) m2.getTagValue(TagW.ContentTime));
 
                 if (date1 == null || date2 == null) {
+                    // SeriesDate contains date and time
                     date1 = (Date) m1.getTagValue(TagW.SeriesDate);
                     date2 = (Date) m2.getTagValue(TagW.SeriesDate);
                 }
@@ -252,15 +257,7 @@ public class DicomSpecialElement extends MediaElement {
                     }
                 }
 
-                int comp = String.CASE_INSENSITIVE_ORDER.compare(m1.getLabel(), m2.getLabel());
-                if (comp != 0) {
-                    return comp;
-                }
-
-                String sopUID1 = (String) m1.getTagValue(TagW.SOPInstanceUID);
-                String sopUID2 = (String) m2.getTagValue(TagW.SOPInstanceUID);
-
-                return String.CASE_INSENSITIVE_ORDER.compare(sopUID2, sopUID1);
+                return String.CASE_INSENSITIVE_ORDER.compare(m1.getLabel(), m2.getLabel());
             }
         };
 
