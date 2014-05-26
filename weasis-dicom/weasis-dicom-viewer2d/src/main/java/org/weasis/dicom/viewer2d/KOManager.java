@@ -25,6 +25,8 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
+import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadDicomObjects;
@@ -175,7 +177,16 @@ public final class KOManager {
 
         // description==null means the user canceled the input
         if (StringUtil.hasText(description)) {
-            return DicomMediaUtils.createDicomKeyObject(dicomSourceAttribute, description, null);
+            Attributes newDicomKeyObject =
+                DicomMediaUtils.createDicomKeyObject(dicomSourceAttribute, description, null);
+
+            if (dicomMediaElement instanceof KOSpecialElement) {
+                Collection<HierachicalSOPInstanceReference> referencedStudySequence =
+                    new KODocumentModule(dicomSourceAttribute).getCurrentRequestedProcedureEvidences();
+
+                new KODocumentModule(newDicomKeyObject).setCurrentRequestedProcedureEvidences(referencedStudySequence);
+            }
+            return newDicomKeyObject;
         }
 
         return null;
