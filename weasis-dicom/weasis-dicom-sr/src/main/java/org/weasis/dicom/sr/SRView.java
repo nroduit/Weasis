@@ -31,7 +31,6 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -116,13 +115,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         closingSeries(oldsequence);
 
         if (series != null) {
-            DicomSpecialElement s = null;
-            List<MediaElement<?>> specialElements =
-                (List<MediaElement<?>>) series.getTagValue(TagW.DicomSpecialElementList);
-            if (specialElements != null && specialElements.size() > 0) {
-                // Should have only one object by series (if more, they are split in several sub-series in dicomModel)
-                s = (DicomSpecialElement) specialElements.get(0);
-            }
+            // Should have only one object by series (if more, they are split in several sub-series in dicomModel)
+            DicomSpecialElement s = DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
             displayLimitedDicomInfo(s);
             series.setOpen(true);
             series.setFocused(true);

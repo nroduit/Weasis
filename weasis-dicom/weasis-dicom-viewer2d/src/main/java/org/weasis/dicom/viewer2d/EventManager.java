@@ -598,6 +598,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void itemStateChanged(Object object) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
                     object));
+
+                SynchView synchView = (SynchView) synchAction.getSelectedItem();
+                if (synchView != null && SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
+                    if (moveTroughSliceAction.getValue() == 1) {
+                        moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
+                    } else {
+                        moveTroughSliceAction.setValue(1);
+                    }
+                }
             }
         };
     }
@@ -608,6 +617,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void actionPerformed(boolean selected) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
                     selected));
+
+                SynchView synchView = (SynchView) synchAction.getSelectedItem();
+                if (synchView != null && SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
+                    if (moveTroughSliceAction.getValue() == 1) {
+                        moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
+                    } else {
+                        moveTroughSliceAction.setValue(1);
+                    }
+                }
             }
         };
     }
@@ -1074,10 +1092,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                         } else {
                                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                                 oldSynch = synch.clone();
-                                                for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
+                                                for (Entry<String, Boolean> a : oldSynch.getActions().entrySet()) {
                                                     a.setValue(false);
                                                 }
-                                                synch.getActions().put(ActionW.SCROLL_SERIES.cmd(), true);
+                                                oldSynch.getActions().put(ActionW.SCROLL_SERIES.cmd(), true);
                                             }
                                         }
                                     } else {
@@ -1089,10 +1107,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                         } else {
                                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                                 oldSynch = synch.clone();
-                                                for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
+                                                for (Entry<String, Boolean> a : oldSynch.getActions().entrySet()) {
                                                     a.setValue(false);
                                                 }
-                                                synch.getActions().put(ActionW.SCROLL_SERIES.cmd(), true);
+                                                oldSynch.getActions().put(ActionW.SCROLL_SERIES.cmd(), true);
                                             }
                                         }
                                     }
@@ -1112,8 +1130,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                 oldSynch = synch.clone();
                             }
-                            synch.getActions().put(ActionW.KO_SELECTION.cmd(), true);
-                            synch.getActions().put(ActionW.KO_FILTER.cmd(), true);
+                            oldSynch.getActions().put(ActionW.KO_SELECTION.cmd(), true);
+                            oldSynch.getActions().put(ActionW.KO_FILTER.cmd(), true);
 
                             pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
