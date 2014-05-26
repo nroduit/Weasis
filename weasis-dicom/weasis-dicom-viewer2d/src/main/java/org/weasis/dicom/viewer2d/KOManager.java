@@ -25,6 +25,8 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
+import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadDicomObjects;
@@ -174,6 +176,12 @@ public final class KOManager {
             // description==null means the user canceled the input
             if (StringUtil.hasText(description)) {
                 Attributes ko = DicomMediaUtils.createDicomKeyObject(dicomSourceAttribute, description, null);
+                if (dicomMediaElement instanceof KOSpecialElement) {
+                    Collection<HierachicalSOPInstanceReference> referencedStudySequence =
+                        new KODocumentModule(dicomSourceAttribute).getCurrentRequestedProcedureEvidences();
+
+                    new KODocumentModule(ko).setCurrentRequestedProcedureEvidences(referencedStudySequence);
+                }
                 if (view2d != null) {
                     // Deactivate filter for new KO
                     ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
@@ -184,7 +192,6 @@ public final class KOManager {
                 return ko;
             }
         }
-
         return null;
     }
 
