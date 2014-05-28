@@ -183,7 +183,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(KeyObjectToolBar.class), key, true)) {
-                TOOLBARS.add(new KeyObjectToolBar(90));
+                TOOLBARS.add(new KeyObjectToolBar<DicomImageElement>(90));
             }
 
             PluginTool tool = null;
