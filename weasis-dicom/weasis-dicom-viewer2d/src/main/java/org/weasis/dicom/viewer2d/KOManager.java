@@ -33,6 +33,12 @@ import org.weasis.dicom.explorer.LoadDicomObjects;
 
 public final class KOManager {
 
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static Collection<KOSpecialElement> getKOElementCollection(DefaultView2d<DicomImageElement> currentView) {
+        return currentView != null ? DicomModel.getKoSpecialElements(currentView.getSeries()) : null;
+    }
+
     public static List<Object> getKOElementListWithNone(DefaultView2d<DicomImageElement> currentView) {
 
         Collection<KOSpecialElement> koElements =
@@ -58,13 +64,13 @@ public final class KOManager {
 
     public static KOSpecialElement getValidKOSelection(final DefaultView2d<DicomImageElement> view2d) {
 
-        KOSpecialElement currentSelectedKO = getCurrentKOSelection(view2d);
-        DicomImageElement currentImage = view2d.getImage();
+        KOSpecialElement selectedKO = getCurrentKOSelection(view2d);
+        DicomImageElement dicomImage = view2d.getImage();
 
         KOSpecialElement newKOSelection = null;
         Attributes newDicomKO = null;
 
-        if (currentSelectedKO == null) {
+        if (selectedKO == null) {
 
             KOSpecialElement validKOSelection = findValidKOSelection(view2d);
 
@@ -80,23 +86,22 @@ public final class KOManager {
                 if (response == 0) {
                     newKOSelection = validKOSelection;
                 } else if (response == 1) {
-                    newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                    newDicomKO = createNewDicomKeyObject(dicomImage, view2d);
                 } else if (response == JOptionPane.CLOSED_OPTION) {
                     return null;
                 }
             } else {
-                newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                newDicomKO = createNewDicomKeyObject(dicomImage, view2d);
             }
 
         } else {
-            if (currentSelectedKO.getMediaReader().isEditableDicom()) {
+            if (selectedKO.getMediaReader().isEditableDicom()) {
 
-                String studyInstanceUID = (String) currentImage.getTagValue(TagW.StudyInstanceUID);
+                String studyInstanceUID = (String) dicomImage.getTagValue(TagW.StudyInstanceUID);
 
-                if (currentSelectedKO.isEmpty()
-                    || currentSelectedKO.containsStudyInstanceUIDReference(studyInstanceUID)) {
+                if (selectedKO.isEmpty() || selectedKO.containsStudyInstanceUIDReference(studyInstanceUID)) {
 
-                    newKOSelection = currentSelectedKO;
+                    newKOSelection = selectedKO;
                 } else {
 
                     String message = "Be aware that selected KO doesn't have any reference on the current study.\n";
@@ -107,9 +112,9 @@ public final class KOManager {
                             JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                     if (response == 0) {
-                        newKOSelection = currentSelectedKO;
+                        newKOSelection = selectedKO;
                     } else if (response == 1) {
-                        newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                        newDicomKO = createNewDicomKeyObject(dicomImage, view2d);
                     } else if (response == JOptionPane.CLOSED_OPTION) {
                         return null;
                     }
@@ -125,9 +130,9 @@ public final class KOManager {
                         JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                 if (response == 0) {
-                    newDicomKO = createNewDicomKeyObject(currentSelectedKO, view2d);
+                    newDicomKO = createNewDicomKeyObject(selectedKO, view2d);
                 } else if (response == 1) {
-                    newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                    newDicomKO = createNewDicomKeyObject(dicomImage, view2d);
                 } else if (response == JOptionPane.CLOSED_OPTION) {
                     return null;
                 }
@@ -135,7 +140,7 @@ public final class KOManager {
         }
 
         if (newDicomKO != null) {
-            newKOSelection = loadDicomObject(view2d.getSeries(), newDicomKO);
+            newKOSelection = loadDicomKeyObject(view2d.getSeries(), newDicomKO);
         }
 
         return newKOSelection;
@@ -143,7 +148,7 @@ public final class KOManager {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static KOSpecialElement loadDicomObject(MediaSeries<DicomImageElement> dicomSeries, Attributes newDicomKO) {
+    public static KOSpecialElement loadDicomKeyObject(MediaSeries<DicomImageElement> dicomSeries, Attributes newDicomKO) {
 
         DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
 
@@ -160,12 +165,11 @@ public final class KOManager {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static Attributes createNewDicomKeyObject(MediaElement<?> dicomMediaElement, Component parentComponent) {
+    public static Attributes createNewDicomKeyObject(MediaElement<?> dicomMediaElement, Component parentComponent) {
 
         if (dicomMediaElement == null || (dicomMediaElement.getMediaReader() instanceof DicomMediaIO) == false) {
             return null;
         }
-
         Attributes dicomSourceAttribute = ((DicomMediaIO) dicomMediaElement.getMediaReader()).getDicomObject();
 
         String message = "Set a description for the new KeyObject Selection";
