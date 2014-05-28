@@ -73,16 +73,14 @@ public class CheckTreeModel {
                             List<DicomSpecialElement> specialElements =
                                 (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
                             if (specialElements != null) {
-                                if (specialElements != null) {
-                                    for (DicomSpecialElement specialElement : specialElements) {
-                                        seriesNode.add(new DefaultMutableTreeNode(specialElement, false) {
-                                            @Override
-                                            public String toString() {
-                                                DicomSpecialElement d = (DicomSpecialElement) getUserObject();
-                                                return d.getShortLabel();
-                                            }
-                                        });
-                                    }
+                                for (DicomSpecialElement specialElement : specialElements) {
+                                    seriesNode.add(new DefaultMutableTreeNode(specialElement, false) {
+                                        @Override
+                                        public String toString() {
+                                            DicomSpecialElement d = (DicomSpecialElement) getUserObject();
+                                            return d.getShortLabel();
+                                        }
+                                    });
                                 }
                             }
                             for (DicomImageElement dicom : series.getMedias(null, null)) {

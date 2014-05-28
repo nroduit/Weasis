@@ -13,7 +13,6 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
@@ -41,7 +40,6 @@ import java.util.Map.Entry;
 
 import javax.media.jai.PlanarImage;
 import javax.swing.ButtonGroup;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -92,13 +90,9 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -138,15 +132,9 @@ import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
-import org.weasis.dicom.codec.display.CornerDisplay;
-import org.weasis.dicom.codec.display.CornerInfoData;
-import org.weasis.dicom.codec.display.Modality;
-import org.weasis.dicom.codec.display.ModalityInfoData;
-import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.ShutterOp;
-import org.weasis.dicom.codec.display.TagView;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -263,39 +251,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), true);
         disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), null);
 
-        setDefaultKOActionWState();
+        initKOActionWState();
     }
 
-    protected void setDefaultKOActionWState() {
-
+    protected void initKOActionWState() {
         actionsInView.put(ActionW.KO_FILTER.cmd(), false);
         actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), false);
         actionsInView.put(ActionW.KO_SELECTION.cmd(), ActionState.NONE);
-
-        // Set the more recent KO by default
-
-        // Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
-        // Object defaultKO = (koElements != null && koElements.size() > 0) ? koElements.iterator().next() : null;
-        // actionsInView.put(ActionW.KO_SELECTION.cmd(), defaultKO);
-        //
-        // if (defaultKO instanceof KOSpecialElement) {
-        // DicomImageElement dicomImage = getImage();
-        //
-        // if (dicomImage != null) {
-        // String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
-        // String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
-        //
-        // if (sopInstanceUID != null && seriesInstanceUID != null) {
-        // KOSpecialElement koElement = (KOSpecialElement) defaultKO;
-        // Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
-        //
-        // if (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUID)) {
-        // actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), true);
-        // }
-        // }
-        // }
-        // }
-
     }
 
     @Override
@@ -311,6 +273,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (name.equals(ActionW.SYNCH.cmd())) {
             SynchEvent synch = (SynchEvent) evt.getNewValue();
             SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+            boolean tile = synchData != null && SynchData.Mode.Tile.equals(synchData.getMode()) ? true : false;
             if (synchData != null && Mode.None.equals(synchData.getMode())) {
                 return;
             }
@@ -360,9 +323,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
                     sortStack(getCurrentSortComparator());
                 } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
-                    KOManager.updateKOFilter(this, val, null);
+                    KOManager.updateKOFilter(this, val, null, tile ? synch.getView().getFrameIndex() : -1);
+                    // KOManager.updateKOFilter(this, val,
+                    // (Boolean) (tile ? synch.getView().getActionValue(ActionW.KO_FILTER.cmd()) : null), tile ? synch
+                    // .getView().getFrameIndex() : -1);
                 } else if (command.equals(ActionW.KO_FILTER.cmd())) {
-                    KOManager.updateKOFilter(this, null, (Boolean) val);
+                    KOManager.updateKOFilter(this, tile ? synch.getView().getActionValue(ActionW.KO_SELECTION.cmd())
+                        : null, (Boolean) val, tile ? synch.getView().getFrameIndex() : -1);
                 } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
                     if (series != null && val instanceof Point2D.Double) {
                         Point2D.Double p = (Point2D.Double) val;
@@ -657,21 +624,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         if (koStarButton.isVisible() != koElementExist) {
             koStarButton.setVisible(koElementExist);
-
-            // Force the KO annotation preference to be set visible or not depending if a KO object is loaded with any
-            // reference on the series in this view, or if new KO were created for this patient
-            infoLayer.setDisplayPreferencesValue(AnnotationsLayer.KEY_OBJECT, koElementExist);
-
-            // TODO for the following think of a better place like somewhere that listen dicomModel update
-            // firePropertyChange since it concerns only current view's eventManager to be updated
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
-                null, null, EVENT.SELECT_VIEW)); // call iniTreeValues in DisplayTool to update checkBox
-
             needToRepaint = true;
         }
 
         if (koElementExist) {
-            needToRepaint = updateKOselectedState();
+            needToRepaint = updateKOselectedState(getImage());
         }
 
         if (needToRepaint) {
@@ -680,10 +637,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     /**
+     * @param newImg
+     * @param img
+     *            , newImg
      * @return true if the state has changed and if the view or at least the KO button need to be repaint
      */
 
-    protected boolean updateKOselectedState() {
+    protected boolean updateKOselectedState(DicomImageElement img) {
 
         eState previousState = koStarButton.getState();
 
@@ -691,11 +651,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         KOViewButton.eState newSelectionState = eState.UNSELECTED;
 
         Object selectedKO = getActionValue(ActionW.KO_SELECTION.cmd());
-        DicomImageElement dicomImage = getImage();
 
-        if (dicomImage != null) {
-            String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
-            String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
+        if (img != null) {
+            String sopInstanceUID = (String) img.getTagValue(TagW.SOPInstanceUID);
+            String seriesInstanceUID = (String) img.getTagValue(TagW.SeriesInstanceUID);
 
             if (sopInstanceUID != null && seriesInstanceUID != null) {
                 if ((selectedKO instanceof KOSpecialElement)) {
@@ -724,36 +683,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), selected);
 
         return (previousState != newSelectionState);
-    }
-
-    protected Rectangle getKOStarButtonBound(Graphics2D g2d) {
-
-        // /////////////////////////////////////////////////////////////////////////////////////////////////
-        // TODO - find a better way to get infoLayer TOP-RIGHT available position for drawing something else
-
-        Modality mod = Modality.getModality((String) getSeries().getTagValue(TagW.Modality));
-        ModalityInfoData infoData = ModalityView.getModlatityInfos(mod);
-        CornerInfoData corner = infoData.getCornerInfo(CornerDisplay.TOP_RIGHT);
-
-        final float fontHeight = FontTools.getAccurateFontHeight(g2d);
-        boolean anonymize = infoLayer.getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
-
-        float drawY = 0;
-        TagView[] infos = corner.getInfos();
-        for (TagView tag : infos) {
-            if (tag != null) {
-                drawY += fontHeight;
-            }
-        }
-
-        // /////////////////////////////////////////////////////////////////////////////////////////////////
-
-        Icon koStarIcon = koStarButton.getIcon();
-
-        int xPos = getWidth() - koStarIcon.getIconWidth() - infoLayer.getBorder();
-        int yPos = (int) (Math.round(drawY) + (0.3 * fontHeight));
-
-        return new Rectangle(xPos, yPos, koStarIcon.getIconWidth(), koStarIcon.getIconHeight());
     }
 
     @Override
@@ -792,6 +721,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         super.setImage(img);
 
         updatePrButtonState(img, newImg);
+        if (newImg) {
+            updateKOselectedState(img);
+        }
     }
 
     void updatePR() {
@@ -1129,9 +1061,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     public void handleLayerChanged(ImageLayer layer) {
-        if (infoLayer.getDisplayPreferences(AnnotationsLayer.KEY_OBJECT)) {
-            updateKOselectedState();
-        }
         repaint();
     }
 

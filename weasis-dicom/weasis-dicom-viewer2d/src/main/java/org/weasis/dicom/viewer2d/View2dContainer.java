@@ -616,13 +616,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 // DicomSpecialElement do not necessarily concerned the series in the Viewer2dContainer
 
                 if (newVal instanceof Series) {
-                    Series series = (Series) newVal;
-                    List<DicomSpecialElement> specialElements =
-                        (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
-                    // TODO handle several elements
-                    if (specialElements != null && specialElements.size() > 0) {
-                        specialElement = specialElements.get(0);
-                    }
+                    specialElement = DicomModel.getFirstSpecialElement((Series) newVal, DicomSpecialElement.class);
                 } else if (newVal instanceof DicomSpecialElement) {
                     specialElement = (DicomSpecialElement) newVal;
                 }
@@ -648,30 +642,30 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                  * Update if necessary all the views with the KOSpecialElement
                  */
                 else if (specialElement instanceof KOSpecialElement) {
-                    setKOSpecialElement((KOSpecialElement) specialElement, null);
+                    setKOSpecialElement((KOSpecialElement) specialElement, null, false);
                 }
             } else if (ObservableEvent.BasicAction.Select.equals(action)) {
                 if (newVal instanceof KOSpecialElement) {
                     // Match using UID of the plugin window and the source event
                     if (this.getDockableUID().equals(evt.getSource())) {
-                        setKOSpecialElement((KOSpecialElement) newVal, true);
+                        setKOSpecialElement((KOSpecialElement) newVal, true, true);
                     }
                 }
             }
         }
     }
 
-    private void setKOSpecialElement(KOSpecialElement updatedKOSelection, Boolean enableFilter) {
-        if (updatedKOSelection != null) {
-            DefaultView2d<DicomImageElement> selectedView = getSelectedImagePane();
+    private void setKOSpecialElement(KOSpecialElement updatedKOSelection, Boolean enableFilter, boolean forceUpdate) {
+        DefaultView2d<DicomImageElement> selectedView = getSelectedImagePane();
+        if (updatedKOSelection != null && selectedView != null) {
             if (SynchData.Mode.Tile.equals(this.getSynchView().getSynchData().getMode())) {
-                if (updatedKOSelection != null) {
+                if (forceUpdate || updatedKOSelection != null) {
                     ActionState koSelection = selectedView.getEventManager().getAction(ActionW.KO_SELECTION);
                     if (koSelection instanceof ComboItemListener) {
                         ((ComboItemListener) koSelection).setSelectedItem(updatedKOSelection);
                     }
                 }
-                if (enableFilter != null) {
+                if (forceUpdate || enableFilter != null) {
                     ActionState koFilterAction = selectedView.getEventManager().getAction(ActionW.KO_FILTER);
                     if (koFilterAction instanceof ToggleButtonListener) {
                         ((ToggleButtonListener) koFilterAction).setSelected(enableFilter);
@@ -690,8 +684,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         continue;
                     }
 
-                    if (updatedKOSelection == view.getActionValue(ActionW.KO_SELECTION.cmd())) {
-                        KOManager.updateKOFilter(view, null, enableFilter);
+                    if (forceUpdate || updatedKOSelection == view.getActionValue(ActionW.KO_SELECTION.cmd())) {
+                        KOManager.updateKOFilter(view, forceUpdate ? updatedKOSelection : null, enableFilter, -1);
                     }
 
                     DicomSeries dicomSeries = (DicomSeries) view.getSeries();

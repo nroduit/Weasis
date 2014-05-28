@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -617,26 +618,25 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             return;
         }
 
-        synchronized (model) {
-            MediaSeriesGroup patientGroup = getParent(series, DicomModel.patient);
+        MediaSeriesGroup patientGroup = getParent(series, DicomModel.patient);
 
-            if (patientGroup == null) {
-                return;
-            }
+        if (patientGroup == null) {
+            return;
+        }
 
-            List<DicomSpecialElement> specialElementList =
-                (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+        List<DicomSpecialElement> specialElementList =
+            (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
 
-            if (specialElementList == null) {
-                patientGroup.setTag(TagW.DicomSpecialElementList, specialElementList =
-                    new ArrayList<DicomSpecialElement>());
-            }
-            for (DicomSpecialElement specialElement : specialElements) {
-                if (!specialElementList.contains(specialElement)) {
-                    specialElementList.add(specialElement);
-                }
+        if (specialElementList == null) {
+            patientGroup.setTag(TagW.DicomSpecialElementList, specialElementList =
+                new CopyOnWriteArrayList<DicomSpecialElement>());
+        }
+        for (DicomSpecialElement specialElement : specialElements) {
+            if (!specialElementList.contains(specialElement)) {
+                specialElementList.add(specialElement);
             }
         }
+
     }
 
     public static boolean isSpecialModality(Series series) {
@@ -685,15 +685,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return null;
     }
 
-    public static List<KOSpecialElement> getKoSpecialElements(MediaSeriesGroup patientGroup) {
-        if (patientGroup != null) {
-            List<DicomSpecialElement> kos =
-                (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+    public static <E> List<E> getSpecialElements(MediaSeriesGroup group, Class<E> clazz) {
+        if (group != null && clazz != null && clazz.isAssignableFrom(clazz)) {
+            List<DicomSpecialElement> kos = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
             if (kos != null) {
-                List<KOSpecialElement> list = new ArrayList<KOSpecialElement>();
+                List<E> list = new ArrayList<E>();
                 for (DicomSpecialElement el : kos) {
-                    if (el instanceof KOSpecialElement) {
-                        list.add((KOSpecialElement) el);
+                    if (clazz.isInstance(el)) {
+                        list.add((E) el);
                     }
                 }
                 return list;
@@ -702,13 +701,26 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return null;
     }
 
-    public static boolean hasPatientKoElements(MediaSeriesGroup patientGroup) {
-        if (patientGroup != null) {
-            List<DicomSpecialElement> kos =
-                (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+    public static <E> E getFirstSpecialElement(MediaSeriesGroup group, Class<E> clazz) {
+        if (group != null && clazz != null && clazz.isAssignableFrom(clazz)) {
+            List<DicomSpecialElement> kos = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
             if (kos != null) {
                 for (DicomSpecialElement el : kos) {
-                    if (el instanceof KOSpecialElement) {
+                    if (clazz.isInstance(el)) {
+                        return (E) el;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static boolean hasSpecialElements(MediaSeriesGroup group, Class<? extends DicomSpecialElement> clazz) {
+        if (group != null && clazz != null) {
+            List<DicomSpecialElement> kos = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
+            if (kos != null) {
+                for (DicomSpecialElement el : kos) {
+                    if (clazz.isInstance(el)) {
                         return true;
                     }
                 }
@@ -873,13 +885,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                     if (specialElementList == null) {
                         initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList =
-                            new ArrayList<DicomSpecialElement>());
+                            new CopyOnWriteArrayList<DicomSpecialElement>());
                     } else if ("SR".equals(dicomReader.getTagValue(TagW.Modality))) {
                         // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
-                        s.setTag(TagW.DicomSpecialElementList, specialElementList =
-                            new ArrayList<DicomSpecialElement>());
+                        specialElementList = new CopyOnWriteArrayList<DicomSpecialElement>();
                         specialElementList.add((DicomSpecialElement) media);
+                        s.setTag(TagW.DicomSpecialElementList, specialElementList);
                         return false;
                     }
                     specialElementList.add((DicomSpecialElement) media);

@@ -974,7 +974,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 public void actionPerformed(ActionEvent e) {
                     final MediaSeriesGroup patient = selectedPatient == null ? null : selectedPatient.patient;
                     if (patient != null && e.getSource() instanceof JButton) {
-                        List<KOSpecialElement> list = DicomModel.getKoSpecialElements(patient);
+                        List<KOSpecialElement> list = DicomModel.getSpecialElements(patient, KOSpecialElement.class);
                         if (list != null && list.size() > 0) {
                             JButton button = (JButton) e.getSource();
 
@@ -1131,7 +1131,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 studyCombobox.addItemListener(studyItemListener);
                 selectStudy();
                 patientContainer.addPane(selectedPatient);
-                koOpen.setVisible(DicomModel.hasPatientKoElements(patient));
+                koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
                 // Send message for selecting related plug-ins window
                 model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, model, null, patient));
             }
@@ -1306,7 +1306,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         int[] positionSeries = new int[1];
         createSeriesPaneInstance(series, positionSeries);
         if (addSeries && positionSeries[0] != -1) {
-            koOpen.setVisible(DicomModel.hasPatientKoElements(patient));
+            koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
             // If new study
             if (positionStudy[0] != -1) {
                 if (modelStudy.getIndexOf(study) < 0) {
