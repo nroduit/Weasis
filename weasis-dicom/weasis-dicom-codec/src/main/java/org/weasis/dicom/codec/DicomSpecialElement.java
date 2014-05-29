@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,12 +26,18 @@ import javax.media.jai.PlanarImage;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.io.DicomOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class DicomSpecialElement extends MediaElement<PlanarImage> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomSpecialElement.class);
 
     protected String label;
     protected String shortLabel;
@@ -81,6 +89,27 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
     public String toString() {
         int length = label.length();
         return length > 3 ? length > 50 ? label.substring(3, 47) + "..." : label.substring(3, length) : label;//$NON-NLS-1$
+    }
+
+    @Override
+    public boolean saveToFile(File output) {
+        File input = file;
+        if (input == null) {
+            Attributes dcm = getMediaReader().getDicomObject();
+            if (dcm != null) {
+                DicomOutputStream out = null;
+                try {
+                    out = new DicomOutputStream(output);
+                    out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
+                    return true;
+                } catch (IOException e) {
+                    LOGGER.error("Cannot write dicom ({}): {}", getLabel(), e.getMessage());
+                } finally {
+                    FileUtil.safeClose(out);
+                }
+            }
+        }
+        return super.saveToFile(output);
     }
 
     @Override

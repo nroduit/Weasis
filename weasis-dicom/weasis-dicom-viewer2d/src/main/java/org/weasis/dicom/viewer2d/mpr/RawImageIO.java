@@ -285,7 +285,7 @@ public class RawImageIO implements MediaReader<PlanarImage> {
             out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
             return tmpFile;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot write dicom file: {}", e.getMessage());
         } finally {
             FileUtil.safeClose(out);
         }

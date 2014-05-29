@@ -86,6 +86,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.LutManager;
@@ -596,17 +597,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ComboItemListener(ActionW.KO_SELECTION, new String[] { ActionState.NONE }) {
             @Override
             public void itemStateChanged(Object object) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    object));
-
-                SynchView synchView = (SynchView) synchAction.getSelectedItem();
-                if (synchView != null && SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
-                    if (moveTroughSliceAction.getValue() == 1) {
-                        moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
-                    } else {
-                        moveTroughSliceAction.setValue(1);
-                    }
-                }
+                koAction(action, object);
             }
         };
     }
@@ -615,19 +606,44 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_FILTER, false) {
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
-
-                SynchView synchView = (SynchView) synchAction.getSelectedItem();
-                if (synchView != null && SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
-                    if (moveTroughSliceAction.getValue() == 1) {
-                        moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
-                    } else {
-                        moveTroughSliceAction.setValue(1);
-                    }
-                }
+                koAction(action, selected);
             }
         };
+    }
+
+    private void koAction(ActionW action, Object selected) {
+        SynchView synchView = (SynchView) synchAction.getSelectedItem();
+        boolean tileMode = synchView != null && SynchData.Mode.Tile.equals(synchView.getSynchData().getMode());
+        DefaultView2d<DicomImageElement> selectedView = getSelectedViewPane();
+        if (tileMode) {
+            if (selectedView2dContainer instanceof View2dContainer && selectedView != null) {
+                View2dContainer container = (View2dContainer) selectedView2dContainer;
+                boolean filterSelection = selected instanceof Boolean;
+                Object selectedKO =
+                    filterSelection ? selectedView.getActionValue(ActionW.KO_SELECTION.cmd()) : selected;
+                Boolean enableFilter =
+                    (Boolean) (filterSelection ? selected : selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
+
+                for (DefaultView2d<DicomImageElement> view : container.getImagePanels(false)) {
+                    if ((view.getSeries() instanceof DicomSeries) == false || (view instanceof View2d) == false) {
+                        continue;
+                    }
+                    KOManager.updateKOFilter(view, selectedKO, enableFilter, -1);
+                }
+
+                container.updateTileOffset();
+            }
+        }
+
+        firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(selectedView, action.cmd(), selected));
+
+        if (tileMode) {
+            if (moveTroughSliceAction.getValue() == 1) {
+                moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
+            } else {
+                moveTroughSliceAction.setValue(1);
+            }
+        }
     }
 
     private ComboItemListener newLutAction() {
@@ -1126,12 +1142,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     } else if (Mode.Tile.equals(synch.getMode())) {
                         for (int i = 0; i < panes.size(); i++) {
                             DefaultView2d<DicomImageElement> pane = panes.get(i);
+                            Object selectedKO = viewPane.getActionValue(ActionW.KO_SELECTION.cmd());
+                            Boolean enableFilter = (Boolean) viewPane.getActionValue(ActionW.KO_FILTER.cmd());
+                            int frameIndex = viewPane.getFrameIndex() - viewPane.getTileOffset();
                             oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                 oldSynch = synch.clone();
                             }
                             oldSynch.getActions().put(ActionW.KO_SELECTION.cmd(), true);
                             oldSynch.getActions().put(ActionW.KO_FILTER.cmd(), true);
+                            KOManager.updateKOFilter(pane, selectedKO, enableFilter, frameIndex);
 
                             pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
