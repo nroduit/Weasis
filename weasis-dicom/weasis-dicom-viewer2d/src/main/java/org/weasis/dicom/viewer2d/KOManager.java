@@ -1,5 +1,6 @@
 package org.weasis.dicom.viewer2d;
 
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -135,7 +136,14 @@ public final class KOManager {
         }
 
         if (newDicomKO != null) {
-            newKOSelection = loadDicomObject(view2d.getSeries(), newDicomKO);
+            if (view2d != null) {
+                // Deactivate filter for new KO
+                ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
+                if (koFilterAction instanceof ToggleButtonListener) {
+                    ((ToggleButtonListener) koFilterAction).setSelected(false);
+                }
+            }
+            newKOSelection = loadDicomKeyObject(view2d.getSeries(), newDicomKO);
         }
 
         return newKOSelection;
@@ -143,7 +151,7 @@ public final class KOManager {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static KOSpecialElement loadDicomObject(MediaSeries<DicomImageElement> dicomSeries, Attributes newDicomKO) {
+    public static KOSpecialElement loadDicomKeyObject(MediaSeries<DicomImageElement> dicomSeries, Attributes newDicomKO) {
 
         DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
 
@@ -160,8 +168,7 @@ public final class KOManager {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static Attributes createNewDicomKeyObject(MediaElement<?> dicomMediaElement,
-        final DefaultView2d<DicomImageElement> view2d) {
+    public static Attributes createNewDicomKeyObject(MediaElement<?> dicomMediaElement, Component parentComponent) {
 
         if (dicomMediaElement != null && dicomMediaElement.getMediaReader() instanceof DicomMediaIO) {
             Attributes dicomSourceAttribute = ((DicomMediaIO) dicomMediaElement.getMediaReader()).getDicomObject();
@@ -170,24 +177,18 @@ public final class KOManager {
             String defautDescription = "new KO";
 
             String description =
-                (String) JOptionPane.showInputDialog(view2d, message, "Key Object Selection (KO)",
+                (String) JOptionPane.showInputDialog(parentComponent, message, "Key Object Selection (KO)",
                     JOptionPane.INFORMATION_MESSAGE, null, null, defautDescription);
 
             // description==null means the user canceled the input
             if (StringUtil.hasText(description)) {
                 Attributes ko = DicomMediaUtils.createDicomKeyObject(dicomSourceAttribute, description, null);
+
                 if (dicomMediaElement instanceof KOSpecialElement) {
                     Collection<HierachicalSOPInstanceReference> referencedStudySequence =
                         new KODocumentModule(dicomSourceAttribute).getCurrentRequestedProcedureEvidences();
 
                     new KODocumentModule(ko).setCurrentRequestedProcedureEvidences(referencedStudySequence);
-                }
-                if (view2d != null) {
-                    // Deactivate filter for new KO
-                    ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
-                    if (koFilterAction instanceof ToggleButtonListener) {
-                        ((ToggleButtonListener) koFilterAction).setSelected(false);
-                    }
                 }
                 return ko;
             }
