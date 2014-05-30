@@ -33,7 +33,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
         }
 
         final DropDownButton zoom = new DropDownButton("zoom", new DropButtonIcon(new ImageIcon(MouseActions.class //$NON-NLS-1$
-            .getResource("/icon/32x32/zoom-original.png")))) { //$NON-NLS-1$
+            .getResource("/icon/32x32/zoom.png")))) { //$NON-NLS-1$
 
                 @Override
                 protected JPopupMenu getPopupMenu() {

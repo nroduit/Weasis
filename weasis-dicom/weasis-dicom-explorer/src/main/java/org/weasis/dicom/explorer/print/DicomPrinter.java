@@ -39,7 +39,7 @@ public class DicomPrinter {
     private String aeTitle;
     private String hostname;
     private int port;
-    private Boolean colorPrintSupported;
+    private boolean colorPrintSupported;
 
     public static void savePrintersSettings(javax.swing.JComboBox printersComboBox) {
         XMLStreamWriter writer = null;
@@ -160,7 +160,7 @@ public class DicomPrinter {
         return colorPrintSupported;
     }
 
-    public void setColorPrintSupported(Boolean colorPrintSupported) {
+    public void setColorPrintSupported(boolean colorPrintSupported) {
         this.colorPrintSupported = colorPrintSupported;
     }
 

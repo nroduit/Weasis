@@ -28,7 +28,14 @@ public class Module {
             if (oldSequence != null) {
                 oldSequence.clear(); // Allows to remove parents of Attributes
             }
-            dcmItems.newSequence(tag, 1).add(module.getAttributes());
+            Attributes attributes = module.getAttributes();
+            if (attributes != null) {
+                Attributes parent = attributes.getParent();
+                if (parent != null) {
+                    attributes = new Attributes(attributes);
+                }
+                dcmItems.newSequence(tag, 1).add(attributes);
+            }
         }
     }
 
@@ -42,7 +49,14 @@ public class Module {
             }
             Sequence newSequence = dcmItems.newSequence(tag, modules.size());
             for (Module module : modules) {
-                newSequence.add(module.getAttributes());
+                Attributes attributes = module.getAttributes();
+                if (attributes != null) {
+                    Attributes parent = attributes.getParent();
+                    if (parent != null) {
+                        attributes = new Attributes(attributes);
+                    }
+                    newSequence.add(attributes);
+                }
             }
         }
     }

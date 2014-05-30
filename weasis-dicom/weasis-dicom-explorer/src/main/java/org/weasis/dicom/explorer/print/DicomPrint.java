@@ -26,6 +26,7 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
+import java.util.concurrent.Executors;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
@@ -37,16 +38,14 @@ import org.dcm4che3.net.Association;
 import org.dcm4che3.net.Connection;
 import org.dcm4che3.net.Device;
 import org.dcm4che3.net.DimseRSP;
-import org.dcm4che3.net.TransferCapability;
 import org.dcm4che3.net.pdu.AAssociateRQ;
+import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
 
 public class DicomPrint {
-
-    private static final String[] NATIVE_LE_TS = { UID.ImplicitVRLittleEndian, UID.ExplicitVRLittleEndian };
 
     private DicomPrintOptions dicomPrintOptions;
 
@@ -121,8 +120,6 @@ public class DicomPrint {
             dicomPrintOptions.isPrintInColor() ? UID.BasicColorImageBoxSOPClass : UID.BasicGrayscaleImageBoxSOPClass;
 
         storeRasterInDicom(image, dicomImage, dicomPrintOptions.isPrintInColor());
-        TransferCapability transferCapability =
-            new TransferCapability(null, printManagementSOPClass, TransferCapability.Role.SCU, NATIVE_LE_TS);
 
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
@@ -130,27 +127,25 @@ public class DicomPrint {
         ApplicationEntity ae = new ApplicationEntity("WEASIS_AE");
         Connection conn = new Connection();
         //    Executor executor = new NewThreadExecutor("WEASIS_AE"); //$NON-NLS-1$
-        ApplicationEntity remoteAE = new ApplicationEntity("WEASIS_AE");
+        ApplicationEntity remoteAE = new ApplicationEntity(dicomPrintOptions.getDicomPrinter().getAeTitle());
         Connection remoteConn = new Connection();
-
-        conn.setPort(106);
-        conn.setHostname("localhost"); //$NON-NLS-1$
 
         ae.addConnection(conn);
         ae.setAssociationInitiator(true);
         ae.setAETitle("WEASIS_AE"); //$NON-NLS-1$
-        ae.addTransferCapability(transferCapability);
 
         remoteConn.setPort(dicomPrintOptions.getDicomPrinter().getPort());
         remoteConn.setHostname(dicomPrintOptions.getDicomPrinter().getHostname());
         remoteConn.setSocketCloseDelay(90);
 
-        remoteAE.addConnection(remoteConn);
         remoteAE.setAssociationAcceptor(true);
-        remoteAE.setAETitle(dicomPrintOptions.getDicomPrinter().getAeTitle());
+        remoteAE.addConnection(remoteConn);
 
-        device.addApplicationEntity(ae);
         device.addConnection(conn);
+        device.addApplicationEntity(ae);
+        ae.addConnection(conn);
+        device.setExecutor(Executors.newSingleThreadExecutor());
+        device.setScheduledExecutor(Executors.newSingleThreadScheduledExecutor());
 
         filmSessionAttrs.setInt(Tag.NumberOfCopies, VR.IS, dicomPrintOptions.getNumOfCopies());
         filmSessionAttrs.setString(Tag.PrintPriority, VR.CS, dicomPrintOptions.getPriority());
@@ -179,25 +174,27 @@ public class DicomPrint {
         seq = filmBoxAttrs.ensureSequence(Tag.ReferencedFilmSessionSequence, 1);
         seq.add(filmSessionSequenceObject);
 
-        Association association;
-        association = ae.connect(conn, remoteConn, new AAssociateRQ());
+        AAssociateRQ rq = new AAssociateRQ();
+        rq.addPresentationContext(new PresentationContext(1, printManagementSOPClass, UID.ImplicitVRLittleEndian));
+        rq.setCallingAET(ae.getAETitle());
+        rq.setCalledAET(remoteAE.getAETitle());
+        Association association = ae.connect(remoteConn, rq);
         // Create a Basic Film Session
         dimseRSPHandler(association.ncreate(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID,
-            filmSessionAttrs, transferCapability.getTransferSyntaxes()[0]));
+            filmSessionAttrs, UID.ImplicitVRLittleEndian));
         // Create a Basic Film Box. We need to get the Image Box UID from the response
         DimseRSP ncreateFilmBoxRSP =
             association.ncreate(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, filmBoxAttrs,
-                transferCapability.getTransferSyntaxes()[0]);
+                UID.ImplicitVRLittleEndian);
         dimseRSPHandler(ncreateFilmBoxRSP);
         ncreateFilmBoxRSP.next();
         Attributes imageBoxSequence = ncreateFilmBoxRSP.getDataset().getNestedDataset(Tag.ReferencedImageBoxSequence);
         // Send N-SET message with the Image Box
         dimseRSPHandler(association.nset(printManagementSOPClass, imageBoxSOPClass,
-            imageBoxSequence.getString(Tag.ReferencedSOPInstanceUID), imageBoxAttrs,
-            transferCapability.getTransferSyntaxes()[0]));
+            imageBoxSequence.getString(Tag.ReferencedSOPInstanceUID), imageBoxAttrs, UID.ImplicitVRLittleEndian));
         // Send N-ACTION message with the print action
         dimseRSPHandler(association.naction(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, 1, null,
-            transferCapability.getTransferSyntaxes()[0]));
+            UID.ImplicitVRLittleEndian));
         // The print action ends here. This will only delete the Film Box and Film Session
         association.ndelete(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID);
         association.ndelete(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID);
@@ -208,7 +205,7 @@ public class DicomPrint {
         response.next();
         Attributes command = response.getCommand();
         if (command.getInt(Tag.Status, 0) != 0) {
-            throw new Exception("Unable to print the image."); //$NON-NLS-1$
+            throw new Exception("Unable to print the image. DICOM response status: " + command.getInt(Tag.Status, 0)); //$NON-NLS-1$
         }
     }
 

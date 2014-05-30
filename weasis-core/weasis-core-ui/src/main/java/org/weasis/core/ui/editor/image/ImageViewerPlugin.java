@@ -214,7 +214,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         if (sequence != null && selectedImagePane != null) {
             if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
                 selectedImagePane.setSeries(sequence, null);
-                updateSynchView();
+                updateTileOffset();
                 return;
             }
             DefaultView2d<E> viewPane = getSelectedImagePane();
@@ -589,11 +589,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     public void setSynchView(SynchView synchView) {
         this.synchView = synchView;
-        updateSynchView();
+        updateTileOffset();
         eventManager.updateAllListeners(this, synchView);
     }
 
-    protected void updateSynchView() {
+    public void updateTileOffset() {
         if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode()) && selectedImagePane != null) {
             MediaSeries<E> series = null;
             DefaultView2d<E> selectedView = selectedImagePane;

@@ -38,8 +38,11 @@ import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -51,6 +54,8 @@ import org.weasis.dicom.explorer.Messages;
  * @author Marcelo Porto (marcelo@animati.com.br)
  */
 public class DicomPrintDialog extends JDialog {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrintDialog.class);
+
     private JButton addPrinterButton;
     private JComboBox borderDensityComboBox;
     private JLabel borderDensityLabel;
@@ -531,6 +536,7 @@ public class DicomPrintDialog extends JDialog {
         try {
             dicomPrint.printImage(image);
         } catch (Exception ex) {
+            AuditLog.logError(LOGGER, ex, "DICOM Print Service");
             JOptionPane
                 .showMessageDialog(
                     this,
@@ -565,9 +571,12 @@ public class DicomPrintDialog extends JDialog {
     }
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_deleteButtonActionPerformed
-        printersComboBox.removeItemAt(printersComboBox.getSelectedIndex());
-        DicomPrinter.savePrintersSettings(printersComboBox);
-        enableOrDisableColorPrint();
+        int index = printersComboBox.getSelectedIndex();
+        if (index >= 0) {
+            printersComboBox.removeItemAt(index);
+            DicomPrinter.savePrintersSettings(printersComboBox);
+            enableOrDisableColorPrint();
+        }
     }
 
     private void printersComboBoxActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_printersComboBoxActionPerformed
@@ -575,9 +584,9 @@ public class DicomPrintDialog extends JDialog {
     }
 
     private void enableOrDisableColorPrint() {
-        if (printersComboBox.getSelectedItem() != null) {
-            DicomPrinter selectedPrinter = (DicomPrinter) printersComboBox.getSelectedItem();
-            Boolean color = selectedPrinter.isColorPrintSupported();
+        DicomPrinter selectedPrinter = (DicomPrinter) printersComboBox.getSelectedItem();
+        if (selectedPrinter != null) {
+            boolean color = selectedPrinter.isColorPrintSupported();
             colorPrintCheckBox.setSelected(color);
             colorPrintCheckBox.setEnabled(color);
         }
