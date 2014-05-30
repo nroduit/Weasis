@@ -691,8 +691,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     DicomSeries dicomSeries = (DicomSeries) view.getSeries();
                     String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
 
-                    if (updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID) == false
-                        && updatedKOSelection.getMediaReader().isEditableDicom() == false) {
+                    if (updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID) == false) {
                         continue;
                     }
 

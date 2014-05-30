@@ -216,7 +216,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             }
 
             if (DicomModel.isSpecialModality(dicomSeries)) {
-                dicomModel.addSpecialModality(dicomSeries);
+                dicomModel.updateSpecialModality(dicomSeries);
             }
 
             Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);

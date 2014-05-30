@@ -36,10 +36,12 @@ import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.KOComponentFactory.SelectedImageFilter;
@@ -239,6 +241,11 @@ public class KeyObjectToolBar extends WtoolBar {
 
                     if (selectedValue.equals(deleteBtn)) {
                         System.out.println("Delete KeyObject");
+
+                        DicomModel dicomModel = (DicomModel) selectedDicomSeries.getTagValue(TagW.ExplorerModel);
+                        if (dicomModel != null) {
+                            dicomModel.removeSpecialElement((DicomSpecialElement) list.getSelectedValue());
+                        }
 
                     } else {
                         Attributes newDicomKO = null;

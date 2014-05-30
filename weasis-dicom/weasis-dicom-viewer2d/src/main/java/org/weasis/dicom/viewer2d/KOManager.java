@@ -322,6 +322,16 @@ public final class KOManager {
                 Object actionValue = view2D.getActionValue(ActionW.KO_SELECTION.cmd());
                 if (actionValue instanceof KOSpecialElement) {
                     selectedKO = (KOSpecialElement) actionValue;
+
+                    // test if current ko_selection action in view do still exist
+                    Collection<KOSpecialElement> koElements =
+                        (view2D != null && view2D.getSeries() != null) ? DicomModel.getKoSpecialElements(view2D
+                            .getSeries()) : null;
+                    if (koElements != null && koElements.contains(selectedKO) == false) {
+                        selectedKO = null;
+                        newSelectedKO = ActionState.NONE;
+                        view2D.setActionsInView(ActionW.KO_SELECTION.cmd(), newSelectedKO);
+                    }
                 }
             } else {
                 if (newSelectedKO instanceof KOSpecialElement) {

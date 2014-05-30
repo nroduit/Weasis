@@ -156,7 +156,7 @@ public class LoadDicomObjects extends ExplorerTask {
                 }
 
                 if (DicomModel.isSpecialModality(dicomSeries)) {
-                    dicomModel.addSpecialModality(dicomSeries);
+                    dicomModel.updateSpecialModality(dicomSeries);
                 } else {
                     dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel,
                         null, dicomSeries));
@@ -199,7 +199,7 @@ public class LoadDicomObjects extends ExplorerTask {
                     }
 
                     if (DicomModel.isSpecialModality(dicomSeries)) {
-                        dicomModel.addSpecialModality(dicomSeries);
+                        dicomModel.updateSpecialModality(dicomSeries);
                     }
 
                     // If Split series or special DICOM element update the explorer view and View2DContainer

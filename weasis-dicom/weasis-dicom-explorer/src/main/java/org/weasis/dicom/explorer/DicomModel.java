@@ -528,6 +528,49 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
     }
 
+    public void removeSpecialElement(DicomSpecialElement dicomSpecialElement) {
+        if (dicomSpecialElement == null) {
+            return;
+        }
+
+        String patientPseudoUID = (String) dicomSpecialElement.getTagValue(TagW.PatientPseudoUID);
+        MediaSeriesGroup patient = getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
+
+        if (patient == null) {
+            return;
+        }
+
+        String studyUID = (String) dicomSpecialElement.getTagValue(TagW.StudyInstanceUID);
+        MediaSeriesGroup study = getHierarchyNode(patient, studyUID);
+        if (study == null) {
+            return;
+        }
+
+        String seriesUID = (String) dicomSpecialElement.getTagValue(TagW.SeriesInstanceUID);
+        Series dicomSeries = (Series) getHierarchyNode(study, seriesUID);
+        if (dicomSeries == null) {
+            return;
+        }
+
+        if (isSpecialModality(dicomSeries)) {
+
+            List<DicomSpecialElement> specialElementList =
+                (List<DicomSpecialElement>) dicomSeries.getTagValue(TagW.DicomSpecialElementList);
+
+            if (specialElementList != null) {
+                if (specialElementList.remove(dicomSpecialElement)) {
+                    updateSpecialModality(dicomSeries);
+                    firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, this, null,
+                        dicomSpecialElement));
+                    if (specialElementList.size() == 0) {
+                        removeSeries(dicomSeries);
+                    }
+                }
+            }
+
+        }
+    }
+
     public void removeSeries(MediaSeriesGroup dicomSeries) {
         if (dicomSeries != null) {
             if (DownloadManager.TASKS.size() > 0) {
@@ -604,13 +647,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     /**
-     * DicomSpecialElement are added at patientGroupLevel since StudyInstanceUID and SeriesInstanceUID are not relevant
-     * with the CurrentRequestedProcedureEvidenceSequence which may referenced SOPInstance of any study and series of
-     * the current Patient
+     * DicomSpecialElement are added or removed at patientGroupLevel since StudyInstanceUID and SeriesInstanceUID are
+     * not relevant with the CurrentRequestedProcedureEvidenceSequence which may reference any SOPInstance of any study
+     * and series ofPatient
      * 
      * @param series
      */
-    public void addSpecialModality(Series series) {
+    public void updateSpecialModality(Series series) {
 
         List<DicomSpecialElement> specialElements =
             (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
@@ -631,8 +674,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             patientGroup.setTag(TagW.DicomSpecialElementList, specialElementList =
                 new CopyOnWriteArrayList<DicomSpecialElement>());
         }
+
         for (DicomSpecialElement specialElement : specialElements) {
-            if (!specialElementList.contains(specialElement)) {
+            if (specialElementList.contains(specialElement)) {
+                specialElementList.remove(specialElement);
+            } else {
                 specialElementList.add(specialElement);
             }
         }
