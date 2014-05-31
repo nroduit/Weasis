@@ -153,7 +153,8 @@ public class LabelPrefView extends AbstractItemDialogPage {
             }
         }
         jComboSize.setSelectedIndex(index);
-        jComboName.setSelectedItem(viewSetting.getFontName());
+        jComboName.setSelectedItem("default".equals(viewSetting.getFontName()) ? Messages
+            .getString("LabelPrefView.default") : viewSetting.getFontName());
 
     }
 
@@ -199,7 +200,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         }
         String name = jComboName.getSelectedItem().toString();
 
-        viewSetting.setFontName(name);
+        viewSetting.setFontName(Messages.getString("LabelPrefView.default").equals(name) ? "default" : name);
         viewSetting.setFontSize(size);
         viewSetting.setFontType(style);
 

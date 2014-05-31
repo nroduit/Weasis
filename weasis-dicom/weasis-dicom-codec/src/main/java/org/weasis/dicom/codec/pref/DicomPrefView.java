@@ -51,9 +51,9 @@ public class DicomPrefView extends AbstractItemDialogPage {
         gbl_panel.columnWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
         gbl_panel.rowWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
         panel.setLayout(gbl_panel);
-        panel.setBorder(new TitledBorder(null, "Image Reader", TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        panel.setBorder(new TitledBorder(null, "Image Reader", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
-        final JLabel j2kLabel = new JLabel("JPEG2000:"); //$NON-NLS-1$
+        final JLabel j2kLabel = new JLabel("JPEG2000:");
         GridBagConstraints gbc_j2kLabel = new GridBagConstraints();
         gbc_j2kLabel.insets = new Insets(0, 0, 5, 5);
         gbc_j2kLabel.anchor = GridBagConstraints.WEST;

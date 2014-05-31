@@ -79,7 +79,6 @@ public class DicomMediaUtils {
          *      http://www.itu.int/ITU-T/asn1/uuid.html<br>
          *      http://healthcaresecprivacy.blogspot.ch/2011/02/creating-and-using-unique-id-uuid-oid.html
          */
-
         weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot());
 
         UIDUtils.setRoot(weasisRootUID);

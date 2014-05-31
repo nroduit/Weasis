@@ -35,7 +35,6 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -257,7 +256,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         int interpolation = comboBoxInterpolation.getSelectedIndex();
         eventManager.getZoomSetting().setInterpolation(interpolation);
         boolean applyWLcolor = checkBoxWLcolor.isSelected();
-        eventManager.getOptions().setProperty(WindowOp.P_APPLY_WL_COLOR, String.valueOf(applyWLcolor));
+        eventManager.getOptions().putBooleanProperty(WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
 
         synchronized (UIManager.VIEWER_PLUGINS) {
             for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
@@ -283,7 +282,10 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         comboBoxInterpolation.setSelectedIndex(1);
 
         // Get the default server configuration and if no value take the default value in parameter.
-        checkBoxWLcolor.setSelected(BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
+        EventManager eventManager = EventManager.getInstance();
+        eventManager.getOptions().resetProperty(WindowOp.P_APPLY_WL_COLOR, Boolean.TRUE.toString());
+
+        checkBoxWLcolor.setSelected(eventManager.getOptions().getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
     }
 
     private void formatSlider(JSlider slider) {

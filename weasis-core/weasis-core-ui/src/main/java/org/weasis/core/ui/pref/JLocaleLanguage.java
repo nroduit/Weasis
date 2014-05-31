@@ -86,13 +86,18 @@ public class JLocaleLanguage extends JComboBox implements ItemListener {
             }
         }
 
+        int defaultIndex = -1;
         for (int i = 0; i < getItemCount(); i++) {
             Locale l = ((JLocale) getItemAt(i)).getLocale();
             if (l.equals(sLoc)) {
-                setSelectedIndex(i);
+                defaultIndex = i;
                 break;
             }
+            if (l.equals(Locale.US)) {
+                defaultIndex = i;
+            }
         }
+        setSelectedIndex(defaultIndex);
     }
 
     @Override

@@ -71,8 +71,6 @@ public class AuditLog {
                         if (pattern != null) {
                             loggingProperties.put(LOG_PATTERN, pattern);
                         }
-                        // org.apache.sling.commons.log.pattern={0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4} {1}* [{2}] {3}
-                        // {5}
                         logConfiguration.update(loggingProperties);
                     } catch (IOException e) {
                         e.printStackTrace();
