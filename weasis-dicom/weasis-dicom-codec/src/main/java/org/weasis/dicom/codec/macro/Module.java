@@ -32,6 +32,7 @@ public class Module {
             if (attributes != null) {
                 Attributes parent = attributes.getParent();
                 if (parent != null) {
+                    // Copy attributes and set parent to null
                     attributes = new Attributes(attributes);
                 }
                 dcmItems.newSequence(tag, 1).add(attributes);
@@ -53,6 +54,7 @@ public class Module {
                 if (attributes != null) {
                     Attributes parent = attributes.getParent();
                     if (parent != null) {
+                        // Copy attributes and set parent to null
                         attributes = new Attributes(attributes);
                     }
                     newSequence.add(attributes);
