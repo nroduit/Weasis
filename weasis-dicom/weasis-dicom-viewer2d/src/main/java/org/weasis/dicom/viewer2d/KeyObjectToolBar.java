@@ -12,6 +12,7 @@ import java.awt.image.ImageProducer;
 import java.util.Collection;
 
 import javax.swing.AbstractButton;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -151,6 +152,8 @@ public class KeyObjectToolBar extends WtoolBar {
                 Collection<KOSpecialElement> koElementCollection = DicomModel.getKoSpecialElements(selectedDicomSeries);
 
                 final JList list = new JList();
+                list.setSelectionModel(new ToggleSelectionModel());
+
                 if (koElementCollection != null) {
                     list.setListData(koElementCollection.toArray());
                 }
@@ -311,4 +314,43 @@ public class KeyObjectToolBar extends WtoolBar {
             }
         });
     }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    class ToggleSelectionModel extends DefaultListSelectionModel {
+        private boolean gestureStarted = false;
+
+        @Override
+        public void setSelectionInterval(int index0, int index1) {
+            // Toggle only one element while the user is dragging the mouse
+            if (!gestureStarted) {
+                if (isSelectedIndex(index0)) {
+                    super.removeSelectionInterval(index0, index1);
+                } else {
+                    if (getSelectionMode() == SINGLE_SELECTION) {
+                        super.setSelectionInterval(index0, index1);
+                    } else {
+                        super.addSelectionInterval(index0, index1);
+                    }
+                }
+            }
+
+            // Disable toggling till the adjusting is over, or keep it
+            // enabled in case setSelectionInterval was called directly.
+            gestureStarted = getValueIsAdjusting();
+
+        }
+
+        @Override
+        public void setValueIsAdjusting(boolean isAdjusting) {
+            super.setValueIsAdjusting(isAdjusting);
+
+            if (isAdjusting == false) {
+                // Enable toggling
+                gestureStarted = false;
+            }
+        }
+    }
+
 }
