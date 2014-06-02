@@ -1,6 +1,5 @@
 package org.weasis.dicom.sr;
 
-import java.awt.Color;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,8 +15,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.EscapeChars;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.InvalidShapeException;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
@@ -25,7 +22,6 @@ import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.GraphicUtil;
 
 public class SRReader {
 
@@ -288,23 +284,34 @@ public class SRReader {
                     }
                 }
             } else if ("SCOORD".equals(type)) {
-                SRImageReference imgRef = map.get(level);
-                if (imgRef == null) {
-                    imgRef = new SRImageReference(level);
-                    map.put(level, imgRef);
-                }
-                // Identifier layerId = new Identifier(350, " [DICOM SR Graphics]");
-                // DragLayer layer = new DragLayer(view.getLayerModel(), layerId);$
                 Attributes graphicsItems = c.getAttributes();
-                try {
-                    Graphic graphic =
-                        GraphicUtil.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false, null, true);
-                    if (graphic != null) {
-                        imgRef.addGraphic(graphic);
-                    }
-                } catch (InvalidShapeException e) {
-                    e.printStackTrace();
-                }
+                // TODO register a SR layer on referenced image
+                // Sequence sc = c.getContent();
+                // if (sc != null) {
+                // for (Attributes attributes : sc) {
+                // SRDocumentContent c2 = new SRDocumentContent(attributes);
+                // String id = getReferencedContentItemIdentifier(c2.getReferencedContentItemIdentifier());
+                // if (id != null) {
+                // SRImageReference imgRef = map.get(id);
+                // if (imgRef == null) {
+                // imgRef = new SRImageReference(id);
+                // map.put(id, imgRef);
+                // }
+                // // Identifier layerId = new Identifier(350, " [DICOM SR Graphics]");
+                // // DragLayer layer = new DragLayer(view.getLayerModel(), layerId);$
+                // try {
+                // Graphic graphic =
+                // GraphicUtil.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false,
+                // null, true);
+                // if (graphic != null) {
+                // imgRef.addGraphic(graphic);
+                // }
+                // } catch (InvalidShapeException e) {
+                // e.printStackTrace();
+                // }
+                // }
+                // }
+                // }
                 html.append(continuous || noCodeName ? " " : ": ");
                 convertTextToHTML(html, graphicsItems.getString(Tag.GraphicType));
                 // } else if ("TCOORD".equals(type)) {
@@ -322,24 +329,32 @@ public class SRReader {
             int[] refs = c.getReferencedContentItemIdentifier();
             if (refs != null) {
                 html.append("Content Item by reference: ");
-                StringBuilder r = new StringBuilder();
-                for (int j = 0; j < refs.length - 1; j++) {
-                    r.append(refs[j]);
-                    r.append('.');
-                }
-                if (refs.length - 1 >= 0) {
-                    r.append(refs[refs.length - 1]);
-                }
+                String id = getReferencedContentItemIdentifier(refs);
                 html.append("<a href=\"#");
-                html.append(r.toString());
+                html.append(id);
                 html.append("\">");
                 html.append("node ");
-                html.append(r.toString());
+                html.append(id);
                 html.append("</a>");
 
             }
 
         }
+    }
+
+    private String getReferencedContentItemIdentifier(int[] refs) {
+        if (refs != null) {
+            StringBuilder r = new StringBuilder();
+            for (int j = 0; j < refs.length - 1; j++) {
+                r.append(refs[j]);
+                r.append('.');
+            }
+            if (refs.length - 1 >= 0) {
+                r.append(refs[refs.length - 1]);
+            }
+            return r.toString();
+        }
+        return null;
     }
 
     private void addContent(StringBuilder html, SRDocumentContent c, Map<String, SRImageReference> map, String level) {

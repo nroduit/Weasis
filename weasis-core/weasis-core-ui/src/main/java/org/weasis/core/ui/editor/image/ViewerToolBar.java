@@ -131,21 +131,23 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             add(synchButton);
         }
 
-        final JButton resetButton = new JButton();
-        resetButton.setToolTipText(Messages.getString("ViewerToolBar.disReset")); //$NON-NLS-1$
-        resetButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/reset.png"))); //$NON-NLS-1$
-        resetButton.addActionListener(new ActionListener() {
+        if (props.getBooleanProperty("weasis.toolbar.reset", true)) {
+            final JButton resetButton = new JButton();
+            resetButton.setToolTipText(Messages.getString("ViewerToolBar.disReset")); //$NON-NLS-1$
+            resetButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/reset.png"))); //$NON-NLS-1$
+            resetButton.addActionListener(new ActionListener() {
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                eventManager.resetDisplay();
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    eventManager.resetDisplay();
+                }
+            });
+            ActionState layout = eventManager.getAction(ActionW.RESET);
+            if (layout != null) {
+                layout.registerActionState(resetButton);
             }
-        });
-        ActionState layout = eventManager.getAction(ActionW.RESET);
-        if (layout != null) {
-            layout.registerActionState(resetButton);
+            add(resetButton);
         }
-        add(resetButton);
     }
 
     private DropDownButton buildMouseButton(MouseActions actions, String actionLabel) {

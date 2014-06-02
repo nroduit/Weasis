@@ -750,28 +750,23 @@ public class WeasisLauncher {
     }
 
     private static String getGeneralProperty(String key, String defaultValue, Properties bundleProp, Properties local,
-        boolean overrideBundleProp, boolean storeInLocalPref) {
-        return getGeneralProperty(key, key, defaultValue, bundleProp, local, overrideBundleProp, storeInLocalPref);
-    }
-
-    private static String getGeneralProperty(String key, String localKey, String defaultValue, Properties bundleProp,
-        Properties local, boolean overrideBundleProp, boolean storeInLocalPref) {
-        String value = local.getProperty(localKey, null);
+        boolean storeInLocalPref, boolean serviceProperty) {
+        String value = local.getProperty(key, null);
         String defaultVal = System.getProperty(key, null);
         if (defaultVal == null) {
             defaultVal = bundleProp.getProperty(key, defaultValue);
         }
-        // Set the default value in bundleContext
-        bundleProp.setProperty("def." + key, defaultVal); //$NON-NLS-1$
+
         if (value == null) {
             value = defaultVal;
-            if (storeInLocalPref && defaultVal != null) {
+            if (storeInLocalPref && value != null) {
                 // When first launch, set property that can be written later
-                local.setProperty(localKey, defaultVal);
+                local.setProperty(key, value);
             }
         }
-        if (overrideBundleProp && value != null) {
+        if (serviceProperty) {
             bundleProp.setProperty(key, value);
+            bundleProp.setProperty("def." + key, defaultVal);
         }
         System.out.println(key + ": " + value); //$NON-NLS-1$
         return value;
@@ -886,16 +881,7 @@ public class WeasisLauncher {
         // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension of config)
         // 4) default value
 
-        final String lang =
-            getGeneralProperty("weasis.lang.code", "locale.lang.code", "en_US", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
-        getGeneralProperty("weasis.confirm.closing", "false", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("weasis.export.dicom", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
-        // Audit log for giving statistics about usage of Weasis
-        getGeneralProperty("audit.log", "false", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
-
-        // Read default value for dicom root UID which should be registered at the http://www.iana.org
-        getGeneralProperty("weasis.dicom.root.uid", "", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+        final String lang = getGeneralProperty("locale.lang.code", "en_US", config, s_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
@@ -904,7 +890,7 @@ public class WeasisLauncher {
         getGeneralProperty("org.apache.sling.commons.log.file.number", "5", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty(
-            "org.apache.sling.commons.log.pattern", "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3} {5}", config, s_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$
+            "org.apache.sling.commons.log.pattern", "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
 
         URI translation_modules = null;
         if (portable != null) {
@@ -969,7 +955,7 @@ public class WeasisLauncher {
         if (look == null) {
             look = getAvailableLookAndFeel(look);
         }
-        config.setProperty("def.weasis.look", look); //$NON-NLS-1$
+        config.setProperty("weasis.look", look); //$NON-NLS-1$
 
         // If look is in local prefs, use it
         if (localLook != null) {
@@ -1092,6 +1078,10 @@ public class WeasisLauncher {
                 if (vOld.getMajor() < 2) {
                     // Force to change some properties when the old version < 2.x
                     s_prop.put("weasis.confirm.closing", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+                    // TODO Activate when no change to switch back to 1.X
+                    // s_prop.remove("locale.language");
+                    // s_prop.remove("locale.country");
+                    // s_prop.remove("locale.variant");
                 }
             } catch (Exception e) {
                 System.err.println("Cannot read old Weasis version!"); //$NON-NLS-1$

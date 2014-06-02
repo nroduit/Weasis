@@ -27,6 +27,50 @@ public class WProperties extends Properties {
         context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     }
 
+    // Get value from: 1) Local preferences 2) Java System properties 3) config.properties
+    @Override
+    public String getProperty(String key) {
+        String value = super.getProperty(key);
+        if (value == null) {
+            value = System.getProperty(key, null);
+            if (value == null) {
+                value = context.getProperty(key);
+            }
+        }
+        return value;
+    }
+
+    public void resetProperty(String key, String defaultValue) {
+        if (isKeyValid(key)) {
+            String value = System.getProperty(key, null);
+            if (value == null) {
+                value = context.getProperty(key);
+                if (value == null) {
+                    value = defaultValue;
+                }
+            }
+            if (isValid(key, value)) {
+                this.put(key, value);
+            }
+        }
+    }
+
+    // Special property used by a OSGI service through BundleContext
+    public void resetServiceProperty(String key, String defaultValue) {
+        if (isKeyValid(key)) {
+            String value = System.getProperty(key, null);
+            if (value == null) {
+                value = context.getProperty("def." + key);
+                if (value == null) {
+                    value = defaultValue;
+                }
+            }
+            if (isValid(key, value)) {
+                this.put(key, value);
+            }
+        }
+    }
+
     public void putIntProperty(String key, int value) {
         if (isValid(key, value)) {
             this.put(key, String.valueOf(value));
@@ -94,16 +138,6 @@ public class WProperties extends Properties {
         if (isValid(key, value)) {
             this.put(key, String.valueOf(value));
         }
-    }
-
-    // Look for properties unmodifiable in the interface (not stored in weasis.properties)
-    @Override
-    public String getProperty(String key) {
-        String value = super.getProperty(key);
-        if (value == null) {
-            value = context.getProperty(key);
-        }
-        return value;
     }
 
     public float getFloatProperty(String key, float def) {
@@ -205,7 +239,7 @@ public class WProperties extends Properties {
         if (properties != null && key != null) {
             String val = prefNode.get(key, null);
             if (val == null) {
-                val = BundleTools.SYSTEM_PREFERENCES.getProperty(key, defaultValue);
+                val = properties.getProperty(key, defaultValue);
             }
             properties.setProperty(key, val);
         }

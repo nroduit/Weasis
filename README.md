@@ -1,12 +1,12 @@
 ![Weasis](weasis-distributions/etc/images/about.png)
 
-The master branch contains Weasis 2.0 which is not released yet .The current stable branch is 1.2.x.
+The master branch contains Weasis 2. The old branch is 1.2.x.
 
 [How to build Weasis](http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source)
 
 [General information](http://www.dcm4che.org/confluence/display/WEA/Home)
 
-## Weasis 2 ##
+## Weasis 2.0 ##
 
 ### General Features: ###
 * Flexible integration to HIS or PHR

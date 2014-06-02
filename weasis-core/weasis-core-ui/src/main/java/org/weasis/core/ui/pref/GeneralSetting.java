@@ -305,15 +305,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
     }
 
     protected void initialize(boolean afirst) {
-        BundleContext ctx = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         WProperties prfs = BundleTools.SYSTEM_PREFERENCES;
-        chckbxConfirmClosing.setSelected(prfs.getBooleanProperty(BundleTools.CONFIRM_CLOSE,
-            Boolean.valueOf(ctx.getProperty("def." + BundleTools.CONFIRM_CLOSE))));//$NON-NLS-1$
-
-        comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prfs.getProperty(AuditLog.LOG_LEVEL,
-            ctx.getProperty("def." + AuditLog.LOG_LEVEL))));//$NON-NLS-1$
-        String fileLogger = prfs.getProperty(AuditLog.LOG_FILE, ctx.getProperty("def." + AuditLog.LOG_FILE));//$NON-NLS-1$s
-        chckbxFileLog.setSelected(!("".equals(fileLogger.trim()))); //$NON-NLS-1$
+        chckbxConfirmClosing.setSelected(prfs.getBooleanProperty(BundleTools.CONFIRM_CLOSE, false));
+        comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prfs.getProperty(AuditLog.LOG_LEVEL, "INFO")));//$NON-NLS-1$
+        chckbxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, ""))); //$NON-NLS-1$
         spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
         spinner_1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB")); //$NON-NLS-1$
         checkRolingLog();
@@ -375,9 +370,12 @@ public class GeneralSetting extends AbstractItemDialogPage {
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
         }
+        String pattern =
+            BundleTools.SYSTEM_PREFERENCES.getProperty(AuditLog.LOG_PATTERN,
+                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}");
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         AuditLog.createOrUpdateLogger(context,
-            "default.log", new String[] { "org" }, level.toString(), logFile, null, fileNb, //$NON-NLS-1$ //$NON-NLS-2$
+            "default.log", new String[] { "org" }, level.toString(), logFile, pattern, fileNb, //$NON-NLS-1$ //$NON-NLS-2$
             fileSize);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
@@ -413,22 +411,21 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        BundleContext ctx = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+        BundleTools.SYSTEM_PREFERENCES.resetProperty(BundleTools.CONFIRM_CLOSE, "false");//$NON-NLS-1$
 
-        BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(BundleTools.CONFIRM_CLOSE,
-            Boolean.valueOf(ctx.getProperty("def." + BundleTools.CONFIRM_CLOSE))); //$NON-NLS-1$
+        // Reset properties used by OSGI service (Sling Logger)
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_LEVEL, "INFO"); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE, ""); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5"); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB"); //$NON-NLS-1$
 
-        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, ctx.getProperty("def." + AuditLog.LOG_LEVEL)); //$NON-NLS-1$
-        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE, ctx.getProperty("def." + AuditLog.LOG_FILE)); //$NON-NLS-1$
-        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER,
-            ctx.getProperty("def." + AuditLog.LOG_FILE_NUMBER)); //$NON-NLS-1$
-        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE,
-            ctx.getProperty("def." + AuditLog.LOG_FILE_SIZE)); //$NON-NLS-1$
-
-        BundleTools.SYSTEM_PREFERENCES.put("locale.lang.code", ctx.getProperty("def.weasis.lang.code")); //$NON-NLS-1$ //$NON-NLS-2$
+        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en_US"); //$NON-NLS-1$ //$NON-NLS-2$
+        // Reset cache of locale format
         LocalUtil.setLocaleFormat(null);
+        // Reset format to the config.properties value or null (default system value)
+        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);//$NON-NLS-1$ 
 
-        BundleTools.SYSTEM_PREFERENCES.put("weasis.look", ctx.getProperty("def.weasis.look")); //$NON-NLS-1$ //$NON-NLS-2$
+        BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.look", null); //$NON-NLS-1$ 
 
     }
 

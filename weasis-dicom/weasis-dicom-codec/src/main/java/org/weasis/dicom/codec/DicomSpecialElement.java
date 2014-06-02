@@ -93,8 +93,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     @Override
     public boolean saveToFile(File output) {
-        File input = file;
-        if (input == null) {
+        if (file == null) {
             Attributes dcm = getMediaReader().getDicomObject();
             if (dcm != null) {
                 DicomOutputStream out = null;

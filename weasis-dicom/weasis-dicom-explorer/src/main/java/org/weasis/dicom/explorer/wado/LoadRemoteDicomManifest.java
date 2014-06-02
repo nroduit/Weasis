@@ -20,10 +20,11 @@ import java.util.Collections;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
-import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefUtils;
+import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
 import org.weasis.dicom.explorer.wado.DownloadManager.PriorityTaskComparator;
 
 public class LoadRemoteDicomManifest extends ExplorerTask {
@@ -78,7 +79,9 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
                     ArrayList<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
 
                     if (wadoTasks != null) {
-                        boolean downloadImmediately = SeriesDownloadPrefUtils.downloadImmediately();
+                        boolean downloadImmediately =
+                            BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
+                                SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
                         for (final LoadSeries loadSeries : wadoTasks) {
                             DownloadManager.addLoadSeries(loadSeries, dicomModel, downloadImmediately);
                         }

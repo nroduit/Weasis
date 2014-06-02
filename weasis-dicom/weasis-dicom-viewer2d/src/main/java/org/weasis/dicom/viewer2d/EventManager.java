@@ -26,7 +26,6 @@ import javax.swing.DefaultComboBoxModel;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +83,6 @@ import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
-import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -628,6 +626,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     if ((view.getSeries() instanceof DicomSeries) == false || (view instanceof View2d) == false) {
                         continue;
                     }
+                    // Recompute the series filter to let perform updateTileOffset() correctly.
                     KOManager.updateKOFilter(view, selectedKO, enableFilter, -1);
                 }
 
@@ -1180,15 +1179,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     public void savePreferences(BundleContext bundleContext) {
         Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
-        // Remove prefs used in Weasis 1.1.0 RC2, has moved to core.ui
-        try {
-            if (prefs.nodeExists(ViewSetting.PREFERENCE_NODE)) {
-                Preferences oldPref = prefs.node(ViewSetting.PREFERENCE_NODE);
-                oldPref.removeNode();
-            }
-        } catch (BackingStoreException e) {
-            // Do nothing
-        }
         zoomSetting.savePreferences(prefs);
         // Mouse buttons preferences
         mouseActions.savePreferences(prefs);

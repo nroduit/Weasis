@@ -13,13 +13,17 @@ package org.weasis.dicom.sr;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -30,7 +34,10 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
+import org.dcm4che3.data.Attributes;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -40,13 +47,18 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
-import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.LoadDicomObjects;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 
 public class SRView extends JScrollPane implements SeriesViewerListener {
@@ -54,6 +66,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     private final JTextPane htmlPanel = new JTextPane();
     private final Map<String, SRImageReference> map = new HashMap<String, SRImageReference>();
     private Series<?> series;
+    private KOSpecialElement keyReferences;
 
     public SRView() {
         this(null);
@@ -190,21 +203,43 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 if (model != null) {
                     MediaSeriesGroup study = model.getParent(series, DicomModel.study);
                     MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
+
                     Series<?> s = findSOPInstanceReference(model, patient, study, ref.getReferencedSOPInstanceUID());
-                    if (s != null) {
-                        SeriesViewerFactory plugin = UIManager.getViewerFactory(s.getMimeType());
-                        if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                            KOSpecialElement ko = buildKO(ref);
-                            PRSpecialElement pr = buildPR(imgRef);
-                            // TODO build a special series and add it to the model
-                            // model.addSpecialModality(s);
-                            model.openrelatedSeries(ko, patient);
+                    if (s instanceof DicomSeries) {
+                        if (keyReferences == null) {
+                            keyReferences = buildKO(model, (DicomSeries) s);
+                        }
+
+                        if (keyReferences != null) {
+                            // TODO Handle multiframe and select the current frame or SOPInstanceUID
+                            // int[] frames = ref.getReferencedFrameNumber();
+                            keyReferences.addKeyObject((String) s.getTagValue(TagW.StudyInstanceUID),
+                                (String) s.getTagValue(TagW.SeriesInstanceUID), ref.getReferencedSOPInstanceUID(),
+                                ref.getReferencedSOPClassUID());
+                            SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
+                            if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
+                                String uid = UUID.randomUUID().toString();
+                                Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+                                props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
+                                props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
+                                props.put(ViewerPluginBuilder.ICON,
+                                    new ImageIcon(model.getClass().getResource("/icon/16x16/key-images.png")));
+                                props.put(ViewerPluginBuilder.UID, uid);
+                                List<MediaSeries<? extends MediaElement<?>>> seriesList =
+                                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+                                seriesList.add(s);
+                                ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, model, props);
+                                ViewerPluginBuilder.openSequenceInPlugin(builder);
+                                model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, uid,
+                                    null, keyReferences));
+                            }
                         }
                     } else {
                         // TODO try to download if IHE IID has been configured
                         JOptionPane.showMessageDialog(this, "Cannot find the image!", "Open Image",
                             JOptionPane.WARNING_MESSAGE);
                     }
+
                 }
             }
         }
@@ -239,19 +274,22 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         return null;
     }
 
-    private KOSpecialElement buildKO(final ImageSOPInstanceReference ref) {
-        if (ref == null) {
-            return null;
-        }
-        int[] frames = ref.getReferencedFrameNumber();
-        // TODO build KO
-        return null;
-    }
+    private KOSpecialElement buildKO(DicomModel model, DicomSeries s) {
+        DicomSpecialElement dcmElement = DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
+        if (dcmElement != null) {
+            DicomImageElement dcm = s.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
+            if (dcm != null && dcm.getMediaReader() instanceof DicomMediaIO) {
+                Attributes dicomSourceAttribute = ((DicomMediaIO) dcm.getMediaReader()).getDicomObject();
+                Attributes attributes =
+                    DicomMediaUtils.createDicomKeyObject(dicomSourceAttribute, dcmElement.getShortLabel(), null);
+                new LoadDicomObjects(model, attributes).addSelectionAndnotify(); // must be executed in the EDT
 
-    private PRSpecialElement buildPR(final SRImageReference ref) {
-        if (ref != null) {
-            // TODO build PR
-            return null;
+                for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(s)) {
+                    if (koElement.getMediaReader().getDicomObject().equals(attributes)) {
+                        return koElement;
+                    }
+                }
+            }
         }
         return null;
     }
