@@ -534,40 +534,48 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
 
         String patientPseudoUID = (String) dicomSpecialElement.getTagValue(TagW.PatientPseudoUID);
-        MediaSeriesGroup patient = getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
+        MediaSeriesGroup patientGroup = getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
 
-        if (patient == null) {
+        if (patientGroup == null) {
             return;
         }
 
         String studyUID = (String) dicomSpecialElement.getTagValue(TagW.StudyInstanceUID);
-        MediaSeriesGroup study = getHierarchyNode(patient, studyUID);
-        if (study == null) {
+        MediaSeriesGroup studyGroup = getHierarchyNode(patientGroup, studyUID);
+        if (studyGroup == null) {
             return;
         }
 
         String seriesUID = (String) dicomSpecialElement.getTagValue(TagW.SeriesInstanceUID);
-        Series dicomSeries = (Series) getHierarchyNode(study, seriesUID);
+        Series<?> dicomSeries = (Series<?>) getHierarchyNode(studyGroup, seriesUID);
         if (dicomSeries == null) {
             return;
         }
 
         if (isSpecialModality(dicomSeries)) {
 
+            @SuppressWarnings("unchecked")
             List<DicomSpecialElement> specialElementList =
                 (List<DicomSpecialElement>) dicomSeries.getTagValue(TagW.DicomSpecialElementList);
 
-            if (specialElementList != null) {
-                if (specialElementList.remove(dicomSpecialElement)) {
-                    updateSpecialModality(dicomSeries);
-                    firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, this, null,
-                        dicomSpecialElement));
-                    if (specialElementList.size() == 0) {
-                        removeSeries(dicomSeries);
-                    }
-                }
+            @SuppressWarnings("unchecked")
+            List<DicomSpecialElement> patientSpecialElementList =
+                (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+
+            if (specialElementList == null || patientSpecialElementList == null) {
+                return;
             }
 
+            specialElementList.remove(dicomSpecialElement);
+
+            if (patientSpecialElementList.remove(dicomSpecialElement)) {
+                firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, this, null,
+                    dicomSpecialElement));
+            }
+
+            if (specialElementList.size() == 0) {
+                removeSeries(dicomSeries);
+            }
         }
     }
 
@@ -647,17 +655,17 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     /**
-     * DicomSpecialElement are added or removed at patientGroupLevel since StudyInstanceUID and SeriesInstanceUID are
-     * not relevant with the CurrentRequestedProcedureEvidenceSequence which may reference any SOPInstance of any study
-     * and series ofPatient
+     * DicomSpecialElement are added at patientGroupLevel since StudyInstanceUID and SeriesInstanceUID are not relevant
+     * with the CurrentRequestedProcedureEvidenceSequence which can reference any SOPInstance of any Study and Series of
+     * the Patient
      * 
      * @param series
      */
-    public void updateSpecialModality(Series series) {
+    public void addSpecialModality(Series series) {
 
-        List<DicomSpecialElement> specialElements =
+        List<DicomSpecialElement> seriesSpecialElementList =
             (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
-        if (specialElements == null || specialElements.size() == 0) {
+        if (seriesSpecialElementList == null || seriesSpecialElementList.size() == 0) {
             return;
         }
 
@@ -667,19 +675,16 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             return;
         }
 
-        List<DicomSpecialElement> specialElementList =
+        List<DicomSpecialElement> patientSpecialElementList =
             (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
 
-        if (specialElementList == null) {
-            patientGroup.setTag(TagW.DicomSpecialElementList, specialElementList =
+        if (patientSpecialElementList == null) {
+            patientGroup.setTag(TagW.DicomSpecialElementList, patientSpecialElementList =
                 new CopyOnWriteArrayList<DicomSpecialElement>());
         }
-
-        for (DicomSpecialElement specialElement : specialElements) {
-            if (specialElementList.contains(specialElement)) {
-                specialElementList.remove(specialElement);
-            } else {
-                specialElementList.add(specialElement);
+        for (DicomSpecialElement seriesSpecialElement : seriesSpecialElementList) {
+            if (patientSpecialElementList.contains(seriesSpecialElement) == false) {
+                patientSpecialElementList.add(seriesSpecialElement);
             }
         }
 
