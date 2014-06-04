@@ -36,6 +36,7 @@ import java.util.TimerTask;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -923,6 +924,7 @@ public class WeasisLauncher {
             modulesi18n = null;
         }
         Locale.setDefault(textToLocale(lang));
+        JComponent.setDefaultLocale(Locale.getDefault());
 
         String nativeLook = null;
         String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
