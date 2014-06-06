@@ -3,10 +3,16 @@ package org.weasis.core.ui.pref;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.Rectangle;
+import java.util.List;
+
+import javax.swing.JFrame;
+
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class Monitor {
     private final GraphicsDevice graphicsDevice;
     private double realScaleFactor;
+    private Rectangle fullscreenBounds;
 
     public Monitor(GraphicsDevice graphicsDevice) {
         this.realScaleFactor = 0.0;
@@ -37,4 +43,42 @@ public class Monitor {
         return graphicsDevice;
     }
 
+    public Rectangle getFullscreenBounds() {
+        if (fullscreenBounds == null) {
+            /*
+             * As screen insets are not available on all the systems (on X11 windowing systems), the only way to get the
+             * maximum visible size desktop is to maximize a JFrame
+             */
+            JFrame frame = new JFrame(this.getGraphicsConfiguration());
+            Rectangle bound = this.getBounds();
+            // frame.setMaximizedBounds(bound);
+            frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
+            frame.setVisible(true);
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+
+            try {
+                // Let time to maximize window
+                Thread.sleep(500);
+            } catch (InterruptedException e1) {
+                // Do noting
+            }
+
+            fullscreenBounds = frame.getBounds();
+            frame.dispose();
+        }
+        return fullscreenBounds;
+    }
+
+    public static Monitor getMonitor(GraphicsConfiguration gconfig) {
+        if (gconfig != null) {
+            List<Monitor> monitors = MeasureTool.viewSetting.getMonitors();
+            for (int i = 0; i < monitors.size(); i++) {
+                Monitor monitor = monitors.get(i);
+                if (gconfig.equals(monitor.getGraphicsConfiguration())) {
+                    return monitor;
+                }
+            }
+        }
+        return null;
+    }
 }
