@@ -58,6 +58,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
@@ -477,9 +478,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             v.removeFocusListener(v);
         }
 
+        String titleDialog = "Fullscreen view";
         Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
+        // Handle the case when the dialog is a detached window and not the fullscreen window.
+        final boolean detachedWindow = fullscreenDialog != null && !titleDialog.equals(fullscreenDialog.getTitle());
+
         grid.removeAll();
-        if (fullscreenDialog == null) {
+        if (detachedWindow || fullscreenDialog == null) {
             remove(grid);
             Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
             while (enumVal.hasNext()) {
@@ -493,10 +498,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     break;
                 }
             }
+            Dialog oldDialog = fullscreenDialog;
             Frame frame = WinUtil.getParentFrame(this);
-            fullscreenDialog = new JDialog(frame, "Fullscreen view", ModalityType.APPLICATION_MODAL);
+            fullscreenDialog =
+                new JDialog(detachedWindow ? oldDialog : frame, titleDialog, ModalityType.APPLICATION_MODAL);
             fullscreenDialog.add(grid, BorderLayout.CENTER);
-            fullscreenDialog.setBounds(frame.getGraphicsConfiguration().getBounds());
             fullscreenDialog.addWindowListener(new WindowAdapter() {
 
                 @Override
@@ -504,7 +510,20 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     maximizedSelectedImagePane(defaultView2d, null);
                 }
             });
-            fullscreenDialog.setVisible(true);
+
+            if (!detachedWindow && (frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH) {
+                fullscreenDialog.setBounds(frame.getBounds());
+                fullscreenDialog.setVisible(true);
+            } else {
+                Monitor monitor =
+                    Monitor.getMonitor(detachedWindow ? oldDialog.getGraphicsConfiguration() : frame
+                        .getGraphicsConfiguration());
+                if (monitor != null) {
+                    fullscreenDialog.setBounds(monitor.getFullscreenBounds());
+                    fullscreenDialog.setVisible(true);
+                }
+            }
+
         } else {
             Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
             while (enumVal.hasNext()) {

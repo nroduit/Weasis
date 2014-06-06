@@ -33,7 +33,6 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -122,29 +121,10 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             realZoomButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    /*
-                     * As screen insets are not available on all the systems (on X11 windowing systems), the only way to
-                     * get the maximum visible size desktop is to maximize a JFrame
-                     */
-                    JFrame frame = new JFrame(monitor.getGraphicsConfiguration());
-                    Rectangle bound = monitor.getBounds();
-                    // frame.setMaximizedBounds(bound);
-                    frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
-                    frame.setVisible(true);
-                    frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
-                    try {
-                        // Let time to maximize window
-                        Thread.sleep(500);
-                    } catch (InterruptedException e1) {
-                        // Do noting
-                    }
-
                     final CalibDialog dialog =
                         new CalibDialog(WinUtil.getParentFrame((Component) e.getSource()), title,
                             ModalityType.APPLICATION_MODAL, monitor);
-                    dialog.setBounds(frame.getBounds());
-                    frame.dispose();
+                    dialog.setBounds(monitor.getFullscreenBounds());
                     dialog.setVisible(true);
 
                 }
