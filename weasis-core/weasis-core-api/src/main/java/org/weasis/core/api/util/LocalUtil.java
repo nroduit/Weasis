@@ -42,8 +42,11 @@ public class LocalUtil {
         Locale l = LOCALE_FORMAT;
         if (l == null) {
             String code = BundleTools.SYSTEM_PREFERENCES.getProperty("locale.format.code");
-            return code == null ? LocalUtil.getSystemLocale() : LocalUtil.textToLocale(code);
+            if (StringUtil.hasLength(code))
+                l = LocalUtil.textToLocale(code);
         }
+        if (l == null)
+            l = Locale.getDefault();
         return l;
     }
 

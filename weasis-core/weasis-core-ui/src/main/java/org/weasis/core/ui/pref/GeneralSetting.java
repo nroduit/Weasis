@@ -67,10 +67,23 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
     private final JLabel jLabelMLook = new JLabel();
     private final JComboBox jComboBoxlnf = new JComboBox();
-    private final JLabel labelLocale = new JLabel("Language" + StringUtil.COLON);
-    private final JLocaleLanguage comboBoxLang = new JLocaleLanguage();
-    private final JLabel labelLocale2 = new JLabel("Regional Format" + StringUtil.COLON);
-    private final JLocaleFormat comboBoxFormat = new JLocaleFormat();
+
+    private final JLabel labelLocale = //
+        new JLabel(Messages.getString("LookSetting.language.interface") + StringUtil.COLON);
+    private final JLocaleLanguage comboBoxLang = new JLocaleLanguage() {
+        @Override
+        protected void handleChange() {
+            comboBoxFormat.refresh();
+        }
+    };
+    private final JLabel labelLocale2 = new JLabel(Messages.getString("LookSetting.language.data") + StringUtil.COLON);
+    private final JLocaleFormat comboBoxFormat = new JLocaleFormat() {
+        @Override
+        protected void handleChange() {
+            txtpnNote.setText(getText());
+        }
+    };
+
     private final JTextPane txtpnNote = new JTextPane();
     private final JCheckBox chckbxConfirmClosing = new JCheckBox(
         Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
@@ -87,20 +100,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final JSpinner spinner_1 = new JSpinner();
     private final Component horizontalStrut_1 = Box.createHorizontalStrut(10);
     private final Component horizontalStrut_2 = Box.createHorizontalStrut(10);
-    private final ItemListener formatItemListener = new ItemListener() {
-
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                Object item = e.getItem();
-                if (item instanceof JLocale) {
-                    Locale locale = ((JLocale) item).getLocale();
-                    LocalUtil.setLocaleFormat(locale);
-                    txtpnNote.setText(getText());
-                }
-            }
-        }
-    };
 
     public GeneralSetting() {
         super(pageName);
@@ -138,7 +137,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
                     @Override
                     public void run() {
                         try {
-                            // JFrame dialog = WeasisWin.getInstance();
                             Dialog dialog = WinUtil.getParentDialog(GeneralSetting.this);
                             UIManager.setLookAndFeel(finalLafClassName);
                             SwingUtilities.updateComponentTreeUI(dialog);
@@ -168,7 +166,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         add(comboBoxLang, gbc_comboBox);
 
         GridBagConstraints gbc_label2 = new GridBagConstraints();
-        gbc_label2.insets = new Insets(15, 10, 5, 5);
+        gbc_label2.insets = new Insets(5, 10, 5, 5);
         gbc_label2.anchor = GridBagConstraints.LINE_END;
         gbc_label2.gridx = 0;
         gbc_label2.gridy = 2;
@@ -181,7 +179,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_comboBox2.gridx = 1;
         gbc_comboBox2.gridy = 2;
         add(comboBoxFormat, gbc_comboBox2);
-        comboBoxFormat.addItemListener(formatItemListener);
 
         GridBagConstraints gbc_txtpnNote = new GridBagConstraints();
         gbc_txtpnNote.anchor = GridBagConstraints.WEST;
