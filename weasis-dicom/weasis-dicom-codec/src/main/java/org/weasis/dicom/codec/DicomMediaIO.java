@@ -1194,13 +1194,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             RenderedImage bi = null;
             if (decompressor != null) {
                 decompressor.setInput(iisOfFrame(frameIndex));
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Start decompressing frame #" + (frameIndex + 1));
-                }
                 bi = decompressor.readAsRenderedImage(0, decompressParam(param));
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Finished decompressing frame #" + (frameIndex + 1));
-                }
             } else {
                 // Rewrite image with subsampled model (otherwise cannot not be displayed as RenderedImage)
                 // Convert YBR_FULL into RBG as the ybr model is not well supported.
@@ -1233,6 +1227,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         }
                     }
                     bi = new BufferedImage(cmodel, rasterDst, false, null);
+                    readingImage = true;
                 } else {
                     ImageReader reader = initRawImageReader();
                     bi = reader.readAsRenderedImage(frameIndex, param);
@@ -1240,7 +1235,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             }
             return validateSignedShortDataBuffer(bi);
         } finally {
-            readingImage = false;
+            /*
+             * "false" will close the stream of the tiled image. The problem is that readAsRenderedImage() do not read
+             * data immediately: RenderedImage delays the image reading
+             */
+
+            // readingImage = false;
         }
     }
 
@@ -1339,8 +1339,11 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     @Override
     public void reset() {
         /*
-         * Prevent error when reading images from a large multiframe and the header is removed from the cache at the
-         * same time
+         * readingHeader: prevent error when reading images from a large multiframe and the header is removed from the
+         * cache at the same time.
+         * 
+         * readingImage: prevent closing stream when reading an image or for the RenderedImage which delays the image
+         * reading).
          */
         if (!readingHeader && !readingImage) {
             super.reset();
