@@ -35,14 +35,14 @@ public class ZoomOp extends AbstractOp {
      * 
      * Double value.
      */
-    public static final String P_RATIO_X = "ratio.x";
+    public static final String P_RATIO_X = "ratio.x"; //$NON-NLS-1$
 
     /**
      * Set a zoom factor in y-axis (Required parameter).
      * 
      * Double value.
      */
-    public static final String P_RATIO_Y = "ratio.y";
+    public static final String P_RATIO_Y = "ratio.y"; //$NON-NLS-1$
 
     /**
      * Set the interpolation type (Optional parameter).

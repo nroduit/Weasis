@@ -306,7 +306,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.twoDecimal(sliderValueToViewScale(getValue()) * 100) + " %"; //$NON-NLS-1$
+                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue())); 
             }
 
         };
@@ -382,7 +382,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.twoDecimal(sliderValueToViewScale(getValue()) * 100) + " %"; //$NON-NLS-1$
+                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue())); 
             }
 
         };

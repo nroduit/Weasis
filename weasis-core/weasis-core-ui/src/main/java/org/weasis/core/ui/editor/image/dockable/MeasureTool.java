@@ -58,6 +58,7 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -188,7 +189,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         transform.add(panel);
 
-        JLabel label = new JLabel(MeasureToolBar.lineGraphic.getUIName() + ":"); //$NON-NLS-1$
+        JLabel label = new JLabel(MeasureToolBar.lineGraphic.getUIName() + StringUtil.COLON); 
         panel.add(label);
 
         JButton button = new JButton(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
@@ -279,7 +280,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         if (spUnitAction instanceof ComboItemListener) {
             final JPanel panel_4 = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
             final JLabel lutLabel = new JLabel();
-            lutLabel.setText("Unit:");
+            lutLabel.setText(Messages.getString("MeasureTool.unit") + StringUtil.COLON); //$NON-NLS-1$
             panel_4.add(lutLabel);
             final JComboBox unitComboBox = ((ComboItemListener) spUnitAction).createCombo(120);
             unitComboBox.setSelectedItem(Unit.PIXEL);

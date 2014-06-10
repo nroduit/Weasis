@@ -16,15 +16,15 @@ public enum Modality {
 
     Default(Messages.getString("Modality.default")), //$NON-NLS-1$
 
-    AU("Audio"),
+    AU("Audio"), //$NON-NLS-1$
 
-    BI("Biomagnetic imaging"),
+    BI("Biomagnetic imaging"), //$NON-NLS-1$
 
-    CD(" Color flow Doppler"),
+    CD("Color flow Doppler"), //$NON-NLS-1$
 
-    DD("Duplex Doppler"),
+    DD("Duplex Doppler"), //$NON-NLS-1$
 
-    DG("Diaphanography"),
+    DG("Diaphanography"), //$NON-NLS-1$
 
     CR("Computed Radiography"), //$NON-NLS-1$
 
@@ -32,23 +32,23 @@ public enum Modality {
 
     DX("Digital Radiography"), //$NON-NLS-1$
 
-    ECG("Electrocardiography"),
+    ECG("Electrocardiography"), //$NON-NLS-1$
 
-    EPS("Cardiac Electrophysiology"),
+    EPS("Cardiac Electrophysiology"), //$NON-NLS-1$
 
     ES("Endoscopy"), //$NON-NLS-1$
 
-    GM("General Microscopy"),
+    GM("General Microscopy"), //$NON-NLS-1$
 
-    HC("Hard Copy"),
+    HC("Hard Copy"), //$NON-NLS-1$
 
-    HD("Hemodynamic Waveform"),
+    HD("Hemodynamic Waveform"), //$NON-NLS-1$
 
-    IO("Intra-oral Radiography"),
+    IO("Intra-oral Radiography"), //$NON-NLS-1$
 
-    IVUS("Intravascular Ultrasound"),
+    IVUS("Intravascular Ultrasound"), //$NON-NLS-1$
 
-    LS("Laser surface scan"),
+    LS("Laser surface scan"), //$NON-NLS-1$
 
     MG("Mammography"), //$NON-NLS-1$
 
@@ -58,7 +58,7 @@ public enum Modality {
 
     OT("Other"), //$NON-NLS-1$
 
-    OP("Ophthalmic Photography"),
+    OP("Ophthalmic Photography"), //$NON-NLS-1$
 
     PR("Presentation State"), //$NON-NLS-1$
 
@@ -68,29 +68,29 @@ public enum Modality {
 
     RF("Radio Fluoroscopy"), //$NON-NLS-1$
 
-    RG("Radiographic imaging (conventional film/screen)"),
+    RG("Radiographic imaging (conventional film/screen)"), //$NON-NLS-1$
 
-    RTDOSE("Radiotherapy Dose"),
+    RTDOSE("Radiotherapy Dose"), //$NON-NLS-1$
 
-    RTIMAGE("Radiotherapy Image"),
+    RTIMAGE("Radiotherapy Image"), //$NON-NLS-1$
 
-    RTPLAN("Radiotherapy Plan"),
+    RTPLAN("Radiotherapy Plan"), //$NON-NLS-1$
 
-    RTRECORD("RT Treatment Record"),
+    RTRECORD("RT Treatment Record"), //$NON-NLS-1$
 
-    RTSTRUCT("Radiotherapy Structure Set"),
+    RTSTRUCT("Radiotherapy Structure Set"), //$NON-NLS-1$
 
     SC("Secondary Capture"), //$NON-NLS-1$
 
-    SM("Slide Microscopy"),
+    SM("Slide Microscopy"), //$NON-NLS-1$
 
-    SMR("Stereometric Relationship"),
+    SMR("Stereometric Relationship"), //$NON-NLS-1$
 
-    SR("SR Document"),
+    SR("SR Document"), //$NON-NLS-1$
 
-    ST("Single-photon emission computed tomography (SPECT)"),
+    ST("Single-photon emission computed tomography (SPECT)"), //$NON-NLS-1$
 
-    TG("Thermography"),
+    TG("Thermography"), //$NON-NLS-1$
 
     US("Ultrasound"), //$NON-NLS-1$
 

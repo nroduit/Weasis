@@ -22,6 +22,7 @@ import javax.swing.JProgressBar;
 import org.weasis.core.api.gui.util.AnimatedIconStatic;
 import org.weasis.core.api.gui.util.ImageSectionIcon;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.LocalUtil;
 
 public class CircularProgressBar extends JProgressBar {
     private static final Color BACK_COLOR = new Color(82, 152, 219);
@@ -72,7 +73,7 @@ public class CircularProgressBar extends JProgressBar {
             range = 1;
         }
         int a = 360 - this.getValue() * 360 / range;
-        String str = (this.getValue() * 100 / range) + "%"; //$NON-NLS-1$
+        String str = LocalUtil.getPercentInstance().format(this.getValue() / range);
 
         float x = w / 2.0f - g2.getFontMetrics().stringWidth(str) / 2.0f;
 

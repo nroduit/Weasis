@@ -17,8 +17,6 @@ import java.util.Enumeration;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
 
-import org.weasis.core.api.Messages;
-
 public class FontTools {
 
     private static final String defaultFamily = "Dialog"; //$NON-NLS-1$

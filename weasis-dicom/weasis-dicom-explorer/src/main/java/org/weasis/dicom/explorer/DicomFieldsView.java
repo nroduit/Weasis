@@ -49,6 +49,7 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -199,26 +200,26 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
     private static void printElement(Attributes dcmObj, int tag, DefaultListModel listModel) {
         StringBuilder buf = new StringBuilder(TagUtils.toString(tag));
-        buf.append(" [");
+        buf.append(" ["); //$NON-NLS-1$
         VR vr = dcmObj.getVR(tag);
         buf.append(vr.toString());
-        buf.append("] ");
+        buf.append("] "); //$NON-NLS-1$
 
         String privateCreator = dcmObj.privateCreatorOf(tag);
         String word = ElementDictionary.keywordOf(tag, privateCreator);
         if (!JMVUtils.textHasContent(word)) {
-            word = "PrivateTag";
+            word = "PrivateTag"; //$NON-NLS-1$
         }
 
         buf.append(word);
-        buf.append(": ");
+        buf.append(StringUtil.COLON_AND_SPACE);
 
         int level = dcmObj.getLevel();
         if (level > 0) {
-            buf.insert(0, "-->");
+            buf.insert(0, "-->"); //$NON-NLS-1$
         }
         for (int i = 1; i < level; i++) {
-            buf.insert(0, "--");
+            buf.insert(0, "--"); //$NON-NLS-1$
         }
 
         Sequence seq = dcmObj.getSequence(tag);
@@ -230,18 +231,18 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             }
         } else {
             if (vr.isInlineBinary()) {
-                buf.append("binary data");
+                buf.append("binary data"); //$NON-NLS-1$
             } else {
                 String[] value = dcmObj.getStrings(privateCreator, tag);
                 if (value != null && value.length > 0) {
                     buf.append(value[0]);
                     for (int i = 1; i < value.length; i++) {
-                        buf.append("\\");
+                        buf.append("\\"); //$NON-NLS-1$
                         buf.append(value[i]);
                     }
                     if (buf.length() > 256) {
                         buf.setLength(253);
-                        buf.append("...");
+                        buf.append("..."); //$NON-NLS-1$
                     }
                 }
             }
@@ -253,9 +254,9 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         if (seq != null) {
             buf.append(seq.size());
             if (seq.size() <= 1) {
-                buf.append(" item");
+                buf.append(" item"); //$NON-NLS-1$
             } else {
-                buf.append(" items");
+                buf.append(" items"); //$NON-NLS-1$
             }
             listModel.addElement(buf.toString());
 
@@ -264,12 +265,12 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 int level = attributes.getLevel();
                 StringBuilder buffer = new StringBuilder();
                 if (level > 0) {
-                    buffer.insert(0, "-->");
+                    buffer.insert(0, "-->"); //$NON-NLS-1$
                 }
                 for (int k = 1; k < level; k++) {
-                    buffer.insert(0, "--");
+                    buffer.insert(0, "--"); //$NON-NLS-1$
                 }
-                buffer.append(" ITEM #");
+                buffer.append(" ITEM #"); //$NON-NLS-1$
                 buffer.append(i + 1);
                 listModel.addElement(buffer.toString());
                 int[] tags = attributes.tags();
@@ -328,7 +329,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                         exist = true;
                         doc.insertString(doc.getLength(), t.toString(), italic);
                         doc.insertString(doc.getLength(),
-                            ": " + TagW.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$ //$NON-NLS-2$
+                            StringUtil.COLON_AND_SPACE + TagW.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$ 
                     }
                 } catch (BadLocationException e) {
                     e.printStackTrace();
@@ -337,7 +338,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
         if (exist) {
             try {
-                doc.insertString(insertTitle, title, doc.getStyle("title")); //$NON-NLS-1$
+                String formatTitle = PATIENT == tags ? title + "\n" : "\n" + title + "\n"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                doc.insertString(insertTitle, formatTitle, doc.getStyle("title")); //$NON-NLS-1$
             } catch (BadLocationException e) {
                 e.printStackTrace();
             }

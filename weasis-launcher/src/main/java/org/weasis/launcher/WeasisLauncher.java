@@ -214,7 +214,7 @@ public class WeasisLauncher {
 
     public static void setJnlpSystemProperties() {
 
-        final String PREFIX = "jnlp.weasis.";
+        final String PREFIX = "jnlp.weasis."; //$NON-NLS-1$
         final int PREFIX_LENGTH = PREFIX.length();
 
         Properties properties = System.getProperties();
@@ -375,7 +375,7 @@ public class WeasisLauncher {
             // and auto-install/auto-start properties.
             loader.setFelix(configProps, m_activator.getBundleContext());
             loader.writeLabel(String.format(
-                Messages.getString("WeasisLauncher.starting"), System.getProperty("weasis.name"))); //$NON-NLS-1$
+                Messages.getString("WeasisLauncher.starting"), System.getProperty("weasis.name"))); //$NON-NLS-1$ //$NON-NLS-2$
             m_tracker =
                 new ServiceTracker(m_activator.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", //$NON-NLS-1$
                     null);
@@ -449,7 +449,7 @@ public class WeasisLauncher {
     }
 
     private static void showMessage(final WeasisFrame mainFrame, Properties config, Properties s_prop) {
-        String versionOld = config.getProperty("prev." + P_WEASIS_VERSION);
+        String versionOld = config.getProperty("prev." + P_WEASIS_VERSION); //$NON-NLS-1$
         String versionNew = config.getProperty(P_WEASIS_VERSION);
         // First time launch
         if (versionOld == null) {
@@ -474,7 +474,7 @@ public class WeasisLauncher {
                         if (response != 0) {
                             File sourceID_props =
                                 new File(
-                                    System.getProperty(P_WEASIS_PATH, ""), System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
+                                    System.getProperty(P_WEASIS_PATH, ""), System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                             // delete the properties file to ask again
                             sourceID_props.delete();
                             System.err.println("Refusing the disclaimer"); //$NON-NLS-1$
@@ -767,7 +767,7 @@ public class WeasisLauncher {
         }
         if (serviceProperty) {
             bundleProp.setProperty(key, value);
-            bundleProp.setProperty("def." + key, defaultVal);
+            bundleProp.setProperty("def." + key, defaultVal); //$NON-NLS-1$
         }
         System.out.println(key + ": " + value); //$NON-NLS-1$
         return value;
@@ -882,7 +882,7 @@ public class WeasisLauncher {
         // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension of config)
         // 4) default value
 
-        final String lang = getGeneralProperty("locale.lang.code", "en_US", config, s_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        final String lang = getGeneralProperty("locale.lang.code", "en_US", config, s_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$ 
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
@@ -988,9 +988,9 @@ public class WeasisLauncher {
                     Object instance = null;
                     MBeanServer server = ManagementFactory.getPlatformMBeanServer();
                     try {
-                        ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
+                        ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow"); //$NON-NLS-1$
                         // Try to get frame from an Applet
-                        instance = server.getAttribute(objectName, "RootPaneContainer");
+                        instance = server.getAttribute(objectName, "RootPaneContainer"); //$NON-NLS-1$
                         if (instance instanceof RootPaneContainer) {
                             mainFrame.setRootPaneContainer((RootPaneContainer) instance);
                         }
@@ -1002,7 +1002,7 @@ public class WeasisLauncher {
                         try {
                             if (instance == null) {
                                 // Build a JFrame which will be used later in base.ui module
-                                ObjectName objectName = new ObjectName("weasis:name=MainWindow");
+                                ObjectName objectName = new ObjectName("weasis:name=MainWindow"); //$NON-NLS-1$
                                 mainFrame.setRootPaneContainer(new JFrame());
                                 server.registerMBean(mainFrame, objectName);
                             }
@@ -1025,7 +1025,7 @@ public class WeasisLauncher {
         String versionOld = common_prop.getProperty(P_WEASIS_VERSION);
         System.out.println("Last running version: " + versionOld); //$NON-NLS-1$
         if (versionOld != null) {
-            config.setProperty("prev." + P_WEASIS_VERSION, versionOld);
+            config.setProperty("prev." + P_WEASIS_VERSION, versionOld); //$NON-NLS-1$
         }
         String versionNew = config.getProperty(P_WEASIS_VERSION);
         System.out.println("Current version: " + versionNew); //$NON-NLS-1$
@@ -1035,13 +1035,13 @@ public class WeasisLauncher {
         // Loads the resource files
         String resPath =
             config
-                .getProperty("weasis.resources.url", System.getProperty("weasis.codebase.url", "") + "/resources.zip");
+                .getProperty("weasis.resources.url", System.getProperty("weasis.codebase.url", "") + "/resources.zip"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         File cacheDir = null;
         try {
-            if (resPath.endsWith(".zip")) {
+            if (resPath.endsWith(".zip")) { //$NON-NLS-1$
                 cacheDir =
-                    new File(dir + File.separator + "data" + File.separator + System.getProperty("weasis.source.id"),
-                        "resources");
+                    new File(dir + File.separator + "data" + File.separator + System.getProperty("weasis.source.id"), //$NON-NLS-1$ //$NON-NLS-2$
+                        "resources"); //$NON-NLS-1$
                 String date = FileUtil.writeResources(resPath, cacheDir, common_prop.getProperty(P_WEASIS_RES_DATE));
                 if (date != null) {
                     update = true;
@@ -1054,14 +1054,14 @@ public class WeasisLauncher {
         }
         if (cacheDir == null) {
             if (portable != null) {
-                cacheDir = new File(portable, "weasis" + File.separator + "resources");
+                cacheDir = new File(portable, "weasis" + File.separator + "resources"); //$NON-NLS-1$ //$NON-NLS-2$
             } else {
-                File f = new File(System.getProperty("user.dir"));
-                cacheDir = new File(f.getParent(), "weasis-distributions" + File.separator + "resources");
+                File f = new File(System.getProperty("user.dir")); //$NON-NLS-1$
+                cacheDir = new File(f.getParent(), "weasis-distributions" + File.separator + "resources"); //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
-        System.out.println("weasis.resources.path: " + cacheDir.getPath());
-        config.setProperty("weasis.resources.path", cacheDir.getPath());
+        System.out.println("weasis.resources.path: " + cacheDir.getPath()); //$NON-NLS-1$
+        config.setProperty("weasis.resources.path", cacheDir.getPath()); //$NON-NLS-1$
 
         // Splash screen that shows bundles loading
         final WeasisLoader loader = new WeasisLoader(cacheDir, mainFrame, s_prop);
@@ -1204,13 +1204,13 @@ public class WeasisLauncher {
     }
 
     public static Locale textToLocale(String value) {
-        if (value == null || value.trim().equals("")) {
+        if (value == null || value.trim().equals("")) { //$NON-NLS-1$
             return Locale.US;
         }
-        String[] val = value.split("_", 3);
-        String language = val.length > 0 ? val[0] : "";
-        String country = val.length > 1 ? val[1] : "";
-        String variant = val.length > 2 ? val[2] : "";
+        String[] val = value.split("_", 3); //$NON-NLS-1$
+        String language = val.length > 0 ? val[0] : ""; //$NON-NLS-1$
+        String country = val.length > 1 ? val[1] : ""; //$NON-NLS-1$
+        String variant = val.length > 2 ? val[2] : ""; //$NON-NLS-1$
 
         return new Locale(language, country, variant);
     }

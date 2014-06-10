@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.weasis.core.api.Messages;
-
 public class Util {
 
     private static final Pattern patternSpaceExceptQuotes = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'"); //$NON-NLS-1$

@@ -71,6 +71,7 @@ public class PatchJPEGLSImageOutputStream extends ImageOutputStreamImpl {
         this.jpegheader = patchJpegLS != null ? new byte[256] : null;
     }
 
+    @Override
     public void write(byte[] b, int off, int len) throws IOException {
         if (jpegheader == null) {
             ios.write(b, off, len);
@@ -97,10 +98,12 @@ public class PatchJPEGLSImageOutputStream extends ImageOutputStreamImpl {
         streamPos += len;
     }
 
+    @Override
     public void write(byte[] b) throws IOException {
 	write(b, 0, b.length);
     }
 
+    @Override
     public void write(int b) throws IOException {
         if (jpegheader == null) {
             ios.write(b);
@@ -109,10 +112,12 @@ public class PatchJPEGLSImageOutputStream extends ImageOutputStreamImpl {
             write(new byte[]{(byte) b},0,1);
     }
 
+    @Override
     public int read() throws IOException {
 	return ios.read();
     }
 
+    @Override
     public int read(byte[] b, int off, int len) throws IOException {
 	return ios.read (b, off, len);
     }

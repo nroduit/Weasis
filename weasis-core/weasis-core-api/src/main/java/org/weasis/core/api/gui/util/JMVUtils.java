@@ -62,6 +62,7 @@ import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
 
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.util.StringUtil;
 
 /**
  * The Class JMVUtils.
@@ -441,9 +442,11 @@ public class JMVUtils {
                     }
                 }
             } else {
-                JOptionPane.showMessageDialog(parent,
-                    Messages.getString("JMVUtils.browser") + " " + url, Messages.getString("JMVUtils.error"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane
+                    .showMessageDialog(
+                        parent,
+                        Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url, Messages.getString("JMVUtils.error"), //$NON-NLS-1$ //$NON-NLS-2$
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }

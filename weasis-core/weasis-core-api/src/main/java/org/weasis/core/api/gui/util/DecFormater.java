@@ -29,11 +29,13 @@ public class DecFormater {
     private static NumberFormat df1 = LocalUtil.getNumberInstance(); // 1 decimals
     private static NumberFormat df2 = LocalUtil.getNumberInstance(); // 2 decimals
     private static NumberFormat df4 = LocalUtil.getNumberInstance(); // 4 decimals
+    private static NumberFormat percent2 = LocalUtil.getPercentInstance();
     private static DecimalFormat dfSci = new DecimalFormat("0.####E0"); // Scientific format with 4 decimals //$NON-NLS-1$
     static {
         df1.setMaximumFractionDigits(1);
         df2.setMaximumFractionDigits(2);
         df4.setMaximumFractionDigits(4);
+        percent2.setMaximumFractionDigits(2);
         dfSci.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(LocalUtil.getLocaleFormat()));
     }
 
@@ -47,6 +49,10 @@ public class DecFormater {
 
     public static String fourDecimal(Number val) {
         return df4.format(val);
+    }
+
+    public static String percentTwoDecimal(Number val) {
+        return percent2.format(val);
     }
 
     public static String scientificFormat(Number val) {

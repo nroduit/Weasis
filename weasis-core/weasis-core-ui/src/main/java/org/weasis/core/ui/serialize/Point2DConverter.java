@@ -13,8 +13,8 @@ public class Point2DConverter implements Converter<Point2D> {
         double x = 0;
         double y = 0;
         try {
-            x = Double.parseDouble(node.getAttribute("x").getValue());
-            y = Double.parseDouble(node.getAttribute("y").getValue());
+            x = Double.parseDouble(node.getAttribute("x").getValue()); //$NON-NLS-1$
+            y = Double.parseDouble(node.getAttribute("y").getValue()); //$NON-NLS-1$
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -24,8 +24,8 @@ public class Point2DConverter implements Converter<Point2D> {
     @Override
     public void write(OutputNode node, Point2D pt) throws Exception {
         if (pt != null) {
-            node.setAttribute("x", Double.toString(pt.getX()));
-            node.setAttribute("y", Double.toString(pt.getY()));
+            node.setAttribute("x", Double.toString(pt.getX())); //$NON-NLS-1$
+            node.setAttribute("y", Double.toString(pt.getY())); //$NON-NLS-1$
         }
     }
 }

@@ -68,7 +68,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
         throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
         if (handlePointTotalNumber != 4) {
-            throw new InvalidShapeException("Not a valid PerpendicularLineGraphic!");
+            throw new InvalidShapeException("Not a valid PerpendicularLineGraphic!"); //$NON-NLS-1$
         }
         buildShape(null);
     }

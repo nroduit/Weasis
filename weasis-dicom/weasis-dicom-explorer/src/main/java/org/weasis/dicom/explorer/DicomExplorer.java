@@ -95,6 +95,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.DefaultMimeAppFactory;
@@ -247,8 +248,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     private final JButton btnExport = new JButton(exportAction);
     private final JButton btnImport = new JButton(importAction);
-    private final JButton koOpen = new JButton("Open Key Images", new ImageIcon(
-        DicomExplorer.class.getResource("/icon/16x16/key-images.png")));
+    private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), new ImageIcon( //$NON-NLS-1$
+        DicomExplorer.class.getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
 
     private final JLabel globalLoadingLabel = new JLabel();
     private final JButton globalResumeButton = new JButton(new Icon() {
@@ -1013,7 +1014,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             panel_1.setLayout(new BorderLayout());
             panel_1.add(panel, BorderLayout.NORTH);
 
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.explorer.moreoptions", true)) {
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.explorer.moreoptions", true)) { //$NON-NLS-1$
                 GridBagConstraints gbc_btnMoreOptions = new GridBagConstraints();
                 gbc_btnMoreOptions.anchor = GridBagConstraints.EAST;
                 gbc_btnMoreOptions.gridx = 1;
@@ -1069,7 +1070,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     JSlider source = (JSlider) e.getSource();
                     if (!source.getValueIsAdjusting()) {
                         ((TitledBorder) palenSlider1.getBorder()).setTitle(Messages
-                            .getString("DicomExplorer.thmb_size") + " " + source.getValue()); //$NON-NLS-1$ //$NON-NLS-2$
+                            .getString("DicomExplorer.thmb_size") + StringUtil.COLON_AND_SPACE + source.getValue()); //$NON-NLS-1$ 
                         palenSlider1.repaint();
                         updateThumbnailSize();
                     }
@@ -1509,7 +1510,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         if (panel_4 == null) {
             panel_4 = new JPanel();
 
-            globalResumeButton.setToolTipText("Resume All");
+            globalResumeButton.setToolTipText(Messages.getString("DicomExplorer.resume_all")); //$NON-NLS-1$
             globalResumeButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -1517,7 +1518,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 }
             });
             panel_4.add(globalResumeButton);
-            globalStopButton.setToolTipText("Stop All");
+            globalStopButton.setToolTipText(Messages.getString("DicomExplorer.stop_all")); //$NON-NLS-1$
             globalStopButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -1700,7 +1701,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         JMenu menuFactory = new JMenu(viewerFactory.getUIName());
                         menuFactory.setIcon(viewerFactory.getIcon());
 
-                        JMenuItem item4 = new JMenuItem("Open");
+                        JMenuItem item4 = new JMenuItem(Messages.getString("DicomExplorer.open")); //$NON-NLS-1$
                         item4.addActionListener(new ActionListener() {
 
                             @Override
@@ -1715,7 +1716,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                         // Exclude system factory
                         if (viewerFactory.canExternalizeSeries()) {
-                            item4 = new JMenuItem("Open in new window");
+                            item4 = new JMenuItem(Messages.getString("DicomExplorer.open_win")); //$NON-NLS-1$
                             item4.addActionListener(new ActionListener() {
 
                                 @Override
@@ -1730,7 +1731,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         }
 
                         if (viewerFactory.canAddSeries()) {
-                            item4 = new JMenuItem("Add");
+                            item4 = new JMenuItem(Messages.getString("DicomExplorer.add")); //$NON-NLS-1$
                             item4.addActionListener(new ActionListener() {
 
                                 @Override

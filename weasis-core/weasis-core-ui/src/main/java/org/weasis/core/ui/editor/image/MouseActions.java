@@ -41,14 +41,14 @@ public class MouseActions {
 
     public MouseActions(Preferences prefs) {
         this.activeButtons =
-            BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", InputEvent.BUTTON1_DOWN_MASK
+            BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", InputEvent.BUTTON1_DOWN_MASK //$NON-NLS-1$
                 | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK | SCROLL_MASK);
-        this.left = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.left", ActionW.WINLEVEL.cmd());
-        this.middle = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.middle", ActionW.PAN.cmd());
+        this.left = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.left", ActionW.WINLEVEL.cmd()); //$NON-NLS-1$
+        this.middle = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.middle", ActionW.PAN.cmd()); //$NON-NLS-1$
         this.right =
-            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.right", ActionW.CONTEXTMENU.cmd());
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.right", ActionW.CONTEXTMENU.cmd()); //$NON-NLS-1$
         this.wheel =
-            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.wheel", ActionW.SCROLL_SERIES.cmd());
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.wheel", ActionW.SCROLL_SERIES.cmd()); //$NON-NLS-1$
 
         applyPreferences(prefs);
 

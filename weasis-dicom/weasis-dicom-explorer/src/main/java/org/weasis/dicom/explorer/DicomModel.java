@@ -750,7 +750,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
                     props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
                     props.put(ViewerPluginBuilder.ICON,
-                        new ImageIcon(getClass().getResource("/icon/16x16/key-images.png")));
+                        new ImageIcon(getClass().getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
                     props.put(ViewerPluginBuilder.UID, uid);
                     ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, this, props);
                     ViewerPluginBuilder.openSequenceInPlugin(builder);
@@ -827,7 +827,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             dicomReader.writeMetaData(patient);
             addHierarchyNode(TreeModel.rootNode, patient);
-            LOGGER.info(Messages.getString("LoadLocalDicom.add_pat") + patient); //$NON-NLS-1$
+            LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
         }
 
         String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);
@@ -886,7 +886,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     if (specialElementList == null) {
                         initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList =
                             new CopyOnWriteArrayList<DicomSpecialElement>());
-                    } else if ("SR".equals(dicomReader.getTagValue(TagW.Modality))) {
+                    } else if ("SR".equals(dicomReader.getTagValue(TagW.Modality))) { //$NON-NLS-1$
                         // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
                         specialElementList = new CopyOnWriteArrayList<DicomSpecialElement>();
@@ -1013,7 +1013,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (TagW.ImageOrientationPlane.equals(tagElement)) {
                     String val = (String) firstMedia.getTagValue(TagW.ImageType);
                     // Exclude images that are MIP in different directions.
-                    if (val != null && val.contains("PROJECTION")) {
+                    if (val != null && val.contains("PROJECTION")) { //$NON-NLS-1$
                         continue;
                     }
                     // } else if (TagW.TemporalPositionIndex.equals(tagElement)) {

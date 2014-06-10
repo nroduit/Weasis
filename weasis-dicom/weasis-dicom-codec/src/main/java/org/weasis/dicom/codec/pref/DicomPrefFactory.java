@@ -16,7 +16,7 @@ public class DicomPrefFactory implements PreferencesPageFactory {
     @Override
     public AbstractItemDialogPage createInstance(Hashtable<String, Object> properties) {
         if (properties != null) {
-            if ("superuser".equals(properties.get("weasis.user.prefs"))) {
+            if ("superuser".equals(properties.get("weasis.user.prefs"))) { //$NON-NLS-1$ //$NON-NLS-2$
                 return new DicomPrefView();
             }
         }

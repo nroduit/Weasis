@@ -153,15 +153,15 @@ public class CheckTreeModel {
                         url = path.toURI().toURL();
                         if (url != null) {
                             StringBuilder buf = new StringBuilder();
-                            buf.append("<html>");
-                            buf.append("<img src=\"");
+                            buf.append("<html>"); //$NON-NLS-1$
+                            buf.append("<img src=\""); //$NON-NLS-1$
                             buf.append(url.toString());
-                            buf.append("\"><br>");
+                            buf.append("\"><br>"); //$NON-NLS-1$
                             Date date = (Date) s.getTagValue(TagW.SeriesDate);
                             if (date != null) {
                                 buf.append(TagW.formatDateTime(date));
                             }
-                            buf.append("</html>");
+                            buf.append("</html>"); //$NON-NLS-1$
                             return buf.toString();
                         }
                     }

@@ -45,7 +45,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
         this.context = context;
         StringBuilder bufDir = new StringBuilder(AppProperties.WEASIS_PATH);
         bufDir.append(File.separator);
-        bufDir.append("preferences");
+        bufDir.append("preferences"); //$NON-NLS-1$
         bufDir.append(File.separator);
         bufDir.append(AppProperties.WEASIS_USER);
         bufDir.append(File.separator);

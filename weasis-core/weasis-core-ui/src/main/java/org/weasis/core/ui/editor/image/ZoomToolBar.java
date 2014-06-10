@@ -40,7 +40,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
                     return getZoomPopupMenuButton(this, eventManager);
                 }
             };
-        zoom.setToolTipText("Select a zoom type");
+        zoom.setToolTipText(Messages.getString("ZoomToolBar.zoom_type")); //$NON-NLS-1$
         add(zoom);
 
         ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
@@ -64,7 +64,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
         final JMenuItem actualZoomMenu =
             new JMenuItem(
-                Messages.getString("ViewerToolBar.zoom_1"), new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$
+                Messages.getString("ViewerToolBar.zoom_1"), new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$ //$NON-NLS-2$
         actualZoomMenu.addActionListener(new ActionListener() {
 
             @Override
@@ -85,8 +85,8 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
                 double realFactor = monitor.getRealScaleFactor();
                 if (realFactor > 0.0) {
                     final JMenuItem realSizeMenu =
-                        new JMenuItem("Real-world zoom", new ImageIcon(
-                            MouseActions.class.getResource("/icon/22x22/zoom-original.png")));
+                        new JMenuItem(Messages.getString("ZoomToolBar.real_zoom"), new ImageIcon( //$NON-NLS-1$
+                            MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$
                     realSizeMenu.addActionListener(new ActionListener() {
 
                         @Override
@@ -106,7 +106,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
         final JMenuItem bestFitMenu =
             new JMenuItem(
-                Messages.getString("ViewerToolBar.zoom_b"), new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-bestfit.png"))); //$NON-NLS-1$
+                Messages.getString("ViewerToolBar.zoom_b"), new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-bestfit.png"))); //$NON-NLS-1$ //$NON-NLS-2$
         bestFitMenu.addActionListener(new ActionListener() {
 
             @Override

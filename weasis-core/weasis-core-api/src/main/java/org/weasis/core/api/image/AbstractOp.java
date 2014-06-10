@@ -39,7 +39,7 @@ public abstract class AbstractOp implements ImageOpNode {
     @Override
     public void clearIOCache() {
         for (String key : params.keySet()) {
-            if (key.startsWith("op.input") || key.startsWith("op.output")) {
+            if (key.startsWith("op.input") || key.startsWith("op.output")) { //$NON-NLS-1$ //$NON-NLS-2$
                 params.put(key, null);
             }
         }

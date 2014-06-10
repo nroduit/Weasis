@@ -79,7 +79,7 @@ public class DicomMediaUtils {
          *      http://www.itu.int/ITU-T/asn1/uuid.html<br>
          *      http://healthcaresecprivacy.blogspot.ch/2011/02/creating-and-using-unique-id-uuid-oid.html
          */
-        weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot());
+        weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot()); //$NON-NLS-1$
 
         UIDUtils.setRoot(weasisRootUID);
     }
@@ -183,9 +183,9 @@ public class DicomMediaUtils {
         int[] descriptor = DicomMediaUtils.getIntAyrrayFromDicomElement(dicomLutObject, Tag.LUTDescriptor, null);
 
         if (descriptor == null) {
-            LOGGER.debug("Missing LUT Descriptor");
+            LOGGER.debug("Missing LUT Descriptor"); //$NON-NLS-1$
         } else if (descriptor.length != 3) {
-            LOGGER.debug("Illegal number of LUT Descriptor values \"{}\"", descriptor.length);
+            LOGGER.debug("Illegal number of LUT Descriptor values \"{}\"", descriptor.length); //$NON-NLS-1$
         } else {
 
             // First value is the number of entries in the lookup table.
@@ -270,17 +270,17 @@ public class DicomMediaUtils {
                     }
                 }
             } else {
-                LOGGER.debug("Illegal number of bits for each entry in the LUT Data");
+                LOGGER.debug("Illegal number of bits for each entry in the LUT Data"); //$NON-NLS-1$
             }
 
             if (lookupTable != null) {
                 if (dataLength != numEntries) {
-                    LOGGER.debug("LUT Data length \"{}\" mismatch number of entries \"{}\" in LUT Descriptor ",
+                    LOGGER.debug("LUT Data length \"{}\" mismatch number of entries \"{}\" in LUT Descriptor ", //$NON-NLS-1$
                         dataLength, numEntries);
                 }
                 if (dataLength > (1 << numBits)) {
                     LOGGER.debug(
-                        "Illegal LUT Data length \"{}\" with respect to the number of bits in LUT descriptor \"{}\"",
+                        "Illegal LUT Data length \"{}\" with respect to the number of bits in LUT descriptor \"{}\"", //$NON-NLS-1$
                         dataLength, numBits);
                 }
             }
@@ -354,7 +354,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getFloat(tag, defaultValue == null ? 0.0F : defaultValue);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse Float of {}: {} ", TagUtils.toString(tag), e.getMessage());
+            LOGGER.error("Cannot parse Float of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
         }
         return defaultValue;
     }
@@ -366,7 +366,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getInt(tag, defaultValue == null ? 0 : defaultValue);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse Integer of {}: {} ", TagUtils.toString(tag), e.getMessage());
+            LOGGER.error("Cannot parse Integer of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
         }
         return defaultValue;
     }
@@ -378,7 +378,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getDouble(tag, defaultValue == null ? 0.0 : defaultValue);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse Double of {}: {} ", TagUtils.toString(tag), e.getMessage());
+            LOGGER.error("Cannot parse Double of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
         }
         return defaultValue;
     }
@@ -390,7 +390,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getInts(tag);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse int[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
+            LOGGER.error("Cannot parse int[] of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
         }
         return defaultValue;
     }
@@ -402,7 +402,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getFloats(tag);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse float[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
+            LOGGER.error("Cannot parse float[] of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
         }
         return defaultValue;
     }
@@ -414,7 +414,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getDoubles(tag);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse double[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
+            LOGGER.error("Cannot parse double[] of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
         }
         return defaultValue;
     }
@@ -445,10 +445,10 @@ public class DicomMediaUtils {
             if (containsRequiredModalityLUTDataAttributes(mLutItems)) {
                 boolean canApplyMLUT = true;
                 String modlality = (String) dicomTagMap.get(TagW.Modality);
-                if ("XA".equals(modlality) || "XRF".equals(modlality)) {
+                if ("XA".equals(modlality) || "XRF".equals(modlality)) { //$NON-NLS-1$ //$NON-NLS-2$
                     // See PS 3.4 N.2.1.2.
                     String pixRel = (String) dicomTagMap.get(TagW.PixelIntensityRelationship);
-                    if (pixRel != null && ("LOG".equalsIgnoreCase(pixRel) || "DISP".equalsIgnoreCase(pixRel))) {
+                    if (pixRel != null && ("LOG".equalsIgnoreCase(pixRel) || "DISP".equalsIgnoreCase(pixRel))) { //$NON-NLS-1$ //$NON-NLS-2$
                         canApplyMLUT = false;
                         LOGGER
                             .debug("Modality LUT Sequence shall NOT be applied according to PixelIntensityRelationship"); //$NON-NLS-1$
@@ -630,7 +630,7 @@ public class DicomMediaUtils {
 
     public static String buildPatientSex(String val) {
         // Sex attribute can have the following values: M(male), F(female), or O(other)
-        String name = val == null ? "O" : val;
+        String name = val == null ? "O" : val; //$NON-NLS-1$
         return name.startsWith("F") ? Messages.getString("DicomMediaIO.female") : name.startsWith("M") ? Messages.getString("DicomMediaIO.Male") : Messages.getString("DicomMediaIO.other"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
     }
 
@@ -646,24 +646,24 @@ public class DicomMediaUtils {
          * (0x3d) characters.
          */
         StringBuilder buf = new StringBuilder();
-        String[] names = name.split("=");
+        String[] names = name.split("="); //$NON-NLS-1$
         for (int k = 0; k < names.length; k++) {
             if (k > 0) {
-                buf.append("=");
+                buf.append("="); //$NON-NLS-1$
             }
             /*
              * In DICOM “family name^given name^middle name^prefix^suffix”
              * 
              * In HL7 “family name^given name^middle name^suffix^prefix^ degree”
              */
-            String[] vals = names[k].split("\\^");
+            String[] vals = names[k].split("\\^"); //$NON-NLS-1$
 
             for (int i = 0; i < vals.length; i++) {
-                if (!"".equals(vals[i])) {
+                if (StringUtil.hasText(vals[i])) { //$NON-NLS-1$
                     if (i >= 3) {
-                        buf.append(", ");
+                        buf.append(", "); //$NON-NLS-1$
                     } else {
-                        buf.append(" ");
+                        buf.append(" "); //$NON-NLS-1$
                     }
                 }
                 buf.append(vals[i]);
@@ -688,7 +688,7 @@ public class DicomMediaUtils {
          */
         // Build a global identifier for the patient.
         StringBuilder buffer = new StringBuilder(patientID == null ? DicomMediaIO.NO_VALUE : patientID);
-        if (issuerOfPatientID != null && !"".equals(issuerOfPatientID.trim())) { //$NON-NLS-1$
+        if (StringUtil.hasText(issuerOfPatientID)) {
             // patientID + issuerOfPatientID => should be unique globally
             buffer.append(issuerOfPatientID);
         }
@@ -1025,8 +1025,8 @@ public class DicomMediaUtils {
             // Overrides Modality LUT Transformation attributes only if sequence is consistent
             if (containsRequiredModalityLUTAttributes(mLutItems)) {
                 String modlality = (String) tagList.get(TagW.Modality);
-                if ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality)
-                    || "PT".equals(modlality)) {
+                if ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    || "PT".equals(modlality)) { //$NON-NLS-1$
                     /*
                      * IHE BIR: 4.16.4.2.2.5.4
                      * 
@@ -1083,7 +1083,7 @@ public class DicomMediaUtils {
     public static void applyPrLutModule(Attributes dcmItems, HashMap<TagW, Object> tagList) {
         if (dcmItems != null && tagList != null) {
             // TODO implement 1.2.840.10008.5.1.4.1.1.11.2 -5 color and xray
-            if ("1.2.840.10008.5.1.4.1.1.11.1".equals(dcmItems.getString(Tag.SOPClassUID))) {
+            if ("1.2.840.10008.5.1.4.1.1.11.1".equals(dcmItems.getString(Tag.SOPClassUID))) { //$NON-NLS-1$
                 /**
                  * @see - Dicom Standard 2011 - PS 3.3 § C.11.6 Softcopy Presentation LUT Module
                  */
@@ -1214,49 +1214,6 @@ public class DicomMediaUtils {
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     * Creates a Dicom Key Object from another dicom KOS document copying its CurrentRequestedProcedureEvidences and
-     * keeping its patient informations. It's the user responsibility to manage the studyUID and serieUID values. Given
-     * UIDs parameters are supposed to be valid and won't be verified. If their value is null a new one will be
-     * generated instead.
-     * 
-     * @param dicomObject
-     * @param description
-     * @param studyInstanceUID
-     *            can be null
-     * @param seriesInstanceUID
-     *            can be null
-     * @return
-     */
-
-    // public static Attributes createDicomKeyObject(Attributes dicomObject, String description, String
-    // studyInstanceUID,
-    // String seriesInstanceUID) {
-    //
-    // if (description == null || "".equals(description)) {
-    // description = "new KO selection";
-    // }
-    //
-    // String patientID = dicomObject.getString(Tag.PatientID);
-    // String patientName = dicomObject.getString(Tag.PatientName);
-    // Date patientBirthdate = dicomObject.getDate(Tag.PatientBirthDate);
-    //
-    // // TODO see implementation in dcm4che3
-    //
-    // // DicomObject newDicomKeyObject =
-    // // createDicomKeyObject(patientID, patientName, patientBirthdate, description, studyInstanceUID,
-    // // seriesInstanceUID);
-    // //
-    // // HierachicalSOPInstanceReference[] referencedStudySequence =
-    // // new KODocumentModule(dicomObject).getCurrentRequestedProcedureEvidences();
-    // //
-    // // new KODocumentModule(newDicomKeyObject).setCurrentRequestedProcedureEvidences(referencedStudySequence);
-    // // return newDicomKeyObject;
-    //
-    // return null;
-    // }
-
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Creates a dicomKeyObjectSelection Attributes from another SOP Instance keeping it's patient and study
@@ -1283,7 +1240,7 @@ public class DicomMediaUtils {
          *       Instances. Key Object Documents do not reside in a Series of Images or other Composite SOP Instances.
          */
 
-        if (seriesInstanceUID == null || "".equals(seriesInstanceUID)) {
+        if (!StringUtil.hasText(seriesInstanceUID)) {
             seriesInstanceUID = UIDUtils.createUID();
         }
 
@@ -1321,7 +1278,7 @@ public class DicomMediaUtils {
          *       Tag.CodeMeaning = "Of Interest"
          */
 
-        final Attributes documentTitle = codeByValue.get("113000").toCodeItem();
+        final Attributes documentTitle = codeByValue.get("113000").toCodeItem(); //$NON-NLS-1$
         // TODO - the user or some preferences should be able to set this title value from a predefined list of code
 
         /**
@@ -1336,8 +1293,8 @@ public class DicomMediaUtils {
         // TODO - add ability to set "Optional Document Title Modifier" for created KOS from the predefined list of code
         // final Attributes documentTitleModifier = null;
 
-        final String seriesNumber = "999"; // A number that identifies the Series. (default: 999)
-        final String instanceNumber = "1"; // A number that identifies the Document. (default: 1)
+        final String seriesNumber = "999"; // A number that identifies the Series. (default: 999) //$NON-NLS-1$
+        final String instanceNumber = "1"; // A number that identifies the Document. (default: 1) //$NON-NLS-1$
 
         // TODO - add ability to override default instanceNumber and seriesNumber from given parameters in case many
         // KEY OBJECT DOCUMENT SERIES and KEY OBJECT DOCUMENT are build for the same Study in the same context
@@ -1357,19 +1314,19 @@ public class DicomMediaUtils {
         dKOS.setString(Tag.SOPClassUID, VR.UI, UID.KeyObjectSelectionDocumentStorage);
         dKOS.setString(Tag.SOPInstanceUID, VR.UI, UIDUtils.createUID());
         dKOS.setDate(Tag.ContentDateAndTime, new Date());
-        dKOS.setString(Tag.Modality, VR.CS, "KO");
+        dKOS.setString(Tag.Modality, VR.CS, "KO"); //$NON-NLS-1$
         dKOS.setNull(Tag.ReferencedPerformedProcedureStepSequence, VR.SQ);
         dKOS.setString(Tag.SeriesInstanceUID, VR.UI, seriesInstanceUID);
         dKOS.setString(Tag.SeriesNumber, VR.IS, seriesNumber);
         dKOS.setString(Tag.InstanceNumber, VR.IS, instanceNumber);
-        dKOS.setString(Tag.ValueType, VR.CS, "CONTAINER");
-        dKOS.setString(Tag.ContinuityOfContent, VR.CS, "SEPARATE");
+        dKOS.setString(Tag.ValueType, VR.CS, "CONTAINER"); //$NON-NLS-1$
+        dKOS.setString(Tag.ContinuityOfContent, VR.CS, "SEPARATE"); //$NON-NLS-1$
         dKOS.newSequence(Tag.ConceptNameCodeSequence, 1).add(documentTitle);
         dKOS.newSequence(Tag.CurrentRequestedProcedureEvidenceSequence, 1);
 
         Attributes templateIdentifier = new Attributes(2);
-        templateIdentifier.setString(Tag.MappingResource, VR.CS, "DCMR");
-        templateIdentifier.setString(Tag.TemplateIdentifier, VR.CS, "2010");
+        templateIdentifier.setString(Tag.MappingResource, VR.CS, "DCMR"); //$NON-NLS-1$
+        templateIdentifier.setString(Tag.TemplateIdentifier, VR.CS, "2010"); //$NON-NLS-1$
         dKOS.newSequence(Tag.ContentTemplateSequence, 1).add(templateIdentifier);
 
         Sequence contentSeq = dKOS.newSequence(Tag.ContentSequence, 1);
@@ -1390,10 +1347,10 @@ public class DicomMediaUtils {
         if (StringUtil.hasText(keyObjectDescription)) {
 
             Attributes keyObjectDescriptionSequence = new Attributes(4);
-            keyObjectDescriptionSequence.setString(Tag.RelationshipType, VR.CS, "CONTAINS");
-            keyObjectDescriptionSequence.setString(Tag.ValueType, VR.CS, "TEXT");
+            keyObjectDescriptionSequence.setString(Tag.RelationshipType, VR.CS, "CONTAINS"); //$NON-NLS-1$
+            keyObjectDescriptionSequence.setString(Tag.ValueType, VR.CS, "TEXT"); //$NON-NLS-1$
             keyObjectDescriptionSequence.newSequence(Tag.ConceptNameCodeSequence, 1).add(
-                codeByValue.get("113012").toCodeItem());
+                codeByValue.get("113012").toCodeItem()); //$NON-NLS-1$
             keyObjectDescriptionSequence.setString(Tag.TextValue, VR.UT, keyObjectDescription);
 
             contentSeq.add(keyObjectDescriptionSequence);
@@ -1422,7 +1379,7 @@ public class DicomMediaUtils {
         InputStream stream = null;
         try {
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            stream = DicomMediaUtils.class.getResourceAsStream("/config/KeyObjectSelectionCodes.xml");
+            stream = DicomMediaUtils.class.getResourceAsStream("/config/KeyObjectSelectionCodes.xml"); //$NON-NLS-1$
             xmler = xmlif.createXMLStreamReader(stream);
 
             int eventType;
@@ -1431,33 +1388,33 @@ public class DicomMediaUtils {
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
-                        if ("resources".equals(key)) {
+                        if ("resources".equals(key)) { //$NON-NLS-1$
                             while (xmler.hasNext()) {
                                 eventType = xmler.next();
                                 switch (eventType) {
                                     case XMLStreamConstants.START_ELEMENT:
                                         key = xmler.getName().getLocalPart();
-                                        if ("resource".equals(key)) {
-                                            String resourceName = xmler.getAttributeValue(null, "name");
-                                            String contextGroupID = xmler.getAttributeValue(null, "contextId");
+                                        if ("resource".equals(key)) { //$NON-NLS-1$
+                                            String resourceName = xmler.getAttributeValue(null, "name"); //$NON-NLS-1$
+                                            String contextGroupID = xmler.getAttributeValue(null, "contextId"); //$NON-NLS-1$
 
                                             while (xmler.hasNext()) {
                                                 eventType = xmler.next();
                                                 switch (eventType) {
                                                     case XMLStreamConstants.START_ELEMENT:
                                                         key = xmler.getName().getLocalPart();
-                                                        if ("code".equals(key)) {
+                                                        if ("code".equals(key)) { //$NON-NLS-1$
 
                                                             String codingSchemeDesignator =
-                                                                xmler.getAttributeValue(null, "scheme");
-                                                            String codeValue = xmler.getAttributeValue(null, "value");
+                                                                xmler.getAttributeValue(null, "scheme"); //$NON-NLS-1$
+                                                            String codeValue = xmler.getAttributeValue(null, "value"); //$NON-NLS-1$
                                                             String codeMeaning =
-                                                                xmler.getAttributeValue(null, "meaning");
+                                                                xmler.getAttributeValue(null, "meaning"); //$NON-NLS-1$
 
                                                             String conceptNameCodeModifier =
-                                                                xmler.getAttributeValue(null, "conceptMod");
+                                                                xmler.getAttributeValue(null, "conceptMod"); //$NON-NLS-1$
                                                             String contexGroupIdModifier =
-                                                                xmler.getAttributeValue(null, "contexId");
+                                                                xmler.getAttributeValue(null, "contexId"); //$NON-NLS-1$
 
                                                             codeByValue.put(codeValue,
                                                                 new DicomMediaUtils.KeyObjectSelectionCode(

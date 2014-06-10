@@ -40,6 +40,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
@@ -57,7 +58,7 @@ public class CalibrationView extends JPanel {
     private final JLabel jLabelKnownDist = new JLabel();
     private final BorderLayout borderLayout1 = new BorderLayout();
     private final GridBagLayout gridBagLayout2 = new GridBagLayout();
-    private final JLabel lblApplyTo = new JLabel(Messages.getString("CalibrationView.apply")); //$NON-NLS-1$
+    private final JLabel lblApplyTo = new JLabel(Messages.getString("CalibrationView.apply") + StringUtil.COLON); //$NON-NLS-1$
     private final JPanel panel = new JPanel();
     private final ButtonGroup ratioGroup = new ButtonGroup();
     private final JRadioButton radioButtonSeries = new JRadioButton(Messages.getString("CalibrationView.series")); //$NON-NLS-1$
@@ -84,7 +85,7 @@ public class CalibrationView extends JPanel {
         jTextFieldLineWidth.setValue(1.0);
         JMVUtils.addCheckAction(jTextFieldLineWidth);
 
-        jLabelKnownDist.setText(Messages.getString("CalibrationView.known")); //$NON-NLS-1$
+        jLabelKnownDist.setText(Messages.getString("CalibrationView.known") + StringUtil.COLON); //$NON-NLS-1$
         this.setLayout(borderLayout1);
 
         this.add(jPanelMode, BorderLayout.CENTER);

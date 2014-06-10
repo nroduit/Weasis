@@ -89,14 +89,14 @@ public class MeasureDialog extends PropertiesDialog {
             if (view2D != null && graphics.size() == 1 && graphic instanceof AnnotationGraphic) {
                 JScrollPane panel = new JScrollPane();
 
-                panel.setBorder(new CompoundBorder(new EmptyBorder(10, 15, 5, 15), new TitledBorder(null, "Text",
+                panel.setBorder(new CompoundBorder(new EmptyBorder(10, 15, 5, 15), new TitledBorder(null, Messages.getString("MeasureDialog.text"), //$NON-NLS-1$
                     TitledBorder.LEADING, TitledBorder.TOP, null, null)));
                 panel.setPreferredSize(new Dimension(400, 140));
                 StringBuilder buf = new StringBuilder();
                 String[] labels = ((AnnotationGraphic) graphic).labelStringArray;
                 for (String s : labels) {
                     buf.append(s);
-                    buf.append("\n");
+                    buf.append("\n"); //$NON-NLS-1$
                 }
                 textPane.setText(buf.toString());
                 panel.setViewportView(textPane);

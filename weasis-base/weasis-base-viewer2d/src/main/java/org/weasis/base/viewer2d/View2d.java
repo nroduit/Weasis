@@ -59,6 +59,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.CalibrationView;
@@ -71,6 +72,7 @@ import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
+import org.weasis.core.ui.graphic.BasicGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
@@ -346,7 +348,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                                 popupMenu.add(menuItem);
                                 popupMenu.add(new JSeparator());
                             }
-                        } else if (ds != null && absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
+                        } else if (ds != null && absgraph.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
                             final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                             item2.addActionListener(new ActionListener() {
 
@@ -434,7 +436,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             ColorLayerUI layer =
-                                            ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(View2d.this));
+                                ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(View2d.this));
                             String title = Messages.getString("View2d.man_calib"); //$NON-NLS-1$
                             CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this);
                             int res =
@@ -473,7 +475,8 @@ public class View2d extends DefaultView2d<ImageElement> {
             return popupMenu;
         } else if (View2d.this.getSourceImage() != null) {
             JPopupMenu popupMenu = new JPopupMenu();
-            TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.left_mouse"), popupMenu.getInsets()); //$NON-NLS-1$
+            TitleMenuItem itemTitle =
+                new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets()); //$NON-NLS-1$
             popupMenu.add(itemTitle);
             popupMenu.setLabel(MouseActions.LEFT);
             String action = eventManager.getMouseActions().getLeft();

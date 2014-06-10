@@ -101,7 +101,7 @@ public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
                             if (series.size() == 1) {
                                 MediaSeries s = series.get(0);
                                 MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
-                                if (inSelView && s.getMimeType().indexOf("dicom") == -1) {
+                                if (inSelView && s.getMimeType().indexOf("dicom") == -1) { //$NON-NLS-1$
                                     // Change the group attribution. DO NOT use it with DICOM.
                                     group = selectedPlugin.getGroupID();
                                 }
@@ -119,7 +119,7 @@ public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
                                         List<MediaSeries<? extends MediaElement<?>>> seriesList = entry.getValue();
                                         if (seriesList.size() > 0) {
                                             // Change the group attribution. DO NOT use it with DICOM.
-                                            if (seriesList.get(0).getMimeType().indexOf("dicom") == -1) {
+                                            if (seriesList.get(0).getMimeType().indexOf("dicom") == -1) { //$NON-NLS-1$
                                                 group = selectedPlugin.getGroupID();
                                             }
                                         }

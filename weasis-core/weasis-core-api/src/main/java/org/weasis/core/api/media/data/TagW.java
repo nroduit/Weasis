@@ -58,7 +58,7 @@ public class TagW implements Transferable, Serializable {
 
     };
 
-    public static final TagW Group = new TagW("Group", TagType.String, 1);
+    public static final TagW Group = new TagW(Messages.getString("TagW.group"), TagType.String, 1); //$NON-NLS-1$
     // Pseudo unique identifier: as PatientID is not a unique identifier for the patient outside an institution,
     // PatientPseudoUID tend to be unique (PatientID, PatientName and PatientBirthDate can be used simultaneously to
     // enforce the unique behavior)
@@ -73,7 +73,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW SplitSeriesNumber = new TagW(Messages.getString("TagElement.split_no"), TagType.Integer); //$NON-NLS-1$
     public static final TagW SeriesSelected = new TagW(Messages.getString("TagElement.select"), TagType.Boolean); //$NON-NLS-1$
     public static final TagW SeriesOpen = new TagW(Messages.getString("TagElement.open"), TagType.Boolean); //$NON-NLS-1$
-    public static final TagW SeriesFocused = new TagW("Focused", TagType.Boolean);
+    public static final TagW SeriesFocused = new TagW(Messages.getString("TagW.focused"), TagType.Boolean); //$NON-NLS-1$
     public static final TagW ImageWidth = new TagW(Messages.getString("TagElement.img_w"), TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageHeight = new TagW(Messages.getString("TagElement.img_h"), TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageDepth = new TagW(Messages.getString("TagElement.img_d"), TagType.Integer); //$NON-NLS-1$
@@ -236,7 +236,7 @@ public class TagW implements Transferable, Serializable {
         "Lossy Image Compression Method", TagType.StringArray); //$NON-NLS-1$
 
     // Only a single Item shall be included in this sequence
-    public static final TagW PresentationLUTSequence = new TagW(0x20500010, "Presentation LUT Sequence",
+    public static final TagW PresentationLUTSequence = new TagW(0x20500010, "Presentation LUT Sequence", //$NON-NLS-1$
         TagType.Sequence);
     public static final TagW PRLUTsExplanation = new TagW("Presentation State LUT Explanation", TagType.String); //$NON-NLS-1$
     public static final TagW PRLUTsData = new TagW("Presentation State LUT Data", TagType.Object); //$NON-NLS-1$;

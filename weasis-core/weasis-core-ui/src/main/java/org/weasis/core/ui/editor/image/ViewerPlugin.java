@@ -25,6 +25,7 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -217,7 +218,7 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
             init(new MenuOnlySimpleAction(this));
             this.dockable = dockable;
             this.closeAll = closeAll;
-            setText(closeAll ? "Close All" : "Close Others");
+            setText(closeAll ? Messages.getString("ViewerPlugin.close_all") : Messages.getString("ViewerPlugin.close_other")); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         @Override

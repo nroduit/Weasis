@@ -129,10 +129,10 @@ public class InfoLayer implements AnnotationsLayer {
 
         if (getDisplayPreferences(PIXEL)) {
             StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pix")); //$NON-NLS-1$
-            sb.append(": ");
+            sb.append(StringUtil.COLON_AND_SPACE);
             if (pixelInfo != null) {
                 sb.append(pixelInfo.getPixelValueText());
-                sb.append(" - ");
+                sb.append(" - "); //$NON-NLS-1$
                 sb.append(pixelInfo.getPixelPositionText());
             }
             String str = sb.toString();
@@ -146,15 +146,15 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.win") + ": " + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) //$NON-NLS-1$ //$NON-NLS-2$
-                        + " " + Messages.getString("InfoLayer.level") + ": " + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    Messages.getString("InfoLayer.win") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) //$NON-NLS-1$ 
+                        + " " + Messages.getString("InfoLayer.level") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ 
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.zoom") + ": " + DecFormater.twoDecimal(view2DPane.getViewModel().getViewScale() * 100) + " " + Messages.getString("InfoLayer.percent"), border, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()), border, //$NON-NLS-1$ 
                     drawY);
             drawY -= fontHeight;
         }
@@ -162,7 +162,7 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.angle") + ": " + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ 
             drawY -= fontHeight;
         }
 
@@ -171,7 +171,7 @@ public class InfoLayer implements AnnotationsLayer {
                 .paintFontOutline(
                     g2,
                     Messages.getString("InfoLayer.frame") //$NON-NLS-1$
-                        + ": " //$NON-NLS-1$
+                        + StringUtil.COLON_AND_SPACE 
                         + (view2DPane.getFrameIndex() + 1)
                         + " / " //$NON-NLS-1$
                         + view2DPane.getSeries().size(

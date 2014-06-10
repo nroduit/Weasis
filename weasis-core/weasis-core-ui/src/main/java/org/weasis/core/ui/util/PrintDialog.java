@@ -28,6 +28,7 @@ import javax.swing.SpinnerNumberModel;
 
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -75,7 +76,7 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().setLayout(gridBagLayout);
         imageSizeLabel = new javax.swing.JLabel();
 
-        imageSizeLabel.setText(Messages.getString("PrintDialog.img_size")); //$NON-NLS-1$
+        imageSizeLabel.setText(Messages.getString("PrintDialog.img_size") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_imageSizeLabel = new GridBagConstraints();
         gbc_imageSizeLabel.anchor = GridBagConstraints.EAST;
         gbc_imageSizeLabel.insets = new Insets(15, 15, 10, 5);
@@ -98,7 +99,7 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().add(imageSizeComboBox, gbc_imageSizeComboBox);
         customImageSizeLabel = new javax.swing.JLabel();
 
-        customImageSizeLabel.setText(Messages.getString("PrintDialog.zoom")); //$NON-NLS-1$
+        customImageSizeLabel.setText(Messages.getString("PrintDialog.zoom") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_customImageSizeLabel = new GridBagConstraints();
         gbc_customImageSizeLabel.anchor = GridBagConstraints.EAST;
         gbc_customImageSizeLabel.insets = new Insets(0, 15, 10, 5);
@@ -116,7 +117,7 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().add(spinner, gbc_spinner);
         positionLabel = new javax.swing.JLabel();
 
-        positionLabel.setText(Messages.getString("PrintDialog.pos")); //$NON-NLS-1$
+        positionLabel.setText(Messages.getString("PrintDialog.pos") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_positionLabel = new GridBagConstraints();
         gbc_positionLabel.anchor = GridBagConstraints.EAST;
         gbc_positionLabel.insets = new Insets(0, 15, 10, 5);

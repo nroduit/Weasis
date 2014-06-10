@@ -29,7 +29,7 @@ public interface AnnotationsLayer extends Layer {
     String FRAME = Messages.getString("AnnotationsLayer.fr"); //$NON-NLS-1$
     String PIXEL = Messages.getString("AnnotationsLayer.pix"); //$NON-NLS-1$
     String PRELOADING_BAR = Messages.getString("AnnotationsLayer.preload_bar"); //$NON-NLS-1$
-    String KEY_OBJECT = "Key Object Selection";
+    String KEY_OBJECT = Messages.getString("AnnotationsLayer.ko"); //$NON-NLS-1$
 
     boolean getDisplayPreferences(String item);
 

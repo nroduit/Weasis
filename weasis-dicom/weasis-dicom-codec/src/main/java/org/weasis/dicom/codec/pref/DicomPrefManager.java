@@ -34,12 +34,12 @@ public class DicomPrefManager {
 
     private DicomPrefManager() {
         restoreDefaultValues();
-        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) {
+        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) { //$NON-NLS-1$ //$NON-NLS-2$
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             Preferences pref = BundlePreferences.getDefaultPreferences(context);
             if (pref != null) {
                 Preferences prefNode = pref.node("dicom"); //$NON-NLS-1$
-                j2kReader = prefNode.get("jpeg2000.reader", null);
+                j2kReader = prefNode.get("jpeg2000.reader", null); //$NON-NLS-1$
             }
         }
     }
@@ -49,7 +49,7 @@ public class DicomPrefManager {
     }
 
     public void savePreferences() {
-        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) {
+        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) { //$NON-NLS-1$ //$NON-NLS-2$
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             Preferences prefs = BundlePreferences.getDefaultPreferences(context);
             if (prefs != null) {

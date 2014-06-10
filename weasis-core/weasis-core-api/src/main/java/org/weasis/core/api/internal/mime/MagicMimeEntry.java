@@ -20,6 +20,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Vector;
 
+import org.weasis.core.api.util.StringUtil;
+
 public class MagicMimeEntry {
 
     public static final int STRING_TYPE = 1;
@@ -113,7 +115,7 @@ public class MagicMimeEntry {
         // Now strip the empty entries
         Vector v = new Vector();
         for (int i = 0; i < tokens.length; i++) {
-            if (!"".equals(tokens[i])) { //$NON-NLS-1$
+            if (StringUtil.hasText(tokens[i])) { //$NON-NLS-1$
                 v.add(tokens[i]);
             }
         }

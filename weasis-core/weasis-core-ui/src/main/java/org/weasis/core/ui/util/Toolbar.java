@@ -18,6 +18,7 @@ public interface Toolbar extends Insertable {
 
     public static final Dimension SEPARATOR_2x24 = new Dimension(2, 24);
 
+    @Override
     Type getType();
 
     WtoolBar getComponent();

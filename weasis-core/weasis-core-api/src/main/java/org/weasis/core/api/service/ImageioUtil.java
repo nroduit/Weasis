@@ -13,7 +13,7 @@ public final class ImageioUtil {
     static {
         IIORegistry temp = null;
         try {
-            Field field = ImageIO.class.getDeclaredField("theRegistry");
+            Field field = ImageIO.class.getDeclaredField("theRegistry"); //$NON-NLS-1$
             field.setAccessible(true);
             temp = (IIORegistry) field.get(null);
         } catch (Exception e) {

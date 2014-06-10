@@ -63,7 +63,7 @@ public class AnimatedLabel extends JLabel {
 
         public Animate(long refresh) {
             super.setDaemon(true);
-            super.setName(AnimatedLabel.this.ani.getName()); //$NON-NLS-1$ //$NON-NLS-2$
+            super.setName(AnimatedLabel.this.ani.getName()); 
             this.refresh = refresh;
         }
 

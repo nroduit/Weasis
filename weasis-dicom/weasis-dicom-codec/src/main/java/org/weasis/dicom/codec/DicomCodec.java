@@ -33,7 +33,7 @@ public class DicomCodec implements Codec {
     public static final RawImageReaderSpi RawImageReaderSpi = new RawImageReaderSpi();
 
     public static final String NAME = "dcm4che"; //$NON-NLS-1$
-    public static final String[] FILE_EXTENSIONS = { "dcm", "dicm" };
+    public static final String[] FILE_EXTENSIONS = { "dcm", "dicm" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     @Override
     public String[] getReaderMIMETypes() {

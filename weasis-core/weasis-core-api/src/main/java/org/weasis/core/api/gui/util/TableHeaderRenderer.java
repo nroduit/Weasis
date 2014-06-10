@@ -21,8 +21,6 @@ import javax.swing.border.Border;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import org.weasis.core.api.Messages;
-
 /**
  * The Class TableHaederRenderer.
  * 
@@ -35,6 +33,7 @@ public class TableHeaderRenderer extends JLabel implements TableCellRenderer {
         setHorizontalTextPosition(SwingConstants.LEADING);
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
         int row, int column) {
         if (table != null) {

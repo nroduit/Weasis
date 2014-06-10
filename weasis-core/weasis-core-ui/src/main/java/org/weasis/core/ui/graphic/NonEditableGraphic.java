@@ -47,7 +47,7 @@ public class NonEditableGraphic extends BasicGraphic {
 
     @Override
     public String getUIName() {
-        return "";
+        return ""; //$NON-NLS-1$
     }
 
     @Override

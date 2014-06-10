@@ -23,8 +23,6 @@ import javax.media.jai.PixelAccessor;
 import javax.media.jai.PointOpImage;
 import javax.media.jai.UnpackedImageData;
 
-import org.weasis.core.api.Messages;
-
 /**
  * The Class ThresholdToBinOpImage.
  * 

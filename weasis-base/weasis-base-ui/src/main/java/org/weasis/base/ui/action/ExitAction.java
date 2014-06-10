@@ -34,6 +34,7 @@ public class ExitAction extends AbstractUIAction {
         setDescription(Messages.getString("ExitAction.description")); //$NON-NLS-1$
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         WeasisWin.getInstance().closeWindow();
     }

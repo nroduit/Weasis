@@ -30,13 +30,13 @@ public class WebStartAppletLauncher extends JApplet {
             public void run() {
                 try {
                     MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-                    ObjectName objectName = new ObjectName("weasis:name=MainWindow");
+                    ObjectName objectName = new ObjectName("weasis:name=MainWindow"); //$NON-NLS-1$
                     server.registerMBean(new WeasisFrame(WebStartAppletLauncher.this), objectName);
 
                     // TODO test commands with quotes (path) in html page
-                    String commands = getParameter("commands");
-                    System.out.println("WebstartLauncher init JApplet : " + commands);
-                    WebstartLauncher.launch(commands == null ? new String[0] : commands.split(" "));
+                    String commands = getParameter("commands"); //$NON-NLS-1$
+                    System.out.println("WebstartLauncher init JApplet : " + commands); //$NON-NLS-1$
+                    WebstartLauncher.launch(commands == null ? new String[0] : commands.split(" ")); //$NON-NLS-1$
 
                 } catch (Exception e) {
                     e.printStackTrace();

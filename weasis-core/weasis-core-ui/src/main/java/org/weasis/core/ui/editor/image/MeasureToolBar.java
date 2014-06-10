@@ -84,49 +84,49 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
     static {
         WProperties p = BundleTools.SYSTEM_PREFERENCES;
-        if (p.getBooleanProperty("weasis.measure.selection", true)) {
+        if (p.getBooleanProperty("weasis.measure.selection", true)) { //$NON-NLS-1$
             graphicList.add(selectionGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.line", true)) {
+        if (p.getBooleanProperty("weasis.measure.line", true)) { //$NON-NLS-1$
             graphicList.add(lineGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.polyline", true)) {
+        if (p.getBooleanProperty("weasis.measure.polyline", true)) { //$NON-NLS-1$
             graphicList.add(polylineGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.rectangle", true)) {
+        if (p.getBooleanProperty("weasis.measure.rectangle", true)) { //$NON-NLS-1$
             graphicList.add(rectangleGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.ellipse", true)) {
+        if (p.getBooleanProperty("weasis.measure.ellipse", true)) { //$NON-NLS-1$
             graphicList.add(ellipseGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.threeptcircle", true)) {
+        if (p.getBooleanProperty("weasis.measure.threeptcircle", true)) { //$NON-NLS-1$
             graphicList.add(threePtCircleGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.polygon", true)) {
+        if (p.getBooleanProperty("weasis.measure.polygon", true)) { //$NON-NLS-1$
             graphicList.add(polygonGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.perpendicular", true)) {
+        if (p.getBooleanProperty("weasis.measure.perpendicular", true)) { //$NON-NLS-1$
             graphicList.add(perpendicularToolGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.parallele", true)) {
+        if (p.getBooleanProperty("weasis.measure.parallele", true)) { //$NON-NLS-1$
             graphicList.add(parallelLineGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.angle", true)) {
+        if (p.getBooleanProperty("weasis.measure.angle", true)) { //$NON-NLS-1$
             graphicList.add(angleToolGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.openangle", true)) {
+        if (p.getBooleanProperty("weasis.measure.openangle", true)) { //$NON-NLS-1$
             graphicList.add(openAngleToolGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.fourptangle", true)) {
+        if (p.getBooleanProperty("weasis.measure.fourptangle", true)) { //$NON-NLS-1$
             graphicList.add(fourPointsAngleToolGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.cobbangle", true)) {
+        if (p.getBooleanProperty("weasis.measure.cobbangle", true)) { //$NON-NLS-1$
             graphicList.add(cobbAngleToolGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.pixelinfo", true)) {
+        if (p.getBooleanProperty("weasis.measure.pixelinfo", true)) { //$NON-NLS-1$
             graphicList.add(pixelInfoGraphic);
         }
-        if (p.getBooleanProperty("weasis.measure.textGrahic", true)) {
+        if (p.getBooleanProperty("weasis.measure.textGrahic", true)) { //$NON-NLS-1$
             graphicList.add(textGrahic);
         }
 

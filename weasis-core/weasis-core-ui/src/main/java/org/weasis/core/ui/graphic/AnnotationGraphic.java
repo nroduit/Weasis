@@ -63,11 +63,11 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         boolean labelVisible) throws InvalidShapeException {
         super(2, paintColor, lineThickness, labelVisible, false);
         if (ptBox == null) {
-            throw new InvalidShapeException("ptBox cannot be null!");
+            throw new InvalidShapeException("ptBox cannot be null!"); //$NON-NLS-1$
         }
         setHandlePointList(ptAnchoir, ptBox);
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn");
+            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
         }
         buildShape(null);
     }
@@ -85,7 +85,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointTotalNumber != 2) {
-            throw new InvalidShapeException("Not a valid AnnotationGraphic!");
+            throw new InvalidShapeException("Not a valid AnnotationGraphic!"); //$NON-NLS-1$
         }
         this.labelStringArray = labelStringArray;
         buildShape(null);
@@ -160,7 +160,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     protected String getInitialText(DefaultView2d view) {
-        return "Text box";
+        return Messages.getString("AnnotationGraphic.text_box"); //$NON-NLS-1$
     }
 
     @Override

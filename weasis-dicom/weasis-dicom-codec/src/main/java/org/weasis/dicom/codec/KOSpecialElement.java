@@ -173,7 +173,7 @@ public class KOSpecialElement extends DicomSpecialElement {
                         for (SOPInstanceReferenceAndMAC sopRef : referencedSOPInstanceSequence) {
                             String SOPInstanceUID = sopRef.getReferencedSOPInstanceUID();
 
-                            if (SOPInstanceUID == null || SOPInstanceUID.equals("")) {
+                            if (SOPInstanceUID == null || SOPInstanceUID.equals("")) { //$NON-NLS-1$
                                 continue;
                             }
 

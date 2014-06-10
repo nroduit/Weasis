@@ -85,7 +85,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
         throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
         if (handlePointTotalNumber < 4) {
-            throw new InvalidShapeException("Not a valid OpenAngleToolGraphic!");
+            throw new InvalidShapeException("Not a valid OpenAngleToolGraphic!"); //$NON-NLS-1$
         }
         buildShape(null);
     }

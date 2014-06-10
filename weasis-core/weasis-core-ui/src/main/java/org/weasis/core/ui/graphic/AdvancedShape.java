@@ -31,7 +31,7 @@ public class AdvancedShape implements Shape {
 
     public AdvancedShape(BasicGraphic graphic, int initialShapeNumber) {
         if (graphic == null) {
-            throw new IllegalArgumentException("Graphic cannot be null!");
+            throw new IllegalArgumentException("Graphic cannot be null!"); //$NON-NLS-1$
         }
         shapeList = new ArrayList<BasicShape>(initialShapeNumber);
         this.graphic = graphic;

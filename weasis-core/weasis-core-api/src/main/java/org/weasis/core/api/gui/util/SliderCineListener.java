@@ -20,6 +20,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.util.StringUtil;
 
 public abstract class SliderCineListener extends SliderChangeListener {
     public enum TIME {
@@ -62,14 +63,14 @@ public abstract class SliderCineListener extends SliderChangeListener {
         JPanel panel = (JPanel) slider.getParent();
         int rate = getCurrentCineRate();
         StringBuilder buffer = new StringBuilder(Messages.getString("SliderCineListener.img")); //$NON-NLS-1$
-        buffer.append(' ');
+        buffer.append(StringUtil.COLON_AND_SPACE);
         buffer.append(getValueToDisplay());
 
         if (slider.isdisplayValueInTitle() && panel != null && panel.getBorder() instanceof TitledBorder) {
             if (rate > 0) {
                 buffer.append(" - "); //$NON-NLS-1$
                 buffer.append(Messages.getString("SliderCineListener.cine")); //$NON-NLS-1$
-                buffer.append(' ');
+                buffer.append(StringUtil.COLON_AND_SPACE);
                 buffer.append(rate);
                 if (TIME.second.equals(time)) {
                     buffer.append(Messages.getString("SliderCineListener.fps")); //$NON-NLS-1$

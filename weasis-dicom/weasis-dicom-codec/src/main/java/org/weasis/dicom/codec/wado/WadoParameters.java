@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.StringUtil;
 
 public class WadoParameters {
 
@@ -53,7 +54,7 @@ public class WadoParameters {
         this.webLogin = webLogin == null ? null : webLogin.trim();
         this.requireOnlySOPInstanceUID = requireOnlySOPInstanceUID;
         this.additionnalParameters = additionnalParameters == null ? "" : additionnalParameters; //$NON-NLS-1$
-        if (overrideDicomTagsList != null && !"".equals(overrideDicomTagsList.trim())) { //$NON-NLS-1$
+        if (StringUtil.hasText(overrideDicomTagsList)) { //$NON-NLS-1$
             String[] val = overrideDicomTagsList.split(","); //$NON-NLS-1$
             overrideDicomTagIDList = new int[val.length];
             for (int i = 0; i < val.length; i++) {

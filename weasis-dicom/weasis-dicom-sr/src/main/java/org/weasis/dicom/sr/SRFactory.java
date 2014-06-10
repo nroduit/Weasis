@@ -26,7 +26,7 @@ import org.weasis.dicom.explorer.DicomModel;
 @Property(name = "service.name", value = "DICOM SR Viewer")
 public class SRFactory implements SeriesViewerFactory {
 
-    public static final String NAME = "DICOM SR Viewer";
+    public static final String NAME = Messages.getString("SRFactory.viewer"); //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MediaElement.class.getResource("/icon/22x22/text-x-generic.png")); //$NON-NLS-1$
 
     public SRFactory() {
@@ -44,7 +44,7 @@ public class SRFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return "DICOM Structured Report";
+        return Messages.getString("SRFactory.sr"); //$NON-NLS-1$
     }
 
     @Override

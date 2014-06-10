@@ -39,6 +39,7 @@ public class ChainPoint implements Comparable<ChainPoint> {
         this.y = y;
     }
 
+    @Override
     public int compareTo(ChainPoint anotherPoint) {
         return (this.y < anotherPoint.y ? -1 : (this.y == anotherPoint.y ? (this.x < anotherPoint.x ? -1
             : (this.x == anotherPoint.x ? 0 : 1)) : 1));

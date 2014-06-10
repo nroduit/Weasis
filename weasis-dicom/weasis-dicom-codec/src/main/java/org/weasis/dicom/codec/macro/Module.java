@@ -11,7 +11,7 @@ public class Module {
 
     public Module(Attributes dcmItems) {
         if (dcmItems == null) {
-            throw new NullPointerException("dcmItems");
+            throw new NullPointerException("dcmItems"); //$NON-NLS-1$
         }
         this.dcmItems = dcmItems;
     }

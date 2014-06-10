@@ -90,7 +90,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     String desc = e.getDescription();
                     URL url = e.getURL();
-                    if (url == null && desc != null && desc.startsWith("#")) {
+                    if (url == null && desc != null && desc.startsWith("#")) { //$NON-NLS-1$
                         htmlPanel.scrollToReference(desc.substring(1));
                     } else {
                         openRelatedSeries(e.getURL().getHost());
@@ -223,7 +223,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                                 props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
                                 props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
                                 props.put(ViewerPluginBuilder.ICON,
-                                    new ImageIcon(model.getClass().getResource("/icon/16x16/key-images.png")));
+                                    new ImageIcon(model.getClass().getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
                                 props.put(ViewerPluginBuilder.UID, uid);
                                 List<MediaSeries<? extends MediaElement<?>>> seriesList =
                                     new ArrayList<MediaSeries<? extends MediaElement<?>>>();
@@ -236,7 +236,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                         }
                     } else {
                         // TODO try to download if IHE IID has been configured
-                        JOptionPane.showMessageDialog(this, "Cannot find the image!", "Open Image",
+                        JOptionPane.showMessageDialog(this, Messages.getString("SRView.msg"), Messages.getString("SRView.open"), //$NON-NLS-1$ //$NON-NLS-2$
                             JOptionPane.WARNING_MESSAGE);
                     }
 

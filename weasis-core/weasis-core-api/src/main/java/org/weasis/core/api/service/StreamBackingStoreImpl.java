@@ -59,6 +59,7 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
     /**
      * @see org.apache.felix.prefs.BackingStore#store(org.apache.felix.prefs.PreferencesImpl)
      */
+    @Override
     public void store(PreferencesImpl prefs) throws BackingStoreException {
         // do we need to store at all?
         if (!this.hasChanges(prefs)) {
@@ -118,6 +119,7 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
     /**
      * @see org.apache.felix.prefs.BackingStore#update(org.apache.felix.prefs.PreferencesImpl)
      */
+    @Override
     public void update(PreferencesImpl prefs) throws BackingStoreException {
         // final PreferencesImpl root = this.load(prefs.getBackingStoreManager(), prefs.getDescription());
         // if (root != null) {

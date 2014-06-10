@@ -29,6 +29,7 @@ import javax.swing.event.ChangeListener;
 
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.StringUtil;
 
 public class Contrast extends JPanel {
 
@@ -39,9 +40,9 @@ public class Contrast extends JPanel {
     private JSlider jSliderContrast = new JSlider(-127, 127, 0);
     private JSlider jSliderLum = new JSlider(-127, 127, 0);
     private JSlider jSliderGamma = new JSlider(1, 200, 100);
-    private TitledBorder title1 = new TitledBorder(Messages.getString("Contrast.contrast")); //$NON-NLS-1$
-    private TitledBorder title2 = new TitledBorder(Messages.getString("Contrast.lum")); //$NON-NLS-1$
-    private TitledBorder title3 = new TitledBorder(Messages.getString("Contrast.gamma")); //$NON-NLS-1$
+    private TitledBorder title1 = new TitledBorder(Messages.getString("Contrast.contrast") + StringUtil.COLON); //$NON-NLS-1$
+    private TitledBorder title2 = new TitledBorder(Messages.getString("Contrast.lum" + StringUtil.COLON)); //$NON-NLS-1$
+    private TitledBorder title3 = new TitledBorder(Messages.getString("Contrast.gamma" + StringUtil.COLON)); //$NON-NLS-1$
     private JButton jButtonReset = new JButton();
 
     private ChangeListener sliderListener = new ChangeListener() {

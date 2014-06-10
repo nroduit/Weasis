@@ -30,6 +30,7 @@ import javax.swing.JSpinner;
 import javax.swing.border.EmptyBorder;
 
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 
 public abstract class PropertiesDialog extends JDialog {
@@ -83,8 +84,8 @@ public abstract class PropertiesDialog extends JDialog {
 
         jPanel1.setLayout(gridBagLayout1);
         JMVUtils.setNumberModel(spinnerLineWidth, 1, 1, 8, 1);
-        jLabelLineWidth.setText(Messages.getString("PropertiesDialog.line_width")); //$NON-NLS-1$
-        jLabelLineColor.setText(Messages.getString("PropertiesDialog.line_color")); //$NON-NLS-1$
+        jLabelLineWidth.setText(Messages.getString("PropertiesDialog.line_width") + StringUtil.COLON); //$NON-NLS-1$
+        jLabelLineColor.setText(Messages.getString("PropertiesDialog.line_color") + StringUtil.COLON); //$NON-NLS-1$
         jButtonColor.setText(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
 
         jButtonColor.addActionListener(new java.awt.event.ActionListener() {

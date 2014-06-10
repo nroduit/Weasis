@@ -149,7 +149,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         try {
             g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0, 0));
         } catch (Throwable t) {
-            if ("java.io.IOException: closed".equals(t.getMessage())) {
+            if ("java.io.IOException: closed".equals(t.getMessage())) { //$NON-NLS-1$
                 // Issue when the stream has been closed of a tiled image (problem that readAsRendered do not read data
                 // immediately)
                 if (sourceImage.isImageInCache()) {
@@ -159,7 +159,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
                 updateDisplayOperations();
             }
             // When outOfMemory exception or when tiles are not available anymore (file stream closed)
-            AuditLog.logError(LOGGER, t, "Draw rendered image error:");
+            AuditLog.logError(LOGGER, t, "Draw rendered image error:"); //$NON-NLS-1$
             System.gc();
             try {
                 // Let garbage collection

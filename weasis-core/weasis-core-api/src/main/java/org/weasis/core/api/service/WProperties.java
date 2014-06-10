@@ -60,7 +60,7 @@ public class WProperties extends Properties {
         if (isKeyValid(key)) {
             String value = System.getProperty(key, null);
             if (value == null) {
-                value = context.getProperty("def." + key);
+                value = context.getProperty("def." + key); //$NON-NLS-1$
                 if (value == null) {
                     value = defaultValue;
                 }

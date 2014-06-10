@@ -40,7 +40,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 
 public class LoadLocalDicom extends ExplorerTask {
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(LoadLocalDicom.class);
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadLocalDicom.class);
     private final File[] files;
     private final DicomModel dicomModel;
     private final boolean recursive;
@@ -69,11 +69,7 @@ public class LoadLocalDicom extends ExplorerTask {
     protected void done() {
         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
             this));
-        writeInfo(Messages.getString("LoadLocalDicom.end")); //$NON-NLS-1$
-    }
-
-    private void writeInfo(String text) {
-        log.info(text);
+        LOGGER.info("End of loading DICOM locally"); //$NON-NLS-1$
     }
 
     public void addSelectionAndnotify(File[] file, boolean firstLevel) {
@@ -102,7 +98,7 @@ public class LoadLocalDicom extends ExplorerTask {
                                 thumbs.add(t);
                             }
 
-                            File gpxFile = new File(file[i].getPath() + ".xml");
+                            File gpxFile = new File(file[i].getPath() + ".xml"); //$NON-NLS-1$
 
                             if (gpxFile.canRead()) {
                                 try {
@@ -146,7 +142,7 @@ public class LoadLocalDicom extends ExplorerTask {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             dicomReader.writeMetaData(patient);
             dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
-            writeInfo(Messages.getString("LoadLocalDicom.add_pat") + " " + patient); //$NON-NLS-1$ //$NON-NLS-2$
+            LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
         }
 
         String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);

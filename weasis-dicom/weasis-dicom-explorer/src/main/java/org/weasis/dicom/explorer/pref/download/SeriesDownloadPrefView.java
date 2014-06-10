@@ -20,18 +20,21 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.explorer.Messages;
 
 public class SeriesDownloadPrefView extends AbstractItemDialogPage {
-    public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately";
+    public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately"; //$NON-NLS-1$
 
     private JCheckBox downloadImmediatelyCheckbox = new JCheckBox(
-        Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox"));
+        Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox")); //$NON-NLS-1$
 
     public SeriesDownloadPrefView() {
-        super(Messages.getString("SeriesDownloadPrefView.title"));
+        super(Messages.getString("SeriesDownloadPrefView.title")); //$NON-NLS-1$
         setBorder(new EmptyBorder(15, 10, 10, 10));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         JPanel panel = new JPanel();
-        panel.setBorder(new TitledBorder(null, "Download", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        panel
+            .setBorder(new TitledBorder(
+                null,
+                org.weasis.core.ui.Messages.getString("SeriesDownloadPrefView.download"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
         add(panel);
         GridBagLayout gbl_panel = new GridBagLayout();
         panel.setLayout(gbl_panel);

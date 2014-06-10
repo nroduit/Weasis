@@ -85,7 +85,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
         @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointTotalNumber != 8) {
-            throw new InvalidShapeException("Not a valid FourPointsAngleToolGraphic!");
+            throw new InvalidShapeException("Not a valid FourPointsAngleToolGraphic!"); //$NON-NLS-1$
         }
         buildShape(null);
     }

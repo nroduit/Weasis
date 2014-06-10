@@ -16,8 +16,6 @@ import java.awt.Image;
 
 import javax.swing.ImageIcon;
 
-import org.weasis.core.api.Messages;
-
 public final class ImageSectionIcon implements AnimatedIconStatic {
 
     private final int dwidth;
@@ -29,6 +27,7 @@ public final class ImageSectionIcon implements AnimatedIconStatic {
     private final int highEnd;
     private int num = 0;
 
+    @Override
     public String getName() {
         return "ImageSectionIcon"; //$NON-NLS-1$
     }
@@ -44,24 +43,29 @@ public final class ImageSectionIcon implements AnimatedIconStatic {
         this.highEnd = highEnd;
     }
 
+    @Override
     public int getIconWidth() {
         return this.width;
     }
 
+    @Override
     public int getIconHeight() {
         return this.height;
     }
 
+    @Override
     public void animate() {
         if (++this.num == this.highEnd) {
             this.num = this.lowEnd + 1;
         }
     }
 
+    @Override
     public void reset() {
         this.num = this.lowEnd;
     }
 
+    @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
         int nx = (this.num % this.dwidth) * this.width;
         int ny = (this.num / this.dwidth) * this.height;

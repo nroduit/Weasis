@@ -69,7 +69,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public PolygonGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
-        super(AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible);
+        super(BasicGraphic.UNDEFINED, paintColor, lineThickness, labelVisible);
     }
 
     public PolygonGraphic(List<Point2D.Double> handlePointList, Color paintColor, float lineThickness,
@@ -85,7 +85,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
         @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointList == null || handlePointList.size() < 3) {
-            throw new InvalidShapeException("Polygon must have at least 3 points!");
+            throw new InvalidShapeException("Polygon must have at least 3 points!"); //$NON-NLS-1$
         }
         buildShape(null);
         // Do not draw points any more
@@ -112,7 +112,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                 this.handlePointTotalNumber = handlePointList.size();
             }
             if (!isShapeValid() || handlePointList.size() < 3) {
-                throw new InvalidShapeException("This Polygon cannot be drawn");
+                throw new InvalidShapeException("This Polygon cannot be drawn"); //$NON-NLS-1$
             }
             buildShape(null);
         }

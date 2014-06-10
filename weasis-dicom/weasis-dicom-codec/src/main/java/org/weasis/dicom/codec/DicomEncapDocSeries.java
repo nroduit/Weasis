@@ -28,6 +28,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
 
 public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements FileExtractor {
 
@@ -92,7 +93,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagW.StudyDescription); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
         toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$ 
-        toolTips.append(' ');
+        toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(TagW.formatDateTime((Date) getTagValue(TagW.SeriesDate)));
         toolTips.append("<br>"); //$NON-NLS-1$ 
         toolTips.append("</html>"); //$NON-NLS-1$

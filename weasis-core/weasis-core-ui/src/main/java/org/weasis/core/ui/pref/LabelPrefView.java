@@ -34,6 +34,7 @@ import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -79,8 +80,8 @@ public class LabelPrefView extends AbstractItemDialogPage {
         this.setLayout(new BorderLayout());
         this.add(jPanel2, BorderLayout.CENTER);
         jPanel2.setLayout(gridBagLayout1);
-        jLabelFont.setText(Messages.getString("LabelPrefView.name")); //$NON-NLS-1$
-        jLabelSize.setText(Messages.getString("LabelPrefView.size")); //$NON-NLS-1$
+        jLabelFont.setText(Messages.getString("LabelPrefView.name") + StringUtil.COLON); //$NON-NLS-1$
+        jLabelSize.setText(Messages.getString("LabelPrefView.size") + StringUtil.COLON); //$NON-NLS-1$
         jPanel2.setBorder(new TitledBorder(Messages.getString("LabelPrefView.font"))); //$NON-NLS-1$
         jCheckBoxBold.setText(Messages.getString("LabelPrefView.bold")); //$NON-NLS-1$
         jCheckBoxItalic.setText(Messages.getString("LabelPrefView.italic")); //$NON-NLS-1$
@@ -153,8 +154,8 @@ public class LabelPrefView extends AbstractItemDialogPage {
             }
         }
         jComboSize.setSelectedIndex(index);
-        jComboName.setSelectedItem("default".equals(viewSetting.getFontName()) ? Messages
-            .getString("LabelPrefView.default") : viewSetting.getFontName());
+        jComboName.setSelectedItem("default".equals(viewSetting.getFontName()) ? Messages //$NON-NLS-1$
+            .getString("LabelPrefView.default") : viewSetting.getFontName()); //$NON-NLS-1$
 
     }
 
@@ -200,7 +201,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         }
         String name = jComboName.getSelectedItem().toString();
 
-        viewSetting.setFontName(Messages.getString("LabelPrefView.default").equals(name) ? "default" : name);
+        viewSetting.setFontName(Messages.getString("LabelPrefView.default").equals(name) ? "default" : name); //$NON-NLS-1$ //$NON-NLS-2$
         viewSetting.setFontSize(size);
         viewSetting.setFontType(style);
 

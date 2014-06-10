@@ -72,7 +72,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
         @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointTotalNumber != 3) {
-            throw new InvalidShapeException("Not a valid AngleToolGraphic!");
+            throw new InvalidShapeException("Not a valid AngleToolGraphic!"); //$NON-NLS-1$
         }
         buildShape(null);
     }

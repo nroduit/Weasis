@@ -101,6 +101,7 @@ public class RectifyUShortToShortDataDescriptor extends OperationDescriptorImpl 
         return true;
     }
 
+    @Override
     public RenderedImage create(ParameterBlock args, RenderingHints renderHints) {
         // Get ImageLayout from renderHints if any.
         RenderedImage src = args.getRenderedSource(0);

@@ -56,7 +56,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public PolylineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
-        super(AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
+        super(BasicGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
     }
 
     public PolylineGraphic(List<Point2D.Double> handlePointList, Color color, float f, boolean labelVisible)
@@ -70,9 +70,9 @@ public class PolylineGraphic extends AbstractDragGraphic {
         @Element(name = "paint", required = false) Paint paintColor,
         @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible)
         throws InvalidShapeException {
-        super(handlePointList, AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
+        super(handlePointList, BasicGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
         if (handlePointList == null || handlePointList.size() < 2) {
-            throw new InvalidShapeException("Polyline must have at least 2 points!");
+            throw new InvalidShapeException("Polyline must have at least 2 points!"); //$NON-NLS-1$
         }
         buildShape(null);
         // Do not draw points any more
@@ -96,7 +96,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
                 this.handlePointTotalNumber = handlePointList.size();
             }
             if (!isShapeValid() || handlePointList.size() < 2) {
-                throw new IllegalStateException("This Polyline cannot be drawn");
+                throw new IllegalStateException("This Polyline cannot be drawn"); //$NON-NLS-1$
             }
             buildShape(null);
         }

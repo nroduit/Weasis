@@ -265,10 +265,10 @@ public class DownloadManager {
             if (urlConnection instanceof HttpURLConnection) {
                 HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
 
-                LOGGER.debug("HttpURLConnection previous ConnectTimeout : {} sec",
+                LOGGER.debug("HttpURLConnection previous ConnectTimeout : {} sec", //$NON-NLS-1$
                     TimeUnit.MILLISECONDS.toSeconds(httpURLConnection.getConnectTimeout()));
                 httpURLConnection.setConnectTimeout(5000);
-                LOGGER.debug("HttpURLConnection new ConnectTimeout : {} sec",
+                LOGGER.debug("HttpURLConnection new ConnectTimeout : {} sec", //$NON-NLS-1$
                     TimeUnit.MILLISECONDS.toSeconds(httpURLConnection.getConnectTimeout()));
 
                 int responseCode = httpURLConnection.getResponseCode();
@@ -279,7 +279,7 @@ public class DownloadManager {
                     if (errorStream != null) {
                         BufferedReader reader = null;
                         try {
-                            reader = new BufferedReader(new InputStreamReader(errorStream, "UTF-8"));
+                            reader = new BufferedReader(new InputStreamReader(errorStream, "UTF-8")); //$NON-NLS-1$
                             StringBuilder stringBuilder = new StringBuilder();
                             String line;
                             while ((line = reader.readLine()) != null) {
@@ -287,8 +287,8 @@ public class DownloadManager {
                             }
                             String errorDescription = stringBuilder.toString();
                             if (StringUtil.hasText(errorDescription)) {
-                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " ["
-                                    + httpURLConnection.getResponseMessage() + "]", errorDescription);
+                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " [" //$NON-NLS-1$ //$NON-NLS-2$
+                                    + httpURLConnection.getResponseMessage() + "]", errorDescription); //$NON-NLS-1$
                             }
                         } finally {
                             if (reader != null) {
@@ -372,15 +372,15 @@ public class DownloadManager {
                                             String httpvalue = getTagAttribute(xmler, "value", null); //$NON-NLS-1$
                                             wadoParameters.addHttpTag(httpkey, httpvalue);
                                             // <Message> tag
-                                        } else if ("Message".equals(xmler.getName().getLocalPart())) {
+                                        } else if ("Message".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
                                             final String title = getTagAttribute(xmler, "title", null); //$NON-NLS-1$
                                             final String message = getTagAttribute(xmler, "description", null); //$NON-NLS-1$
                                             if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
-                                                String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$
+                                                String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
                                                 final int messageType =
-                                                    "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE : "INFO"
+                                                    "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE : "INFO" //$NON-NLS-1$ //$NON-NLS-2$
                                                         .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
-                                                        : JOptionPane.WARNING_MESSAGE;
+                                                            : JOptionPane.WARNING_MESSAGE;
 
                                                 GuiExecutor.instance().execute(new Runnable() {
 
@@ -444,7 +444,7 @@ public class DownloadManager {
             }
 
         } catch (Throwable t) {
-            final String message = "Error on loading wadoXML from : " + uri.toString();
+            final String message = "Error on loading wadoXML from : " + uri.toString(); //$NON-NLS-1$
             LOGGER.error(message);
 
             if (LOGGER.isDebugEnabled()) {
@@ -453,7 +453,7 @@ public class DownloadManager {
                 LOGGER.error(t.toString());
             }
 
-            final String title = "LOADING ERROR";
+            final String title = "LOADING ERROR"; //$NON-NLS-1$
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
             GuiExecutor.instance().execute(new Runnable() {

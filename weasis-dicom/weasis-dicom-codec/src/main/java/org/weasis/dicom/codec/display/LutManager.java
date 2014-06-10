@@ -42,7 +42,7 @@ public class LutManager {
             for (int i = 0; i < files.length; i++) {
                 if (files[i].isFile() && files[i].canRead()) {
                     try {
-                        scan = new Scanner(files[i], "UTF-8");
+                        scan = new Scanner(files[i], "UTF-8"); //$NON-NLS-1$
                         byte[][] lut = readLutFile(new Scanner(files[i], "UTF-8")); //$NON-NLS-1$
                         luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut, ByteLutCollection
                             .invert(lut)));

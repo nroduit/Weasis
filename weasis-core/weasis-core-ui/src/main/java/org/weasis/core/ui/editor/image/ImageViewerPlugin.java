@@ -56,6 +56,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
+import org.weasis.core.ui.graphic.BasicGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.pref.Monitor;
@@ -459,7 +460,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         List<AbstractDragGraphic> selGraphics = defaultView2d.getLayerModel().getSelectedDragableGraphics();
         if (selGraphics != null) {
             for (AbstractDragGraphic g : selGraphics) {
-                if (g.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
+                if (g.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
                     return;
                 }
             }
@@ -478,7 +479,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             v.removeFocusListener(v);
         }
 
-        String titleDialog = "Fullscreen view";
+        String titleDialog = Messages.getString("ImageViewerPlugin.fullscreen"); //$NON-NLS-1$
         Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
         // Handle the case when the dialog is a detached window and not the fullscreen window.
         final boolean detachedWindow = fullscreenDialog != null && !titleDialog.equals(fullscreenDialog.getTitle());

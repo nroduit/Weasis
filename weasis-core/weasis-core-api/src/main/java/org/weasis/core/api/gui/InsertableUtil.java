@@ -11,8 +11,8 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 
 public class InsertableUtil {
-    public final static String ALL_BUNDLE = "weasis";
-    public final static String ALL = "all";
+    public final static String ALL_BUNDLE = "weasis"; //$NON-NLS-1$
+    public final static String ALL = "all"; //$NON-NLS-1$
 
     private InsertableUtil() {
 
@@ -35,8 +35,8 @@ public class InsertableUtil {
         if (list != null && prefs != null && bundleName != null && componentName != null) {
             // Remove prefs of Weasis 1.x
             try {
-                if (prefs.nodeExists("toolbars")) {
-                    Preferences oldPref = prefs.node("toolbars");
+                if (prefs.nodeExists("toolbars")) { //$NON-NLS-1$
+                    Preferences oldPref = prefs.node("toolbars"); //$NON-NLS-1$
                     oldPref.removeNode();
                 }
             } catch (Exception e) {
@@ -47,7 +47,7 @@ public class InsertableUtil {
                 for (Insertable c : list) {
                     if (!Type.EMPTY.equals(c.getType())) {
                         String nodeName = getCName(c.getClass());
-                        String key = "visible";
+                        String key = "visible"; //$NON-NLS-1$
                         Preferences node = prefNode.node(nodeName);
                         String valString = node.get(key, null);
                         // If not specify, value is true
@@ -56,12 +56,12 @@ public class InsertableUtil {
                             val =
                                 getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName, nodeName,
                                     key, val);
-                        } else if (valString.equalsIgnoreCase("false")) {
+                        } else if (valString.equalsIgnoreCase("false")) { //$NON-NLS-1$
                             val = false;
                         }
                         c.setComponentEnabled(val);
 
-                        key = "cPosition";
+                        key = "cPosition"; //$NON-NLS-1$
                         valString = node.get(key, null);
                         // If not specify, value is true
                         int index = c.getComponentPosition();
@@ -91,8 +91,8 @@ public class InsertableUtil {
                     if (!Type.EMPTY.equals(c.getType())) {
                         String cname = getCName(c.getClass());
                         Preferences node = prefNode.node(cname);
-                        BundlePreferences.putBooleanPreferences(node, "visible", c.isComponentEnabled());
-                        BundlePreferences.putIntPreferences(node, "cPosition", c.getComponentPosition());
+                        BundlePreferences.putBooleanPreferences(node, "visible", c.isComponentEnabled()); //$NON-NLS-1$
+                        BundlePreferences.putIntPreferences(node, "cPosition", c.getComponentPosition()); //$NON-NLS-1$
                     }
                 }
             }
@@ -155,6 +155,6 @@ public class InsertableUtil {
         if (clazz != null) {
             return clazz.getSimpleName().toLowerCase();
         }
-        return "";
+        return ""; //$NON-NLS-1$
     }
 }

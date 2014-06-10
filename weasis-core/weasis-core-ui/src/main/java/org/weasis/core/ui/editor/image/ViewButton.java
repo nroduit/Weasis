@@ -16,7 +16,7 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
 
     public ViewButton(ShowPopup popup, Icon icon) {
         if (icon == null || popup == null) {
-            throw new IllegalArgumentException("Null parameter");
+            throw new IllegalArgumentException("Null parameter"); //$NON-NLS-1$
         }
         this.popup = popup;
         this.icon = icon;

@@ -104,6 +104,7 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -138,8 +139,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         CURRENT, BEST_FIT, PIXEL_SIZE, REAL
     };
 
-    public static final String zoomTypeCmd = "zoom.type";
-    public static final ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png"));
+    public static final String zoomTypeCmd = "zoom.type"; //$NON-NLS-1$
+    public static final ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png")); //$NON-NLS-1$
     public static final int CENTER_POINTER = 1 << 1;
     public static final int HIGHLIGHTED_POINTER = 1 << 2;
     static final Shape[] pointer;
@@ -450,7 +451,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 setImage(media);
             }
         } catch (Throwable e) {
-            AuditLog.logError(LOGGER, e, "Unexpected error:");
+            AuditLog.logError(LOGGER, e, "Unexpected error:"); //$NON-NLS-1$
             imageLayer.setImage(null, null);
             closeLens();
         } finally {
@@ -803,7 +804,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             (int) Math
                 .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) / getWidth())); //$NON-NLS-1$
         fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
-        return new Font("SansSerif", 0, fontSize);
+        return new Font("SansSerif", 0, fontSize); //$NON-NLS-1$
     }
 
     /** paint routine */
@@ -1339,7 +1340,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 Math.max(
                     oldBound.width,
                     this.getGraphics().getFontMetrics(getLayerFont())
-                        .stringWidth(Messages.getString("DefaultView2d.pix") + pixelInfo) + 4); //$NON-NLS-1$
+                        .stringWidth(Messages.getString("DefaultView2d.pix") + StringUtil.COLON_AND_SPACE + pixelInfo) + 4); //$NON-NLS-1$
             infoLayer.setPixelInfo(pixelInfo);
             repaint(oldBound);
         }

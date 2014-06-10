@@ -13,7 +13,7 @@ import org.weasis.dicom.codec.DicomSpecialElementFactory;
 public class SRElementFactory implements DicomSpecialElementFactory {
 
     public static final String SERIES_SR_MIMETYPE = "sr/dicom"; //$NON-NLS-1$
-    public static final String[] modalities = { "SR" };
+    public static final String[] modalities = { "SR" }; //$NON-NLS-1$
 
     @Override
     public String getSeriesMimeType() {

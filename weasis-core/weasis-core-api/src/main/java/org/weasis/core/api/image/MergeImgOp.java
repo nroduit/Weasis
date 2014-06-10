@@ -33,7 +33,7 @@ import com.sun.media.jai.util.ImageUtil;
 public class MergeImgOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(MergeImgOp.class);
 
-    public static final String OP_NAME = "merge.img";
+    public static final String OP_NAME = "merge.img"; //$NON-NLS-1$
 
     /**
      * The second image for merging operation (Required parameter). Note: calling clearIOCache will remove the parameter
@@ -41,14 +41,14 @@ public class MergeImgOp extends AbstractOp {
      * 
      * java.awt.image.RenderedImage value.
      */
-    public static final String INPUT_IMG2 = "op.input.img.2";
+    public static final String INPUT_IMG2 = "op.input.img.2"; //$NON-NLS-1$
 
     /**
      * Opacity of the top image (Optional parameter).
      * 
      * Integer value. Default value is 255 (highest value => no transparency).
      */
-    public static final String P_OPACITY = "opacity";
+    public static final String P_OPACITY = "opacity"; //$NON-NLS-1$
 
     public MergeImgOp() {
         setName(OP_NAME);

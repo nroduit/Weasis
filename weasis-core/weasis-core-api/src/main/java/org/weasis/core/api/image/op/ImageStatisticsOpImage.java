@@ -60,7 +60,7 @@ public class ImageStatisticsOpImage extends StatisticsOpImage {
 
     @Override
     protected String[] getStatisticsNames() {
-        return new String[] { "statistics" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        return new String[] { "statistics" }; //$NON-NLS-1$ 
     }
 
     @Override

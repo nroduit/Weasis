@@ -26,6 +26,7 @@ public class DropButtonIcon implements Icon {
         this.leftIcon = leftIcon;
     }
 
+    @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2d = (Graphics2D) g;
         leftIcon.paintIcon(c, g2d, x, y);
@@ -47,10 +48,12 @@ public class DropButtonIcon implements Icon {
 
     }
 
+    @Override
     public int getIconWidth() {
         return leftIcon.getIconWidth() + 10;
     }
 
+    @Override
     public int getIconHeight() {
         return leftIcon.getIconHeight();
     }

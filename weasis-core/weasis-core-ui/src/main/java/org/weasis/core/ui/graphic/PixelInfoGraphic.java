@@ -46,8 +46,8 @@ public class PixelInfoGraphic extends AnnotationGraphic {
 
     public static final Icon ICON = new ImageIcon(PixelInfoGraphic.class.getResource("/icon/22x22/draw-pixelinfo.png")); //$NON-NLS-1$
 
-    public static final Measurement ANCHOR_POINT_X = new Measurement("Point X", 1, true, true, false);
-    public static final Measurement ANCHOR_POINT_Y = new Measurement("Point Y", 2, true, true, false);
+    public static final Measurement ANCHOR_POINT_X = new Measurement(Messages.getString("PixelInfoGraphic.x"), 1, true, true, false); //$NON-NLS-1$
+    public static final Measurement ANCHOR_POINT_Y = new Measurement(Messages.getString("PixelInfoGraphic.y"), 2, true, true, false); //$NON-NLS-1$
 
     private PixelInfo pixelInfo;
 
@@ -202,7 +202,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
                     if (values != null) {
                         for (int i = 0; i < values.length; i++) {
                             Measurement m =
-                                new Measurement((channelNames == null || i >= channelNames.length) ? "?"
+                                new Measurement((channelNames == null || i >= channelNames.length) ? Messages.getString("PixelInfoGraphic.unknown") //$NON-NLS-1$
                                     : channelNames[i], i + 2, true, true, false);
                             measVal.add(new MeasureItem(m, values[i], pixelInfo.getPixelValueUnit()));
                         }

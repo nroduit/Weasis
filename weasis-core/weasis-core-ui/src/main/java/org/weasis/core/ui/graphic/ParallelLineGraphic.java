@@ -67,7 +67,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
         @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointTotalNumber != 6) {
-            throw new InvalidShapeException("Not a valid ParallelLineGraphic!");
+            throw new InvalidShapeException("Not a valid ParallelLineGraphic!"); //$NON-NLS-1$
         }
         buildShape(null);
     }

@@ -47,14 +47,14 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
         boolean labelVisible, Point2D centerGap, int gapSize) throws InvalidShapeException {
         super(2, paintColor, lineThickness, labelVisible, false);
         if (ptStart == null || ptEnd == null) {
-            throw new InvalidShapeException("Point2D is null!");
+            throw new InvalidShapeException("Point2D is null!"); //$NON-NLS-1$
         }
         this.gapSize = gapSize;
         this.centerGap = centerGap;
         setHandlePointList(ptStart, ptEnd);
 
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn");
+            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
         }
         buildShape(null);
     }
@@ -68,7 +68,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
         throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
         if (handlePointTotalNumber != 2) {
-            throw new InvalidShapeException("Not a valid LineWithGapGraphic!");
+            throw new InvalidShapeException("Not a valid LineWithGapGraphic!"); //$NON-NLS-1$
         }
         this.gapSize = gapSize;
         this.centerGap = centerGap;
@@ -88,7 +88,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "";
+        return ""; //$NON-NLS-1$
     }
 
     @Override

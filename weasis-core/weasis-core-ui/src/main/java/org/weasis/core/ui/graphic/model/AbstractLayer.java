@@ -38,7 +38,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     private static final long serialVersionUID = -6113490831569841167L;
 
-    public static final Identifier IMAGE = new Identifier(20, "Image");
+    public static final Identifier IMAGE = new Identifier(20, Messages.getString("AbstractLayer.image")); //$NON-NLS-1$
     public static final Identifier CROSSLINES = new Identifier(100, Messages.getString("Tools.cross"));//$NON-NLS-1$ 
     public static final Identifier ANNOTATION = new Identifier(200, Messages.getString("Tools.Anno"));//$NON-NLS-1$ 
     // public static final Identifier DRAW = new Identifier(400, "Graphic Annotation");
