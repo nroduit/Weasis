@@ -58,6 +58,7 @@ import javax.swing.LookAndFeel;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
+import javax.swing.WindowConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,6 +178,7 @@ public class WeasisWin {
         if (container == null || container instanceof JFrame) {
             JFrame jFrame = container == null ? new JFrame() : (JFrame) container;
             frame = jFrame;
+            jFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
             frame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
@@ -226,7 +228,7 @@ public class WeasisWin {
             // TODO add a message, Please wait or kill
             return false;
         }
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", true)) { //$NON-NLS-1$
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", false)) { //$NON-NLS-1$
             int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
             if (option == JOptionPane.YES_OPTION) {
                 closeAllRunnable();

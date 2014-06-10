@@ -113,8 +113,12 @@ public class JLocaleLanguage extends JComboBox implements ItemListener {
                 sortLocales();
                 addItemListener(this);
                 firePropertyChange("locale", null, locale); //$NON-NLS-1$
+                handleChange();
             }
         }
+    }
+
+    protected void handleChange() {
     }
 
 }

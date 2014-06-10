@@ -5,6 +5,7 @@ import java.awt.image.renderable.RenderedImageFactory;
 import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptorImpl;
 import javax.media.jai.OperationRegistry;
+import javax.media.jai.PlanarImage;
 import javax.media.jai.RegistryElementDescriptor;
 import javax.media.jai.registry.RIFRegistry;
 
@@ -44,6 +45,12 @@ public class JAIUtil {
      */
     public static void setJaiCacheMemoryCapacity(long tileCacheMB) {
         getJAI().getTileCache().setMemoryCapacity(tileCacheMB * 1024L * 1024L);
+    }
+
+    public static void removeCacheTiles(PlanarImage img) {
+        if (img != null) {
+            getJAI().getTileCache().removeTiles(img);
+        }
     }
 
 }

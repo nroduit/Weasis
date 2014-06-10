@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.core.ui.pref;
 
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,11 +21,12 @@ import javax.swing.JComboBox;
 
 import org.weasis.core.api.util.LocalUtil;
 
-public class JLocaleFormat extends JComboBox {
+public class JLocaleFormat extends JComboBox implements ItemListener {
 
     public JLocaleFormat() {
         super();
         sortLocales();
+        addItemListener(this);
     }
 
     private void sortLocales() {
@@ -42,17 +45,13 @@ public class JLocaleFormat extends JComboBox {
 
         JLocale dloc = null;
         for (int i = 0; i < locales.length; i++) {
-            if (locales[i].getCountry().length() > 0) {
-                JLocale val = new JLocale(locales[i]);
-                if (val.getLocale().equals(defaultLocale)) {
-                    dloc = val;
-                }
-                addItem(val);
+            JLocale val = new JLocale(locales[i]);
+            if (val.getLocale().equals(defaultLocale)) {
+                dloc = val;
             }
+            addItem(val);
         }
-        if (dloc != null) {
-            this.setSelectedItem(dloc);
-        }
+        this.setSelectedItem(dloc);
     }
 
     public void selectLocale() {
@@ -73,4 +72,27 @@ public class JLocaleFormat extends JComboBox {
         }
     }
 
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            Object item = e.getItem();
+            if (item instanceof JLocale) {
+                Locale locale = ((JLocale) item).getLocale();
+                LocalUtil.setLocaleFormat(locale.equals(Locale.getDefault()) ? null : locale);
+                handleChange();
+            }
+        }
+    }
+
+    protected void handleChange() {
+    }
+
+    public void refresh() {
+        removeItemListener(this);
+        removeAllItems();
+        sortLocales();
+        selectLocale();
+        handleChange();
+        addItemListener(this);
+    }
 }

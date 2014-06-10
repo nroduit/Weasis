@@ -149,6 +149,15 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         try {
             g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0, 0));
         } catch (Throwable t) {
+            if ("java.io.IOException: closed".equals(t.getMessage())) {
+                // Issue when the stream has been closed of a tiled image (problem that readAsRendered do not read data
+                // immediately)
+                if (sourceImage.isImageInCache()) {
+                    sourceImage.removeImageFromCache();
+                }
+                disOpManager.setFirstNode(getSourceRenderedImage());
+                updateDisplayOperations();
+            }
             // When outOfMemory exception or when tiles are not available anymore (file stream closed)
             AuditLog.logError(LOGGER, t, "Draw rendered image error:");
             System.gc();

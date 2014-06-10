@@ -68,7 +68,6 @@ import java.io.IOException;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageTypeSpecifier;
 
-
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageioimpl.common.ImageUtil;
 import com.sun.media.imageioimpl.common.SimpleRenderedImage;
@@ -369,7 +368,9 @@ public class RawRenderedImage extends SimpleRenderedImage {
                 currentTile = readSubsampledRaster((WritableRaster) currentTile);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            // Issue when the stream is closed, need to throw Error because RuntimeException is caught
+            // TODO Change JAI lib to propagate the RuntimeException
+            throw new Error(e);
         }
 
         if (currentTileGrid == null) {
