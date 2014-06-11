@@ -96,12 +96,15 @@ public class ImagePrint implements Printable {
                 pj.print(aset);
             } catch (Exception e) {
                 // check for the annoying 'Printer is not accepting job' error.
-                if (e.getMessage().indexOf(Messages.getString("ImagePrint.0")) != -1) { //$NON-NLS-1$
+                if (e.getMessage().indexOf("accepting job") != -1) { //$NON-NLS-1$
                     // recommend prompting the user at this point if they want to force it
                     // so they'll know there may be a problem.
                     int response =
-                        JOptionPane.showConfirmDialog(null, Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
-                            Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                        JOptionPane
+                            .showConfirmDialog(
+                                null,
+                                Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
+                                Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
 
                     if (response == 0) {
                         try {

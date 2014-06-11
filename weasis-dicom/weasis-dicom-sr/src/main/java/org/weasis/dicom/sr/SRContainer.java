@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -265,7 +264,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                     if (srview != null) {
                         Window parent = SwingUtilities.getWindowAncestor(SRContainer.this);
                         PreviewDialog dialog = new PreviewDialog(parent, srview.getHtmlPanel());
-                        JMVUtils.showCenterScreen(dialog, parent);
+                        dialog.setVisible(true);
                     }
                 }
             };

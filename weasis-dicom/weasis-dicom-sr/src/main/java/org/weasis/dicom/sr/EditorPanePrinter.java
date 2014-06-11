@@ -29,21 +29,18 @@ import javax.swing.text.Position;
 import javax.swing.text.View;
 
 public class EditorPanePrinter extends JPanel implements Pageable, Printable {
+    public static int PAGE_SHIFT = 20;
+
     JEditorPane sourcePane;
-    Paper paper;
+
     Insets margins;
     ArrayList<PagePanel> pages;
     int pageWidth;
     int pageHeight;
     View rootView;
-    public static int PAGE_SHIFT = 20;
     PageFormat pageFormat;
 
-    public EditorPanePrinter(JEditorPane pane, Paper paper, Insets margins) {
-        initData(pane, paper, margins);
-    }
-
-    public void initData(JEditorPane pane, Paper paper, Insets margins) {
+    public EditorPanePrinter(JEditorPane pane, PageFormat pageFormat, Insets margins) {
         JEditorPane tmpPane = new JEditorPane();
         tmpPane.setEditorKit(pane.getEditorKit());
         tmpPane.setContentType(pane.getContentType());
@@ -51,11 +48,11 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
 
         this.sourcePane = tmpPane;
 
-        this.paper = paper;
+        this.pageFormat = pageFormat;
+        Paper paper = pageFormat.getPaper();
         this.margins = margins;
         this.pageWidth = (int) paper.getWidth();
         this.pageHeight = (int) paper.getHeight();
-        pageFormat = new PageFormat();
         paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
         pageFormat.setPaper(paper);
 
@@ -205,12 +202,10 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
     @Override
     public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
         if (pageIndex < pages.size()) {
-            pageFormat.getPaper().setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
-
+            pageFormat.getPaper().setImageableArea(0, 0, pageWidth, pageHeight);
             pages.get(pageIndex).isPrinting = true;
             pages.get(pageIndex).paint(g);
             pages.get(pageIndex).isPrinting = false;
-
             return PAGE_EXISTS;
         }
 
