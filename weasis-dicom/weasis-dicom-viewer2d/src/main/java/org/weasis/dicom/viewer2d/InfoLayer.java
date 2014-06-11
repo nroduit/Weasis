@@ -319,7 +319,7 @@ public class InfoLayer implements AnnotationsLayer {
             String instance = " "; //$NON-NLS-1$
             if (dcm != null) {
                 Integer inst = (Integer) dcm.getTagValue(TagW.InstanceNumber);
-                if (inst != null && inst != 0) {
+                if (inst != null) {
                     instance = " [" + inst + "] "; //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
