@@ -657,14 +657,15 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     private void setKOSpecialElement(KOSpecialElement updatedKOSelection, Boolean enableFilter, boolean forceUpdate) {
         DefaultView2d<DicomImageElement> selectedView = getSelectedImagePane();
+
         if (updatedKOSelection != null && selectedView != null) {
             if (SynchData.Mode.Tile.equals(this.getSynchView().getSynchData().getMode())) {
-                if (forceUpdate || updatedKOSelection != null) {
-                    ActionState koSelection = selectedView.getEventManager().getAction(ActionW.KO_SELECTION);
-                    if (koSelection instanceof ComboItemListener) {
-                        ((ComboItemListener) koSelection).setSelectedItem(updatedKOSelection);
-                    }
+
+                ActionState koSelection = selectedView.getEventManager().getAction(ActionW.KO_SELECTION);
+                if (koSelection instanceof ComboItemListener) {
+                    ((ComboItemListener) koSelection).setSelectedItem(updatedKOSelection);
                 }
+
                 if (forceUpdate || enableFilter != null) {
                     ActionState koFilterAction = selectedView.getEventManager().getAction(ActionW.KO_FILTER);
                     if (koFilterAction instanceof ToggleButtonListener) {

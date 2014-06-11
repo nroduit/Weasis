@@ -583,7 +583,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void actionPerformed(boolean newSelectedState) {
                 View2d selectedViewPane = (View2d) getSelectedViewPane();
 
-                if (KOManager.setKeyObjectReference(newSelectedState, selectedViewPane) == false) {
+                if (KOManager.setKeyObjectReference(newSelectedState, selectedViewPane)) {
                     selectedViewPane.updateKOButtonVisibleState();
                     updateKeyObjectComponentsListener(selectedViewPane);
                 }
@@ -627,7 +627,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         continue;
                     }
                     // Recompute the series filter to let perform updateTileOffset() correctly.
-                    KOManager.updateKOFilter(view, selectedKO, enableFilter, -1);
+                    // KOManager.updateKOFilter(view, selectedKO, enableFilter, -1);
+                    KOManager.updateKOFilter(view, selectedKO, enableFilter, -1, false);
                 }
 
                 container.updateTileOffset();

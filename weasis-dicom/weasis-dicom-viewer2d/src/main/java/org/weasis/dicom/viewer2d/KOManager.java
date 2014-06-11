@@ -263,7 +263,9 @@ public final class KOManager {
             if (koSelection instanceof ComboItemListener) {
                 ((ComboItemListener) koSelection).setSelectedItem(validKOSelection);
             }
-        } else {
+        }
+
+        if (validKOSelection == currentSelectedKO || currentSelectedKO == null) {
             DicomImageElement currentImage = view2d.getImage();
             hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, currentImage);
 
@@ -313,6 +315,11 @@ public final class KOManager {
 
     public static void updateKOFilter(DefaultView2d<DicomImageElement> view2D, Object newSelectedKO,
         Boolean enableFilter, int imgSelectionIndex) {
+        updateKOFilter(view2D, newSelectedKO, enableFilter, imgSelectionIndex, true);
+    }
+
+    public static void updateKOFilter(DefaultView2d<DicomImageElement> view2D, Object newSelectedKO,
+        Boolean enableFilter, int imgSelectionIndex, boolean updateImage) {
 
         if (view2D instanceof View2d) {
             boolean tiledMode = imgSelectionIndex >= 0;
@@ -371,55 +378,59 @@ public final class KOManager {
             }
             view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
 
-            /*
-             * The getFrameIndex() returns a valid index for the current image displayed according to the current
-             * FILTERED_SERIES and the current SortComparator
-             */
-            int newImageIndex = view2D.getFrameIndex();
-            if (tiledMode) {
-                newImageIndex = view2D.getTileOffset() + imgSelectionIndex;
-            }
+            if (updateImage) {
 
-            if (koFilter && newImageIndex < 0) {
-                if (dicomSeries.size(sopInstanceUIDFilter) > 0 && view2D.getImage() != null) {
+                /*
+                 * The getFrameIndex() returns a valid index for the current image displayed according to the current
+                 * FILTERED_SERIES and the current SortComparator
+                 */
+                int newImageIndex = view2D.getFrameIndex();
+                if (tiledMode) {
+                    newImageIndex = view2D.getTileOffset() + imgSelectionIndex;
+                }
 
-                    double[] val = (double[]) view2D.getImage().getTagValue(TagW.SlicePosition);
-                    if (val != null) {
-                        double location = val[0] + val[1] + val[2];
-                        // Double offset = (Double) view2D.getActionValue(ActionW.STACK_OFFSET.cmd());
-                        // if (offset != null) {
-                        // location += offset;
-                        // }
-                        newImageIndex =
-                            dicomSeries.getNearestImageIndex(location, view2D.getTileOffset(), sopInstanceUIDFilter,
-                                view2D.getCurrentSortComparator());
+                if (koFilter && newImageIndex < 0) {
+                    if (dicomSeries.size(sopInstanceUIDFilter) > 0 && view2D.getImage() != null) {
+
+                        double[] val = (double[]) view2D.getImage().getTagValue(TagW.SlicePosition);
+                        if (val != null) {
+                            double location = val[0] + val[1] + val[2];
+                            // Double offset = (Double) view2D.getActionValue(ActionW.STACK_OFFSET.cmd());
+                            // if (offset != null) {
+                            // location += offset;
+                            // }
+                            newImageIndex =
+                                dicomSeries.getNearestImageIndex(location, view2D.getTileOffset(),
+                                    sopInstanceUIDFilter, view2D.getCurrentSortComparator());
+                        }
+                    } else {
+                        // If there is no more image in KO series filtered then disable the KO_FILTER
+                        sopInstanceUIDFilter = null;
+                        view2D.setActionsInView(ActionW.KO_FILTER.cmd(), false);
+                        view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
+                        newImageIndex = view2D.getFrameIndex();
+                    }
+                }
+
+                if (view2D == view2D.getEventManager().getSelectedViewPane()) {
+                    /*
+                     * Update the sliceAction action according to nearest image when the filter hides the image of the
+                     * previous state.
+                     */
+                    ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
+                    if (seqAction instanceof SliderCineListener) {
+                        SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
+                        moveTroughSliceAction.setMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter),
+                            newImageIndex + 1);
                     }
                 } else {
-                    // If there is no more image in KO series filtered then disable the KO_FILTER
-                    sopInstanceUIDFilter = null;
-                    view2D.setActionsInView(ActionW.KO_FILTER.cmd(), false);
-                    view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
-                    newImageIndex = view2D.getFrameIndex();
+                    DicomImageElement newImage =
+                        dicomSeries.getMedia(newImageIndex, sopInstanceUIDFilter, view2D.getCurrentSortComparator());
+                    if (newImage != null && !newImage.isImageAvailable()) {
+                        newImage.getImage();
+                    }
+                    ((View2d) view2D).setImage(newImage);
                 }
-            }
-
-            if (view2D == view2D.getEventManager().getSelectedViewPane()) {
-                /*
-                 * Update the sliceAction action according to nearest image when the filter hides the image of the
-                 * previous state.
-                 */
-                ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
-                if (seqAction instanceof SliderCineListener) {
-                    SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
-                    moveTroughSliceAction.setMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter), newImageIndex + 1);
-                }
-            } else {
-                DicomImageElement newImage =
-                    dicomSeries.getMedia(newImageIndex, sopInstanceUIDFilter, view2D.getCurrentSortComparator());
-                if (newImage != null && !newImage.isImageAvailable()) {
-                    newImage.getImage();
-                }
-                ((View2d) view2D).setImage(newImage);
             }
             ((View2d) view2D).updateKOButtonVisibleState();
         }
