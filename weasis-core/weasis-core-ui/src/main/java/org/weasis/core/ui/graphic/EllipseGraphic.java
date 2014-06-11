@@ -58,11 +58,11 @@ public class EllipseGraphic extends RectangleGraphic {
         throws InvalidShapeException {
         super(lineThickness, paint, labelVisible, filled);
         if (rect == null) {
-            throw new InvalidShapeException("Rectangle2D is null!");
+            throw new InvalidShapeException("Rectangle2D is null!"); //$NON-NLS-1$
         }
         setHandlePointList(rect);
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn");
+            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
         }
         buildShape(null);
     }

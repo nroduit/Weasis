@@ -14,7 +14,7 @@ public class LocalUtil {
 
     public static String localeToText(Locale value) {
         if (value == null) {
-            return "en_US";
+            return "en_US"; //$NON-NLS-1$
         }
         return value.toString();
     }
@@ -23,25 +23,25 @@ public class LocalUtil {
         if (!StringUtil.hasText(value)) {
             return Locale.US;
         }
-        String[] val = value.split("_", 3);
-        String language = val.length > 0 ? val[0] : "";
-        String country = val.length > 1 ? val[1] : "";
-        String variant = val.length > 2 ? val[2] : "";
+        String[] val = value.split("_", 3); //$NON-NLS-1$
+        String language = val.length > 0 ? val[0] : ""; //$NON-NLS-1$
+        String country = val.length > 1 ? val[1] : ""; //$NON-NLS-1$
+        String variant = val.length > 2 ? val[2] : ""; //$NON-NLS-1$
 
         return new Locale(language, country, variant);
     }
 
     public static Locale getSystemLocale() {
-        String language = System.getProperty("user.language", "en");
-        String country = System.getProperty("user.country", "US");
-        String variant = System.getProperty("user.variant", "");
+        String language = System.getProperty("user.language", "en"); //$NON-NLS-1$ //$NON-NLS-2$
+        String country = System.getProperty("user.country", "US"); //$NON-NLS-1$ //$NON-NLS-2$
+        String variant = System.getProperty("user.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
         return new Locale(language, country, variant);
     }
 
     public static Locale getLocaleFormat() {
         Locale l = LOCALE_FORMAT;
         if (l == null) {
-            String code = BundleTools.SYSTEM_PREFERENCES.getProperty("locale.format.code");
+            String code = BundleTools.SYSTEM_PREFERENCES.getProperty("locale.format.code"); //$NON-NLS-1$
             if (StringUtil.hasLength(code))
                 l = LocalUtil.textToLocale(code);
         }
@@ -52,9 +52,9 @@ public class LocalUtil {
 
     public static void setLocaleFormat(Locale value) {
         if (value == null) {
-            BundleTools.SYSTEM_PREFERENCES.remove("locale.format.code");
+            BundleTools.SYSTEM_PREFERENCES.remove("locale.format.code"); //$NON-NLS-1$
         } else {
-            BundleTools.SYSTEM_PREFERENCES.put("locale.format.code", LocalUtil.localeToText(value));
+            BundleTools.SYSTEM_PREFERENCES.put("locale.format.code", LocalUtil.localeToText(value)); //$NON-NLS-1$
         }
         LOCALE_FORMAT = value;
     }

@@ -171,7 +171,7 @@ public class DicomImageElement extends ImageElement {
 
     public boolean isPhotometricInterpretationInverse() {
         String prLUTShape = (String) getTagValue(TagW.PresentationLUTShape);
-        return prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1"
+        return prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1" //$NON-NLS-1$ //$NON-NLS-2$
             .equalsIgnoreCase(getPhotometricInterpretation());
     }
 
@@ -342,10 +342,10 @@ public class DicomImageElement extends ImageElement {
                     // Remove MLut as it cannot be used.
                     tags.remove(TagW.ModalityLUTData);
                     LOGGER
-                        .warn("Pixel values doesn't match to Modality LUT sequence table. So the Modality LUT is not applied.");
+                        .warn("Pixel values doesn't match to Modality LUT sequence table. So the Modality LUT is not applied."); //$NON-NLS-1$
                 }
             } else {
-                LOGGER.warn("Cannot apply Modality LUT sequence and Pixel Padding");
+                LOGGER.warn("Cannot apply Modality LUT sequence and Pixel Padding"); //$NON-NLS-1$
             }
         }
         boolean modSeqLUT = mLUTSeq != null;

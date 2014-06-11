@@ -17,7 +17,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.TransferHandler;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.media.data.TagW;
 
 public abstract class InfoViewListPanel extends JPanel {

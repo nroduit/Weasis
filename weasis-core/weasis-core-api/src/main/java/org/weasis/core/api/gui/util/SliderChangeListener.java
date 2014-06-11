@@ -26,6 +26,7 @@ import javax.swing.event.ChangeListener;
 
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
 
 public abstract class SliderChangeListener extends MouseActionAdapter implements ChangeListener, ActionState {
 
@@ -226,7 +227,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     public void updateSliderProoperties(JSliderW slider) {
         JPanel panel = (JPanel) slider.getParent();
 
-        String result = basicState.getActionW().getTitle() + ": " + getValueToDisplay(); //$NON-NLS-1$
+        String result = basicState.getActionW().getTitle() + StringUtil.COLON_AND_SPACE + getValueToDisplay(); 
         if (slider.isdisplayValueInTitle() && panel != null && panel.getBorder() instanceof TitledBorder) {
             ((TitledBorder) panel.getBorder()).setTitle(result);
             panel.repaint();

@@ -127,7 +127,7 @@ public class Thumbnail extends JLabel {
                     type = Messages.getString("Thumbnail.audio"); //$NON-NLS-1$
                     icon = MimeInspector.audioIcon;
                 } else if (mime.equals("sr/dicom")) { //$NON-NLS-1$
-                    type = "Structured Report";
+                    type = Messages.getString("Thumbnail.dicom_sr"); //$NON-NLS-1$
                     icon = MimeInspector.textIcon;
                 } else if (mime.startsWith("txt")) { //$NON-NLS-1$
                     type = Messages.getString("Thumbnail.text"); //$NON-NLS-1$
@@ -226,7 +226,7 @@ public class Thumbnail extends JLabel {
                                                 thumbnailPath =
                                                     File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                         } catch (IOException e) {
-                                            AuditLog.logError(LOGGER, e, "Cannot create file for thumbnail!");
+                                            AuditLog.logError(LOGGER, e, "Cannot create file for thumbnail!"); //$NON-NLS-1$
                                         }
                                         try {
                                             BufferedImage thumbnail = null;

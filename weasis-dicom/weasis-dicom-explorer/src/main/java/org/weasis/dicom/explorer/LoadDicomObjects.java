@@ -41,7 +41,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 
 public class LoadDicomObjects extends ExplorerTask {
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(LoadDicomObjects.class);
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadDicomObjects.class);
     private final Attributes[] dicomObjectsToLoad;
     private final DicomModel dicomModel;
 
@@ -70,11 +70,7 @@ public class LoadDicomObjects extends ExplorerTask {
     protected void done() {
         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
             this));
-        writeInfo(Messages.getString("LoadDicomObjects.end")); //$NON-NLS-1$
-    }
-
-    private void writeInfo(String text) {
-        log.info(text);
+        LOGGER.info("End of loading DICOM locally"); //$NON-NLS-1$
     }
 
     public void addSelectionAndnotify() {
@@ -119,7 +115,7 @@ public class LoadDicomObjects extends ExplorerTask {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             dicomReader.writeMetaData(patient);
             dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
-            writeInfo(Messages.getString("LoadDicomObjects.add_pat") + " " + patient); //$NON-NLS-1$ //$NON-NLS-2$
+            LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
         }
 
         String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);

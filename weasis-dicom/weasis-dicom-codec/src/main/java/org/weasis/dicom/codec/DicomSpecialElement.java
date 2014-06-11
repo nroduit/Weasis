@@ -102,7 +102,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                     out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                     return true;
                 } catch (IOException e) {
-                    LOGGER.error("Cannot write dicom ({}): {}", getLabel(), e.getMessage());
+                    LOGGER.error("Cannot write dicom ({}): {}", getLabel(), e.getMessage()); //$NON-NLS-1$
                 } finally {
                     FileUtil.safeClose(out);
                 }

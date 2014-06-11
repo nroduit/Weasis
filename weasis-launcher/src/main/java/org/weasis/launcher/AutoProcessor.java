@@ -383,9 +383,9 @@ public class AutoProcessor {
     private static String getBundleNameFromLocation(String location) {
         if (location != null) {
             int index = location.lastIndexOf("/"); //$NON-NLS-1$
-            String name = index >= 0 ? location.substring(index + 1) : location; //$NON-NLS-1$
+            String name = index >= 0 ? location.substring(index + 1) : location; 
             index = name.lastIndexOf(".jar"); //$NON-NLS-1$
-            return index >= 0 ? name.substring(0, index) : name; //$NON-NLS-1$
+            return index >= 0 ? name.substring(0, index) : name; 
         }
         return null;
     }
@@ -409,7 +409,7 @@ public class AutoProcessor {
                 String filename = p.toString();
                 String value = WeasisLauncher.modulesi18n.getProperty(filename);
                 if (value != null) {
-                    String baseURL = System.getProperty("weasis.i18n"); //$NON-NLS-1$ //$NON-NLS-2$
+                    String baseURL = System.getProperty("weasis.i18n"); //$NON-NLS-1$ 
                     if (baseURL != null) {
                         String translation_modules = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename); //$NON-NLS-1$ //$NON-NLS-2$
                         String bundleName = getBundleNameFromLocation(filename);

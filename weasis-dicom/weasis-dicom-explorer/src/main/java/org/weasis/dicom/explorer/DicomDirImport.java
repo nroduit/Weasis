@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -64,7 +65,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         setBorder(new TitledBorder(null,
             Messages.getString("DicomDirImport.dicomdir"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
 
-        lblImportAFolder = new JLabel(Messages.getString("DicomDirImport.path")); //$NON-NLS-1$
+        lblImportAFolder = new JLabel(Messages.getString("DicomDirImport.path") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
         gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
         gbc_lblImportAFolder.insets = new Insets(5, 5, 5, 5);

@@ -28,7 +28,7 @@ public class ImageOpEvent {
 
     public ImageOpEvent(OpEvent eventType, MediaSeries series, ImageElement image, HashMap<String, Object> params) {
         if (eventType == null) {
-            throw new IllegalArgumentException(); //$NON-NLS-1$
+            throw new IllegalArgumentException(); 
         }
         this.eventType = eventType;
         this.series = series;

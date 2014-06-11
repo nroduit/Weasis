@@ -2,8 +2,6 @@
 
 package org.weasis.dicom.codec.geometry;
 
-import org.weasis.dicom.codec.Messages;
-
 /**
  * <p>
  * An abstract class to describe the spatial geometry of an entire volume of contiguous cross-sectional image slices.

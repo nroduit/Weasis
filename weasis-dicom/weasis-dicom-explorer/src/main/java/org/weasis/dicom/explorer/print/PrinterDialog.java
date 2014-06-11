@@ -35,6 +35,7 @@ import javax.swing.text.NumberFormatter;
 
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
 /**
@@ -92,7 +93,7 @@ public class PrinterDialog extends JDialog {
         content.setLayout(gridBagLayout);
         descriptionLabel = new JLabel();
 
-        descriptionLabel.setText(Messages.getString("PrinterDialog.desc")); //$NON-NLS-1$
+        descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_descriptionLabel = new GridBagConstraints();
         gbc_descriptionLabel.anchor = GridBagConstraints.EAST;
         gbc_descriptionLabel.insets = new Insets(0, 0, 5, 5);
@@ -109,7 +110,7 @@ public class PrinterDialog extends JDialog {
         content.add(descriptionTf, gbc_descriptionTf);
         aeTitleLabel = new JLabel();
 
-        aeTitleLabel.setText(Messages.getString("PrinterDialog.aet")); //$NON-NLS-1$
+        aeTitleLabel.setText(Messages.getString("PrinterDialog.aet") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_aeTitleLabel = new GridBagConstraints();
         gbc_aeTitleLabel.anchor = GridBagConstraints.SOUTHEAST;
         gbc_aeTitleLabel.insets = new Insets(0, 0, 5, 5);
@@ -126,7 +127,7 @@ public class PrinterDialog extends JDialog {
         content.add(aeTitleTf, gbc_aeTitleTf);
         hostnameLabel = new JLabel();
 
-        hostnameLabel.setText(Messages.getString("PrinterDialog.host")); //$NON-NLS-1$
+        hostnameLabel.setText(Messages.getString("PrinterDialog.host") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_hostnameLabel = new GridBagConstraints();
         gbc_hostnameLabel.anchor = GridBagConstraints.EAST;
         gbc_hostnameLabel.insets = new Insets(0, 0, 5, 5);
@@ -143,7 +144,7 @@ public class PrinterDialog extends JDialog {
         content.add(hostnameTf, gbc_hostnameTf);
         portLabel = new JLabel();
 
-        portLabel.setText(Messages.getString("PrinterDialog.port")); //$NON-NLS-1$
+        portLabel.setText(Messages.getString("PrinterDialog.port") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_portLabel = new GridBagConstraints();
         gbc_portLabel.anchor = GridBagConstraints.WEST;
         gbc_portLabel.insets = new Insets(0, 0, 5, 5);
@@ -216,8 +217,7 @@ public class PrinterDialog extends JDialog {
         String hostname = hostnameTf.getText();
         Number port = JMVUtils.getFormattedValue(portTf);
 
-        if (desc == null || "".equals(desc) || aeTitle == null || "".equals(aeTitle) || hostname == null //$NON-NLS-1$ //$NON-NLS-2$
-            || "".equals(hostname) || port == null || "".equals(port)) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (!StringUtil.hasText(desc) || !StringUtil.hasText(aeTitle) || !StringUtil.hasText(hostname) || port == null) {
             JOptionPane.showMessageDialog(this, Messages.getString("PrinterDialog.fill_message"), //$NON-NLS-1$
                 Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             return;

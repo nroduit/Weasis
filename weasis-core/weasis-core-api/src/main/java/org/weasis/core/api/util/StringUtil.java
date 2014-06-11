@@ -1,8 +1,11 @@
 package org.weasis.core.api.util;
 
+import org.weasis.core.api.Messages;
+
 public class StringUtil {
 
-    public static final String COLON = ":";
+    public static final String COLON = Messages.getString("StringUtil.colon"); //$NON-NLS-1$
+    public static final String COLON_AND_SPACE = Messages.getString("StringUtil.colon_space"); //$NON-NLS-1$
 
     private StringUtil() {
     }
@@ -38,7 +41,7 @@ public class StringUtil {
             try {
                 return Integer.parseInt(val.trim());
             } catch (NumberFormatException e) {
-                System.out.print("Cannot convert " + val + " to int");
+                System.out.print("Cannot convert " + val + " to int"); //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
         return 0;

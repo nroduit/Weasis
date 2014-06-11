@@ -152,6 +152,7 @@ public class DropDownButton extends Box {
     /** This object responds to events on the main button. */
     private class MainButtonListener implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (mainRunsDefaultMenuOption && !isEmpty()) {
                 JMenuItem defaultItem = menu.getItem(0);
@@ -198,10 +199,12 @@ public class DropDownButton extends Box {
      */
     private class MenuContainerListener implements ContainerListener {
 
+        @Override
         public void componentAdded(ContainerEvent e) {
             setDropDownEnabled(true);
         }
 
+        @Override
         public void componentRemoved(ContainerEvent e) {
             setDropDownEnabled(!isEmpty());
         }
@@ -220,6 +223,7 @@ public class DropDownButton extends Box {
             this.w = width;
         }
 
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
             Shape clipping = g.getClip();
             g.setClip(x, y, width, height);
@@ -227,11 +231,13 @@ public class DropDownButton extends Box {
             g.setClip(clipping);
         }
 
+        @Override
         public Insets getBorderInsets(Component c) {
             Insets i = b.getBorderInsets(c);
             return new Insets(i.top, i.left, i.bottom, i.right - w);
         }
 
+        @Override
         public boolean isBorderOpaque() {
             return b.isBorderOpaque();
         }
@@ -251,6 +257,7 @@ public class DropDownButton extends Box {
 
         Color arrowColor = Color.black;
 
+        @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             g.setColor(arrowColor);
             g.drawLine(x, y, x + 4, y);
@@ -258,10 +265,12 @@ public class DropDownButton extends Box {
             g.drawLine(x + 2, y + 2, x + 2, y + 2);
         }
 
+        @Override
         public int getIconWidth() {
             return 6;
         }
 
+        @Override
         public int getIconHeight() {
             return 4;
         }

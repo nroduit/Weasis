@@ -129,14 +129,14 @@ public class ImageFiler extends AbstractBufferHandler {
         RenderedImage src = null;
         if (filename != null) {
             try {
-                ImageInputStream in = new FileImageInputStream(new RandomAccessFile(filename, "r"));
+                ImageInputStream in = new FileImageInputStream(new RandomAccessFile(filename, "r")); //$NON-NLS-1$
                 ImageLayout layout = new ImageLayout();
                 layout.setTileWidth(TILESIZE);
                 layout.setTileHeight(TILESIZE);
                 RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
-                ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead");
-                pb.setParameter("Input", in);
-                src = JAI.create("ImageRead", pb, hints);
+                ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
+                pb.setParameter("Input", in); //$NON-NLS-1$
+                src = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
                 src = getReadableImage(src);
             } catch (Exception ex) {
             }
@@ -199,7 +199,7 @@ public class ImageFiler extends AbstractBufferHandler {
             ArrayList<TIFFField> extraFields = new ArrayList<TIFFField>(6);
             int fileVal = getResolutionInDpi(source);
             if (fileVal > 0) {
-                TIFFDirectory dir = (TIFFDirectory) source.getProperty("tiff_directory");
+                TIFFDirectory dir = (TIFFDirectory) source.getProperty("tiff_directory"); //$NON-NLS-1$
                 TIFFField f;
                 f = dir.getField(282);
                 long[][] l_xRes = f.getAsRationals();
@@ -232,7 +232,7 @@ public class ImageFiler extends AbstractBufferHandler {
             }
         }
 
-        ImageEncoder enc = ImageCodec.createImageEncoder("TIFF", os, param);
+        ImageEncoder enc = ImageCodec.createImageEncoder("TIFF", os, param); //$NON-NLS-1$
         enc.encode(source);
     }
 
@@ -242,9 +242,9 @@ public class ImageFiler extends AbstractBufferHandler {
             try {
                 String mime = img.getMimeType();
 
-                if ("image/tiff".equals(mime) || "image/x-tiff".equals(mime)) {
+                if ("image/tiff".equals(mime) || "image/x-tiff".equals(mime)) { //$NON-NLS-1$ //$NON-NLS-2$
                     ImageDecoder dec =
-                        ImageCodec.createImageDecoder("tiff", new FileSeekableStream(img.getFile()), null);
+                        ImageCodec.createImageDecoder("tiff", new FileSeekableStream(img.getFile()), null); //$NON-NLS-1$
                     int count = dec.getNumPages();
                     if (count == 2) {
                         RenderedImage src2 = dec.decodeAsRenderedImage(1);
@@ -266,8 +266,8 @@ public class ImageFiler extends AbstractBufferHandler {
         RenderedImage thumbnail = null;
         try {
             String mimeType = MimeInspector.getMimeType(file);
-            if (mimeType != null && (mimeType.equals("image/tiff") || mimeType.equals("image/x-tiff"))) {
-                ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null);
+            if (mimeType != null && (mimeType.equals("image/tiff") || mimeType.equals("image/x-tiff"))) { //$NON-NLS-1$ //$NON-NLS-2$
+                ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
                 int count = dec.getNumPages();
                 if (count == 2) {
                     RenderedImage src2 = dec.decodeAsRenderedImage(1);
@@ -285,8 +285,8 @@ public class ImageFiler extends AbstractBufferHandler {
     }
 
     private static int getResolutionInDpi(RenderedImage source) {
-        if (source.getProperty("tiff_directory") instanceof TIFFDirectory) {
-            TIFFDirectory dir = (TIFFDirectory) source.getProperty("tiff_directory");
+        if (source.getProperty("tiff_directory") instanceof TIFFDirectory) { //$NON-NLS-1$
+            TIFFDirectory dir = (TIFFDirectory) source.getProperty("tiff_directory"); //$NON-NLS-1$
             TIFFField fieldx = dir.getField(282); // 282 is X_resolution
             TIFFField fieldy = dir.getField(283); // 283 is Y_resolution
             TIFFField fieldUnit = dir.getField(296); // 296 is unit
@@ -493,7 +493,7 @@ public class ImageFiler extends AbstractBufferHandler {
 
     public static RenderedImage readTiledCacheImage(File file) {
         try {
-            ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null);
+            ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
             return dec.decodeAsRenderedImage();
 
         } catch (IOException ex) {
@@ -504,7 +504,7 @@ public class ImageFiler extends AbstractBufferHandler {
 
     public static RenderedImage readThumbnailCacheImage(File file) {
         try {
-            ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null);
+            ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
             int count = dec.getNumPages();
             if (count == 2) {
                 RenderedImage src2 = dec.decodeAsRenderedImage(1);

@@ -11,7 +11,7 @@ public class ColorConverter implements Converter<Color> {
 
     @Override
     public Color read(InputNode node) {
-        InputNode nodeRgb = node.getAttribute("rgb");
+        InputNode nodeRgb = node.getAttribute("rgb"); //$NON-NLS-1$
         String rgb = null;
         try {
             rgb = nodeRgb == null ? null : nodeRgb.getValue();
@@ -23,6 +23,6 @@ public class ColorConverter implements Converter<Color> {
 
     @Override
     public void write(OutputNode node, Color color) throws Exception {
-        node.setAttribute("rgb", WProperties.color2Hexadecimal(color));
+        node.setAttribute("rgb", WProperties.color2Hexadecimal(color)); //$NON-NLS-1$
     }
 }

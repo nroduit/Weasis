@@ -42,16 +42,17 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
     private JLabel fileLabel = new JLabel();
 
     public DicomZipImport() {
-        super("DICOM Zip");
+        super(Messages.getString("DicomZipImport.title")); //$NON-NLS-1$
         setComponentPosition(3);
         initGUI();
         initialize(true);
     }
 
     public void initGUI() {
-        setBorder(new TitledBorder(null, "DICOM Zip", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        setBorder(new TitledBorder(null,
+            Messages.getString("DicomZipImport.title"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
         setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-        btnOpen = new JButton("Select a file");
+        btnOpen = new JButton(Messages.getString("DicomZipImport.select_file")); //$NON-NLS-1$
         btnOpen.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -68,10 +69,10 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         JFileChooser fileChooser = new JFileChooser(directory);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
-        fileChooser.setFileFilter(new FileFormatFilter("zip", "ZIP"));
+        fileChooser.setFileFilter(new FileFormatFilter("zip", "ZIP")); //$NON-NLS-1$ //$NON-NLS-2$
         if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION
             || (selectedFile = fileChooser.getSelectedFile()) == null) {
-            fileLabel.setText("");
+            fileLabel.setText(""); //$NON-NLS-1$
             return;
         } else {
             Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, selectedFile.getParent());
@@ -115,13 +116,13 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         if (file != null) {
             ArrayList<LoadSeries> loadSeries = null;
             if (file.canRead()) {
-                File dir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip"));
+                File dir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip")); //$NON-NLS-1$ //$NON-NLS-2$
                 try {
                     FileUtil.unzip(file, dir);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                DicomDirLoader dirImport = new DicomDirLoader(new File(dir, "DICOMDIR"), dicomModel, false);
+                DicomDirLoader dirImport = new DicomDirLoader(new File(dir, "DICOMDIR"), dicomModel, false); //$NON-NLS-1$
                 loadSeries = dirImport.readDicomDir();
             }
             if (loadSeries != null && loadSeries.size() > 0) {

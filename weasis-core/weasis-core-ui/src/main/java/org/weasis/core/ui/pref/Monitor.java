@@ -1,5 +1,6 @@
 package org.weasis.core.ui.pref;
 
+import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.Rectangle;
@@ -54,7 +55,7 @@ public class Monitor {
             // frame.setMaximizedBounds(bound);
             frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
             frame.setVisible(true);
-            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            frame.setExtendedState(Frame.MAXIMIZED_BOTH);
 
             try {
                 // Let time to maximize window

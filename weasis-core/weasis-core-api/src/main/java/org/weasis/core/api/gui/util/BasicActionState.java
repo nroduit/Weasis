@@ -29,6 +29,7 @@ public class BasicActionState implements ActionState {
         }
     }
 
+    @Override
     public boolean isActionEnabled() {
         return enabled;
     }

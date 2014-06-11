@@ -160,8 +160,8 @@ public class WeasisWin {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         RootPaneContainer container = null;
         try {
-            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
-            Object containerObj = server.getAttribute(objectName, "RootPaneContainer");
+            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow"); //$NON-NLS-1$
+            Object containerObj = server.getAttribute(objectName, "RootPaneContainer"); //$NON-NLS-1$
             if (containerObj instanceof RootPaneContainer) {
                 container = (RootPaneContainer) containerObj;
                 container.getRootPane().updateUI();
@@ -172,7 +172,7 @@ public class WeasisWin {
             }
         } catch (InstanceNotFoundException ignored) {
         } catch (JMException e) {
-            log.debug("Error while receiving main window", e);
+            log.debug("Error while receiving main window", e); //$NON-NLS-1$
         }
 
         if (container == null || container instanceof JFrame) {
@@ -192,7 +192,7 @@ public class WeasisWin {
             frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, (Component) rootPaneContainer);
         }
 
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.menu.menubar", true)) {
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.menu.menubar", true)) { //$NON-NLS-1$
             rootPaneContainer.getRootPane().setJMenuBar(createMenuBar());
         }
         toolbarContainer = new ToolBarContainer();
@@ -202,11 +202,10 @@ public class WeasisWin {
         rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
         if (frame != null) {
-            frame.setTitle(AppProperties.WEASIS_NAME
-                + " v" + AppProperties.WEASIS_VERSION + " " + Messages.getString("WeasisWin.winTitle")); //$NON-NLS-1$
+            frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); //$NON-NLS-1$ 
             ImageIcon icon = ResourceUtil.getIconLogo64();
             if (icon != null) {
-                frame.setIconImage(icon.getImage()); //$NON-NLS-1$
+                frame.setIconImage(icon.getImage()); 
             }
         }
     }
@@ -265,7 +264,7 @@ public class WeasisWin {
     public void createMainPanel() throws Exception {
 
         // Do not disable check when debugging
-        if (System.getProperty("maven.localRepository") == null) {
+        if (System.getProperty("maven.localRepository") == null) { //$NON-NLS-1$
             DockUtilities.disableCheckLayoutLocked();
         }
         CControl control = UIManager.DOCKING_CONTROL;
@@ -285,32 +284,32 @@ public class WeasisWin {
         if (laf.getClass().getName().startsWith("org.pushingpixels")) { //$NON-NLS-1$
             ColorManager colors = control.getController().getColors();
 
-            Color selection = javax.swing.UIManager.getColor("TextArea.selectionBackground");
+            Color selection = javax.swing.UIManager.getColor("TextArea.selectionBackground"); //$NON-NLS-1$
             Color inactiveColor = DockUI.getColor(LookAndFeelColors.TITLE_BACKGROUND).darker();
             Color inactiveColorGradient = DockUI.getColor(LookAndFeelColors.PANEL_BACKGROUND);
             Color activeColor = selection.darker();
-            Color ActiveTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground");
+            Color ActiveTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground"); //$NON-NLS-1$
 
-            colors.put(Priority.CLIENT, "stack.tab.border.selected", inactiveColorGradient);
-            colors.put(Priority.CLIENT, "stack.tab.border.selected.focused", selection);
-            colors.put(Priority.CLIENT, "stack.tab.border.selected.focuslost", inactiveColor);
+            colors.put(Priority.CLIENT, "stack.tab.border.selected", inactiveColorGradient); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.border.selected.focused", selection); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.border.selected.focuslost", inactiveColor); //$NON-NLS-1$
 
-            colors.put(Priority.CLIENT, "stack.tab.top.selected", inactiveColor);
-            colors.put(Priority.CLIENT, "stack.tab.top.selected.focused", activeColor);
-            colors.put(Priority.CLIENT, "stack.tab.top.selected.focuslost", inactiveColor);
+            colors.put(Priority.CLIENT, "stack.tab.top.selected", inactiveColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.top.selected.focused", activeColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.top.selected.focuslost", inactiveColor); //$NON-NLS-1$
 
-            colors.put(Priority.CLIENT, "stack.tab.bottom.selected", inactiveColorGradient);
-            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focused", selection);
-            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focuslost", inactiveColor);
+            colors.put(Priority.CLIENT, "stack.tab.bottom.selected", inactiveColorGradient); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focused", selection); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focuslost", inactiveColor); //$NON-NLS-1$
 
-            colors.put(Priority.CLIENT, "stack.tab.text.selected", RexSystemColor.getInactiveTextColor());
-            colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", ActiveTextColor);
-            colors.put(Priority.CLIENT, "stack.tab.text.selected.focuslost", RexSystemColor.getInactiveTextColor());
+            colors.put(Priority.CLIENT, "stack.tab.text.selected", RexSystemColor.getInactiveTextColor()); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", ActiveTextColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.text.selected.focuslost", RexSystemColor.getInactiveTextColor()); //$NON-NLS-1$
 
-            colors.put(Priority.CLIENT, "title.flap.active", selection);
-            colors.put(Priority.CLIENT, "title.flap.active.text", ActiveTextColor);
-            colors.put(Priority.CLIENT, "title.flap.active.knob.highlight", Colors.brighter(selection));
-            colors.put(Priority.CLIENT, "title.flap.active.knob.shadow", Colors.darker(selection));
+            colors.put(Priority.CLIENT, "title.flap.active", selection); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "title.flap.active.text", ActiveTextColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "title.flap.active.knob.highlight", Colors.brighter(selection)); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "title.flap.active.knob.shadow", Colors.darker(selection)); //$NON-NLS-1$
         }
 
         control.addFocusListener(selectionListener);
@@ -645,7 +644,7 @@ public class WeasisWin {
             frame.setVisible(true);
 
             frame.setExtendedState((frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH
-                ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
+                ? Frame.NORMAL : Frame.MAXIMIZED_BOTH);
         }
         log.info("End of loading the GUI..."); //$NON-NLS-1$
     }
@@ -863,14 +862,14 @@ public class WeasisWin {
         toolBarMenu.addPopupMenuListener();
         menuDisplay.add(toolBarMenu);
 
-        DynamicMenu toolMenu = new DynamicMenu("Tools") {
+        DynamicMenu toolMenu = new DynamicMenu(Messages.getString("WeasisWin.tools")) { //$NON-NLS-1$
 
-            @Override
-            public void popupMenuWillBecomeVisible() {
-                buildToolSubMenu(this);
+                @Override
+                public void popupMenuWillBecomeVisible() {
+                    buildToolSubMenu(this);
 
-            }
-        };
+                }
+            };
         toolMenu.addPopupMenuListener();
         menuDisplay.add(toolMenu);
     }
@@ -908,13 +907,13 @@ public class WeasisWin {
 
         menuFile.add(exportMenu);
         menuFile.add(new JSeparator());
-        DynamicMenu printMenu = new DynamicMenu("Print") {
+        DynamicMenu printMenu = new DynamicMenu(Messages.getString("WeasisWin.print")) { //$NON-NLS-1$
 
-            @Override
-            public void popupMenuWillBecomeVisible() {
-                buildPrintSubMenu(this);
-            }
-        };
+                @Override
+                public void popupMenuWillBecomeVisible() {
+                    buildPrintSubMenu(this);
+                }
+            };
         printMenu.addPopupMenuListener();
         menuFile.add(printMenu);
         menuFile.add(new JSeparator());

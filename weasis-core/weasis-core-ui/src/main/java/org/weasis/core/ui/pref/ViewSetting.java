@@ -131,14 +131,14 @@ public class ViewSetting {
             }
 
             Monitor monitor = new Monitor(gd[i]);
-            StringBuilder buf = new StringBuilder("screen.");
+            StringBuilder buf = new StringBuilder("screen."); //$NON-NLS-1$
             buf.append(monitor.getMonitorID());
             Rectangle b = monitor.getBounds();
-            buf.append(".");
+            buf.append("."); //$NON-NLS-1$
             buf.append(b.width);
-            buf.append("x");
+            buf.append("x"); //$NON-NLS-1$
             buf.append(b.height);
-            buf.append(".pitch");
+            buf.append(".pitch"); //$NON-NLS-1$
             double pitch = BundleTools.LOCAL_PERSISTENCE.getDoubleProperty(buf.toString(), 0.0);
             monitor.setRealScaleFactor(pitch);
             monitors.add(monitor);

@@ -102,7 +102,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                         return getPopupMenuScroll(this);
                     }
                 };
-            mouseWheel.setToolTipText(Messages.getString("ViewerToolBar.change")); //$NON-NLS-1
+            mouseWheel.setToolTipText(Messages.getString("ViewerToolBar.change")); //$NON-NLS-1$
             add(mouseWheel);
         }
 
@@ -110,7 +110,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             addSeparator(Toolbar.SEPARATOR_2x24);
         }
 
-        if (props.getBooleanProperty("weasis.toolbar.layoutbouton", true)) {
+        if (props.getBooleanProperty("weasis.toolbar.layoutbouton", true)) { //$NON-NLS-1$
             final DropDownButton layout =
                 new DropDownButton("layout", new DropButtonIcon(new ImageIcon(MouseActions.class //$NON-NLS-1$
                     .getResource("/icon/32x32/layout.png")))) { //$NON-NLS-1$
@@ -124,14 +124,14 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             add(layout);
         }
 
-        if (props.getBooleanProperty("weasis.toolbar.synchbouton", true)) {
+        if (props.getBooleanProperty("weasis.toolbar.synchbouton", true)) { //$NON-NLS-1$
             add(Box.createRigidArea(new Dimension(5, 0)));
 
             synchButton = buildSynchButton();
             add(synchButton);
         }
 
-        if (props.getBooleanProperty("weasis.toolbar.reset", true)) {
+        if (props.getBooleanProperty("weasis.toolbar.reset", true)) { //$NON-NLS-1$
             final JButton resetButton = new JButton();
             resetButton.setToolTipText(Messages.getString("ViewerToolBar.disReset")); //$NON-NLS-1$
             resetButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/reset.png"))); //$NON-NLS-1$

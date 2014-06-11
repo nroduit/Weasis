@@ -46,7 +46,7 @@ public class AuditLog {
                 if (confAdmin != null) {
                     try {
                         Dictionary<String, Object> loggingProperties;
-                        Configuration logConfiguration = getLogConfiguration(confAdmin, loggerKey, loggerVal[0]); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        Configuration logConfiguration = getLogConfiguration(confAdmin, loggerKey, loggerVal[0]); 
                         if (logConfiguration == null) {
                             logConfiguration =
                                 confAdmin.createFactoryConfiguration(
@@ -98,7 +98,7 @@ public class AuditLog {
 
     public static void logError(Logger log, Throwable t, String message) {
         if (log.isDebugEnabled()) {
-            log.error(message, t); //$NON-NLS-1$
+            log.error(message, t); 
         } else {
             log.error(t.getMessage());
         }

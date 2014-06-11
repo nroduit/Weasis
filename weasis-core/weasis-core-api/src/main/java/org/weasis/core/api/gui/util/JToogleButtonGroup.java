@@ -78,20 +78,24 @@ public class JToogleButtonGroup implements ActionListener, ComboBoxModelAdapter 
         return itemList.toArray(new JToggleButton[itemList.size()]);
     }
 
+    @Override
     public void contentsChanged(ListDataEvent e) {
         setSelected(dataModel.getSelectedItem());
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof JToggleButton) {
             JToggleButton item = (JToggleButton) e.getSource();

@@ -26,8 +26,6 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.registry.RenderableRegistryMode;
 import javax.media.jai.registry.RenderedRegistryMode;
 
-import org.weasis.core.api.Messages;
-
 import com.sun.media.jai.opimage.RIFUtil;
 
 public class RectifySignedShortDataDescriptor extends OperationDescriptorImpl implements RenderedImageFactory {
@@ -98,6 +96,7 @@ public class RectifySignedShortDataDescriptor extends OperationDescriptorImpl im
         return true;
     }
 
+    @Override
     public RenderedImage create(ParameterBlock args, RenderingHints renderHints) {
         // Get ImageLayout from renderHints if any.
         ImageLayout layout = RIFUtil.getImageLayoutHint(renderHints);

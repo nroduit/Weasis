@@ -16,6 +16,7 @@ import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -49,7 +50,7 @@ public class PointGraphic extends BasicGraphic {
         @Attribute(name = "pt_size") int pointSize) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
         if (handlePointTotalNumber != 1) {
-            throw new InvalidShapeException("Not a valid PointGraphic!");
+            throw new InvalidShapeException("Not a valid PointGraphic!"); //$NON-NLS-1$
         }
         buildShape();
     }
@@ -88,7 +89,7 @@ public class PointGraphic extends BasicGraphic {
 
     @Override
     public String getUIName() {
-        return "Point";
+        return Messages.getString("PointGraphic.point"); //$NON-NLS-1$
     }
 
     @Override

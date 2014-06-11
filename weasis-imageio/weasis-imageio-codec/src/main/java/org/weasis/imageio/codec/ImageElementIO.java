@@ -142,7 +142,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
             sUID = (String) element.getTagValue(TagW.SeriesInstanceUID);
         }
         if (sUID == null) {
-            sUID = uri == null ? "unknown" : uri.toString();
+            sUID = uri == null ? "unknown" : uri.toString(); //$NON-NLS-1$
         }
         MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, TagW.FileName) { //$NON-NLS-1$
 

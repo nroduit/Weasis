@@ -547,19 +547,19 @@ public class DicomImageUtils {
                 int value2 = ((Byte) Array.get(outLut2, i)).intValue();
                 if (value1 != value2) {
                     countDiff++;
-                    System.out.println("value1 /value2 : " + value1 + "/" + value2);
+                    System.out.println("value1 /value2 : " + value1 + "/" + value2); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             } else if (outLut instanceof short[]) {
                 int value1 = ((Short) Array.get(outLut, i)).intValue();
                 int value2 = ((Short) Array.get(outLut2, i)).intValue();
                 if (value1 != value2) {
                     countDiff++;
-                    System.out.println("value1 /value2 : " + value1 + "/" + value2);
+                    System.out.println("value1 /value2 : " + value1 + "/" + value2); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
         }
         if (countDiff > 0) {
-            System.out.println("countDiff : " + countDiff);
+            System.out.println("countDiff : " + countDiff); //$NON-NLS-1$
         }
 
     };
@@ -683,17 +683,17 @@ public class DicomImageUtils {
     public static int[] lutDescriptor(Attributes ds, int descTag) {
         int[] desc = DicomMediaUtils.getIntAyrrayFromDicomElement(ds, descTag, null);
         if (desc == null) {
-            throw new IllegalArgumentException("Missing LUT Descriptor!");
+            throw new IllegalArgumentException("Missing LUT Descriptor!"); //$NON-NLS-1$
         }
         if (desc.length != 3) {
-            throw new IllegalArgumentException("Illegal number of LUT Descriptor values: " + desc.length);
+            throw new IllegalArgumentException("Illegal number of LUT Descriptor values: " + desc.length); //$NON-NLS-1$
         }
         if (desc[0] < 0) {
-            throw new IllegalArgumentException("Illegal LUT Descriptor: len=" + desc[0]);
+            throw new IllegalArgumentException("Illegal LUT Descriptor: len=" + desc[0]); //$NON-NLS-1$
         }
         int bits = desc[2];
         if (bits != 8 && bits != 16) {
-            throw new IllegalArgumentException("Illegal LUT Descriptor: bits=" + bits);
+            throw new IllegalArgumentException("Illegal LUT Descriptor: bits=" + bits); //$NON-NLS-1$
         }
         return desc;
     }
@@ -705,10 +705,10 @@ public class DicomImageUtils {
         if (data == null) {
             int[] segm = DicomMediaUtils.getIntAyrrayFromDicomElement(ds, segmTag, null);
             if (segm == null) {
-                throw new IllegalArgumentException("Missing LUT Data!");
+                throw new IllegalArgumentException("Missing LUT Data!"); //$NON-NLS-1$
             }
             if (bits == 8) {
-                throw new IllegalArgumentException("Segmented LUT Data with LUT Descriptor: bits=8");
+                throw new IllegalArgumentException("Segmented LUT Data with LUT Descriptor: bits=8"); //$NON-NLS-1$
             }
             data = new byte[len];
             inflateSegmentedLut(segm, data);
@@ -780,12 +780,12 @@ public class DicomImageUtils {
     }
 
     private static void endOfSegmentedLut() {
-        throw new IllegalArgumentException("Running out of data inflating segmented LUT");
+        throw new IllegalArgumentException("Running out of data inflating segmented LUT"); //$NON-NLS-1$
     }
 
     private static int linearSegment(int y1, byte[] out, int x, int n) {
         if (x == 0) {
-            throw new IllegalArgumentException("Linear segment cannot be the first segment");
+            throw new IllegalArgumentException("Linear segment cannot be the first segment"); //$NON-NLS-1$
         }
 
         try {
@@ -801,16 +801,16 @@ public class DicomImageUtils {
     }
 
     private static void exceedsLutLength(int descLen) {
-        throw new IllegalArgumentException("Number of entries in inflated segmented LUT exceeds specified value: "
-            + descLen + " in LUT Descriptor");
+        throw new IllegalArgumentException("Number of entries in inflated segmented LUT exceeds specified value: " //$NON-NLS-1$
+            + descLen + " in LUT Descriptor"); //$NON-NLS-1$
     }
 
     private static void lutLengthMismatch(int lutLen, int descLen) {
-        throw new IllegalArgumentException("Number of actual LUT entries: " + lutLen + " mismatch specified value: "
-            + descLen + " in LUT Descriptor");
+        throw new IllegalArgumentException("Number of actual LUT entries: " + lutLen + " mismatch specified value: " //$NON-NLS-1$ //$NON-NLS-2$
+            + descLen + " in LUT Descriptor"); //$NON-NLS-1$
     }
 
     private static void illegalOpcode(int op, int i) {
-        throw new IllegalArgumentException("illegal op code:" + op + ", index:" + i);
+        throw new IllegalArgumentException("illegal op code:" + op + ", index:" + i); //$NON-NLS-1$ //$NON-NLS-2$
     }
 }

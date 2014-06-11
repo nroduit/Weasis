@@ -33,13 +33,14 @@ import org.weasis.core.api.image.LutShape.eFunction;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.Messages;
 
 public class PresetWindowLevel {
     private static final Logger LOGGER = LoggerFactory.getLogger(PresetWindowLevel.class);
 
-    public static final String fullDynamicExplanation = Messages.getString("PresetWindowLevel.full");
+    public static final String fullDynamicExplanation = Messages.getString("PresetWindowLevel.full"); //$NON-NLS-1$
     private static final Map<String, List<PresetWindowLevel>> presetListByModality = getPresetListByModality();
 
     private final String name;
@@ -115,7 +116,7 @@ public class PresetWindowLevel {
             return null;
         }
 
-        String dicomKeyWord = " [" + "Dicom" + "]";
+        String dicomKeyWord = " " + Messages.getString("PresetWindowLevel.dcm_preset"); //$NON-NLS-1$ //$NON-NLS-2$
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
 
@@ -128,9 +129,9 @@ public class PresetWindowLevel {
         LutShape defaultLutShape = LutShape.LINEAR; // Implicitly defined as default function in DICOM standard
 
         if (lutFunctionDescriptor != null) {
-            if ("SIGMOID".equalsIgnoreCase(lutFunctionDescriptor)) {
+            if ("SIGMOID".equalsIgnoreCase(lutFunctionDescriptor)) { //$NON-NLS-1$
                 defaultLutShape = new LutShape(eFunction.SIGMOID, eFunction.SIGMOID + dicomKeyWord);
-            } else if ("LINEAR".equalsIgnoreCase(lutFunctionDescriptor)) {
+            } else if ("LINEAR".equalsIgnoreCase(lutFunctionDescriptor)) { //$NON-NLS-1$
                 defaultLutShape = new LutShape(eFunction.LINEAR, eFunction.LINEAR + dicomKeyWord);
             }
         }
@@ -138,20 +139,20 @@ public class PresetWindowLevel {
         if (levelList != null && windowList != null) {
 
             int windowLevelDefaultCount = (levelList.length == windowList.length) ? levelList.length : 0;
-            String defaultExplanation = "Default";
+            String defaultExplanation = Messages.getString("PresetWindowLevel.default"); //$NON-NLS-1$
 
             int k = 1;
 
             for (int i = 0; i < windowLevelDefaultCount; i++) {
-                String explanation = defaultExplanation + " " + k;
+                String explanation = defaultExplanation + " " + k; //$NON-NLS-1$
                 if (wlExplanationList != null && i < wlExplanationList.length) {
-                    if (wlExplanationList[i] != null && !wlExplanationList[i].equals("")) {
+                    if (StringUtil.hasText(wlExplanationList[i])) {
                         explanation = wlExplanationList[i]; // optional attribute
                     }
                 }
                 if (windowList[i] == null || levelList[i] == null) {
                     // Level value is not consistent, do not add to the list
-                    LOGGER.error("DICOM preset '{}' is not valid. It is not added to the preset list", explanation);
+                    LOGGER.error("DICOM preset '{}' is not valid. It is not added to the preset list", explanation); //$NON-NLS-1$
                     continue;
                 }
 
@@ -174,16 +175,16 @@ public class PresetWindowLevel {
         String[] voiLUTsExplanation = (String[]) tags.get(TagW.VOILUTsExplanation); // optional attribute
 
         if (voiLUTsData != null) {
-            String defaultExplanation = "VOI LUT";
+            String defaultExplanation = Messages.getString("PresetWindowLevel.voi_lut"); //$NON-NLS-1$
 
             for (int i = 0; i < voiLUTsData.length; i++) {
                 if (voiLUTsData[i] == null) {
                     continue;
                 }
-                String explanation = defaultExplanation + " " + i;
+                String explanation = defaultExplanation + " " + i; //$NON-NLS-1$
 
                 if (voiLUTsExplanation != null && i < voiLUTsExplanation.length) {
-                    if (voiLUTsExplanation[i] != null && !voiLUTsExplanation[i].equals("")) {
+                    if (StringUtil.hasText(voiLUTsExplanation[i])) {
                         explanation = voiLUTsExplanation[i];
                     }
                 }
@@ -293,7 +294,7 @@ public class PresetWindowLevel {
                                                 }
                                                 presetList.add(preset);
                                             } catch (Exception e) {
-                                                LOGGER.error("Preset {} cannot be read from xml file", name);
+                                                LOGGER.error("Preset {} cannot be read from xml file", name); //$NON-NLS-1$
                                             }
                                         }
                                         break;
@@ -310,7 +311,7 @@ public class PresetWindowLevel {
         }
 
         catch (Exception e) {
-            LOGGER.error("Cannot read presets file! " + e.getMessage());
+            LOGGER.error("Cannot read presets file! " + e.getMessage()); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);

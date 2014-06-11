@@ -19,8 +19,6 @@ import javax.swing.AbstractButton;
 import javax.swing.ImageIcon;
 import javax.swing.border.Border;
 
-import org.weasis.core.ui.Messages;
-
 public class ToolBarButtonBorder implements Border {
 
     private static Image borderImage =
@@ -36,10 +34,12 @@ public class ToolBarButtonBorder implements Border {
     public ToolBarButtonBorder() {
     }
 
+    @Override
     public boolean isBorderOpaque() {
         return false;
     }
 
+    @Override
     public void paintBorder(Component component, Graphics graphics, int x, int y, int w, int h) {
         Image img = pressed ? pressedBorderImage : borderImage;
         graphics.drawImage(img, x + w - 5, y, x + w, y + 5, borderWidth - 5, 0, borderWidth, 5, null);
@@ -57,6 +57,7 @@ public class ToolBarButtonBorder implements Border {
 
     }
 
+    @Override
     public Insets getBorderInsets(Component component) {
         if (component instanceof AbstractButton) {
             AbstractButton btn = (AbstractButton) component;

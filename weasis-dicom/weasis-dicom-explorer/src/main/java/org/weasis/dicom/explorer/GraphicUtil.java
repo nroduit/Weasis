@@ -22,11 +22,11 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class GraphicUtil {
 
-    public static final String POINT = "POINT";
-    public static final String POLYLINE = "POLYLINE";
-    public static final String INTERPOLATED = "INTERPOLATED";
-    public static final String CIRCLE = "CIRCLE";
-    public static final String ELLIPSE = "ELLIPSE";
+    public static final String POINT = "POINT"; //$NON-NLS-1$
+    public static final String POLYLINE = "POLYLINE"; //$NON-NLS-1$
+    public static final String INTERPOLATED = "INTERPOLATED"; //$NON-NLS-1$
+    public static final String CIRCLE = "CIRCLE"; //$NON-NLS-1$
+    public static final String ELLIPSE = "ELLIPSE"; //$NON-NLS-1$
 
     public static Graphic buildGraphicFromPR(Attributes go, Color color, boolean labelVisible, double width,
         double height, boolean canBeEdited, AffineTransform inverse, boolean dcmSR) throws InvalidShapeException {
@@ -45,7 +45,7 @@ public class GraphicUtil {
          * 
          * MATRIX not implemented
          */
-        boolean isDisp = dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits));
+        boolean isDisp = dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits)); //$NON-NLS-1$
 
         String type = go.getString(Tag.GraphicType);
         Graphic shape = null;
@@ -225,7 +225,7 @@ public class GraphicUtil {
         if (grFill == null) {
             return false;
         }
-        return grFill.equalsIgnoreCase("Y");
+        return grFill.equalsIgnoreCase("Y"); //$NON-NLS-1$
     }
 
     private static double euclideanDistance(float[] points, int p1, int p2, boolean isDisp, double width, double height) {

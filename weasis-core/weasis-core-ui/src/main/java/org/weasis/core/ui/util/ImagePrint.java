@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.PrintOptions.SCALE;
 
@@ -95,25 +96,25 @@ public class ImagePrint implements Printable {
                 pj.print(aset);
             } catch (Exception e) {
                 // check for the annoying 'Printer is not accepting job' error.
-                if (e.getMessage().indexOf("accepting job") != -1) {
+                if (e.getMessage().indexOf(Messages.getString("ImagePrint.0")) != -1) { //$NON-NLS-1$
                     // recommend prompting the user at this point if they want to force it
                     // so they'll know there may be a problem.
                     int response =
-                        JOptionPane.showConfirmDialog(null, "Printer is not ready to print, do you want print anyway?",
-                            "Printer Status", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        JOptionPane.showConfirmDialog(null, Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
+                            Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
 
                     if (response == 0) {
                         try {
                             // try printing again but ignore the not-accepting-jobs attribute
                             ForcedAcceptPrintService.setupPrintJob(pj); // add secret ingredient
                             pj.print(aset);
-                            LOGGER.info("Bypass Printer is not accepting job");
+                            LOGGER.info("Bypass Printer is not accepting job"); //$NON-NLS-1$
                         } catch (PrinterException ex) {
-                            AuditLog.logError(LOGGER, e, "Printer exception");
+                            AuditLog.logError(LOGGER, e, "Printer exception"); //$NON-NLS-1$
                         }
                     }
                 } else {
-                    AuditLog.logError(LOGGER, e, "Print exception");
+                    AuditLog.logError(LOGGER, e, "Print exception"); //$NON-NLS-1$
                 }
             }
         }

@@ -29,29 +29,28 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.weasis.core.api.Messages;
+import org.weasis.core.api.util.StringUtil;
 
 /**
  * Yet another GNU long options parser. This one is configured by parsing its Usage string.
  */
 public class Options implements Option {
     public static void main(String[] args) {
-        final String[] usage =
-            { "test - test Options usage", //$NON-NLS-1$
-                "  text before Usage: is displayed when usage() is called and no error has occurred.", //$NON-NLS-1$
-                "  so can be used as a simple help message.", "", "Usage: testOptions [OPTION]... PATTERN [FILES]...", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                "  Output control: arbitary non-option text can be included.", "  -? --help                show help", //$NON-NLS-1$ //$NON-NLS-2$
-                "  -c --count=COUNT           show COUNT lines", //$NON-NLS-1$
-                "  -h --no-filename         suppress the prefixing filename on output", //$NON-NLS-1$
-                "  -q --quiet, --silent     suppress all normal output", //$NON-NLS-1$
-                "     --binary-files=TYPE   assume that binary files are TYPE", //$NON-NLS-1$
-                "                           TYPE is 'binary', 'text', or 'without-match'", //$NON-NLS-1$
-                "  -I                       equivalent to --binary-files=without-match", //$NON-NLS-1$
-                "  -d --directories=ACTION  how to handle directories (default=skip)", //$NON-NLS-1$
-                "                           ACTION is 'read', 'recurse', or 'skip'", //$NON-NLS-1$
-                "  -D --devices=ACTION      how to handle devices, FIFOs and sockets", //$NON-NLS-1$
-                "                           ACTION is 'read' or 'skip'", //$NON-NLS-1$
-                "  -R, -r --recursive       equivalent to --directories=recurse" }; //$NON-NLS-1$
+        final String[] usage = { "test - test Options usage", //$NON-NLS-1$
+            "  text before Usage: is displayed when usage() is called and no error has occurred.", //$NON-NLS-1$
+            "  so can be used as a simple help message.", "", "Usage: testOptions [OPTION]... PATTERN [FILES]...", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            "  Output control: arbitary non-option text can be included.", "  -? --help                show help", //$NON-NLS-1$ //$NON-NLS-2$
+            "  -c --count=COUNT           show COUNT lines", //$NON-NLS-1$
+            "  -h --no-filename         suppress the prefixing filename on output", //$NON-NLS-1$
+            "  -q --quiet, --silent     suppress all normal output", //$NON-NLS-1$
+            "     --binary-files=TYPE   assume that binary files are TYPE", //$NON-NLS-1$
+            "                           TYPE is 'binary', 'text', or 'without-match'", //$NON-NLS-1$
+            "  -I                       equivalent to --binary-files=without-match", //$NON-NLS-1$
+            "  -d --directories=ACTION  how to handle directories (default=skip)", //$NON-NLS-1$
+            "                           ACTION is 'read', 'recurse', or 'skip'", //$NON-NLS-1$
+            "  -D --devices=ACTION      how to handle devices, FIFOs and sockets", //$NON-NLS-1$
+            "                           ACTION is 'read' or 'skip'", //$NON-NLS-1$
+            "  -R, -r --recursive       equivalent to --directories=recurse" }; //$NON-NLS-1$
 
         Option opt = Options.compile(usage).parse(args);
 
@@ -131,16 +130,19 @@ public class Options implements Option {
         return new Options(optSpec, gspec, null);
     }
 
+    @Override
     public Option setStopOnBadOption(boolean stopOnBadOption) {
         this.stopOnBadOption = stopOnBadOption;
         return this;
     }
 
+    @Override
     public Option setOptionsFirst(boolean optionsFirst) {
         this.optionsFirst = optionsFirst;
         return this;
     }
 
+    @Override
     public boolean isSet(String name) {
         if (!optSet.containsKey(name)) {
             throw new IllegalArgumentException("option not defined in spec: " + name); //$NON-NLS-1$
@@ -149,6 +151,7 @@ public class Options implements Option {
         return optSet.get(name);
     }
 
+    @Override
     public Object getObject(String name) {
         if (!optArg.containsKey(name)) {
             throw new IllegalArgumentException("option not defined with argument: " + name); //$NON-NLS-1$
@@ -159,6 +162,7 @@ public class Options implements Option {
         return list.isEmpty() ? "" : list.get(list.size() - 1); //$NON-NLS-1$
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<Object> getObjectList(String name) {
         List<Object> list;
@@ -170,7 +174,7 @@ public class Options implements Option {
 
         if (arg instanceof String) { // default value
             list = new ArrayList<Object>();
-            if (!"".equals(arg)) { //$NON-NLS-1$
+            if (StringUtil.hasText((String) arg)) { //$NON-NLS-1$
                 list.add(arg);
             }
         } else {
@@ -180,6 +184,7 @@ public class Options implements Option {
         return list;
     }
 
+    @Override
     public List<String> getList(String name) {
         ArrayList<String> list = new ArrayList<String>();
         for (Object o : getObjectList(name)) {
@@ -207,6 +212,7 @@ public class Options implements Option {
         list.add(value);
     }
 
+    @Override
     public String get(String name) {
         try {
             return (String) getObject(name);
@@ -215,6 +221,7 @@ public class Options implements Option {
         }
     }
 
+    @Override
     public int getNumber(String name) {
         String number = get(name);
         try {
@@ -227,10 +234,12 @@ public class Options implements Option {
         }
     }
 
+    @Override
     public List<Object> argObjects() {
         return xargs;
     }
 
+    @Override
     public List<String> args() {
         if (args == null) {
             args = new ArrayList<String>();
@@ -241,6 +250,7 @@ public class Options implements Option {
         return args;
     }
 
+    @Override
     public void usage() {
         StringBuilder buf = new StringBuilder();
         int index = 0;
@@ -266,6 +276,7 @@ public class Options implements Option {
     /**
      * prints usage message and returns IllegalArgumentException, for you to throw.
      */
+    @Override
     public IllegalArgumentException usageError(String s) {
         error = usageName + ": " + s; //$NON-NLS-1$
         usage();
@@ -380,14 +391,17 @@ public class Options implements Option {
         error = null;
     }
 
+    @Override
     public Option parse(Object[] argv) {
         return parse(argv, false);
     }
 
+    @Override
     public Option parse(List<? extends Object> argv) {
         return parse(argv, false);
     }
 
+    @Override
     public Option parse(Object[] argv, boolean skipArg0) {
         if (null == argv) {
             throw new IllegalArgumentException("argv is null"); //$NON-NLS-1$
@@ -396,6 +410,7 @@ public class Options implements Option {
         return parse(Arrays.asList(argv), skipArg0);
     }
 
+    @Override
     public Option parse(List<? extends Object> argv, boolean skipArg0) {
         reset();
         List<Object> args = new ArrayList<Object>();
@@ -484,8 +499,7 @@ public class Options implements Option {
                                 int k = i + 1;
                                 if (k < arg.length()) {
                                     addArg(name, arg.substring(k));
-                                }
-                                else {
+                                } else {
                                     needOpt = c;
                                     needArg = name;
                                 }

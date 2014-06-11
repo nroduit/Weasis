@@ -27,6 +27,7 @@ public class DropDownLabel implements Icon {
         this.label = label;
     }
 
+    @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setPaint(Color.black);
@@ -44,10 +45,12 @@ public class DropDownLabel implements Icon {
 
     }
 
+    @Override
     public int getIconWidth() {
         return iconWidth + 10;
     }
 
+    @Override
     public int getIconHeight() {
         return iconHeight;
     }

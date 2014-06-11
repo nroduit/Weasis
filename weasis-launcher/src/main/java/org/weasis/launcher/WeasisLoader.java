@@ -117,7 +117,7 @@ public class WeasisLoader {
         Icon icon = null;
         File iconFile = null;
         if (resPath != null) {
-            iconFile = new File(resPath, "images" + File.separator + "about.png");
+            iconFile = new File(resPath, "images" + File.separator + "about.png"); //$NON-NLS-1$ //$NON-NLS-2$
             if (!iconFile.canRead()) {
                 iconFile = null;
             }

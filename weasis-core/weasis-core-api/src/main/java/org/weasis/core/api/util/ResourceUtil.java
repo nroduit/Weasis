@@ -27,7 +27,7 @@ public class ResourceUtil {
         try {
             return url != null ? url.openStream() : null;
         } catch (IOException e) {
-            LOGGER.error("Cannot read resource:{}", e.getMessage());
+            LOGGER.error("Cannot read resource:{}", e.getMessage()); //$NON-NLS-1$
             return null;
         }
     }
@@ -53,11 +53,11 @@ public class ResourceUtil {
     }
 
     public static ImageIcon getLargeLogo() {
-        return getLogo("images" + File.separator + "about.png");
+        return getLogo("images" + File.separator + "about.png"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public static ImageIcon getIconLogo64() {
-        return getLogo("images" + File.separator + "logo-button.png");
+        return getLogo("images" + File.separator + "logo-button.png"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public static ImageIcon getLogo(String filename) {
@@ -68,14 +68,14 @@ public class ResourceUtil {
                 icon = new ImageIcon(file.toURI().toURL());
             }
         } catch (Exception e) {
-            LOGGER.error("Cannot read logo image:{}", e.getMessage());
+            LOGGER.error("Cannot read logo image:{}", e.getMessage()); //$NON-NLS-1$
         }
         return icon;
     }
 
     public static File getResource(String filename) {
         if (filename != null) {
-            return new File(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"), filename);
+            return new File(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"), filename); //$NON-NLS-1$
         }
         return null;
     }

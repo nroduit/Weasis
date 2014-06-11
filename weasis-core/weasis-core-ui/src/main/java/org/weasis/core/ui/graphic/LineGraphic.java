@@ -67,11 +67,11 @@ public class LineGraphic extends AbstractDragGraphic {
         boolean labelVisible) throws InvalidShapeException {
         super(2, paintColor, lineThickness, labelVisible, false);
         if (ptStart == null || ptEnd == null) {
-            throw new InvalidShapeException("Point2D is null!");
+            throw new InvalidShapeException("Point2D is null!"); //$NON-NLS-1$
         }
         setHandlePointList(ptStart, ptEnd);
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn");
+            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
         }
         buildShape(null);
     }
@@ -84,7 +84,7 @@ public class LineGraphic extends AbstractDragGraphic {
         throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
         if (handlePointTotalNumber != 2) {
-            throw new InvalidShapeException("Not a valid LineGraphic!");
+            throw new InvalidShapeException("Not a valid LineGraphic!"); //$NON-NLS-1$
         }
         buildShape(null);
     }

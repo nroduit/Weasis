@@ -19,10 +19,11 @@ import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.Messages;
 
 public class SimpleOpManager implements OpManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleOpManager.class);
-    public static final String NAME = "Image Operations";
+    public static final String NAME = Messages.getString("SimpleOpManager.img_op"); //$NON-NLS-1$
 
     public enum Position {
         BEFORE, AFTER
@@ -68,12 +69,12 @@ public class SimpleOpManager implements OpManager {
             String title = action.getName();
             int k = 2;
             while (nodes.get(title) != null) {
-                title += " " + k;
+                title += " " + k; //$NON-NLS-1$
                 k++;
             }
             if (k > 2) {
                 action.setName(title);
-                LOGGER.warn("This name already exists, rename to {}.", title);
+                LOGGER.warn("This name already exists, rename to {}.", title); //$NON-NLS-1$
             }
             nodes.put(title, action);
             if (positionRef != null) {
@@ -206,7 +207,7 @@ public class SimpleOpManager implements OpManager {
                     }
                     op.process();
                 } catch (Exception e) {
-                    LOGGER.error("Image {} failed: {}", op.getParam(ImageOpNode.NAME), e.getMessage());
+                    LOGGER.error("Image {} failed: {}", op.getParam(ImageOpNode.NAME), e.getMessage()); //$NON-NLS-1$
                     // Skip this operation
                     op.setParam(ImageOpNode.OUTPUT_IMG, op.getParam(ImageOpNode.INPUT_IMG));
                 }

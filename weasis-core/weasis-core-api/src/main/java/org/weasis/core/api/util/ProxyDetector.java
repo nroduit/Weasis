@@ -16,8 +16,6 @@ import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.util.List;
 
-import org.weasis.core.api.Messages;
-
 /**
  * 
  * Detecting and selecting a proxy

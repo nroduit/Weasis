@@ -130,7 +130,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
          * DICOM PR and KO are not displayed with a special viewer but are transversally managed objects. So they are
          * not registered from a viewer.
          */
-        DCM_ELEMENT_FACTORIES.put("PR", new DicomSpecialElementFactory() {
+        DCM_ELEMENT_FACTORIES.put("PR", new DicomSpecialElementFactory() { //$NON-NLS-1$
 
             @Override
             public String getSeriesMimeType() {
@@ -139,7 +139,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
             @Override
             public String[] getModalities() {
-                return new String[] { "PR" };
+                return new String[] { "PR" }; //$NON-NLS-1$
             }
 
             @Override
@@ -147,7 +147,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 return new PRSpecialElement(mediaIO);
             }
         });
-        DCM_ELEMENT_FACTORIES.put("KO", new DicomSpecialElementFactory() {
+        DCM_ELEMENT_FACTORIES.put("KO", new DicomSpecialElementFactory() { //$NON-NLS-1$
 
             @Override
             public String getSeriesMimeType() {
@@ -156,7 +156,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
             @Override
             public String[] getModalities() {
-                return new String[] { "KO" };
+                return new String[] { "KO" }; //$NON-NLS-1$
             }
 
             @Override
@@ -273,7 +273,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 Attributes header = md.getAttributes();
                 // Exclude DICOMDIR
                 String mediaStorageSOPClassUID = fmi == null ? null : fmi.getString(Tag.MediaStorageSOPClassUID);
-                if ("1.2.840.10008.1.3.10".equals(mediaStorageSOPClassUID)) { //$NON-NLS-1$ //$NON-NLS-2$
+                if ("1.2.840.10008.1.3.10".equals(mediaStorageSOPClassUID)) { //$NON-NLS-1$ 
                     mimeType = UNREADABLE;
                     close();
                     return false;
@@ -304,7 +304,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             } catch (Throwable t) {
                 mimeType = UNREADABLE;
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.error("Cannot read DICOM:", t);
+                    LOGGER.error("Cannot read DICOM:", t); //$NON-NLS-1$
                 } else {
                     LOGGER.error(t.getMessage());
                 }
@@ -657,7 +657,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             if (bitsAllocated > 16 && samplesPerPixel == 1) {
                 dataType = DataBuffer.TYPE_INT;
             }
-            String photometricInterpretation = header.getString(Tag.PhotometricInterpretation, "MONOCHROME2");
+            String photometricInterpretation = header.getString(Tag.PhotometricInterpretation, "MONOCHROME2"); //$NON-NLS-1$
             pmi = PhotometricInterpretation.fromString(photometricInterpretation);
             setTagNoNull(TagW.PresentationLUTShape, header.getString(Tag.PresentationLUTShape));
             setTagNoNull(TagW.PhotometricInterpretation, photometricInterpretation);
@@ -707,7 +707,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         Float ri = (Float) tags.get(TagW.RescaleIntercept);
                         String rt = (String) tags.get(TagW.RescaleType);
                         tags.put(TagW.RescaleIntercept, ri == null ? 0.0f : ri);
-                        tags.put(TagW.RescaleType, rt == null ? "US" : rt);
+                        tags.put(TagW.RescaleType, rt == null ? "US" : rt); //$NON-NLS-1$
                     }
                     // Divide pixel value by (2 ^ rightBit) => remove right bits
                     slopeVal /= 1 << (high - bitsStored);
@@ -808,13 +808,13 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         FileOutputStream fileOut = null;
                         ObjectOutput objOut = null;
                         try {
-                            File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR);
+                            File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                             fileOut = new FileOutputStream(file);
                             objOut = new ObjectOutputStream(fileOut);
                             objOut.writeObject(overlayData);
                             media.setTag(TagW.OverlayBurninData, file.getPath());
                         } catch (Exception e) {
-                            LOGGER.error("Cannot serialize overlay: {}", e.getMessage());
+                            LOGGER.error("Cannot serialize overlay: {}", e.getMessage()); //$NON-NLS-1$
                         } finally {
                             FileUtil.safeClose(objOut);
                             FileUtil.safeClose(fileOut);
@@ -988,7 +988,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             if (ts == null) {
                 ts = NO_VALUE;
             }
-            desc[1] = Messages.getString("DicomMediaIO.msg_no_reader") + ts; //$NON-NLS-1$
+            desc[1] = Messages.getString("DicomMediaIO.msg_no_reader") + StringUtil.COLON_AND_SPACE + ts; //$NON-NLS-1$
         }
         return desc;
     }
@@ -1092,13 +1092,13 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 decompressor.setInput(iisOfFrame(frameIndex));
 
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Start decompressing frame #" + (frameIndex + 1));
+                    LOGGER.debug("Start decompressing frame #" + (frameIndex + 1)); //$NON-NLS-1$
                 }
                 Raster wr =
                     pmi.decompress() == pmi && decompressor.canReadRaster() ? decompressor.readRaster(0,
                         decompressParam(param)) : decompressor.read(0, decompressParam(param)).getRaster();
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Finished decompressing frame #" + (frameIndex + 1));
+                    LOGGER.debug("Finished decompressing frame #" + (frameIndex + 1)); //$NON-NLS-1$
                 }
                 return wr;
             }
@@ -1145,11 +1145,11 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             if (decompressor != null) {
                 decompressor.setInput(iisOfFrame(frameIndex));
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Start decompressing frame #" + (frameIndex + 1));
+                    LOGGER.debug("Start decompressing frame #" + (frameIndex + 1)); //$NON-NLS-1$
                 }
                 BufferedImage bi = decompressor.read(0, decompressParam(param));
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Finished decompressing frame #" + (frameIndex + 1));
+                    LOGGER.debug("Finished decompressing frame #" + (frameIndex + 1)); //$NON-NLS-1$
                 }
                 return bi;
             } else {
@@ -1198,7 +1198,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             } else {
                 // Rewrite image with subsampled model (otherwise cannot not be displayed as RenderedImage)
                 // Convert YBR_FULL into RBG as the ybr model is not well supported.
-                if (pmi.isSubSambled() || pmi.name().startsWith("YBR")) {
+                if (pmi.isSubSambled() || pmi.name().startsWith("YBR")) { //$NON-NLS-1$
                     // TODO improve this
                     WritableRaster raster = (WritableRaster) readRaster(frameIndex, param);
                     ColorModel cm = createColorModel(bitsStored, dataType);
@@ -1307,7 +1307,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             return md.getAttributes();
         } catch (Exception e) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("Cannot read DICOM:", e);
+                LOGGER.error("Cannot read DICOM:", e); //$NON-NLS-1$
             } else {
                 LOGGER.error(e.getMessage());
             }
@@ -1321,7 +1321,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         resetInternalState();
         if (input != null) {
             if (!(input instanceof ImageInputStream)) {
-                throw new IllegalArgumentException("Input not an ImageInputStream!");
+                throw new IllegalArgumentException("Input not an ImageInputStream!"); //$NON-NLS-1$
             }
             this.iis = (ImageInputStream) input;
         }
@@ -1368,7 +1368,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
     private void checkIndex(int frameIndex) {
         if (frameIndex < 0 || frameIndex >= numberOfFrame) {
-            throw new IndexOutOfBoundsException("imageIndex: " + frameIndex);
+            throw new IndexOutOfBoundsException("imageIndex: " + frameIndex); //$NON-NLS-1$
         }
     }
 
@@ -1435,7 +1435,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             }
 
             if (iis == null) {
-                throw new IllegalStateException("Input not set!");
+                throw new IllegalStateException("Input not set!"); //$NON-NLS-1$
             }
 
             /*
@@ -1475,7 +1475,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 numberOfFrame = ds.getInt(Tag.NumberOfFrames, 1);
                 hasPixel = ds.getInt(Tag.BitsStored, ds.getInt(Tag.BitsAllocated, 0)) > 0;
 
-                if (readImageAfter && !tsuid.startsWith("1.2.840.10008.1.2.4.10") && hasPixel) {
+                if (readImageAfter && !tsuid.startsWith("1.2.840.10008.1.2.4.10") && hasPixel) { //$NON-NLS-1$
 
                     if (pixdata instanceof BulkData) {
                         int width = (Integer) getTagValue(TagW.Columns);
@@ -1493,7 +1493,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     } else if (pixdata instanceof Fragments) {
                         ImageReaderItem readerItem = ImageReaderFactory.getImageReader(tsuid);
                         if (readerItem == null) {
-                            throw new IOException("Unsupported Transfer Syntax: " + tsuid);
+                            throw new IOException("Unsupported Transfer Syntax: " + tsuid); //$NON-NLS-1$
                         }
                         this.decompressor = readerItem.getImageReader();
                         // this.patchJpegLS = param.patchJPEGLS;

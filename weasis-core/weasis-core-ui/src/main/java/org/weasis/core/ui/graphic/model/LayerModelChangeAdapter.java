@@ -17,15 +17,19 @@ package org.weasis.core.ui.graphic.model;
  */
 public class LayerModelChangeAdapter implements LayerModelChangeListener {
 
+    @Override
     public void handleLayerModelChanged(LayerModel layerModel) {
     }
 
+    @Override
     public void handleLayerAdded(LayerModel layerModel, AbstractLayer layer) {
     }
 
+    @Override
     public void handleLayerRemoved(LayerModel layerModel, AbstractLayer layer) {
     }
 
+    @Override
     public void handleLayerChanged(LayerModel layerModel, AbstractLayer layer) {
     }
 }

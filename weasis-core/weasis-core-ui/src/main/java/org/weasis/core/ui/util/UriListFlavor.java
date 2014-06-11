@@ -18,8 +18,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import org.weasis.core.ui.Messages;
-
 public class UriListFlavor {
 
     public static DataFlavor uriListFlavor;

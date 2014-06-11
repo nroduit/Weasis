@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -142,7 +143,7 @@ public class DicomPrintDialog extends JDialog {
         content.setLayout(gbl_content);
         mediumTypeLabel = new JLabel();
 
-        mediumTypeLabel.setText(Messages.getString("DicomPrintDialog.med_type")); //$NON-NLS-1$
+        mediumTypeLabel.setText(Messages.getString("DicomPrintDialog.med_type") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_mediumTypeLabel = new GridBagConstraints();
         gbc_mediumTypeLabel.anchor = GridBagConstraints.EAST;
         gbc_mediumTypeLabel.insets = new Insets(0, 0, 5, 5);
@@ -160,7 +161,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(mediumTypeComboBox, gbc_mediumTypeComboBox);
         priorityLabel = new JLabel();
 
-        priorityLabel.setText(Messages.getString("DicomPrintDialog.priority")); //$NON-NLS-1$
+        priorityLabel.setText(Messages.getString("DicomPrintDialog.priority") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_priorityLabel = new GridBagConstraints();
         gbc_priorityLabel.anchor = GridBagConstraints.EAST;
         gbc_priorityLabel.insets = new Insets(0, 0, 5, 5);
@@ -178,7 +179,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(priorityComboBox, gbc_priorityComboBox);
         filmDestinationLabel = new JLabel();
 
-        filmDestinationLabel.setText(Messages.getString("DicomPrintDialog.film_dest")); //$NON-NLS-1$
+        filmDestinationLabel.setText(Messages.getString("DicomPrintDialog.film_dest") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_filmDestinationLabel = new GridBagConstraints();
         gbc_filmDestinationLabel.anchor = GridBagConstraints.EAST;
         gbc_filmDestinationLabel.insets = new Insets(0, 0, 5, 5);
@@ -197,7 +198,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(filmDestinationComboBox, gbc_filmDestinationComboBox);
         numOfCopiesLabel = new JLabel();
 
-        numOfCopiesLabel.setText(Messages.getString("DicomPrintDialog.copies")); //$NON-NLS-1$
+        numOfCopiesLabel.setText(Messages.getString("DicomPrintDialog.copies") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_numOfCopiesLabel = new GridBagConstraints();
         gbc_numOfCopiesLabel.anchor = GridBagConstraints.EAST;
         gbc_numOfCopiesLabel.insets = new Insets(0, 0, 5, 5);
@@ -240,7 +241,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(printOptionsSeparator, gbc_printOptionsSeparator);
         imageDisplayLabel = new JLabel();
 
-        imageDisplayLabel.setText(Messages.getString("DicomPrintDialog.disp_format")); //$NON-NLS-1$
+        imageDisplayLabel.setText(Messages.getString("DicomPrintDialog.disp_format") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_imageDisplayLabel = new GridBagConstraints();
         gbc_imageDisplayLabel.anchor = GridBagConstraints.EAST;
         gbc_imageDisplayLabel.insets = new Insets(0, 0, 5, 5);
@@ -259,7 +260,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(imageDisplayFormatComboBox, gbc_imageDisplayFormatComboBox);
         filmSizeIdLabel = new JLabel();
 
-        filmSizeIdLabel.setText(Messages.getString("DicomPrintDialog.size_id")); //$NON-NLS-1$
+        filmSizeIdLabel.setText(Messages.getString("DicomPrintDialog.size_id") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_filmSizeIdLabel = new GridBagConstraints();
         gbc_filmSizeIdLabel.anchor = GridBagConstraints.EAST;
         gbc_filmSizeIdLabel.insets = new Insets(0, 0, 5, 5);
@@ -278,7 +279,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(filmSizeIdComboBox, gbc_filmSizeIdComboBox);
         filmOrientationLabel = new JLabel();
 
-        filmOrientationLabel.setText(Messages.getString("DicomPrintDialog.film_orientation")); //$NON-NLS-1$
+        filmOrientationLabel.setText(Messages.getString("DicomPrintDialog.film_orientation") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_filmOrientationLabel = new GridBagConstraints();
         gbc_filmOrientationLabel.anchor = GridBagConstraints.EAST;
         gbc_filmOrientationLabel.insets = new Insets(0, 0, 5, 5);
@@ -293,7 +294,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(filmOrientationComboBox, gbc_filmOrientationComboBox);
         magnificationTypeLabel = new JLabel();
 
-        magnificationTypeLabel.setText(Messages.getString("DicomPrintDialog.magn_type")); //$NON-NLS-1$
+        magnificationTypeLabel.setText(Messages.getString("DicomPrintDialog.magn_type") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_magnificationTypeLabel = new GridBagConstraints();
         gbc_magnificationTypeLabel.anchor = GridBagConstraints.EAST;
         gbc_magnificationTypeLabel.insets = new Insets(0, 0, 5, 5);
@@ -311,7 +312,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(magnificationTypeComboBox, gbc_magnificationTypeComboBox);
         smoothingTypeLabel = new JLabel();
 
-        smoothingTypeLabel.setText(Messages.getString("DicomPrintDialog.smooth")); //$NON-NLS-1$
+        smoothingTypeLabel.setText(Messages.getString("DicomPrintDialog.smooth") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_smoothingTypeLabel = new GridBagConstraints();
         gbc_smoothingTypeLabel.anchor = GridBagConstraints.EAST;
         gbc_smoothingTypeLabel.insets = new Insets(0, 0, 5, 5);
@@ -329,7 +330,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(smoothingTypeComboBox, gbc_smoothingTypeComboBox);
         borderDensityLabel = new JLabel();
 
-        borderDensityLabel.setText(Messages.getString("DicomPrintDialog.border")); //$NON-NLS-1$
+        borderDensityLabel.setText(Messages.getString("DicomPrintDialog.border") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_borderDensityLabel = new GridBagConstraints();
         gbc_borderDensityLabel.anchor = GridBagConstraints.EAST;
         gbc_borderDensityLabel.insets = new Insets(0, 0, 5, 5);
@@ -347,7 +348,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(borderDensityComboBox, gbc_borderDensityComboBox);
         minDensityLabel = new JLabel();
 
-        minDensityLabel.setText(Messages.getString("DicomPrintDialog.min_density")); //$NON-NLS-1$
+        minDensityLabel.setText(Messages.getString("DicomPrintDialog.min_density") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_minDensityLabel = new GridBagConstraints();
         gbc_minDensityLabel.anchor = GridBagConstraints.EAST;
         gbc_minDensityLabel.insets = new Insets(0, 0, 5, 5);
@@ -365,7 +366,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(minDensitySpinner, gbc_minDensitySpinner);
         maxDensityLabel = new JLabel();
 
-        maxDensityLabel.setText(Messages.getString("DicomPrintDialog.max_density")); //$NON-NLS-1$
+        maxDensityLabel.setText(Messages.getString("DicomPrintDialog.max_density") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_maxDensityLabel = new GridBagConstraints();
         gbc_maxDensityLabel.anchor = GridBagConstraints.EAST;
         gbc_maxDensityLabel.insets = new Insets(0, 0, 5, 5);
@@ -383,7 +384,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(maxDensitySpinner, gbc_maxDensitySpinner);
         trimLabel = new JLabel();
 
-        trimLabel.setText(Messages.getString("DicomPrintDialog.trim")); //$NON-NLS-1$
+        trimLabel.setText(Messages.getString("DicomPrintDialog.trim") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_trimLabel = new GridBagConstraints();
         gbc_trimLabel.anchor = GridBagConstraints.EAST;
         gbc_trimLabel.insets = new Insets(0, 0, 5, 5);
@@ -401,7 +402,7 @@ public class DicomPrintDialog extends JDialog {
         content.add(trimComboBox, gbc_trimComboBox);
         printAnnotationsCheckBox = new JCheckBox();
 
-        printAnnotationsCheckBox.setText(org.weasis.core.ui.Messages.getString("PrintDialog.annotate")); //$NON-NLS-1$
+        printAnnotationsCheckBox.setText(Messages.getString("PrintDialog.annotate")); //$NON-NLS-1$
         printAnnotationsCheckBox.setSelected(true);
         GridBagConstraints gbc_printAnnotationsCheckBox = new GridBagConstraints();
         gbc_printAnnotationsCheckBox.anchor = GridBagConstraints.NORTHWEST;
@@ -411,7 +412,7 @@ public class DicomPrintDialog extends JDialog {
         gbc_printAnnotationsCheckBox.gridy = 9;
         content.add(printAnnotationsCheckBox, gbc_printAnnotationsCheckBox);
 
-        JCheckBox chckbxSelctedView = new JCheckBox(org.weasis.core.ui.Messages.getString("PrintDialog.selected_view")); //$NON-NLS-1$
+        JCheckBox chckbxSelctedView = new JCheckBox(Messages.getString("PrintDialog.selected_view")); //$NON-NLS-1$
         chckbxSelctedView.setSelected(true);
         // TODO remove this when multiple views can be printed
         chckbxSelctedView.setEnabled(false);
@@ -427,7 +428,7 @@ public class DicomPrintDialog extends JDialog {
         printerLabel = new JLabel();
         printersCfg.add(printerLabel);
 
-        printerLabel.setText(Messages.getString("DicomPrintDialog.printer")); //$NON-NLS-1$
+        printerLabel.setText(Messages.getString("DicomPrintDialog.printer") + StringUtil.COLON); //$NON-NLS-1$
         printersComboBox = new JComboBox();
         printersCfg.add(printersComboBox);
 
@@ -536,7 +537,7 @@ public class DicomPrintDialog extends JDialog {
         try {
             dicomPrint.printImage(image);
         } catch (Exception ex) {
-            AuditLog.logError(LOGGER, ex, "DICOM Print Service");
+            AuditLog.logError(LOGGER, ex, Messages.getString("DicomPrintDialog.0")); //$NON-NLS-1$
             JOptionPane
                 .showMessageDialog(
                     this,

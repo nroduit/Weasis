@@ -61,7 +61,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
         throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible);
         if (handlePointTotalNumber != 5) {
-            throw new InvalidShapeException("Not a valid CobbAngleToolGraphic!");
+            throw new InvalidShapeException("Not a valid CobbAngleToolGraphic!"); //$NON-NLS-1$
         }
     }
 

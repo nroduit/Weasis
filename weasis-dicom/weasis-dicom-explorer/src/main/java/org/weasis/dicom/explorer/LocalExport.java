@@ -64,6 +64,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.serialize.DefaultSerializer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -84,7 +85,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static final String HEIGHT_BITS = "exp.8bis";//$NON-NLS-1$
     private static final String CD_COMPATIBLE = "exp.cd";//$NON-NLS-1$
 
-    public static final String[] EXPORT_FORMAT = { "DICOM", "DICOM ZIP", "JPEG", "PNG", "TIFF" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    public static final String[] EXPORT_FORMAT = { "DICOM", "DICOM ZIP", "JPEG", "PNG", "TIFF" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
     private final DicomModel dicomModel;
     private JLabel lblImportAFolder;
@@ -111,7 +112,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEFT);
 
-        lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp")); //$NON-NLS-1$
+        lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp") + StringUtil.COLON); //$NON-NLS-1$
         panel.add(lblImportAFolder);
 
         comboBoxImgFormat = new JComboBox();
@@ -130,7 +131,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         });
         panel.add(btnNewButton);
 
-        chckbxGraphics = new JCheckBox("Graphics", true);
+        chckbxGraphics = new JCheckBox(Messages.getString("LocalExport.graphics"), true); //$NON-NLS-1$
 
         panel.add(chckbxGraphics);
         add(exportTree, BorderLayout.CENTER);
@@ -180,7 +181,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
             palenSlider1.setBorder(new TitledBorder(
-                Messages.getString("LocalExport.jpeg_quality") + " " + slider.getValue())); //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("LocalExport.jpeg_quality") + StringUtil.COLON_AND_SPACE + slider.getValue())); //$NON-NLS-1$ 
 
             slider.setPaintTicks(true);
             slider.setSnapToTicks(false);
@@ -244,7 +245,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (saveFile) {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setAcceptAllFileFilterUsed(false);
-            FileFormatFilter filter = new FileFormatFilter("zip", "ZIP");
+            FileFormatFilter filter = new FileFormatFilter("zip", "ZIP"); //$NON-NLS-1$ //$NON-NLS-2$
             fileChooser.addChoosableFileFilter(filter);
             fileChooser.setFileFilter(filter);
         } else {
@@ -258,7 +259,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else {
             if (saveFile) {
                 outputFolder =
-                    ".zip".equals(FileUtil.getExtension(folder.getName())) ? folder : new File(folder + ".zip");
+                    ".zip".equals(FileUtil.getExtension(folder.getName())) ? folder : new File(folder + ".zip"); //$NON-NLS-1$ //$NON-NLS-2$
             } else {
                 outputFolder = folder;
             }
@@ -293,29 +294,29 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
 
-            ExplorerTask task = new ExplorerTask("Exporting...", false) {
+            ExplorerTask task = new ExplorerTask(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
 
-                @Override
-                protected Boolean doInBackground() throws Exception {
-                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart,
-                        dicomModel, null, this));
-                    if (EXPORT_FORMAT[0].equals(format)) {
-                        writeDicom(exportDir, model, false);
-                    } else if (EXPORT_FORMAT[1].equals(format)) {
-                        writeDicom(exportDir, model, true);
-                    } else {
-                        writeOther(exportDir, model, format);
+                    @Override
+                    protected Boolean doInBackground() throws Exception {
+                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart,
+                            dicomModel, null, this));
+                        if (EXPORT_FORMAT[0].equals(format)) {
+                            writeDicom(exportDir, model, false);
+                        } else if (EXPORT_FORMAT[1].equals(format)) {
+                            writeDicom(exportDir, model, true);
+                        } else {
+                            writeOther(exportDir, model, format);
+                        }
+                        return true;
                     }
-                    return true;
-                }
 
-                @Override
-                protected void done() {
-                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop,
-                        dicomModel, null, this));
-                }
+                    @Override
+                    protected void done() {
+                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop,
+                            dicomModel, null, this));
+                    }
 
-            };
+                };
             task.execute();
         }
     }
@@ -366,7 +367,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             String seriesName = FileUtil.getValidFileNameWithoutHTML(objects[3].toString());
                             if (seriesName.length() > 30) {
                                 buffer.append(seriesName, 0, 27);
-                                buffer.append("...");
+                                buffer.append(Messages.getString("LocalExport.partialtext_symbol")); //$NON-NLS-1$
                             } else {
                                 buffer.append(seriesName);
                             }
@@ -393,8 +394,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             image = img.getRenderedImage(image);
                         }
                         if (image != null) {
-                            File destinationFile = new File(destinationDir, instance + ".jpg");
-                            ImageFiler.writeJPG(destinationFile, image, jpegQuality / 100.0f); //$NON-NLS-1$
+                            File destinationFile = new File(destinationDir, instance + ".jpg"); //$NON-NLS-1$
+                            ImageFiler.writeJPG(destinationFile, image, jpegQuality / 100.0f);
                             if (writeGraphics) {
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
@@ -407,8 +408,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             image = img.getRenderedImage(image);
                         }
                         if (image != null) {
-                            File destinationFile = new File(destinationDir, instance + ".png");
-                            ImageFiler.writePNG(destinationFile, image); //$NON-NLS-1$
+                            File destinationFile = new File(destinationDir, instance + ".png"); //$NON-NLS-1$
+                            ImageFiler.writePNG(destinationFile, image);
                             if (writeGraphics) {
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
@@ -421,8 +422,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             if (!more8bits) {
                                 image = img.getRenderedImage(image);
                             }
-                            File destinationFile = new File(destinationDir, instance + ".tif");
-                            ImageFiler.writeTIFF(destinationFile, image, false, false, false); //$NON-NLS-1$
+                            File destinationFile = new File(destinationDir, instance + ".tif"); //$NON-NLS-1$
+                            ImageFiler.writeTIFF(destinationFile, image, false, false, false);
                             if (writeGraphics) {
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
@@ -451,7 +452,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             keepNames = false;
             writeDicomdir = true;
             cdCompatible = true;
-            writeDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip"));
+            writeDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip")); //$NON-NLS-1$ //$NON-NLS-2$
         } else {
             Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
             keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$

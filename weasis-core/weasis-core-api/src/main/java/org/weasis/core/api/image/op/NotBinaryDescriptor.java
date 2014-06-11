@@ -19,7 +19,6 @@ import javax.media.jai.ImageLayout;
 import javax.media.jai.OperationDescriptorImpl;
 import javax.media.jai.PlanarImage;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.image.util.LayoutUtil;
 
 import com.sun.media.jai.util.ImageUtil;
@@ -49,6 +48,7 @@ public class NotBinaryDescriptor extends OperationDescriptorImpl implements Rend
         super(resources, supportedModes, 1, paramNames, paramClasses, paramDefaults, null);
     }
 
+    @Override
     public RenderedImage create(ParameterBlock parameterblock, RenderingHints renderHints) {
         if (!validateSources(parameterblock)) {
             return null;

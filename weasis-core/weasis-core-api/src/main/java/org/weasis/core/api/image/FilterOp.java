@@ -30,7 +30,7 @@ public class FilterOp extends AbstractOp {
      * 
      * org.weasis.core.api.image.util.KernelData value.
      */
-    public static final String P_KERNEL_DATA = "kernel";
+    public static final String P_KERNEL_DATA = "kernel"; //$NON-NLS-1$
 
     public FilterOp() {
         setName(OP_NAME);

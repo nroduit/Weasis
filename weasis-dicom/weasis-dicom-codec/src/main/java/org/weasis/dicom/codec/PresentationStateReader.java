@@ -18,13 +18,13 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 public class PresentationStateReader {
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
-    public static final String PR_PRESETS = "pr.presets";
-    public static final String TAG_OLD_PIX_SIZE = "original.pixel.spacing";
-    public static final String TAG_OLD_ModalityLUTData = "original.modality.lut";
-    public static final String TAG_OLD_RescaleSlope = "original.rescale.slope";
-    public static final String TAG_OLD_RescaleIntercept = "original.rescale.intercept";
-    public static final String TAG_OLD_RescaleType = "original.rescale.type";
-    public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers";
+    public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
+    public static final String TAG_OLD_PIX_SIZE = "original.pixel.spacing"; //$NON-NLS-1$
+    public static final String TAG_OLD_ModalityLUTData = "original.modality.lut"; //$NON-NLS-1$
+    public static final String TAG_OLD_RescaleSlope = "original.rescale.slope"; //$NON-NLS-1$
+    public static final String TAG_OLD_RescaleIntercept = "original.rescale.intercept"; //$NON-NLS-1$
+    public static final String TAG_OLD_RescaleType = "original.rescale.type"; //$NON-NLS-1$
+    public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers"; //$NON-NLS-1$
 
     private final PRSpecialElement prSpecialElement;
     private final Attributes dcmobj;
@@ -111,7 +111,7 @@ public class PresentationStateReader {
         if (dcmobj != null) {
             // Rotation and then Flip
             tags.put(ActionW.ROTATION.cmd(), dcmobj.getInt(Tag.ImageRotation, 0));
-            tags.put(ActionW.FLIP.cmd(), "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip)));
+            tags.put(ActionW.FLIP.cmd(), "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip))); //$NON-NLS-1$
         }
     }
 

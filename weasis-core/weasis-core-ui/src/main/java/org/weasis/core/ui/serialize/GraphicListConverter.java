@@ -34,7 +34,7 @@ public class GraphicListConverter implements Converter<GraphicList> {
                     g = serializer.read((Class<? extends Graphic>) val, next);
                 }
             } catch (Exception e) {
-                LOGGER.error("Cannot instantiate a graphic: {}", e.getMessage());
+                LOGGER.error("Cannot instantiate a graphic: {}", e.getMessage()); //$NON-NLS-1$
             }
             if (g != null) {
                 graphics.list.add(g);
@@ -51,7 +51,7 @@ public class GraphicListConverter implements Converter<GraphicList> {
                     try {
                         serializer.write(g, node);
                     } catch (Exception e) {
-                        LOGGER.error("Cannot write a graphic: {}", e.getMessage());
+                        LOGGER.error("Cannot write a graphic: {}", e.getMessage()); //$NON-NLS-1$
                     }
                 }
             }

@@ -17,6 +17,8 @@ import java.text.StringCharacterIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.weasis.core.api.util.StringUtil;
+
 /**
  * Convenience methods for escaping special characters related to HTML, XML, and regular expressions.
  * 
@@ -176,7 +178,7 @@ public final class EscapeChars {
      */
     public static String forHTML(String aText) {
         if (aText == null) {
-            return "";
+            return ""; //$NON-NLS-1$
         }
         final StringBuilder result = new StringBuilder();
         final StringCharacterIterator iterator = new StringCharacterIterator(aText);
@@ -339,7 +341,7 @@ public final class EscapeChars {
         if (aText == null) {
             return null;
         }
-        if (("".equals(aText))) { //$NON-NLS-1$
+        if (!StringUtil.hasText(aText)) { //$NON-NLS-1$
             return ""; //$NON-NLS-1$
         }
         final StringBuilder result = new StringBuilder();

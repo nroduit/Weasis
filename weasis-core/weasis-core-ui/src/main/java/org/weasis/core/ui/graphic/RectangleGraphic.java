@@ -71,11 +71,11 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         boolean filled) throws InvalidShapeException {
         super(8, paintColor, lineThickness, labelVisible, filled);
         if (rect == null) {
-            throw new InvalidShapeException("Rectangle2D is null!");
+            throw new InvalidShapeException("Rectangle2D is null!"); //$NON-NLS-1$
         }
         setHandlePointList(rect);
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn");
+            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
         }
         buildShape(null);
     }
@@ -88,7 +88,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointTotalNumber != 8) {
-            throw new InvalidShapeException("Not a valid RectangleGraphic!");
+            throw new InvalidShapeException("Not a valid RectangleGraphic!"); //$NON-NLS-1$
         }
         buildShape(null);
     }

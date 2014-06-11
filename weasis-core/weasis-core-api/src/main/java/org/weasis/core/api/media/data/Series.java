@@ -32,6 +32,7 @@ import org.weasis.core.api.Messages;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.StringUtil;
 
 public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroupNode implements MediaSeries<E> {
 
@@ -357,7 +358,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
             RenderedImage img = image.getImage();
             if (img != null) {
                 toolTips.append(Messages.getString("Series.img_size")); //$NON-NLS-1$
-                toolTips.append(' ');
+                toolTips.append(StringUtil.COLON_AND_SPACE);
                 toolTips.append(img.getWidth());
                 toolTips.append('x');
                 toolTips.append(img.getHeight());
@@ -371,7 +372,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
     protected void addToolTipsElement(StringBuilder toolTips, String title, TagW tag) {
         Object tagValue = getTagValue(tag);
         toolTips.append(title);
-        toolTips.append(' ');
+        toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(tagValue == null ? "" : tagValue); //$NON-NLS-1$
         toolTips.append("<br>"); //$NON-NLS-1$
     }

@@ -19,12 +19,9 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -61,22 +58,22 @@ import org.weasis.core.ui.Messages;
 public class GeneralSetting extends AbstractItemDialogPage {
     private static final Logger LOGGER = LoggerFactory.getLogger(GeneralSetting.class);
 
-    public static final String pageName = Messages.getString("LookSetting.gen"); //$NON-NLS-1$
+    public static final String pageName = Messages.getString("GeneralSetting.gen"); //$NON-NLS-1$
 
     private LookInfo oldUILook;
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
     private final JLabel jLabelMLook = new JLabel();
     private final JComboBox jComboBoxlnf = new JComboBox();
 
-    private final JLabel labelLocale = //
-        new JLabel(Messages.getString("LookSetting.language.interface") + StringUtil.COLON);
+    private final JLabel labelLocale = new JLabel(Messages.getString("GeneralSetting.language") + StringUtil.COLON); //$NON-NLS-1$
     private final JLocaleLanguage comboBoxLang = new JLocaleLanguage() {
         @Override
         protected void handleChange() {
             comboBoxFormat.refresh();
         }
     };
-    private final JLabel labelLocale2 = new JLabel(Messages.getString("LookSetting.language.data") + StringUtil.COLON);
+    private final JLabel labelLocale2 = new JLabel(
+        Messages.getString("GeneralSetting.language.data") + StringUtil.COLON); //$NON-NLS-1$
     private final JLocaleFormat comboBoxFormat = new JLocaleFormat() {
         @Override
         protected void handleChange() {
@@ -91,12 +88,12 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final JButton button = new JButton(Messages.getString("GeneralSetting.show")); //$NON-NLS-1$
     private final JCheckBox chckbxFileLog = new JCheckBox(Messages.getString("GeneralSetting.rol_log")); //$NON-NLS-1$
     private final JPanel panel = new JPanel();
-    private final JLabel lblLogLevel = new JLabel(Messages.getString("GeneralSetting.log_level")); //$NON-NLS-1$
+    private final JLabel lblLogLevel = new JLabel(Messages.getString("GeneralSetting.log_level") + StringUtil.COLON); //$NON-NLS-1$
     private final JComboBox comboBoxLogLevel = new JComboBox(LEVEL.values());
     private final Component horizontalStrut = Box.createHorizontalStrut(10);
-    private final JLabel labelNumber = new JLabel(Messages.getString("GeneralSetting.log_nb")); //$NON-NLS-1$
+    private final JLabel labelNumber = new JLabel(Messages.getString("GeneralSetting.log_nb") + StringUtil.COLON); //$NON-NLS-1$
     private final JSpinner spinner = new JSpinner();
-    private final JLabel labelSize = new JLabel(Messages.getString("GeneralSetting.log_size")); //$NON-NLS-1$
+    private final JLabel labelSize = new JLabel(Messages.getString("GeneralSetting.log_size") + StringUtil.COLON); //$NON-NLS-1$
     private final JSpinner spinner_1 = new JSpinner();
     private final Component horizontalStrut_1 = Box.createHorizontalStrut(10);
     private final Component horizontalStrut_2 = Box.createHorizontalStrut(10);
@@ -122,7 +119,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     private void jbInit() throws Exception {
         this.setLayout(gridBagLayout1);
-        jLabelMLook.setText(Messages.getString("LookSetting.lf")); //$NON-NLS-1$
+        jLabelMLook.setText(Messages.getString("GeneralSetting.lf") + StringUtil.COLON); //$NON-NLS-1$
 
         GridBagConstraints gbc_button = new GridBagConstraints();
         gbc_button.insets = new Insets(7, 5, 5, 15);
@@ -311,7 +308,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         checkRolingLog();
 
         comboBoxLang.selectLocale(prfs.getProperty("locale.lang.code")); //$NON-NLS-1$
-        comboBoxFormat.selectLocale(); //$NON-NLS-1$
+        comboBoxFormat.selectLocale(); 
 
         String className = prfs.getProperty("weasis.look"); //$NON-NLS-1$
         if (className == null) {
@@ -369,7 +366,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         }
         String pattern =
             BundleTools.SYSTEM_PREFERENCES.getProperty(AuditLog.LOG_PATTERN,
-                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}");
+                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}"); //$NON-NLS-1$
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         AuditLog.createOrUpdateLogger(context,
             "default.log", new String[] { "org" }, level.toString(), logFile, pattern, fileNb, //$NON-NLS-1$ //$NON-NLS-2$

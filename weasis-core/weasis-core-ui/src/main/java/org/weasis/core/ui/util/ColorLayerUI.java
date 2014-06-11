@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.RootPaneContainer;
 import javax.swing.Timer;
 

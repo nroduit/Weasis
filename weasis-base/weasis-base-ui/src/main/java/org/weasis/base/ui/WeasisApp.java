@@ -57,6 +57,7 @@ public class WeasisApp {
         } else if (opt.isSet("visible")) { //$NON-NLS-1$
             GuiExecutor.instance().execute(new Runnable() {
 
+                @Override
                 public void run() {
                     Frame app = WeasisWin.getInstance().getFrame();
                     app.setVisible(true);

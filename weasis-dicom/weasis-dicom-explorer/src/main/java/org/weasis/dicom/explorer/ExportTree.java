@@ -55,7 +55,7 @@ public class ExportTree extends JScrollPane {
         };
 
         // Register tooltips
-        this.tree.setToolTipText("");
+        this.tree.setToolTipText(""); //$NON-NLS-1$
         this.tree.setCheckingModel(model.getCheckingModel());
         this.tree.getCheckingModel().setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
         expandTree(tree, model.getRootNode(), 3);

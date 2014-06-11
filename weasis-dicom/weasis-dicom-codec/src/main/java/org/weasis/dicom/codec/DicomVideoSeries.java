@@ -27,6 +27,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
 
 public class DicomVideoSeries extends Series<DicomVideoElement> implements FileExtractor {
 
@@ -103,11 +104,12 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagW.SeriesNumber); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagW.StudyDescription); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
-        toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$ //$NON-NLS-2$
-        toolTips.append(' ');
+        toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$ 
+        toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(TagW.formatDateTime((Date) getTagValue(TagW.SeriesDate)));
         toolTips.append("<br>"); //$NON-NLS-1$ 
         toolTips.append(Messages.getString("DicomVideo.video_l")); //$NON-NLS-1$
+        toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
     }

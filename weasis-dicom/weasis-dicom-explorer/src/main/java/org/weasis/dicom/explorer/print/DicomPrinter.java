@@ -58,7 +58,7 @@ public class DicomPrinter {
                 writer.writeAttribute("description", printer.getDescription()); //$NON-NLS-1$
                 writer.writeAttribute("aeTitle", printer.getAeTitle()); //$NON-NLS-1$
                 writer.writeAttribute("hostname", printer.getHostname()); //$NON-NLS-1$
-                writer.writeAttribute("port", "" + printer.getPort()); //$NON-NLS-1$
+                writer.writeAttribute("port", "" + printer.getPort()); //$NON-NLS-1$ //$NON-NLS-2$
                 writer.writeAttribute("colorPrintSupported", printer.isColorPrintSupported().toString()); //$NON-NLS-1$
                 writer.writeEndElement();
             }

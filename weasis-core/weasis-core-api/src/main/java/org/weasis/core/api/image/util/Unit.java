@@ -51,7 +51,7 @@ public enum Unit {
     // micro and mili iches are not official units because micro and mili comes from metric unit
     MICROINCH(9, Messages.getString("Unit.minch"), Messages.getString("Unit.minch_s"), 2.54E-08), //$NON-NLS-1$ //$NON-NLS-2$
 
-    MILLIINCH(10, "milli-inches", "mil", 2.54E-05),
+    MILLIINCH(10, Messages.getString("Unit.mil_inch"), Messages.getString("Unit.mil"), 2.54E-05), //$NON-NLS-1$ //$NON-NLS-2$
 
     INCH(11, Messages.getString("Unit.inch"), Messages.getString("Unit.inch_s"), 2.54E-02), //$NON-NLS-1$ //$NON-NLS-2$
 

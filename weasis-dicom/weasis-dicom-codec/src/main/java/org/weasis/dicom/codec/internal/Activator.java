@@ -36,8 +36,8 @@ import org.weasis.dicom.codec.pref.DicomPrefManager;
 public class Activator implements BundleActivator, ServiceListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
-    private static final String LOGGER_KEY = "always.info.ItemParser";
-    private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser";
+    private static final String LOGGER_KEY = "always.info.ItemParser"; //$NON-NLS-1$
+    private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser"; //$NON-NLS-1$
 
     // @Override
     @Override
@@ -56,11 +56,11 @@ public class Activator implements BundleActivator, ServiceListener {
             if (logConfiguration == null) {
                 logConfiguration =
                     confAdmin
-                        .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null);
+                        .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                 Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
-                loggingProperties.put("org.apache.sling.commons.log.level", "INFO");
+                loggingProperties.put("org.apache.sling.commons.log.level", "INFO"); //$NON-NLS-1$ //$NON-NLS-2$
                 // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
-                loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL);
+                loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL); //$NON-NLS-1$
                 // add this property to give us something unique to re-find this configuration
                 loggingProperties.put(LOGGER_KEY, LOGGER_VAL);
                 logConfiguration.update(loggingProperties);
@@ -75,9 +75,9 @@ public class Activator implements BundleActivator, ServiceListener {
                     for (String modality : factory.getModalities()) {
                         DicomSpecialElementFactory prev = DicomMediaIO.DCM_ELEMENT_FACTORIES.put(modality, factory);
                         if (prev != null) {
-                            LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass());
+                            LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass()); //$NON-NLS-1$
                         }
-                        LOGGER.debug("Register DicomSpecialElementFactory: {}", factory.getClass());
+                        LOGGER.debug("Register DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
                     }
                 }
             }
@@ -110,9 +110,9 @@ public class Activator implements BundleActivator, ServiceListener {
             for (String modality : factory.getModalities()) {
                 DicomSpecialElementFactory prev = DicomMediaIO.DCM_ELEMENT_FACTORIES.put(modality, factory);
                 if (prev != null) {
-                    LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass());
+                    LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass()); //$NON-NLS-1$
                 }
-                LOGGER.debug("Register DicomSpecialElementFactory: {}", factory.getClass());
+                LOGGER.debug("Register DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
             }
 
         } else if (event.getType() == ServiceEvent.UNREGISTERING) {
@@ -121,9 +121,9 @@ public class Activator implements BundleActivator, ServiceListener {
                 if (factory.equals(f)) {
                     DicomMediaIO.DCM_ELEMENT_FACTORIES.remove(modality);
                 } else {
-                    LOGGER.warn("Cannot unregister {}, {} is registered instead", factory.getClass(), f.getClass());
+                    LOGGER.warn("Cannot unregister {}, {} is registered instead", factory.getClass(), f.getClass()); //$NON-NLS-1$
                 }
-                LOGGER.debug("Unregister DicomSpecialElementFactory: {}", factory.getClass());
+                LOGGER.debug("Unregister DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
             }
             // Unget service object and null references.
             context.ungetService(m_ref);

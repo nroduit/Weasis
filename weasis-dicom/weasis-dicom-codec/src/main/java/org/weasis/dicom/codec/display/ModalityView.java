@@ -49,32 +49,32 @@ public class ModalityView {
         TagView[] disElements = DEFAULT_MODALITY_VIEW.getCornerInfo(CornerDisplay.TOP_LEFT).getInfos();
         disElements[0] = new TagView(TagW.PatientName);
         disElements[1] = new TagView(TagW.PatientBirthDate);
-        disElements[2] = new TagView(Messages.getString("ModalityView.id"), TagW.PatientID);
-        disElements[3] = new TagView(Messages.getString("ModalityView.sex"), TagW.PatientSex);
+        disElements[2] = new TagView(Messages.getString("ModalityView.id"), TagW.PatientID); //$NON-NLS-1$
+        disElements[3] = new TagView(Messages.getString("ModalityView.sex"), TagW.PatientSex); //$NON-NLS-1$
 
         disElements = DEFAULT_MODALITY_VIEW.getCornerInfo(CornerDisplay.TOP_RIGHT).getInfos();
         disElements[0] = new TagView(TagW.InstitutionName);
-        disElements[1] = new TagView(Messages.getString("ModalityView.study_des"), TagW.StudyDescription);
-        disElements[2] = new TagView(Messages.getString("ModalityView.study"), TagW.StudyID);
-        disElements[3] = new TagView("Ac. Nb: $V", TagW.AccessionNumber);
+        disElements[1] = new TagView(Messages.getString("ModalityView.desc25"), TagW.StudyDescription); //$NON-NLS-1$
+        disElements[2] = new TagView(Messages.getString("ModalityView.study"), TagW.StudyID); //$NON-NLS-1$
+        disElements[3] = new TagView(Messages.getString("ModalityView.ac_nb"), TagW.AccessionNumber); //$NON-NLS-1$
         // else content date, else Series date, else Study date
         disElements[4] =
-            new TagView(Messages.getString("ModalityView.acq"), TagW.AcquisitionDate, TagW.ContentDate,
+            new TagView(Messages.getString("ModalityView.acq"), TagW.AcquisitionDate, TagW.ContentDate, //$NON-NLS-1$
                 TagW.SeriesDate, TagW.StudyDate);
         // else content time, else Series time, else Study time
         disElements[5] =
-            new TagView(Messages.getString("ModalityView.acq"), TagW.AcquisitionTime, TagW.ContentTime,
+            new TagView(Messages.getString("ModalityView.acq"), TagW.AcquisitionTime, TagW.ContentTime, //$NON-NLS-1$
                 TagW.SeriesDate, TagW.StudyDate);
 
         disElements = DEFAULT_MODALITY_VIEW.getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos();
-        disElements[1] = new TagView(Messages.getString("ModalityView.series_nb"), TagW.SeriesNumber);
-        disElements[2] = new TagView(Messages.getString("ModalityView.laterality"), TagW.ImageLaterality);
+        disElements[1] = new TagView(Messages.getString("ModalityView.series_nb"), TagW.SeriesNumber); //$NON-NLS-1$
+        disElements[2] = new TagView(Messages.getString("ModalityView.laterality"), TagW.ImageLaterality); //$NON-NLS-1$
         // derived from Contrast/Bolus Agent Sequence (0018,0012), if
         // present, else Contrast/Bolus Agent (0018,0010)
-        disElements[3] = new TagView("$V:l$25$", TagW.ContrastBolusAgent);
-        disElements[4] = new TagView(Messages.getString("ModalityView.series_desc"), TagW.SeriesDescription);
-        disElements[5] = new TagView(Messages.getString("ModalityView.thick"), TagW.SliceThickness);
-        disElements[6] = new TagView(Messages.getString("ModalityView.location"), TagW.SliceLocation);
+        disElements[3] = new TagView(Messages.getString("ModalityView.desc25"), TagW.ContrastBolusAgent); //$NON-NLS-1$
+        disElements[4] = new TagView(Messages.getString("ModalityView.desc25"), TagW.SeriesDescription); //$NON-NLS-1$
+        disElements[5] = new TagView(Messages.getString("ModalityView.thick"), TagW.SliceThickness); //$NON-NLS-1$
+        disElements[6] = new TagView(Messages.getString("ModalityView.location"), TagW.SliceLocation); //$NON-NLS-1$
         /*
          * Spacing Between Slices (0018,0088), if present, else a value derived from successive values of Image Position
          * (Patient) (0020,0032) perpendicular to the Image Orientation (Patient) (0020,0037)
@@ -98,7 +98,7 @@ public class ModalityView {
         try {
             return Modality.valueOf(name);
         } catch (Exception e) {
-            LOGGER.error("Modality reference of {} is missing", name);
+            LOGGER.error("Modality reference of {} is missing", name); //$NON-NLS-1$
         }
         return null;
     }
@@ -107,14 +107,14 @@ public class ModalityView {
         try {
             return CornerDisplay.valueOf(name);
         } catch (Exception e) {
-            LOGGER.error("CornerDisplay reference of {} doesn't exist", name);
+            LOGGER.error("CornerDisplay reference of {} doesn't exist", name); //$NON-NLS-1$
         }
         return null;
     }
 
     private static TagView getTagView(String name, String format) {
         if (name != null) {
-            String[] vals = name.split(",");
+            String[] vals = name.split(","); //$NON-NLS-1$
             ArrayList<TagW> list = new ArrayList<TagW>(vals.length);
             for (String s : vals) {
                 try {
@@ -125,7 +125,7 @@ public class ModalityView {
                         list.add(t);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("CornerDisplay reference of {} doesn't exist", name);
+                    LOGGER.error("CornerDisplay reference of {} doesn't exist", name); //$NON-NLS-1$
                 }
             }
             if (list.size() > 0) {
@@ -166,7 +166,7 @@ public class ModalityView {
                                                     readModality(data, xmler);
                                                     MODALITY_VIEW_MAP.put(m, data);
                                                 } catch (Exception e) {
-                                                    LOGGER.error("Modality {} cannot be read from xml file", name);
+                                                    LOGGER.error("Modality {} cannot be read from xml file", name); //$NON-NLS-1$
                                                 }
                                             }
                                         }
@@ -184,7 +184,7 @@ public class ModalityView {
         }
 
         catch (Exception e) {
-            LOGGER.error("Cannot read attributes-view.xml file! " + e.getMessage());
+            LOGGER.error("Cannot read attributes-view.xml file! " + e.getMessage()); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
@@ -199,7 +199,7 @@ public class ModalityView {
             eventType = xmler.next();
             switch (eventType) {
                 case XMLStreamConstants.START_ELEMENT:
-                    if ("corner".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) {
+                    if ("corner".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
                         String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
                         CornerDisplay corner = getCornerDisplay(name);
                         if (corner != null) {
@@ -208,7 +208,7 @@ public class ModalityView {
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if ("modality".equals(xmler.getName().getLocalPart())) {
+                    if ("modality".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
                         state = false;
                     }
                     break;
@@ -243,13 +243,13 @@ public class ModalityView {
                     }
                     break;
                 case XMLStreamConstants.START_ELEMENT:
-                    if ("p".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) {
+                    if ("p".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
                         index = FileUtil.getIntegerTagAttribute(xmler, "index", -1); //$NON-NLS-1$
                         format = xmler.getAttributeValue(null, "format");//$NON-NLS-1$
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if ("corner".equals(xmler.getName().getLocalPart())) {
+                    if ("corner".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
                         state = false;
                     }
                     break;

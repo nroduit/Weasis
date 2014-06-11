@@ -33,8 +33,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TransferSyntax;
-import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.wado.DicomManager;
 
 public class WadoPrefView extends AbstractItemDialogPage {
@@ -54,7 +54,7 @@ public class WadoPrefView extends AbstractItemDialogPage {
     private JLabel lblCompression;
 
     public WadoPrefView() {
-        super(Messages.getString("WadoPrefView.wado")); //$NON-NLS-1$
+        super("WADO");
         setComponentPosition(5500);
         initGUI();
     }
@@ -62,7 +62,7 @@ public class WadoPrefView extends AbstractItemDialogPage {
     private void initGUI() {
         setBorder(new EmptyBorder(15, 10, 10, 10));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        lblCompression = new JLabel(Messages.getString("WadoPrefView.compr")); //$NON-NLS-1$
+        lblCompression = new JLabel("Compression" + StringUtil.COLON);
         add(panel);
         GridBagLayout gbl_panel = new GridBagLayout();
         gbl_panel.columnWidths = new int[] { 0, 0, 0, 0 };
@@ -70,10 +70,9 @@ public class WadoPrefView extends AbstractItemDialogPage {
         gbl_panel.columnWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
         gbl_panel.rowWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
         panel.setLayout(gbl_panel);
-        panel.setBorder(new TitledBorder(null,
-            Messages.getString("WadoPrefView.compr2"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        panel.setBorder(new TitledBorder(null, "Compression", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
-        final JLabel lblTranscodingTo = new JLabel(Messages.getString("WadoPrefView.trans")); //$NON-NLS-1$
+        final JLabel lblTranscodingTo = new JLabel("Transcoding to" + StringUtil.COLON);
         GridBagConstraints gbc_lblTranscodingTo = new GridBagConstraints();
         gbc_lblTranscodingTo.insets = new Insets(0, 0, 5, 5);
         gbc_lblTranscodingTo.anchor = GridBagConstraints.WEST;
@@ -99,7 +98,9 @@ public class WadoPrefView extends AbstractItemDialogPage {
         gbc_lblstrut.gridy = 0;
         panel.add(Box.createHorizontalStrut(2), gbc_lblstrut);
 
-        JTextArea txtpnNoteWhenThe = new JTextArea(Messages.getString("WadoPrefView.mes")); //$NON-NLS-1$
+        JTextArea txtpnNoteWhenThe =
+            new JTextArea(
+                "Note: When the WADO server cannot apply the Transfer Syntax, it should return an uncompressed image (1.2.840.10008.1.2.1) or it triggers an error.");
 
         GridBagConstraints gbc_txtpnNoteWhenThe = new GridBagConstraints();
         gbc_txtpnNoteWhenThe.weighty = 1.0;

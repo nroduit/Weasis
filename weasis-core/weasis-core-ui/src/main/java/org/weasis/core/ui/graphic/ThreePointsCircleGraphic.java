@@ -72,7 +72,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
         @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointTotalNumber != 3) {
-            throw new InvalidShapeException("Not a valid ThreePointsCircleGraphic!");
+            throw new InvalidShapeException("Not a valid ThreePointsCircleGraphic!"); //$NON-NLS-1$
         }
         buildShape(null);
     }

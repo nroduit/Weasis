@@ -12,8 +12,6 @@ package org.weasis.core.api.internal.mime;
 
 import java.util.ArrayList;
 
-import org.weasis.core.api.Messages;
-
 public class InvalidMagicMimeEntryException extends Exception {
 
     public InvalidMagicMimeEntryException() {

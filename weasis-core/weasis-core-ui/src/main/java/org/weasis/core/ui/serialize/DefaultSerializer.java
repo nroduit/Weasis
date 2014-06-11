@@ -22,22 +22,22 @@ public class DefaultSerializer {
 
     private DefaultSerializer() {
         this.classMap = new HashMap<String, Class<?>>();
-        classMap.put("angle", org.weasis.core.ui.graphic.AngleToolGraphic.class);
-        classMap.put("annotation", org.weasis.core.ui.graphic.AnnotationGraphic.class);
-        classMap.put("pixelInfo", org.weasis.core.ui.graphic.PixelInfoGraphic.class);
-        classMap.put("cobbAngle", org.weasis.core.ui.graphic.CobbAngleToolGraphic.class);
-        classMap.put("openAngle", org.weasis.core.ui.graphic.OpenAngleToolGraphic.class);
-        classMap.put("ellipse", org.weasis.core.ui.graphic.EllipseGraphic.class);
-        classMap.put("fourPointsAngle", org.weasis.core.ui.graphic.FourPointsAngleToolGraphic.class);
-        classMap.put("line", org.weasis.core.ui.graphic.LineGraphic.class);
-        classMap.put("perpendicularLine", org.weasis.core.ui.graphic.PerpendicularLineGraphic.class);
-        classMap.put("lineWithGap", org.weasis.core.ui.graphic.LineWithGapGraphic.class);
-        classMap.put("ParallelLine", org.weasis.core.ui.graphic.ParallelLineGraphic.class);
-        classMap.put("point", org.weasis.core.ui.graphic.PointGraphic.class);
-        classMap.put("polygon", org.weasis.core.ui.graphic.PolygonGraphic.class);
-        classMap.put("polyline", org.weasis.core.ui.graphic.PolylineGraphic.class);
-        classMap.put("rectangle", org.weasis.core.ui.graphic.RectangleGraphic.class);
-        classMap.put("threePointsCircle", org.weasis.core.ui.graphic.ThreePointsCircleGraphic.class);
+        classMap.put("angle", org.weasis.core.ui.graphic.AngleToolGraphic.class); //$NON-NLS-1$
+        classMap.put("annotation", org.weasis.core.ui.graphic.AnnotationGraphic.class); //$NON-NLS-1$
+        classMap.put("pixelInfo", org.weasis.core.ui.graphic.PixelInfoGraphic.class); //$NON-NLS-1$
+        classMap.put("cobbAngle", org.weasis.core.ui.graphic.CobbAngleToolGraphic.class); //$NON-NLS-1$
+        classMap.put("openAngle", org.weasis.core.ui.graphic.OpenAngleToolGraphic.class); //$NON-NLS-1$
+        classMap.put("ellipse", org.weasis.core.ui.graphic.EllipseGraphic.class); //$NON-NLS-1$
+        classMap.put("fourPointsAngle", org.weasis.core.ui.graphic.FourPointsAngleToolGraphic.class); //$NON-NLS-1$
+        classMap.put("line", org.weasis.core.ui.graphic.LineGraphic.class); //$NON-NLS-1$
+        classMap.put("perpendicularLine", org.weasis.core.ui.graphic.PerpendicularLineGraphic.class); //$NON-NLS-1$
+        classMap.put("lineWithGap", org.weasis.core.ui.graphic.LineWithGapGraphic.class); //$NON-NLS-1$
+        classMap.put("ParallelLine", org.weasis.core.ui.graphic.ParallelLineGraphic.class); //$NON-NLS-1$
+        classMap.put("point", org.weasis.core.ui.graphic.PointGraphic.class); //$NON-NLS-1$
+        classMap.put("polygon", org.weasis.core.ui.graphic.PolygonGraphic.class); //$NON-NLS-1$
+        classMap.put("polyline", org.weasis.core.ui.graphic.PolylineGraphic.class); //$NON-NLS-1$
+        classMap.put("rectangle", org.weasis.core.ui.graphic.RectangleGraphic.class); //$NON-NLS-1$
+        classMap.put("threePointsCircle", org.weasis.core.ui.graphic.ThreePointsCircleGraphic.class); //$NON-NLS-1$
 
         Registry registry = new Registry();
         Strategy strategy = new RegistryStrategy(registry);
@@ -67,7 +67,7 @@ public class DefaultSerializer {
     }
 
     public static void readMeasurementGraphics(ImageElement img, File destinationFile) {
-        File gpxFile = new File(destinationFile.getPath() + ".xml");
+        File gpxFile = new File(destinationFile.getPath() + ".xml"); //$NON-NLS-1$
 
         if (gpxFile.canRead()) {
             try {
@@ -82,7 +82,7 @@ public class DefaultSerializer {
     public static void writeMeasurementGraphics(ImageElement img, File destinationFile) {
         GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
         if (list != null && list.list.size() > 0) {
-            File gpxFile = new File(destinationFile.getParent(), destinationFile.getName() + ".xml");
+            File gpxFile = new File(destinationFile.getParent(), destinationFile.getName() + ".xml"); //$NON-NLS-1$
             try {
                 DefaultSerializer.getInstance().getSerializer().write(list, gpxFile);
             } catch (Exception e) {

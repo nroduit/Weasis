@@ -104,9 +104,9 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         jTextPane1.setBackground(Color.WHITE);
         jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
         final StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); //$NON-NLS-1$
-        message.append(AppProperties.WEASIS_NAME); //$NON-NLS-1$
+        message.append(AppProperties.WEASIS_NAME); 
         message.append(" "); //$NON-NLS-1$
-        message.append(AppProperties.WEASIS_VERSION); //$NON-NLS-1$
+        message.append(AppProperties.WEASIS_VERSION); 
         message.append("</H2>"); //$NON-NLS-1$
 
         String rn = Messages.getString("WeasisWin.release"); //$NON-NLS-1$
@@ -114,15 +114,15 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
             BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.releasenotes", ""))); //$NON-NLS-1$ //$NON-NLS-2$
 
         message.append("<BR>"); //$NON-NLS-1$
-        message.append(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", "")); //$NON-NLS-1$
+        message.append(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", "")); //$NON-NLS-1$ //$NON-NLS-2$
         message.append("</div>"); //$NON-NLS-1$
         jTextPane1.setText(message.toString());
         jLabel1.setBorder(BorderFactory.createLineBorder(Color.black, 2));
 
-        jLabel1.setIcon(ResourceUtil.getLargeLogo()); //$NON-NLS-1$
+        jLabel1.setIcon(ResourceUtil.getLargeLogo()); 
         jPanel3.setLayout(borderLayout3);
 
-        jTabbedPane1.add(jPanel3, this.getTitle()); //$NON-NLS-1$
+        jTabbedPane1.add(jPanel3, this.getTitle()); 
         jPanel3.add(jPanel1, BorderLayout.NORTH);
         jPanel1.add(jLabel1, null);
         jPanel3.add(jScrollPane3, BorderLayout.CENTER);

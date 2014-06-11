@@ -3,6 +3,7 @@ package org.weasis.dicom.explorer;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
@@ -258,12 +259,11 @@ public class DicomDirLoader {
                     int height = iconInstance.getInt(Tag.Rows, 0);
                     if (width != 0 && height != 0) {
                         WritableRaster raster =
-                            WritableRaster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, new Point(0,
-                                0));
+                            Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, new Point(0, 0));
                         raster.setDataElements(0, 0, width, height, pixelData);
                         PhotometricInterpretation pmi =
                             PhotometricInterpretation.fromString(iconInstance.getString(Tag.PhotometricInterpretation,
-                                "MONOCHROME2"));
+                                "MONOCHROME2")); //$NON-NLS-1$
                         BufferedImage thumbnail =
                             new BufferedImage(pmi.createColorModel(8, DataBuffer.TYPE_BYTE, iconInstance), raster,
                                 false, null);

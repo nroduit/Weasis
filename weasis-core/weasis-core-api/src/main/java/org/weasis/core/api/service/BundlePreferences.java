@@ -32,7 +32,7 @@ public class BundlePreferences {
             dataFolder.mkdirs();
             return dataFolder;
         }
-        return new File(AppProperties.WEASIS_PATH, "data");
+        return new File(AppProperties.WEASIS_PATH, "data"); //$NON-NLS-1$
     }
 
     public static Preferences getDefaultPreferences(BundleContext context) {

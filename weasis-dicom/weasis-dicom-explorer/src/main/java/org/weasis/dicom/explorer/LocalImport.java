@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
@@ -53,10 +54,11 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     public void initGUI() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         setLayout(gridBagLayout);
-        setBorder(new TitledBorder(null,
-            Messages.getString("LocalImport.imp_files"), TitledBorder.LEADING, TitledBorder.TOP, null, null));//$NON-NLS-1$
+        setBorder(new TitledBorder(
+            null,
+            Messages.getString("LocalImport.imp_files") + StringUtil.COLON, TitledBorder.LEADING, TitledBorder.TOP, null, null));//$NON-NLS-1$
 
-        lblImportAFolder = new JLabel(Messages.getString("LocalImport.path")); //$NON-NLS-1$
+        lblImportAFolder = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
         gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
         gbc_lblImportAFolder.insets = new Insets(5, 5, 0, 0);

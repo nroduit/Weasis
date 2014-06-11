@@ -71,7 +71,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
     public void setSlider(Rectangle slider) {
         Rectangle oldSlider = this.slider;
         this.slider = new Rectangle(slider);
-        firePropertyChange("slider", oldSlider, this.slider);
+        firePropertyChange("slider", oldSlider, this.slider); //$NON-NLS-1$
     }
 
     private void updateImageDisplay() {

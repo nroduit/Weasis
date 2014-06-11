@@ -124,7 +124,7 @@ public class DicomPrint {
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
         Device device = new Device("WEASIS_AE"); //$NON-NLS-1$
-        ApplicationEntity ae = new ApplicationEntity("WEASIS_AE");
+        ApplicationEntity ae = new ApplicationEntity("WEASIS_AE"); //$NON-NLS-1$
         Connection conn = new Connection();
         //    Executor executor = new NewThreadExecutor("WEASIS_AE"); //$NON-NLS-1$
         ApplicationEntity remoteAE = new ApplicationEntity(dicomPrintOptions.getDicomPrinter().getAeTitle());

@@ -40,6 +40,7 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -210,7 +211,7 @@ public class ImageTool extends PluginTool {
         ActionState lutShapeAction = EventManager.getInstance().getAction(ActionW.LUT_SHAPE);
         if (lutShapeAction instanceof ComboItemListener) {
             final JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
-            final JLabel label = new JLabel(ActionW.LUT_SHAPE.getTitle() + ":"); //$NON-NLS-1$
+            final JLabel label = new JLabel(ActionW.LUT_SHAPE.getTitle() + StringUtil.COLON); //$NON-NLS-1$
             pane.add(label);
             final JComboBox combo = ((ComboItemListener) lutShapeAction).createCombo(140);
             combo.setMaximumRowCount(10);

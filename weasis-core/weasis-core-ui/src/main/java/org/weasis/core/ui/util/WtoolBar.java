@@ -27,6 +27,7 @@ import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
 
 public class WtoolBar extends JPanel implements Toolbar {
 
@@ -89,7 +90,7 @@ public class WtoolBar extends JPanel implements Toolbar {
     }
 
     public void addSeparator(Dimension dim) {
-        JSeparator s = new JSeparator(JSeparator.VERTICAL);
+        JSeparator s = new JSeparator(SwingConstants.VERTICAL);
         s.setPreferredSize(dim);
         add(s);
     }

@@ -252,7 +252,7 @@ public class InfoLayer implements AnnotationsLayer {
 
         if (getDisplayPreferences(PIXEL)) {
             StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel")); //$NON-NLS-1$
-            sb.append(": ");
+            sb.append(StringUtil.COLON_AND_SPACE);
             if (pixelInfo != null) {
                 sb.append(pixelInfo.getPixelValueText());
                 sb.append(" - ");
@@ -303,8 +303,8 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.zoom") + " " + DecFormater.twoDecimal(view2DPane.getViewModel().getViewScale() * 100) //$NON-NLS-1$ //$NON-NLS-2$
-                        + " " + Messages.getString("InfoLayer.percent_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$
+                    Messages.getString("InfoLayer.zoom") + " " + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()) //$NON-NLS-1$ //$NON-NLS-2$
+                    , border, drawY); //$NON-NLS-1$ //$NON-NLS-2$
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {

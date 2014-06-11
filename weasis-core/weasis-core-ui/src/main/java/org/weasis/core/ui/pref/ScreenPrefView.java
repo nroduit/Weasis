@@ -46,6 +46,8 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class ScreenPrefView extends AbstractItemDialogPage {
@@ -53,7 +55,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     private final JPanel panelList = new JPanel();
 
     public ScreenPrefView() {
-        super("Monitors");
+        super(Messages.getString("ScreenPrefView.monitors")); //$NON-NLS-1$
         setComponentPosition(100);
         setBorder(new EmptyBorder(15, 10, 10, 10));
         BorderLayout borderLayout = new BorderLayout();
@@ -96,28 +98,28 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
             StringBuilder buf = new StringBuilder();
             buf.append(i + 1);
-            buf.append(". ");
-            buf.append("Monitor");
-            buf.append(": ");
+            buf.append(". "); //$NON-NLS-1$
+            buf.append(Messages.getString("ScreenPrefView.monitor")); //$NON-NLS-1$
+            buf.append(StringUtil.COLON_AND_SPACE);
             buf.append(monitor.getMonitorID());
-            buf.append(".");
+            buf.append("."); //$NON-NLS-1$
             buf.append(mb.width);
-            buf.append("x");
+            buf.append("x"); //$NON-NLS-1$
             buf.append(mb.height);
             final String title = buf.toString();
 
             if (monitor.getRealScaleFactor() > 0) {
-                buf.append(" ");
+                buf.append(" "); //$NON-NLS-1$
                 buf.append((int) Math.round(mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
-                buf.append("x");
+                buf.append("x"); //$NON-NLS-1$
                 buf.append((int) Math.round(mb.height
                     * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
-                buf.append(" ");
+                buf.append(" "); //$NON-NLS-1$
                 buf.append(Unit.MILLIMETER.getAbbreviation());
             }
             p.add(new JLabel(buf.toString()));
 
-            JButton realZoomButton = new JButton("Spatial calibration");
+            JButton realZoomButton = new JButton(Messages.getString("ScreenPrefView.sp_calib")); //$NON-NLS-1$
             realZoomButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -129,7 +131,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
                 }
             });
-            realZoomButton.setToolTipText("Calibrate screen for getting real size zoom");
+            realZoomButton.setToolTipText(Messages.getString("ScreenPrefView.calib_real")); //$NON-NLS-1$
             p.add(realZoomButton);
 
             panelList.add(p);
@@ -201,11 +203,11 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                 String hlength =
                     DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())
                         * horizontalLength)
-                        + " " + Unit.MILLIMETER.getAbbreviation();
+                        + " " + Unit.MILLIMETER.getAbbreviation(); //$NON-NLS-1$
                 String vlength =
                     DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())
                         * verticalLength)
-                        + " " + Unit.MILLIMETER.getAbbreviation();
+                        + " " + Unit.MILLIMETER.getAbbreviation(); //$NON-NLS-1$
                 g2d.drawString(hlength, x2 - 70, y2 + 15);
                 g2d.drawString(vlength, xv1 + 10, yv2 - 5);
             }
@@ -229,8 +231,9 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
         private final Cross cross;
         private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField(LocalUtil.getIntegerInstance());
-        private final JComboBox jComboBoxType = new JComboBox(new String[] { "Displayed horizontal line length",
-            "Displayed vertical line length", "Screen size (diagonal)" });
+        private final JComboBox jComboBoxType = new JComboBox(new String[] {
+            Messages.getString("ScreenPrefView.horiz_line"), //$NON-NLS-1$
+            Messages.getString("ScreenPrefView.vertical_line"), Messages.getString("ScreenPrefView.screen_size") }); //$NON-NLS-1$ //$NON-NLS-2$
         private final JComboBox jComboBoxUnit = new JComboBox(new Unit[] { Unit.MILLIMETER, Unit.CENTIMETER,
             Unit.MILLIINCH, Unit.INCH });
 
@@ -247,12 +250,12 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             final JPanel inputPanel = new JPanel();
             jTextFieldLineWidth.setValue(0L);
             JMVUtils.setPreferredWidth(jTextFieldLineWidth, 100);
-            inputPanel.add(new JLabel("Enter one of the following distance" + " :"));
+            inputPanel.add(new JLabel(Messages.getString("ScreenPrefView.enter_dist") + StringUtil.COLON)); //$NON-NLS-1$ 
             inputPanel.add(jComboBoxType);
             inputPanel.add(jTextFieldLineWidth);
             inputPanel.add(jComboBoxUnit);
             inputPanel.add(Box.createHorizontalStrut(15));
-            JButton apply = new JButton("Apply");
+            JButton apply = new JButton(Messages.getString("ScreenPrefView.apply")); //$NON-NLS-1$
             apply.addActionListener(new ActionListener() {
 
                 @Override
@@ -295,20 +298,17 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                     }
                 }
                 cross.repaint();
-                JOptionPane
-                    .showMessageDialog(
-                        this,
-                        "To obtain a correct real zoom factor, make sure that the size of \nthe two white lines must match exactly with the real measurement",
-                        "Spatial calibration", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, Messages.getString("ScreenPrefView.calib_desc"), //$NON-NLS-1$
+                    Messages.getString("ScreenPrefView.sp_calib"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
 
-                StringBuilder buf = new StringBuilder("screen.");
+                StringBuilder buf = new StringBuilder("screen."); //$NON-NLS-1$
                 buf.append(monitor.getMonitorID());
                 Rectangle b = monitor.getBounds();
-                buf.append(".");
+                buf.append("."); //$NON-NLS-1$
                 buf.append(b.width);
-                buf.append("x");
+                buf.append("x"); //$NON-NLS-1$
                 buf.append(b.height);
-                buf.append(".pitch");
+                buf.append(".pitch"); //$NON-NLS-1$
                 BundleTools.LOCAL_PERSISTENCE.putDoubleProperty(buf.toString(), monitor.getRealScaleFactor());
             }
         }

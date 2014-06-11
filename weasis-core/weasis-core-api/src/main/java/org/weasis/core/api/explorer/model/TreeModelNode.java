@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.api.explorer.model;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.media.data.TagW;
 
 /**
