@@ -56,12 +56,12 @@ public class WeasisLoader {
 
     private final File resPath;
     private final WeasisFrame mainFrame;
-    private final Properties serverProperties;
+    private final Properties localProperties;
 
-    public WeasisLoader(File resPath, WeasisFrame mainFrame, Properties serverProperties) {
+    public WeasisLoader(File resPath, WeasisFrame mainFrame, Properties localProperties) {
         this.resPath = resPath;
         this.mainFrame = mainFrame;
-        this.serverProperties = serverProperties;
+        this.localProperties = localProperties;
     }
 
     public void writeLabel(String text) {
@@ -176,8 +176,8 @@ public class WeasisLoader {
         return mainFrame;
     }
 
-    public Properties getServerProperties() {
-        return serverProperties;
+    public Properties getLocalProperties() {
+        return localProperties;
     }
 
     /*
