@@ -99,7 +99,6 @@ public class KeyObjectToolBar extends WtoolBar {
         final ComboItemListener koSelectionAction = (ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION);
         GroupRadioMenu koSelectionMenu = koSelectionAction.createGroupRadioMenu();
 
-        @SuppressWarnings("serial")
         final DropDownButton koSelectionButton =
             new DropDownButton(ActionW.KO_SELECTION.cmd(), buildKoSelectionIcon(), koSelectionMenu) {
                 @Override
