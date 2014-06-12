@@ -138,7 +138,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     protected final ImageViewerEventManager<E> eventManager;
 
     public MeasureToolBar(final ImageViewerEventManager<E> eventManager, int index) {
-        super("Measurement Bar", index); //$NON-NLS-1$
+        super("Measurement Bar", index);
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }

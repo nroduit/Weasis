@@ -124,17 +124,17 @@ public class ImageParameters {
 
     @Override
     public String toString() {
-        StringBuilder buf = new StringBuilder("Size:");
+        StringBuilder buf = new StringBuilder("Size:"); //$NON-NLS-1$
         buf.append(width);
-        buf.append("x");
+        buf.append("x"); //$NON-NLS-1$
         buf.append(height);
-        buf.append(" Bits/Sample:");
+        buf.append(" Bits/Sample:"); //$NON-NLS-1$
         buf.append(bitsPerSample);
-        buf.append(" Samples/Pixel:");
+        buf.append(" Samples/Pixel:"); //$NON-NLS-1$
         buf.append(samplesPerPixel);
-        buf.append(" Bytes/Line:");
+        buf.append(" Bytes/Line:"); //$NON-NLS-1$
         buf.append(bytesPerLine);
-        buf.append(" Big Endian:");
+        buf.append(" Big Endian:"); //$NON-NLS-1$
         buf.append(bigEndian);
         return buf.toString();
     }

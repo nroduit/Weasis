@@ -150,7 +150,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             String bundleName = context.getBundle().getSymbolicName();
             String componentName = InsertableUtil.getCName(this.getClass());
-            String key = "enable";
+            String key = "enable"; //$NON-NLS-1$
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
@@ -391,8 +391,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             menuRoot.add(new JSeparator());
 
-            JMenu menu = new JMenu("3D");
-            JMenuItem mip = new JMenuItem("MIP view");
+            JMenu menu = new JMenu(Messages.getString("View2dContainer.3d")); //$NON-NLS-1$
+            JMenuItem mip = new JMenuItem(Messages.getString("View2dContainer.mip")); //$NON-NLS-1$
             mip.addActionListener(new ActionListener() {
 
                 @Override
@@ -416,7 +416,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             });
             menu.add(mip);
 
-            JMenuItem mpr = new JMenuItem("Orthogonal MPR");
+            JMenuItem mpr = new JMenuItem(Messages.getString("View2dContainer.mpr")); //$NON-NLS-1$
             mpr.addActionListener(new ActionListener() {
 
                 @Override

@@ -71,12 +71,12 @@ public final class KOManager {
 
             if (validKOSelection != null) {
 
-                String message = "No KO is selected but at least one is available.\n";
-                Object[] options = { "Select the latest KO", "New KO" };
+                String message = Messages.getString("KOManager.select_KO_msg"); //$NON-NLS-1$
+                Object[] options =
+                    { Messages.getString("KOManager.select_last_ko"), Messages.getString("KOManager.new_ko") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-                int response =
-                    JOptionPane.showOptionDialog(view2d, message, "Key Object Selection (KO)",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                int response = JOptionPane.showOptionDialog(view2d, message, Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                 if (response == 0) {
                     newKOSelection = validKOSelection;
@@ -100,11 +100,12 @@ public final class KOManager {
                     newKOSelection = currentSelectedKO;
                 } else {
 
-                    String message = "The selected KO doesn't have any reference on the current study.\n";
-                    Object[] options = { "Use it anyway", "New KO" };
+                    String message = Messages.getString("KOManager.no_ko_msg"); //$NON-NLS-1$
+                    Object[] options =
+                        { Messages.getString("KOManager.use_ko"), Messages.getString("KOManager.new_ko") }; //$NON-NLS-1$ //$NON-NLS-2$
 
                     int response =
-                        JOptionPane.showOptionDialog(view2d, message, "Key Object Selection (KO)",
+                        JOptionPane.showOptionDialog(view2d, message, Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
                             JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                     if (response == 0) {
@@ -118,12 +119,12 @@ public final class KOManager {
 
             } else {
 
-                String message = "The selected KO is read only.\n";
-                Object[] options = { "New KO", "New KO from the current one" };
+                String message = Messages.getString("KOManager.ko_readonly"); //$NON-NLS-1$
+                Object[] options =
+                    { Messages.getString("KOManager.new_ko"), Messages.getString("KOManager.new_ko_from") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-                int response =
-                    JOptionPane.showOptionDialog(view2d, message, "Key Object Selection (KO)",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                int response = JOptionPane.showOptionDialog(view2d, message, Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                 if (response == 0) {
                     newDicomKO = createNewDicomKeyObject(currentImage, view2d);
@@ -173,11 +174,12 @@ public final class KOManager {
         if (dicomMediaElement != null && dicomMediaElement.getMediaReader() instanceof DicomMediaIO) {
             Attributes dicomSourceAttribute = ((DicomMediaIO) dicomMediaElement.getMediaReader()).getDicomObject();
 
-            String message = "Set a description for the new KO";
-            String defautDescription = "new KO";
+            String message = Messages.getString("KOManager.ko_desc"); //$NON-NLS-1$
+            String defautDescription = Messages.getString("KOManager.ko_name"); //$NON-NLS-1$
 
             String description =
-                (String) JOptionPane.showInputDialog(parentComponent, message, "Key Object Selection (KO)",
+                (String) JOptionPane.showInputDialog(parentComponent, message,
+                    Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
                     JOptionPane.INFORMATION_MESSAGE, null, null, defautDescription);
 
             // description==null means the user canceled the input

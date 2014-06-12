@@ -147,7 +147,7 @@ public class InfoLayer implements AnnotationsLayer {
                 .paintFontOutline(
                     g2,
                     Messages.getString("InfoLayer.win") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) //$NON-NLS-1$ 
-                        + " " + Messages.getString("InfoLayer.level") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ 
+                        + "/" + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ 
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
@@ -171,7 +171,7 @@ public class InfoLayer implements AnnotationsLayer {
                 .paintFontOutline(
                     g2,
                     Messages.getString("InfoLayer.frame") //$NON-NLS-1$
-                        + StringUtil.COLON_AND_SPACE 
+                        + StringUtil.COLON_AND_SPACE
                         + (view2DPane.getFrameIndex() + 1)
                         + " / " //$NON-NLS-1$
                         + view2DPane.getSeries().size(

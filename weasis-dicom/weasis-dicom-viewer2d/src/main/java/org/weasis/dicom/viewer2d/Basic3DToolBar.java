@@ -7,8 +7,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -23,13 +21,12 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mpr.MPRFactory;
 
 public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
-    private final Logger LOGGER = LoggerFactory.getLogger(Basic3DToolBar.class);
 
     public Basic3DToolBar(int index) {
-        super("Basic 3D Tools", index);
+        super(Messages.getString("Basic3DToolBar.title"), index); //$NON-NLS-1$
 
         final JButton mprButton = new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mpr.png")));//$NON-NLS-1$
-        mprButton.setToolTipText("Build Orthogonal MPR from the selected view");
+        mprButton.setToolTipText(Messages.getString("Basic3DToolBar.mpr")); //$NON-NLS-1$
         mprButton.addActionListener(new ActionListener() {
 
             @Override
@@ -54,7 +51,7 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
         add(mprButton);
 
         final JButton mipButton = new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mip.png"))); //$NON-NLS-1$
-        mipButton.setToolTipText("Build MIP from the selected view");
+        mipButton.setToolTipText(Messages.getString("Basic3DToolBar.mip")); //$NON-NLS-1$
         mipButton.addActionListener(new ActionListener() {
 
             @Override

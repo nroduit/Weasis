@@ -22,8 +22,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 
 import org.dcm4che3.data.UID;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.OpManager;
@@ -44,24 +44,13 @@ import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 
 public class MipView extends View2d {
     public static final ImageIcon MIP_ICON_SETTING = new ImageIcon(
-        MipView.class.getResource("/icon/22x22/mip-setting.png"));
-    public static final ActionW MIP = new ActionW("MIP", "mip", 0, 0, null);
-    public static final ActionW MIP_MIN_SLICE = new ActionW("Min Slice: ", "mip_min", 0, 0, null);
-    public static final ActionW MIP_MAX_SLICE = new ActionW("Max Slice: ", "mip_max", 0, 0, null);
+        MipView.class.getResource("/icon/22x22/mip-setting.png")); //$NON-NLS-1$
+    public static final ActionW MIP = new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW MIP_MIN_SLICE = new ActionW(Messages.getString("MipView.min"), "mip_min", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW MIP_MAX_SLICE = new ActionW(Messages.getString("MipView.max"), "mip_max", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
 
     public enum Type {
-        MIN("min-MIP"), MEAN("mean-MIP"), MAX("MIP");
-
-        private final String value;
-
-        Type(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            return value;
-        }
+        MIN, MEAN, MAX;
     };
 
     private final ViewButton mip_button;
@@ -175,171 +164,174 @@ public class MipView extends View2d {
             }
         });
 
-        process = new Thread("Building MIP view") {
-            @Override
-            public void run() {
-                try {
-                    MipView imageOperation = MipView.this;
-                    Type mipType = (Type) imageOperation.getActionValue(MIP.cmd());
-                    PlanarImage curImage = null;
-                    MediaSeries<DicomImageElement> series = imageOperation.getSeries();
-                    if (series != null) {
-                        GuiExecutor.instance().execute(new Runnable() {
+        process = new Thread(Messages.getString("MipView.build")) { //$NON-NLS-1$
+                @Override
+                public void run() {
+                    try {
+                        MipView imageOperation = MipView.this;
+                        Type mipType = (Type) imageOperation.getActionValue(MIP.cmd());
+                        PlanarImage curImage = null;
+                        MediaSeries<DicomImageElement> series = imageOperation.getSeries();
+                        if (series != null) {
+                            GuiExecutor.instance().execute(new Runnable() {
 
-                            @Override
-                            public void run() {
-                                progressBar.setValue(0);
-                                MipView.this.repaint();
-                            }
-                        });
-
-                        SeriesComparator sort =
-                            (SeriesComparator) imageOperation.getActionValue(ActionW.SORTSTACK.cmd());
-                        Boolean reverse = (Boolean) imageOperation.getActionValue(ActionW.INVERSESTACK.cmd());
-                        Comparator sortFilter = (reverse != null && reverse) ? sort.getReversOrderComparator() : sort;
-                        Filter filter = (Filter) imageOperation.getActionValue(ActionW.FILTERED_SERIES.cmd());
-                        Iterable<DicomImageElement> medias = series.copyOfMedias(filter, sortFilter);
-                        DicomImageElement firstDcm = null;
-                        // synchronized (series) {
-                        Iterator<DicomImageElement> iter = medias.iterator();
-                        int startIndex = min - 1;
-                        int k = 0;
-                        if (startIndex > 0) {
-                            while (iter.hasNext()) {
-                                DicomImageElement dcm = iter.next();
-                                if (k >= startIndex) {
-                                    firstDcm = dcm;
-                                    break;
+                                @Override
+                                public void run() {
+                                    progressBar.setValue(0);
+                                    MipView.this.repaint();
                                 }
-                                k++;
-                            }
-                        } else {
-                            if (iter.hasNext()) {
-                                firstDcm = iter.next();
-                            }
-                        }
+                            });
 
-                        final List<ImageElement> sources = new ArrayList<ImageElement>();
-                        int stopIndex = max - 1;
-                        if (firstDcm != null) {
-                            sources.add(firstDcm);
-                            while (iter.hasNext()) {
-                                if (this.isInterrupted()) {
-                                    return;
+                            SeriesComparator sort =
+                                (SeriesComparator) imageOperation.getActionValue(ActionW.SORTSTACK.cmd());
+                            Boolean reverse = (Boolean) imageOperation.getActionValue(ActionW.INVERSESTACK.cmd());
+                            Comparator sortFilter =
+                                (reverse != null && reverse) ? sort.getReversOrderComparator() : sort;
+                            Filter filter = (Filter) imageOperation.getActionValue(ActionW.FILTERED_SERIES.cmd());
+                            Iterable<DicomImageElement> medias = series.copyOfMedias(filter, sortFilter);
+                            DicomImageElement firstDcm = null;
+                            // synchronized (series) {
+                            Iterator<DicomImageElement> iter = medias.iterator();
+                            int startIndex = min - 1;
+                            int k = 0;
+                            if (startIndex > 0) {
+                                while (iter.hasNext()) {
+                                    DicomImageElement dcm = iter.next();
+                                    if (k >= startIndex) {
+                                        firstDcm = dcm;
+                                        break;
+                                    }
+                                    k++;
                                 }
-                                DicomImageElement dcm = iter.next();
-                                // TODO check Pixel size, LUTs if they are different from the first image (if yes then
-                                // display
-                                // confirmation message to continue)
-                                sources.add(dcm);
-
-                                if (k >= stopIndex) {
-                                    break;
-                                }
-                                k++;
-                            }
-                            if (sources.size() > 1) {
-                                curImage = addCollectionOperation(mipType, sources, MipView.this, progressBar);
                             } else {
-                                curImage = null;
-                            }
-                        }
-                        // }
-                        final DicomImageElement dicom;
-                        if (curImage != null && firstDcm != null) {
-                            DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
-                            RawImage raw = null;
-                            try {
-                                File mipDir =
-                                    AppProperties.buildAccessibleTempDirectory(
-                                        AppProperties.FILE_CACHE_DIR.getName(), "mip");
-                                raw = new RawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$);
-                                writeRasterInRaw(curImage.getAsBufferedImage(), raw.getOutputStream());
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            } finally {
-                                if (raw != null) {
-                                    raw.disposeOutputStream();
+                                if (iter.hasNext()) {
+                                    firstDcm = iter.next();
                                 }
                             }
-                            if (raw == null) {
-                                return;
+
+                            final List<ImageElement> sources = new ArrayList<ImageElement>();
+                            int stopIndex = max - 1;
+                            if (firstDcm != null) {
+                                sources.add(firstDcm);
+                                while (iter.hasNext()) {
+                                    if (this.isInterrupted()) {
+                                        return;
+                                    }
+                                    DicomImageElement dcm = iter.next();
+                                    // TODO check Pixel size, LUTs if they are different from the first image (if yes
+                                    // then
+                                    // display
+                                    // confirmation message to continue)
+                                    sources.add(dcm);
+
+                                    if (k >= stopIndex) {
+                                        break;
+                                    }
+                                    k++;
+                                }
+                                if (sources.size() > 1) {
+                                    curImage = addCollectionOperation(mipType, sources, MipView.this, progressBar);
+                                } else {
+                                    curImage = null;
+                                }
                             }
-                            RawImageIO rawIO = new RawImageIO(raw.getFile().toURI(), null);
-                            int bitsAllocated = imgRef.getBitsAllocated();
-                            int bitsStored = imgRef.getBitsStored();
-
-                            // Tags with same values for all the Series
-                            rawIO.setTag(TagW.TransferSyntaxUID, UID.ImplicitVRLittleEndian);
-                            rawIO.setTag(TagW.Columns, curImage.getWidth());
-                            rawIO.setTag(TagW.Rows, curImage.getHeight());
-
-                            rawIO.setTag(TagW.SeriesInstanceUID,
-                                "mip." + (String) series.getTagValue(TagW.SubseriesInstanceUID));
-
-                            TagW[] tagList =
-                                { TagW.PhotometricInterpretation, TagW.ImageOrientationPatient,
-                                    TagW.PixelRepresentation, TagW.Units, TagW.ImageType, TagW.SamplesPerPixel,
-                                    TagW.MonoChrome, TagW.Modality };
-                            rawIO.copyTags(tagList, imgRef, true);
-
-                            rawIO.setTag(TagW.BitsAllocated, bitsAllocated);
-                            rawIO.setTag(TagW.BitsStored, bitsStored);
-
-                            TagW[] tagList2 =
-                                { TagW.SmallestImagePixelValue, TagW.LargestImagePixelValue, TagW.ModalityLUTData,
-                                    TagW.ModalityLUTType, TagW.ModalityLUTExplanation, TagW.RescaleSlope,
-                                    TagW.RescaleIntercept, TagW.RescaleType, TagW.VOILUTsData, TagW.VOILUTsExplanation,
-                                    TagW.PixelPaddingValue, TagW.PixelPaddingRangeLimit, TagW.WindowWidth,
-                                    TagW.WindowCenter, TagW.WindowCenterWidthExplanation, TagW.VOILutFunction,
-                                    TagW.PixelSpacing, TagW.ImagerPixelSpacing,
-                                    TagW.PixelSpacingCalibrationDescription, TagW.PixelAspectRatio };
-                            rawIO.copyTags(tagList2, imgRef, false);
-
-                            // Image specific tags
-                            rawIO.setTag(TagW.SOPInstanceUID, "mip.1");
-                            rawIO.setTag(TagW.InstanceNumber, 1);
-
-                            dicom = new DicomImageElement(rawIO, 0);
-                            DicomImageElement oldImage = getImage();
-                            // Use graphics of the previous image when they belongs to a MIP image
-                            if (oldImage != null && "mip.1".equals(oldImage.getTagValue(TagW.SOPInstanceUID))) {
-                                dicom.setTag(TagW.MeasurementGraphics, oldImage.getTagValue(TagW.MeasurementGraphics));
-                            }
-                        } else {
-                            dicom = null;
-                        }
-                        // imageLayer.updateAllImageOperations();
-                        // actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
-                        // imageLayer.setPreprocessing(manager);
-
-                        // Following actions need to be executed in EDT thread
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                DicomImageElement oldImage = getImage();
-                                // Trick: call super to change the image as "this" method is empty
-                                MipView.super.setImage(dicom);
-                                if (oldImage != null) {
-                                    // Close stream
-                                    oldImage.dispose();
-                                    // Delete file in cache
-                                    File file = oldImage.getFile();
-                                    if (file != null) {
-                                        file.delete();
+                            // }
+                            final DicomImageElement dicom;
+                            if (curImage != null && firstDcm != null) {
+                                DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
+                                RawImage raw = null;
+                                try {
+                                    File mipDir =
+                                        AppProperties.buildAccessibleTempDirectory(
+                                            AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
+                                    raw = new RawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$);
+                                    writeRasterInRaw(curImage.getAsBufferedImage(), raw.getOutputStream());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                } finally {
+                                    if (raw != null) {
+                                        raw.disposeOutputStream();
                                     }
                                 }
-                                progressBar.setVisible(false);
-                            }
-                        });
+                                if (raw == null) {
+                                    return;
+                                }
+                                RawImageIO rawIO = new RawImageIO(raw.getFile().toURI(), null);
+                                int bitsAllocated = imgRef.getBitsAllocated();
+                                int bitsStored = imgRef.getBitsStored();
 
+                                // Tags with same values for all the Series
+                                rawIO.setTag(TagW.TransferSyntaxUID, UID.ImplicitVRLittleEndian);
+                                rawIO.setTag(TagW.Columns, curImage.getWidth());
+                                rawIO.setTag(TagW.Rows, curImage.getHeight());
+
+                                rawIO.setTag(TagW.SeriesInstanceUID,
+                                    "mip." + (String) series.getTagValue(TagW.SubseriesInstanceUID)); //$NON-NLS-1$
+
+                                TagW[] tagList =
+                                    { TagW.PhotometricInterpretation, TagW.ImageOrientationPatient,
+                                        TagW.PixelRepresentation, TagW.Units, TagW.ImageType, TagW.SamplesPerPixel,
+                                        TagW.MonoChrome, TagW.Modality };
+                                rawIO.copyTags(tagList, imgRef, true);
+
+                                rawIO.setTag(TagW.BitsAllocated, bitsAllocated);
+                                rawIO.setTag(TagW.BitsStored, bitsStored);
+
+                                TagW[] tagList2 =
+                                    { TagW.SmallestImagePixelValue, TagW.LargestImagePixelValue, TagW.ModalityLUTData,
+                                        TagW.ModalityLUTType, TagW.ModalityLUTExplanation, TagW.RescaleSlope,
+                                        TagW.RescaleIntercept, TagW.RescaleType, TagW.VOILUTsData,
+                                        TagW.VOILUTsExplanation, TagW.PixelPaddingValue, TagW.PixelPaddingRangeLimit,
+                                        TagW.WindowWidth, TagW.WindowCenter, TagW.WindowCenterWidthExplanation,
+                                        TagW.VOILutFunction, TagW.PixelSpacing, TagW.ImagerPixelSpacing,
+                                        TagW.PixelSpacingCalibrationDescription, TagW.PixelAspectRatio };
+                                rawIO.copyTags(tagList2, imgRef, false);
+
+                                // Image specific tags
+                                rawIO.setTag(TagW.SOPInstanceUID, "mip.1"); //$NON-NLS-1$
+                                rawIO.setTag(TagW.InstanceNumber, 1);
+
+                                dicom = new DicomImageElement(rawIO, 0);
+                                DicomImageElement oldImage = getImage();
+                                // Use graphics of the previous image when they belongs to a MIP image
+                                if (oldImage != null && "mip.1".equals(oldImage.getTagValue(TagW.SOPInstanceUID))) { //$NON-NLS-1$
+                                    dicom.setTag(TagW.MeasurementGraphics,
+                                        oldImage.getTagValue(TagW.MeasurementGraphics));
+                                }
+                            } else {
+                                dicom = null;
+                            }
+                            // imageLayer.updateAllImageOperations();
+                            // actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
+                            // imageLayer.setPreprocessing(manager);
+
+                            // Following actions need to be executed in EDT thread
+                            GuiExecutor.instance().execute(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    DicomImageElement oldImage = getImage();
+                                    // Trick: call super to change the image as "this" method is empty
+                                    MipView.super.setImage(dicom);
+                                    if (oldImage != null) {
+                                        // Close stream
+                                        oldImage.dispose();
+                                        // Delete file in cache
+                                        File file = oldImage.getFile();
+                                        if (file != null) {
+                                            file.delete();
+                                        }
+                                    }
+                                    progressBar.setVisible(false);
+                                }
+                            });
+
+                        }
+                    } finally {
+                        progressBar.setVisible(false);
                     }
-                } finally {
-                    progressBar.setVisible(false);
                 }
-            }
-        };
+            };
         process.start();
     }
 

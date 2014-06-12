@@ -50,13 +50,13 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.SelectedImageFilter;
 @SuppressWarnings("serial")
 public class KeyObjectToolBar extends WtoolBar {
 
-    public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/24x24/star_bw.png"));
+    public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/24x24/star_bw.png")); //$NON-NLS-1$
     public static final ImageIcon KO_STAR_ICON_SELECTED;
-    public static final ImageIcon KO_FILTER_ICON = new ImageIcon(View2d.class.getResource("/icon/24x24/synch-KO.png"));
+    public static final ImageIcon KO_FILTER_ICON = new ImageIcon(View2d.class.getResource("/icon/24x24/synch-KO.png")); //$NON-NLS-1$
     public static final ImageIcon KO_FILTER_ICON_SELECTED;
 
     public static final ImageIcon KO_EDIT_SELECTION_ICON = new ImageIcon(
-        View2d.class.getResource("/icon/24x24/ko_edit_selection.png"));
+        View2d.class.getResource("/icon/24x24/ko_edit_selection.png")); //$NON-NLS-1$
 
     static {
         ImageFilter imageFilter = new SelectedImageFilter(new float[] { 1.0f, 0.78f, 0.0f }); // ORANGE
@@ -69,7 +69,7 @@ public class KeyObjectToolBar extends WtoolBar {
     }
 
     public KeyObjectToolBar(int index) {
-        super("KeyObject Tools", index);
+        super(Messages.getString("KeyObjectToolBar.title"), index); //$NON-NLS-1$
 
         final EventManager evtMgr = EventManager.getInstance();
 
@@ -162,9 +162,9 @@ public class KeyObjectToolBar extends WtoolBar {
                 JScrollPane scrollList = new JScrollPane(list);
                 // scrollList.setPreferredSize(new Dimension(500, 50));
 
-                final JButton deleteBtn = new JButton("Delete KeyObject");
-                final JButton createBtn = new JButton("Create a new KeyObject");
-                final JButton copyBtn = new JButton("Copy selected KeyObject");
+                final JButton deleteBtn = new JButton(Messages.getString("KeyObjectToolBar.delete")); //$NON-NLS-1$
+                final JButton createBtn = new JButton(Messages.getString("KeyObjectToolBar.new")); //$NON-NLS-1$
+                final JButton copyBtn = new JButton(Messages.getString("KeyObjectToolBar.copy")); //$NON-NLS-1$
 
                 int maxBtnWidth = 0;
                 maxBtnWidth = Math.max(maxBtnWidth, deleteBtn.getPreferredSize().width);
@@ -175,7 +175,7 @@ public class KeyObjectToolBar extends WtoolBar {
                 createBtn.setPreferredSize(new Dimension(maxBtnWidth, createBtn.getPreferredSize().height));
                 copyBtn.setPreferredSize(new Dimension(maxBtnWidth, copyBtn.getPreferredSize().height));
 
-                Object[] message = { "Key Object referenced to this Patient", scrollList };
+                Object[] message = { Messages.getString("KeyObjectToolBar.k0_list"), scrollList }; //$NON-NLS-1$
 
                 final JOptionPane pane =
                     new JOptionPane(message, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null,
@@ -230,7 +230,8 @@ public class KeyObjectToolBar extends WtoolBar {
                 deleteBtn.setEnabled(!list.isSelectionEmpty());
 
                 pane.setComponentOrientation(selectedView2dContainer.getComponentOrientation());
-                JDialog dialog = pane.createDialog(selectedView2dContainer, "Edit KeyObject");
+                JDialog dialog =
+                    pane.createDialog(selectedView2dContainer, Messages.getString("KeyObjectToolBar.edit")); //$NON-NLS-1$
 
                 pane.selectInitialValue();
 
@@ -242,7 +243,7 @@ public class KeyObjectToolBar extends WtoolBar {
                 if (selectedValue != null) {
 
                     if (selectedValue.equals(deleteBtn)) {
-                        System.out.println("Delete KeyObject");
+                        System.out.println("Delete KeyObject"); //$NON-NLS-1$
 
                         DicomModel dicomModel = (DicomModel) selectedDicomSeries.getTagValue(TagW.ExplorerModel);
                         if (dicomModel != null) {
@@ -253,12 +254,12 @@ public class KeyObjectToolBar extends WtoolBar {
                         Attributes newDicomKO = null;
 
                         if (selectedValue.equals(createBtn)) {
-                            System.out.println("Create new KeyObject");
+                            System.out.println("Create new KeyObject"); //$NON-NLS-1$
                             newDicomKO =
                                 KOManager.createNewDicomKeyObject(selectedView2d.getImage(), selectedView2dContainer);
 
                         } else if (selectedValue.equals(copyBtn)) {
-                            System.out.println("Copy selected KeyObject : " + list.getSelectedValue().toString());
+                            System.out.println("Copy selected KeyObject : " + list.getSelectedValue().toString()); //$NON-NLS-1$
                             newDicomKO =
                                 KOManager.createNewDicomKeyObject((MediaElement<?>) list.getSelectedValue(),
                                     selectedView2dContainer);
@@ -283,7 +284,7 @@ public class KeyObjectToolBar extends WtoolBar {
     }
 
     private Icon buildKoSelectionIcon() {
-        final Icon mouseIcon = new ImageIcon(View2d.class.getResource("/icon/24x24/dcm-KO.png"));
+        final Icon mouseIcon = new ImageIcon(View2d.class.getResource("/icon/24x24/dcm-KO.png")); //$NON-NLS-1$
 
         return new DropButtonIcon(new Icon() {
 

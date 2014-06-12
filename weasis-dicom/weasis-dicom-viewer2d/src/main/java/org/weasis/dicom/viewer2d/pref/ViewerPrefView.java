@@ -35,6 +35,7 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -84,7 +85,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
             Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
         add(panel_1);
 
-        JLabel lblInterpolation = new JLabel(Messages.getString("ViewerPrefView.interp")); //$NON-NLS-1$
+        JLabel lblInterpolation = new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON); //$NON-NLS-1$
         panel_1.add(lblInterpolation);
         EventManager eventManager = EventManager.getInstance();
 
@@ -94,11 +95,12 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         JPanel winlevelPanel = new JPanel();
         ((FlowLayout) winlevelPanel.getLayout()).setAlignment(FlowLayout.LEADING);
-        winlevelPanel.setBorder(new TitledBorder(null, "Other", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        winlevelPanel.setBorder(new TitledBorder(null,
+            Messages.getString("ViewerPrefView.other"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
         add(winlevelPanel);
 
         checkBoxWLcolor =
-            new JCheckBox("Apply Window/Level on color images", eventManager.getOptions().getBooleanProperty(
+            new JCheckBox(Messages.getString("ViewerPrefView.wl_color"), eventManager.getOptions().getBooleanProperty( //$NON-NLS-1$
                 WindowOp.P_APPLY_WL_COLOR, true));
         winlevelPanel.add(checkBoxWLcolor);
 
