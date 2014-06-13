@@ -99,7 +99,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
             }
         });
         StyleSheet ss = ((HTMLEditorKit) htmlPanel.getEditorKit()).getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((htmlPanel.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((htmlPanel.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$ //$NON-NLS-2$
             + Integer.toHexString((htmlPanel.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
             + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
         setPreferredSize(new Dimension(1024, 1024));

@@ -55,7 +55,6 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.Messages;
 
 public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
@@ -81,15 +80,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>(1));
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>(1));
     private static volatile boolean INI_COMPONENTS = false;
-
-    protected SRView srview;
-
-    public SRContainer() {
-        this(VIEWS_1x1, null);
-    }
-
-    public SRContainer(GridBagLayoutModel layoutModel, String uid) {
-        super(new ImageViewerEventManager<DicomImageElement>() {
+    static final ImageViewerEventManager<DicomImageElement> SR_EVENT_MANAGER =
+        new ImageViewerEventManager<DicomImageElement>() {
 
             @Override
             public boolean updateComponentsListener(DefaultView2d<DicomImageElement> defaultView2d) {
@@ -101,12 +93,27 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             public void resetDisplay() {
                 // Do nothing
             }
-        }, layoutModel, uid, SRFactory.NAME, SRFactory.ICON, null);
+
+            @Override
+            public void setSelectedView2dContainer(ImageViewerPlugin<DicomImageElement> selectedView2dContainer) {
+                this.selectedView2dContainer = selectedView2dContainer;
+            }
+
+        };
+
+    protected SRView srview;
+
+    public SRContainer() {
+        this(VIEWS_1x1, null);
+    }
+
+    public SRContainer(GridBagLayoutModel layoutModel, String uid) {
+        super(SR_EVENT_MANAGER, layoutModel, uid, SRFactory.NAME, SRFactory.ICON, null);
         setSynchView(SynchView.NONE);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
             // Add toolbars
-            TOOLBARS.add(new SrToolBar<DicomImageElement>(this, 20));
+            TOOLBARS.add(new SrToolBar<DicomImageElement>(20));
         }
     }
 
@@ -142,6 +149,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     @Override
     public void setSelected(boolean selected) {
         if (selected) {
+            eventManager.setSelectedView2dContainer(this);
+
             // Send event to select the related patient in Dicom Explorer.
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
             if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
@@ -149,6 +158,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                     new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, getGroupID()));
             }
 
+        } else {
+            eventManager.setSelectedView2dContainer(null);
         }
     }
 
@@ -289,7 +300,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     void displayHeader() {
         if (srview != null) {
-            JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
+            JFrame frame = new JFrame(org.weasis.dicom.explorer.Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
             frame.setSize(500, 630);
             DicomFieldsView view = new DicomFieldsView();
             view.changingViewContentEvent(new SeriesViewerEvent(this, srview.getSeries(), DicomModel
@@ -325,8 +336,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                             JOptionPane
                                 .showConfirmDialog(
                                     null,
-                                    Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
-                                    Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                                    org.weasis.dicom.explorer.Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
+                                    org.weasis.dicom.explorer.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
 
                         if (response == 0) {
                             try {
@@ -344,7 +355,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                 } finally {
                     // Set back the UI style (shared by some classes)
                     StyleSheet ss = ((HTMLEditorKit) srview.getHtmlPanel().getEditorKit()).getStyleSheet();
-                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((srview.getHtmlPanel().getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
+                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((srview.getHtmlPanel().getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$ //$NON-NLS-2$
                         + Integer.toHexString((srview.getHtmlPanel().getForeground().getRGB() & 0xffffff) | 0x1000000)
                             .substring(1) + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
                 }

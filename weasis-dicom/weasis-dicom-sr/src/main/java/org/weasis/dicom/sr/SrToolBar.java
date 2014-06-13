@@ -14,29 +14,35 @@ import org.weasis.core.ui.util.WtoolBar;
 public class SrToolBar<DicomImageElement> extends WtoolBar {
     private final Logger LOGGER = LoggerFactory.getLogger(SrToolBar.class);
 
-    public SrToolBar(final SRContainer container, int index) {
+    public SrToolBar(int index) {
         super("Main Bar", index); //$NON-NLS-1$
 
         final JButton printButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png")));
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png"))); //$NON-NLS-1$
         printButton.setToolTipText(Messages.getString("SRContainer.print_layout")); //$NON-NLS-1$
         printButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                container.printCurrentView();
+                ImageViewerPlugin<?> container = SRContainer.SR_EVENT_MANAGER.getSelectedView2dContainer();
+                if (container instanceof SRContainer) {
+                    ((SRContainer) container).printCurrentView();
+                }
             }
         });
         add(printButton);
 
         final JButton metaButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/text-x-generic.png")));
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/text-x-generic.png"))); //$NON-NLS-1$
         metaButton.setToolTipText("Open DICOM Information"); //$NON-NLS-1$
         metaButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                container.displayHeader();
+                ImageViewerPlugin<?> container = SRContainer.SR_EVENT_MANAGER.getSelectedView2dContainer();
+                if (container instanceof SRContainer) {
+                    ((SRContainer) container).displayHeader();
+                }
             }
         });
         add(metaButton);
