@@ -1659,7 +1659,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (pane == null) {
                 return;
             }
-            if (evt.getClickCount() == 2) {
+
+            ViewButton selectedButton = null;
+            // Do select the view when pressing on a view button
+            for (ViewButton b : getViewButtons()) {
+                if (b.isVisible() && b.contains(evt.getPoint())) {
+                    selectedButton = b;
+                    break;
+                }
+            }
+
+            if (evt.getClickCount() == 2 && selectedButton == null) {
                 pane.maximizedSelectedImagePane(DefaultView2d.this, evt);
                 return;
             }
@@ -1674,13 +1684,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             requestFocusInWindow();
 
             // Do select the view when pressing on a view button
-            for (ViewButton b : getViewButtons()) {
-                if (b.isVisible() && b.contains(evt.getPoint())) {
-                    DefaultView2d.this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
-                    evt.consume();
-                    b.showPopup(evt.getComponent(), evt.getX(), evt.getY());
-                    return;
-                }
+            if (selectedButton != null) {
+                DefaultView2d.this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+                evt.consume();
+                selectedButton.showPopup(evt.getComponent(), evt.getX(), evt.getY());
+                return;
             }
 
             int modifiers = evt.getModifiersEx();
