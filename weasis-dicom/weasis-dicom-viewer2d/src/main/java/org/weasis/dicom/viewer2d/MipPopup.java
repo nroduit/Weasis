@@ -28,6 +28,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ShowPopup;
 
 public class MipPopup implements ShowPopup {
@@ -38,20 +39,22 @@ public class MipPopup implements ShowPopup {
             return null;
         }
         final JDialog dialog =
-            new JDialog(SwingUtilities.getWindowAncestor(view), "MIP Options", ModalityType.APPLICATION_MODAL);
+            new JDialog(SwingUtilities.getWindowAncestor(view),
+                Messages.getString("MipPopup.title"), ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
         dialog.setIconImage(MipView.MIP_ICON_SETTING.getImage());
         final Container panel_1 = dialog.getContentPane();
         panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
 
         final JPanel framePanel = new JPanel();
-        framePanel.setBorder(new TitledBorder(null, "Projection", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        framePanel.setBorder(new TitledBorder(null,
+            Messages.getString("MipPopup.projection"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
         final ButtonGroup ratioGroup = new ButtonGroup();
 
-        JRadioButton rdbtnMinProjection = new JRadioButton("Min");
+        JRadioButton rdbtnMinProjection = new JRadioButton(Messages.getString("MipPopup.min")); //$NON-NLS-1$
         framePanel.add(rdbtnMinProjection);
-        JRadioButton rdbtnMeanProjection = new JRadioButton("Mean");
+        JRadioButton rdbtnMeanProjection = new JRadioButton(Messages.getString("MipPopup.mean")); //$NON-NLS-1$
         framePanel.add(rdbtnMeanProjection);
-        JRadioButton rdbtnMaxProjection = new JRadioButton("Max");
+        JRadioButton rdbtnMaxProjection = new JRadioButton(Messages.getString("MipPopup.max")); //$NON-NLS-1$
         framePanel.add(rdbtnMaxProjection);
         panel_1.add(framePanel);
         ratioGroup.add(rdbtnMinProjection);
@@ -108,9 +111,11 @@ public class MipPopup implements ShowPopup {
         ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
         if (sequence instanceof SliderCineListener) {
             SliderCineListener cineAction = (SliderCineListener) sequence;
-            final JSliderW frameSliderMin = createSlider("Min Slice", 4, true, cineAction.getModel());
+            final JSliderW frameSliderMin =
+                createSlider(MipView.MIP_MIN_SLICE.getTitle(), 4, true, cineAction.getModel());
             panel_1.add(frameSliderMin.getParent());
-            final JSliderW frameSliderMax = createSlider("Max Slice", 4, true, cineAction.getModel());
+            final JSliderW frameSliderMax =
+                createSlider(MipView.MIP_MAX_SLICE.getTitle(), 4, true, cineAction.getModel());
             panel_1.add(frameSliderMax.getParent());
             Integer minSlice = (Integer) view.getActionValue(MipView.MIP_MIN_SLICE.cmd());
             frameSliderMin.setValue(minSlice == null ? 1 : minSlice);
@@ -122,7 +127,8 @@ public class MipPopup implements ShowPopup {
                 @Override
                 public void stateChanged(ChangeEvent e) {
                     JSliderW slider = (JSliderW) e.getSource();
-                    updateSliderProoperties(slider, MipView.MIP_MIN_SLICE.getTitle() + slider.getValue());
+                    updateSliderProoperties(slider, MipView.MIP_MIN_SLICE.getTitle() + StringUtil.COLON_AND_SPACE
+                        + slider.getValue());
                     if (!slider.getValueIsAdjusting()) {
                         view.setActionsInView(MipView.MIP_MIN_SLICE.cmd(), slider.getValue());
                         view.applyMipParameters();
@@ -134,7 +140,8 @@ public class MipPopup implements ShowPopup {
                 @Override
                 public void stateChanged(ChangeEvent e) {
                     JSliderW slider = (JSliderW) e.getSource();
-                    updateSliderProoperties(slider, MipView.MIP_MAX_SLICE.getTitle() + slider.getValue());
+                    updateSliderProoperties(slider, MipView.MIP_MAX_SLICE.getTitle() + StringUtil.COLON_AND_SPACE
+                        + slider.getValue());
                     if (!slider.getValueIsAdjusting()) {
                         view.setActionsInView(MipView.MIP_MAX_SLICE.cmd(), slider.getValue());
                         view.applyMipParameters();
@@ -148,7 +155,7 @@ public class MipPopup implements ShowPopup {
         panel.setBorder(new EmptyBorder(20, 15, 10, 15));
         dialog.getContentPane().add(panel);
 
-        JButton btnExitMipMode = new JButton("Exit MIP Mode");
+        JButton btnExitMipMode = new JButton(Messages.getString("MipPopup.exit")); //$NON-NLS-1$
         btnExitMipMode.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -161,7 +168,7 @@ public class MipPopup implements ShowPopup {
         Component horizontalStrut = Box.createHorizontalStrut(20);
         panel.add(horizontalStrut);
 
-        JButton btnClose = new JButton("Close");
+        JButton btnClose = new JButton(Messages.getString("MipPopup.close")); //$NON-NLS-1$
         btnClose.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

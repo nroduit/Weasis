@@ -52,7 +52,7 @@ import com.sun.media.jai.util.ImageUtil;
 public class RawImageIO implements MediaReader<PlanarImage> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawImageIO.class);
 
-    private static final String mimeType = "image/raw";
+    private static final String mimeType = "image/raw"; //$NON-NLS-1$
     private static final int[] OFFSETS_0 = { 0 };
     private static final int[] OFFSETS_0_0_0 = { 0, 0, 0 };
     private static final int[] OFFSETS_0_1_2 = { 0, 1, 2 };
@@ -221,7 +221,7 @@ public class RawImageIO implements MediaReader<PlanarImage> {
                 new RawImageInputStream(imageStream, createImageTypeSpecifier(h, false, pixelRepresentation),
                     frameOffsets, imageDimensions);
             riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-            ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next();
+            ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next(); //$NON-NLS-1$
             reader.setInput(riis);
             return reader;
         }
@@ -285,7 +285,7 @@ public class RawImageIO implements MediaReader<PlanarImage> {
             out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
             return tmpFile;
         } catch (IOException e) {
-            LOGGER.error("Cannot write dicom file: {}", e.getMessage());
+            LOGGER.error("Cannot write dicom file: {}", e.getMessage()); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(out);
         }

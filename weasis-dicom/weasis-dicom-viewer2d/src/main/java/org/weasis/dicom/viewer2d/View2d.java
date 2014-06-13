@@ -90,6 +90,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -154,8 +155,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
 
-    public static final ImageIcon KO_ICON = new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-KO.png"));
-    public static final ImageIcon PR_ICON = new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-PR.png"));
+    public static final ImageIcon KO_ICON = new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-KO.png")); //$NON-NLS-1$
+    public static final ImageIcon PR_ICON = new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-PR.png")); //$NON-NLS-1$
 
     private final Dimension oldSize;
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
@@ -1428,7 +1429,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     protected JPopupMenu buildContexMenu(final MouseEvent evt) {
         JPopupMenu popupMenu = new JPopupMenu();
-        TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.left_mouse"), popupMenu.getInsets()); //$NON-NLS-1$
+        TitleMenuItem itemTitle =
+            new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets()); //$NON-NLS-1$
         popupMenu.add(itemTitle);
         final EventManager event = EventManager.getInstance();
         popupMenu.setLabel(MouseActions.LEFT);
@@ -1515,13 +1517,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // }
 
         WProperties p = BundleTools.SYSTEM_PREFERENCES;
-        if (p.getBooleanProperty("weasis.contextmenu.presets", true)) {
+        if (p.getBooleanProperty("weasis.contextmenu.presets", true)) { //$NON-NLS-1$
             ActionState presetAction = eventManager.getAction(ActionW.PRESET);
             if (presetAction instanceof ComboItemListener) {
                 JMenu menu =
                     ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
                         .getString("View2dContainer.presets"));//$NON-NLS-1$
-                menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/winLevel.png")));
+                menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/winLevel.png"))); //$NON-NLS-1$
                 for (Component mitem : menu.getMenuComponents()) {
                     RadioMenuItem ritem = ((RadioMenuItem) mitem);
                     PresetWindowLevel preset = (PresetWindowLevel) ritem.getUserObject();
@@ -1540,7 +1542,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // }
         // }
 
-        if (p.getBooleanProperty("weasis.contextmenu.sortstack", true)) {
+        if (p.getBooleanProperty("weasis.contextmenu.sortstack", true)) { //$NON-NLS-1$
             ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
             if (stackAction instanceof ComboItemListener) {
                 JMenu menu =
@@ -1556,7 +1558,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
         }
 
-        if (p.getBooleanProperty("weasis.contextmenu.orientation", true)) {
+        if (p.getBooleanProperty("weasis.contextmenu.orientation", true)) { //$NON-NLS-1$
             ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
             if (rotateAction instanceof SliderChangeListener) {
                 popupMenu.add(new JSeparator());
@@ -1610,13 +1612,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         popupMenu.add(new JSeparator());
 
-        if (p.getBooleanProperty("weasis.contextmenu.reset", true)) {
+        if (p.getBooleanProperty("weasis.contextmenu.reset", true)) { //$NON-NLS-1$
             JMenu menu = ResetTools.createUnregisteredJMenu();
-            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png")));
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$
             popupMenu.add(menu);
         }
 
-        if (p.getBooleanProperty("weasis.contextmenu.close", true)) {
+        if (p.getBooleanProperty("weasis.contextmenu.close", true)) { //$NON-NLS-1$
             JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
             close.addActionListener(new ActionListener() {
 

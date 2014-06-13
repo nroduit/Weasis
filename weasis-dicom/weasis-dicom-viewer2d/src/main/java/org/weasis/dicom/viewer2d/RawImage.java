@@ -12,7 +12,7 @@ public class RawImage {
 
     public RawImage(File file) {
         if (file == null) {
-            throw new IllegalArgumentException("File cannot be null");
+            throw new IllegalArgumentException("File cannot be null"); //$NON-NLS-1$
         }
         this.file = file;
     }

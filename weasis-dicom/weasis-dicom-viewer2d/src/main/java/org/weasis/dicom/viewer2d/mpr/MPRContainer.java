@@ -109,7 +109,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     }
 
     public static final GridBagLayoutModel VIEWS_2x1_mpr = new GridBagLayoutModel(
-        new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", "Orthogonal MPR", null);
+        new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", Messages.getString("MPRContainer.title"), null); //$NON-NLS-1$ //$NON-NLS-2$
     static {
         LinkedHashMap<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
         constraints.put(new LayoutConstraints(MprView.class.getName(), 0, 0, 0, 1, 2, 0.5, 1.0,
@@ -152,7 +152,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             INI_COMPONENTS = true;
             // Add standard toolbars
             WProperties props = (WProperties) BundleTools.SYSTEM_PREFERENCES.clone();
-            props.putBooleanProperty("weasis.toolbar.synchbouton", false);
+            props.putBooleanProperty("weasis.toolbar.synchbouton", false); //$NON-NLS-1$
 
             EventManager evtMg = EventManager.getInstance();
             TOOLBARS.add(View2dContainer.TOOLBARS.get(0));
@@ -586,59 +586,59 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                 this.setPluginName(title);
             }
             view.repaint();
-            process = new Thread("Building MPR views") {
-                @Override
-                public void run() {
-                    try {
-                        SeriesBuilder.createMissingSeries(this, MPRContainer.this, view);
+            process = new Thread(Messages.getString("MPRContainer.build")) { //$NON-NLS-1$
+                    @Override
+                    public void run() {
+                        try {
+                            SeriesBuilder.createMissingSeries(this, MPRContainer.this, view);
 
-                        // Following actions need to be executed in EDT thread
-                        GuiExecutor.instance().execute(new Runnable() {
+                            // Following actions need to be executed in EDT thread
+                            GuiExecutor.instance().execute(new Runnable() {
 
-                            @Override
-                            public void run() {
-                                ActionState synch = EventManager.getInstance().getAction(ActionW.SYNCH);
-                                if (synch instanceof ComboItemListener) {
-                                    ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
-                                }
-                                ActionState cross = EventManager.getInstance().getAction(ActionW.CROSSHAIR);
-                                if (cross instanceof CrosshairListener) {
-                                    ((CrosshairListener) cross).setPoint(view.getImageCoordinatesFromMouse(
-                                        view.getWidth() / 2, view.getHeight() / 2));
-                                }
-                            }
-                        });
-
-                    } catch (final Exception e) {
-                        e.printStackTrace();
-                        // Following actions need to be executed in EDT thread
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                for (DefaultView2d v : view2ds) {
-                                    if (v != view && v instanceof MprView) {
-                                        JProgressBar bar = ((MprView) v).getProgressBar();
-                                        if (bar == null) {
-                                            bar = new JProgressBar();
-                                            Dimension dim = new Dimension(v.getWidth() / 2, 30);
-                                            bar.setSize(dim);
-                                            bar.setPreferredSize(dim);
-                                            bar.setMaximumSize(dim);
-                                            bar.setValue(0);
-                                            bar.setStringPainted(true);
-                                            ((MprView) v).setProgressBar(bar);
-                                        }
-                                        bar.setString(e.getMessage());
-                                        v.repaint();
+                                @Override
+                                public void run() {
+                                    ActionState synch = EventManager.getInstance().getAction(ActionW.SYNCH);
+                                    if (synch instanceof ComboItemListener) {
+                                        ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
+                                    }
+                                    ActionState cross = EventManager.getInstance().getAction(ActionW.CROSSHAIR);
+                                    if (cross instanceof CrosshairListener) {
+                                        ((CrosshairListener) cross).setPoint(view.getImageCoordinatesFromMouse(
+                                            view.getWidth() / 2, view.getHeight() / 2));
                                     }
                                 }
-                            }
-                        });
-                    }
-                }
+                            });
 
-            };
+                        } catch (final Exception e) {
+                            e.printStackTrace();
+                            // Following actions need to be executed in EDT thread
+                            GuiExecutor.instance().execute(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    for (DefaultView2d v : view2ds) {
+                                        if (v != view && v instanceof MprView) {
+                                            JProgressBar bar = ((MprView) v).getProgressBar();
+                                            if (bar == null) {
+                                                bar = new JProgressBar();
+                                                Dimension dim = new Dimension(v.getWidth() / 2, 30);
+                                                bar.setSize(dim);
+                                                bar.setPreferredSize(dim);
+                                                bar.setMaximumSize(dim);
+                                                bar.setValue(0);
+                                                bar.setStringPainted(true);
+                                                ((MprView) v).setProgressBar(bar);
+                                            }
+                                            bar.setString(e.getMessage());
+                                            v.repaint();
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                };
             process.start();
         }
     }

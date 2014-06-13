@@ -196,7 +196,7 @@ public class InfoLayer implements AnnotationsLayer {
                 Color.RED);
             String tsuid = (String) image.getTagValue(TagW.TransferSyntaxUID);
             if (StringUtil.hasText(tsuid)) {
-                tsuid = Messages.getString("InfoLayer.tsuid") + " " + tsuid; //$NON-NLS-1$ //$NON-NLS-2$
+                tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid; //$NON-NLS-1$ 
                 y += fontHeight;
                 GraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2, y,
                     Color.RED);
@@ -231,17 +231,18 @@ public class InfoLayer implements AnnotationsLayer {
              * Image Management Devices, July 27, 2000).
              */
             drawY -= fontHeight;
-            if ("01".equals(dcm.getTagValue(TagW.LossyImageCompression))) {
+            if ("01".equals(dcm.getTagValue(TagW.LossyImageCompression))) { //$NON-NLS-1$
                 double[] rates = (double[]) dcm.getTagValue(TagW.LossyImageCompressionRatio);
                 String[] methods = (String[]) dcm.getTagValue(TagW.LossyImageCompressionMethod);
-                StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.lossy"));//$NON-NLS-1$
+                StringBuilder buf =
+                    new StringBuilder(Messages.getString("InfoLayer.lossy") + StringUtil.COLON_AND_SPACE);//$NON-NLS-1$
                 if (rates != null && rates.length > 0) {
                     if (methods != null && methods.length > 0) {
                         buf.append(methods[0]);
                     }
-                    buf.append(" [");
+                    buf.append(" ["); //$NON-NLS-1$
                     buf.append((int) rates[0]);
-                    buf.append(":1");
+                    buf.append(":1"); //$NON-NLS-1$
                     buf.append(']');
                 }
 
@@ -255,7 +256,7 @@ public class InfoLayer implements AnnotationsLayer {
             sb.append(StringUtil.COLON_AND_SPACE);
             if (pixelInfo != null) {
                 sb.append(pixelInfo.getPixelValueText());
-                sb.append(" - ");
+                sb.append(" - "); //$NON-NLS-1$
                 sb.append(pixelInfo.getPixelPositionText());
             }
             String str = sb.toString();
@@ -271,12 +272,10 @@ public class InfoLayer implements AnnotationsLayer {
             Number level = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
             boolean outside = false;
             if (window != null && level != null) {
-                sb.append(Messages.getString("InfoLayer.win"));//$NON-NLS-1$
-                sb.append(" ");//$NON-NLS-1$
+                sb.append(Messages.getString("InfoLayer.wl"));//$NON-NLS-1$
+                sb.append(StringUtil.COLON_AND_SPACE);
                 sb.append(DecFormater.oneDecimal(window));
-                sb.append(" ");//$NON-NLS-1$
-                sb.append(Messages.getString("InfoLayer.level"));//$NON-NLS-1$
-                sb.append(" ");//$NON-NLS-1$
+                sb.append("/");//$NON-NLS-1$
                 sb.append(DecFormater.oneDecimal(level));
                 if (dcm != null) {
                     boolean pixelPadding =
@@ -287,8 +286,8 @@ public class InfoLayer implements AnnotationsLayer {
                     float maxp = level.floatValue() + window.floatValue() / 2.0f;
                     if (minp > maxModLUT || maxp < minModLUT) {
                         outside = true;
-                        sb.append(" - ");
-                        sb.append("Values outside of the image spectrum!");
+                        sb.append(" - "); //$NON-NLS-1$
+                        sb.append(Messages.getString("InfoLayer.msg_outside_levels")); //$NON-NLS-1$
                     }
                 }
             }
@@ -303,24 +302,24 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.zoom") + " " + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()) //$NON-NLS-1$ //$NON-NLS-2$
-                    , border, drawY); //$NON-NLS-1$ //$NON-NLS-2$
+                    Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()) //$NON-NLS-1$ 
+                    , border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.angle") + " " + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ 
             drawY -= fontHeight;
         }
 
         if (getDisplayPreferences(FRAME)) {
-            String instance = " "; //$NON-NLS-1$
+            String instance = StringUtil.COLON_AND_SPACE;
             if (dcm != null) {
                 Integer inst = (Integer) dcm.getTagValue(TagW.InstanceNumber);
                 if (inst != null) {
-                    instance = " [" + inst + "] "; //$NON-NLS-1$ //$NON-NLS-2$
+                    instance += "[" + inst + "] "; //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
             GraphicLabel.paintFontOutline(
@@ -677,7 +676,7 @@ public class InfoLayer implements AnnotationsLayer {
         final int maxOutputValue = 255;
 
         OpManager dispOp = view2DPane.getDisplayOpManager();
-        ImageOpNode wlOp = dispOp.getNode(WindowOp.NAME);
+        ImageOpNode wlOp = dispOp.getNode(ImageOpNode.NAME);
         if (wlOp == null) {
             return;
         }

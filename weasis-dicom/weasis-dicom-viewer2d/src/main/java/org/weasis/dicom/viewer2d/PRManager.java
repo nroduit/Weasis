@@ -137,7 +137,7 @@ public class PRManager {
                         continue;
                     }
                     Identifier layerId =
-                        new Identifier(310 + glm.getInt(Tag.GraphicLayerOrder, 0), graphicLayerName + " [DICOM]");
+                        new Identifier(310 + glm.getInt(Tag.GraphicLayerOrder, 0), graphicLayerName + " [DICOM]"); //$NON-NLS-1$
                     DragLayer layer = new DragLayer(view.getLayerModel(), layerId);
                     // TODO should be an option
                     layer.setLocked(true);
@@ -161,7 +161,7 @@ public class PRManager {
                                     layer.addGraphic(graphic);
                                 }
                             } catch (InvalidShapeException e) {
-                                LOGGER.error("Cannot create graphic: {}", e.getMessage());
+                                LOGGER.error("Cannot create graphic: {}", e.getMessage()); //$NON-NLS-1$
                             }
                         }
                     }
@@ -171,7 +171,7 @@ public class PRManager {
                         for (Attributes txo : txos) {
                             String[] lines = EscapeChars.convertToLines(txo.getString(Tag.UnformattedTextValue));
                             // MATRIX not implemented
-                            boolean isDisp = "DISPLAY".equalsIgnoreCase(txo.getString(Tag.BoundingBoxAnnotationUnits));
+                            boolean isDisp = "DISPLAY".equalsIgnoreCase(txo.getString(Tag.BoundingBoxAnnotationUnits)); //$NON-NLS-1$
                             float[] topLeft = txo.getFloats(Tag.BoundingBoxTopLeftHandCorner);
                             float[] bottomRight = txo.getFloats(Tag.BoundingBoxBottomRightHandCorner);
                             Rectangle2D rect = null;
@@ -215,7 +215,7 @@ public class PRManager {
                                     line.setLabel(lines, view);
                                     layer.addGraphic(line);
                                 } catch (InvalidShapeException e) {
-                                    LOGGER.error("Cannot create annotation: {}", e.getMessage());
+                                    LOGGER.error("Cannot create annotation: {}", e.getMessage()); //$NON-NLS-1$
                                 }
                             } else if (rect != null) {
                                 AnnotationGraphic g;
@@ -226,7 +226,7 @@ public class PRManager {
                                     g.setLabel(lines, view);
                                     layer.addGraphic(g);
                                 } catch (InvalidShapeException e) {
-                                    LOGGER.error("Cannot create annotation: {}", e.getMessage());
+                                    LOGGER.error("Cannot create annotation: {}", e.getMessage()); //$NON-NLS-1$
                                 }
                             }
                         }

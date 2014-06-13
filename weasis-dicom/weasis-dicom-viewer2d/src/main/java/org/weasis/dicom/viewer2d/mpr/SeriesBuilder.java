@@ -52,8 +52,8 @@ import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.util.ImageToolkit;
@@ -68,6 +68,7 @@ import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
@@ -98,7 +99,7 @@ public class SeriesBuilder {
                         final boolean[] abort = new boolean[] { false, false };
                         Tuple3d voxelSpacing = geometry.getVoxelSpacing();
                         if (voxelSpacing.x != voxelSpacing.y) {
-                            confirmMessage(view, "Images have non square pixels!", abort);
+                            confirmMessage(view, Messages.getString("SeriesBuilder.non_square"), abort); //$NON-NLS-1$
                         }
 
                         int width = (Integer) img.getTagValue(TagW.Columns);
@@ -106,7 +107,7 @@ public class SeriesBuilder {
 
                         Float tilt = (Float) img.getTagValue(TagW.GantryDetectorTilt);
                         if (tilt != null && tilt != 0.0f) {
-                            confirmMessage(view, "Images have gantry tilt!", abort);
+                            confirmMessage(view, Messages.getString("SeriesBuilder.gantry"), abort); //$NON-NLS-1$
                         }
                         HashMap<TagW, Object> tags = img.getMediaReader().getMediaFragmentTags(0);
                         if (tags != null) {
@@ -128,37 +129,37 @@ public class SeriesBuilder {
                                 // The reference image is the first of the saggital stack (Left)
                                 rotate(vc, vr, Math.toRadians(270), resr);
                                 recParams[0] =
-                                    new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { resr.x,
+                                    new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { resr.x, //$NON-NLS-1$
                                         resr.y, resr.z, row[0], row[1], row[2] }, true, true,
                                         new Object[] { 0.0, false }, frUID);
                                 recParams[1] =
-                                    new ViewParameter(".3", SliceOrientation.CORONAL, false,
+                                    new ViewParameter(".3", SliceOrientation.CORONAL, false, //$NON-NLS-1$
                                         TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
                                             col[1], col[2] }, true, true, new Object[] { true, 0.0 }, frUID);
                             } else if (SliceOrientation.CORONAL.equals(type1)) {
                                 // The reference image is the first of the coronal stack (Anterior)
                                 rotate(vc, vr, Math.toRadians(90), resc);
                                 recParams[0] =
-                                    new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { row[0],
+                                    new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { row[0], //$NON-NLS-1$
                                         row[1], row[2], resc.x, resc.y, resc.z }, false, true, new Object[] { 0.0,
                                         false }, frUID);
 
                                 rotate(vc, vr, Math.toRadians(90), resr);
                                 recParams[1] =
-                                    new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
+                                    new ViewParameter(".3", SliceOrientation.SAGITTAL, true, //$NON-NLS-1$
                                         TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
                                             col[1], col[2] }, true, false, new Object[] { true, 0.0 }, frUID);
                             } else {
                                 // The reference image is the last of the axial stack (Head)
                                 rotate(vc, vr, Math.toRadians(270), resc);
                                 recParams[0] =
-                                    new ViewParameter(".2", SliceOrientation.CORONAL, true, null, new double[] {
+                                    new ViewParameter(".2", SliceOrientation.CORONAL, true, null, new double[] { //$NON-NLS-1$
                                         row[0], row[1], row[2], resc.x, resc.y, resc.z }, false, false, new Object[] {
-                                        0.0, false }, frUID);
+                                            0.0, false }, frUID);
 
                                 rotate(vr, vc, Math.toRadians(90), resr);
                                 recParams[1] =
-                                    new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
+                                    new ViewParameter(".3", SliceOrientation.SAGITTAL, true, //$NON-NLS-1$
                                         TransposeDescriptor.ROTATE_270, new double[] { col[0], col[1], col[2], resr.x,
                                             resr.y, resr.z }, false, false, new Object[] { true, 0.0 }, frUID);
 
@@ -527,7 +528,7 @@ public class SeriesBuilder {
             File dir = new File(MPR_CACHE_DIR, seriesID + params.suffix);
             dir.mkdirs();
             for (int i = 0; i < newSeries.length; i++) {
-                newSeries[i] = new RawImage(new File(dir, "mpr_" + (i + 1)));//$NON-NLS-1$ //$NON-NLS-2$);
+                newSeries[i] = new RawImage(new File(dir, "mpr_" + (i + 1)));//$NON-NLS-1$
             }
             double epsilon = 1e-3;
             double lastPos = 0.0;
@@ -541,13 +542,13 @@ public class SeriesBuilder {
                 DicomImageElement dcm = iter.next();
                 double[] sp = (double[]) dcm.getTagValue(TagW.SlicePosition);
                 if (sp == null && !abort[1]) {
-                    confirmMessage(view, "Space between slices is unpredictable!", abort);
+                    confirmMessage(view, Messages.getString("SeriesBuilder.space_missing"), abort); //$NON-NLS-1$
                 } else {
                     double pos = (sp[0] + sp[1] + sp[2]);
                     if (index > 0) {
                         double space = Math.abs(pos - lastPos);
                         if (!abort[1] && (space == 0.0 || (index > 1 && lastSpace - space > epsilon))) {
-                            confirmMessage(view, "Space between slices is not regular!", abort);
+                            confirmMessage(view, Messages.getString("SeriesBuilder.space"), abort); //$NON-NLS-1$
                         }
                         lastSpace = space;
                     }
@@ -569,7 +570,7 @@ public class SeriesBuilder {
                 PlanarImage image = dcm.getImage();
                 if (image == null) {
                     abort[0] = true;
-                    throw new IIOException("Cannot read an image!");
+                    throw new IIOException("Cannot read an image!"); //$NON-NLS-1$
                 }
                 writeRasterInRaw(getImage(image, params.transposeImage), newSeries);
             }
@@ -719,8 +720,7 @@ public class SeriesBuilder {
             @Override
             public void run() {
                 int usrChoice =
-                    JOptionPane.showConfirmDialog(view, message
-                        + "\nThe image may be displayed incorrectly.\n Do you want to continue anyway?",
+                    JOptionPane.showConfirmDialog(view, message + Messages.getString("SeriesBuilder.add_warn"), //$NON-NLS-1$
                         MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                 if (usrChoice == JOptionPane.NO_OPTION) {
                     abort[0] = true;

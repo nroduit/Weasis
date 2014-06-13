@@ -25,7 +25,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
         if (sequence instanceof SliderCineListener) {
             final SliderCineListener cineAction = (SliderCineListener) sequence;
             WProperties p = BundleTools.SYSTEM_PREFERENCES;
-            if (p.getBooleanProperty("weasis.cinetoolbar.gotostart", true)) {
+            if (p.getBooleanProperty("weasis.cinetoolbar.gotostart", true)) { //$NON-NLS-1$
                 final JButton rwdButton = new JButton();
                 rwdButton.setToolTipText(Messages.getString("CineToolBar.start")); //$NON-NLS-1$
                 rwdButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-rwd.png"))); //$NON-NLS-1$
@@ -40,7 +40,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 sequence.registerActionState(rwdButton);
             }
 
-            if (p.getBooleanProperty("weasis.cinetoolbar.prev", true)) {
+            if (p.getBooleanProperty("weasis.cinetoolbar.prev", true)) { //$NON-NLS-1$
                 final JButton prevButton = new JButton();
                 prevButton.setToolTipText(Messages.getString("CineToolBar.prev")); //$NON-NLS-1$
                 prevButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-prev.png"))); //$NON-NLS-1$
@@ -56,7 +56,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 sequence.registerActionState(prevButton);
             }
 
-            if (p.getBooleanProperty("weasis.cinetoolbar.pause", true)) {
+            if (p.getBooleanProperty("weasis.cinetoolbar.pause", true)) { //$NON-NLS-1$
                 final JButton pauseButton = new JButton();
                 pauseButton.setActionCommand(ActionW.CINESTOP.cmd());
                 pauseButton.setToolTipText(Messages.getString("CineToolBar.pause")); //$NON-NLS-1$
@@ -66,7 +66,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 sequence.registerActionState(pauseButton);
             }
 
-            if (p.getBooleanProperty("weasis.cinetoolbar.start", true)) {
+            if (p.getBooleanProperty("weasis.cinetoolbar.start", true)) { //$NON-NLS-1$
                 final JButton startButton = new JButton();
                 startButton.setActionCommand(ActionW.CINESTART.cmd());
                 startButton.setToolTipText(Messages.getString("CineToolBar.play")); //$NON-NLS-1$
@@ -76,7 +76,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 sequence.registerActionState(startButton);
             }
 
-            if (p.getBooleanProperty("weasis.cinetoolbar.stop", true)) {
+            if (p.getBooleanProperty("weasis.cinetoolbar.stop", true)) { //$NON-NLS-1$
                 final JButton stopButton = new JButton();
                 stopButton.setToolTipText(Messages.getString("CineToolBar.stop")); //$NON-NLS-1$
                 stopButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-stop.png"))); //$NON-NLS-1$
@@ -92,7 +92,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 sequence.registerActionState(stopButton);
             }
 
-            if (p.getBooleanProperty("weasis.cinetoolbar.next", true)) {
+            if (p.getBooleanProperty("weasis.cinetoolbar.next", true)) { //$NON-NLS-1$
                 final JButton nextButton = new JButton();
                 nextButton.setToolTipText(Messages.getString("CineToolBar.next")); //$NON-NLS-1$
                 nextButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-next.png"))); //$NON-NLS-1$
@@ -108,7 +108,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 sequence.registerActionState(nextButton);
             }
 
-            if (p.getBooleanProperty("weasis.cinetoolbar.gotoend", true)) {
+            if (p.getBooleanProperty("weasis.cinetoolbar.gotoend", true)) { //$NON-NLS-1$
                 final JButton fwdButton = new JButton();
                 fwdButton.setToolTipText(Messages.getString("CineToolBar.end")); //$NON-NLS-1$
                 fwdButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-fwd.png"))); //$NON-NLS-1$
