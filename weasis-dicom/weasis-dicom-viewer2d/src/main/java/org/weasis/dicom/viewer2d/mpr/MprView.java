@@ -35,6 +35,9 @@ public class MprView extends View2d {
         super(eventManager);
         this.sliceOrientation = SliceOrientation.AXIAL;
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PRELOADING_BAR, false);
+
+        // Remove PR and KO buttons
+        getViewButtons().clear();
     }
 
     @Override

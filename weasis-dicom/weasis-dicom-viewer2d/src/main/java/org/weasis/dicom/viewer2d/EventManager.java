@@ -856,12 +856,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             return false;
         }
 
-        // TODO docking
-        // Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
-        // if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
-        // return false;
-        // }
-
         if (selectedView2dContainer == null || view2d != selectedView2dContainer.getSelectedImagePane()) {
             return false;
         }
@@ -934,19 +928,26 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     public void updateKeyObjectComponentsListener(DefaultView2d<DicomImageElement> view2d) {
         if (view2d != null) {
-            koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE
-                .cmd()));
-            koFilterAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
+            if (JMVUtils.getNULLtoFalse(view2d.getActionValue("no.ko"))) {
+                koToggleAction.enableAction(false);
+                koFilterAction.enableAction(false);
+                koSelectionAction.enableAction(false);
+            } else {
+                koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE
+                    .cmd()));
+                koFilterAction
+                    .setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
 
-            Object[] kos = KOManager.getKOElementListWithNone(view2d).toArray();
-            boolean enable = kos.length > 1;
-            if (enable) {
-                koSelectionAction.setDataListWithoutTriggerAction(kos);
-                koSelectionAction
-                    .setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));
+                Object[] kos = KOManager.getKOElementListWithNone(view2d).toArray();
+                boolean enable = kos.length > 1;
+                if (enable) {
+                    koSelectionAction.setDataListWithoutTriggerAction(kos);
+                    koSelectionAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION
+                        .cmd()));
+                }
+                koFilterAction.enableAction(enable);
+                koSelectionAction.enableAction(enable);
             }
-            koFilterAction.enableAction(enable);
-            koSelectionAction.enableAction(enable);
         }
 
     }

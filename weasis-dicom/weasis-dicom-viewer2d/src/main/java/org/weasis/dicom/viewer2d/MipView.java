@@ -74,6 +74,7 @@ public class MipView extends View2d {
         actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
         actionsInView.put(MIP_MIN_SLICE.cmd(), 1);
         actionsInView.put(MIP_MAX_SLICE.cmd(), 15);
+        actionsInView.put("no.ko", true);
 
         // Propagate the preset
         OpManager disOp = getDisplayOpManager();
@@ -87,6 +88,11 @@ public class MipView extends View2d {
 
     @Override
     public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
+        MediaSeries<DicomImageElement> oldsequence = this.series;
+        this.series = series;
+        if (oldsequence != null && !oldsequence.equals(series)) {
+            closingSeries(oldsequence);
+        }
         // If series is updates by other actions than MIP, the view is reseted
         exitMipMode(series, selectedDicom);
     }
@@ -301,9 +307,6 @@ public class MipView extends View2d {
                             } else {
                                 dicom = null;
                             }
-                            // imageLayer.updateAllImageOperations();
-                            // actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
-                            // imageLayer.setPreprocessing(manager);
 
                             // Following actions need to be executed in EDT thread
                             GuiExecutor.instance().execute(new Runnable() {
@@ -313,7 +316,9 @@ public class MipView extends View2d {
                                     DicomImageElement oldImage = getImage();
                                     // Trick: call super to change the image as "this" method is empty
                                     MipView.super.setImage(dicom);
-                                    if (oldImage != null) {
+                                    if (oldImage == null) {
+                                        eventManager.updateComponentsListener(MipView.this);
+                                    } else {
                                         // Close stream
                                         oldImage.dispose();
                                         // Delete file in cache
