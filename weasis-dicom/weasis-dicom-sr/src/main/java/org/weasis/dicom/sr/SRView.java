@@ -99,7 +99,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
             }
         });
         StyleSheet ss = ((HTMLEditorKit) htmlPanel.getEditorKit()).getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;color:#" //$NON-NLS-1$
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((htmlPanel.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
             + Integer.toHexString((htmlPanel.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
             + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
         setPreferredSize(new Dimension(1024, 1024));
@@ -236,7 +236,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                         }
                     } else {
                         // TODO try to download if IHE IID has been configured
-                        JOptionPane.showMessageDialog(this, Messages.getString("SRView.msg"), Messages.getString("SRView.open"), //$NON-NLS-1$ //$NON-NLS-2$
+                        JOptionPane.showMessageDialog(this,
+                            Messages.getString("SRView.msg"), Messages.getString("SRView.open"), //$NON-NLS-1$ //$NON-NLS-2$
                             JOptionPane.WARNING_MESSAGE);
                     }
 

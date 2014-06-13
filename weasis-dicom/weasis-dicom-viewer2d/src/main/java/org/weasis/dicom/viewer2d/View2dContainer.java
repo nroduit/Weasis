@@ -503,25 +503,28 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         if (source instanceof DicomSeries) {
                             DicomSeries series = (DicomSeries) source;
                             DefaultView2d<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
-                            DicomImageElement img = view2DPane.getImage();
-                            if (img != null && view2DPane.getSeries() == series) {
-                                ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                                if (seqAction instanceof SliderCineListener) {
-                                    SliderCineListener sliceAction = (SliderCineListener) seqAction;
-                                    if (param instanceof DicomImageElement) {
-                                        Filter<DicomImageElement> filter =
-                                            (Filter<DicomImageElement>) view2DPane
-                                                .getActionValue(ActionW.FILTERED_SERIES.cmd());
-                                        int imgIndex =
-                                            series.getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
-                                        if (imgIndex < 0) {
-                                            imgIndex = 0;
-                                            // add again the series for registering listeners
-                                            // (require at least one image)
-                                            view2DPane.setSeries(series, null);
-                                        }
-                                        if (imgIndex >= 0) {
-                                            sliceAction.setMinMaxValue(1, series.size(filter), imgIndex + 1);
+                            if (view2DPane != null) {
+                                DicomImageElement img = view2DPane.getImage();
+                                if (img != null && view2DPane.getSeries() == series) {
+                                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                                    if (seqAction instanceof SliderCineListener) {
+                                        SliderCineListener sliceAction = (SliderCineListener) seqAction;
+                                        if (param instanceof DicomImageElement) {
+                                            Filter<DicomImageElement> filter =
+                                                (Filter<DicomImageElement>) view2DPane
+                                                    .getActionValue(ActionW.FILTERED_SERIES.cmd());
+                                            int imgIndex =
+                                                series
+                                                    .getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
+                                            if (imgIndex < 0) {
+                                                imgIndex = 0;
+                                                // add again the series for registering listeners
+                                                // (require at least one image)
+                                                view2DPane.setSeries(series, null);
+                                            }
+                                            if (imgIndex >= 0) {
+                                                sliceAction.setMinMaxValue(1, series.size(filter), imgIndex + 1);
+                                            }
                                         }
                                     }
                                 }

@@ -1,20 +1,30 @@
 package org.weasis.dicom.sr;
 
-import java.awt.Window;
+import java.awt.BorderLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.print.PageFormat;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.SwingUtilities;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,19 +36,26 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.util.ForcedAcceptPrintService;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.explorer.DicomExplorer;
+import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.Messages;
 
 public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
@@ -89,6 +106,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
             // Add toolbars
+            TOOLBARS.add(new SrToolBar<DicomImageElement>(this, 20));
         }
     }
 
@@ -260,17 +278,78 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
 
                 @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (srview != null) {
-                        Window parent = SwingUtilities.getWindowAncestor(SRContainer.this);
-                        PreviewDialog dialog = new PreviewDialog(parent, srview.getHtmlPanel());
-                        dialog.setVisible(true);
-                    }
+                public void actionPerformed(ActionEvent action) {
+                    printCurrentView();
                 }
             };
         actions.add(printStd);
 
         return actions;
+    }
+
+    void displayHeader() {
+        if (srview != null) {
+            JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
+            frame.setSize(500, 630);
+            DicomFieldsView view = new DicomFieldsView();
+            view.changingViewContentEvent(new SeriesViewerEvent(this, srview.getSeries(), DicomModel
+                .getFirstSpecialElement(srview.getSeries(), DicomSpecialElement.class), EVENT.SELECT));
+            JPanel panel = new JPanel();
+            panel.setLayout(new BorderLayout());
+            panel.add(view);
+            frame.getContentPane().add(panel);
+            frame.setVisible(true);
+        }
+    }
+
+    void printCurrentView() {
+        if (srview != null) {
+            PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
+            PrinterJob pj = PrinterJob.getPrinterJob();
+
+            // Get page format from the printer
+            if (pj.printDialog(aset)) {
+                PageFormat pageFormat = pj.defaultPage();
+                // Force to print in black and white
+                EditorPanePrinter pnlPreview =
+                    new EditorPanePrinter(srview.getHtmlPanel(), pageFormat, new Insets(18, 18, 18, 18));
+                pj.setPageable(pnlPreview);
+                try {
+                    pj.print();
+                } catch (PrinterException e) {
+                    // check for the annoying 'Printer is not accepting job' error.
+                    if (e.getMessage().indexOf("accepting job") != -1) { //$NON-NLS-1$
+                        // recommend prompting the user at this point if they want to force it
+                        // so they'll know there may be a problem.
+                        int response =
+                            JOptionPane
+                                .showConfirmDialog(
+                                    null,
+                                    Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
+                                    Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+
+                        if (response == 0) {
+                            try {
+                                // try printing again but ignore the not-accepting-jobs attribute
+                                ForcedAcceptPrintService.setupPrintJob(pj); // add secret ingredient
+                                pj.print(aset);
+                                LOGGER.info("Bypass Printer is not accepting job"); //$NON-NLS-1$
+                            } catch (PrinterException ex) {
+                                AuditLog.logError(LOGGER, e, "Printer exception"); //$NON-NLS-1$
+                            }
+                        }
+                    } else {
+                        AuditLog.logError(LOGGER, e, "Print exception"); //$NON-NLS-1$
+                    }
+                } finally {
+                    // Set back the UI style (shared by some classes)
+                    StyleSheet ss = ((HTMLEditorKit) srview.getHtmlPanel().getEditorKit()).getStyleSheet();
+                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((srview.getHtmlPanel().getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
+                        + Integer.toHexString((srview.getHtmlPanel().getForeground().getRGB() & 0xffffff) | 0x1000000)
+                            .substring(1) + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
+                }
+            }
+        }
     }
 
     @Override
@@ -301,4 +380,5 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public List<GridBagLayoutModel> getLayoutList() {
         return LAYOUT_LIST;
     }
+
 }

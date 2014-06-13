@@ -17,16 +17,15 @@ import java.awt.print.Pageable;
 import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
 import java.util.ArrayList;
 
-import javax.print.PrintService;
 import javax.swing.JEditorPane;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import javax.swing.plaf.basic.BasicEditorPaneUI;
 import javax.swing.text.Position;
 import javax.swing.text.View;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 public class EditorPanePrinter extends JPanel implements Pageable, Printable {
     public static int PAGE_SHIFT = 20;
@@ -41,9 +40,15 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
     PageFormat pageFormat;
 
     public EditorPanePrinter(JEditorPane pane, PageFormat pageFormat, Insets margins) {
+
         JEditorPane tmpPane = new JEditorPane();
-        tmpPane.setEditorKit(pane.getEditorKit());
+        tmpPane.setUI(new BasicEditorPaneUI());
         tmpPane.setContentType(pane.getContentType());
+        if (tmpPane.getEditorKit() instanceof HTMLEditorKit) {
+            StyleSheet ss = ((HTMLEditorKit) tmpPane.getEditorKit()).getStyleSheet();
+            ss.addRule("body {font-family:sans-serif;font-size:12pt;color:black;background-color:white;font-weight:normal;}"); //$NON-NLS-1$
+        }
+        tmpPane.setBorder(null);
         tmpPane.setText(pane.getText());
 
         this.sourcePane = tmpPane;
@@ -56,6 +61,7 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
         paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
         pageFormat.setPaper(paper);
 
+        // updateUIToRemoveLF(this);
         doPagesLayout();
     }
 
@@ -90,14 +96,18 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
             Shape pageShape =
                 getPageShape(startY, pageWidth - margins.left - margins.right, pageHeight - margins.top
                     - margins.bottom, sourcePane);
-            pages.add(new PagePanel(startY, endPageY, pageShape));
+            PagePanel p = new PagePanel(startY, endPageY, pageShape);
+            updateUIToRemoveLF(p);
+            pages.add(p);
             startY = endPageY;
             endPageY = getEndPageY(startY);
         }
         Shape pageShape =
             getPageShape(startY, pageWidth - margins.left - margins.right, pageHeight - margins.top - margins.bottom,
                 sourcePane);
-        pages.add(new PagePanel(startY, endPageY, pageShape));
+        PagePanel p = new PagePanel(startY, endPageY, pageShape);
+        updateUIToRemoveLF(p);
+        pages.add(p);
 
         int count = 0;
         for (PagePanel pi : pages) {
@@ -124,6 +134,15 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
         }
 
         return realY;
+    }
+
+    private void updateUIToRemoveLF(JPanel panel) {
+        panel.setUI(new javax.swing.plaf.PanelUI() {
+        });
+        panel.setBackground(Color.WHITE);
+        panel.setForeground(Color.BLACK);
+        panel.setBorder(null);
+        panel.setOpaque(true);
     }
 
     protected View getLeafViewAtPoint(Point p, View root) {
@@ -203,9 +222,10 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
     public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
         if (pageIndex < pages.size()) {
             pageFormat.getPaper().setImageableArea(0, 0, pageWidth, pageHeight);
-            pages.get(pageIndex).isPrinting = true;
-            pages.get(pageIndex).paint(g);
-            pages.get(pageIndex).isPrinting = false;
+            PagePanel p = pages.get(pageIndex);
+            p.isPrinting = true;
+            p.paint(g);
+            p.isPrinting = false;
             return PAGE_EXISTS;
         }
 
@@ -259,48 +279,13 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
             this.pageEndY = pageEndY;
             this.pageShape = pageShape;
 
+            updateUIToRemoveLF(innerPage);
+
             setSize(pageWidth, pageHeight);
-            setBackground(Color.white);
             setLayout(null);
             add(innerPage);
             innerPage.setBounds(margins.left, margins.top, pageWidth - margins.left - margins.right, pageHeight
                 - margins.top - margins.bottom);
-        }
-
-        @Override
-        public void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-            g.setColor(Color.black);
-            g.drawRect(0, 0, getWidth() - 2, getHeight() - 2);
-        }
-    }
-
-    public void print() {
-        print((PrintService) null);
-    }
-
-    public void print(PrintService ps) {
-        try {
-            PrinterJob pj = PrinterJob.getPrinterJob();
-            JFrame tmp = null;
-            if (this.getParent() == null) {
-                tmp = new JFrame();
-                tmp.getContentPane().add(new JScrollPane(this));
-                tmp.pack();
-                tmp.setVisible(false);
-            }
-            pj.setPageable(this);
-            if (ps != null) {
-                pj.setPrintService(ps);
-            }
-            pj.print();
-
-            if (tmp != null) {
-                tmp.dispose();
-            }
-        } catch (PrinterException e1) {
-            e1.printStackTrace();
         }
     }
 
