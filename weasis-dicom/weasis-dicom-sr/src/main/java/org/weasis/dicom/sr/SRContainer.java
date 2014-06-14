@@ -334,8 +334,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                             JOptionPane
                                 .showConfirmDialog(
                                     null,
-                                    org.weasis.dicom.explorer.Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
-                                    org.weasis.dicom.explorer.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                                    org.weasis.core.ui.Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
+                                    org.weasis.core.ui.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
 
                         if (response == 0) {
                             try {

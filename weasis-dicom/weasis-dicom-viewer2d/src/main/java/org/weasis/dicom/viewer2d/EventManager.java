@@ -927,7 +927,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     public void updateKeyObjectComponentsListener(DefaultView2d<DicomImageElement> view2d) {
         if (view2d != null) {
-            if (JMVUtils.getNULLtoFalse(view2d.getActionValue("no.ko"))) {
+            if (JMVUtils.getNULLtoFalse(view2d.getActionValue("no.ko"))) { //$NON-NLS-1$
                 koToggleAction.enableAction(false);
                 koFilterAction.enableAction(false);
                 koSelectionAction.enableAction(false);

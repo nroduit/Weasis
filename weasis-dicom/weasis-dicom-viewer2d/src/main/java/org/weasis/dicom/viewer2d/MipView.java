@@ -74,7 +74,7 @@ public class MipView extends View2d {
         actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
         actionsInView.put(MIP_MIN_SLICE.cmd(), 1);
         actionsInView.put(MIP_MAX_SLICE.cmd(), 15);
-        actionsInView.put("no.ko", true);
+        actionsInView.put("no.ko", true); //$NON-NLS-1$
 
         // Propagate the preset
         OpManager disOp = getDisplayOpManager();

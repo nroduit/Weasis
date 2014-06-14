@@ -79,7 +79,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
         JPanel panel1 = new JPanel();
         panel1
-            .setBorder(new TitledBorder(null, "Monitor Settings", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+            .setBorder(new TitledBorder(null, Messages.getString("ScreenPrefView.settings"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
         add(panel1, BorderLayout.NORTH);
         panel1.setLayout(new BorderLayout(0, 0));
 

@@ -345,6 +345,7 @@ public class SRReader {
                 html.append(id);
                 html.append("\">"); //$NON-NLS-1$
                 html.append(Messages.getString("SRReader.node")); //$NON-NLS-1$
+                html.append(" "); //$NON-NLS-1$
                 html.append(id);
                 html.append("</a>"); //$NON-NLS-1$
 

@@ -474,7 +474,7 @@ public class WeasisLauncher {
                         if (response == 0) {
                             // Write "false" in weasis.properties. It can be useful when preferences are store remotely.
                             // The user will accept the disclaimer only once.
-                            l_prop.setProperty("weasis.show.disclaimer", Boolean.FALSE.toString());
+                            l_prop.setProperty("weasis.show.disclaimer", Boolean.FALSE.toString()); //$NON-NLS-1$
                             if (prefDir != null) {
                                 FileUtil.storeProperties(new File(prefDir, APP_PROPERTY_FILE), l_prop, null);
                             }

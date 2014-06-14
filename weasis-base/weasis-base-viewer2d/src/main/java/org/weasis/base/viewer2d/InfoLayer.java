@@ -146,7 +146,7 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.win") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) //$NON-NLS-1$ 
+                    Messages.getString("InfoLayer.wl") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) //$NON-NLS-1$ 
                         + "/" + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ 
             drawY -= fontHeight;
         }
