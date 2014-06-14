@@ -145,14 +145,14 @@ public class AnnotationGraphic extends AbstractDragGraphic {
                 + GraphicLabel.GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, GraphicLabel.GROWING_BOUND);
             if (line != null) {
-                newShape.addLinkSegmentToInvariantShape(line, ptBox, labelBounds, getDashStroke(lineThickness), true);
+                newShape.addLinkSegmentToInvariantShape(line, ptBox, labelBounds, getDashStroke(lineThickness), false);
 
                 ScaleInvariantShape arrow =
                     newShape.addScaleInvShape(GeomUtil.getArrowShape(ptAnchor, ptBox, 15, 8), ptAnchor,
-                        getStroke(lineThickness), true);
+                        getStroke(lineThickness), false);
                 arrow.setFilled(true);
             }
-            newShape.addAllInvShape(labelBounds, ptBox, getStroke(lineThickness), true);
+            newShape.addAllInvShape(labelBounds, ptBox, getStroke(lineThickness), false);
 
         }
 

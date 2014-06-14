@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -108,6 +109,9 @@ public abstract class PropertiesDialog extends JDialog {
         gbc_lbloverridesmultipleValues.insets = new Insets(15, 10, 0, 25);
         gbc_lbloverridesmultipleValues.gridx = 2;
         gbc_lbloverridesmultipleValues.gridy = 0;
+        lbloverridesmultipleValues.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(),
+            BorderFactory.createEmptyBorder(3, 3, 3, 3)));
+        lbloverridesmultipleValues.setOpaque(true);
         jPanel1.add(lbloverridesmultipleValues, gbc_lbloverridesmultipleValues);
         jPanel1.add(jLabelLineColor, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
             GridBagConstraints.NONE, new Insets(10, 25, 0, 0), 0, 0));

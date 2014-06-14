@@ -127,8 +127,6 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         LAYOUT_LIST.add(VIEWS_2x1_mpr);
         LAYOUT_LIST.add(VIEWS_2x2_f2);
         LAYOUT_LIST.add(VIEWS_2_f1x2);
-        LAYOUT_LIST.add(VIEWS_1x2);
-        LAYOUT_LIST.add(VIEWS_2x1);
     }
 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected

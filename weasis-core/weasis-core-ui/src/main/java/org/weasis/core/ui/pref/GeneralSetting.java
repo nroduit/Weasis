@@ -186,10 +186,13 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_txtpnNote.gridy = 3;
         txtpnNote.setEditable(false);
         txtpnNote.setContentType("text/html"); //$NON-NLS-1$
-        StyleSheet ss = ((HTMLEditorKit) txtpnNote.getEditorKit()).getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;color:#" //$NON-NLS-1$
-            + Integer.toHexString((labelLocale.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-            + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
+
+        HTMLEditorKit kit = new HTMLEditorKit();
+        StyleSheet ss = kit.getStyleSheet();
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((txtpnNote.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$ //$NON-NLS-2$
+            + Integer.toHexString((txtpnNote.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
+        txtpnNote.setEditorKit(kit);
         txtpnNote.setText(getText());
         add(txtpnNote, gbc_txtpnNote);
 
@@ -308,7 +311,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         checkRolingLog();
 
         comboBoxLang.selectLocale(prfs.getProperty("locale.lang.code")); //$NON-NLS-1$
-        comboBoxFormat.selectLocale(); 
+        comboBoxFormat.selectLocale();
 
         String className = prfs.getProperty("weasis.look"); //$NON-NLS-1$
         if (className == null) {

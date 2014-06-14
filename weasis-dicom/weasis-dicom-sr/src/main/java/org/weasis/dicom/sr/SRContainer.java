@@ -23,8 +23,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -352,12 +350,6 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                     } else {
                         AuditLog.logError(LOGGER, e, "Print exception"); //$NON-NLS-1$
                     }
-                } finally {
-                    // Set back the UI style (shared by some classes)
-                    StyleSheet ss = ((HTMLEditorKit) srview.getHtmlPanel().getEditorKit()).getStyleSheet();
-                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((srview.getHtmlPanel().getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$ //$NON-NLS-2$
-                        + Integer.toHexString((srview.getHtmlPanel().getForeground().getRGB() & 0xffffff) | 0x1000000)
-                            .substring(1) + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
                 }
             }
         }

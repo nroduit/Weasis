@@ -78,8 +78,8 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         });
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(null, "Monitor Settings", TitledBorder.LEADING, TitledBorder.TOP, null, //$NON-NLS-1$
-            null));
+        panel1
+            .setBorder(new TitledBorder(null, "Monitor Settings", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(panel1, BorderLayout.NORTH);
         panel1.setLayout(new BorderLayout(0, 0));
 
@@ -109,13 +109,14 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             final String title = buf.toString();
 
             if (monitor.getRealScaleFactor() > 0) {
-                buf.append(" "); //$NON-NLS-1$
+                buf.append(" ("); //$NON-NLS-1$
                 buf.append((int) Math.round(mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
                 buf.append("x"); //$NON-NLS-1$
                 buf.append((int) Math.round(mb.height
                     * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
                 buf.append(" "); //$NON-NLS-1$
                 buf.append(Unit.MILLIMETER.getAbbreviation());
+                buf.append(")"); //$NON-NLS-1$
             }
             p.add(new JLabel(buf.toString()));
 

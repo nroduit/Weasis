@@ -773,11 +773,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         this.selectedView2dContainer = selectedView2dContainer;
 
         if (selectedView2dContainer != null) {
+            if (oldContainer == null || !oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
+                synchAction.setDataListWithoutTriggerAction(selectedView2dContainer.getSynchList().toArray());
+                layoutAction.setDataListWithoutTriggerAction(selectedView2dContainer.getLayoutList().toArray());
+            }
             if (oldContainer != null) {
-                if (!oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
-                    synchAction.setDataListWithoutTriggerAction(selectedView2dContainer.getSynchList().toArray());
-                    layoutAction.setDataListWithoutTriggerAction(selectedView2dContainer.getLayoutList().toArray());
-                }
                 DefaultView2d<DicomImageElement> pane = oldContainer.getSelectedImagePane();
                 if (pane != null) {
                     pane.setFocused(false);

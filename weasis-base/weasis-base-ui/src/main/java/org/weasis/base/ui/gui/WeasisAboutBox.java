@@ -32,6 +32,8 @@ import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -100,13 +102,18 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         jPanelAbout.setLayout(gridBagLayout1);
         jTextPane1.setContentType("text/html"); //$NON-NLS-1$
         jTextPane1.setEditable(false);
+        HTMLEditorKit kit = new HTMLEditorKit();
+        StyleSheet ss = kit.getStyleSheet();
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$ //$NON-NLS-2$
+            + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
+        jTextPane1.setEditorKit(kit);
 
-        jTextPane1.setBackground(Color.WHITE);
         jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
         final StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); //$NON-NLS-1$
-        message.append(AppProperties.WEASIS_NAME); 
+        message.append(AppProperties.WEASIS_NAME);
         message.append(" "); //$NON-NLS-1$
-        message.append(AppProperties.WEASIS_VERSION); 
+        message.append(AppProperties.WEASIS_VERSION);
         message.append("</H2>"); //$NON-NLS-1$
 
         String rn = Messages.getString("WeasisWin.release"); //$NON-NLS-1$
@@ -119,10 +126,10 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         jTextPane1.setText(message.toString());
         jLabel1.setBorder(BorderFactory.createLineBorder(Color.black, 2));
 
-        jLabel1.setIcon(ResourceUtil.getLargeLogo()); 
+        jLabel1.setIcon(ResourceUtil.getLargeLogo());
         jPanel3.setLayout(borderLayout3);
 
-        jTabbedPane1.add(jPanel3, this.getTitle()); 
+        jTabbedPane1.add(jPanel3, this.getTitle());
         jPanel3.add(jPanel1, BorderLayout.NORTH);
         jPanel1.add(jLabel1, null);
         jPanel3.add(jScrollPane3, BorderLayout.CENTER);

@@ -357,10 +357,14 @@ public class JMVUtils {
         StyleConstants.setBold(s, true);
         s = doc.addStyle("bold", regular); //$NON-NLS-1$
         StyleConstants.setBold(s, true);
+        StyleConstants.setFontSize(s, 12);
         s = doc.addStyle("small", regular); //$NON-NLS-1$
         StyleConstants.setFontSize(s, 10);
         s = doc.addStyle("large", regular); //$NON-NLS-1$
         StyleConstants.setFontSize(s, 14);
+        s = doc.addStyle("italic", regular); //$NON-NLS-1$
+        StyleConstants.setFontSize(s, 12);
+        StyleConstants.setItalic(s, true);
     }
 
     public static String getValueRGBasText(Color color) {
