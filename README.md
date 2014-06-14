@@ -1,4 +1,4 @@
-![Weasis](weasis-distributions/etc/images/about.png)
+![Weasis](weasis-distributions/resources/images/about.png)
 
 The master branch contains Weasis 2. The old branch is 1.2.x.
 
@@ -12,7 +12,8 @@ The master branch contains Weasis 2. The old branch is 1.2.x.
 * Flexible integration to HIS or PHR
 * Web based distribution (embedded in a web page or launch from an external window)
 * Desktop portable distribution (Windows, Mac OS X and Linux)
-* Embedded DICOM viewer (portable distribution) in CD/DVD or other portable media 
+* Embedded DICOM viewer (portable distribution) in CD/DVD or other portable media
+* Can be configured with very low memory footprint. Do not require recent hardware.
 * [Multi-language support](https://www.transifex.com/projects/p/weasis/)
 * [Configuration of preferences](http://www.dcm4che.org/confluence/display/WEA/Weasis+Preferences) on server-side and client-side
 * [API for building custom plug-ins](http://www.dcm4che.org/confluence/display/WEA/How+to+build+and+install+a+plug-in)
@@ -26,7 +27,7 @@ The master branch contains Weasis 2. The old branch is 1.2.x.
 * Display Presentation States (GSPS) and Key Object Selection
 * Create key images (Key Object Selection object)
 * Support of Modality LUTs and VOI LUTs (even non-linear)
-* Support of several screens
+* Support of several screens, full-screen mode.
 * Multiplanar reconstructions and Maximum Intensity Projection
 * Display Structured Reports
 * Display cross-lines
@@ -36,3 +37,5 @@ The master branch contains Weasis 2. The old branch is 1.2.x.
 * Save measurements and annotations
 * Import CD/DVD and local DICOM files
 * Export DICOM with several options (DICOMDIR, ZIP, Anonymized, ISO image file with Weasis, TIFF, JPEG, PNG, HTML...)
+* Magnifier glass
+* Native and DICOM printing
