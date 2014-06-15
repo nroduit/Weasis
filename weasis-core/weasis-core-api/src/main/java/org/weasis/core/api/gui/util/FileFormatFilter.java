@@ -24,6 +24,8 @@ import java.util.TreeMap;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
+import org.weasis.core.api.Messages;
+
 import com.sun.media.jai.codec.ImageCodec;
 
 /**
@@ -163,7 +165,7 @@ public class FileFormatFilter extends FileFilter {
         }
         Collections.sort(namesList);
         Iterator<String> it = namesList.iterator();
-        String desc = "All supported files"; //$NON-NLS-1$
+        String desc = Messages.getString("FileFormatFilter.all_supported"); //$NON-NLS-1$
         ArrayList<String> names = new ArrayList<String>();
         do {
             if (!it.hasNext()) {
