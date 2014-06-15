@@ -35,6 +35,7 @@ import java.util.TimerTask;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -930,26 +931,22 @@ public class WeasisLauncher {
                 System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
         }
+
         if (lang.equals("en_US")) { //$NON-NLS-1$
             // if English no need to load i18n bundle fragments
             modulesi18n = null;
         } else {
-            InputStream inStream = WeasisLauncher.class.getResourceAsStream("/swing/basic_" + lang + ".properties");
-            if (inStream != null) {
-                Properties swingDialogs = new Properties();
-                try {
-                    swingDialogs.load(inStream);
-                } catch (IOException e) {
-                    System.err.println("Cannot read swing translations: " + e); //$NON-NLS-1$
-                } finally {
-                    FileUtil.safeClose(inStream);
-                }
-                for (Object key : swingDialogs.keySet()) {
-                    UIManager.put(key, swingDialogs.get(key));
-                }
-            }
+            SwingResources.loadResources("/swing/basic_" + lang + ".properties");
+            SwingResources.loadResources("/swing/synth_" + lang + ".properties");
         }
-        Locale.setDefault(textToLocale(lang));
+
+        Locale locale = textToLocale(lang);
+        // JVM Locale
+        Locale.setDefault(locale);
+        // LookAndFeel Locale
+        UIManager.getDefaults().setDefaultLocale(locale);
+        // For new components
+        JComponent.setDefaultLocale(locale);
 
         String nativeLook = null;
         String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
