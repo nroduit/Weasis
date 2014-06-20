@@ -274,7 +274,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (name.equals(ActionW.SYNCH.cmd())) {
             SynchEvent synch = (SynchEvent) evt.getNewValue();
             SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-            boolean tile = synchData != null && SynchData.Mode.Tile.equals(synchData.getMode()) ? true : false;
+            boolean tile = synchData != null && SynchData.Mode.Tile.equals(synchData.getMode());
             if (synchData != null && Mode.None.equals(synchData.getMode())) {
                 return;
             }

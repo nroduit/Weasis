@@ -1140,11 +1140,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
 
                     } else if (Mode.Tile.equals(synch.getMode())) {
+                        Object selectedKO = viewPane.getActionValue(ActionW.KO_SELECTION.cmd());
+                        Boolean enableFilter = (Boolean) viewPane.getActionValue(ActionW.KO_FILTER.cmd());
+                        int frameIndex =
+                            JMVUtils.getNULLtoFalse(enableFilter) ? 0 : viewPane.getFrameIndex()
+                                - viewPane.getTileOffset();
                         for (int i = 0; i < panes.size(); i++) {
                             DefaultView2d<DicomImageElement> pane = panes.get(i);
-                            Object selectedKO = viewPane.getActionValue(ActionW.KO_SELECTION.cmd());
-                            Boolean enableFilter = (Boolean) viewPane.getActionValue(ActionW.KO_FILTER.cmd());
-                            int frameIndex = viewPane.getFrameIndex() - viewPane.getTileOffset();
                             oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                 oldSynch = synch.clone();

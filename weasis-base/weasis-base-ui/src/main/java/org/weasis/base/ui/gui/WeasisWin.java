@@ -205,7 +205,7 @@ public class WeasisWin {
             frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); //$NON-NLS-1$ 
             ImageIcon icon = ResourceUtil.getIconLogo64();
             if (icon != null) {
-                frame.setIconImage(icon.getImage()); 
+                frame.setIconImage(icon.getImage());
             }
         }
     }
@@ -454,6 +454,7 @@ public class WeasisWin {
     }
 
     private void setExternalPosition(final DefaultSingleCDockable dockable) {
+        // TODO should be set dynamically. Maximize button of external window does not support mulit-screens.
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gd = ge.getScreenDevices();

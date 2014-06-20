@@ -60,6 +60,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
+import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.graphic.GraphicLabel;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
@@ -112,7 +113,6 @@ public class InfoLayer implements AnnotationsLayer {
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
         displayPreferences.put(PRELOADING_BAR, true);
-        displayPreferences.put(KEY_OBJECT, false);
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
 
@@ -1396,12 +1396,15 @@ public class InfoLayer implements AnnotationsLayer {
                     height += b.getIcon().getIconHeight() + 5;
                 }
             }
+
             // TODO implement to draw in two columns when height > getHeight() * 2 / 3
             Point2D.Float midy =
                 new Point2D.Float(positions[1].x, (float) (view.getHeight() * 0.5 - (height - space) * 0.5));
+            SynchData synchData = (SynchData) view.getActionValue(ActionW.SYNCH_LINK.cmd());
+            boolean tile = synchData != null && SynchData.Mode.Tile.equals(synchData.getMode());
 
             for (ViewButton b : view.getViewButtons()) {
-                if (b.isVisible()) {
+                if (b.isVisible() && (tile && b.getIcon() == View2d.KO_ICON) == false) {
                     Icon icon = b.getIcon();
                     int p = b.getPosition();
 

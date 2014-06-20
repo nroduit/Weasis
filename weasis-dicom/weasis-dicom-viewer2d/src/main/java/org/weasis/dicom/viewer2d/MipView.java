@@ -63,7 +63,7 @@ public class MipView extends View2d {
         progressBar.setVisible(false);
         this.mip_button = new ViewButton(new MipPopup(), MIP_ICON_SETTING);
         mip_button.setVisible(true);
-        // Remove PR and KO buttons
+        // Remove KO buttons
         getViewButtons().clear();
         getViewButtons().add(mip_button);
     }
