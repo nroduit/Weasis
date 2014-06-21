@@ -89,7 +89,7 @@ public class InfoLayer implements AnnotationsLayer {
     private boolean visible = true;
     private final Color color = Color.yellow;
     private static final int BORDER = 10;
-    private final DefaultView2d view2DPane;
+    private final DefaultView2d<DicomImageElement> view2DPane;
     private final DicomModel model;
     private PixelInfo pixelInfo = null;
     private final Rectangle pixelInfoBound;
@@ -536,7 +536,7 @@ public class InfoLayer implements AnnotationsLayer {
             positions[1] = new Point2D.Float(bound.width - border, border);
             positions[2] = new Point2D.Float(bound.width - border, bound.height - border);
         }
-        drawExtendedActions(g2, view2DPane, positions);
+        drawExtendedActions(g2, positions);
     }
 
     private void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
@@ -610,7 +610,17 @@ public class InfoLayer implements AnnotationsLayer {
                 JMVUtils.getNULLtoFalse(pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE)) ? lut
                     .getInvertedLutTable() : lut.getLutTable();
             float length = table[0].length;
-            float x = bound.width - 30f;
+
+            int width = 0;
+            for (ViewButton b : view2DPane.getViewButtons()) {
+                if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
+                    int w = b.getIcon().getIconWidth() + 5;
+                    if (w > width) {
+                        width = w;
+                    }
+                }
+            }
+            float x = bound.width - 30f - width;
             float y = bound.height / 2f - length / 2f;
 
             g2.setPaint(Color.black);
@@ -669,7 +679,7 @@ public class InfoLayer implements AnnotationsLayer {
 
         // /////////////////////////////////////////////////////////////////////////////////////
 
-        final DicomImageElement image = (DicomImageElement) view2DPane.getImage();
+        final DicomImageElement image = view2DPane.getImage();
 
         // Min/Max out Lut pixel values defined as unsigned 8 bits data
         final int minOutputValue = 0;
@@ -1387,11 +1397,11 @@ public class InfoLayer implements AnnotationsLayer {
         return identifier;
     }
 
-    protected void drawExtendedActions(Graphics2D g2d, DefaultView2d<?> view, Point2D.Float[] positions) {
-        if (view.getViewButtons().size() > 0) {
+    protected void drawExtendedActions(Graphics2D g2d, Point2D.Float[] positions) {
+        if (view2DPane.getViewButtons().size() > 0) {
             int space = 5;
             int height = 0;
-            for (ViewButton b : view.getViewButtons()) {
+            for (ViewButton b : view2DPane.getViewButtons()) {
                 if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
                     height += b.getIcon().getIconHeight() + 5;
                 }
@@ -1399,11 +1409,11 @@ public class InfoLayer implements AnnotationsLayer {
 
             // TODO implement to draw in two columns when height > getHeight() * 2 / 3
             Point2D.Float midy =
-                new Point2D.Float(positions[1].x, (float) (view.getHeight() * 0.5 - (height - space) * 0.5));
-            SynchData synchData = (SynchData) view.getActionValue(ActionW.SYNCH_LINK.cmd());
+                new Point2D.Float(positions[1].x, (float) (view2DPane.getHeight() * 0.5 - (height - space) * 0.5));
+            SynchData synchData = (SynchData) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
             boolean tile = synchData != null && SynchData.Mode.Tile.equals(synchData.getMode());
 
-            for (ViewButton b : view.getViewButtons()) {
+            for (ViewButton b : view2DPane.getViewButtons()) {
                 if (b.isVisible() && (tile && b.getIcon() == View2d.KO_ICON) == false) {
                     Icon icon = b.getIcon();
                     int p = b.getPosition();
@@ -1433,7 +1443,7 @@ public class InfoLayer implements AnnotationsLayer {
                         b.y = midy.y;
                         midy.y += icon.getIconHeight() + 5;
                     }
-                    icon.paintIcon(view, g2d, (int) b.x, (int) b.y);
+                    icon.paintIcon(view2DPane, g2d, (int) b.x, (int) b.y);
                 }
             }
         }
