@@ -6,16 +6,13 @@ import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class SrToolBar<DicomImageElement> extends WtoolBar {
-    private final Logger LOGGER = LoggerFactory.getLogger(SrToolBar.class);
 
     public SrToolBar(int index) {
-        super("Main Bar", index); //$NON-NLS-1$
+        super("Main Bar", index);
 
         final JButton printButton =
             new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png"))); //$NON-NLS-1$

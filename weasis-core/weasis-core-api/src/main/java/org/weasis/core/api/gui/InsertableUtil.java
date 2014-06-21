@@ -33,15 +33,6 @@ public class InsertableUtil {
     public static void applyPreferences(List<? extends Insertable> list, Preferences prefs, String bundleName,
         String componentName, Type type) {
         if (list != null && prefs != null && bundleName != null && componentName != null) {
-            // Remove prefs of Weasis 1.x
-            try {
-                if (prefs.nodeExists("toolbars")) { //$NON-NLS-1$
-                    Preferences oldPref = prefs.node("toolbars"); //$NON-NLS-1$
-                    oldPref.removeNode();
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
             Preferences prefNode = prefs.node(componentName).node(type.name().toLowerCase() + "s"); //$NON-NLS-1$
             synchronized (list) {
                 for (Insertable c : list) {

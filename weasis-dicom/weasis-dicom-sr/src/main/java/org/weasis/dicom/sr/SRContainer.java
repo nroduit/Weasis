@@ -24,10 +24,13 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -35,6 +38,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -110,8 +114,16 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
         setSynchView(SynchView.NONE);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
-            // Add toolbars
-            TOOLBARS.add(new SrToolBar<DicomImageElement>(20));
+            // Add standard toolbars
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            String bundleName = context.getBundle().getSymbolicName();
+            String componentName = InsertableUtil.getCName(this.getClass());
+            String key = "enable"; //$NON-NLS-1$
+
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(SrToolBar.class), key, true)) {
+                TOOLBARS.add(new SrToolBar<DicomImageElement>(10));
+            }
         }
     }
 
