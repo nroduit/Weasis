@@ -53,6 +53,7 @@ import org.apache.felix.framework.util.FelixConstants;
 import org.apache.felix.framework.util.Util;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
+import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.launcher.applet.WeasisFrame;
 
@@ -491,11 +492,30 @@ public class WeasisLauncher {
                 });
             }
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
-            // Version vOld = new Version(versionOld.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
 
             String val = getGeneralProperty("weasis.show.release", "true", s_prop, l_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
             if (Boolean.valueOf(val)) {
-                // TODO Handle the release message
+                Version vOld = getVersion(versionOld);
+                Version vNew = getVersion(versionNew);
+                if (vNew.compareTo(vOld) > 0) {
+
+                    String last_tag = l_prop.getProperty("weasis.version.release", null); //$NON-NLS-1$
+                    if (last_tag != null) {
+                        vOld = getVersion(last_tag);
+                        if (vNew.compareTo(vOld) <= 0) {
+                            // Message has been already displayed once.
+                            return;
+                        }
+                    }
+
+                    // Can be useful when preferences are store remotely.
+                    // The user will see the release message only once.
+                    l_prop.setProperty("weasis.version.release", vNew.toString()); //$NON-NLS-1$
+                    if (prefDir != null) {
+                        FileUtil.storeProperties(new File(prefDir, APP_PROPERTY_FILE), l_prop, null);
+                    }
+
+                }
                 final String releaseNotesUrl = s_prop.getProperty("weasis.releasenotes"); //$NON-NLS-1$
                 final StringBuilder message = new StringBuilder("<P>"); //$NON-NLS-1$
                 message
@@ -557,6 +577,15 @@ public class WeasisLauncher {
                 });
             }
         }
+    }
+
+    private static Version getVersion(String version) {
+        String v = ""; //$NON-NLS-1$
+        if (version != null) {
+            int index = version.indexOf("-"); //$NON-NLS-1$
+            v = index > 0 ? version.substring(0, index) : version;
+        }
+        return new Version(v);
     }
 
     private static String toHex(int val) {
