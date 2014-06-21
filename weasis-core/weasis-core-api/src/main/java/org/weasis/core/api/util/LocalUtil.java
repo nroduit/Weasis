@@ -23,6 +23,11 @@ public class LocalUtil {
         if (!StringUtil.hasText(value)) {
             return Locale.US;
         }
+
+        if ("system".equals(value)) {
+            return getSystemLocale();
+        }
+
         String[] val = value.split("_", 3); //$NON-NLS-1$
         String language = val.length > 0 ? val[0] : ""; //$NON-NLS-1$
         String country = val.length > 1 ? val[1] : ""; //$NON-NLS-1$
@@ -42,11 +47,13 @@ public class LocalUtil {
         Locale l = LOCALE_FORMAT;
         if (l == null) {
             String code = BundleTools.SYSTEM_PREFERENCES.getProperty("locale.format.code"); //$NON-NLS-1$
-            if (StringUtil.hasLength(code))
+            if (StringUtil.hasLength(code)) {
                 l = LocalUtil.textToLocale(code);
+            }
         }
-        if (l == null)
+        if (l == null) {
             l = Locale.getDefault();
+        }
         return l;
     }
 

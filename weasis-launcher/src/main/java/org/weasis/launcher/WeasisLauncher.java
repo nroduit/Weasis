@@ -932,15 +932,16 @@ public class WeasisLauncher {
             }
         }
 
-        if (lang.equals("en_US")) { //$NON-NLS-1$
+        Locale locale = textToLocale(lang);
+        if (Locale.US.equals(locale)) { //$NON-NLS-1$
             // if English no need to load i18n bundle fragments
             modulesi18n = null;
         } else {
-            SwingResources.loadResources("/swing/basic_" + lang + ".properties");
-            SwingResources.loadResources("/swing/synth_" + lang + ".properties");
+            String suffix = locale.toString();
+            SwingResources.loadResources("/swing/basic_" + suffix + ".properties");
+            SwingResources.loadResources("/swing/synth_" + suffix + ".properties");
         }
 
-        Locale locale = textToLocale(lang);
         // JVM Locale
         Locale.setDefault(locale);
         // LookAndFeel Locale
@@ -1216,6 +1217,14 @@ public class WeasisLauncher {
         if (value == null || value.trim().equals("")) { //$NON-NLS-1$
             return Locale.US;
         }
+
+        if ("system".equals(value)) {
+            String language = System.getProperty("user.language", "en"); //$NON-NLS-1$ //$NON-NLS-2$
+            String country = System.getProperty("user.country", "US"); //$NON-NLS-1$ //$NON-NLS-2$
+            String variant = System.getProperty("user.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
+            return new Locale(language, country, variant);
+        }
+
         String[] val = value.split("_", 3); //$NON-NLS-1$
         String language = val.length > 0 ? val[0] : ""; //$NON-NLS-1$
         String country = val.length > 1 ? val[1] : ""; //$NON-NLS-1$
@@ -1223,4 +1232,5 @@ public class WeasisLauncher {
 
         return new Locale(language, country, variant);
     }
+
 }
