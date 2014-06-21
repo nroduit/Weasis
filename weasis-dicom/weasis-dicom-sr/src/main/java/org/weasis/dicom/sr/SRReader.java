@@ -260,7 +260,7 @@ public class SRReader {
 
                     html.append("<a href=\"http://"); //$NON-NLS-1$
                     html.append(level);
-                    html.append("\">"); //$NON-NLS-1$
+                    html.append("\" style=\"color:#FF9900\">"); //$NON-NLS-1$
                     html.append(Messages.getString("SRReader.show_img")); //$NON-NLS-1$
                     html.append("</a>"); //$NON-NLS-1$
 

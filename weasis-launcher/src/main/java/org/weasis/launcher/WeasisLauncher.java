@@ -566,8 +566,11 @@ public class WeasisLauncher {
                                 .substring(1) + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
                         message.append("<BR>"); //$NON-NLS-1$
                         String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
-                        message.append(String.format("<a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
+                        message.append(String.format("<a href=\"%s", //$NON-NLS-1$ 
                             releaseNotesUrl));
+                        message.append("\" style=\"color:#FF9900\">"); //$NON-NLS-1$
+                        message.append(rn);
+                        message.append("</a>");//$NON-NLS-1$
                         message.append("</P>"); //$NON-NLS-1$
                         jTextPane1.setText(message.toString());
                         JOptionPane.showMessageDialog(mainFrame.getRootPaneContainer() == null ? null : mainFrame
