@@ -53,6 +53,8 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.op.ByteLut;
+import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -62,6 +64,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -87,7 +90,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
-import org.weasis.dicom.codec.display.LutManager;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
@@ -646,7 +648,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     private ComboItemListener newLutAction() {
-        return new ComboItemListener(ActionW.LUT, LutManager.getLutCollection()) {
+        List<ByteLut> luts = new ArrayList<ByteLut>();
+        luts.add(ByteLut.grayLUT);
+        ByteLutCollection.readLutFilesFromResourcesDir(luts, ResourceUtil.getResource("luts"));//$NON-NLS-1$
+        // Set default first as the list has been sorted
+        luts.add(0, ByteLut.defaultLUT);
+
+        return new ComboItemListener(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
 
             @Override
             public void itemStateChanged(Object object) {

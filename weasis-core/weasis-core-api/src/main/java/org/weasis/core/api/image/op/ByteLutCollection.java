@@ -11,8 +11,14 @@
 package org.weasis.core.api.image.op;
 
 import java.awt.Color;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Scanner;
+
+import org.weasis.core.api.util.FileUtil;
 
 /**
  * <code>ByteLutCollection</code> contains a collection of lookup tables (LUT).
@@ -35,33 +41,6 @@ public class ByteLutCollection {
 
     private ByteLutCollection() {
     }
-
-    // /**
-    // * the Red to yellow LUT
-    // */
-    // public static final byte redToYellow[][] = new byte[3][256];
-    // static {
-    // int[] g =
-    // { 0, 0, 2, 3, 4, 4, 6, 6, 7, 9, 9, 11, 12, 12, 14, 14, 15, 17, 17, 19, 20, 20, 22, 22, 23, 25, 25, 26, 27,
-    // 28, 30, 31, 32, 32, 33, 34, 35, 37, 38, 39, 40, 40, 41, 42, 44, 45, 46, 47, 47, 48, 49, 51, 52, 53, 54,
-    // 54, 55, 56, 57, 59, 60, 61, 61, 62, 63, 64, 66, 67, 68, 69, 69, 70, 71, 73, 74, 75, 76, 76, 77, 78, 79,
-    // 81, 82, 83, 83, 84, 85, 86, 88, 89, 90, 91, 91, 92, 93, 95, 96, 97, 98, 98, 99, 100, 102, 103, 104,
-    // 105, 105, 106, 107, 108, 110, 111, 112, 112, 113, 114, 115, 117, 118, 119, 120, 120, 121, 122, 124,
-    // 125, 126, 127, 127, 128, 129, 130, 132, 133, 134, 134, 135, 136, 137, 139, 140, 141, 142, 142, 143,
-    // 144, 146, 147, 148, 149, 149, 150, 151, 153, 154, 155, 156, 156, 157, 158, 159, 161, 162, 163, 163,
-    // 164, 165, 166, 168, 169, 170, 171, 171, 172, 173, 175, 176, 177, 178, 178, 179, 180, 181, 183, 184,
-    // 185, 185, 186, 187, 188, 190, 191, 192, 193, 193, 194, 195, 197, 198, 199, 200, 200, 201, 202, 204,
-    // 205, 206, 207, 207, 208, 209, 210, 212, 213, 214, 214, 215, 216, 217, 219, 220, 221, 222, 222, 223,
-    // 224, 226, 227, 228, 229, 229, 230, 231, 232, 234, 235, 236, 236, 237, 238, 239, 241, 242, 243, 244,
-    // 244, 245, 246, 248, 249, 250, 251, 251, 252, 253, 255 };
-    //
-    // for (int i = 0; i < 256; i++) {
-    // redToYellow[0][i] = (byte) 255;
-    // redToYellow[1][i] = (byte) g[i];
-    // redToYellow[2][i] = (byte) 0;
-    // }
-    //
-    // }
 
     /**
      * the Flag LUT
@@ -195,6 +174,56 @@ public class ByteLutCollection {
         return invertlut;
     }
 
+    public static void readLutFilesFromResourcesDir(List<ByteLut> luts, File lutFolder) {
+        if (luts != null && lutFolder != null && lutFolder.exists() && lutFolder.isDirectory()) {
+            File[] files = lutFolder.listFiles();
+            Scanner scan = null;
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].isFile() && files[i].canRead()) {
+                    try {
+                        scan = new Scanner(files[i], "UTF-8"); //$NON-NLS-1$
+                        byte[][] lut = readLutFile(new Scanner(files[i], "UTF-8")); //$NON-NLS-1$
+                        luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut, ByteLutCollection
+                            .invert(lut)));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (scan != null) {
+                            scan.close();
+                        }
+                    }
+                }
+            }
+            Collections.sort(luts, new Comparator<ByteLut>() {
+
+                @Override
+                public int compare(ByteLut o1, ByteLut o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
+        }
+    }
+
+    public static byte[][] readLutFile(Scanner scan) throws Exception {
+        final byte lut[][] = new byte[3][256];
+        int lineIndex = 0;
+
+        while (scan.hasNext()) {
+            if (lineIndex >= 256) {
+                break;
+            }
+
+            String[] line = scan.nextLine().split("\\s+"); //$NON-NLS-1$
+            if (line.length == 3) {
+                lut[0][lineIndex] = (byte) Integer.parseInt(line[0]);
+                lut[1][lineIndex] = (byte) Integer.parseInt(line[1]);
+                lut[2][lineIndex] = (byte) Integer.parseInt(line[2]);
+            }
+
+            lineIndex++;
+        }
+        return lut;
+    }
     // public static void main(String[] args) {
     // List<ByteLut> luts = getLutCollection();
     // for (ByteLut byteLut : luts) {

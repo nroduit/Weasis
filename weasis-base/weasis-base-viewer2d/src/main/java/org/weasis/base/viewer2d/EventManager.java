@@ -13,6 +13,7 @@ package org.weasis.base.viewer2d;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.osgi.framework.BundleContext;
@@ -48,6 +49,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -181,9 +183,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     private ComboItemListener newLutAction() {
-        List<ByteLut> luts = ByteLutCollection.getLutCollection();
-        return new ComboItemListener(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
+        List<ByteLut> luts = new ArrayList<ByteLut>();
+        luts.add(ByteLut.grayLUT);
+        ByteLutCollection.readLutFilesFromResourcesDir(luts, ResourceUtil.getResource("luts"));//$NON-NLS-1$
+        // Set default first as the list has been sorted
+        luts.add(0, ByteLut.defaultLUT);
 
+        return new ComboItemListener(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
             @Override
             public void itemStateChanged(Object object) {
                 if (object instanceof ByteLut) {
