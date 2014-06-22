@@ -30,7 +30,7 @@ public class SrToolBar<DicomImageElement> extends WtoolBar {
         add(printButton);
 
         final JButton metaButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/text-x-generic.png"))); //$NON-NLS-1$
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
         metaButton.setToolTipText("Open DICOM Information"); //$NON-NLS-1$
         metaButton.addActionListener(new ActionListener() {
 

@@ -86,7 +86,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
                 if (realFactor > 0.0) {
                     final JMenuItem realSizeMenu =
                         new JMenuItem(Messages.getString("ZoomToolBar.real_zoom"), new ImageIcon( //$NON-NLS-1$
-                            MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$
+                            MouseActions.class.getResource("/icon/22x22/zoom-real.png"))); //$NON-NLS-1$
                     realSizeMenu.addActionListener(new ActionListener() {
 
                         @Override
@@ -122,7 +122,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
         // final JMenuItem areaZoomMenu =
         // new JMenuItem("Area selection", new ImageIcon(
-        // MouseActions.class.getResource("/icon/16x16/zoom-bestfit.png")));
+        // MouseActions.class.getResource("/icon/22x22/zoom-select.png")));
         // areaZoomMenu.addActionListener(new ActionListener() {
         //
         // @Override

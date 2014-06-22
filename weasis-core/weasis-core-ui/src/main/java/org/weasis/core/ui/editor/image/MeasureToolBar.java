@@ -78,7 +78,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         Color.YELLOW, true);
     public static final CobbAngleToolGraphic cobbAngleToolGraphic = new CobbAngleToolGraphic(1.0f, Color.YELLOW, true);
     public static final PixelInfoGraphic pixelInfoGraphic = new PixelInfoGraphic(1.0f, Color.YELLOW, true);
-    public static final AnnotationGraphic textGrahic = new AnnotationGraphic(1.0f, new Color(166, 196, 231), true);
+    public static final AnnotationGraphic textGrahic = new AnnotationGraphic(1.0f, Color.YELLOW, true);
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
     public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();

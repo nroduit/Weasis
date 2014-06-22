@@ -926,7 +926,8 @@ public class WeasisLauncher {
         // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension of config)
         // 4) default value
 
-        final String lang = getGeneralProperty("locale.lang.code", "en", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$ 
+        final String lang = getGeneralProperty("locale.lang.code", "en", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("locale.format.code", "system", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$ 
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$

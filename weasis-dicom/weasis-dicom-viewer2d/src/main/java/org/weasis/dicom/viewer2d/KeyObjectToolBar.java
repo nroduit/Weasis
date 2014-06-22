@@ -50,13 +50,13 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.SelectedImageFilter;
 @SuppressWarnings("serial")
 public class KeyObjectToolBar extends WtoolBar {
 
-    public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/24x24/star_bw.png")); //$NON-NLS-1$
+    public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/32x32/star_bw.png")); //$NON-NLS-1$
     public static final ImageIcon KO_STAR_ICON_SELECTED;
-    public static final ImageIcon KO_FILTER_ICON = new ImageIcon(View2d.class.getResource("/icon/24x24/synch-KO.png")); //$NON-NLS-1$
+    public static final ImageIcon KO_FILTER_ICON = new ImageIcon(View2d.class.getResource("/icon/32x32/synch-KO.png")); //$NON-NLS-1$
     public static final ImageIcon KO_FILTER_ICON_SELECTED;
 
     public static final ImageIcon KO_EDIT_SELECTION_ICON = new ImageIcon(
-        View2d.class.getResource("/icon/24x24/ko_edit_selection.png")); //$NON-NLS-1$
+        View2d.class.getResource("/icon/32x32/edit-KO.png")); //$NON-NLS-1$
 
     static {
         ImageFilter imageFilter = new SelectedImageFilter(new float[] { 1.0f, 0.78f, 0.0f }); // ORANGE
@@ -284,7 +284,7 @@ public class KeyObjectToolBar extends WtoolBar {
     }
 
     private Icon buildKoSelectionIcon() {
-        final Icon mouseIcon = new ImageIcon(View2d.class.getResource("/icon/24x24/dcm-KO.png")); //$NON-NLS-1$
+        final Icon mouseIcon = new ImageIcon(View2d.class.getResource("/icon/32x32/dcm-KO.png")); //$NON-NLS-1$
 
         return new DropButtonIcon(new Icon() {
 

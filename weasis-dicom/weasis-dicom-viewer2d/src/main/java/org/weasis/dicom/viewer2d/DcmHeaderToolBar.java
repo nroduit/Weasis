@@ -15,7 +15,7 @@ public class DcmHeaderToolBar<DicomImageElement> extends WtoolBar {
         super("DICOM Header Bar", index);
 
         final JButton metaButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/text-x-generic.png"))); //$NON-NLS-1$
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
         metaButton.setToolTipText("Open DICOM Information");
         metaButton.addActionListener(new ActionListener() {
 
