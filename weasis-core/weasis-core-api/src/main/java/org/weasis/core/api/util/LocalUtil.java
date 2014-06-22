@@ -14,14 +14,14 @@ public class LocalUtil {
 
     public static String localeToText(Locale value) {
         if (value == null) {
-            return "en_US"; //$NON-NLS-1$
+            return "en"; //$NON-NLS-1$
         }
         return value.toString();
     }
 
     public static Locale textToLocale(String value) {
         if (!StringUtil.hasText(value)) {
-            return Locale.US;
+            return Locale.ENGLISH;
         }
 
         if ("system".equals(value)) {
@@ -38,7 +38,7 @@ public class LocalUtil {
 
     public static Locale getSystemLocale() {
         String language = System.getProperty("user.language", "en"); //$NON-NLS-1$ //$NON-NLS-2$
-        String country = System.getProperty("user.country", "US"); //$NON-NLS-1$ //$NON-NLS-2$
+        String country = System.getProperty("user.country", ""); //$NON-NLS-1$ //$NON-NLS-2$
         String variant = System.getProperty("user.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
         return new Locale(language, country, variant);
     }

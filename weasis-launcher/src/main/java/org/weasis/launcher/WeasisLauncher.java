@@ -926,7 +926,7 @@ public class WeasisLauncher {
         // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension of config)
         // 4) default value
 
-        final String lang = getGeneralProperty("locale.lang.code", "en_US", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$ 
+        final String lang = getGeneralProperty("locale.lang.code", "en", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$ 
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
@@ -965,7 +965,7 @@ public class WeasisLauncher {
         }
 
         Locale locale = textToLocale(lang);
-        if (Locale.US.equals(locale)) { //$NON-NLS-1$
+        if (Locale.ENGLISH.equals(locale)) { //$NON-NLS-1$
             // if English no need to load i18n bundle fragments
             modulesi18n = null;
         } else {
@@ -1247,12 +1247,12 @@ public class WeasisLauncher {
 
     public static Locale textToLocale(String value) {
         if (value == null || value.trim().equals("")) { //$NON-NLS-1$
-            return Locale.US;
+            return Locale.ENGLISH;
         }
 
         if ("system".equals(value)) {
             String language = System.getProperty("user.language", "en"); //$NON-NLS-1$ //$NON-NLS-2$
-            String country = System.getProperty("user.country", "US"); //$NON-NLS-1$ //$NON-NLS-2$
+            String country = System.getProperty("user.country", ""); //$NON-NLS-1$ //$NON-NLS-2$
             String variant = System.getProperty("user.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
             return new Locale(language, country, variant);
         }

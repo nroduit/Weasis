@@ -416,7 +416,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5"); //$NON-NLS-1$
         BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB"); //$NON-NLS-1$
 
-        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en_US"); //$NON-NLS-1$ //$NON-NLS-2$
+        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en"); //$NON-NLS-1$ //$NON-NLS-2$
         // Reset cache of locale format
         LocalUtil.setLocaleFormat(null);
         // Reset format to the config.properties value or null (default system value)

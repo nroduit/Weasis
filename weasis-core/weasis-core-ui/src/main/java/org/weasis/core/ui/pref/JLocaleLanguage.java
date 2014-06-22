@@ -48,7 +48,7 @@ public class JLocaleLanguage extends JComboBox implements ItemListener {
             }
         }
         if (languages.isEmpty()) {
-            languages.add(Locale.US);
+            languages.add(Locale.ENGLISH);
         }
     }
 
@@ -93,7 +93,7 @@ public class JLocaleLanguage extends JComboBox implements ItemListener {
                 defaultIndex = i;
                 break;
             }
-            if (l.equals(Locale.US)) {
+            if (l.equals(Locale.ENGLISH)) {
                 defaultIndex = i;
             }
         }
