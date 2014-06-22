@@ -48,10 +48,11 @@ public class OverlayOp extends AbstractOp {
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();
-        if (OpEvent.ImageChange.equals(type)) {
+        if (OpEvent.ImageChange.equals(type)  || OpEvent.ResetDisplay.equals(type)) {
             ImageElement img = event.getImage();
             boolean noMedia = img == null;
             setParam(P_IMAGE_ELEMENT, noMedia ? null : img);
+            setParam(P_PR_ELEMENT, null);
         } else if (OpEvent.ApplyPR.equals(type)) {
             HashMap<String, Object> p = event.getParams();
             if (p != null) {
