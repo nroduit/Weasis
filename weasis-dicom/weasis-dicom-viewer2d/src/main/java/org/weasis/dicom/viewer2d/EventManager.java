@@ -585,7 +585,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void actionPerformed(boolean newSelectedState) {
                 View2d selectedViewPane = (View2d) getSelectedViewPane();
                 KOManager.setKeyObjectReference(newSelectedState, selectedViewPane);
-                // selectedViewPane.updateKOButtonVisibleState();
+                selectedViewPane.updateKOButtonVisibleState();
                 updateKeyObjectComponentsListener(selectedViewPane);
 
             }

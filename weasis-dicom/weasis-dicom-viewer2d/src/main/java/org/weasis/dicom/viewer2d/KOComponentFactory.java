@@ -113,10 +113,6 @@ public final class KOComponentFactory {
                                 .setSelectedWithoutTriggerAction(currentSelectedState);
                         }
                         ((ToggleButtonListener) koToggleAction).setSelected(!currentSelectedState);
-
-                        if (view2d.updateKOselectedState(view2d.getImage())) {
-                            view2d.repaint();
-                        }
                     }
                 }
             }
