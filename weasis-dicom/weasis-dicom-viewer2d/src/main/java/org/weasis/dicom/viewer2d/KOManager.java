@@ -19,6 +19,7 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -258,8 +259,6 @@ public final class KOManager {
 
         KOSpecialElement currentSelectedKO = KOManager.getCurrentKOSelection(view2d);
 
-        boolean hasKeyObjectReferenceChanged = false;
-
         if (validKOSelection != currentSelectedKO) {
             ActionState koSelection = view2d.getEventManager().getAction(ActionW.KO_SELECTION);
             if (koSelection instanceof ComboItemListener) {
@@ -267,7 +266,12 @@ public final class KOManager {
             }
         }
 
+        boolean hasKeyObjectReferenceChanged = false;
+
         if (validKOSelection == currentSelectedKO || currentSelectedKO == null) {
+            // KO Toogle State is changed only if KO Selection remains the same,
+            // or if there was no previous KO Selection
+
             DicomImageElement currentImage = view2d.getImage();
             hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, currentImage);
 
@@ -284,14 +288,13 @@ public final class KOManager {
         return hasKeyObjectReferenceChanged;
     }
 
-    public static void setKeyObjectReferenceAllSeries(boolean selectedState,
+    public static boolean setKeyObjectReferenceAllSeries(boolean selectedState,
         final DefaultView2d<DicomImageElement> view2d) {
 
         KOSpecialElement validKOSelection = getValidKOSelection(view2d);
 
         if (validKOSelection == null) {
-            ((EventManager) view2d.getEventManager()).updateKeyObjectComponentsListener(view2d);
-            return; // canceled
+            return false; // canceled
         }
 
         KOSpecialElement currentSelectedKO = KOManager.getCurrentKOSelection(view2d);
@@ -303,14 +306,26 @@ public final class KOManager {
             }
         }
 
-        validKOSelection.setKeyObjectReference(selectedState, view2d.getSeries().getSortedMedias(null));
+        boolean hasKeyObjectReferenceChanged = false;
 
-        DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
-        if (dicomModel != null) {
-            dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
-                validKOSelection));
+        if (validKOSelection == currentSelectedKO || currentSelectedKO == null) {
+            // KO Toogle State is changed only if KO Selection remains the same,
+            // or if there was no previous KO Selection
+
+            List<DicomImageElement> dicomImageList = view2d.getSeries().getSortedMedias(null);
+            hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, dicomImageList);
+
+            if (hasKeyObjectReferenceChanged) {
+                DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
+                // Fire an event since any view in any View2dContainer may have its KO selected state changed
+                if (dicomModel != null) {
+                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
+                        new SeriesEvent(SeriesEvent.Action.Update, validKOSelection, "updateAll")));
+                }
+            }
         }
 
+        return hasKeyObjectReferenceChanged;
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

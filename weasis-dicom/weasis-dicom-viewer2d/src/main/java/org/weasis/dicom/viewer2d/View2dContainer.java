@@ -504,10 +504,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             if (newVal instanceof SeriesEvent) {
                 SeriesEvent event2 = (SeriesEvent) newVal;
 
+                SeriesEvent.Action action2 = event2.getActionCommand();
+                Object source = event2.getSource();
+                Object param = event2.getParam();
+
                 if (ObservableEvent.BasicAction.Add.equals(action)) {
-                    SeriesEvent.Action action2 = event2.getActionCommand();
-                    Object source = event2.getSource();
-                    Object param = event2.getParam();
 
                     if (SeriesEvent.Action.AddImage.equals(action2)) {
                         if (source instanceof DicomSeries) {
@@ -566,6 +567,12 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                     v.repaint(v.getInfoLayer().getPreloadingProgressBound());
                                 }
                             }
+                        }
+                    }
+                } else if (ObservableEvent.BasicAction.Update.equals(action)) {
+                    if (SeriesEvent.Action.Update.equals(action2)) {
+                        if (source instanceof KOSpecialElement) {
+                            setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll"));
                         }
                     }
                 }
@@ -655,23 +662,24 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                  * Update if necessary all the views with the KOSpecialElement
                  */
                 else if (specialElement instanceof KOSpecialElement) {
-                    setKOSpecialElement((KOSpecialElement) specialElement, null, false);
+                    setKOSpecialElement((KOSpecialElement) specialElement, null, false, false);
                 }
             } else if (ObservableEvent.BasicAction.Select.equals(action)) {
                 if (newVal instanceof KOSpecialElement) {
                     // Match using UID of the plugin window and the source event
                     if (this.getDockableUID().equals(evt.getSource())) {
-                        setKOSpecialElement((KOSpecialElement) newVal, true, true);
+                        setKOSpecialElement((KOSpecialElement) newVal, true, true, false);
                     }
                 }
             }
         }
     }
 
-    private void setKOSpecialElement(KOSpecialElement updatedKOSelection, Boolean enableFilter, boolean forceUpdate) {
+    private void setKOSpecialElement(KOSpecialElement updatedKOSelection, Boolean enableFilter, boolean forceUpdate,
+        boolean updateAll) {
         DefaultView2d<DicomImageElement> selectedView = getSelectedImagePane();
 
-        if (updatedKOSelection != null && selectedView != null) {
+        if (updatedKOSelection != null && selectedView instanceof View2d) {
             if (SynchData.Mode.Tile.equals(this.getSynchView().getSynchData().getMode())) {
 
                 ActionState koSelection = selectedView.getEventManager().getAction(ActionW.KO_SELECTION);
@@ -685,6 +693,16 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         ((ToggleButtonListener) koFilterAction).setSelected(enableFilter);
                     }
                 }
+
+                if (updateAll) {
+                    ArrayList<DefaultView2d<DicomImageElement>> viewList = getImagePanels(true);
+                    for (DefaultView2d<DicomImageElement> view : viewList) {
+                        ((View2d) view).updateKOButtonVisibleState();
+                    }
+                } else {
+                    ((View2d) selectedView).updateKOButtonVisibleState();
+                }
+
             } else {
                 /*
                  * Set the selected view at the end of the list to trigger the synchronization of the SCROLL_SERIES
@@ -710,12 +728,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     }
 
                     ((View2d) view).updateKOButtonVisibleState();
-
-                    if (selectedView == view) {
-                        EventManager.getInstance().updateKeyObjectComponentsListener(view);
-                    }
                 }
             }
+
+            EventManager.getInstance().updateKeyObjectComponentsListener(selectedView);
         }
     }
 

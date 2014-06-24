@@ -583,11 +583,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_TOOGLE_STATE, false) {
             @Override
             public void actionPerformed(boolean newSelectedState) {
-                View2d selectedViewPane = (View2d) getSelectedViewPane();
-                KOManager.setKeyObjectReference(newSelectedState, selectedViewPane);
-                selectedViewPane.updateKOButtonVisibleState();
-                updateKeyObjectComponentsListener(selectedViewPane);
 
+                boolean hasKeyObjectReferenceChanged =
+                    KOManager.setKeyObjectReference(newSelectedState, getSelectedViewPane());
+
+                if (hasKeyObjectReferenceChanged == false) {
+                    // If KO Toogle State hasn't changed this action should be reset to its previous state, that is the
+                    // current view's actionValue
+                    this.setSelectedWithoutTriggerAction((Boolean) getSelectedViewPane().getActionValue(
+                        ActionW.KO_TOOGLE_STATE.cmd()));
+
+                    // this.setSelectedWithoutTriggerAction(!newSelectedState);
+                }
             }
         };
     }

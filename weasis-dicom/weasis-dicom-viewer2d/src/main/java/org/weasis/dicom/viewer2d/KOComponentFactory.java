@@ -107,11 +107,11 @@ public final class KOComponentFactory {
                 if (evtMgr.getSelectedViewPane() == view2d) {
                     ActionState koToggleAction = view2d.getEventManager().getAction(ActionW.KO_TOOGLE_STATE);
                     if (koToggleAction instanceof ToggleButtonListener) {
-                        if (((ToggleButtonListener) koToggleAction).isSelected() != currentSelectedState) {
-                            // When action and view are not synchronized, adapt the state of the action.
-                            ((ToggleButtonListener) koToggleAction)
-                                .setSelectedWithoutTriggerAction(currentSelectedState);
-                        }
+                        // if (((ToggleButtonListener) koToggleAction).isSelected() != currentSelectedState) {
+                        // // When action and view are not synchronized, adapt the state of the action.
+                        // ((ToggleButtonListener) koToggleAction)
+                        // .setSelectedWithoutTriggerAction(currentSelectedState);
+                        // }
                         ((ToggleButtonListener) koToggleAction).setSelected(!currentSelectedState);
                     }
                 }
