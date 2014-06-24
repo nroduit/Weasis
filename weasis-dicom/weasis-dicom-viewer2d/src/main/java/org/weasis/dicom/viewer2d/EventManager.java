@@ -313,13 +313,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     }
                 }
 
-                if (view2d != null && image != view2d.getImage()) {
+                if (view2d != null && image != view2d.getImage() && image != null) {
                     PresetWindowLevel oldPreset = (PresetWindowLevel) presetAction.getSelectedItem();
                     PresetWindowLevel newPreset = null;
                     boolean pixelPadding =
                         JMVUtils.getNULLtoTrue(view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
                             ActionW.IMAGE_PIX_PADDING.cmd()));
+
                     List<PresetWindowLevel> newPresetList = image.getPresetList(pixelPadding);
+
                     // Assume the image cannot display when win =1 and level = 0
                     if (oldPreset != null || (windowAction.getValue() <= 1 && levelAction.getValue() == 0)) {
                         if (isDefaultPresetSelected) {
@@ -592,8 +594,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     // current view's actionValue
                     this.setSelectedWithoutTriggerAction((Boolean) getSelectedViewPane().getActionValue(
                         ActionW.KO_TOOGLE_STATE.cmd()));
-
-                    // this.setSelectedWithoutTriggerAction(!newSelectedState);
                 }
             }
         };
