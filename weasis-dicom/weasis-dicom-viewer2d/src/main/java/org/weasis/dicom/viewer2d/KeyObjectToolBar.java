@@ -55,6 +55,9 @@ public class KeyObjectToolBar extends WtoolBar {
     public static final ImageIcon KO_FILTER_ICON = new ImageIcon(View2d.class.getResource("/icon/32x32/synch-KO.png")); //$NON-NLS-1$
     public static final ImageIcon KO_FILTER_ICON_SELECTED;
 
+    public static final ImageIcon KO_ALL_STAR_ICON = new ImageIcon(
+        View2d.class.getResource("/icon/32x32/star_bw_all.png")); //$NON-NLS-1$
+
     public static final ImageIcon KO_EDIT_SELECTION_ICON = new ImageIcon(
         View2d.class.getResource("/icon/32x32/edit-KO.png")); //$NON-NLS-1$
 
@@ -113,6 +116,23 @@ public class KeyObjectToolBar extends WtoolBar {
         koSelectionButton.setToolTipText(ActionW.KO_SELECTION.getTitle());
         koSelectionAction.registerActionState(koSelectionButton);
         add(koSelectionButton);
+
+        // --------------------------------------------------------------------------------------------------
+        // final JButton koToggleAllBtn = new JButton(KO_ALL_STAR_ICON);
+        //
+        // koToggleAllBtn.addActionListener(new ActionListener() {
+        //
+        // @Override
+        // public void actionPerformed(ActionEvent e) {
+        //
+        // View2d selectedViewPane = (View2d) EventManager.getInstance().getSelectedViewPane();
+        // KOSpecialElement koSelection = KOManager.getCurrentKOSelection(selectedViewPane);
+        // if (koSelection != null) {
+        // KOManager.setKeyObjectReferenceAllSeries(koSelection.isEmpty(), selectedViewPane);
+        // }
+        // }
+        // });
+        // add(koToggleAllBtn);
 
         // --------------------------------------------------------------------------------------------------
         JButton koEditSelectionBtn = new JButton(KO_EDIT_SELECTION_ICON);
