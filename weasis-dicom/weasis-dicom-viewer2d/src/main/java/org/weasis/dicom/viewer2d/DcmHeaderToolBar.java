@@ -6,6 +6,8 @@ import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
+import org.weasis.core.api.gui.util.ActionState;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
 
@@ -16,7 +18,7 @@ public class DcmHeaderToolBar<DicomImageElement> extends WtoolBar {
 
         final JButton metaButton =
             new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
-        metaButton.setToolTipText("Open DICOM Information");
+        metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());
         metaButton.addActionListener(new ActionListener() {
 
             @Override
@@ -28,6 +30,10 @@ public class DcmHeaderToolBar<DicomImageElement> extends WtoolBar {
             }
         });
         add(metaButton);
+        ActionState headerAction = EventManager.getInstance().getAction(ActionW.SHOW_HEADER);
+        if (headerAction != null) {
+            headerAction.registerActionState(metaButton);
+        }
     }
 
 }

@@ -119,7 +119,7 @@ public class KeyObjectToolBar extends WtoolBar {
 
         // final String[] optionsNoSelection = { "Delete KeyObject", "Create a new KeyObject" };
         // final String[] optionsWithSelection = { "Delete KeyObject", "Copy selected KeyObject" };
-
+        koSelectionAction.registerActionState(koEditSelectionBtn);
         koEditSelectionBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

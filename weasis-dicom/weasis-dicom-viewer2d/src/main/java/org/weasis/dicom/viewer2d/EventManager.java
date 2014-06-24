@@ -194,6 +194,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(panAction = newPanAction());
         iniAction(crosshairAction = newCrosshairAction());
         iniAction(new BasicActionState(ActionW.RESET));
+        iniAction(new BasicActionState(ActionW.SHOW_HEADER));
 
         iniAction(koToggleAction = newKOToggleAction());
         iniAction(koFilterAction = newKOFilterAction());
@@ -629,14 +630,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     filterSelection ? selectedView.getActionValue(ActionW.KO_SELECTION.cmd()) : selected;
                 Boolean enableFilter =
                     (Boolean) (filterSelection ? selected : selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
+                DefaultView2d<DicomImageElement> viewPane = container.getSelectedImagePane();
+                int frameIndex =
+                    JMVUtils.getNULLtoFalse(enableFilter) ? 0 : viewPane.getFrameIndex() - viewPane.getTileOffset();
 
-                for (DefaultView2d<DicomImageElement> view : container.getImagePanels(false)) {
+                for (DefaultView2d<DicomImageElement> view : container.getImagePanels(true)) {
                     if ((view.getSeries() instanceof DicomSeries) == false || (view instanceof View2d) == false) {
                         continue;
                     }
-                    // Recompute the series filter to let perform updateTileOffset() correctly.
-                    // KOManager.updateKOFilter(view, selectedKO, enableFilter, -1);
-                    KOManager.updateKOFilter(view, selectedKO, enableFilter, -1, false);
+
+                    KOManager.updateKOFilter(view, selectedKO, enableFilter, frameIndex, false);
                 }
 
                 container.updateTileOffset();

@@ -60,6 +60,7 @@ public class ActionW {
     public static final ActionW LUT = new ActionW(Messages.getString("ActionW.lut"), "lut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW INVERSELUT = new ActionW("", "inverseLut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW RESET = new ActionW(Messages.getString("ActionW.Reset"), "reset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW SHOW_HEADER = new ActionW("Open DICOM Information", "reset", 0, 0, null); //$NON-NLS-2$
     public static final ActionW PAN =
         new ActionW(
             Messages.getString("ActionW.pan"), "pan", KeyEvent.VK_T, 0, getCustomCursor("pan.png", Messages.getString("ActionW.pan"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
@@ -68,7 +69,8 @@ public class ActionW {
         Messages.getString("ActionW.measure"), "measure", KeyEvent.VK_M, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW DRAW_MEASURE = new ActionW(
         Messages.getString("ActionW.measurement"), "measurement", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW SPATIAL_UNIT = new ActionW(Messages.getString("ActionW.spatial_unit"), "spunit", 0, 0, null);  //$NON-NLS-1$//$NON-NLS-2$
+    public static final ActionW SPATIAL_UNIT = new ActionW(
+        Messages.getString("ActionW.spatial_unit"), "spunit", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW SORTSTACK = new ActionW("", "sortStack", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW CONTEXTMENU = new ActionW(
         Messages.getString("ActionW.context_menu"), "contextMenu", KeyEvent.VK_Q, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
@@ -78,10 +80,13 @@ public class ActionW {
     public static final ActionW IMAGE_OVERLAY = new ActionW(
         Messages.getString("ActionW.overlay"), "overlay", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW PR_STATE = new ActionW(Messages.getString("ActionW.PR"), "pr_state", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
-    public static final ActionW KO_TOOGLE_STATE = new ActionW(Messages.getString("ActionW.toggle_ko"), "ko_toogle_state", KeyEvent.VK_K, 0, //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW KO_TOOGLE_STATE = new ActionW(
+        Messages.getString("ActionW.toggle_ko"), "ko_toogle_state", KeyEvent.VK_K, 0, //$NON-NLS-1$ //$NON-NLS-2$
         null);
-    public static final ActionW KO_SELECTION = new ActionW(Messages.getString("ActionW.select_ko"), "ko_selection", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW KO_FILTER = new ActionW(Messages.getString("ActionW.filter_ko"), "ko_filter", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW KO_SELECTION = new ActionW(
+        Messages.getString("ActionW.select_ko"), "ko_selection", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW KO_FILTER = new ActionW(
+        Messages.getString("ActionW.filter_ko"), "ko_filter", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW IMAGE_PIX_PADDING = new ActionW(
         Messages.getString("ActionW.pixpad"), "pixel_padding", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW IMAGE_SHUTTER = new ActionW(
