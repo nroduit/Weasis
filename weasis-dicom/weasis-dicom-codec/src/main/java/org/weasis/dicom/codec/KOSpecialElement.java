@@ -641,6 +641,8 @@ public class KOSpecialElement extends DicomSpecialElement {
 
             referencedSeries.setReferencedSOPInstances(referencedSOPInstances);
         } else {
+
+            sopInstanceReferenceMapBySeriesUID.remove(seriesInstanceUID);
             seriesAndInstanceReferenceBySeriesUID.remove(seriesInstanceUID);
 
             if (!seriesAndInstanceReferenceBySeriesUID.isEmpty()) {
