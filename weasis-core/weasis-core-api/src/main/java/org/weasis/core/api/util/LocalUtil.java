@@ -24,7 +24,7 @@ public class LocalUtil {
             return Locale.ENGLISH;
         }
 
-        if ("system".equals(value)) {
+        if ("system".equals(value)) { //$NON-NLS-1$
             return getSystemLocale();
         }
 

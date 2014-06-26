@@ -320,7 +320,7 @@ public final class KOManager {
                 // Fire an event since any view in any View2dContainer may have its KO selected state changed
                 if (dicomModel != null) {
                     dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
-                        new SeriesEvent(SeriesEvent.Action.Update, validKOSelection, "updateAll")));
+                        new SeriesEvent(SeriesEvent.Action.Update, validKOSelection, "updateAll"))); //$NON-NLS-1$
                 }
             }
         }

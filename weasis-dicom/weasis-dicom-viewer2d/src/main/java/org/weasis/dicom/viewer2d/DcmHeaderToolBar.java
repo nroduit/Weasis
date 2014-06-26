@@ -14,7 +14,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class DcmHeaderToolBar<DicomImageElement> extends WtoolBar {
 
     public DcmHeaderToolBar(int index) {
-        super("DICOM Header Bar", index);
+        super(Messages.getString("DcmHeaderToolBar.title"), index); //$NON-NLS-1$
 
         final JButton metaButton =
             new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$

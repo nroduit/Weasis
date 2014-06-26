@@ -572,7 +572,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 } else if (ObservableEvent.BasicAction.Update.equals(action)) {
                     if (SeriesEvent.Action.Update.equals(action2)) {
                         if (source instanceof KOSpecialElement) {
-                            setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll"));
+                            setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll")); //$NON-NLS-1$
                         }
                     }
                 }

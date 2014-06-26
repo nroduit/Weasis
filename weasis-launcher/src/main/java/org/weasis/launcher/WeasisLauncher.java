@@ -971,8 +971,8 @@ public class WeasisLauncher {
             modulesi18n = null;
         } else {
             String suffix = locale.toString();
-            SwingResources.loadResources("/swing/basic_" + suffix + ".properties");
-            SwingResources.loadResources("/swing/synth_" + suffix + ".properties");
+            SwingResources.loadResources("/swing/basic_" + suffix + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
+            SwingResources.loadResources("/swing/synth_" + suffix + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         // JVM Locale
@@ -1251,7 +1251,7 @@ public class WeasisLauncher {
             return Locale.ENGLISH;
         }
 
-        if ("system".equals(value)) {
+        if ("system".equals(value)) { //$NON-NLS-1$
             String language = System.getProperty("user.language", "en"); //$NON-NLS-1$ //$NON-NLS-2$
             String country = System.getProperty("user.country", ""); //$NON-NLS-1$ //$NON-NLS-2$
             String variant = System.getProperty("user.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$

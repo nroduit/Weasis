@@ -8,15 +8,15 @@ import javax.swing.UIManager;
 
 public class SwingResources {
 
-    static final String AND_MNEMONIC = "AndMnemonic";
-    static final String TITLE_SUFFIX = ".titleAndMnemonic";
-    static final String TEXT_SUFFIX = ".textAndMnemonic";
+    static final String AND_MNEMONIC = "AndMnemonic"; //$NON-NLS-1$
+    static final String TITLE_SUFFIX = ".titleAndMnemonic"; //$NON-NLS-1$
+    static final String TEXT_SUFFIX = ".textAndMnemonic"; //$NON-NLS-1$
 
-    static final String KEY_MNEMONIC = "Mnemonic";
-    static final String KEY_MNEMONIC_INDEX = "DisplayedMnemonicIndex";
-    static final String KEY_TEXT = "Text";
+    static final String KEY_MNEMONIC = "Mnemonic"; //$NON-NLS-1$
+    static final String KEY_MNEMONIC_INDEX = "DisplayedMnemonicIndex"; //$NON-NLS-1$
+    static final String KEY_TEXT = "Text"; //$NON-NLS-1$
 
-    static final String KEY_TITLE = "Title";
+    static final String KEY_TITLE = "Title"; //$NON-NLS-1$
 
     /**
      * <code>TextAndMnemonicHashMap</code> stores swing resource strings. Many of strings can have a mnemonic. For
@@ -35,8 +35,8 @@ public class SwingResources {
     public static void loadResources(String path) {
         InputStream inStream = WeasisLauncher.class.getResourceAsStream(path);
         if (inStream != null) {
-            String version = System.getProperty("java.version");
-            boolean v6 = version.startsWith("1.6");
+            String version = System.getProperty("java.version"); //$NON-NLS-1$
+            boolean v6 = version.startsWith("1.6"); //$NON-NLS-1$
             Properties swingDialogs = new Properties();
             try {
                 swingDialogs.load(inStream);
@@ -65,8 +65,8 @@ public class SwingResources {
                             compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), KEY_TEXT);
                             UIManager.put(compositeKey, getTextFromProperty(text));
                             if (mnemonic != null) {
-                                if (v6 && stringKey.startsWith("ColorChooser")) {
-                                    compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), "NameText");
+                                if (v6 && stringKey.startsWith("ColorChooser")) { //$NON-NLS-1$
+                                    compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), "NameText"); //$NON-NLS-1$
                                     UIManager.put(compositeKey, getTextFromProperty(text));
                                 }
                                 compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), KEY_MNEMONIC);
@@ -97,7 +97,7 @@ public class SwingResources {
     }
 
     static String getTextFromProperty(String text) {
-        return text.replace("&", "");
+        return text.replace("&", ""); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     static String getMnemonicFromProperty(String text) {
