@@ -7,7 +7,7 @@
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<!-- Remove "-beta" for release -->
-	<version>2.0.0</version>
+	<version>2.0.1-beta</version>
 
 	<prerequisites>
 		<maven>2.2.1</maven>
@@ -17,7 +17,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- Remove "-SNAPSHOT" for release -->
-		<qualifier></qualifier>
+		<qualifier>-SNAPSHOT</qualifier>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
 			in config.properties) -->
 		<dollar>$</dollar>
@@ -41,11 +41,11 @@
 		<slf4j.version>1.6.4</slf4j.version>
 		<sling.commons.log.version>3.0.2</sling.commons.log.version>
 
-		<weasis.launcher.version>2.0.0${qualifier}</weasis.launcher.version>
-		<weasis.core.version>2.0.0${qualifier}</weasis.core.version>
-		<weasis.imageio.version>2.0.0${qualifier}</weasis.imageio.version>
-		<weasis.base.version>2.0.0${qualifier}</weasis.base.version>
-		<weasis.dicom.version>2.0.0${qualifier}</weasis.dicom.version>
+		<weasis.launcher.version>2.0.1${qualifier}</weasis.launcher.version>
+		<weasis.core.version>2.0.1${qualifier}</weasis.core.version>
+		<weasis.imageio.version>2.0.1${qualifier}</weasis.imageio.version>
+		<weasis.base.version>2.0.1${qualifier}</weasis.base.version>
+		<weasis.dicom.version>2.0.1${qualifier}</weasis.dicom.version>
 
 		<dockingframes.version>1.1.2-P8c2</dockingframes.version>
 		<substance.version>7.2.1</substance.version>
