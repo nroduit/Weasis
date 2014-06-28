@@ -126,7 +126,7 @@ public class WeasisWin {
     private static final Logger log = LoggerFactory.getLogger(WeasisWin.class);
 
     private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
-    private static final JMenu menuDisplay = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
+    private static final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
     private static final JMenu menuSelectedPlugin = new JMenu();
     private static ViewerPlugin selectedPlugin = null;
 
@@ -654,8 +654,8 @@ public class WeasisWin {
         JMenuBar menuBar = new JMenuBar();
         buildMenuFile();
         menuBar.add(menuFile);
-        buildMenuDisplay();
-        menuBar.add(menuDisplay);
+        buildMenuView();
+        menuBar.add(menuView);
         menuBar.add(menuSelectedPlugin);
         final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help")); //$NON-NLS-1$
         final String helpURL = System.getProperty("weasis.help.url"); //$NON-NLS-1$
@@ -849,8 +849,8 @@ public class WeasisWin {
         }
     }
 
-    private void buildMenuDisplay() {
-        menuDisplay.removeAll();
+    private void buildMenuView() {
+        menuView.removeAll();
 
         DynamicMenu toolBarMenu = new DynamicMenu(Messages.getString("WeasisWin.toolbar")) {//$NON-NLS-1$
 
@@ -861,7 +861,7 @@ public class WeasisWin {
                 }
             };
         toolBarMenu.addPopupMenuListener();
-        menuDisplay.add(toolBarMenu);
+        menuView.add(toolBarMenu);
 
         DynamicMenu toolMenu = new DynamicMenu(Messages.getString("WeasisWin.tools")) { //$NON-NLS-1$
 
@@ -872,7 +872,7 @@ public class WeasisWin {
                 }
             };
         toolMenu.addPopupMenuListener();
-        menuDisplay.add(toolMenu);
+        menuView.add(toolMenu);
     }
 
     private static void buildMenuFile() {
