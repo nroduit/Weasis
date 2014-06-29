@@ -10,7 +10,7 @@ The master branch contains Weasis 2. The old branch is 1.2.x.
 
 ### General Features: ###
 * Flexible integration to HIS or PHR
-* Web based distribution (embedded in a web page or launch from an external window)
+* Web based distribution ([embedded in a web page](https://github.com/nroduit/weasis-jnlp-distributions) or launch from an external window)
 * Desktop portable distribution (Windows, Mac OS X and Linux)
 * Embedded DICOM viewer (portable distribution) in CD/DVD or other portable media
 * Can be configured with very low memory footprint. Do not require recent hardware.
