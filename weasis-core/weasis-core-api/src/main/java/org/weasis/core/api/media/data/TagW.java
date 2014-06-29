@@ -73,7 +73,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW SplitSeriesNumber = new TagW(Messages.getString("TagElement.split_no"), TagType.Integer); //$NON-NLS-1$
     public static final TagW SeriesSelected = new TagW(Messages.getString("TagElement.select"), TagType.Boolean); //$NON-NLS-1$
     public static final TagW SeriesOpen = new TagW(Messages.getString("TagElement.open"), TagType.Boolean); //$NON-NLS-1$
-    public static final TagW SeriesFocused = new TagW(Messages.getString("TagW.focused"), TagType.Boolean); //$NON-NLS-1$
+    public static final TagW SeriesFocused = new TagW("Focused", TagType.Boolean); //$NON-NLS-1$
     public static final TagW ImageWidth = new TagW(Messages.getString("TagElement.img_w"), TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageHeight = new TagW(Messages.getString("TagElement.img_h"), TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageDepth = new TagW(Messages.getString("TagElement.img_d"), TagType.Integer); //$NON-NLS-1$

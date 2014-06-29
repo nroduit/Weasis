@@ -200,27 +200,27 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(MiniTool.class), key, true)) {
-                tool = new MiniTool(Messages.getString("View2dContainer.mini")) { //$NON-NLS-1$
+                tool = new MiniTool(MiniTool.BUTTON_NAME) {
 
-                        @Override
-                        public SliderChangeListener[] getActions() {
+                    @Override
+                    public SliderChangeListener[] getActions() {
 
-                            ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                            ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                            if (seqAction instanceof SliderChangeListener) {
-                                listeners.add((SliderChangeListener) seqAction);
-                            }
-                            ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                            if (zoomAction instanceof SliderChangeListener) {
-                                listeners.add((SliderChangeListener) zoomAction);
-                            }
-                            ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                            if (rotateAction instanceof SliderChangeListener) {
-                                listeners.add((SliderChangeListener) rotateAction);
-                            }
-                            return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                        if (seqAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) seqAction);
                         }
-                    };
+                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                        if (zoomAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) zoomAction);
+                        }
+                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                        if (rotateAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) rotateAction);
+                        }
+                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                    }
+                };
                 // DefaultSingleCDockable dock = tool.registerToolAsDockable();
                 // dock.setDefaultLocation(ExtendedMode.NORMALIZED,
                 // CLocation.base(UIManager.BASE_AREA).normalRectangle(1.0, 0.0, 0.05, 1.0));

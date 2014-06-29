@@ -119,26 +119,26 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             TOOLBARS.add(new ZoomToolBar(evtMg, 20));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
 
-            PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini")) { //$NON-NLS-1$
+            PluginTool tool = new MiniTool(MiniTool.BUTTON_NAME) {
 
-                    @Override
-                    public SliderChangeListener[] getActions() {
-                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                        if (seqAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) seqAction);
-                        }
-                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                        if (zoomAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) zoomAction);
-                        }
-                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                        if (rotateAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) rotateAction);
-                        }
-                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                @Override
+                public SliderChangeListener[] getActions() {
+                    ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                    if (seqAction instanceof SliderChangeListener) {
+                        listeners.add((SliderChangeListener) seqAction);
                     }
-                };
+                    ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                    if (zoomAction instanceof SliderChangeListener) {
+                        listeners.add((SliderChangeListener) zoomAction);
+                    }
+                    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                    if (rotateAction instanceof SliderChangeListener) {
+                        listeners.add((SliderChangeListener) rotateAction);
+                    }
+                    return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                }
+            };
             TOOLS.add(tool);
 
             tool = new ImageTool(Messages.getString("View2dContainer.img_tool"), null); //$NON-NLS-1$
