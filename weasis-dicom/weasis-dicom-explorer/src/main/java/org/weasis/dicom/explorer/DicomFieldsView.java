@@ -69,7 +69,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         TagW.StudyDescription, TagW.StudyComments };
     private static final TagW[] SERIES = { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber, TagW.Modality,
         TagW.ReferringPhysicianName, TagW.InstitutionName, TagW.InstitutionalDepartmentName, TagW.BodyPartExamined };
-    private static final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.TransferSyntaxUID,
+    private static final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.FrameType, TagW.TransferSyntaxUID,
         TagW.InstanceNumber, TagW.ImageComments, TagW.ImageLaterality, TagW.PhotometricInterpretation,
         TagW.SamplesPerPixel, TagW.PixelRepresentation, TagW.Columns, TagW.Rows, TagW.ImageWidth, TagW.ImageHeight,
         TagW.ImageDepth, TagW.BitsAllocated, TagW.BitsStored };

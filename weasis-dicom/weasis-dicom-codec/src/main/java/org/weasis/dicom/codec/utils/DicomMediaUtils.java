@@ -1000,7 +1000,8 @@ public class DicomMediaUtils {
                 // Type of Frame. A multi-valued attribute analogous to the Image Type (0008,0008).
                 // Enumerated Values and Defined Terms are the same as those for the four values of the Image Type
                 // (0008,0008) attribute, except that the value MIXED is not allowed. See C.8.16.1 and C.8.13.3.1.1.
-                setTagNoNull(tagList, TagW.FrameType, imageFrameType.getString(Tag.FrameType));
+                setTagNoNull(tagList, TagW.FrameType,
+                    DicomMediaUtils.getStringFromDicomElement(imageFrameType, Tag.FrameType));
             }
         }
     }
