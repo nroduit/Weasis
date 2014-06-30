@@ -73,7 +73,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         TagW.InstanceNumber, TagW.ImageComments, TagW.ImageLaterality, TagW.PhotometricInterpretation,
         TagW.SamplesPerPixel, TagW.PixelRepresentation, TagW.Columns, TagW.Rows, TagW.ImageWidth, TagW.ImageHeight,
         TagW.ImageDepth, TagW.BitsAllocated, TagW.BitsStored };
-    private static final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation, TagW.SliceThickness };
+    private static final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation, TagW.SliceThickness,
+        TagW.ImagePositionPatient, TagW.ImageOrientationPatient, };
     private static final TagW[] IMAGE_ACQ = { TagW.KVP, TagW.ContrastBolusAgent };
 
     private final JScrollPane allPane = new JScrollPane();
