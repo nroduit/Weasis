@@ -73,7 +73,7 @@ public class CircularProgressBar extends JProgressBar {
             range = 1;
         }
         int a = 360 - this.getValue() * 360 / range;
-        String str = LocalUtil.getPercentInstance().format(this.getValue() / range);
+        String str = LocalUtil.getPercentInstance().format((double) this.getValue() / range);
 
         float x = w / 2.0f - g2.getFontMetrics().stringWidth(str) / 2.0f;
 
