@@ -493,7 +493,12 @@ public class DicomMediaUtils {
                         LOGGER.debug("Modality Rescale Slope is required if Rescale Intercept is present."); //$NON-NLS-1$
                     }
                 } else {
-                    LOGGER.debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
+                    String modlality = (String) dicomTagMap.get(TagW.Modality);
+                    if (("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    || "PT".equals(modlality)) == false) { //$NON-NLS-1$
+                        LOGGER
+                            .debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
+                    }
                 }
             }
 
@@ -939,8 +944,8 @@ public class DicomMediaUtils {
              * 
              * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.9-b Pixel Value Transformation
              */
-            applyModalityLutModule(dcm.getNestedDataset(Tag.PixelValueTransformationSequence), tagList,
-                Tag.PixelValueTransformationSequence);
+            Attributes mLutItems = dcm.getNestedDataset(Tag.PixelValueTransformationSequence);
+            applyModalityLutModule(mLutItems, tagList, Tag.PixelValueTransformationSequence);
 
             /**
              * Specifies the attributes of the Frame VOI LUT Functional Group. It contains one or more sets of linear or
@@ -948,7 +953,8 @@ public class DicomMediaUtils {
              * 
              * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.10b Frame VOI LUT With LUT Macro
              */
-            applyVoiLutModule(dcm.getNestedDataset(Tag.FrameVOILUTSequence), tagList, Tag.FrameVOILUTSequence);
+            applyVoiLutModule(dcm.getNestedDataset(Tag.FrameVOILUTSequence), mLutItems, tagList,
+                Tag.FrameVOILUTSequence);
 
             // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT (C.7.6.16-14),
             // Real World Value Mapping (C.7.6.16-12)
@@ -1036,7 +1042,7 @@ public class DicomMediaUtils {
                      * be ignored from the perspective of applying window values, and for those SOP Classes, window
                      * values shall be applied directly to the stored pixel values without rescaling.
                      */
-                    LOGGER.info("Do not apply Modality LUT to {}", modlality);//$NON-NLS-1$
+                    LOGGER.info("Do not apply RescaleSlope and RescaleIntercept to {}", modlality);//$NON-NLS-1$
                 } else {
                     setTagNoNull(tagList, TagW.RescaleSlope,
                         getFloatFromDicomElement(mLutItems, Tag.RescaleSlope, null));
@@ -1058,12 +1064,40 @@ public class DicomMediaUtils {
         }
     }
 
-    public static void applyVoiLutModule(Attributes voiItems, HashMap<TagW, Object> tagList, Integer seqParentTag) {
+    public static void applyVoiLutModule(Attributes voiItems, Attributes mLutItems, HashMap<TagW, Object> tagList,
+        Integer seqParentTag) {
         if (voiItems != null && tagList != null) {
             // Overrides VOI LUT Transformation attributes only if sequence is consistent
             if (containsRequiredVOILUTWindowLevelAttributes(voiItems)) {
-                setTagNoNull(tagList, TagW.WindowWidth, getFloatArrayFromDicomElement(voiItems, Tag.WindowWidth));
-                setTagNoNull(tagList, TagW.WindowCenter, getFloatArrayFromDicomElement(voiItems, Tag.WindowCenter));
+                Float[] ww = getFloatArrayFromDicomElement(voiItems, Tag.WindowWidth);
+                Float[] wc = getFloatArrayFromDicomElement(voiItems, Tag.WindowCenter);
+                if (mLutItems != null) {
+                    /*
+                     * IHE BIR: 4.16.4.2.2.5.4
+                     * 
+                     * If Rescale Slope and Rescale Intercept has been removed in applyModalityLutModule() then the
+                     * Window Center and Window Width must be adapted
+                     * 
+                     * see https://groups.google.com/forum/#!topic/comp.protocols.dicom/iTCxWcsqjnM
+                     */
+                    Float rs = getFloatFromDicomElement(mLutItems, Tag.RescaleSlope, null);
+                    Float ri = getFloatFromDicomElement(mLutItems, Tag.RescaleIntercept, null);
+                    String modlality = (String) tagList.get(TagW.Modality);
+                    if (ww != null && wc != null && rs != null && ri != null
+                        && "MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        || "PT".equals(modlality)) { //$NON-NLS-1$
+                        int windowLevelDefaultCount = (ww.length == wc.length) ? ww.length : 0;
+                        for (int i = 0; i < windowLevelDefaultCount; i++) {
+                            if (ww[i] == null || wc[i] == null) {
+                                continue;
+                            }
+                            ww[i] = (ww[i] - ri) / rs;
+                            wc[i] = (wc[i] - ri) / rs;
+                        }
+                    }
+                }
+                setTagNoNull(tagList, TagW.WindowWidth, ww);
+                setTagNoNull(tagList, TagW.WindowCenter, wc);
                 setTagNoNull(tagList, TagW.WindowCenterWidthExplanation,
                     getStringArrayFromDicomElement(voiItems, Tag.WindowCenterWidthExplanation));
                 setTagNoNull(tagList, TagW.VOILutFunction, getStringFromDicomElement(voiItems, Tag.VOILUTFunction));
@@ -1106,7 +1140,7 @@ public class DicomMediaUtils {
             applyModalityLutModule(dcmItems, tagList, null);
 
             // VOI LUT Module
-            applyVoiLutModule(dcmItems.getNestedDataset(Tag.SoftcopyVOILUTSequence), tagList,
+            applyVoiLutModule(dcmItems.getNestedDataset(Tag.SoftcopyVOILUTSequence), dcmItems, tagList,
                 Tag.SoftcopyVOILUTSequence);
 
             // Presentation LUT Module

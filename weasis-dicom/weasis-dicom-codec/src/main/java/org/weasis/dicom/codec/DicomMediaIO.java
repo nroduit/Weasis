@@ -132,38 +132,38 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
          */
         DCM_ELEMENT_FACTORIES.put("PR", new DicomSpecialElementFactory() { //$NON-NLS-1$
 
-            @Override
-            public String getSeriesMimeType() {
-                return SERIES_PR_MIMETYPE;
-            }
+                @Override
+                public String getSeriesMimeType() {
+                    return SERIES_PR_MIMETYPE;
+                }
 
-            @Override
-            public String[] getModalities() {
-                return new String[] { "PR" }; //$NON-NLS-1$
-            }
+                @Override
+                public String[] getModalities() {
+                    return new String[] { "PR" }; //$NON-NLS-1$
+                }
 
-            @Override
-            public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
-                return new PRSpecialElement(mediaIO);
-            }
-        });
+                @Override
+                public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+                    return new PRSpecialElement(mediaIO);
+                }
+            });
         DCM_ELEMENT_FACTORIES.put("KO", new DicomSpecialElementFactory() { //$NON-NLS-1$
 
-            @Override
-            public String getSeriesMimeType() {
-                return SERIES_KO_MIMETYPE;
-            }
+                @Override
+                public String getSeriesMimeType() {
+                    return SERIES_KO_MIMETYPE;
+                }
 
-            @Override
-            public String[] getModalities() {
-                return new String[] { "KO" }; //$NON-NLS-1$
-            }
+                @Override
+                public String[] getModalities() {
+                    return new String[] { "KO" }; //$NON-NLS-1$
+                }
 
-            @Override
-            public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
-                return new KOSpecialElement(mediaIO);
-            }
-        });
+                @Override
+                public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+                    return new KOSpecialElement(mediaIO);
+                }
+            });
     }
 
     private static final SoftHashMap<DicomMediaIO, DicomMetaData> HEADER_CACHE =
@@ -634,7 +634,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.PixelIntensityRelationship,
                 DicomMediaUtils.getStringFromDicomElement(header, Tag.PixelIntensityRelationship));
 
-            DicomMediaUtils.applyVoiLutModule(header, tags, null);
+            DicomMediaUtils.applyVoiLutModule(header, header, tags, null);
 
             setTagNoNull(TagW.Units, header.getString(Tag.Units));
 
