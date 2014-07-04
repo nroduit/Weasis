@@ -544,6 +544,19 @@ public class TagW implements Transferable, Serializable {
     public static Date getDicomDate(String date) {
         if (date != null) {
             try {
+                if (date.length() > 8) {
+                    char c = date.charAt(4);
+                    if (!Character.isDigit(date.charAt(4))) {
+                        // Format yyyy.mm.dd (prior DICOM3.0)
+                        StringBuilder buf = new StringBuilder(10);
+                        buf.append("yyyy");
+                        buf.append(c);
+                        buf.append("MM");
+                        buf.append(c);
+                        buf.append("dd");
+                        return new SimpleDateFormat(buf.toString()).parse(date);
+                    }
+                }
                 return dicomformatDate.parse(date);
             } catch (Exception e) {
             }

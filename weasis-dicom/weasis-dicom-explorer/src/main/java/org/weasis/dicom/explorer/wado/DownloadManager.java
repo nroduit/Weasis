@@ -29,7 +29,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.TimeZone;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -50,7 +49,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
-import org.dcm4che3.util.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -490,11 +488,8 @@ public class DownloadManager {
 
         String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), DicomMediaIO.NO_VALUE);
         String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null);
-        Date birthdate = null;
         String date = getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null);
-        if (date != null) {
-            birthdate = DateUtils.parseDA(TimeZone.getDefault(), date, false);
-        }
+        Date birthdate = TagW.getDicomDate(date);
         String name =
             DicomMediaUtils.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(),
                 DicomMediaIO.NO_VALUE));
@@ -548,7 +543,7 @@ public class DownloadManager {
                 TagW.getDicomTime(getTagAttribute(xmler, TagW.StudyTime.getTagName(), null)));
             // Merge date and time, used in display
             study.setTagNoNull(TagW.StudyDate, TagW.dateTime(
-                TagW.getDicomTime(getTagAttribute(xmler, TagW.StudyDate.getTagName(), null)),
+                TagW.getDicomDate(getTagAttribute(xmler, TagW.StudyDate.getTagName(), null)),
                 (Date) study.getTagValue(TagW.StudyTime)));
 
             study.setTagNoNull(TagW.StudyDescription, getTagAttribute(xmler, TagW.StudyDescription.getTagName(), null));
