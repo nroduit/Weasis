@@ -685,6 +685,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         InputStream in = null;
 
         File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+        log.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$ //$NON-NLS-2$
         try {
             out = new BufferedOutputStream(new FileOutputStream(outFile));
             in = httpCon.getInputStream();

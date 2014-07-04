@@ -271,8 +271,8 @@ public class RawImageIO implements MediaReader<PlanarImage> {
         return new ImageTypeSpecifier(cm, sm);
     }
 
-    public File getDicomFile() {
-        Attributes dcm = new Attributes();
+    public File getDicomFile(Attributes cpTags) {
+        Attributes dcm = new Attributes(cpTags);
         DicomMediaUtils.fillAttributes(tags, dcm);
 
         DicomOutputStream out = null;

@@ -24,6 +24,7 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -318,7 +319,7 @@ public class SeriesBuilder {
         int bitsStored = img.getBitsStored();
         double[] pixSpacing = new double[] { sPixSize, origPixSize };
 
-        Attributes attributes = null;
+        final Attributes attributes = ((DicomMediaIO) img.getMediaReader()).getDicomObject();
         int dataType = 0;
         ColorModel cm = null;
         SampleModel sampleModel = null;
@@ -340,8 +341,6 @@ public class SeriesBuilder {
             }
 
             pixSpacing = new double[] { origPixSize, sPixSize };
-
-            attributes = ((DicomMediaIO) img.getMediaReader()).getDicomObject();
 
             int samplesPerPixel = (Integer) img.getTagValue(TagW.SamplesPerPixel);
             boolean banded =
@@ -365,6 +364,12 @@ public class SeriesBuilder {
             dim.width = dim.height;
             dim.height = tmp;
         }
+
+        final int[] COPIED_ATTRS =
+            { Tag.SpecificCharacterSet, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence,
+                Tag.ReferringPhysicianName, Tag.ModalityLUTSequence, Tag.VOILUTSequence };
+        Arrays.sort(COPIED_ATTRS);
+        final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
 
         int last = newSeries.length;
         List<DicomImageElement> dcms = new ArrayList<DicomImageElement>();
@@ -442,6 +447,7 @@ public class SeriesBuilder {
             }
             RawImageIO rawIO = new RawImageIO(inFile.toURI(), null);
             // Tags with same values for all the Series
+
             rawIO.setTag(TagW.TransferSyntaxUID, UID.ImplicitVRLittleEndian);
             rawIO.setTag(TagW.Columns, dim.width);
             rawIO.setTag(TagW.Rows, dim.height);
@@ -455,8 +461,9 @@ public class SeriesBuilder {
 
             // Mandatory tags
             TagW[] mtagList =
-                { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientPseudoUID,
-                    TagW.StudyInstanceUID, TagW.SOPClassUID };
+                { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientSex, TagW.PatientPseudoUID,
+                    TagW.StudyInstanceUID, TagW.StudyID, TagW.SOPClassUID, TagW.StudyDate, TagW.StudyTime,
+                    TagW.AccessionNumber };
             rawIO.copyTags(mtagList, img, true);
 
             TagW[] tagList =
@@ -469,7 +476,6 @@ public class SeriesBuilder {
                     TagW.RescaleIntercept, TagW.RescaleType, TagW.VOILUTsData, TagW.VOILUTsExplanation,
                     TagW.PixelPaddingValue, TagW.PixelPaddingRangeLimit, TagW.WindowWidth, TagW.WindowCenter,
                     TagW.WindowCenterWidthExplanation, TagW.VOILutFunction, TagW.PixelSpacingCalibrationDescription, };
-            // TagW.SmallestImagePixelValue,TagW.LargestImagePixelValue,
             rawIO.copyTags(tagList2, img, false);
 
             // Clone array, because values are adapted according to the min and max pixel values.
@@ -498,6 +504,7 @@ public class SeriesBuilder {
             rawIO.setTag(TagW.ImagePositionPatient, new double[] { p.x, p.y, p.z });
 
             HashMap<TagW, Object> tagList4 = rawIO.getMediaFragmentTags(null);
+
             DicomMediaUtils.buildLUTs(tagList4);
             DicomMediaUtils.computeSlicePositionVector(tagList4);
             double[] loc = (double[]) tagList4.get(TagW.SlicePosition);
@@ -508,7 +515,7 @@ public class SeriesBuilder {
                 @Override
                 public boolean saveToFile(File output) {
                     RawImageIO reader = (RawImageIO) getMediaReader();
-                    return FileUtil.nioCopyFile(reader.getDicomFile(), output);
+                    return FileUtil.nioCopyFile(reader.getDicomFile(cpTags), output);
                 }
             };
             dcms.add(dcm);
