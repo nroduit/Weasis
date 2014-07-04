@@ -1,23 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-parent</artifactId>
+		<groupId>org.weasis</groupId>
+		<version>2.0.1-SNAPSHOT</version>
+		<relativePath>../weasis-parent/pom.xml</relativePath>
+	</parent>
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.weasis</groupId>
 	<artifactId>weasis-distributions</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
-	<!-- Remove "-beta" for release -->
-	<version>2.0.1-beta</version>
-
-	<prerequisites>
-		<maven>2.2.1</maven>
-	</prerequisites>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-		<!-- Remove "-SNAPSHOT" for release -->
-		<qualifier>-SNAPSHOT</qualifier>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
 			in config.properties) -->
 		<dollar>$</dollar>
@@ -41,18 +37,17 @@
 		<slf4j.version>1.6.4</slf4j.version>
 		<sling.commons.log.version>3.0.2</sling.commons.log.version>
 
-		<weasis.launcher.version>2.0.1${qualifier}</weasis.launcher.version>
-		<weasis.core.version>2.0.1${qualifier}</weasis.core.version>
-		<weasis.imageio.version>2.0.1${qualifier}</weasis.imageio.version>
-		<weasis.base.version>2.0.1${qualifier}</weasis.base.version>
-		<weasis.dicom.version>2.0.1${qualifier}</weasis.dicom.version>
+		<weasis.launcher.version>${project.version}</weasis.launcher.version>
+		<weasis.core.version>${project.version}</weasis.core.version>
+		<weasis.imageio.version>${project.version}</weasis.imageio.version>
+		<weasis.base.version>${project.version}</weasis.base.version>
+		<weasis.dicom.version>${project.version}</weasis.dicom.version>
 
 		<dockingframes.version>1.1.2-P8c2</dockingframes.version>
 		<substance.version>7.2.1</substance.version>
 		<jai.version>1.1.4-b05</jai.version>
 		<jai.native.version>1.1.4-b03</jai.native.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
-		<!-- <weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version> -->
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 
@@ -71,50 +66,6 @@
 		</pluginRepository>
 	</pluginRepositories>
 	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-install-plugin</artifactId>
-					<version>2.5</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-clean-plugin</artifactId>
-					<version>2.5</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-deploy-plugin</artifactId>
-					<version>2.8</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>2.4</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jarsigner-plugin</artifactId>
-					<version>1.3.1</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-resources-plugin</artifactId>
-					<version>2.6</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-site-plugin</artifactId>
-					<version>3.3</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.16</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -684,40 +635,6 @@
 									<descriptors>
 										<descriptor>src/assembly/portable-dist.xml</descriptor>
 									</descriptors>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>standalone.builder</id>
-			<activation>
-				<!-- Build Standalone Version -->
-				<property>
-					<name>standalone</name>
-					<value>true</value>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>com.bah.maven</groupId>
-						<artifactId>maven-installjammer-plugin</artifactId>
-						<version>1.2</version>
-						<executions>
-							<execution>
-								<id>installer</id>
-								<phase>package</phase>
-								<goals>
-									<goal>build-installer</goal>
-								</goals>
-								<configuration>
-									<appName>Weasis</appName>
-									<version>${project.version}</version>
-									<installVersion>${project.version}</installVersion>
-									<projectFile>/home/nicolas/InstallJammerProjects/Weasis/Weasis.mpi</projectFile>
 								</configuration>
 							</execution>
 						</executions>
