@@ -490,7 +490,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     @Override
     public List<Action> getExportActions() {
-        return null;
+        return selectedImagePane == null ? null : selectedImagePane.getExportToClipboardAction();
     }
 
     @Override
