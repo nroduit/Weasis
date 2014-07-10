@@ -13,7 +13,6 @@
 	<name>DICOM Structured Report Viewer [${project.artifactId}]</name>
 	<properties>
 		<bundle.namespace>org.weasis.dicom.sr</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
 	<build>
 		<plugins>
