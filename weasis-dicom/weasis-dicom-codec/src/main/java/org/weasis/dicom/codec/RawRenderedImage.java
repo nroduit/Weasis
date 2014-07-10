@@ -190,8 +190,15 @@ public class RawRenderedImage extends SimpleRenderedImage {
 
         this.tileDataSize = ImageUtil.getTileSize(originalSampleModel);
 
-        this.tileWidth = originalSampleModel.getWidth();
-        this.tileHeight = originalSampleModel.getHeight();
+        // TODO handle other sampleModel
+        if (originalSampleModel instanceof ComponentSampleModel) {
+            this.tileWidth = originalSampleModel.getWidth();
+            this.tileHeight = originalSampleModel.getHeight();
+        } else {
+            this.tileWidth = dim.width;
+            this.tileHeight = dim.height;
+        }
+
         this.tileGridXOffset = destinationRegion.x;
         this.tileGridYOffset = destinationRegion.y;
         this.originalNumXTiles = getNumXTiles();
@@ -224,21 +231,24 @@ public class RawRenderedImage extends SimpleRenderedImage {
 
             long pStream;
             int lineStep = 0;
-            int elementSize = (DataBuffer.getDataTypeSize(originalSampleModel.getDataType()) + 7) / 8;
+            int pixelSize = (DataBuffer.getDataTypeSize(originalSampleModel.getDataType()) + 7) / 8;
             int lineLength = tileWidth;
             int nbLine = tileHeight;
 
             if (tiled) {
-                // TODO does not handle band offset! and pixelinterleaved
-                int bands = originalSampleModel.getNumBands();
+                // TODO handle other sampleModel
+                if (originalSampleModel instanceof ComponentSampleModel) {
+                    ComponentSampleModel sm = (ComponentSampleModel) originalSampleModel;
+                    pixelSize *= sm.getPixelStride();
+                }
                 int tileRowOffset = (originalNumXTiles * tileWidth) - width;
                 int tileColumnOffset = (originalNumYTiles * tileHeight) - height;
                 // Position removing full tiles
-                pStream = position + tileY * originalNumXTiles * tileDataSize / bands;
+                pStream = position + tileY * originalNumXTiles * tileDataSize;
                 // Remove partial tile size from previous rows.
-                pStream -= tileY * tileRowOffset * tileHeight * elementSize;
+                pStream -= tileY * tileRowOffset * tileHeight * pixelSize;
                 // Add current raw line offset
-                pStream += tileX * tileWidth * elementSize;
+                pStream += tileX * tileWidth * pixelSize;
 
                 if (tileY == (originalNumYTiles - 1)) {
                     nbLine = tileHeight - tileColumnOffset;
@@ -246,7 +256,7 @@ public class RawRenderedImage extends SimpleRenderedImage {
                 if (tileX == (originalNumXTiles - 1)) {
                     lineLength = tileWidth - tileRowOffset;
                 }
-                lineStep = (width - lineLength) * elementSize;
+                lineStep = (width - lineLength) * pixelSize;
             } else {
                 pStream = position;
             }
@@ -264,12 +274,12 @@ public class RawRenderedImage extends SimpleRenderedImage {
                         for (int i = 0; i < buf.length; i++) {
                             if (tiled) {
                                 if (i > 0) {
-                                    iis.seek(pStream + i * (width * height * elementSize));
+                                    iis.seek(pStream + i * (width * height * pixelSize));
                                 }
-                                iis.readFully(buf[i], 0, lineLength);
+                                iis.readFully(buf[i], 0, lineLength * pixelSize);
                                 for (int j = 1; j < nbLine; j++) {
                                     iis.skipBytes(lineStep);
-                                    iis.readFully(buf[i], tileWidth * j, lineLength);
+                                    iis.readFully(buf[i], tileWidth * j * pixelSize, lineLength * pixelSize);
                                 }
                             } else {
                                 iis.readFully(buf[i], 0, buf[i].length);
@@ -281,8 +291,9 @@ public class RawRenderedImage extends SimpleRenderedImage {
                         short[][] sbuf = ((DataBufferShort) currentTile.getDataBuffer()).getBankData();
                         for (int i = 0; i < sbuf.length; i++) {
                             if (tiled) {
+                                // Handle seek and skipBytes in byte and readFully in short
                                 if (i > 0) {
-                                    iis.seek(pStream + i * (width * height * elementSize));
+                                    iis.seek(pStream + i * (width * height * pixelSize));
                                 }
                                 iis.readFully(sbuf[i], 0, lineLength);
                                 for (int j = 1; j < nbLine; j++) {
@@ -300,7 +311,7 @@ public class RawRenderedImage extends SimpleRenderedImage {
                         for (int i = 0; i < usbuf.length; i++) {
                             if (tiled) {
                                 if (i > 0) {
-                                    iis.seek(pStream + i * (width * height * elementSize));
+                                    iis.seek(pStream + i * (width * height * pixelSize));
                                 }
                                 iis.readFully(usbuf[i], 0, lineLength);
                                 for (int j = 1; j < nbLine; j++) {
@@ -317,7 +328,7 @@ public class RawRenderedImage extends SimpleRenderedImage {
                         for (int i = 0; i < ibuf.length; i++) {
                             if (tiled) {
                                 if (i > 0) {
-                                    iis.seek(pStream + i * (width * height * elementSize));
+                                    iis.seek(pStream + i * (width * height * pixelSize));
                                 }
                                 iis.readFully(ibuf[i], 0, lineLength);
                                 for (int j = 1; j < nbLine; j++) {
@@ -334,7 +345,7 @@ public class RawRenderedImage extends SimpleRenderedImage {
                         for (int i = 0; i < fbuf.length; i++) {
                             if (tiled) {
                                 if (i > 0) {
-                                    iis.seek(pStream + i * (width * height * elementSize));
+                                    iis.seek(pStream + i * (width * height * pixelSize));
                                 }
                                 iis.readFully(fbuf[i], 0, lineLength);
                                 for (int j = 1; j < nbLine; j++) {
@@ -351,7 +362,7 @@ public class RawRenderedImage extends SimpleRenderedImage {
                         for (int i = 0; i < dbuf.length; i++) {
                             if (tiled) {
                                 if (i > 0) {
-                                    iis.seek(pStream + i * (width * height * elementSize));
+                                    iis.seek(pStream + i * (width * height * pixelSize));
                                 }
                                 iis.readFully(dbuf[i], 0, lineLength);
                                 for (int j = 1; j < nbLine; j++) {

@@ -1084,8 +1084,8 @@ public class DicomMediaUtils {
                     Float ri = getFloatFromDicomElement(mLutItems, Tag.RescaleIntercept, null);
                     String modlality = (String) tagList.get(TagW.Modality);
                     if (ww != null && wc != null && rs != null && ri != null
-                        && "MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        || "PT".equals(modlality)) { //$NON-NLS-1$
+                        && ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        || "PT".equals(modlality))) { //$NON-NLS-1$
                         int windowLevelDefaultCount = (ww.length == wc.length) ? ww.length : 0;
                         for (int i = 0; i < windowLevelDefaultCount; i++) {
                             if (ww[i] == null || wc[i] == null) {
