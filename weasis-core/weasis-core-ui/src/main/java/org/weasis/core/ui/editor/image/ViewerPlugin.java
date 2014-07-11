@@ -74,7 +74,7 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
         this.dockable.setTitleIcon(icon);
         this.dockable.setFocusComponent(this);
         this.dockable.setStackable(true);
-        this.dockable.setSingleTabShown(false);
+        this.dockable.setSingleTabShown(true);
         this.dockable.putAction(CDockable.ACTION_KEY_CLOSE, new CCloseAction(UIManager.DOCKING_CONTROL) {
             @Override
             public void close(CDockable dockable) {
@@ -218,7 +218,8 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
             init(new MenuOnlySimpleAction(this));
             this.dockable = dockable;
             this.closeAll = closeAll;
-            setText(closeAll ? Messages.getString("ViewerPlugin.close_all") : Messages.getString("ViewerPlugin.close_other")); //$NON-NLS-1$ //$NON-NLS-2$
+            setText(closeAll
+                ? Messages.getString("ViewerPlugin.close_all") : Messages.getString("ViewerPlugin.close_other")); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         @Override

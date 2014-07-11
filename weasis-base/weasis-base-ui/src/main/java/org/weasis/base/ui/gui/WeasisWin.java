@@ -357,7 +357,13 @@ public class WeasisWin {
         if (screenBound == null && factory != null && group != null) {
             boolean bestDefaultLayout = JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
             synchronized (UIManager.VIEWER_PLUGINS) {
-                for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
+                for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
+                    final ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                    // Remove the views not attached to any window (Fix bugs with external window)
+                    if (WinUtil.getParentWindow(p) == null) {
+                        UIManager.VIEWER_PLUGINS.remove(i);
+                        continue;
+                    }
                     if (p instanceof ImageViewerPlugin && p.getName().equals(factory.getUIName())
                         && group.equals(p.getGroupID())) {
                         ImageViewerPlugin viewer = ((ImageViewerPlugin) p);
