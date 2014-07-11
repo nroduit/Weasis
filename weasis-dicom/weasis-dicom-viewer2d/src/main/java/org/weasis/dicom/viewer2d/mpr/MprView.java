@@ -2,7 +2,6 @@ package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Graphics2D;
 import java.beans.PropertyChangeEvent;
-import java.util.Map.Entry;
 
 import javax.swing.JProgressBar;
 
@@ -14,9 +13,6 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
-import org.weasis.core.ui.editor.image.SynchData;
-import org.weasis.core.ui.editor.image.SynchData.Mode;
-import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.viewer2d.View2d;
@@ -72,25 +68,25 @@ public class MprView extends View2d {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         super.propertyChange(evt);
-        if (series == null) {
-            return;
-        }
-        final String name = evt.getPropertyName();
-        if (name.equals(ActionW.SYNCH.cmd())) {
-            SynchEvent synch = (SynchEvent) evt.getNewValue();
-            SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-            if (synchData != null && Mode.None.equals(synchData.getMode())) {
-                return;
-            }
-            for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
-                final String command = entry.getKey();
-                final Object val = entry.getValue();
-                if (synchData != null && !synchData.isActionEnable(command)) {
-                    continue;
-                }
-
-            }
-        }
+        // if (series == null) {
+        // return;
+        // }
+        // final String name = evt.getPropertyName();
+        // if (name.equals(ActionW.SYNCH.cmd())) {
+        // SynchEvent synch = (SynchEvent) evt.getNewValue();
+        // SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+        // if (synchData != null && Mode.None.equals(synchData.getMode())) {
+        // return;
+        // }
+        // for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
+        // final String command = entry.getKey();
+        // final Object val = entry.getValue();
+        // if (synchData != null && !synchData.isActionEnable(command)) {
+        // continue;
+        // }
+        //
+        // }
+        // }
     }
 
     @Override

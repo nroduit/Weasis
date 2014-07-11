@@ -39,6 +39,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -599,10 +600,24 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                                     if (synch instanceof ComboItemListener) {
                                         ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
                                     }
+                                    // Set the middle image (best choice to propagate the default preset of non CT
+                                    // modalities)
+                                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                                    if (seqAction instanceof SliderChangeListener) {
+                                        SliderCineListener sliceAction = (SliderCineListener) seqAction;
+                                        sliceAction.setValue(sliceAction.getMax() / 2);
+                                    }
                                     ActionState cross = EventManager.getInstance().getAction(ActionW.CROSSHAIR);
                                     if (cross instanceof CrosshairListener) {
                                         ((CrosshairListener) cross).setPoint(view.getImageCoordinatesFromMouse(
                                             view.getWidth() / 2, view.getHeight() / 2));
+                                    }
+                                    // Force to propagate the default preset
+                                    ActionState presetAction = EventManager.getInstance().getAction(ActionW.PRESET);
+                                    if (presetAction instanceof ComboItemListener) {
+                                        ComboItemListener p = (ComboItemListener) presetAction;
+                                        p.setSelectedItemWithoutTriggerAction(null);
+                                        p.setSelectedItem(p.getFirstItem());
                                     }
                                 }
                             });
