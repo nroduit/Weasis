@@ -82,6 +82,11 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
+        ImageViewerPlugin<DicomImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
+        if (container instanceof MPRContainer) {
+            // Remove crosshair tool
+            container.setSelected(false);
+        }
         // Save preferences
         EventManager.getInstance().savePreferences(bundleContext);
         UIManager.closeSeriesViewerType(MPRContainer.class);
