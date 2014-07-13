@@ -1053,14 +1053,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     protected void fillPixelInfo(final PixelInfo pixelInfo, final DicomImageElement imageElement, final double[] c) {
         if (c != null && c.length >= 1) {
-            if (c.length == 1) {
-                boolean pixelPadding =
-                    JMVUtils.getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
-                        ActionW.IMAGE_PIX_PADDING.cmd()));
-                pixelInfo.setValues(new double[] { imageElement.pixel2mLUT((float) c[0], pixelPadding) });
-            } else {
-                super.fillPixelInfo(pixelInfo, imageElement, c);
+            boolean pixelPadding =
+                JMVUtils.getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
+                    ActionW.IMAGE_PIX_PADDING.cmd()));
+            for (int i = 0; i < c.length; i++) {
+                c[i] = imageElement.pixel2mLUT((float) c[i], pixelPadding);
             }
+            pixelInfo.setValues(c);
         }
     }
 
