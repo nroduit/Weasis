@@ -433,6 +433,15 @@ public class SeriesBuilder {
                     shortBuffer.put(data);
 
                     writToFile(inFile, byteBuffer);
+                } else if (dataBuffer instanceof DataBufferInt) {
+                    int[] data = ((DataBufferInt) dataBuffer).getData();
+
+                    byteBuffer = ByteBuffer.allocate(data.length * 4);
+                    byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+                    IntBuffer intBuffer = byteBuffer.asIntBuffer();
+                    intBuffer.put(data);
+
+                    writToFile(inFile, byteBuffer);
                 }
                 if (bar != null) {
                     GuiExecutor.instance().execute(new Runnable() {
@@ -616,6 +625,19 @@ public class SeriesBuilder {
                     bytesOut[i * 2 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
                 }
                 width *= 2;
+                for (int j = 0; j < height; j++) {
+                    newSeries[j].getOutputStream().write(bytesOut, j * width, width);
+                }
+            } else if (dataBuffer instanceof DataBufferInt) {
+                int[] data = ((DataBufferInt) dataBuffer).getData();
+                bytesOut = new byte[data.length * 4];
+                for (int i = 0; i < data.length; i++) {
+                    bytesOut[i * 4] = (byte) (data[i] & 0xFF);
+                    bytesOut[i * 4 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
+                    bytesOut[i * 4 + 2] = (byte) ((data[i] >>> 16) & 0xFF);
+                    bytesOut[i * 4 + 3] = (byte) ((data[i] >>> 24) & 0xFF);
+                }
+                width *= 4;
                 for (int j = 0; j < height; j++) {
                     newSeries[j].getOutputStream().write(bytesOut, j * width, width);
                 }

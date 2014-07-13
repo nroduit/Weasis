@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.io.File;
@@ -375,6 +376,15 @@ public class MipView extends View2d {
                 for (int i = 0; i < data.length; i++) {
                     bytesOut[i * 2] = (byte) (data[i] & 0xFF);
                     bytesOut[i * 2 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
+                }
+            } else if (dataBuffer instanceof DataBufferInt) {
+                int[] data = ((DataBufferInt) dataBuffer).getData();
+                bytesOut = new byte[data.length * 4];
+                for (int i = 0; i < data.length; i++) {
+                    bytesOut[i * 4] = (byte) (data[i] & 0xFF);
+                    bytesOut[i * 4 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
+                    bytesOut[i * 4 + 2] = (byte) ((data[i] >>> 16) & 0xFF);
+                    bytesOut[i * 4 + 3] = (byte) ((data[i] >>> 24) & 0xFF);
                 }
             }
             out.write(bytesOut);
