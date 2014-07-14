@@ -690,6 +690,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 if (forceUpdate || enableFilter != null) {
                     ActionState koFilterAction = selectedView.getEventManager().getAction(ActionW.KO_FILTER);
                     if (koFilterAction instanceof ToggleButtonListener) {
+                        if (enableFilter == null) {
+                            enableFilter =
+                                JMVUtils.getNULLtoFalse(selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
+                        }
                         ((ToggleButtonListener) koFilterAction).setSelected(enableFilter);
                     }
                 }

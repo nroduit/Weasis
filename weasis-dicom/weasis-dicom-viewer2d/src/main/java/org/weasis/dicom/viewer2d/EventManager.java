@@ -643,6 +643,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 }
 
                 container.updateTileOffset();
+                if ((selectedView.getSeries() instanceof DicomSeries) == false) {
+                    ArrayList<DefaultView2d<DicomImageElement>> panes = selectedView2dContainer.getImagePanels(false);
+                    if (panes.size() > 0) {
+                        selectedView2dContainer.setSelectedImagePane(panes.get(0));
+                        return;
+                    }
+                }
             }
         }
 
@@ -1177,6 +1184,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                             addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
                             // pane.updateSynchState();
+                        }
+
+                        if (JMVUtils.getNULLtoFalse(enableFilter)) {
+                            KOManager.updateKOFilter(viewPane, selectedKO, enableFilter, frameIndex);
                         }
                     }
                 }

@@ -282,6 +282,16 @@ public final class KOManager {
                     dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
                         validKOSelection));
                 }
+
+                boolean filter = JMVUtils.getNULLtoFalse(view2d.getActionValue(ActionW.KO_FILTER.cmd()));
+                if (filter) {
+                    // When unchecking an image, force to call the filter action to resize the views
+                    ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
+                    if (koFilterAction instanceof ToggleButtonListener) {
+                        ((ToggleButtonListener) koFilterAction).setSelectedWithoutTriggerAction(false);
+                        ((ToggleButtonListener) koFilterAction).setSelected(true);
+                    }
+                }
             }
         }
 
@@ -432,7 +442,7 @@ public final class KOManager {
                 if (view2D == view2D.getEventManager().getSelectedViewPane()) {
                     /*
                      * Update the sliceAction action according to nearest image when the filter hides the image of the
-                     * previous state.
+                     * previous state. And update the action min and max.
                      */
                     ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
                     if (seqAction instanceof SliderCineListener) {
@@ -440,14 +450,14 @@ public final class KOManager {
                         moveTroughSliceAction.setMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter),
                             newImageIndex + 1);
                     }
-                } else {
-                    DicomImageElement newImage =
-                        dicomSeries.getMedia(newImageIndex, sopInstanceUIDFilter, view2D.getCurrentSortComparator());
-                    if (newImage != null && !newImage.isImageAvailable()) {
-                        newImage.getImage();
-                    }
-                    ((View2d) view2D).setImage(newImage);
                 }
+                DicomImageElement newImage =
+                    dicomSeries.getMedia(newImageIndex, sopInstanceUIDFilter, view2D.getCurrentSortComparator());
+                if (newImage != null && !newImage.isImageAvailable()) {
+                    newImage.getImage();
+                }
+                ((View2d) view2D).setImage(newImage);
+
             }
             ((View2d) view2D).updateKOButtonVisibleState();
         }
