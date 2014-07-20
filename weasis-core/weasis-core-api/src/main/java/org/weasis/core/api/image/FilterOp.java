@@ -18,6 +18,7 @@ import javax.media.jai.JAI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.KernelData;
 
 public class FilterOp extends AbstractOp {
@@ -47,7 +48,7 @@ public class FilterOp extends AbstractOp {
             ParameterBlock paramBlock = new ParameterBlock();
             paramBlock.addSource(source);
             paramBlock.add(kernel.getKernelJAI());
-            result = JAI.create("convolve", paramBlock, null); //$NON-NLS-1$
+            result = JAI.create("convolve", paramBlock, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
         }
         params.put(OUTPUT_IMG, result);
     }

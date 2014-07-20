@@ -220,8 +220,7 @@ public class ImageFiler extends AbstractBufferHandler {
                 extraFields.add(new TIFFField(296, TIFFField.TIFF_SHORT, l_resUnit.length, l_resUnit));
 
             }
-            extraFields
-                .add(new TIFFField(305, TIFFField.TIFF_ASCII, 1, new String[] { AppProperties.WEASIS_NAME }));
+            extraFields.add(new TIFFField(305, TIFFField.TIFF_ASCII, 1, new String[] { AppProperties.WEASIS_NAME }));
             param.setExtraFields(extraFields.toArray(new TIFFField[extraFields.size()]));
 
             if (!binary) {
@@ -395,6 +394,7 @@ public class ImageFiler extends AbstractBufferHandler {
                         layout.setColorModel(LayoutUtil.createBinaryIndexColorModel());
                         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
                         hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
+                        hints.add(ImageToolkit.NOCACHE_HINT);
                         ParameterBlock pb = new ParameterBlock();
                         pb.addSource(source);
                         return JAI.create("NotBinary", pb, hints); //$NON-NLS-1$
@@ -410,14 +410,14 @@ public class ImageFiler extends AbstractBufferHandler {
                 ParameterBlockJAI pb = new ParameterBlockJAI("bandSelect"); //$NON-NLS-1$
                 pb.addSource(dst);
                 pb.setParameter("bandIndices", new int[] { 0, 1, 0 }); //$NON-NLS-1$
-                dst = JAI.create("bandSelect", pb); //$NON-NLS-1$
+                dst = JAI.create("bandSelect", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
             }
             // for image with alpha channel
             else if (numBands > 3) {
                 ParameterBlockJAI pb = new ParameterBlockJAI("bandSelect"); //$NON-NLS-1$
                 pb.addSource(dst);
                 pb.setParameter("bandIndices", new int[] { 0, 1, 2 }); //$NON-NLS-1$
-                dst = JAI.create("bandSelect", pb); //$NON-NLS-1$
+                dst = JAI.create("bandSelect", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
             }
         }
         return dst;

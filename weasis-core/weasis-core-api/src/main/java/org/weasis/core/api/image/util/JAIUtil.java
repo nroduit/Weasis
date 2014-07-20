@@ -1,5 +1,8 @@
 package org.weasis.core.api.image.util;
 
+import java.awt.Rectangle;
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderedImageFactory;
 
 import javax.media.jai.JAI;
@@ -7,6 +10,7 @@ import javax.media.jai.OperationDescriptorImpl;
 import javax.media.jai.OperationRegistry;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RegistryElementDescriptor;
+import javax.media.jai.TileCache;
 import javax.media.jai.registry.RIFRegistry;
 
 public class JAIUtil {
@@ -53,4 +57,26 @@ public class JAIUtil {
         }
     }
 
+    public static void addCacheTiles(RenderedImage img, Rectangle tileBounds) {
+        if (img != null && tileBounds != null) {
+            TileCache tileCache = getJAI().getTileCache();
+
+            int ti, tj;
+
+            // Loop over tiles within the clipping region
+            for (tj = tileBounds.y; tj <= tileBounds.height; tj++) {
+                for (ti = tileBounds.x; ti <= tileBounds.width; ti++) {
+                    try {
+                        Raster tile = tileCache.getTile(img, ti, tj);
+                        if (tile == null) {
+                            tile = img.getTile(ti, tj);
+                            tileCache.add(img, ti, tj, tile);
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
 }
