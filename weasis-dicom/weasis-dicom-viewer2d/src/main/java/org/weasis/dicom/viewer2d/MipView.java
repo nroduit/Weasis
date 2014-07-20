@@ -32,6 +32,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.MaxCollectionZprojection;
 import org.weasis.core.api.image.op.MeanCollectionZprojection;
 import org.weasis.core.api.image.op.MinCollectionZprojection;
+import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
@@ -345,7 +346,7 @@ public class MipView extends View2d {
         ParameterBlockJAI pb2 = new ParameterBlockJAI(operation);
         pb2.addSource(img1);
         pb2.addSource(img2);
-        return JAI.create(operation, pb2);
+        return JAI.create(operation, pb2, ImageToolkit.NOCACHE_HINT);
     }
 
     public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources, MipView mipView,

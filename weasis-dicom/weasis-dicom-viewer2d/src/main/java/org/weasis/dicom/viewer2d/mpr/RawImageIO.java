@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
@@ -91,7 +92,7 @@ public class RawImageIO implements MediaReader<PlanarImage> {
                     ParameterBlock pb = new ParameterBlock();
                     pb.addSource(buffer);
                     // Tile size are set in this operation
-                    img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
+                    img = JAI.create("formatbinary", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
                 } else if (buffer.getTileWidth() != ImageFiler.TILESIZE
                     || buffer.getTileHeight() != ImageFiler.TILESIZE) {
                     img = ImageFiler.tileImage(buffer);
