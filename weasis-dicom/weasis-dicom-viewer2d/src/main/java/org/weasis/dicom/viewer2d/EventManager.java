@@ -746,8 +746,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             break;
                         }
                     }
-                } else if (keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode() && koToggleAction.isActionEnabled()) {
-                    koToggleAction.setSelected(!koToggleAction.isSelected());
                 } else if (presetAction.isActionEnabled()) {
                     DefaultComboBoxModel model = presetAction.getModel();
                     for (int i = 0; i < model.getSize(); i++) {
@@ -764,6 +762,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         ActionState a1 = getAction(action);
         if (a1 == null || a1.isActionEnabled()) {
             return action;
+        } else if (koToggleAction.getActionW().equals(action) && keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode()) {
+            koToggleAction.setSelected(!koToggleAction.isSelected());
         }
         return null;
     }
