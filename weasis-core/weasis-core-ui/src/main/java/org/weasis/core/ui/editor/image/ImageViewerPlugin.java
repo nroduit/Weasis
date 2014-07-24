@@ -449,8 +449,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
 
     public void resetMaximizedSelectedImagePane(final DefaultView2d<E> defaultView2d) {
-        if (layoutModel.getConstraints().size() > 1 && grid.getComponentCount() == 1) {
-            maximizedSelectedImagePane(defaultView2d, null);
+        if (grid.getComponentCount() == 1) {
+            Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
+            if (fullscreenDialog != null
+                && fullscreenDialog.getTitle().equals(Messages.getString("ImageViewerPlugin.fullscreen"))) {
+                maximizedSelectedImagePane(defaultView2d, null);
+            }
         }
     }
 
