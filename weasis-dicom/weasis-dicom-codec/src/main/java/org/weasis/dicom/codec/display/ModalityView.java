@@ -58,13 +58,11 @@ public class ModalityView {
         disElements[2] = new TagView(Messages.getString("ModalityView.study"), TagW.StudyID); //$NON-NLS-1$
         disElements[3] = new TagView(Messages.getString("ModalityView.ac_nb"), TagW.AccessionNumber); //$NON-NLS-1$
         // else content date, else Series date, else Study date
-        disElements[4] =
-            new TagView(Messages.getString("ModalityView.acq"), TagW.AcquisitionDate, TagW.ContentDate, //$NON-NLS-1$
-                TagW.SeriesDate, TagW.StudyDate);
+        disElements[4] = new TagView(Messages.getString("ModalityView.acq"), TagW.AcquisitionDate, TagW.ContentDate, //$NON-NLS-1$
+            TagW.SeriesDate, TagW.StudyDate);
         // else content time, else Series time, else Study time
-        disElements[5] =
-            new TagView(Messages.getString("ModalityView.acq"), TagW.AcquisitionTime, TagW.ContentTime, //$NON-NLS-1$
-                TagW.SeriesDate, TagW.StudyDate);
+        disElements[5] = new TagView(Messages.getString("ModalityView.acq"), TagW.AcquisitionTime, TagW.ContentTime, //$NON-NLS-1$
+            TagW.SeriesDate, TagW.StudyDate);
 
         disElements = DEFAULT_MODALITY_VIEW.getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos();
         disElements[1] = new TagView(Messages.getString("ModalityView.series_nb"), TagW.SeriesNumber); //$NON-NLS-1$
@@ -79,7 +77,7 @@ public class ModalityView {
          * Spacing Between Slices (0018,0088), if present, else a value derived from successive values of Image Position
          * (Patient) (0020,0032) perpendicular to the Image Orientation (Patient) (0020,0037)
          */
-
+        MODALITY_VIEW_MAP.put(Modality.Default, DEFAULT_MODALITY_VIEW);
         readTagDisplayByModality();
     }
 
