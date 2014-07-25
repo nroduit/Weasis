@@ -388,6 +388,15 @@ public class WeasisLauncher {
             loader.close();
             loader = null;
 
+            // Start telnet after all other bundles. This will ensure that all the plugins commands are activated once
+            // telnet is available
+            for (Bundle b : m_felix.getBundleContext().getBundles()) {
+                if (b.getSymbolicName().equals("org.apache.felix.gogo.shell") && b.getState() == Bundle.INSTALLED) {
+                    b.start();
+                    break;
+                }
+            }
+
             SwingUtilities.invokeLater(new Runnable() {
 
                 @Override
