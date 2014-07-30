@@ -218,13 +218,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(DicomExplorer.this));
-            DicomImport dialog = new DicomImport(WinUtil.getParentFrame(DicomExplorer.this), model);
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
+            DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
             dialog.showPage(BUTTON_NAME);
-            JMVUtils.showCenterScreen(dialog);
-            if (layer != null) {
-                layer.hideUI();
-            }
+            ColorLayerUI.showCenterScreen(dialog, layer);
         }
     };
     private final AbstractAction exportAction = new AbstractAction(BUTTON_NAME) {
@@ -232,13 +229,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         @Override
         public void actionPerformed(ActionEvent e) {
             if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(DicomExplorer.this));
-                DicomExport dialog = new DicomExport(WinUtil.getParentFrame(DicomExplorer.this), model);
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
+                DicomExport dialog = new DicomExport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
                 dialog.showPage(BUTTON_NAME);
-                JMVUtils.showCenterScreen(dialog);
-                if (layer != null) {
-                    layer.hideUI();
-                }
+                ColorLayerUI.showCenterScreen(dialog, layer);
             } else {
                 JOptionPane.showMessageDialog((Component) e.getSource(),
                     Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
@@ -2052,14 +2046,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                         if (response == 0) {
-                            ColorLayerUI layer =
-                                ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(DicomExplorer.this));
-                            DicomImport dialog = new DicomImport(WinUtil.getParentFrame(DicomExplorer.this), model);
+                            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
+                            DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
                             dialog.showPage(Messages.getString("DicomDirImport.dicomdir")); //$NON-NLS-1$
-                            JMVUtils.showCenterScreen(dialog);
-                            if (layer != null) {
-                                layer.hideUI();
-                            }
+                            ColorLayerUI.showCenterScreen(dialog, layer);
                         }
                     } else {
                         DicomDirImport.loadDicomDir(file, model, true);

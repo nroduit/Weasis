@@ -41,12 +41,10 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
-import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.dicom.explorer.Messages;
 
@@ -549,25 +547,16 @@ public class DicomPrintDialog extends JDialog {
     }
 
     private void addPrinterButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_addPrinterButtonActionPerformed
-        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(this));
-        Window parent = SwingUtilities.getWindowAncestor(this);
-        PrinterDialog dialog = new PrinterDialog(parent, "", null, printersComboBox); //$NON-NLS-1$
-        JMVUtils.showCenterScreen(dialog);
-        if (layer != null) {
-            layer.hideUI();
-        }
+        PrinterDialog dialog = new PrinterDialog(SwingUtilities.getWindowAncestor(this), "", null, printersComboBox); //$NON-NLS-1$
+        JMVUtils.showCenterScreen(dialog, this);
         enableOrDisableColorPrint();
     }
 
     private void editButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_editButtonActionPerformed
-        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(this));
-        Window parent = SwingUtilities.getWindowAncestor(this);
         PrinterDialog dialog =
-            new PrinterDialog(parent, "", (DicomPrinter) printersComboBox.getSelectedItem(), printersComboBox); //$NON-NLS-1$
-        JMVUtils.showCenterScreen(dialog);
-        if (layer != null) {
-            layer.hideUI();
-        }
+            new PrinterDialog(SwingUtilities.getWindowAncestor(this),
+                "", (DicomPrinter) printersComboBox.getSelectedItem(), printersComboBox); //$NON-NLS-1$
+        JMVUtils.showCenterScreen(dialog, this);
         enableOrDisableColorPrint();
     }
 

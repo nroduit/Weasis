@@ -15,6 +15,7 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -150,10 +151,15 @@ public class JMVUtils {
     }
 
     public static void showCenterScreen(Window window, Component parent) {
-        Dimension sSize = parent.getSize();
-        Dimension wSize = window.getSize();
-        window.setLocation(((sSize.width - wSize.width) / 2), ((sSize.height - wSize.height) / 2));
-        window.setVisible(true);
+        if (parent == null) {
+            showCenterScreen(window);
+        } else {
+            Dimension sSize = parent.getSize();
+            Dimension wSize = window.getSize();
+            Point p = parent.getLocationOnScreen();
+            window.setLocation(p.x + ((sSize.width - wSize.width) / 2), p.y + ((sSize.height - wSize.height) / 2));
+            window.setVisible(true);
+        }
     }
 
     public static void formatTableHeaders(JTable table, int alignement) {

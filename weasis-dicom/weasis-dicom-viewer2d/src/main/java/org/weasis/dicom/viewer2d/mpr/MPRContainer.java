@@ -3,7 +3,6 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -37,11 +36,9 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -503,14 +500,10 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    ColorLayerUI layer =
-                        ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(MPRContainer.this));
-                    Window parent = SwingUtilities.getWindowAncestor(MPRContainer.this);
-                    PrintDialog dialog = new PrintDialog(parent, title, eventManager);
-                    JMVUtils.showCenterScreen(dialog, parent);
-                    if (layer != null) {
-                        layer.hideUI();
-                    }
+                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
+                    PrintDialog dialog =
+                        new PrintDialog(SwingUtilities.getWindowAncestor(MPRContainer.this), title, eventManager);
+                    ColorLayerUI.showCenterScreen(dialog, layer);
                 }
             };
         actions.add(printStd);
@@ -520,13 +513,10 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(MPRContainer.this));
-                Window parent = SwingUtilities.getWindowAncestor(MPRContainer.this);
-                DicomPrintDialog dialog = new DicomPrintDialog(parent, title2, eventManager);
-                JMVUtils.showCenterScreen(dialog, parent);
-                if (layer != null) {
-                    layer.hideUI();
-                }
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
+                DicomPrintDialog dialog =
+                    new DicomPrintDialog(SwingUtilities.getWindowAncestor(MPRContainer.this), title2, eventManager);
+                ColorLayerUI.showCenterScreen(dialog, layer);
             }
         };
         actions.add(printStd2);

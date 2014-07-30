@@ -35,7 +35,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker.StateValue;
 import javax.xml.XMLConstants;
@@ -56,7 +55,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -385,16 +383,16 @@ public class DownloadManager {
                                                     @Override
                                                     public void run() {
 
-                                                        JFrame rootFrame = null;
+                                                        PluginTool explorer = null;
                                                         DataExplorerView dicomExplorer =
                                                             UIManager.getExplorerplugin(DicomExplorer.NAME);
                                                         if (dicomExplorer instanceof PluginTool) {
-                                                            rootFrame =
-                                                                WinUtil.getParentJFrame((PluginTool) dicomExplorer);
+                                                            explorer = (PluginTool) dicomExplorer;
                                                         }
                                                         ColorLayerUI layer =
-                                                            ColorLayerUI.createTransparentLayerUI(rootFrame);
-                                                        JOptionPane.showOptionDialog(rootFrame, message, title,
+                                                            ColorLayerUI.createTransparentLayerUI(explorer);
+                                                        JOptionPane.showOptionDialog(
+                                                            ColorLayerUI.getContentPane(layer), message, title,
                                                             JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
                                                         if (layer != null) {
                                                             layer.hideUI();
@@ -459,14 +457,14 @@ public class DownloadManager {
                 @Override
                 public void run() {
 
-                    JFrame rootFrame = null;
+                    PluginTool explorer = null;
                     DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
                     if (dicomExplorer instanceof PluginTool) {
-                        rootFrame = WinUtil.getParentJFrame((PluginTool) dicomExplorer);
+                        explorer = (PluginTool) dicomExplorer;
                     }
-                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootFrame);
-                    JOptionPane.showOptionDialog(rootFrame, message, title, JOptionPane.DEFAULT_OPTION, messageType,
-                        null, null, null);
+                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
+                    JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, title,
+                        JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
                     if (layer != null) {
                         layer.hideUI();
                     }

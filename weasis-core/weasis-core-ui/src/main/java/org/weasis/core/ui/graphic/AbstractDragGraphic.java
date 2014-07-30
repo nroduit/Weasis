@@ -24,7 +24,6 @@ import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -268,16 +267,11 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
                                 }
                             }
                             if (!isEditingGraph) {
-                                ColorLayerUI layer =
-                                    ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(graphPane));
+                                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(graphPane);
                                 final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
                                 list.add(AbstractDragGraphic.this);
                                 JDialog dialog = new MeasureDialog(graphPane, list);
-                                WinUtil.adjustLocationToFitScreen(dialog, mouseEvent.getLocationOnScreen());
-                                dialog.setVisible(true);
-                                if (layer != null) {
-                                    layer.hideUI();
-                                }
+                                ColorLayerUI.showCenterScreen(dialog, layer);
                             }
                         }
                     }

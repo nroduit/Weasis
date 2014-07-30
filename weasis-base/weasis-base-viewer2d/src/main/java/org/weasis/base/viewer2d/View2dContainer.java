@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.base.viewer2d;
 
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -41,11 +40,9 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -453,14 +450,10 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    ColorLayerUI layer =
-                        ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(View2dContainer.this));
-                    Window parent = SwingUtilities.getWindowAncestor(View2dContainer.this);
-                    PrintDialog dialog = new PrintDialog(parent, title, eventManager);
-                    JMVUtils.showCenterScreen(dialog, parent);
-                    if (layer != null) {
-                        layer.hideUI();
-                    }
+                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
+                    PrintDialog dialog =
+                        new PrintDialog(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
+                    ColorLayerUI.showCenterScreen(dialog, layer);
                 }
             };
         actions.add(printStd);

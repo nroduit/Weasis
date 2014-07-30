@@ -11,9 +11,9 @@
 package org.weasis.dicom.explorer;
 
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class DicomExport extends AbstractWizardDialog {
     private final DicomModel dicomModel;
     private final CheckTreeModel treeModel;
 
-    public DicomExport(Frame parent, final DicomModel dicomModel) {
+    public DicomExport(Window parent, final DicomModel dicomModel) {
         super(parent,
             Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;

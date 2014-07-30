@@ -46,7 +46,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.PseudoColorOp;
@@ -435,13 +434,12 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            ColorLayerUI layer =
-                                ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(View2d.this));
+                            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                             String title = Messages.getString("View2d.man_calib"); //$NON-NLS-1$
                             CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this);
                             int res =
-                                JOptionPane.showConfirmDialog(calibMenu, calibrationDialog, title,
-                                    JOptionPane.OK_CANCEL_OPTION);
+                                JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
+                                    title, JOptionPane.OK_CANCEL_OPTION);
                             if (layer != null) {
                                 layer.hideUI();
                             }
@@ -460,14 +458,9 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        ColorLayerUI layer =
-                            ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(View2d.this));
+                        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                         JDialog dialog = new MeasureDialog(View2d.this, list);
-                        WinUtil.adjustLocationToFitScreen(dialog, evt.getLocationOnScreen());
-                        dialog.setVisible(true);
-                        if (layer != null) {
-                            layer.hideUI();
-                        }
+                        ColorLayerUI.showCenterScreen(dialog, layer);
                     }
                 });
                 popupMenu.add(properties);

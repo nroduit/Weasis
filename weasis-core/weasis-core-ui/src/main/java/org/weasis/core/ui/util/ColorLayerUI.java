@@ -1,7 +1,12 @@
 package org.weasis.core.ui.util;
 
 import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -11,6 +16,8 @@ import javax.swing.Timer;
 
 import org.jdesktop.jxlayer.JXLayer;
 import org.jdesktop.jxlayer.plaf.AbstractLayerUI;
+import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 
 public class ColorLayerUI extends AbstractLayerUI<JComponent> {
 
@@ -38,6 +45,28 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
             return ui;
         }
         return null;
+    }
+
+    public static ColorLayerUI createTransparentLayerUI(Component parent) {
+        if (parent != null) {
+            return createTransparentLayerUI(WinUtil.getRootPaneContainer(parent));
+        }
+        return null;
+    }
+
+    public static void showCenterScreen(Window window, ColorLayerUI layer) {
+        Container container = getContentPane(layer);
+        if (container == null) {
+            JMVUtils.showCenterScreen(window);
+        } else {
+            Dimension sSize = container.getSize();
+            Dimension wSize = window.getSize();
+            Point p = container.getLocationOnScreen();
+            window.setLocation(p.x + ((sSize.width - wSize.width) / 2), p.y + ((sSize.height - wSize.height) / 2));
+            window.setVisible(true);
+
+            layer.hideUI();
+        }
     }
 
     @Override
@@ -93,4 +122,12 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
     public JXLayer<JComponent> getXlayer() {
         return xlayer;
     }
+
+    public static Container getContentPane(ColorLayerUI layer) {
+        if (layer != null && layer.parent != null) {
+            return layer.parent.getRootPane();
+        }
+        return null;
+    }
+
 }

@@ -53,7 +53,6 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.JToogleButtonGroup;
 import org.weasis.core.api.gui.util.TableHeaderRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -189,7 +188,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         transform.add(panel);
 
-        JLabel label = new JLabel(MeasureToolBar.lineGraphic.getUIName() + StringUtil.COLON); 
+        JLabel label = new JLabel(MeasureToolBar.lineGraphic.getUIName() + StringUtil.COLON);
         panel.add(label);
 
         JButton button = new JButton(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
@@ -297,13 +296,10 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         btnGerenralOptions.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(MeasureTool.this));
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MeasureTool.this);
                 PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(MeasureTool.this));
                 dialog.showPage(LABEL_PREF_NAME);
-                JMVUtils.showCenterScreen(dialog);
-                if (layer != null) {
-                    layer.hideUI();
-                }
+                ColorLayerUI.showCenterScreen(dialog, layer);
             }
         });
         transform.add(panel_2);

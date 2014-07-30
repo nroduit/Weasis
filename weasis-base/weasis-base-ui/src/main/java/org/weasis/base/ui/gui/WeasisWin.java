@@ -714,10 +714,7 @@ public class WeasisWin {
             public void actionPerformed(ActionEvent e) {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
                 WeasisAboutBox about = new WeasisAboutBox();
-                JMVUtils.showCenterScreen(about, rootPaneContainer.getRootPane());
-                if (layer != null) {
-                    layer.hideUI();
-                }
+                ColorLayerUI.showCenterScreen(about, layer);
             }
         });
         helpMenuItem.add(aboutMenuItem);

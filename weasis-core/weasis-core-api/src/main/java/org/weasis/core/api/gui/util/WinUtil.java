@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.api.gui.util;
 
-import java.awt.AWTError;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
@@ -24,10 +23,9 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.util.ArrayList;
 
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
+import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
 
 /**
@@ -64,6 +62,18 @@ public abstract class WinUtil {
         for (Container p = c.getParent(); p != null; p = p.getParent()) {
             if (p instanceof Dialog) {
                 return (Dialog) p;
+            }
+        }
+        return null;
+    }
+
+    public static RootPaneContainer getRootPaneContainer(Component c) {
+        if (c instanceof RootPaneContainer) {
+            return (RootPaneContainer) c;
+        }
+        for (Container p = c.getParent(); p != null; p = p.getParent()) {
+            if (p instanceof RootPaneContainer) {
+                return (RootPaneContainer) p;
             }
         }
         return null;
@@ -233,69 +243,6 @@ public abstract class WinUtil {
 
     public static Dimension getScreenSize() {
         return Toolkit.getDefaultToolkit().getScreenSize();
-    }
-
-    public static Component[] searchComponentHierarchy(Component component, Class class1) {
-        ArrayList arraylist = new ArrayList();
-        searchComponentHierarchyImpl(component, class1, arraylist);
-        Component acomponent[] = new Component[arraylist.size()];
-        return (Component[]) arraylist.toArray(acomponent);
-    }
-
-    public static Component searchComponentHierarchy(Component component, Class class1, int i) {
-        Component acomponent[] = searchComponentHierarchy(component, class1);
-        if (acomponent == null || acomponent.length <= i) {
-            return null;
-        } else {
-            return acomponent[i];
-        }
-    }
-
-    public static void searchComponentHierarchyImpl(Component component, Class class1, ArrayList arraylist) {
-        if (class1.isAssignableFrom(component.getClass())) {
-            arraylist.add(component);
-        }
-        if (!(component instanceof Container)) {
-            return;
-        }
-        Container container = (Container) component;
-        int i = container.getComponentCount();
-        for (int j = 0; j < i; j++) {
-            searchComponentHierarchyImpl(container.getComponent(j), class1, arraylist);
-        }
-    }
-
-    public static void makeComponentOrphan(Component component) {
-        if (component != null) {
-            Container container = component.getParent();
-            if (container != null) {
-                container.remove(component);
-            }
-        }
-    }
-
-    public static boolean isBeepEnabled() {
-        return c_beep_allowed;
-    }
-
-    public static void setBeepEnabled(boolean flag) {
-        c_beep_allowed = flag;
-    }
-
-    public static void soundBeep() {
-        if (!isBeepEnabled()) {
-            return;
-        }
-        Object obj = null;
-        try {
-            Toolkit toolkit = Toolkit.getDefaultToolkit();
-            toolkit.beep();
-        } catch (AWTError awterror) {
-        }
-    }
-
-    public static void showMessageDialog(Component component, String s) {
-        JOptionPane.showMessageDialog(component, s);
     }
 
 }
