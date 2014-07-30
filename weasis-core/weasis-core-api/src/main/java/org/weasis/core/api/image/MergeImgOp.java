@@ -22,7 +22,6 @@ import javax.media.jai.operator.CropDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.ImageToolkit;
 
 import com.sun.media.jai.util.ImageUtil;
 
@@ -96,7 +95,7 @@ public class MergeImgOp extends AbstractOp {
         pb.add(false);
         pb.add(CompositeDescriptor.NO_DESTINATION_ALPHA);
 
-        return JAI.create("composite", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+        return JAI.create("composite", pb, null); //$NON-NLS-1$
     }
 
     public static PlanarImage combineTwoImages(RenderedImage sourceDown, RenderedImage sourceUp, PlanarImage alpha1) {
@@ -119,14 +118,14 @@ public class MergeImgOp extends AbstractOp {
         pb.add(false);
         pb.add(CompositeDescriptor.NO_DESTINATION_ALPHA);
 
-        return JAI.create("composite", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+        return JAI.create("composite", pb, null); //$NON-NLS-1$
     }
 
     public static RenderedImage formatIfBinary(RenderedImage src) {
         if (src != null && ImageUtil.isBinary(src.getSampleModel())) {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(src);
-            return JAI.create("formatbinary", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+            return JAI.create("formatbinary", pb, null); //$NON-NLS-1$
         }
         return src;
     }
@@ -137,7 +136,7 @@ public class MergeImgOp extends AbstractOp {
         pb2.addSource(img);
         pb2.addSource(img);
         pb2.addSource(img);
-        return JAI.create("bandMerge", pb2, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+        return JAI.create("bandMerge", pb2, null); //$NON-NLS-1$
     }
 
 }
