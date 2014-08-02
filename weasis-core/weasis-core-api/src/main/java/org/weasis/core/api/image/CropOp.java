@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.util.ImageToolkit;
 
 public class CropOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(CropOp.class);
@@ -52,7 +51,7 @@ public class CropOp extends AbstractOp {
                 pb.addSource(source);
                 pb.add((float) area.x).add((float) area.y);
                 pb.add((float) area.width).add((float) area.height);
-                result = JAI.create("crop", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+                result = JAI.create("crop", pb, null); //$NON-NLS-1$
 
                 if (JMVUtils.getNULLtoFalse(params.get(P_SHIFT_TO_ORIGIN))) {
                     float diffw = source.getMinX() - result.getMinX();
@@ -62,7 +61,7 @@ public class CropOp extends AbstractOp {
                         pb.addSource(result);
                         pb.add(diffw);
                         pb.add(diffh);
-                        result = JAI.create("translate", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+                        result = JAI.create("translate", pb, null); //$NON-NLS-1$
                     }
                 }
             }

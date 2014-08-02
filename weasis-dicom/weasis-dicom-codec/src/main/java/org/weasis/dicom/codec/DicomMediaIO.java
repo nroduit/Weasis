@@ -84,7 +84,6 @@ import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
@@ -783,7 +782,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 ParameterBlock pb = new ParameterBlock();
                 pb.addSource(buffer);
                 // Tile size are set in this operation
-                img = JAI.create("formatbinary", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+                img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
             } else if (buffer.getTileWidth() != ImageFiler.TILESIZE || buffer.getTileHeight() != ImageFiler.TILESIZE) {
                 img = ImageFiler.tileImage(buffer);
             } else {

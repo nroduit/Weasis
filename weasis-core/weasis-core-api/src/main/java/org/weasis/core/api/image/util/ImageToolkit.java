@@ -227,7 +227,7 @@ public class ImageToolkit {
         params.add((float) toWidth); // width
         params.add((float) toHeight); // height
 
-        return JAI.create("crop", params, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+        return JAI.create("crop", params, null); //$NON-NLS-1$
     }
 
     /**
@@ -262,7 +262,7 @@ public class ImageToolkit {
         params.add(new BorderExtenderConstant(fill));// type
         params.add(color); // fill color
 
-        return JAI.create("border", params, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+        return JAI.create("border", params, null); //$NON-NLS-1$
     }
 
     /**
@@ -328,20 +328,20 @@ public class ImageToolkit {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(source);
             pb.add(lookup);
-            result = JAI.create("lookup", pb, ImageToolkit.NOCACHE_HINT); // hints); //$NON-NLS-1$
+            result = JAI.create("lookup", pb, null); // hints); //$NON-NLS-1$
         } else if (datatype == DataBuffer.TYPE_INT || datatype == DataBuffer.TYPE_FLOAT
             || datatype == DataBuffer.TYPE_DOUBLE) {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(source);
             pb.add(new double[] { slope });
             pb.add(new double[] { y_int });
-            result = JAI.create("rescale", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+            result = JAI.create("rescale", pb, null); //$NON-NLS-1$
 
             // produce a byte image
             pb = new ParameterBlock();
             pb.addSource(result);
             pb.add(DataBuffer.TYPE_BYTE);
-            result = JAI.create("format", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+            result = JAI.create("format", pb, null); //$NON-NLS-1$
         }
 
         return result;

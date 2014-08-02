@@ -504,7 +504,7 @@ public class DicomImageElement extends ImageElement {
         ParameterBlock pb = new ParameterBlock();
         pb.addSource(imageSource);
         pb.add(lookup);
-        final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+        final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, null); //$NON-NLS-1$
 
         pb.removeSources();
         pb.removeParameters();
@@ -746,13 +746,13 @@ public class DicomImageElement extends ImageElement {
             pb.addSource(imageSource);
             pb.add(new double[] { slope });
             pb.add(new double[] { y_int });
-            RenderedOp rescale = JAI.create("rescale", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+            RenderedOp rescale = JAI.create("rescale", pb, null); //$NON-NLS-1$
 
             // produce a byte image
             pb = new ParameterBlock();
             pb.addSource(rescale);
             pb.add(DataBuffer.TYPE_BYTE);
-            return JAI.create("format", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+            return JAI.create("format", pb, null); //$NON-NLS-1$
         }
         return null;
     }
