@@ -799,15 +799,16 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     // Serialize overlay (from pixel data)
                     Attributes ds = getDicomObject();
                     int[] overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ds, 0xffff);
-                    byte[][] overlayData = new byte[overlayGroupOffsets.length][];
-                    Raster raster = buffer.getData();
-                    for (int i = 0; i < overlayGroupOffsets.length; i++) {
-                        overlayData[i] = OverlayUtils.extractOverlay(overlayGroupOffsets[i], raster, ds);
-                    }
+
                     if (overlayGroupOffsets.length > 0) {
                         FileOutputStream fileOut = null;
                         ObjectOutput objOut = null;
                         try {
+                            byte[][] overlayData = new byte[overlayGroupOffsets.length][];
+                            Raster raster = buffer.getData();
+                            for (int i = 0; i < overlayGroupOffsets.length; i++) {
+                                overlayData[i] = OverlayUtils.extractOverlay(overlayGroupOffsets[i], raster, ds);
+                            }
                             File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                             fileOut = new FileOutputStream(file);
                             objOut = new ObjectOutputStream(fileOut);

@@ -28,6 +28,11 @@
 package org.weasis.dicom.codec.utils;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.ComponentSampleModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferShort;
+import java.awt.image.DataBufferUShort;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
@@ -149,8 +154,54 @@ public class OverlayUtils {
 
         // Binary size = ((imageSize + 7) / 8 ) + 1 & (-2) = 32769 & (-2) = 1000000000000001 & 1111111111111111110
         byte[] ovlyData = new byte[(((length + 7) >>> 3) + 1) & (~1)];
-        Overlays.extractFromPixeldata(raster, mask, ovlyData, 0, length);
+        extractFromPixeldata(raster, mask, ovlyData, 0, length);
         return ovlyData;
+    }
+
+    public static void extractFromPixeldata(Raster raster, int mask, byte[] ovlyData, int off, int length) {
+        ComponentSampleModel sm = (ComponentSampleModel) raster.getSampleModel();
+        int rows = raster.getHeight();
+        int columns = raster.getWidth();
+        int stride = sm.getScanlineStride();
+        DataBuffer db = raster.getDataBuffer();
+        switch (db.getDataType()) {
+            case DataBuffer.TYPE_BYTE:
+                extractFromPixeldata(((DataBufferByte) db).getData(), rows, columns, stride, mask, ovlyData, off,
+                    length);
+                break;
+            case DataBuffer.TYPE_USHORT:
+                extractFromPixeldata(((DataBufferUShort) db).getData(), rows, columns, stride, mask, ovlyData, off,
+                    length);
+                break;
+            case DataBuffer.TYPE_SHORT:
+                extractFromPixeldata(((DataBufferShort) db).getData(), rows, columns, stride, mask, ovlyData, off,
+                    length);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported DataBuffer type: " + db.getDataType());
+        }
+    }
+
+    private static void extractFromPixeldata(byte[] pixeldata, int rows, int columns, int stride, int mask,
+        byte[] ovlyData, int off, int length) {
+        for (int y = 0, i = off, imax = off + length; y < columns && i < imax; y++) {
+            for (int j = y * stride; j < imax && i < imax; j++, i++) {
+                if ((pixeldata[j] & mask) != 0) {
+                    ovlyData[i >>> 3] |= 1 << (i & 7);
+                }
+            }
+        }
+    }
+
+    private static void extractFromPixeldata(short[] pixeldata, int rows, int columns, int stride, int mask,
+        byte[] ovlyData, int off, int length) {
+        for (int y = 0, i = off, imax = off + length; y < columns && i < imax; y++) {
+            for (int j = y * stride; j < imax && i < imax; j++, i++) {
+                if ((pixeldata[j] & mask) != 0) {
+                    ovlyData[i >>> 3] |= 1 << (i & 7);
+                }
+            }
+        }
     }
 
 }
