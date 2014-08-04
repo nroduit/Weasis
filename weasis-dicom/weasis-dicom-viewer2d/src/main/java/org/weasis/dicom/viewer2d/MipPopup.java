@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -39,8 +40,8 @@ public class MipPopup implements ShowPopup {
             return null;
         }
         final JDialog dialog =
-            new JDialog(SwingUtilities.getWindowAncestor(view),
-                Messages.getString("MipPopup.title"), ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
+                        new JDialog(SwingUtilities.getWindowAncestor(view),
+                            Messages.getString("MipPopup.title"), ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
         dialog.setIconImage(MipView.MIP_ICON_SETTING.getImage());
         final Container panel_1 = dialog.getContentPane();
         panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
@@ -112,10 +113,10 @@ public class MipPopup implements ShowPopup {
         if (sequence instanceof SliderCineListener) {
             SliderCineListener cineAction = (SliderCineListener) sequence;
             final JSliderW frameSliderMin =
-                createSlider(MipView.MIP_MIN_SLICE.getTitle(), 4, true, cineAction.getModel());
+                            createSlider(MipView.MIP_MIN_SLICE.getTitle(), 4, true, cineAction.getModel());
             panel_1.add(frameSliderMin.getParent());
             final JSliderW frameSliderMax =
-                createSlider(MipView.MIP_MAX_SLICE.getTitle(), 4, true, cineAction.getModel());
+                            createSlider(MipView.MIP_MAX_SLICE.getTitle(), 4, true, cineAction.getModel());
             panel_1.add(frameSliderMax.getParent());
             Integer minSlice = (Integer) view.getActionValue(MipView.MIP_MIN_SLICE.cmd());
             frameSliderMin.setValue(minSlice == null ? 1 : minSlice);
@@ -212,8 +213,7 @@ public class MipPopup implements ShowPopup {
         if (invoker instanceof MipView) {
             JDialog dialog = buildDialog((MipView) invoker);
             dialog.pack();
-            dialog.setLocation(x, y);
-            dialog.setVisible(true);
+            JMVUtils.showCenterScreen(dialog, invoker);
         }
     }
 }

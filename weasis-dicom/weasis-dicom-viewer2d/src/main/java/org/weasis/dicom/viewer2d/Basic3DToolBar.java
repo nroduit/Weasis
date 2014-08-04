@@ -71,7 +71,7 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
                             newView2d.applyMipParameters();
                             JDialog dialog = MipPopup.buildDialog(newView2d);
                             dialog.pack();
-                            JMVUtils.showCenterScreen(dialog, newView2d);
+                            JMVUtils.showCenterScreen(dialog, container);
                         }
                     }
                 }
