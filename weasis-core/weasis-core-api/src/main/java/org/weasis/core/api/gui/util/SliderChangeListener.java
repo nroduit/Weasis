@@ -227,7 +227,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     public void updateSliderProoperties(JSliderW slider) {
         JPanel panel = (JPanel) slider.getParent();
 
-        String result = basicState.getActionW().getTitle() + StringUtil.COLON_AND_SPACE + getValueToDisplay(); 
+        String result = basicState.getActionW().getTitle() + StringUtil.COLON_AND_SPACE + getValueToDisplay();
         if (slider.isdisplayValueInTitle() && panel != null && panel.getBorder() instanceof TitledBorder) {
             ((TitledBorder) panel.getBorder()).setTitle(result);
             panel.repaint();
@@ -272,6 +272,13 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
                 } else {
                     dragAccumulator += val;
                 }
+                if (dragAccumulator < getMin()) {
+                    dragAccumulator = getMin();
+                }
+                if (dragAccumulator > getMax()) {
+                    dragAccumulator = getMax();
+                }
+
                 // logger.debug("val:" + val + " accu: " + dragAccumulator);
                 if (val < 0.0) {
                     setValue((int) Math.ceil(dragAccumulator));
