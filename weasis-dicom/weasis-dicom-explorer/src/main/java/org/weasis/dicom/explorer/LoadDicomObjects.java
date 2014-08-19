@@ -149,6 +149,7 @@ public class LoadDicomObjects extends ExplorerTask {
                 if (t == null) {
                     t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
                     dicomSeries.setTag(TagW.Thumbnail, t);
+                    t.repaint();
                 }
 
                 if (DicomModel.isSpecialModality(dicomSeries)) {

@@ -82,7 +82,6 @@ import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -1600,12 +1599,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 if (series.getSeriesLoader() instanceof LoadSeries) {
                     // In case series is downloaded or canceled
                     LoadSeries loader = (LoadSeries) series.getSeriesLoader();
-                    if (loader.isDone()) {
-                        thumb.setProgressBar(null);
-                        thumb.repaint();
-                    } else {
-                        thumb.setProgressBar(loader.getProgressBar());
-                    }
+                    thumb.setProgressBar(loader.isDone() ? null : loader.getProgressBar());
                 }
                 return thumb;
             }
@@ -2047,7 +2041,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                         if (response == 0) {
                             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
-                            DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
+                            DicomImport dialog =
+                                new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
                             dialog.showPage(Messages.getString("DicomDirImport.dicomdir")); //$NON-NLS-1$
                             ColorLayerUI.showCenterScreen(dialog, layer);
                         }

@@ -209,9 +209,9 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 if (thumbnail.getThumbnailPath() == null
                     || dicomSeries.getTagValue(TagW.DirectDownloadThumbnail) != null) {
                     thumbnail.reBuildThumbnail(MediaSeries.MEDIA_POSITION.MIDDLE);
-                    thumbnail.revalidate();
+                } else {
+                    thumbnail.repaint();
                 }
-                thumbnail.repaint();
 
             }
 
@@ -490,12 +490,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                         thumbnail = new SeriesThumbnail(dicomSeries, Thumbnail.DEFAULT_SIZE);
                     }
                     // In case series is downloaded or canceled
-                    if (LoadSeries.this.isDone()) {
-                        thumbnail.setProgressBar(null);
-                        thumbnail.repaint();
-                    } else {
-                        thumbnail.setProgressBar(progressBar);
-                    }
+                    thumbnail.setProgressBar(LoadSeries.this.isDone() ? null : progressBar);
                     thumbnail.registerListeners();
                     addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
                     dicomSeries.setTag(TagW.Thumbnail, thumbnail);
@@ -554,8 +549,6 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                                 SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                                 if (thumbnail != null) {
                                     thumbnail.reBuildThumbnail(finalfile, MediaSeries.MEDIA_POSITION.MIDDLE);
-                                    thumbnail.revalidate();
-                                    thumbnail.repaint();
                                 }
                             }
                         });
@@ -685,7 +678,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         InputStream in = null;
 
         File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-        log.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$ //$NON-NLS-2$
+        log.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$ 
         try {
             out = new BufferedOutputStream(new FileOutputStream(outFile));
             in = httpCon.getInputStream();

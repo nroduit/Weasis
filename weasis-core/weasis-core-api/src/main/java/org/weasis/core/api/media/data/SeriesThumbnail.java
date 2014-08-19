@@ -152,6 +152,8 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
              * explorerModel (stream should be closed at least when closing the application or when free the cache).
              */
             buildThumbnail((MediaElement<?>) media, series.getTagValue(TagW.ExplorerModel) != null);
+            revalidate();
+            repaint();
         }
     }
 

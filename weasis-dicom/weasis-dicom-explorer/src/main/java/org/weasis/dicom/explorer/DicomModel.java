@@ -905,6 +905,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (t == null) {
             t = DicomExplorer.createThumbnail(dicomSeries, this, Thumbnail.DEFAULT_SIZE);
             dicomSeries.setTag(TagW.Thumbnail, t);
+            t.repaint();
         }
         firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, this, null, dicomSeries));
     }
