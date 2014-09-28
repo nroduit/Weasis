@@ -696,7 +696,7 @@ public class SeriesBuilder {
                 * Math.cos(angle) + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);
     }
 
-    private static void removeAllPrivateTags(Attributes item) {
+    private static void removeAllPrivateTags(Attributes item) throws Exception {
         // TODO remove them or skip when reading?
         Visitor visitor = new Visitor() {
 

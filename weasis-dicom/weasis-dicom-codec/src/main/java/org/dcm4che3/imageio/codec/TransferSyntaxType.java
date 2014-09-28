@@ -55,20 +55,27 @@ public enum TransferSyntaxType {
     },
     JPEG_BASELINE {
         @Override
-        public int getMaxBitsStored() { return 8; }
+        public int getMaxBitsStored() {
+            return 8;
+        }
     },
     JPEG_EXTENDED {
         @Override
-        public int getMaxBitsStored() { return 12; }
+        public int getMaxBitsStored() {
+            return 12;
+        }
     },
-    JPEG_LOSSLESS,
-    JPEG_2000 {
+    JPEG_LOSSLESS, JPEG_2000 {
         @Override
-        public boolean canEncodeSigned() { return true; }
+        public boolean canEncodeSigned() {
+            return true;
+        }
     },
     RLE {
         @Override
-        public int getPlanarConfiguration() { return 1; }
+        public int getPlanarConfiguration() {
+            return 1;
+        }
     },
     JPIP {
         @Override
@@ -78,7 +85,9 @@ public enum TransferSyntaxType {
     },
     MPEG {
         @Override
-        public int getMaxBitsStored() { return 8; }
+        public int getMaxBitsStored() {
+            return 8;
+        }
     };
 
     public boolean isPixeldataEncapsulated() {
@@ -97,13 +106,12 @@ public enum TransferSyntaxType {
         return 16;
     }
 
-    private static final HashMap<String, TransferSyntaxType> map =
-            new HashMap<String, TransferSyntaxType>();
+    private static final HashMap<String, TransferSyntaxType> map = new HashMap<String, TransferSyntaxType>();
     static {
         map.put(UID.ImplicitVRLittleEndian, NATIVE);
         map.put(UID.ExplicitVRLittleEndian, NATIVE);
         map.put(UID.DeflatedExplicitVRLittleEndian, NATIVE);
-        map.put(UID.ExplicitVRBigEndian, NATIVE);
+        map.put(UID.ExplicitVRBigEndianRetired, NATIVE);
         map.put(UID.JPEGBaseline1, JPEG_BASELINE);
         map.put(UID.JPEGExtended24, JPEG_EXTENDED);
         map.put(UID.JPEGLosslessNonHierarchical14, JPEG_LOSSLESS);
