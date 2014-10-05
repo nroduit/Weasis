@@ -136,7 +136,6 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
         if (menuRoot != null) {
             menuRoot.removeAll();
-            menuRoot.setText(SRFactory.NAME);
 
             List<Action> actions = getPrintActions();
             if (actions != null) {

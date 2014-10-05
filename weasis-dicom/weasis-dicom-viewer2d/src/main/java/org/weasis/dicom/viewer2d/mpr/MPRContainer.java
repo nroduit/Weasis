@@ -4,7 +4,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -18,7 +17,6 @@ import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 import javax.swing.JProgressBar;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
@@ -36,9 +34,9 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -74,7 +72,6 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
@@ -98,7 +95,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         actions.put(ActionW.PRESET.cmd(), true);
         actions.put(ActionW.LUT_SHAPE.cmd(), true);
         actions.put(ActionW.LUT.cmd(), true);
-        actions.put(ActionW.INVERSELUT.cmd(), true);
+        actions.put(ActionW.INVERT_LUT.cmd(), true);
         actions.put(ActionW.FILTER.cmd(), true);
         DEFAULT_MPR = new SynchView("MPR synch", "mpr", SynchData.Mode.Stack, //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
@@ -176,129 +173,33 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
         if (menuRoot != null) {
             menuRoot.removeAll();
-            menuRoot.setText(View2dFactory.NAME);
 
-            List<Action> actions = getPrintActions();
-            if (actions != null) {
-                JMenu printMenu = new JMenu(Messages.getString("View2dContainer.print")); //$NON-NLS-1$
-                for (Action action : actions) {
-                    JMenuItem item = new JMenuItem(action);
-                    printMenu.add(item);
+            if (eventManager instanceof EventManager) {
+                EventManager manager = (EventManager) eventManager;
+
+                int count = menuRoot.getItemCount();
+
+                JMVUtils.addItemToMenu(menuRoot, manager.getPresetMenu("weasis.pluginMenu.presets"));
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu("weasis.pluginMenu.lutShape"));
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu("weasis.pluginMenu.lut"));
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu("weasis.pluginMenu.invertLut"));
+                JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu("weasis.pluginMenu.filter"));
+
+                if (count < menuRoot.getItemCount()) {
+                    menuRoot.add(new JSeparator());
+                    count = menuRoot.getItemCount();
                 }
-                menuRoot.add(printMenu);
-            }
 
-            // ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
-            // if (viewingAction instanceof ComboItemListener) {
-            // menuRoot.add(((ComboItemListener) viewingAction).createMenu(Messages
-            //                    .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
-            // }
-            // ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-            // if (presetAction instanceof ComboItemListener) {
-            // JMenu menu =
-            // ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
-            //                        .getString("View2dContainer.presets"));//$NON-NLS-1$
-            // for (Component mitem : menu.getMenuComponents()) {
-            // RadioMenuItem ritem = ((RadioMenuItem) mitem);
-            // PresetWindowLevel preset = (PresetWindowLevel) ritem.getObject();
-            // if (preset.getKeyCode() > 0) {
-            // ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
-            // }
-            // }
-            // menuRoot.add(menu);
-            // }
-            // ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
-            // if (lutShapeAction instanceof ComboItemListener) {
-            // menuRoot.add(((ComboItemListener) lutShapeAction).createMenu("LUT_Shape"));
-            // }
-            ActionState lutAction = eventManager.getAction(ActionW.LUT);
-            if (lutAction instanceof ComboItemListener) {
-                JMenu menu =
-                    ((ComboItemListener) lutAction).createUnregisteredRadioMenu(Messages
-                        .getString("View2dContainer.lut")); //$NON-NLS-1$
-                menu.setEnabled(true);
-                ActionState invlutAction = eventManager.getAction(ActionW.INVERSELUT);
-                if (invlutAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) invlutAction).createMenu(Messages
-                        .getString("View2dContainer.inv_lut"))); //$NON-NLS-1$
+                JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu("weasis.pluginMenu.zoom"));
+                JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu("weasis.pluginMenu.orientation"));
+
+                if (count < menuRoot.getItemCount()) {
+                    menuRoot.add(new JSeparator());
+                    count = menuRoot.getItemCount();
                 }
-                menuRoot.add(menu);
+
+                menuRoot.add(manager.getResetMenu("weasis.pluginMenu.reset"));
             }
-            ActionState filterAction = eventManager.getAction(ActionW.FILTER);
-            if (filterAction instanceof ComboItemListener) {
-                JMenu menu =
-                    ((ComboItemListener) filterAction).createUnregisteredRadioMenu(Messages
-                        .getString("View2dContainer.filter")); //$NON-NLS-1$
-                menu.setEnabled(true);
-                menuRoot.add(menu);
-            }
-            ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
-            if (stackAction instanceof ComboItemListener) {
-                JMenu menu =
-                    ((ComboItemListener) stackAction).createUnregisteredRadioMenu(Messages
-                        .getString("View2dContainer.sort_stack")); //$NON-NLS-1$
-                menu.setEnabled(true);
-                ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
-                if (invstackAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) invstackAction).createMenu(Messages
-                        .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
-                }
-                menuRoot.add(menu);
-            }
-            ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-            if (rotateAction instanceof SliderChangeListener) {
-                menuRoot.add(new JSeparator());
-                JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
-                JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-                final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue(0);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() - 90 + 360) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 90) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 180) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                ActionState flipAction = eventManager.getAction(ActionW.FLIP);
-                if (flipAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) flipAction).createMenu(Messages
-                        .getString("View2dContainer.flip_h"))); //$NON-NLS-1$
-                    menuRoot.add(menu);
-                }
-            }
-
-            menuRoot.add(new JSeparator());
-            menuRoot.add(ResetTools.createUnregisteredJMenu());
 
         }
         return menuRoot;

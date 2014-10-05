@@ -58,9 +58,10 @@ public class ActionW {
     public static final ActionW LUT_SHAPE = new ActionW(
         Messages.getString("ActionW.lut_shape"), "lut_shape", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW LUT = new ActionW(Messages.getString("ActionW.lut"), "lut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW INVERSELUT = new ActionW("", "inverseLut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW INVERT_LUT = new ActionW("Invert LUT", "inverseLut", 0, 0, null); //$NON-NLS-2$
     public static final ActionW RESET = new ActionW(Messages.getString("ActionW.Reset"), "reset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW SHOW_HEADER = new ActionW(Messages.getString("ActionW.show_header"), "reset", 0, 0, null);  //$NON-NLS-1$//$NON-NLS-2$
+    public static final ActionW SHOW_HEADER = new ActionW(
+        Messages.getString("ActionW.show_header"), "reset", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW PAN =
         new ActionW(
             Messages.getString("ActionW.pan"), "pan", KeyEvent.VK_T, 0, getCustomCursor("pan.png", Messages.getString("ActionW.pan"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$

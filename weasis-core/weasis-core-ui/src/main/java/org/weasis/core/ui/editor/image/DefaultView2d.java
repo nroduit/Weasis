@@ -1146,7 +1146,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, entry.getValue())) {
                     imageLayer.updateDisplayOperations();
                 }
-            } else if (command.equals(ActionW.INVERSELUT.cmd())) {
+            } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
                 if (manager.setParamValue(WindowOp.OP_NAME, command, entry.getValue())) {
                     manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, entry.getValue());
                     // Update VOI LUT if pixel padding

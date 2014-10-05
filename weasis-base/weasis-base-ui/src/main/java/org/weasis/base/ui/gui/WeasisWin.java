@@ -127,7 +127,14 @@ public class WeasisWin {
 
     private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
     private static final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
-    private static final JMenu menuSelectedPlugin = new JMenu();
+    private static final DynamicMenu menuSelectedPlugin = new DynamicMenu("") {
+
+        @Override
+        public void popupMenuWillBecomeVisible() {
+            buildSelectedPluginMenu(this);
+
+        }
+    };
     private static ViewerPlugin selectedPlugin = null;
 
     private static final WeasisWin instance = new WeasisWin();
@@ -591,7 +598,7 @@ public class WeasisWin {
         }
         selectedPlugin = plugin;
         selectedPlugin.setSelected(true);
-        selectedPlugin.fillSelectedPluginMenu(menuSelectedPlugin);
+        menuSelectedPlugin.setText(selectedPlugin.getName());
 
         List<DockableTool> tool = selectedPlugin.getToolPanel();
         List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
@@ -663,6 +670,8 @@ public class WeasisWin {
         buildMenuView();
         menuBar.add(menuView);
         menuBar.add(menuSelectedPlugin);
+        menuSelectedPlugin.addPopupMenuListener();
+
         final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help")); //$NON-NLS-1$
         final String helpURL = System.getProperty("weasis.help.url"); //$NON-NLS-1$
         if (helpURL != null) {
@@ -742,7 +751,7 @@ public class WeasisWin {
         }
     }
 
-    private void buildToolSubMenu(final JMenu toolMenu) {
+    private static void buildToolSubMenu(final JMenu toolMenu) {
         List<DockableTool> tools = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
         if (tools != null) {
             for (final DockableTool t : tools) {
@@ -849,6 +858,12 @@ public class WeasisWin {
                     }
                 }
             }
+        }
+    }
+
+    private static void buildSelectedPluginMenu(final JMenu selectedPluginMenu) {
+        if (selectedPlugin != null) {
+            selectedPlugin.fillSelectedPluginMenu(selectedPluginMenu);
         }
     }
 

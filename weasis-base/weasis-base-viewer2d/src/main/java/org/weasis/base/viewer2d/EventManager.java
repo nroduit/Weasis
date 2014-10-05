@@ -16,6 +16,13 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JSeparator;
+
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.BackingStoreException;
@@ -49,6 +56,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -62,6 +70,7 @@ import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
@@ -485,5 +494,143 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);
             InsertableUtil.savePreferences(View2dContainer.TOOLS, containerNode, Type.TOOL);
         }
+    }
+
+    public MediaSeries<ImageElement> getSelectedSeries() {
+        DefaultView2d<ImageElement> pane = getSelectedViewPane();
+        if (pane != null) {
+            return pane.getSeries();
+        }
+        return null;
+    }
+
+    public JMenu getResetMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            ButtonGroup group = new ButtonGroup();
+            menu = new JMenu(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$ 
+            menu.setEnabled(getSelectedSeries() != null);
+
+            if (menu.isEnabled()) {
+                for (final ResetTools action : ResetTools.values()) {
+                    final JMenuItem item = new JMenuItem(action.toString());
+                    item.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            reset(action);
+                        }
+                    });
+                    menu.add(item);
+                    group.add(item);
+                }
+            }
+        }
+        return menu;
+    }
+
+    public JMenu getZoomMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = new JMenu(ActionW.ZOOM.getTitle());
+            menu.setIcon(ActionW.ZOOM.getSmallIcon());
+            menu.setEnabled(zoomAction.isActionEnabled());
+
+            if (zoomAction.isActionEnabled()) {
+                for (JMenuItem jMenuItem : ZoomToolBar.getZoomListMenuItems(this)) {
+                    menu.add(jMenuItem);
+                }
+            }
+        }
+        return menu;
+    }
+
+    public JMenu getOrientationMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
+            menu.setIcon(ActionW.ROTATION.getSmallIcon());
+            menu.setEnabled(rotateAction.isActionEnabled());
+
+            if (rotateAction.isActionEnabled()) {
+                JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotateAction.setValue(0);
+                    }
+                });
+                menu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotateAction.setValue((rotateAction.getValue() - 90 + 360) % 360);
+                    }
+                });
+                menu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotateAction.setValue((rotateAction.getValue() + 90) % 360);
+                    }
+                });
+                menu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotateAction.setValue((rotateAction.getValue() + 180) % 360);
+                    }
+                });
+                menu.add(menuItem);
+
+                menu.add(new JSeparator());
+                menu.add(flipAction.createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h"))); //$NON-NLS-1$
+            }
+        }
+        return menu;
+    }
+
+    // public JMenu getSortStackMenu(String prop) {
+    // JMenu menu = null;
+    // if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    //            menu = sortStackAction.createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+    //
+    // menu.add(new JSeparator());
+    // menu.add(inverseStackAction.createUnregiteredJCheckBoxMenuItem(Messages
+    //                .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
+    // }
+    // return menu;
+    // }
+
+    public JMenu getLutMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = lutAction.createUnregisteredRadioMenu(Messages.getString("ImageTool.lut"));//$NON-NLS-1$
+        }
+        return menu;
+    }
+
+    public JCheckBoxMenuItem getLutInverseMenu(String prop) {
+        JCheckBoxMenuItem menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = inverseLutAction.createUnregiteredJCheckBoxMenuItem(ActionW.INVERT_LUT.getTitle());
+        }
+        return menu;
+    }
+
+    public JMenu getFilterMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = filterAction.createUnregisteredRadioMenu(Messages.getString("ImageTool.filter")); //$NON-NLS-1$
+        }
+        return menu;
     }
 }

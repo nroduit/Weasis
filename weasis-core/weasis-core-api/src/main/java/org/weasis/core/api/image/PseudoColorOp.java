@@ -45,7 +45,7 @@ public class PseudoColorOp extends AbstractOp {
      * Boolean value. Default value is false.
      */
 
-    public static final String P_LUT_INVERSE = ActionW.INVERSELUT.cmd();
+    public static final String P_LUT_INVERSE = ActionW.INVERT_LUT.cmd();
 
     public PseudoColorOp() {
         setName(OP_NAME);

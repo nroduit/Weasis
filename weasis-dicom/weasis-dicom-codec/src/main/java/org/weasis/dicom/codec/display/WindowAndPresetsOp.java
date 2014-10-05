@@ -76,7 +76,7 @@ public class WindowAndPresetsOp extends WindowOp {
         setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(pixelPadding));
         setParam(ActionW.LUT_SHAPE.cmd(), p ? preset.getLutShape() : img.getDefaultShape(pixelPadding));
         // node.setParam(ActionW.IMAGE_PIX_PADDING.cmd(), pixelPadding);
-        // node.setParam(ActionW.INVERSELUT.cmd(), false);
+        // node.setParam(ActionW.INVERT_LUT.cmd(), false);
         // node.setParam(WindowOp.P_FILL_OUTSIDE_LUT, false);
     }
 

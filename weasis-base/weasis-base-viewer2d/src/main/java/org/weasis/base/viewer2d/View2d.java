@@ -30,7 +30,6 @@ import java.util.List;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -43,9 +42,8 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
-import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.PseudoColorOp;
@@ -58,6 +56,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -365,6 +364,8 @@ public class View2d extends DefaultView2d<ImageElement> {
                     }
                 }
             }
+
+            int count = popupMenu.getComponentCount();
             if (graphicComplete) {
                 JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_selec")); //$NON-NLS-1$
                 menuItem.addActionListener(new ActionListener() {
@@ -395,8 +396,13 @@ public class View2d extends DefaultView2d<ImageElement> {
                     }
                 });
                 popupMenu.add(menuItem);
-                popupMenu.add(new JSeparator());
             }
+
+            if (count < popupMenu.getComponentCount()) {
+                popupMenu.add(new JSeparator());
+                count = popupMenu.getComponentCount();
+            }
+
             // TODO separate AbstractDragGraphic and ClassGraphic for properties
             final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
             for (Graphic graphic : selected) {
@@ -425,7 +431,10 @@ public class View2d extends DefaultView2d<ImageElement> {
                     }
                 });
                 popupMenu.add(item);
-                popupMenu.add(new JSeparator());
+                if (count < popupMenu.getComponentCount()) {
+                    popupMenu.add(new JSeparator());
+                    count = popupMenu.getComponentCount();
+                }
 
                 if (graphicComplete && graph instanceof LineGraphic) {
 
@@ -449,9 +458,14 @@ public class View2d extends DefaultView2d<ImageElement> {
                         }
                     });
                     popupMenu.add(calibMenu);
-                    popupMenu.add(new JSeparator());
                 }
             }
+
+            if (count < popupMenu.getComponentCount()) {
+                popupMenu.add(new JSeparator());
+                count = popupMenu.getComponentCount();
+            }
+
             if (list.size() > 0) {
                 JMenuItem properties = new JMenuItem(Messages.getString("View2d.prop")); //$NON-NLS-1$
                 properties.addActionListener(new ActionListener() {
@@ -473,6 +487,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             popupMenu.add(itemTitle);
             popupMenu.setLabel(MouseActions.LEFT);
             String action = eventManager.getMouseActions().getLeft();
+            int count = popupMenu.getComponentCount();
 
             ButtonGroup groupButtons = new ButtonGroup();
             ImageViewerPlugin<ImageElement> view = eventManager.getSelectedView2dContainer();
@@ -508,8 +523,14 @@ public class View2d extends DefaultView2d<ImageElement> {
                     }
                 }
             }
-            if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
+
+            if (count < popupMenu.getComponentCount()) {
                 popupMenu.add(new JSeparator());
+                count = popupMenu.getComponentCount();
+            }
+
+            if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
+
                 JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
                 menuItem.addActionListener(new ActionListener() {
 
@@ -550,67 +571,47 @@ public class View2d extends DefaultView2d<ImageElement> {
                 });
                 popupMenu.add(menuItem);
             }
-            ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-            if (rotateAction instanceof SliderChangeListener) {
+
+            if (count < popupMenu.getComponentCount()) {
                 popupMenu.add(new JSeparator());
-                JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
-                JMenuItem menuItem = new JMenuItem(Messages.getString("View2dContainer.reset")); //$NON-NLS-1$
-                final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue(0);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() - 90 + 360) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 90) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.180")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 180) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                ActionState flipAction = eventManager.getAction(ActionW.FLIP);
-                if (flipAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) flipAction).createUnregiteredJCheckBoxMenuItem(Messages
-                        .getString("View2d.flip"))); //$NON-NLS-1$
-                    popupMenu.add(menu);
-                }
+                count = popupMenu.getComponentCount();
             }
 
-            popupMenu.add(new JSeparator());
-            popupMenu.add(ResetTools.createUnregisteredJMenu());
-            JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
-            close.addActionListener(new ActionListener() {
+            if (eventManager instanceof EventManager) {
+                EventManager manager = (EventManager) eventManager;
+                JMVUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
+                JMVUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
+                JMVUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    View2d.this.setSeries(null, null);
+                if (count < popupMenu.getComponentCount()) {
+                    popupMenu.add(new JSeparator());
+                    count = popupMenu.getComponentCount();
                 }
-            });
-            popupMenu.add(close);
+
+                JMVUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
+                JMVUtils.addItemToMenu(popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
+                // JMVUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
+
+                if (count < popupMenu.getComponentCount()) {
+                    popupMenu.add(new JSeparator());
+                    count = popupMenu.getComponentCount();
+                }
+
+                JMVUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
+            }
+
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.contextmenu.close", true)) { //$NON-NLS-1$
+                JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
+                close.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        View2d.this.setSeries(null, null);
+                    }
+                });
+                popupMenu.add(close);
+            }
+
             return popupMenu;
         }
         return null;

@@ -27,41 +27,52 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
 
         final JButton mprButton = new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mpr.png")));//$NON-NLS-1$
         mprButton.setToolTipText(Messages.getString("Basic3DToolBar.mpr")); //$NON-NLS-1$
-        mprButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                EventManager eventManager = EventManager.getInstance();
-                ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
-                if (container instanceof View2dContainer) {
-                    DefaultView2d selView = container.getSelectedImagePane();
-                    if (selView != null) {
-                        MediaSeries s = selView.getSeries();
-                        // Requires at least 5 images to build the MPR views
-                        if (s != null && s.size(null) >= 5) {
-                            DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
-                            if (model instanceof DicomModel) {
-                                ViewerPluginBuilder.openSequenceInPlugin(new MPRFactory(), s, model, false, false);
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        mprButton.addActionListener(getMprAction());
         add(mprButton);
 
         final JButton mipButton = new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mip.png"))); //$NON-NLS-1$
         mipButton.setToolTipText(Messages.getString("Basic3DToolBar.mip")); //$NON-NLS-1$
-        mipButton.addActionListener(new ActionListener() {
+        mipButton.addActionListener(getMipAction());
+        add(mipButton);
+
+        // Attach 3D functions to the SCROLL_SERIES actions
+        ActionState scrollAction = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
+        if (scrollAction != null) {
+            scrollAction.registerActionState(mprButton);
+            scrollAction.registerActionState(mipButton);
+        }
+    }
+
+    public static ActionListener getMprAction() {
+        return new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 EventManager eventManager = EventManager.getInstance();
-                ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
+                MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = eventManager.getSelectedSeries();
+                // Requires at least 5 images to build the MPR views
+                if (s != null && s.size(null) >= 5) {
+                    DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
+                    if (model instanceof DicomModel) {
+                        ViewerPluginBuilder.openSequenceInPlugin(new MPRFactory(), s, model, false, false);
+                    }
+                }
+            }
+        };
+    }
+
+    public static ActionListener getMipAction() {
+        return new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                EventManager eventManager = EventManager.getInstance();
+                ImageViewerPlugin<org.weasis.dicom.codec.DicomImageElement> container =
+                    eventManager.getSelectedView2dContainer();
                 if (container instanceof View2dContainer) {
-                    DefaultView2d selView = container.getSelectedImagePane();
+                    DefaultView2d<org.weasis.dicom.codec.DicomImageElement> selView = container.getSelectedImagePane();
                     if (selView != null) {
-                        MediaSeries s = selView.getSeries();
+                        MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = selView.getSeries();
                         if (s != null && s.size(null) > 2) {
                             container.setSelectedAndGetFocus();
                             MipView newView2d = new MipView(eventManager);
@@ -76,14 +87,6 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
                     }
                 }
             }
-        });
-        add(mipButton);
-
-        // Attach 3D functions to the SCROLL_SERIES actions
-        ActionState scrollAction = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
-        if (scrollAction != null) {
-            scrollAction.registerActionState(mprButton);
-            scrollAction.registerActionState(mipButton);
-        }
+        };
     }
 }

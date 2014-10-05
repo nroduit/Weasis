@@ -227,7 +227,7 @@ public class ImageTool extends PluginTool {
             panel_4.add(lutLabel);
             final JComboBox lutcomboBox = ((ComboItemListener) lutAction).createCombo(140);
             panel_4.add(lutcomboBox);
-            ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERSELUT);
+            ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERT_LUT);
             if (invlutAction instanceof ToggleButtonListener) {
                 panel_4.add(((ToggleButtonListener) invlutAction).createCheckBox(Messages
                     .getString("ImageTool.inverse"))); //$NON-NLS-1$

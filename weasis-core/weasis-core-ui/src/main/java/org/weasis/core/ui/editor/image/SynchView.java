@@ -38,7 +38,7 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.PRESET.cmd(), true);
         actions.put(ActionW.LUT_SHAPE.cmd(), true);
         actions.put(ActionW.LUT.cmd(), true);
-        actions.put(ActionW.INVERSELUT.cmd(), true);
+        actions.put(ActionW.INVERT_LUT.cmd(), true);
         actions.put(ActionW.FILTER.cmd(), true);
         actions.put(ActionW.INVERSESTACK.cmd(), true);
         actions.put(ActionW.SORTSTACK.cmd(), true);

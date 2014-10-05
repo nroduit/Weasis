@@ -704,7 +704,7 @@ public class InfoLayer implements AnnotationsLayer {
         int highInputValue =
             (int) (image.getMaxValue(pixelPadding) > highLevel ? highLevel : image.getMaxValue(pixelPadding));
 
-        final boolean inverseLut = (Boolean) wlOp.getParam(ActionW.INVERSELUT.cmd());
+        final boolean inverseLut = (Boolean) wlOp.getParam(ActionW.INVERT_LUT.cmd());
 
         LutShape lutShape = (LutShape) wlOp.getParam(ActionW.LUT_SHAPE.cmd());
 

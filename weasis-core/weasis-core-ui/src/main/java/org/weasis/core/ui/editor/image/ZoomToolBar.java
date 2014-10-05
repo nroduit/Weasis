@@ -4,6 +4,8 @@ import java.awt.GraphicsConfiguration;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
@@ -61,7 +63,15 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
     private JPopupMenu getZoomPopupMenuButton(DropDownButton dropDownButton,
         final ImageViewerEventManager<E> eventManager) {
         JPopupMenu popupMouseButtons = new JPopupMenu();
+        for (JMenuItem jMenuItem : getZoomListMenuItems(eventManager)) {
+            popupMouseButtons.add(jMenuItem);
+        }
+        return popupMouseButtons;
+    }
 
+    public static List<JMenuItem> getZoomListMenuItems(final ImageViewerEventManager<?> eventManager) {
+
+        List<JMenuItem> list = new ArrayList<JMenuItem>();
         final JMenuItem actualZoomMenu =
             new JMenuItem(
                 Messages.getString("ViewerToolBar.zoom_1"), new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$ //$NON-NLS-2$
@@ -75,9 +85,10 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
                 }
             }
         });
-        popupMouseButtons.add(actualZoomMenu);
+        list.add(actualZoomMenu);
 
-        Window win = SwingUtilities.getWindowAncestor(this);
+        ImageViewerPlugin<?> selCt = eventManager.getSelectedView2dContainer();
+        Window win = selCt == null ? null : SwingUtilities.getWindowAncestor(selCt);
         if (win != null) {
             GraphicsConfiguration config = win.getGraphicsConfiguration();
             Monitor monitor = MeasureTool.viewSetting.getMonitor(config.getDevice());
@@ -99,7 +110,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
                             AuditLog.LOGGER.info("action:{} val:-100.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
                         }
                     });
-                    popupMouseButtons.add(realSizeMenu);
+                    list.add(realSizeMenu);
                 }
             }
         }
@@ -118,7 +129,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
                 AuditLog.LOGGER.info("action:{} val:-200.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
             }
         });
-        popupMouseButtons.add(bestFitMenu);
+        list.add(bestFitMenu);
 
         // final JMenuItem areaZoomMenu =
         // new JMenuItem("Area selection", new ImageIcon(
@@ -130,8 +141,8 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
         //
         // }
         // });
-        // popupMouseButtons.add(areaZoomMenu);
+        // list.add(areaZoomMenu);
 
-        return popupMouseButtons;
+        return list;
     }
 }

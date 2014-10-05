@@ -11,7 +11,6 @@
 package org.weasis.base.viewer2d;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 
@@ -37,12 +35,11 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -163,99 +160,20 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
         if (menuRoot != null) {
             menuRoot.removeAll();
-            menuRoot.setText(ViewerFactory.NAME);
 
-            List<Action> actions = getPrintActions();
-            if (actions != null) {
-                JMenu printMenu = new JMenu(Messages.getString("View2dContainer.print")); //$NON-NLS-1$
-                for (Action action : actions) {
-                    JMenuItem item = new JMenuItem(action);
-                    printMenu.add(item);
-                }
-                menuRoot.add(printMenu);
-            }
-            ActionState lutAction = eventManager.getAction(ActionW.LUT);
-            if (lutAction instanceof ComboItemListener) {
-                JMenu menu =
-                    ((ComboItemListener) lutAction).createUnregisteredRadioMenu(Messages
-                        .getString("View2dContainer.lut")); //$NON-NLS-1$
-                menu.setEnabled(true);
-                ActionState invlutAction = eventManager.getAction(ActionW.INVERSELUT);
-                if (invlutAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) invlutAction).createMenu(Messages
-                        .getString("View2dContainer.inv_lut"))); //$NON-NLS-1$
-                }
-                menuRoot.add(menu);
-            }
-            ActionState filterAction = eventManager.getAction(ActionW.FILTER);
-            if (filterAction instanceof ComboItemListener) {
-                JMenu menu =
-                    ((ComboItemListener) filterAction).createUnregisteredRadioMenu(Messages
-                        .getString("View2dContainer.filter")); //$NON-NLS-1$
-                menu.setEnabled(true);
-                menuRoot.add(menu);
-            }
-            // ActionState stackAction = EventManager.getInstance().getAction(ActionW.SORTSTACK);
-            // if (stackAction instanceof ComboItemListener) {
-            // JMenu menu = ((ComboItemListener) stackAction).createMenu("Sort Stack by");
-            // ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
-            // if (invstackAction instanceof ToggleButtonListener) {
-            // menu.add(new JSeparator());
-            // menu.add(((ToggleButtonListener) invstackAction).createMenu("Inverse Stack"));
-            // }
-            // menuRoot.add(menu);
-            // }
-            ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-            if (rotateAction instanceof SliderChangeListener) {
+            if (eventManager instanceof EventManager) {
+                EventManager manager = (EventManager) eventManager;
+
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu(null));
+                JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu(null));
                 menuRoot.add(new JSeparator());
-                JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
-                JMenuItem menuItem = new JMenuItem(Messages.getString("View2dContainer.reset")); //$NON-NLS-1$
-                final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue(0);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() - 90 + 360) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 90) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.180")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 180) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                ActionState flipAction = eventManager.getAction(ActionW.FLIP);
-                if (flipAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) flipAction).createMenu(Messages.getString("View2dContainer.flip"))); //$NON-NLS-1$
-                    menuRoot.add(menu);
-                }
+                JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
+                JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
+                // JMVUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
+                menuRoot.add(new JSeparator());
+                menuRoot.add(manager.getResetMenu(null));
             }
-            menuRoot.add(new JSeparator());
-            menuRoot.add(ResetTools.createUnregisteredJMenu());
 
         }
         return menuRoot;

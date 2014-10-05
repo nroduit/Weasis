@@ -67,9 +67,9 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
         }
 
         final JToggleButton invertButton = new JToggleButton();
-        invertButton.setToolTipText(Messages.getString("LutToolBar.invert")); //$NON-NLS-1$
+        invertButton.setToolTipText(ActionW.INVERT_LUT.getTitle());
         invertButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/invert.png"))); //$NON-NLS-1$
-        ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERSELUT);
+        ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERT_LUT);
         if (invlutAction instanceof ToggleButtonListener) {
             ((ToggleButtonListener) invlutAction).registerActionState(invertButton);
         }

@@ -33,8 +33,10 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFormattedTextField.AbstractFormatterFactory;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
@@ -516,5 +518,17 @@ public class JMVUtils {
             url = ClassLoader.getSystemResource(resource);
         }
         return url;
+    }
+
+    public static void addItemToMenu(JMenu menu, JMenuItem item) {
+        if (menu != null && item != null) {
+            menu.add(item);
+        }
+    }
+
+    public static void addItemToMenu(JPopupMenu menu, Component item) {
+        if (menu != null && item != null) {
+            menu.add(item);
+        }
     }
 }

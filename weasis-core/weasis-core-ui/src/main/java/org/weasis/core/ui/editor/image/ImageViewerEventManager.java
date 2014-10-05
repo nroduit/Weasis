@@ -348,7 +348,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     }
 
     protected ToggleButtonListener newInverseLutAction() {
-        return new ToggleButtonListener(ActionW.INVERSELUT, false) {
+        return new ToggleButtonListener(ActionW.INVERT_LUT, false) {
 
             @Override
             public void actionPerformed(boolean selected) {

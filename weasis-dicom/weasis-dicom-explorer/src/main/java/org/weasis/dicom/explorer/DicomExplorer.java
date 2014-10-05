@@ -308,13 +308,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     }
 
-    private String getLimiteStringSize(String name, int limit) {
-        if (name.length() > limit) {
-            name = name.substring(0, limit - 2) + "..."; //$NON-NLS-1$
-        }
-        return name;
-    }
-
     public SeriesSelectionModel getSelectionList() {
         return selectionList;
     }

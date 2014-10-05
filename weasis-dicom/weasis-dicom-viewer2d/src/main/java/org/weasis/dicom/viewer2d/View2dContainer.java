@@ -12,7 +12,6 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -27,7 +26,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -44,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
@@ -71,7 +68,6 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -97,7 +93,6 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
-import org.weasis.dicom.viewer2d.mpr.MPRFactory;
 
 public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
@@ -110,12 +105,12 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     public static final GridBagLayoutModel VIEWS_2x1_r1xc2_dump =
-                    new GridBagLayoutModel(
-                        View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), "layout_dump", Messages.getString("View2dContainer.layout_dump"), new ImageIcon( //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            View2dContainer.class.getResource("/icon/22x22/layout1x2_c2.png"))); //$NON-NLS-1$
+        new GridBagLayoutModel(
+            View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), "layout_dump", Messages.getString("View2dContainer.layout_dump"), new ImageIcon( //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                View2dContainer.class.getResource("/icon/22x22/layout1x2_c2.png"))); //$NON-NLS-1$
 
     public static final List<GridBagLayoutModel> LAYOUT_LIST = Collections
-                    .synchronizedList(new ArrayList<GridBagLayoutModel>());
+        .synchronizedList(new ArrayList<GridBagLayoutModel>());
     static {
         LAYOUT_LIST.add(VIEWS_1x1);
         LAYOUT_LIST.add(VIEWS_1x2);
@@ -159,7 +154,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
                 TOOLBARS.add(new ViewerToolBar<DicomImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
-                                BundleTools.SYSTEM_PREFERENCES, 10));
+                    BundleTools.SYSTEM_PREFERENCES, 10));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(MeasureToolBar.class), key, true)) {
@@ -276,177 +271,36 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
         if (menuRoot != null) {
             menuRoot.removeAll();
-            menuRoot.setText(View2dFactory.NAME);
+            if (eventManager instanceof EventManager) {
+                EventManager manager = (EventManager) eventManager;
+                JMenu menu = new JMenu(Messages.getString("View2dContainer.3d")); //$NON-NLS-1$
+                ActionState scrollAction = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
+                menu.setEnabled(manager.getSelectedSeries() != null
+                    && (scrollAction != null && scrollAction.isActionEnabled()));
 
-            List<Action> actions = getPrintActions();
-            if (actions != null) {
-                JMenu printMenu = new JMenu(Messages.getString("View2dContainer.print")); //$NON-NLS-1$
-                for (Action action : actions) {
-                    JMenuItem item = new JMenuItem(action);
-                    printMenu.add(item);
-                }
-                menuRoot.add(printMenu);
-            }
+                if (menu.isEnabled()) {
+                    JMenuItem mpr = new JMenuItem(Messages.getString("View2dContainer.mpr")); //$NON-NLS-1$
+                    mpr.addActionListener(Basic3DToolBar.getMprAction());
+                    menu.add(mpr);
 
-            // ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
-            // if (viewingAction instanceof ComboItemListener) {
-            // menuRoot.add(((ComboItemListener) viewingAction).createMenu(Messages
-            //                    .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
-            // }
-            // ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-            // if (presetAction instanceof ComboItemListener) {
-            // JMenu menu =
-            // ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
-            //                        .getString("View2dContainer.presets"));//$NON-NLS-1$
-            // for (Component mitem : menu.getMenuComponents()) {
-            // RadioMenuItem ritem = ((RadioMenuItem) mitem);
-            // PresetWindowLevel preset = (PresetWindowLevel) ritem.getObject();
-            // if (preset.getKeyCode() > 0) {
-            // ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
-            // }
-            // }
-            // menuRoot.add(menu);
-            // }
-            // ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
-            // if (lutShapeAction instanceof ComboItemListener) {
-            // menuRoot.add(((ComboItemListener) lutShapeAction).createMenu("LUT_Shape"));
-            // }
-            ActionState lutAction = eventManager.getAction(ActionW.LUT);
-            if (lutAction instanceof ComboItemListener) {
-                JMenu menu =
-                                ((ComboItemListener) lutAction).createUnregisteredRadioMenu(Messages
-                                    .getString("View2dContainer.lut")); //$NON-NLS-1$
-                menu.setEnabled(true);
-                ActionState invlutAction = eventManager.getAction(ActionW.INVERSELUT);
-                if (invlutAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) invlutAction).createMenu(Messages
-                        .getString("View2dContainer.inv_lut"))); //$NON-NLS-1$
+                    JMenuItem mip = new JMenuItem(Messages.getString("View2dContainer.mip")); //$NON-NLS-1$
+                    mip.addActionListener(Basic3DToolBar.getMipAction());
+                    menu.add(mip);
                 }
                 menuRoot.add(menu);
-            }
-            ActionState filterAction = eventManager.getAction(ActionW.FILTER);
-            if (filterAction instanceof ComboItemListener) {
-                JMenu menu =
-                                ((ComboItemListener) filterAction).createUnregisteredRadioMenu(Messages
-                                    .getString("View2dContainer.filter")); //$NON-NLS-1$
-                menu.setEnabled(true);
-                menuRoot.add(menu);
-            }
-            ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
-            if (stackAction instanceof ComboItemListener) {
-                JMenu menu =
-                                ((ComboItemListener) stackAction).createUnregisteredRadioMenu(Messages
-                                    .getString("View2dContainer.sort_stack")); //$NON-NLS-1$
-                menu.setEnabled(true);
-                ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
-                if (invstackAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) invstackAction).createMenu(Messages
-                        .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
-                }
-                menuRoot.add(menu);
-            }
-            ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-            if (rotateAction instanceof SliderChangeListener) {
                 menuRoot.add(new JSeparator());
-                JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
-                JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-                final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue(0);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() - 90 + 360) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 90) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 180) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                ActionState flipAction = eventManager.getAction(ActionW.FLIP);
-                if (flipAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) flipAction).createMenu(Messages
-                        .getString("View2dContainer.flip_h"))); //$NON-NLS-1$
-                    menuRoot.add(menu);
-                }
+                JMVUtils.addItemToMenu(menuRoot, manager.getPresetMenu(null));
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu(null));
+                JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu(null));
+                menuRoot.add(new JSeparator());
+                JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
+                JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
+                JMVUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
+                menuRoot.add(new JSeparator());
+                menuRoot.add(manager.getResetMenu(null));
             }
-
-            menuRoot.add(new JSeparator());
-
-            JMenu menu = new JMenu(Messages.getString("View2dContainer.3d")); //$NON-NLS-1$
-            JMenuItem mip = new JMenuItem(Messages.getString("View2dContainer.mip")); //$NON-NLS-1$
-            mip.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DefaultView2d<DicomImageElement> selView = getSelectedImagePane();
-                    if (selView != null) {
-                        MediaSeries<DicomImageElement> s = selView.getSeries();
-                        if (s != null && s.size(null) > 2) {
-                            setSelectedAndGetFocus();
-                            MipView newView2d = new MipView(eventManager);
-                            newView2d.registerDefaultListeners();
-                            newView2d.setMIPSeries(s, null);
-                            replaceView(selView, newView2d);
-                            newView2d.applyMipParameters();
-                            JDialog dialog = MipPopup.buildDialog(newView2d);
-                            dialog.pack();
-                            JMVUtils.showCenterScreen(dialog, View2dContainer.this);
-                        }
-                    }
-                }
-            });
-            menu.add(mip);
-
-            JMenuItem mpr = new JMenuItem(Messages.getString("View2dContainer.mpr")); //$NON-NLS-1$
-            mpr.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DefaultView2d<DicomImageElement> selView = getSelectedImagePane();
-                    if (selView != null) {
-                        MediaSeries<DicomImageElement> s = selView.getSeries();
-                        if (s != null && s.size(null) > 7) {
-                            DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
-                            if (model instanceof DicomModel) {
-                                ViewerPluginBuilder.openSequenceInPlugin(new MPRFactory(), s, model, false, false);
-                            }
-                        }
-                    }
-                }
-            });
-            menu.add(mpr);
-
-            menuRoot.add(menu);
-
-            menuRoot.add(new JSeparator());
-            menuRoot.add(ResetTools.createUnregisteredJMenu());
 
         }
         return menuRoot;
@@ -521,11 +375,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                         SliderCineListener sliceAction = (SliderCineListener) seqAction;
                                         if (param instanceof DicomImageElement) {
                                             Filter<DicomImageElement> filter =
-                                                            (Filter<DicomImageElement>) view2DPane
-                                                            .getActionValue(ActionW.FILTERED_SERIES.cmd());
+                                                (Filter<DicomImageElement>) view2DPane
+                                                    .getActionValue(ActionW.FILTERED_SERIES.cmd());
                                             int imgIndex =
-                                                            series
-                                                            .getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
+                                                series
+                                                    .getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
                                             if (imgIndex < 0) {
                                                 imgIndex = 0;
                                                 // add again the series for registering listeners
@@ -691,7 +545,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     if (koFilterAction instanceof ToggleButtonListener) {
                         if (enableFilter == null) {
                             enableFilter =
-                                            JMVUtils.getNULLtoFalse(selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
+                                JMVUtils.getNULLtoFalse(selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
                         }
                         ((ToggleButtonListener) koFilterAction).setSelected(enableFilter);
                     }
@@ -826,57 +680,57 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         // TODO Add option in properties to deactivate this option
         if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
             AbstractAction importAll =
-                            new AbstractAction(
-                                Messages.getString("View2dContainer.expOsirixMes"), new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) { //$NON-NLS-1$//$NON-NLS-2$
+                new AbstractAction(
+                    Messages.getString("View2dContainer.expOsirixMes"), new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) { //$NON-NLS-1$//$NON-NLS-2$
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    String cmd = "/usr/bin/open -b com.rossetantoine.osirix"; //$NON-NLS-1$
-                    String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
-                    if (baseDir != null) {
-                        String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
-                        if (prop != null) {
-                            String[] dirs = prop.split(","); //$NON-NLS-1$
-                            File[] files = new File[dirs.length];
-                            for (int i = 0; i < files.length; i++) {
-                                File file = new File(baseDir, dirs[i].trim());
-                                if (file.canRead()) {
-                                    cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        String cmd = "/usr/bin/open -b com.rossetantoine.osirix"; //$NON-NLS-1$
+                        String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
+                        if (baseDir != null) {
+                            String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
+                            if (prop != null) {
+                                String[] dirs = prop.split(","); //$NON-NLS-1$
+                                File[] files = new File[dirs.length];
+                                for (int i = 0; i < files.length; i++) {
+                                    File file = new File(baseDir, dirs[i].trim());
+                                    if (file.canRead()) {
+                                        cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+                                    }
                                 }
                             }
+                        } else {
+                            File file = new File(AppProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
+                            if (file.canRead()) {
+                                cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+                            }
                         }
-                    } else {
-                        File file = new File(AppProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
-                        if (file.canRead()) {
-                            cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+                        System.out.println("Execute cmd:" + cmd); //$NON-NLS-1$
+                        try {
+                            Process p = Runtime.getRuntime().exec(cmd);
+                            BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+                            String data;
+                            while ((data = buffer.readLine()) != null) {
+                                System.out.println(data);
+                            }
+                            int val = 0;
+                            if (p.waitFor() != 0) {
+                                val = p.exitValue();
+                            }
+                            if (val != 0) {
+                                JOptionPane.showMessageDialog(View2dContainer.this,
+                                    Messages.getString("View2dContainer.expOsirixTitle"), //$NON-NLS-1$
+                                    Messages.getString("View2dContainer.expOsirixMes"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+                            }
+
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        } catch (InterruptedException e2) {
+                            LOGGER.error("Cannot get the exit status of the open Osirix command: ", e2.getMessage()); //$NON-NLS-1$
                         }
                     }
-                    System.out.println("Execute cmd:" + cmd); //$NON-NLS-1$
-                    try {
-                        Process p = Runtime.getRuntime().exec(cmd);
-                        BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-                        String data;
-                        while ((data = buffer.readLine()) != null) {
-                            System.out.println(data);
-                        }
-                        int val = 0;
-                        if (p.waitFor() != 0) {
-                            val = p.exitValue();
-                        }
-                        if (val != 0) {
-                            JOptionPane.showMessageDialog(View2dContainer.this,
-                                Messages.getString("View2dContainer.expOsirixTitle"), //$NON-NLS-1$
-                                Messages.getString("View2dContainer.expOsirixMes"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
-                        }
-
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    } catch (InterruptedException e2) {
-                        LOGGER.error("Cannot get the exit status of the open Osirix command: ", e2.getMessage()); //$NON-NLS-1$
-                    }
-                }
-            };
+                };
             if (actions == null) {
                 actions = new ArrayList<Action>(1);
             }
@@ -890,16 +744,16 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         ArrayList<Action> actions = new ArrayList<Action>(2);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
         AbstractAction printStd =
-                        new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
+            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                PrintDialog dialog =
-                                new PrintDialog(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
-                ColorLayerUI.showCenterScreen(dialog, layer);
-            }
-        };
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
+                    PrintDialog dialog =
+                        new PrintDialog(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
+                    ColorLayerUI.showCenterScreen(dialog, layer);
+                }
+            };
         actions.add(printStd);
 
         final String title2 = Messages.getString("View2dContainer.dcm_print"); //$NON-NLS-1$
@@ -909,7 +763,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             public void actionPerformed(ActionEvent e) {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
                 DicomPrintDialog dialog =
-                                new DicomPrintDialog(SwingUtilities.getWindowAncestor(View2dContainer.this), title2, eventManager);
+                    new DicomPrintDialog(SwingUtilities.getWindowAncestor(View2dContainer.this), title2, eventManager);
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         };

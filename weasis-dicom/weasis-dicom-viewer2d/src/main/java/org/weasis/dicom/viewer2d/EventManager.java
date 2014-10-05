@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
+import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,7 +23,14 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.BoundedRangeModel;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -40,6 +48,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
@@ -63,6 +72,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.DockableTool;
@@ -81,6 +91,7 @@ import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
@@ -1240,6 +1251,170 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 prefs.node(MPRContainer.class.getSimpleName().toLowerCase()), Type.TOOLBAR);
         }
     }
+
+    public MediaSeries<DicomImageElement> getSelectedSeries() {
+        DefaultView2d<DicomImageElement> pane = getSelectedViewPane();
+        if (pane != null) {
+            return pane.getSeries();
+        }
+        return null;
+    }
+
+    public JMenu getResetMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            ButtonGroup group = new ButtonGroup();
+            menu = new JMenu(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$ 
+            menu.setEnabled(getSelectedSeries() != null);
+
+            if (menu.isEnabled()) {
+                for (final ResetTools action : ResetTools.values()) {
+                    final JMenuItem item = new JMenuItem(action.toString());
+                    item.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            reset(action);
+                        }
+                    });
+                    menu.add(item);
+                    group.add(item);
+                }
+            }
+        }
+        return menu;
+    }
+
+    public JMenu getPresetMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = presetAction.createUnregisteredRadioMenu(Messages.getString("View2dContainer.presets"));//$NON-NLS-1$
+            menu.setIcon(ActionW.WINLEVEL.getSmallIcon());
+            for (Component mitem : menu.getMenuComponents()) {
+                RadioMenuItem ritem = ((RadioMenuItem) mitem);
+                PresetWindowLevel preset = (PresetWindowLevel) ritem.getUserObject();
+                if (preset.getKeyCode() > 0) {
+                    ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
+                }
+            }
+        }
+        return menu;
+    }
+
+    public JMenu getLutShapeMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = lutShapeAction.createUnregisteredRadioMenu(ActionW.LUT_SHAPE.getTitle());
+        }
+        return menu;
+    }
+
+    public JMenu getZoomMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = new JMenu(ActionW.ZOOM.getTitle());
+            menu.setIcon(ActionW.ZOOM.getSmallIcon());
+            menu.setEnabled(zoomAction.isActionEnabled());
+
+            if (zoomAction.isActionEnabled()) {
+                for (JMenuItem jMenuItem : ZoomToolBar.getZoomListMenuItems(this)) {
+                    menu.add(jMenuItem);
+                }
+            }
+        }
+        return menu;
+    }
+
+    public JMenu getOrientationMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
+            menu.setIcon(ActionW.ROTATION.getSmallIcon());
+            menu.setEnabled(rotateAction.isActionEnabled());
+
+            if (rotateAction.isActionEnabled()) {
+                JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotateAction.setValue(0);
+                    }
+                });
+                menu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotateAction.setValue((rotateAction.getValue() - 90 + 360) % 360);
+                    }
+                });
+                menu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotateAction.setValue((rotateAction.getValue() + 90) % 360);
+                    }
+                });
+                menu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotateAction.setValue((rotateAction.getValue() + 180) % 360);
+                    }
+                });
+                menu.add(menuItem);
+
+                menu.add(new JSeparator());
+                menu.add(flipAction.createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h"))); //$NON-NLS-1$
+            }
+        }
+        return menu;
+    }
+
+    public JMenu getSortStackMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = sortStackAction.createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+
+            menu.add(new JSeparator());
+            menu.add(inverseStackAction.createUnregiteredJCheckBoxMenuItem(Messages
+                .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
+        }
+        return menu;
+    }
+
+    public JMenu getLutMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = lutAction.createUnregisteredRadioMenu(Messages.getString("ImageTool.lut"));//$NON-NLS-1$
+        }
+        return menu;
+    }
+
+    public JCheckBoxMenuItem getLutInverseMenu(String prop) {
+        JCheckBoxMenuItem menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = inverseLutAction.createUnregiteredJCheckBoxMenuItem(ActionW.INVERT_LUT.getTitle());
+        }
+        return menu;
+    }
+
+    public JMenu getFilterMenu(String prop) {
+        JMenu menu = null;
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+            menu = filterAction.createUnregisteredRadioMenu(Messages.getString("ImageTool.filter")); //$NON-NLS-1$
+        }
+        return menu;
+    }
+
+    // ***** OSGI commands: dcmview2d:cmd ***** //
 
     public void zoom(String[] argv) throws IOException {
         final String[] usage =
