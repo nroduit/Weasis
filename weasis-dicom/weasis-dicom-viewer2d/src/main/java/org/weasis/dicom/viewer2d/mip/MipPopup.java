@@ -1,4 +1,4 @@
-package org.weasis.dicom.viewer2d;
+package org.weasis.dicom.viewer2d.mip;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -31,17 +31,18 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ShowPopup;
+import org.weasis.dicom.viewer2d.Messages;
 
 public class MipPopup implements ShowPopup {
     private final Logger LOGGER = LoggerFactory.getLogger(MipPopup.class);
 
-    static JDialog buildDialog(final MipView view) {
+    public static JDialog buildDialog(final MipView view) {
         if (view == null) {
             return null;
         }
         final JDialog dialog =
-                        new JDialog(SwingUtilities.getWindowAncestor(view),
-                            Messages.getString("MipPopup.title"), ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
+            new JDialog(SwingUtilities.getWindowAncestor(view),
+                Messages.getString("MipPopup.title"), ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
         dialog.setIconImage(MipView.MIP_ICON_SETTING.getImage());
         final Container panel_1 = dialog.getContentPane();
         panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
@@ -77,7 +78,7 @@ public class MipPopup implements ShowPopup {
                     JRadioButton btn = (JRadioButton) e.getSource();
                     if (btn.isSelected()) {
                         view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MIN);
-                        view.applyMipParameters();
+                        view.buildMip(false);
                     }
                 }
             }
@@ -90,7 +91,7 @@ public class MipPopup implements ShowPopup {
                     JRadioButton btn = (JRadioButton) e.getSource();
                     if (btn.isSelected()) {
                         view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MEAN);
-                        view.applyMipParameters();
+                        view.buildMip(false);
                     }
                 }
             }
@@ -103,7 +104,7 @@ public class MipPopup implements ShowPopup {
                     JRadioButton btn = (JRadioButton) e.getSource();
                     if (btn.isSelected()) {
                         view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MAX);
-                        view.applyMipParameters();
+                        view.buildMip(false);
                     }
                 }
             }
@@ -112,40 +113,39 @@ public class MipPopup implements ShowPopup {
         ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
         if (sequence instanceof SliderCineListener) {
             SliderCineListener cineAction = (SliderCineListener) sequence;
-            final JSliderW frameSliderMin =
-                            createSlider(MipView.MIP_MIN_SLICE.getTitle(), 4, true, cineAction.getModel());
-            panel_1.add(frameSliderMin.getParent());
-            final JSliderW frameSliderMax =
-                            createSlider(MipView.MIP_MAX_SLICE.getTitle(), 4, true, cineAction.getModel());
-            panel_1.add(frameSliderMax.getParent());
-            Integer minSlice = (Integer) view.getActionValue(MipView.MIP_MIN_SLICE.cmd());
-            frameSliderMin.setValue(minSlice == null ? 1 : minSlice);
-            Integer maxSlice = (Integer) view.getActionValue(MipView.MIP_MAX_SLICE.cmd());
-            frameSliderMax.setValue(maxSlice == null ? 15 : maxSlice);
+            final JSliderW frameSlider = cineAction.createSlider(4, true);
+            panel_1.add(frameSlider.getParent());
+            final JSliderW sliderThickness =
+                createSlider(MipView.MIP_THICKNESS.getTitle(), 4, true, cineAction.getModel());
+            panel_1.add(sliderThickness.getParent());
+            Integer extend = (Integer) view.getActionValue(MipView.MIP_THICKNESS.cmd());
+            sliderThickness.setValue(extend == null ? 2 : extend);
+            updateSliderProoperties(sliderThickness, MipView.MIP_THICKNESS.getTitle() + StringUtil.COLON_AND_SPACE
+                + sliderThickness.getValue());
 
-            frameSliderMin.addChangeListener(new ChangeListener() {
+            frameSlider.addChangeListener(new ChangeListener() {
 
                 @Override
                 public void stateChanged(ChangeEvent e) {
                     JSliderW slider = (JSliderW) e.getSource();
-                    updateSliderProoperties(slider, MipView.MIP_MIN_SLICE.getTitle() + StringUtil.COLON_AND_SPACE
-                        + slider.getValue());
+                    // updateSliderProoperties(slider, ActionW.SCROLL_SERIES.getTitle() + StringUtil.COLON_AND_SPACE
+                    // + slider.getValue());
                     if (!slider.getValueIsAdjusting()) {
-                        view.setActionsInView(MipView.MIP_MIN_SLICE.cmd(), slider.getValue());
-                        view.applyMipParameters();
+                        view.setActionsInView(ActionW.SCROLL_SERIES.cmd(), slider.getValue());
+                        view.buildMip(false);
                     }
                 }
             });
-            frameSliderMax.addChangeListener(new ChangeListener() {
+            sliderThickness.addChangeListener(new ChangeListener() {
 
                 @Override
                 public void stateChanged(ChangeEvent e) {
                     JSliderW slider = (JSliderW) e.getSource();
-                    updateSliderProoperties(slider, MipView.MIP_MAX_SLICE.getTitle() + StringUtil.COLON_AND_SPACE
+                    updateSliderProoperties(slider, MipView.MIP_THICKNESS.getTitle() + StringUtil.COLON_AND_SPACE
                         + slider.getValue());
                     if (!slider.getValueIsAdjusting()) {
-                        view.setActionsInView(MipView.MIP_MAX_SLICE.cmd(), slider.getValue());
-                        view.applyMipParameters();
+                        view.setActionsInView(MipView.MIP_THICKNESS.cmd(), slider.getValue());
+                        view.buildMip(false);
                     }
                 }
             });
@@ -156,11 +156,11 @@ public class MipPopup implements ShowPopup {
         panel.setBorder(new EmptyBorder(20, 15, 10, 15));
         dialog.getContentPane().add(panel);
 
-        JButton btnExitMipMode = new JButton(Messages.getString("MipPopup.exit")); //$NON-NLS-1$
+        JButton btnExitMipMode = new JButton("Rebuild Series");
         btnExitMipMode.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                view.exitMipMode(view.getSeries(), null);
+                view.buildMip(true);
                 dialog.dispose();
             }
         });
@@ -173,6 +173,7 @@ public class MipPopup implements ShowPopup {
         btnClose.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                view.exitMipMode(view.getSeries(), null);
                 dialog.dispose();
             }
         });
@@ -186,14 +187,14 @@ public class MipPopup implements ShowPopup {
         final JPanel palenSlider1 = new JPanel();
         palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
         palenSlider1.setBorder(new TitledBorder(title));
-        JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum(), model.getValue());
+        JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum() / 2 + 1, 2);
         slider.setLabelDivision(labelDivision);
         slider.setdisplayValueInTitle(displayValueInTitle);
         slider.setPaintTicks(true);
         palenSlider1.add(slider);
         if (labelDivision > 0) {
             slider.setPaintLabels(true);
-            SliderChangeListener.setSliderLabelValues(slider, model.getMinimum(), model.getMaximum());
+            SliderChangeListener.setSliderLabelValues(slider, slider.getMinimum(), slider.getMaximum());
         }
         return slider;
     }

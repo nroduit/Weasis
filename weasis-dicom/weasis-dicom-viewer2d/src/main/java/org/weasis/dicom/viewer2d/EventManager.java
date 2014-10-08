@@ -103,6 +103,7 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 
@@ -1073,14 +1074,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 }
                 viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
                 addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
-                if (viewPane instanceof MipView) {
-                    // Handle special case with MIP view, do not let scroll the series
-                    moveTroughSliceAction.enableAction(false);
-                    synchView = SynchView.NONE;
-                    synch = synchView.getSynchData();
-                } else {
-                    moveTroughSliceAction.enableAction(true);
-                }
+                // if (viewPane instanceof MipView) {
+                // // Handle special case with MIP view, do not let scroll the series
+                // moveTroughSliceAction.enableAction(false);
+                // synchView = SynchView.NONE;
+                // synch = synchView.getSynchData();
+                // } else {
+                moveTroughSliceAction.enableAction(true);
+                // }
                 final ArrayList<DefaultView2d<DicomImageElement>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);

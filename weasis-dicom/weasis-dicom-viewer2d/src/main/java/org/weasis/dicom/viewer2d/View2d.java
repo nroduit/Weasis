@@ -132,6 +132,7 @@ import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.IntersectSlice;
+import org.weasis.dicom.codec.geometry.IntersectVolume;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -796,8 +797,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         }
                     }
 
+                    // IntersectSlice: display a line representing the center of the slice
                     IntersectSlice slice = new IntersectSlice(sliceGeometry);
-                    // IntersectVolume slice = new IntersectVolume(sliceGeometry);
                     if (firstImage != null) {
                         addCrossline(firstImage, slice, false);
                     }
@@ -805,7 +806,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         addCrossline(lastImage, slice, false);
                     }
                     if (selImage != null) {
-                        addCrossline(selImage, slice, true);
+                        // IntersectVolume: display a rectangle to show the slice thickness
+                        addCrossline(selImage, new IntersectVolume(sliceGeometry), true);
                     }
                     repaint();
                 }

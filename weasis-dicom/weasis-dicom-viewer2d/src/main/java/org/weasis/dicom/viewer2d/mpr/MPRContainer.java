@@ -46,6 +46,8 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -468,12 +470,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
             String title = (String) sequence.getTagValue(TagW.PatientName);
             if (title != null) {
-                if (title.length() > 30) {
-                    this.setToolTipText(title);
-                    title = title.substring(0, 30);
-                    title = title.concat("..."); //$NON-NLS-1$
-                }
-                this.setPluginName(title);
+                this.getDockable().setTitleToolTip(title);
+                this.setPluginName(StringUtil.getTruncatedString(title, 25, Suffix.THREE_PTS));
             }
             view.repaint();
             process = new Thread(Messages.getString("MPRContainer.build")) { //$NON-NLS-1$

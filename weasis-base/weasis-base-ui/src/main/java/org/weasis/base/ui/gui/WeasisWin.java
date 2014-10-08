@@ -82,6 +82,8 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
@@ -429,12 +431,8 @@ public class WeasisWin {
             if (group != null) {
                 title = group.toString();
                 viewer.setGroupID(group);
-                if (title.length() > 30) {
-                    viewer.setToolTipText(title);
-                    title = title.substring(0, 30);
-                    title = title.concat("..."); //$NON-NLS-1$
-                }
-                viewer.setPluginName(title);
+                viewer.getDockable().setTitleToolTip(title);
+                viewer.setPluginName(StringUtil.getTruncatedString(title, 25, Suffix.THREE_PTS));
             }
 
             // Override default plugin icon

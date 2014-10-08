@@ -1,61 +1,60 @@
-package org.weasis.dicom.viewer2d;
+package org.weasis.dicom.viewer2d.mip;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
-import java.awt.image.DataBufferShort;
-import java.awt.image.DataBufferUShort;
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.PlanarImage;
 import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 
 import org.dcm4che3.data.UID;
+import org.dcm4che3.util.UIDUtils;
+import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.MaxCollectionZprojection;
-import org.weasis.core.api.image.op.MeanCollectionZprojection;
-import org.weasis.core.api.image.op.MinCollectionZprojection;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.viewer2d.Messages;
+import org.weasis.dicom.viewer2d.RawImage;
+import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 
 public class MipView extends View2d {
     public static final ImageIcon MIP_ICON_SETTING = new ImageIcon(
         MipView.class.getResource("/icon/22x22/mip-setting.png")); //$NON-NLS-1$
     public static final ActionW MIP = new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW MIP_MIN_SLICE = new ActionW(Messages.getString("MipView.min"), "mip_min", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW MIP_MAX_SLICE = new ActionW(Messages.getString("MipView.max"), "mip_max", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW MIP_THICKNESS = new ActionW("Image Extension", "mip_thick", 0, 0, null); //$NON-NLS-2$
 
     public enum Type {
         MIN, MEAN, MAX;
     };
 
-    private final ViewButton mip_button;
     private final JProgressBar progressBar;
     private volatile Thread process;
 
@@ -63,19 +62,14 @@ public class MipView extends View2d {
         super(eventManager);
         progressBar = new JProgressBar();
         progressBar.setVisible(false);
-        this.mip_button = new ViewButton(new MipPopup(), MIP_ICON_SETTING);
-        mip_button.setVisible(true);
-        // Remove KO buttons
-        getViewButtons().clear();
-        getViewButtons().add(mip_button);
     }
 
     @Override
     protected void initActionWState() {
         super.initActionWState();
         actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
-        actionsInView.put(MIP_MIN_SLICE.cmd(), 1);
-        actionsInView.put(MIP_MAX_SLICE.cmd(), 15);
+        actionsInView.put(MIP_THICKNESS.cmd(), 2);
+        actionsInView.put(MipView.MIP.cmd(), MipView.Type.MAX);
         actionsInView.put("no.ko", true); //$NON-NLS-1$
 
         // Propagate the preset
@@ -84,8 +78,14 @@ public class MipView extends View2d {
         // disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), null);
     }
 
-    public void setMIPSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
-        super.setSeries(series, selectedDicom);
+    public void setMIPSeries(DefaultView2d selView) {
+        if (selView != null) {
+            actionsInView.put(ActionW.SORTSTACK.cmd(), selView.getActionValue(ActionW.SORTSTACK.cmd()));
+            actionsInView.put(ActionW.INVERSESTACK.cmd(), selView.getActionValue(ActionW.INVERSESTACK.cmd()));
+            actionsInView.put(ActionW.FILTERED_SERIES.cmd(), selView.getActionValue(ActionW.FILTERED_SERIES.cmd()));
+            MediaSeries s = selView.getSeries();
+            super.setSeries(s, null);
+        }
     }
 
     @Override
@@ -119,19 +119,14 @@ public class MipView extends View2d {
     public void exitMipMode(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
         // reset current process
         this.setActionsInView(MipView.MIP.cmd(), null);
-        this.setActionsInView(MipView.MIP_MIN_SLICE.cmd(), null);
-        this.setActionsInView(MipView.MIP_MAX_SLICE.cmd(), null);
-        this.applyMipParameters();
-        DicomImageElement img = getImage();
-        if (img != null) {
-            // Close stream
-            img.dispose();
-            // Delete file in cache
-            File file = img.getFile();
-            if (file != null) {
-                file.delete();
-            }
+        this.setActionsInView(MipView.MIP_THICKNESS.cmd(), null);
+        if (process != null) {
+            final Thread t = process;
+            process = null;
+            t.interrupt();
         }
+
+        setMip(null);
 
         ImageViewerPlugin<DicomImageElement> container = this.getEventManager().getSelectedView2dContainer();
         container.setSelectedAndGetFocus();
@@ -141,16 +136,17 @@ public class MipView extends View2d {
         container.replaceView(this, newView2d);
     }
 
-    public void applyMipParameters() {
+    public void buildMip(final boolean fullSeries) {
+
         if (process != null) {
             final Thread t = process;
             process = null;
             t.interrupt();
         }
 
-        final Integer min = (Integer) getActionValue(MIP_MIN_SLICE.cmd());
-        final Integer max = (Integer) getActionValue(MIP_MAX_SLICE.cmd());
-        if (series == null || min == null || max == null) {
+        final Type mipType = (Type) getActionValue(MipView.MIP.cmd());
+        final Integer extend = (Integer) getActionValue(MIP_THICKNESS.cmd());
+        if (series == null || extend == null || mipType == null) {
             return;
         }
         GuiExecutor.instance().invokeAndWait(new Runnable() {
@@ -158,7 +154,123 @@ public class MipView extends View2d {
             @Override
             public void run() {
                 progressBar.setMinimum(0);
-                progressBar.setMaximum(max - min + 1);
+                progressBar.setMaximum(2 * extend + 1);
+                Dimension dim = new Dimension(getWidth() / 2, 30);
+                progressBar.setSize(dim);
+                progressBar.setPreferredSize(dim);
+                progressBar.setMaximumSize(dim);
+                progressBar.setValue(0);
+                progressBar.setStringPainted(true);
+                // Required for Substance l&f
+                progressBar.updateUI();
+                progressBar.setVisible(true);
+                repaint();
+            }
+        });
+
+        process = new Thread(Messages.getString("MipView.build")) { //$NON-NLS-1$
+                @Override
+                public void run() {
+                    final List<DicomImageElement> dicoms = new ArrayList<DicomImageElement>();
+                    try {
+                        SeriesBuilder
+                            .applyMipParameters(progressBar, MipView.this, dicoms, mipType, extend, fullSeries);
+                    } finally {
+                        // Following actions need to be executed in EDT thread
+                        GuiExecutor.instance().execute(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                try {
+                                    if (dicoms.size() == 1) {
+                                        setMip(dicoms.get(0));
+                                    } else if (dicoms.size() > 1) {
+                                        try {
+                                            DicomImageElement dcm = dicoms.get(0);
+                                            Series s =
+                                                new DicomSeries((String) dcm.getTagValue(TagW.SeriesInstanceUID));
+                                            s.addAll(dicoms);
+                                            s.setTag(TagW.FrameOfReferenceUID,
+                                                series.getTagValue(TagW.FrameOfReferenceUID));
+                                            ((DicomMediaIO) series.getMedia(MEDIA_POSITION.MIDDLE, null, null)
+                                                .getMediaReader()).writeMetaData(s);
+                                            DataExplorerModel model =
+                                                (DataExplorerModel) MipView.this.getSeries().getTagValue(
+                                                    TagW.ExplorerModel);
+                                            if (model instanceof DicomModel) {
+                                                DicomModel dicomModel = (DicomModel) model;
+                                                MediaSeriesGroup study = dicomModel.getParent(series, DicomModel.study);
+                                                if (study != null) {
+                                                    s.setTag(TagW.ExplorerModel, dicomModel);
+                                                    dicomModel.addHierarchyNode(study, s);
+                                                    dicomModel.firePropertyChange(new ObservableEvent(
+                                                        ObservableEvent.BasicAction.Add, dicomModel, null, s));
+                                                }
+
+                                                View2dFactory factory = new View2dFactory() {
+                                                    @Override
+                                                    public javax.swing.Icon getIcon() {
+                                                        return new ImageIcon(MipView.class
+                                                            .getResource("/icon/16x16/mip.png"));
+                                                    };
+
+                                                };
+                                                ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false,
+                                                    false);
+                                            }
+                                        } finally {
+                                            MipView.this.exitMipMode(series, null);
+                                        }
+                                    }
+                                } finally {
+                                    progressBar.setVisible(false);
+                                }
+                            }
+                        });
+                    }
+                }
+            };
+        process.start();
+
+    }
+
+    protected void setMip(DicomImageElement dicom) {
+        DicomImageElement oldImage = getImage();
+        if (dicom != null) {
+            // Trick: call super to change the image as "this" method is empty
+            super.setImage(dicom);
+        }
+
+        if (oldImage == null) {
+            eventManager.updateComponentsListener(MipView.this);
+        } else {
+            // Close stream
+            oldImage.dispose();
+            // Delete file in cache
+            File file = oldImage.getFile();
+            if (file != null) {
+                file.delete();
+            }
+        }
+    }
+
+    public void applyMipParameters() {
+        if (process != null) {
+            final Thread t = process;
+            process = null;
+            t.interrupt();
+        }
+
+        final Integer extend = (Integer) getActionValue(MIP_THICKNESS.cmd());
+        if (series == null || extend == null) {
+            return;
+        }
+        GuiExecutor.instance().invokeAndWait(new Runnable() {
+
+            @Override
+            public void run() {
+                progressBar.setMinimum(0);
+                progressBar.setMaximum(2 * extend + 1);
                 Dimension dim = new Dimension(getWidth() / 2, 30);
                 progressBar.setSize(dim);
                 progressBar.setPreferredSize(dim);
@@ -197,55 +309,54 @@ public class MipView extends View2d {
                                 (reverse != null && reverse) ? sort.getReversOrderComparator() : sort;
                             Filter filter = (Filter) imageOperation.getActionValue(ActionW.FILTERED_SERIES.cmd());
                             Iterable<DicomImageElement> medias = series.copyOfMedias(filter, sortFilter);
-                            DicomImageElement firstDcm = null;
+
                             // synchronized (series) {
                             Iterator<DicomImageElement> iter = medias.iterator();
-                            int startIndex = min - 1;
-                            int k = 0;
-                            if (startIndex > 0) {
-                                while (iter.hasNext()) {
-                                    DicomImageElement dcm = iter.next();
-                                    if (k >= startIndex) {
-                                        firstDcm = dcm;
-                                        break;
-                                    }
-                                    k++;
-                                }
-                            } else {
-                                if (iter.hasNext()) {
-                                    firstDcm = iter.next();
-                                }
+                            int curImg = 2;
+                            ActionState sequence = imageOperation.getEventManager().getAction(ActionW.SCROLL_SERIES);
+                            if (sequence instanceof SliderCineListener) {
+                                SliderCineListener cineAction = (SliderCineListener) sequence;
+                                curImg = cineAction.getValue();
+                            }
+
+                            int startIndex = curImg - 1 - extend;
+
+                            if (startIndex < 0) {
+                                startIndex = 0;
                             }
 
                             final List<ImageElement> sources = new ArrayList<ImageElement>();
-                            int stopIndex = max - 1;
-                            if (firstDcm != null) {
-                                sources.add(firstDcm);
-                                while (iter.hasNext()) {
-                                    if (this.isInterrupted()) {
-                                        return;
-                                    }
-                                    DicomImageElement dcm = iter.next();
+                            int stopIndex = curImg - 1 + extend;
+                            int k = 0;
+                            while (iter.hasNext()) {
+                                if (this.isInterrupted()) {
+                                    return;
+                                }
+                                DicomImageElement dcm = iter.next();
+                                if (k >= startIndex) {
                                     // TODO check Pixel size, LUTs if they are different from the first image (if yes
                                     // then
                                     // display
                                     // confirmation message to continue)
                                     sources.add(dcm);
+                                }
 
-                                    if (k >= stopIndex) {
-                                        break;
-                                    }
-                                    k++;
+                                if (k >= stopIndex) {
+                                    break;
                                 }
-                                if (sources.size() > 1) {
-                                    curImage = addCollectionOperation(mipType, sources, MipView.this, progressBar);
-                                } else {
-                                    curImage = null;
-                                }
+                                k++;
                             }
+
+                            if (sources.size() > 2) {
+                                curImage =
+                                    SeriesBuilder.addCollectionOperation(mipType, sources, MipView.this, progressBar);
+                            } else {
+                                curImage = null;
+                            }
+
                             // }
                             final DicomImageElement dicom;
-                            if (curImage != null && firstDcm != null) {
+                            if (curImage != null) {
                                 DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
                                 RawImage raw = null;
                                 try {
@@ -253,7 +364,8 @@ public class MipView extends View2d {
                                         AppProperties.buildAccessibleTempDirectory(
                                             AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
                                     raw = new RawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$);
-                                    writeRasterInRaw(curImage.getAsBufferedImage(), raw.getOutputStream());
+                                    SeriesBuilder
+                                        .writeRasterInRaw(curImage.getAsBufferedImage(), raw.getOutputStream());
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 } finally {
@@ -272,6 +384,13 @@ public class MipView extends View2d {
                                 rawIO.setTag(TagW.TransferSyntaxUID, UID.ImplicitVRLittleEndian);
                                 rawIO.setTag(TagW.Columns, curImage.getWidth());
                                 rawIO.setTag(TagW.Rows, curImage.getHeight());
+
+                                rawIO.setTag(TagW.SliceThickness, SeriesBuilder.getThickness(sources));
+                                double[] loc = (double[]) imgRef.getTagValue(TagW.SlicePosition);
+                                if (loc != null) {
+                                    rawIO.setTag(TagW.SlicePosition, loc);
+                                    rawIO.setTag(TagW.SliceLocation, (float) (loc[0] + loc[1] + loc[2]));
+                                }
 
                                 rawIO.setTag(TagW.SeriesInstanceUID,
                                     "mip." + (String) series.getTagValue(TagW.SubseriesInstanceUID)); //$NON-NLS-1$
@@ -296,7 +415,7 @@ public class MipView extends View2d {
                                 rawIO.copyTags(tagList2, imgRef, false);
 
                                 // Image specific tags
-                                rawIO.setTag(TagW.SOPInstanceUID, "mip.1"); //$NON-NLS-1$
+                                rawIO.setTag(TagW.SOPInstanceUID, UIDUtils.createUID());
                                 rawIO.setTag(TagW.InstanceNumber, 1);
 
                                 dicom = new DicomImageElement(rawIO, 0);
@@ -340,56 +459,6 @@ public class MipView extends View2d {
                 }
             };
         process.start();
-    }
-
-    public static PlanarImage arithmeticOperation(String operation, PlanarImage img1, PlanarImage img2) {
-        ParameterBlockJAI pb2 = new ParameterBlockJAI(operation);
-        pb2.addSource(img1);
-        pb2.addSource(img2);
-        return JAI.create(operation, pb2, ImageToolkit.NOCACHE_HINT);
-    }
-
-    public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources, MipView mipView,
-        JProgressBar progressBar) {
-        if (Type.MIN.equals(mipType)) {
-            MinCollectionZprojection op = new MinCollectionZprojection(sources, mipView, progressBar);
-            return op.computeMinCollectionOpImage();
-        }
-        if (Type.MEAN.equals(mipType)) {
-            MeanCollectionZprojection op = new MeanCollectionZprojection(sources, mipView, progressBar);
-            return op.computeMeanCollectionOpImage();
-        }
-        MaxCollectionZprojection op = new MaxCollectionZprojection(sources, mipView, progressBar);
-        return op.computeMaxCollectionOpImage();
-    }
-
-    private static void writeRasterInRaw(BufferedImage image, OutputStream out) throws IOException {
-        if (out != null && image != null) {
-            DataBuffer dataBuffer = image.getRaster().getDataBuffer();
-            byte[] bytesOut = null;
-            if (dataBuffer instanceof DataBufferByte) {
-                bytesOut = ((DataBufferByte) dataBuffer).getData();
-            } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-                short[] data =
-                    dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                        : ((DataBufferUShort) dataBuffer).getData();
-                bytesOut = new byte[data.length * 2];
-                for (int i = 0; i < data.length; i++) {
-                    bytesOut[i * 2] = (byte) (data[i] & 0xFF);
-                    bytesOut[i * 2 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
-                }
-            } else if (dataBuffer instanceof DataBufferInt) {
-                int[] data = ((DataBufferInt) dataBuffer).getData();
-                bytesOut = new byte[data.length * 4];
-                for (int i = 0; i < data.length; i++) {
-                    bytesOut[i * 4] = (byte) (data[i] & 0xFF);
-                    bytesOut[i * 4 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
-                    bytesOut[i * 4 + 2] = (byte) ((data[i] >>> 16) & 0xFF);
-                    bytesOut[i * 4 + 3] = (byte) ((data[i] >>> 24) & 0xFF);
-                }
-            }
-            out.write(bytesOut);
-        }
     }
 
 }

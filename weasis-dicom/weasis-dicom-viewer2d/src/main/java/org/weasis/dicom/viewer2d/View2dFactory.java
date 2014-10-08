@@ -99,7 +99,7 @@ public class View2dFactory implements SeriesViewerFactory {
                 uid = (String) val;
             }
         }
-        View2dContainer instance = new View2dContainer(model, uid);
+        View2dContainer instance = new View2dContainer(model, uid, getUIName(), getIcon(), null);
         if (properties != null) {
             Object obj = properties.get(DataExplorerModel.class.getName());
             if (obj instanceof DicomModel) {

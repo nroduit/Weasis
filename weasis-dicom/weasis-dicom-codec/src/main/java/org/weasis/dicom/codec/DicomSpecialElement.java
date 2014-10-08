@@ -34,6 +34,8 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class DicomSpecialElement extends MediaElement<PlanarImage> {
@@ -78,7 +80,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
     }
 
     public String getShortLabel() {
-        return label.length() > 50 ? label.substring(0, 47) + "..." : label;//$NON-NLS-1$
+        return StringUtil.getTruncatedString(label, 50, Suffix.THREE_PTS);
     }
 
     public String getLabel() {
@@ -87,8 +89,10 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     @Override
     public String toString() {
-        int length = label.length();
-        return length > 3 ? length > 50 ? label.substring(3, 47) + "..." : label.substring(3, length) : label;//$NON-NLS-1$
+        String modality = (String) getTagValue(TagW.Modality);
+        int prefix = modality == null ? 0 : modality.length() + 1;
+        String l = getShortLabel();
+        return l.length() > prefix ? label.substring(prefix) : l;
     }
 
     @Override

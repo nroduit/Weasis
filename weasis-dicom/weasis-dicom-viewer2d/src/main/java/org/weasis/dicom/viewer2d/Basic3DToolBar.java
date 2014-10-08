@@ -18,6 +18,8 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.viewer2d.mip.MipPopup;
+import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MPRFactory;
 
 public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
@@ -77,11 +79,11 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
                             container.setSelectedAndGetFocus();
                             MipView newView2d = new MipView(eventManager);
                             newView2d.registerDefaultListeners();
-                            newView2d.setMIPSeries(s, null);
+                            newView2d.setMIPSeries(selView);
                             container.replaceView(selView, newView2d);
-                            newView2d.applyMipParameters();
                             JDialog dialog = MipPopup.buildDialog(newView2d);
                             dialog.pack();
+                            newView2d.buildMip(false);
                             JMVUtils.showCenterScreen(dialog, container);
                         }
                     }

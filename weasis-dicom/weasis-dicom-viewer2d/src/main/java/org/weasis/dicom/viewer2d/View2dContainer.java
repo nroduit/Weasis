@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -134,11 +135,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     private static volatile boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
-        this(VIEWS_1x1, null);
+        this(VIEWS_1x1, null, View2dFactory.NAME, View2dFactory.ICON, null);
     }
 
-    public View2dContainer(GridBagLayoutModel layoutModel, String uid) {
-        super(EventManager.getInstance(), layoutModel, uid, View2dFactory.NAME, View2dFactory.ICON, null);
+    public View2dContainer(GridBagLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
+        super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
         setSynchView(SynchView.DEFAULT_STACK);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;

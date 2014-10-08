@@ -77,6 +77,9 @@ public class SeriesBuilder {
     public static final File MPR_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
         AppProperties.FILE_CACHE_DIR.getName(), "mpr"); //$NON-NLS-1$
 
+    private SeriesBuilder() {
+    }
+
     public static void createMissingSeries(Thread thread, MPRContainer mprContainer, final MprView view)
         throws Exception {
         // TODO test images have all the same size and pixel spacing
@@ -236,6 +239,7 @@ public class SeriesBuilder {
                             img =
                                 series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter,
                                     SortSeriesStack.slicePosition);
+                            final Attributes attributes = ((DicomMediaIO) img.getMediaReader()).getDicomObject();
 
                             for (int i = 0; i < 2; i++) {
                                 if (needBuild[i]) {
@@ -267,11 +271,10 @@ public class SeriesBuilder {
                                     final DicomSeries dicomSeries =
                                         buildDicomSeriesFromRaw(secSeries,
                                             new Dimension(i == 0 ? width : height, size), img, viewParams, seriesID,
-                                            origPixSize, sPixSize, geometry, mprView);
-                                    final Attributes attributes =
-                                        ((DicomMediaIO) img.getMediaReader()).getDicomObject();
+                                            origPixSize, sPixSize, geometry, mprView, attributes);
 
                                     if (dicomSeries != null) {
+                                        dicomSeries.setTag(TagW.FrameOfReferenceUID, frUID);
                                         if (study != null && treeModel != null) {
                                             dicomSeries.setTag(TagW.ExplorerModel, model);
                                             treeModel.addHierarchyNode(study, dicomSeries);
@@ -312,14 +315,13 @@ public class SeriesBuilder {
 
     private static DicomSeries buildDicomSeriesFromRaw(final RawImage[] newSeries, Dimension dim,
         DicomImageElement img, ViewParameter params, String seriesID, double origPixSize, double sPixSize,
-        GeometryOfSlice geometry, final MprView view) throws Exception {
+        GeometryOfSlice geometry, final MprView view, final Attributes attributes) throws Exception {
 
         String recSeriesID = seriesID + params.suffix;
         int bitsAllocated = img.getBitsAllocated();
         int bitsStored = img.getBitsStored();
         double[] pixSpacing = new double[] { sPixSize, origPixSize };
 
-        final Attributes attributes = ((DicomMediaIO) img.getMediaReader()).getDicomObject();
         int dataType = 0;
         ColorModel cm = null;
         SampleModel sampleModel = null;
@@ -499,8 +501,6 @@ public class SeriesBuilder {
             // Image specific tags
             int index = i;
             rawIO.setTag(TagW.SOPInstanceUID, UIDUtils.createUID());
-            rawIO.setTag(TagW.FrameOfReferenceUID, params.frameOfReferenceUID);
-
             rawIO.setTag(TagW.InstanceNumber, params.reverseIndexOrder ? last - index : index + 1);
 
             double x =
