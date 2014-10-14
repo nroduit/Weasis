@@ -18,16 +18,19 @@ import java.util.List;
 import javax.media.jai.JAI;
 import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.PlanarImage;
-import javax.swing.JProgressBar;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
+import org.weasis.core.api.gui.task.TaskInterruptionException;
+import org.weasis.core.api.gui.task.TaskMonitor;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.op.MaxCollectionZprojection;
 import org.weasis.core.api.image.op.MeanCollectionZprojection;
@@ -38,8 +41,10 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
@@ -52,12 +57,11 @@ public class SeriesBuilder {
     private SeriesBuilder() {
     }
 
-    // TODO use ProgressMonitor instead JProgressBar
-    public static void applyMipParameters(final JProgressBar progressBar, final View2d view,
-        List<DicomImageElement> dicoms, Type mipType, Integer extend, boolean fullSeries) {
+    public static void applyMipParameters(final TaskMonitor taskMonitor, final View2d view,
+        final MediaSeries<DicomImageElement> series, List<DicomImageElement> dicoms, Type mipType, Integer extend,
+        boolean fullSeries) {
 
         PlanarImage curImage = null;
-        MediaSeries<DicomImageElement> series = view.getSeries();
         if (series != null) {
 
             SeriesComparator sort = (SeriesComparator) view.getActionValue(ActionW.SORTSTACK.cmd());
@@ -65,8 +69,6 @@ public class SeriesBuilder {
             Comparator sortFilter = (reverse != null && reverse) ? sort.getReversOrderComparator() : sort;
             Filter filter = (Filter) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
             Iterable<DicomImageElement> medias = series.copyOfMedias(filter, sortFilter);
-
-            // synchronized (series) {
 
             int curImg = extend - 1;
             ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
@@ -77,19 +79,31 @@ public class SeriesBuilder {
 
             int minImg = fullSeries ? extend : curImg;
             int maxImg = fullSeries ? series.size(filter) - extend : curImg;
-
-            final Attributes cpTags;
             if (fullSeries) {
-                DicomImageElement img = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, sortFilter);
-                final Attributes attributes = ((DicomMediaIO) img.getMediaReader()).getDicomObject();
-                final int[] COPIED_ATTRS =
-                    { Tag.SpecificCharacterSet, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence,
-                        Tag.ReferringPhysicianName, Tag.ModalityLUTSequence, Tag.VOILUTSequence };
-                Arrays.sort(COPIED_ATTRS);
-                cpTags = new Attributes(attributes, COPIED_ATTRS);
-            } else {
-                cpTags = null;
+                taskMonitor.setMaximum(maxImg - minImg);
             }
+
+            DicomImageElement img = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, sortFilter);
+            final Attributes attributes = ((DcmMediaReader) img.getMediaReader()).getDicomObject();
+            final int[] COPIED_ATTRS =
+                { Tag.SpecificCharacterSet, Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate, Tag.PatientBirthTime,
+                    Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence, Tag.PatientWeight,
+                    Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
+
+                    Tag.StudyID, Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments,
+                    Tag.AccessionNumber, Tag.ModalitiesInStudy,
+
+                    Tag.Modality, Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName,
+                    Tag.InstitutionName, Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer,
+                    Tag.ManufacturerModelName, Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined,
+                    Tag.FrameOfReferenceUID, Tag.ModalityLUTSequence, Tag.VOILUTSequence };
+
+            Arrays.sort(COPIED_ATTRS);
+            final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
+            cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MIP]");
+            cpTags.setString(Tag.ImageType, VR.CS, new String[] { "DERIVED", "SECONDARY", "PROJECTION IMAGE" });
+            String imageType = DicomMediaUtils.getStringFromDicomElement(cpTags, Tag.ImageType);
+            String seriesUID = UIDUtils.createUID();
 
             for (int index = minImg; index <= maxImg; index++) {
                 Iterator<DicomImageElement> iter = medias.iterator();
@@ -101,15 +115,8 @@ public class SeriesBuilder {
                 int stopIndex = index + extend;
                 int k = 0;
                 while (iter.hasNext()) {
-                    // if (this.isInterrupted()) {
-                    // return;
-                    // }
                     DicomImageElement dcm = iter.next();
                     if (k >= startIndex) {
-                        // TODO check Pixel size, LUTs if they are different from the first image (if yes
-                        // then
-                        // display
-                        // confirmation message to continue)
                         sources.add(dcm);
                     }
 
@@ -120,15 +127,20 @@ public class SeriesBuilder {
                 }
 
                 if (sources.size() > 1) {
-                    curImage = addCollectionOperation(mipType, sources, view, progressBar);
+                    if (fullSeries) {
+                        taskMonitor.setShowProgression(false);
+                    }
+                    curImage = addCollectionOperation(mipType, sources, taskMonitor);
                 } else {
                     curImage = null;
                 }
 
-                // }
+                if (fullSeries) {
+                    taskMonitor.setShowProgression(true);
+                }
+
                 final DicomImageElement dicom;
                 if (curImage != null) {
-                    String seriesUID = UIDUtils.createUID();
 
                     DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
                     RawImage raw = null;
@@ -148,6 +160,7 @@ public class SeriesBuilder {
                         return;
                     }
                     RawImageIO rawIO = new RawImageIO(raw.getFile().toURI(), null);
+                    rawIO.setBaseAttributes(cpTags);
 
                     // Tags with same values for all the Series
                     rawIO.setTag(TagW.TransferSyntaxUID, UID.ImplicitVRLittleEndian);
@@ -156,7 +169,7 @@ public class SeriesBuilder {
                     rawIO.setTag(TagW.BitsAllocated, imgRef.getBitsAllocated());
                     rawIO.setTag(TagW.BitsStored, imgRef.getBitsStored());
 
-                    rawIO.setTag(TagW.SliceThickness, getThickness(sources));
+                    rawIO.setTag(TagW.SliceThickness, getThickness(sources.get(0), sources.get(sources.size() - 1)));
                     double[] loc = (double[]) imgRef.getTagValue(TagW.SlicePosition);
                     if (loc != null) {
                         rawIO.setTag(TagW.SlicePosition, loc);
@@ -167,14 +180,14 @@ public class SeriesBuilder {
 
                     // Mandatory tags
                     TagW[] mtagList =
-                        { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientSex,
-                            TagW.PatientPseudoUID, TagW.StudyInstanceUID, TagW.StudyID, TagW.SOPClassUID,
-                            TagW.StudyDate, TagW.StudyTime, TagW.AccessionNumber };
+                        { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientPseudoUID,
+                            TagW.StudyInstanceUID, TagW.StudyID, TagW.SOPClassUID, TagW.StudyDate, TagW.StudyTime,
+                            TagW.AccessionNumber };
                     rawIO.copyTags(mtagList, imgRef, true);
 
                     TagW[] tagList =
-                        { TagW.PhotometricInterpretation, TagW.PixelRepresentation, TagW.Units, TagW.ImageType,
-                            TagW.SamplesPerPixel, TagW.MonoChrome, TagW.Modality };
+                        { TagW.PhotometricInterpretation, TagW.PixelRepresentation, TagW.Units, TagW.SamplesPerPixel,
+                            TagW.MonoChrome, TagW.Modality };
                     rawIO.copyTags(tagList, imgRef, true);
 
                     TagW[] tagList2 =
@@ -190,29 +203,44 @@ public class SeriesBuilder {
                     // Image specific tags
                     rawIO.setTag(TagW.SOPInstanceUID, UIDUtils.createUID());
                     rawIO.setTag(TagW.InstanceNumber, index + 1);
+                    rawIO.setTag(TagW.ImageType, imageType);
 
-                    if (cpTags == null) {
-                        dicom = new DicomImageElement(rawIO, 0);
-                    } else {
-                        dicom = new DicomImageElement(rawIO, 0) {
-                            @Override
-                            public boolean saveToFile(File output) {
-                                RawImageIO reader = (RawImageIO) getMediaReader();
-                                return FileUtil.nioCopyFile(reader.getDicomFile(cpTags), output);
-                            }
-                        };
-                    }
+                    dicom = new DicomImageElement(rawIO, 0) {
+                        @Override
+                        public boolean saveToFile(File output) {
+                            RawImageIO reader = (RawImageIO) getMediaReader();
+                            return FileUtil.nioCopyFile(reader.getDicomFile(), output);
+                        }
+                    };
+
                     dicoms.add(dicom);
+
+                    if (taskMonitor != null && taskMonitor.isCanceled()) {
+                        throw new TaskInterruptionException("Rebuilding MIP series has been canceled!");
+                    }
+                    final int progress = index - minImg;
+                    GuiExecutor.instance().execute(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            if (taskMonitor != null) {
+                                taskMonitor.setProgress(progress);
+                                StringBuilder buf = new StringBuilder("Image");
+                                buf.append(StringUtil.COLON_AND_SPACE);
+                                buf.append(progress);
+                                buf.append("/");
+                                buf.append(taskMonitor.getMaximum());
+                                taskMonitor.setNote(buf.toString());
+                            }
+                        }
+                    });
                 }
 
             }
         }
     }
 
-    static double getThickness(List<ImageElement> sources) {
-        ImageElement firstDcm = sources.get(0);
-        ImageElement lastDcm = sources.get(sources.size() - 1);
-
+    static double getThickness(ImageElement firstDcm, ImageElement lastDcm) {
         double[] p1 = (double[]) firstDcm.getTagValue(TagW.SlicePosition);
         double[] p2 = (double[]) lastDcm.getTagValue(TagW.SlicePosition);
         if (p1 != null && p2 != null) {
@@ -230,9 +258,7 @@ public class SeriesBuilder {
 
             return diff;
         }
-
         return 1.0;
-
     }
 
     public static PlanarImage arithmeticOperation(String operation, PlanarImage img1, PlanarImage img2) {
@@ -242,17 +268,17 @@ public class SeriesBuilder {
         return JAI.create(operation, pb2, ImageToolkit.NOCACHE_HINT);
     }
 
-    public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources, View2d view,
-        JProgressBar progressBar) {
+    public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources,
+        final TaskMonitor taskMonitor) {
         if (Type.MIN.equals(mipType)) {
-            MinCollectionZprojection op = new MinCollectionZprojection(sources, view, progressBar);
+            MinCollectionZprojection op = new MinCollectionZprojection(sources, taskMonitor);
             return op.computeMinCollectionOpImage();
         }
         if (Type.MEAN.equals(mipType)) {
-            MeanCollectionZprojection op = new MeanCollectionZprojection(sources, view, progressBar);
+            MeanCollectionZprojection op = new MeanCollectionZprojection(sources, taskMonitor);
             return op.computeMeanCollectionOpImage();
         }
-        MaxCollectionZprojection op = new MaxCollectionZprojection(sources, view, progressBar);
+        MaxCollectionZprojection op = new MaxCollectionZprojection(sources, taskMonitor);
         return op.computeMaxCollectionOpImage();
     }
 

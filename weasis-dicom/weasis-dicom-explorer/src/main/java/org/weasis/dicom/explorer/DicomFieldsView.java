@@ -56,6 +56,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
@@ -182,6 +183,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     printAttribute(metaData.getFileMetaInformation(), listModel);
                     printAttribute(metaData.getAttributes(), listModel);
                 }
+            } else if (loader instanceof DcmMediaReader) {
+                printAttribute(((DcmMediaReader) loader).getDicomObject(), listModel);
             }
         }
 
@@ -296,10 +299,9 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
                 if (dicomView != null) {
                     DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
-                    MediaSeriesGroup study = model.getParent(series, DicomModel.study);
 
                     MediaReader loader = media.getMediaReader();
-                    if (loader instanceof DicomMediaIO) {
+                    if (loader instanceof DcmMediaReader) {
                         writeItems(
                             Messages.getString("DicomFieldsView.pat"), PATIENT, model.getParent(series, DicomModel.patient), doc); //$NON-NLS-1$
                         writeItems(Messages.getString("DicomFieldsView.station"), STATION, series, doc); //$NON-NLS-1$

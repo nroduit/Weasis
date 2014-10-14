@@ -331,7 +331,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
                     if (series != null && val instanceof Point2D.Double) {
                         Point2D.Double p = (Point2D.Double) val;
-                        GeometryOfSlice sliceGeometry = this.getImage().getSliceGeometry();
+                        GeometryOfSlice sliceGeometry = this.getImage().getDispSliceGeometry();
                         String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
                         if (sliceGeometry != null && fruid != null) {
                             Point3d p3 = Double.isNaN(p.x) ? null : sliceGeometry.getPosition(p);
@@ -348,7 +348,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                         if (v instanceof View2d
                                             && fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
                                             if (v != container.getSelectedImagePane()) {
-                                                GeometryOfSlice geometry = v.getImage().getSliceGeometry();
+                                                GeometryOfSlice geometry = v.getImage().getDispSliceGeometry();
                                                 if (geometry != null) {
                                                     Vector3d vn = geometry.getNormal();
                                                     // vn.absolute();
@@ -763,7 +763,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void computeCrosslines(double location) {
         DicomImageElement image = this.getImage();
         if (image != null) {
-            GeometryOfSlice sliceGeometry = image.getSliceGeometry();
+            GeometryOfSlice sliceGeometry = image.getDispSliceGeometry();
             if (sliceGeometry != null) {
                 DefaultView2d<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
                 MediaSeries<DicomImageElement> selSeries = view2DPane == null ? null : view2DPane.getSeries();
@@ -800,14 +800,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     // IntersectSlice: display a line representing the center of the slice
                     IntersectSlice slice = new IntersectSlice(sliceGeometry);
                     if (firstImage != null) {
-                        addCrossline(firstImage, slice, false);
+                        addCrossline(firstImage, image, slice, false);
                     }
                     if (lastImage != null) {
-                        addCrossline(lastImage, slice, false);
+                        addCrossline(lastImage, image, slice, false);
                     }
                     if (selImage != null) {
                         // IntersectVolume: display a rectangle to show the slice thickness
-                        addCrossline(selImage, new IntersectVolume(sliceGeometry), true);
+                        addCrossline(selImage, image, new IntersectVolume(sliceGeometry), true);
                     }
                     repaint();
                 }
@@ -816,12 +816,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     }
 
-    protected void addCrossline(DicomImageElement selImage, LocalizerPoster localizer, boolean fill) {
-        GeometryOfSlice sliceGeometry = selImage.getSliceGeometry();
+    protected void addCrossline(DicomImageElement selImage, DicomImageElement curImage, LocalizerPoster localizer,
+        boolean center) {
+        GeometryOfSlice sliceGeometry = selImage.getDispSliceGeometry();
         if (sliceGeometry != null) {
             List<Point2D.Double> pts = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
             if (pts != null && pts.size() > 0) {
-                Color color = fill ? Color.blue : Color.cyan;
+                Color color = center ? Color.blue : Color.cyan;
                 try {
                     Graphic graphic =
                         pts.size() == 2 ? new LineGraphic(pts.get(0), pts.get(1), 1.0f, color, false)
@@ -936,7 +937,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.CROSSLINES);
         if (image != null && layer != null) {
             layer.deleteAllGraphic();
-            GeometryOfSlice sliceGeometry = image.getSliceGeometry();
+            GeometryOfSlice sliceGeometry = image.getDispSliceGeometry();
             if (sliceGeometry != null) {
                 SliceOrientation sliceOrientation = this.getSliceOrientation();
                 if (sliceOrientation != null && p3 != null) {

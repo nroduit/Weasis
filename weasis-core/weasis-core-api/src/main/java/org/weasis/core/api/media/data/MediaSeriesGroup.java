@@ -11,6 +11,8 @@
 package org.weasis.core.api.media.data;
 
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 public interface MediaSeriesGroup {
 
@@ -34,4 +36,6 @@ public interface MediaSeriesGroup {
     Comparator<TagW> getComparator();
 
     void setTagNoNull(TagW tag, Object value);
+
+    Iterator<Entry<TagW, Object>> getTagEntrySetIterator();
 }

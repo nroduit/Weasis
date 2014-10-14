@@ -104,7 +104,7 @@ import org.weasis.dicom.codec.utils.OverlayUtils;
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.jai.util.ImageUtil;
 
-public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage> {
+public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarImage> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaIO.class);
 

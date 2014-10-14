@@ -23,8 +23,8 @@ import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
@@ -172,8 +172,8 @@ public final class KOManager {
 
     public static Attributes createNewDicomKeyObject(MediaElement<?> dicomMediaElement, Component parentComponent) {
 
-        if (dicomMediaElement != null && dicomMediaElement.getMediaReader() instanceof DicomMediaIO) {
-            Attributes dicomSourceAttribute = ((DicomMediaIO) dicomMediaElement.getMediaReader()).getDicomObject();
+        if (dicomMediaElement != null && dicomMediaElement.getMediaReader() instanceof DcmMediaReader) {
+            Attributes dicomSourceAttribute = ((DcmMediaReader) dicomMediaElement.getMediaReader()).getDicomObject();
 
             String message = Messages.getString("KOManager.ko_desc"); //$NON-NLS-1$
             String defautDescription = Messages.getString("KOManager.ko_name"); //$NON-NLS-1$

@@ -5,7 +5,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
@@ -19,6 +18,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mip.MipPopup;
+import org.weasis.dicom.viewer2d.mip.MipPopup.MipDialog;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MPRFactory;
 
@@ -79,12 +79,14 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
                             container.setSelectedAndGetFocus();
                             MipView newView2d = new MipView(eventManager);
                             newView2d.registerDefaultListeners();
-                            newView2d.setMIPSeries(selView);
+                            newView2d.initMIPSeries(selView);
                             container.replaceView(selView, newView2d);
-                            JDialog dialog = MipPopup.buildDialog(newView2d);
+                            MipDialog dialog = MipPopup.buildDialog(newView2d);
                             dialog.pack();
-                            newView2d.buildMip(false);
+                            MipView.buildMip(dialog, newView2d, false);
+                            dialog.updateThickness();
                             JMVUtils.showCenterScreen(dialog, container);
+
                         }
                     }
                 }

@@ -1,6 +1,5 @@
 package org.weasis.core.api.image.op;
 
-import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -11,43 +10,49 @@ import java.util.List;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RasterAccessor;
 import javax.media.jai.RasterFormatTag;
-import javax.swing.JProgressBar;
 
+import org.weasis.core.api.gui.task.TaskInterruptionException;
+import org.weasis.core.api.gui.task.TaskMonitor;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.util.StringUtil;
 
 public class MinCollectionZprojection {
 
     private final List<ImageElement> sources;
-    private final Component view;
-    private final JProgressBar progressBar;
+    private final TaskMonitor taskMonitor;
 
-    public MinCollectionZprojection(List<ImageElement> sources, Component view, JProgressBar progressBar) {
+    public MinCollectionZprojection(List<ImageElement> sources, final TaskMonitor taskMonitor) {
         if (sources == null) {
             throw new IllegalArgumentException("Sources cannot be null!"); //$NON-NLS-1$
         }
         this.sources = sources;
-        this.view = view;
-        this.progressBar = progressBar;
+        this.taskMonitor = taskMonitor;
     }
 
-    private void incrementProgressBar() {
-        if (progressBar == null) {
+    private void incrementProgressBar(final int progress) {
+        if (taskMonitor == null) {
             return;
         }
-        GuiExecutor.instance().execute(new Runnable() {
+        if (taskMonitor.isCanceled()) {
+            throw new TaskInterruptionException("Operation from " + this.getClass().getName() + " has been canceled");
+        }
+        if (taskMonitor.isShowProgression()) {
+            GuiExecutor.instance().execute(new Runnable() {
 
-            @Override
-            public void run() {
-                if (progressBar != null) {
-                    progressBar.setValue(progressBar.getValue() + 1);
+                @Override
+                public void run() {
+                    taskMonitor.setProgress(progress);
+                    StringBuilder buf = new StringBuilder("Operation");
+                    buf.append(StringUtil.COLON_AND_SPACE);
+                    buf.append(progress);
+                    buf.append("/");
+                    buf.append(taskMonitor.getMaximum());
+                    taskMonitor.setNote(buf.toString());
                 }
-                if (view != null) {
-                    view.repaint();
-                }
-            }
-        });
+            });
+        }
     }
 
     public PlanarImage computeMinCollectionOpImage() {
@@ -146,7 +151,7 @@ public class MinCollectionZprojection {
                     }
                 }
             }
-            incrementProgressBar();
+            incrementProgressBar(i);
         }
     }
 
@@ -201,7 +206,7 @@ public class MinCollectionZprojection {
                     }
                 }
             }
-            incrementProgressBar();
+            incrementProgressBar(i);
         }
     }
 
@@ -255,7 +260,7 @@ public class MinCollectionZprojection {
                     }
                 }
             }
-            incrementProgressBar();
+            incrementProgressBar(i);
         }
     }
 
@@ -309,7 +314,7 @@ public class MinCollectionZprojection {
                     }
                 }
             }
-            incrementProgressBar();
+            incrementProgressBar(i);
         }
     }
 
@@ -363,7 +368,7 @@ public class MinCollectionZprojection {
                     }
                 }
             }
-            incrementProgressBar();
+            incrementProgressBar(i);
         }
     }
 
@@ -417,7 +422,7 @@ public class MinCollectionZprojection {
                     }
                 }
             }
-            incrementProgressBar();
+            incrementProgressBar(i);
         }
     }
 }

@@ -41,7 +41,6 @@ import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
@@ -72,7 +71,7 @@ public class DicomImageElement extends ImageElement {
     private volatile List<PresetWindowLevel> windowingPresetCollection = null;
     private volatile Collection<LutShape> lutShapeCollection = null;
 
-    public DicomImageElement(MediaReader mediaIO, Object key) {
+    public DicomImageElement(DcmMediaReader mediaIO, Object key) {
         super(mediaIO, key);
         String modality = (String) mediaIO.getTagValue(TagW.Modality);
         if (!"SC".equals(modality) && !"OT".equals(modality)) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -785,7 +784,8 @@ public class DicomImageElement extends ImageElement {
             inverseLUT, JMVUtils.getNULLtoFalse(fillLutOutside), JMVUtils.getNULLtoFalse(wlOnColorImage));
     }
 
-    public GeometryOfSlice getSliceGeometry() {
+    public GeometryOfSlice getDispSliceGeometry() {
+        // The geometry is adapted to get square pixel as all the images are displayed with square pixel.
         double[] imgOr = (double[]) getTagValue(TagW.ImageOrientationPatient);
         if (imgOr != null && imgOr.length == 6) {
             double[] pos = (double[]) getTagValue(TagW.ImagePositionPatient);
@@ -803,6 +803,28 @@ public class DicomImageElement extends ImageElement {
                     return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] }, new double[] { imgOr[3],
                         imgOr[4], imgOr[5] }, pos, spacing, sliceTickness, new double[] { rows * getRescaleY(),
                         columns * getRescaleX(), 1 });
+                }
+            }
+        }
+        return null;
+    }
+
+    public GeometryOfSlice getSliceGeometry() {
+        double[] imgOr = (double[]) getTagValue(TagW.ImageOrientationPatient);
+        if (imgOr != null && imgOr.length == 6) {
+            double[] pos = (double[]) getTagValue(TagW.ImagePositionPatient);
+            if (pos != null && pos.length == 3) {
+                Double sliceTickness = (Double) getTagValue(TagW.SliceThickness);
+                if (sliceTickness == null) {
+                    sliceTickness = getPixelSize();
+                }
+                double[] pixSize = getDisplayPixelSize();
+                double[] spacing = { pixSize[0], pixSize[1], sliceTickness };
+                Integer rows = (Integer) getTagValue(TagW.Rows);
+                Integer columns = (Integer) getTagValue(TagW.Columns);
+                if (rows != null && columns != null && rows > 0 && columns > 0) {
+                    return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] }, new double[] { imgOr[3],
+                        imgOr[4], imgOr[5] }, pos, spacing, sliceTickness, new double[] { rows, columns, 1 });
                 }
             }
         }

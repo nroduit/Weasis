@@ -39,17 +39,18 @@ import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.jai.util.ImageUtil;
 
-public class RawImageIO implements MediaReader<PlanarImage> {
+public class RawImageIO implements DcmMediaReader<PlanarImage> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawImageIO.class);
 
     private static final String mimeType = "image/raw"; //$NON-NLS-1$
@@ -62,6 +63,7 @@ public class RawImageIO implements MediaReader<PlanarImage> {
     private final HashMap<TagW, Object> tags;
     private final Codec codec;
     private ImageInputStream imageStream;
+    private Attributes attributes;
 
     public RawImageIO(URI media, Codec codec) {
         if (media == null) {
@@ -70,6 +72,57 @@ public class RawImageIO implements MediaReader<PlanarImage> {
         this.tags = new HashMap<TagW, Object>();
         this.uri = media;
         this.codec = codec;
+    }
+
+    public void setBaseAttributes(Attributes attributes) {
+        this.attributes = attributes;
+    }
+
+    public File getDicomFile() {
+        Attributes dcm = getDicomObject();
+
+        DicomOutputStream out = null;
+        try {
+            File file = new File(uri);
+            BulkData bdl = new BulkData(uri.toString(), 0, (int) file.length(), false);
+            dcm.setValue(Tag.PixelData, VR.OW, bdl);
+            File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
+            out = new DicomOutputStream(tmpFile);
+            out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
+            return tmpFile;
+        } catch (IOException e) {
+            LOGGER.error("Cannot write dicom file: {}", e.getMessage()); //$NON-NLS-1$
+        } finally {
+            FileUtil.safeClose(out);
+        }
+        return null;
+
+    }
+
+    @Override
+    public void writeMetaData(MediaSeriesGroup group) {
+        if (group == null) {
+            return;
+        }
+        // Get the dicom header
+        Attributes header = getDicomObject();
+        DicomMediaUtils.writeMetaData(group, header);
+
+        // Series Group
+        if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
+            // Information for series ToolTips
+            group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
+            group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
+
+            //            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
+            // MediaElement[] elements = getMediaElement();
+            // if (elements != null) {
+            // for (MediaElement m : elements) {
+            // m.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
+            // }
+            // }
+            // }
+        }
     }
 
     @Override
@@ -271,25 +324,11 @@ public class RawImageIO implements MediaReader<PlanarImage> {
         return new ImageTypeSpecifier(cm, sm);
     }
 
-    public File getDicomFile(Attributes cpTags) {
-        Attributes dcm = new Attributes(cpTags);
+    @Override
+    public Attributes getDicomObject() {
+        Attributes dcm = new Attributes();
         DicomMediaUtils.fillAttributes(tags, dcm);
-
-        DicomOutputStream out = null;
-        try {
-            File file = new File(uri);
-            BulkData bdl = new BulkData(uri.toString(), 0, (int) file.length(), false);
-            dcm.setValue(Tag.PixelData, VR.OW, bdl);
-            File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
-            out = new DicomOutputStream(tmpFile);
-            out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
-            return tmpFile;
-        } catch (IOException e) {
-            LOGGER.error("Cannot write dicom file: {}", e.getMessage()); //$NON-NLS-1$
-        } finally {
-            FileUtil.safeClose(out);
-        }
-        return null;
-
+        dcm.addAll(attributes);
+        return dcm;
     }
 }

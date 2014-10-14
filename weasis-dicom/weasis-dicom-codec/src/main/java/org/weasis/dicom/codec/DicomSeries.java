@@ -62,7 +62,7 @@ public class DicomSeries extends Series<DicomImageElement> {
 
     @Override
     public <T extends MediaElement<?>> void addMedia(T media) {
-        if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
+        if (media != null && media.getMediaReader() instanceof DcmMediaReader) {
             if (media instanceof DicomImageElement) {
                 DicomImageElement dcm = (DicomImageElement) media;
                 int insertIndex;

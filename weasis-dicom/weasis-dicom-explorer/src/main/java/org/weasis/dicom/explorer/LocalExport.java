@@ -66,8 +66,8 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.serialize.DefaultSerializer;
+import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.explorer.internal.Activator;
@@ -571,7 +571,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (writer != null) {
             Attributes fmi = null;
             Attributes dataset = null;
-            DicomMediaIO dicomImageLoader = (DicomMediaIO) img.getMediaReader();
+            DcmMediaReader dicomImageLoader = (DcmMediaReader) img.getMediaReader();
             dataset = dicomImageLoader.getDicomObject();
             if (dataset == null) {
                 LOGGER.error("Cannot export DICOM file: ", img.getFile()); //$NON-NLS-1$

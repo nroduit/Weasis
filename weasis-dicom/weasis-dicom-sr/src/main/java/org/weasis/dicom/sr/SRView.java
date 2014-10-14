@@ -49,6 +49,7 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
@@ -281,8 +282,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         DicomSpecialElement dcmElement = DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
         if (dcmElement != null) {
             DicomImageElement dcm = s.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
-            if (dcm != null && dcm.getMediaReader() instanceof DicomMediaIO) {
-                Attributes dicomSourceAttribute = ((DicomMediaIO) dcm.getMediaReader()).getDicomObject();
+            if (dcm != null && dcm.getMediaReader() instanceof DcmMediaReader) {
+                Attributes dicomSourceAttribute = ((DcmMediaReader) dcm.getMediaReader()).getDicomObject();
                 Attributes attributes =
                     DicomMediaUtils.createDicomKeyObject(dicomSourceAttribute, dcmElement.getShortLabel(), null);
                 new LoadDicomObjects(model, attributes).addSelectionAndnotify(); // must be executed in the EDT

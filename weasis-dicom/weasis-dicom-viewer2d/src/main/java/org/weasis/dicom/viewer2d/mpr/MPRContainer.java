@@ -71,6 +71,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
+import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.Messages;
@@ -154,6 +155,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             TOOLBARS.add(new MeasureToolBar(evtMg, 11));
             TOOLBARS.add(new ZoomToolBar(evtMg, 20));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
+            TOOLBARS.add(new DcmHeaderToolBar<DicomImageElement>(35));
             TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
 
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -592,4 +594,5 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     public List<GridBagLayoutModel> getLayoutList() {
         return LAYOUT_LIST;
     }
+
 }

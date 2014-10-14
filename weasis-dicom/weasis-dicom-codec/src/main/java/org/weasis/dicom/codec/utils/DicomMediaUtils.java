@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1541,6 +1542,18 @@ public class DicomMediaUtils {
         }
     }
 
+    public static void fillAttributes(Iterator<Entry<TagW, Object>> iter, Attributes dataset) {
+
+        if (iter != null && dataset != null) {
+            ElementDictionary dic = ElementDictionary.getStandardElementDictionary();
+
+            while (iter.hasNext()) {
+                Entry<TagW, Object> entry = iter.next();
+                fillAttributes(dataset, entry.getKey(), entry.getValue(), dic);
+            }
+        }
+    }
+
     public static void fillAttributes(Attributes dataset, final TagW tag, final Object val, ElementDictionary dic) {
 
         if (dataset != null) {
@@ -1582,7 +1595,7 @@ public class DicomMediaUtils {
                 Sequence sIn = (Sequence) val;
                 Sequence sOut = dataset.newSequence(id, sIn.size());
                 for (Attributes attributes : sIn) {
-                    sOut.add(attributes);
+                    sOut.add(attributes.getParent() == null ? attributes : new Attributes(attributes));
                 }
             }
         }

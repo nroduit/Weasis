@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
-import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -27,11 +26,9 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 
@@ -66,8 +63,6 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -89,7 +84,6 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.explorer.DicomExplorer;
-import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
@@ -643,26 +637,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             e1.printStackTrace();
         }
         return null;
-    }
-
-    public void displayHeader() {
-        DefaultView2d<DicomImageElement> selView = getSelectedImagePane();
-        if (selView != null) {
-            DicomImageElement img = selView.getImage();
-            if (img != null) {
-                JFrame frame = new JFrame(org.weasis.dicom.explorer.Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
-                frame.setSize(500, 630);
-                DicomFieldsView view = new DicomFieldsView();
-                view.changingViewContentEvent(new SeriesViewerEvent(this, selView.getSeries(), img, EVENT.SELECT));
-                JPanel panel = new JPanel();
-                panel.setLayout(new BorderLayout());
-                panel.add(view);
-                frame.getContentPane().add(panel);
-                frame.setAlwaysOnTop(true);
-                JMVUtils.showCenterScreen(frame, View2dContainer.this);
-
-            }
-        }
     }
 
     @Override
