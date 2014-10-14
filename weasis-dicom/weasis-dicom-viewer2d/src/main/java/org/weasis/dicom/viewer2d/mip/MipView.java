@@ -164,14 +164,7 @@ public class MipView extends View2d {
                                                     ObservableEvent.BasicAction.Add, dicomModel, null, s));
                                             }
 
-                                            View2dFactory factory = new View2dFactory() {
-                                                // @Override
-                                                // public javax.swing.Icon getIcon() {
-                                                // return new ImageIcon(MipView.class
-                                                // .getResource("/icon/16x16/mip.png"));
-                                                // };
-
-                                            };
+                                            View2dFactory factory = new View2dFactory();
                                             ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
                                         }
                                     }

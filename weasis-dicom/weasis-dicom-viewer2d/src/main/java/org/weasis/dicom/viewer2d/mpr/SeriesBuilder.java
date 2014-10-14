@@ -291,8 +291,6 @@ public class SeriesBuilder {
                                             @Override
                                             public void run() {
                                                 mprView.setProgressBar(null);
-                                                // Copy tags from original dicom into series
-                                                DicomMediaUtils.writeMetaData(dicomSeries, attributes);
                                                 mprView.setSeries(dicomSeries);
                                                 // Copy the synch values from the main view
                                                 for (String action : MPRContainer.DEFAULT_MPR.getSynchData()
