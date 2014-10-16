@@ -286,19 +286,19 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         DicomImageElement img = getImage();
                         ImageOpNode node = disOp.getNode(WindowOp.OP_NAME);
 
-                        if (img == null || !img.containsPreset(preset)) {
-                            // When series synchronization, do not synch preset from other series
-                            node.setParam(ActionW.PRESET.cmd(), null);
-                        }
                         if (node != null) {
-                            boolean pixelPadding =
-                                JMVUtils.getNULLtoTrue(disOp.getParamValue(WindowOp.OP_NAME,
-                                    ActionW.IMAGE_PIX_PADDING.cmd()));
+                            // boolean pixelPadding =
+                            // JMVUtils.getNULLtoTrue(disOp.getParamValue(WindowOp.OP_NAME,
+                            // ActionW.IMAGE_PIX_PADDING.cmd()));
                             node.setParam(ActionW.WINDOW.cmd(), preset.getWindow());
                             node.setParam(ActionW.LEVEL.cmd(), preset.getLevel());
                             // node.setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pixelPadding));
                             // node.setParam(ActionW.LEVEL_MAX.cmd(), img.getMinValue(pixelPadding));
                             node.setParam(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
+                            // When series synchronization, do not synch preset from other series
+                            // TODO should search to the complete list when PR is applied
+                            node.setParam(ActionW.PRESET.cmd(), (img == null || !img.containsPreset(preset)) ? null
+                                : preset);
                         }
                         imageLayer.updateDisplayOperations();
                     }

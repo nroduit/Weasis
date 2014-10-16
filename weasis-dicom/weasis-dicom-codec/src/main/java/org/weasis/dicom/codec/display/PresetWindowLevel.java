@@ -105,7 +105,7 @@ public class PresetWindowLevel {
     public boolean equals(Object obj) {
         if (obj instanceof PresetWindowLevel) {
             PresetWindowLevel p = (PresetWindowLevel) obj;
-            return window == p.window && level == p.level && name.equals(p.name) && shape.equals(p.shape);
+            return window.equals(p.window) && level.equals(p.level) && name.equals(p.name) && shape.equals(p.shape);
         }
         return false;
     }
