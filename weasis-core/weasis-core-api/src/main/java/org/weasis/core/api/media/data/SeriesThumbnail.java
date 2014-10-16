@@ -101,7 +101,9 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
     }
 
     public void setProgressBar(JProgressBar progressBar) {
-        removeMouseListener(this);
+        if (progressBar == null) {
+            removeMouseListener(this);
+        }
         this.progressBar = progressBar;
     }
 
