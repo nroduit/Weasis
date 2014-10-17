@@ -13,8 +13,10 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.task.TaskMonitor;
+import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -190,6 +192,12 @@ public class MipView extends View2d {
         if (oldImage == null) {
             eventManager.updateComponentsListener(MipView.this);
         } else {
+            // Force to draw crosslines without changing the slice position
+            ActionState sequence = eventManager.getAction(ActionW.SCROLL_SERIES);
+            if (sequence instanceof SliderCineListener) {
+                SliderCineListener cineAction = (SliderCineListener) sequence;
+                cineAction.stateChanged(cineAction.getModel());
+            }
             // Close stream
             oldImage.dispose();
             // Delete file in cache
