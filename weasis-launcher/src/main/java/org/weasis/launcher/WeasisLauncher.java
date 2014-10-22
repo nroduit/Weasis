@@ -450,15 +450,19 @@ public class WeasisLauncher {
                 System.err.println(" * " + b.getSymbolicName() + "-" + b.getVersion().toString() + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     + STATE.valueOf(b.getState()));
             }
-
-            // Set flag to clean cache at next launch
-            File common_file = new File(System.getProperty(P_WEASIS_PATH), APP_PROPERTY_FILE);
-            Properties common_prop = readProperties(common_file);
-            common_prop.setProperty("weasis.clean.cache", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            FileUtil.storeProperties(common_file, common_prop, null);
+            resetBundleCache();
         } finally {
             Runtime.getRuntime().halt(exitStatus);
         }
+    }
+
+    private static void resetBundleCache() {
+        // Set flag to clean cache at next launch
+        File sourceID_props =
+            new File(System.getProperty(P_WEASIS_PATH, ""), System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
+        Properties localSourceProp = readProperties(sourceID_props);
+        localSourceProp.setProperty("weasis.clean.cache", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+        FileUtil.storeProperties(sourceID_props, localSourceProp, null);
     }
 
     private static void showMessage(final WeasisFrame mainFrame, Properties s_prop, final Properties l_prop) {
@@ -979,7 +983,7 @@ public class WeasisLauncher {
         }
 
         Locale locale = textToLocale(lang);
-        if (Locale.ENGLISH.equals(locale)) { //$NON-NLS-1$
+        if (Locale.ENGLISH.equals(locale)) {
             // if English no need to load i18n bundle fragments
             modulesi18n = null;
         } else {
@@ -1089,16 +1093,16 @@ public class WeasisLauncher {
         System.out.println("weasis.look: " + look); //$NON-NLS-1$
 
         File sourceID_props = new File(dir, System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
-        Properties common_prop = readProperties(sourceID_props);
+        Properties localSourceProp = readProperties(sourceID_props);
 
-        String versionOld = common_prop.getProperty(P_WEASIS_VERSION);
+        String versionOld = localSourceProp.getProperty(P_WEASIS_VERSION);
         System.out.println("Last running version: " + versionOld); //$NON-NLS-1$
         if (versionOld != null) {
             s_prop.setProperty("prev." + P_WEASIS_VERSION, versionOld); //$NON-NLS-1$
         }
         String versionNew = s_prop.getProperty(P_WEASIS_VERSION);
         System.out.println("Current version: " + versionNew); //$NON-NLS-1$
-        String cleanCacheAfterCrash = common_prop.getProperty("weasis.clean.cache"); //$NON-NLS-1$
+        String cleanCacheAfterCrash = localSourceProp.getProperty("weasis.clean.cache"); //$NON-NLS-1$
 
         boolean update = false;
         // Loads the resource files
@@ -1111,10 +1115,11 @@ public class WeasisLauncher {
                 cacheDir =
                     new File(dir + File.separator + "data" + File.separator + System.getProperty("weasis.source.id"), //$NON-NLS-1$ //$NON-NLS-2$
                         "resources"); //$NON-NLS-1$
-                String date = FileUtil.writeResources(resPath, cacheDir, common_prop.getProperty(P_WEASIS_RES_DATE));
+                String date =
+                    FileUtil.writeResources(resPath, cacheDir, localSourceProp.getProperty(P_WEASIS_RES_DATE));
                 if (date != null) {
                     update = true;
-                    common_prop.put(P_WEASIS_RES_DATE, date);
+                    localSourceProp.put(P_WEASIS_RES_DATE, date);
                 }
             }
         } catch (Throwable e) {
@@ -1140,7 +1145,7 @@ public class WeasisLauncher {
         if (versionNew != null) {
             // Add also to java properties for the about
             System.setProperty(P_WEASIS_VERSION, versionNew);
-            common_prop.put(P_WEASIS_VERSION, versionNew);
+            localSourceProp.put(P_WEASIS_VERSION, versionNew);
             if (versionOld == null || !versionOld.equals(versionNew)) {
                 update = true;
             }
@@ -1151,7 +1156,7 @@ public class WeasisLauncher {
         boolean cleanCache = Boolean.parseBoolean(s_prop.getProperty("weasis.clean.previous.version")); //$NON-NLS-1$
         if (cleanCacheAfterCrash != null && "true".equals(cleanCacheAfterCrash)) { //$NON-NLS-1$
             s_prop.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
-            common_prop.remove("weasis.clean.cache"); //$NON-NLS-1$
+            localSourceProp.remove("weasis.clean.cache"); //$NON-NLS-1$
             update = true;
             System.out.println("Clean plug-in cache because Weasis has crashed during the previous launch"); //$NON-NLS-1$
         }
@@ -1165,7 +1170,7 @@ public class WeasisLauncher {
         }
 
         if (update) {
-            FileUtil.storeProperties(sourceID_props, common_prop, null);
+            FileUtil.storeProperties(sourceID_props, localSourceProp, null);
         }
         System.out.println("***** End of Configuration *****"); //$NON-NLS-1$
         return loader;
