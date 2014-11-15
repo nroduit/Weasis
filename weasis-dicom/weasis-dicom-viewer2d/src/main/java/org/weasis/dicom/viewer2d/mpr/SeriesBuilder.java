@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.imageio.IIOException;
+import javax.media.jai.Interpolation;
 import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RasterFactory;
@@ -39,7 +40,6 @@ import javax.media.jai.operator.TransposeType;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.vecmath.Point3d;
-import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
 import org.dcm4che3.data.Attributes;
@@ -97,17 +97,18 @@ public class SeriesBuilder {
                         SortSeriesStack.slicePosition) : series.getMedia(MediaSeries.MEDIA_POSITION.LAST, filter,
                         SortSeriesStack.slicePosition);
                 if (img != null && img.getMediaReader() instanceof DcmMediaReader) {
-                    GeometryOfSlice geometry = img.getSliceGeometry();
+                    GeometryOfSlice geometry = img.getDispSliceGeometry();
                     if (geometry != null) {
-                        // abort needs to be final array to be changed on "invoqueAndWhait()" block.
-                        final boolean[] abort = new boolean[] { false, false };
-                        Tuple3d voxelSpacing = geometry.getVoxelSpacing();
-                        if (voxelSpacing.x != voxelSpacing.y) {
-                            confirmMessage(view, Messages.getString("SeriesBuilder.non_square"), abort); //$NON-NLS-1$
-                        }
-
                         int width = (Integer) img.getTagValue(TagW.Columns);
                         int height = (Integer) img.getTagValue(TagW.Rows);
+                        // abort needs to be final array to be changed on "invoqueAndWhait()" block.
+                        final boolean[] abort = new boolean[] { false, false };
+
+                        if (img.getRescaleX() != img.getRescaleY()) {
+                            // confirmMessage(view, Messages.getString("SeriesBuilder.non_square"), abort); //$NON-NLS-1$
+                            width = img.getRescaleWidth(width);
+                            height = img.getRescaleHeight(height);
+                        }
 
                         Float tilt = (Float) img.getTagValue(TagW.GantryDetectorTilt);
                         if (tilt != null && tilt != 0.0f) {
@@ -602,6 +603,14 @@ public class SeriesBuilder {
                 if (image == null) {
                     abort[0] = true;
                     throw new IIOException("Cannot read an image!"); //$NON-NLS-1$
+                }
+
+                if (dcm.getRescaleX() != dcm.getRescaleY()) {
+                    ParameterBlock pb = new ParameterBlock();
+                    pb.addSource(image);
+                    pb.add((float) dcm.getRescaleX()).add((float) dcm.getRescaleY()).add(0.0f).add(0.0f);
+                    pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
+                    image = JAI.create("scale", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
                 }
                 writeRasterInRaw(getImage(image, params.transposeImage), newSeries);
             }
