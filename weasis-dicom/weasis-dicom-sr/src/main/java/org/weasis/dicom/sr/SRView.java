@@ -124,7 +124,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         if (oldsequence == null && newSeries == null) {
             return;
         }
-        if (oldsequence != null && oldsequence.equals(newSeries) && htmlPanel.getText().length() > 5) {
+        if (oldsequence != null && oldsequence.equals(newSeries)) {
             return;
         }
 

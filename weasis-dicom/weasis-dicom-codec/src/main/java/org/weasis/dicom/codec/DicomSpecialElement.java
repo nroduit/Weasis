@@ -42,7 +42,6 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomSpecialElement.class);
 
     protected String label;
-    protected String shortLabel;
 
     public DicomSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO, null);

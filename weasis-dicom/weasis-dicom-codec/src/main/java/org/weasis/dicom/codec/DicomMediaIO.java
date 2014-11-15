@@ -87,7 +87,6 @@ import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -402,17 +401,20 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     private boolean setDicomSpecialType(Attributes header) {
         String modality = header.getString(Tag.Modality);
         if (modality != null) {
+            String encap = header.getString(Tag.MIMETypeOfEncapsulatedDocument);
             DicomSpecialElementFactory factory = DCM_ELEMENT_FACTORIES.get(modality);
             if (factory != null) {
                 mimeType = factory.getSeriesMimeType();
-                return true;
-            } else {
-                String encap = header.getString(Tag.MIMETypeOfEncapsulatedDocument);
-                if (encap != null) {
-                    mimeType = SERIES_ENCAP_DOC_MIMETYPE;
+                // Can be not null for instance by ECG with encapsulated pdf
+                if (encap == null) {
                     return true;
                 }
             }
+            if (encap != null) {
+                mimeType = SERIES_ENCAP_DOC_MIMETYPE;
+                return true;
+            }
+
         }
         return false;
     }
@@ -438,6 +440,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         return tags.get(tag);
     }
 
+    @Override
     public void writeMetaData(MediaSeriesGroup group) {
         if (group == null) {
             return;
@@ -1302,6 +1305,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         this.skipLargePrivate = skipLargePrivate;
     }
 
+    @Override
     public Attributes getDicomObject() {
         try {
             DicomMetaData md = readMetaData(false);

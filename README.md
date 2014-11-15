@@ -2,9 +2,11 @@
 
 The master branch contains Weasis 2. The old branch is 1.2.x.
 
+[General information](http://www.dcm4che.org/confluence/display/WEA/Home)
+
 [How to build Weasis](http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source)
 
-[General information](http://www.dcm4che.org/confluence/display/WEA/Home)
+[Issue Tracker](http://www.dcm4che.org/jira/browse/WEA)
 
 ## Weasis 2.0 ##
 
@@ -19,9 +21,10 @@ The master branch contains Weasis 2. The old branch is 1.2.x.
 * [API for building custom plug-ins](http://www.dcm4che.org/confluence/display/WEA/How+to+build+and+install+a+plug-in)
 
 ### Viewer Features: ###
-* View all kinds of DICOM files (including multiframe, enhanced, MPEG-2, MPEG-4, MIME Encapsulation, SR, PR, KOS, ECG)
+* Display all kinds of DICOM files (including multiframe, enhanced, MPEG-2, MPEG-4, MIME Encapsulation, SR, PR, KOS, ECG and AU)
 * Viewer for common image formats (TIFF, BMP, FlashPiX, GIF, JPEG, PNG, and PNM)
 * Image manipulation (pan, zoom, windowing, presets, rotation, flip, scroll, crosshair, filtering...)
+* Optimal performance for handling large images since there is no need to load the whole image data in memory at once (Uncompressed images, tiled TIFF, tiled jpeg2000 and tiled FlashPiX).
 * Layouts for comparing series or studies
 * Advanced series synchronization options
 * Display Presentation States (GSPS) and Key Object Selection
