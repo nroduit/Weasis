@@ -8,6 +8,7 @@ import javax.swing.JButton;
 
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.dicom.explorer.DicomFieldsView;
 
 public class SrToolBar<DicomImageElement> extends WtoolBar {
 
@@ -38,7 +39,7 @@ public class SrToolBar<DicomImageElement> extends WtoolBar {
             public void actionPerformed(ActionEvent e) {
                 ImageViewerPlugin<?> container = SRContainer.SR_EVENT_MANAGER.getSelectedView2dContainer();
                 if (container instanceof SRContainer) {
-                    ((SRContainer) container).displayHeader();
+                    DicomFieldsView.displayHeaderForSpecialElement(container, ((SRContainer) container).getSeries());
                 }
             }
         });

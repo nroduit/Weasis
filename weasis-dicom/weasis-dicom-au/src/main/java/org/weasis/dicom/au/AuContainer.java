@@ -1,28 +1,15 @@
-package org.weasis.dicom.sr;
+package org.weasis.dicom.au;
 
-import java.awt.BorderLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.print.PageFormat;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.PrintRequestAttributeSet;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -32,35 +19,28 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
-import org.weasis.core.ui.util.ForcedAcceptPrintService;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.explorer.DicomExplorer;
-import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
 
-public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
+public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuContainer.class);
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
     static {
@@ -71,7 +51,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
         .synchronizedList(new ArrayList<GridBagLayoutModel>());
 
     public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1", //$NON-NLS-1$
-        "1x1", 1, 1, SRView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ 
+        "1x1", 1, 1, AuView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ 
             .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
     static {
         LAYOUT_LIST.add(VIEWS_1x1);
@@ -81,9 +61,9 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>(1));
-    public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>(1));
     private static volatile boolean INI_COMPONENTS = false;
-    static final ImageViewerEventManager<DicomImageElement> SR_EVENT_MANAGER =
+
+    static final ImageViewerEventManager<DicomImageElement> AU_EVENT_MANAGER =
         new ImageViewerEventManager<DicomImageElement>() {
 
             @Override
@@ -103,15 +83,14 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             }
 
         };
+    protected AuView auview;
 
-    protected SRView srview;
-
-    public SRContainer() {
+    public AuContainer() {
         this(VIEWS_1x1, null);
     }
 
-    public SRContainer(GridBagLayoutModel layoutModel, String uid) {
-        super(SR_EVENT_MANAGER, layoutModel, uid, SRFactory.NAME, SRFactory.ICON, null);
+    public AuContainer(GridBagLayoutModel layoutModel, String uid) {
+        super(AU_EVENT_MANAGER, layoutModel, uid, AuFactory.NAME, AuFactory.ICON, null);
         setSynchView(SynchView.NONE);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
@@ -122,8 +101,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             String key = "enable"; //$NON-NLS-1$
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
-                InsertableUtil.getCName(SrToolBar.class), key, true)) {
-                TOOLBARS.add(new SrToolBar<DicomImageElement>(10));
+                InsertableUtil.getCName(AuToolBar.class), key, true)) {
+                TOOLBARS.add(new AuToolBar<DicomImageElement>(10));
             }
         }
     }
@@ -135,25 +114,12 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     @Override
     public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
-        if (menuRoot != null) {
-            menuRoot.removeAll();
-
-            List<Action> actions = getPrintActions();
-            if (actions != null) {
-                JMenu printMenu = new JMenu(Messages.getString("SRContainer.print")); //$NON-NLS-1$
-                for (Action action : actions) {
-                    JMenuItem item = new JMenuItem(action);
-                    printMenu.add(item);
-                }
-                menuRoot.add(printMenu);
-            }
-        }
         return menuRoot;
     }
 
     @Override
     public List<DockableTool> getToolPanel() {
-        return TOOLS;
+        return null;
     }
 
     @Override
@@ -176,14 +142,14 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     @Override
     public void close() {
         super.close();
-        SRFactory.closeSeriesViewer(this);
+        AuFactory.closeSeriesViewer(this);
 
         GuiExecutor.instance().execute(new Runnable() {
 
             @Override
             public void run() {
-                if (srview != null) {
-                    srview.dispose();
+                if (auview != null) {
+                    auview.dispose();
                 }
             }
         });
@@ -195,17 +161,10 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             ObservableEvent event = (ObservableEvent) evt;
             ObservableEvent.BasicAction action = event.getActionCommand();
             Object newVal = event.getNewValue();
-            // if (ObservableEvent.BasicAction.Update.equals(action)) {
-            // if (newVal instanceof Series) {
-            // Series series = (Series) newVal;
-            // if (srview != null && srview.getSeries() != series) {
-            // srview.setSeries(series);
-            // }
-            // }
-            // }
+
             if (ObservableEvent.BasicAction.Remove.equals(action)) {
                 if (newVal instanceof DicomSeries) {
-                    if (srview != null && srview.getSeries() == newVal) {
+                    if (auview != null && auview.getSeries() == newVal) {
                         close();
                     }
                 } else if (newVal instanceof MediaSeriesGroup) {
@@ -222,7 +181,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
                             for (MediaSeriesGroup s : model.getChildren(group)) {
-                                if (srview != null && srview.getSeries() == s) {
+                                if (auview != null && auview.getSeries() == s) {
                                     close();
                                     break;
                                 }
@@ -266,8 +225,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             if (component instanceof SeriesViewerListener) {
                 eventManager.addSeriesViewerListener((SeriesViewerListener) component);
             }
-            if (component instanceof SRView) {
-                srview = (SRView) component;
+            if (component instanceof AuView) {
+                auview = (AuView) component;
             }
             return component;
         } catch (Exception e1) {
@@ -293,92 +252,20 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     @Override
     public List<Action> getPrintActions() {
-        ArrayList<Action> actions = new ArrayList<Action>(1);
-        final String title = Messages.getString("SRContainer.print_layout"); //$NON-NLS-1$
-        AbstractAction printStd =
-            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(ActionEvent action) {
-                    printCurrentView();
-                }
-            };
-        actions.add(printStd);
-
-        return actions;
-    }
-
-    void displayHeader() {
-        if (srview != null) {
-            JFrame frame = new JFrame(org.weasis.dicom.explorer.Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
-            frame.setSize(500, 630);
-            DicomFieldsView view = new DicomFieldsView();
-            view.changingViewContentEvent(new SeriesViewerEvent(this, srview.getSeries(), DicomModel
-                .getFirstSpecialElement(srview.getSeries(), DicomSpecialElement.class), EVENT.SELECT));
-            JPanel panel = new JPanel();
-            panel.setLayout(new BorderLayout());
-            panel.add(view);
-            frame.getContentPane().add(panel);
-            frame.setAlwaysOnTop(true);
-            JMVUtils.showCenterScreen(frame, srview);
-        }
-    }
-
-    void printCurrentView() {
-        if (srview != null) {
-            PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
-            PrinterJob pj = PrinterJob.getPrinterJob();
-
-            // Get page format from the printer
-            if (pj.printDialog(aset)) {
-                PageFormat pageFormat = pj.defaultPage();
-                // Force to print in black and white
-                EditorPanePrinter pnlPreview =
-                    new EditorPanePrinter(srview.getHtmlPanel(), pageFormat, new Insets(18, 18, 18, 18));
-                pj.setPageable(pnlPreview);
-                try {
-                    pj.print();
-                } catch (PrinterException e) {
-                    // check for the annoying 'Printer is not accepting job' error.
-                    if (e.getMessage().indexOf("accepting job") != -1) { //$NON-NLS-1$
-                        // recommend prompting the user at this point if they want to force it
-                        // so they'll know there may be a problem.
-                        int response =
-                            JOptionPane
-                                .showConfirmDialog(
-                                    null,
-                                    org.weasis.core.ui.Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
-                                    org.weasis.core.ui.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
-
-                        if (response == 0) {
-                            try {
-                                // try printing again but ignore the not-accepting-jobs attribute
-                                ForcedAcceptPrintService.setupPrintJob(pj); // add secret ingredient
-                                pj.print(aset);
-                                LOGGER.info("Bypass Printer is not accepting job"); //$NON-NLS-1$
-                            } catch (PrinterException ex) {
-                                AuditLog.logError(LOGGER, e, "Printer exception"); //$NON-NLS-1$
-                            }
-                        }
-                    } else {
-                        AuditLog.logError(LOGGER, e, "Print exception"); //$NON-NLS-1$
-                    }
-                }
-            }
-        }
+        return null;
     }
 
     public Series<?> getSeries() {
-        if (srview != null) {
-            return srview.getSeries();
+        if (auview != null) {
+            return auview.getSeries();
         }
         return null;
     }
 
     @Override
     public void addSeries(MediaSeries<DicomImageElement> sequence) {
-        if (srview != null && sequence instanceof Series && srview.getSeries() != sequence) {
-            srview.setSeries((Series<DicomImageElement>) sequence);
+        if (auview != null && sequence instanceof Series && auview.getSeries() != sequence) {
+            auview.setSeries((Series) sequence);
         }
     }
 

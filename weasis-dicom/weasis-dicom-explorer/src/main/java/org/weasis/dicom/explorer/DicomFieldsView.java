@@ -17,6 +17,7 @@ import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
+import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -44,10 +45,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -56,8 +59,10 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSpecialElement;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
@@ -349,4 +354,45 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             }
         }
     }
+
+    public static void displayHeader(ImageViewerPlugin<?> container) {
+        if (container != null) {
+            DefaultView2d<?> selView = container.getSelectedImagePane();
+            if (selView != null) {
+                ImageElement img = selView.getImage();
+                if (img != null) {
+                    JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
+                    frame.setSize(500, 630);
+                    DicomFieldsView view = new DicomFieldsView();
+                    view.changingViewContentEvent(new SeriesViewerEvent(container, selView.getSeries(), img,
+                        EVENT.SELECT));
+                    JPanel panel = new JPanel();
+                    panel.setLayout(new BorderLayout());
+                    panel.add(view);
+                    frame.getContentPane().add(panel);
+                    frame.setAlwaysOnTop(true);
+                    JMVUtils.showCenterScreen(frame, container);
+                }
+            }
+        }
+    }
+
+    public static void displayHeaderForSpecialElement(ViewerPlugin<?> container, Series<?> series) {
+        if (container != null && series != null) {
+            DicomSpecialElement dcm = DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
+            if (dcm != null) {
+                JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
+                frame.setSize(500, 630);
+                DicomFieldsView view = new DicomFieldsView();
+                view.changingViewContentEvent(new SeriesViewerEvent(container, series, dcm, EVENT.SELECT));
+                JPanel panel = new JPanel();
+                panel.setLayout(new BorderLayout());
+                panel.add(view);
+                frame.getContentPane().add(panel);
+                frame.setAlwaysOnTop(true);
+                JMVUtils.showCenterScreen(frame, container);
+            }
+        }
+    }
+
 }

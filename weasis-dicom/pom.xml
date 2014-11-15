@@ -17,5 +17,6 @@
 		<module>weasis-dicom-explorer</module>
 		<module>weasis-dicom-viewer2d</module>
 		<module>weasis-dicom-sr</module>
+		<module>weasis-dicom-au</module>
 	</modules>
 </project>
