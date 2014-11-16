@@ -124,8 +124,8 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         if (studyElements != null && seriesUID != null && sopUID != null) {
             for (DicomSpecialElement dicom : studyElements) {
                 if (dicom != null && "PR".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
-                    if (isSopuidInReferencedSeriesSequence((Sequence) dicom.getTagValue(TagW.ReferencedSeriesSequence),
-                        seriesUID, sopUID, frameNumber)) {
+                    if (isSopuidInReferencedSeriesSequence(
+                        (Attributes[]) dicom.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID, frameNumber)) {
                         filteredList.add(dicom);
                     }
                 }
@@ -134,7 +134,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         return filteredList;
     }
 
-    public static boolean isSopuidInReferencedSeriesSequence(Sequence seq, String seriesUID, String sopUID,
+    public static boolean isSopuidInReferencedSeriesSequence(Attributes[] seq, String seriesUID, String sopUID,
         Integer frameNumber) {
         if (seq != null) {
             for (Attributes item : seq) {
@@ -221,8 +221,8 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
             if (element instanceof PRSpecialElement) {
                 PRSpecialElement prElement = (PRSpecialElement) element;
 
-                if (isSopuidInReferencedSeriesSequence((Sequence) prElement.getTagValue(TagW.ReferencedSeriesSequence),
-                    seriesUID, sopUID, frameNumber)) {
+                if (isSopuidInReferencedSeriesSequence(
+                    (Attributes[]) prElement.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID, frameNumber)) {
 
                     if (prList == null) {
                         prList = new ArrayList<PRSpecialElement>();

@@ -32,7 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 
-import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Attributes;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
@@ -495,7 +495,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                             DicomImageElement img = view.getImage();
                             if (img != null) {
                                 if (DicomSpecialElement.isSopuidInReferencedSeriesSequence(
-                                    (Sequence) specialElement.getTagValue(TagW.ReferencedSeriesSequence),
+                                    (Attributes[]) specialElement.getTagValue(TagW.ReferencedSeriesSequence),
                                     (String) img.getTagValue(TagW.SeriesInstanceUID),
                                     (String) img.getTagValue(TagW.SOPInstanceUID), (Integer) img.getKey())) {
                                     ((View2d) view).updatePR();

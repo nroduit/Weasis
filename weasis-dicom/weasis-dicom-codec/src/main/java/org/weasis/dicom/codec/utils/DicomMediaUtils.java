@@ -441,9 +441,9 @@ public class DicomMediaUtils {
             // NOTE : Either a Modality LUT Sequence containing a single Item or Rescale Slope and Intercept values
             // shall be present but not both (@see Dicom Standard 2011 - PS 3.3 § C.11.1 Modality LUT Module)
 
-            Attributes mLutItems = (Attributes) dicomTagMap.get(TagW.ModalityLUTSequence);
+            Attributes[] mLutItems = (Attributes[]) dicomTagMap.get(TagW.ModalityLUTSequence);
 
-            if (containsRequiredModalityLUTDataAttributes(mLutItems)) {
+            if (mLutItems != null && mLutItems.length > 0 && containsRequiredModalityLUTDataAttributes(mLutItems[0])) {
                 boolean canApplyMLUT = true;
                 String modlality = (String) dicomTagMap.get(TagW.Modality);
                 if ("XA".equals(modlality) || "XRF".equals(modlality)) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -458,11 +458,11 @@ public class DicomMediaUtils {
 
                 if (canApplyMLUT) {
                     DicomMediaUtils.setTagNoNull(dicomTagMap, TagW.ModalityLUTData,
-                        createLut(mLutItems, isPixelRepresentationSigned));
+                        createLut(mLutItems[0], isPixelRepresentationSigned));
                     DicomMediaUtils.setTagNoNull(dicomTagMap, TagW.ModalityLUTType,
-                        getStringFromDicomElement(mLutItems, Tag.ModalityLUTType));
+                        getStringFromDicomElement(mLutItems[0], Tag.ModalityLUTType));
                     DicomMediaUtils.setTagNoNull(dicomTagMap, TagW.ModalityLUTExplanation, // Optional Tag
-                        getStringFromDicomElement(mLutItems, Tag.LUTExplanation));
+                        getStringFromDicomElement(mLutItems[0], Tag.LUTExplanation));
                 }
             }
 
@@ -507,11 +507,11 @@ public class DicomMediaUtils {
             // Table, but not both, may be applied to the Image for display. Inclusion of both indicates that multiple
             // alternative views may be presented. (@see Dicom Standard 2011 - PS 3.3 § C.11.2 VOI LUT Module)
 
-            Sequence voiLUTSequence = (Sequence) dicomTagMap.get(TagW.VOILUTSequence);
+            Attributes[] voiLUTSequence = (Attributes[]) dicomTagMap.get(TagW.VOILUTSequence);
 
-            if (voiLUTSequence != null && !voiLUTSequence.isEmpty()) {
-                LookupTableJAI[] voiLUTsData = new LookupTableJAI[voiLUTSequence.size()];
-                String[] voiLUTsExplanation = new String[voiLUTSequence.size()];
+            if (voiLUTSequence != null && voiLUTSequence.length > 0) {
+                LookupTableJAI[] voiLUTsData = new LookupTableJAI[voiLUTSequence.length];
+                String[] voiLUTsExplanation = new String[voiLUTSequence.length];
 
                 boolean isOutModalityLutSigned = isPixelRepresentationSigned;
 
@@ -541,8 +541,8 @@ public class DicomMediaUtils {
                     }
                 }
 
-                for (int i = 0; i < voiLUTSequence.size(); i++) {
-                    Attributes voiLUTobj = voiLUTSequence.get(i);
+                for (int i = 0; i < voiLUTSequence.length; i++) {
+                    Attributes voiLUTobj = voiLUTSequence[i];
                     if (containsLUTAttributes(voiLUTobj)) {
                         voiLUTsData[i] = createLut(voiLUTobj, isOutModalityLutSigned);
                         voiLUTsExplanation[i] = getStringFromDicomElement(voiLUTobj, Tag.LUTExplanation);
@@ -584,11 +584,11 @@ public class DicomMediaUtils {
              *      preceding transformation, and it never selects a subset or superset of the that range (unlike the
              *      VOI LUT).
              */
-            Attributes prLUTSequence = (Attributes) dicomTagMap.get(TagW.PresentationLUTSequence);
-            if (prLUTSequence != null) {
-                DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsData, createLut(prLUTSequence, false));
+            Attributes[] prLUTSequence = (Attributes[]) dicomTagMap.get(TagW.PresentationLUTSequence);
+            if (prLUTSequence != null && prLUTSequence.length > 0) {
+                DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsData, createLut(prLUTSequence[0], false));
                 DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsExplanation,
-                    getStringFromDicomElement(prLUTSequence, Tag.LUTExplanation)); // Optional Tag
+                    getStringFromDicomElement(prLUTSequence[0], Tag.LUTExplanation)); // Optional Tag
                 // TODO implement PresentationLUTSequence renderer
             }
         }
@@ -711,13 +711,23 @@ public class DicomMediaUtils {
 
     public static void setTag(Map<TagW, Object> tags, TagW tag, Object value) {
         if (tag != null) {
-            tags.put(tag, value);
+            if (value instanceof Sequence) {
+                Sequence seq = (Sequence) value;
+                Attributes[] list = new Attributes[seq.size()];
+                for (int i = 0; i < list.length; i++) {
+                    Attributes attributes = seq.get(i);
+                    list[i] = attributes.getParent() == null ? attributes : new Attributes(attributes);
+                }
+                tags.put(tag, list);
+            } else {
+                tags.put(tag, value);
+            }
         }
     }
 
     public static void setTagNoNull(Map<TagW, Object> tags, TagW tag, Object value) {
-        if (tag != null && value != null) {
-            tags.put(tag, value);
+        if (value != null) {
+            setTag(tags, tag, value);
         }
     }
 
@@ -762,9 +772,6 @@ public class DicomMediaUtils {
                 getIntegerFromDicomElement(header, Tag.NumberOfStudyRelatedInstances, null));
             group.setTagNoNull(TagW.NumberOfStudyRelatedSeries,
                 getIntegerFromDicomElement(header, Tag.NumberOfStudyRelatedSeries, null));
-
-            // TODO sequence: define data structure
-            group.setTagNoNull(TagW.ProcedureCodeSequence, header.getSequence(Tag.ProcedureCodeSequence));
         }
         // Series Group
         else if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
@@ -789,9 +796,6 @@ public class DicomMediaUtils {
             group.setTagNoNull(TagW.StationName, header.getString(Tag.StationName));
             group.setTagNoNull(TagW.Manufacturer, header.getString(Tag.Manufacturer));
             group.setTagNoNull(TagW.ManufacturerModelName, header.getString(Tag.ManufacturerModelName));
-            // TODO sequence: define data structure
-            group.setTagNoNull(TagW.ReferencedPerformedProcedureStepSequence,
-                header.getSequence(Tag.ReferencedPerformedProcedureStepSequence));
             group.setTagNoNull(TagW.SeriesNumber, getIntegerFromDicomElement(header, Tag.SeriesNumber, null));
             group.setTagNoNull(TagW.PreferredPlaybackSequencing,
                 getIntegerFromDicomElement(header, Tag.PreferredPlaybackSequencing, null));
@@ -802,8 +806,6 @@ public class DicomMediaUtils {
             group.setTagNoNull(TagW.KVP, getFloatFromDicomElement(header, Tag.KVP, null));
             group.setTagNoNull(TagW.Laterality, header.getString(Tag.Laterality));
             group.setTagNoNull(TagW.BodyPartExamined, header.getString(Tag.BodyPartExamined));
-            // TODO sequence: define data structure
-            group.setTagNoNull(TagW.ReferencedImageSequence, header.getSequence(Tag.ReferencedImageSequence));
             group.setTagNoNull(TagW.FrameOfReferenceUID, header.getString(Tag.FrameOfReferenceUID));
             group.setTagNoNull(TagW.NumberOfSeriesRelatedInstances,
                 getIntegerFromDicomElement(header, Tag.NumberOfSeriesRelatedInstances, null));
@@ -811,9 +813,6 @@ public class DicomMediaUtils {
                 getDateFromDicomElement(header, Tag.PerformedProcedureStepStartDate, null));
             group.setTagNoNull(TagW.PerformedProcedureStepStartTime,
                 getDateFromDicomElement(header, Tag.PerformedProcedureStepStartTime, null));
-            // TODO sequence: define data structure
-            group.setTagNoNull(TagW.RequestAttributesSequence, header.getSequence(Tag.RequestAttributesSequence));
-
         }
     }
 
@@ -1058,9 +1057,9 @@ public class DicomMediaUtils {
             }
 
             // Should exist only in root DICOM (when seqParentTag == null)
-            Attributes mLutSeq = mLutItems.getNestedDataset(Tag.ModalityLUTSequence);
-            if (mLutSeq != null && containsRequiredModalityLUTDataAttributes(mLutSeq)) {
-                setTagNoNull(tagList, TagW.ModalityLUTSequence, mLutItems.getNestedDataset(Tag.ModalityLUTSequence));
+            Sequence mLutSeq = mLutItems.getSequence(Tag.ModalityLUTSequence);
+            if (mLutSeq != null && mLutSeq.size() > 0 && containsRequiredModalityLUTDataAttributes(mLutSeq.get(0))) {
+                setTagNoNull(tagList, TagW.ModalityLUTSequence, mLutSeq);
             }
         }
     }
@@ -1108,10 +1107,7 @@ public class DicomMediaUtils {
             //                    "Cannot apply VOI LUT from {} with inconsistent attributes", TagUtils.toString(seqParentTag));//$NON-NLS-1$
             // }
 
-            Sequence vLutSeq = voiItems.getSequence(Tag.VOILUTSequence);
-            if (vLutSeq != null && vLutSeq.size() > 0) {
-                setTagNoNull(tagList, TagW.VOILUTSequence, vLutSeq);
-            }
+            setTagNoNull(tagList, TagW.VOILUTSequence, voiItems.getSequence(Tag.VOILUTSequence));
         }
     }
 
@@ -1122,7 +1118,7 @@ public class DicomMediaUtils {
                 /**
                  * @see - Dicom Standard 2011 - PS 3.3 § C.11.6 Softcopy Presentation LUT Module
                  */
-                Attributes presentationLUT = dcmItems.getNestedDataset(Tag.PresentationLUTSequence);
+                Sequence presentationLUT = dcmItems.getSequence(Tag.PresentationLUTSequence);
                 if (presentationLUT != null) {
                     setTagNoNull(tagList, TagW.PresentationLUTSequence, presentationLUT);
                 } else {
@@ -1591,11 +1587,11 @@ public class DicomMediaUtils {
                 dataset.setInt(id, dic.vrOf(id), (int[]) val);
             } else if (TagType.StringArray.equals(type) && val instanceof String[]) {
                 dataset.setString(id, dic.vrOf(id), (String[]) val);
-            } else if (TagType.Sequence.equals(type) && val instanceof Sequence) {
-                Sequence sIn = (Sequence) val;
-                Sequence sOut = dataset.newSequence(id, sIn.size());
+            } else if (TagType.Sequence.equals(type) && val instanceof Attributes[]) {
+                Attributes[] sIn = (Attributes[]) val;
+                Sequence sOut = dataset.newSequence(id, sIn.length);
                 for (Attributes attributes : sIn) {
-                    sOut.add(attributes.getParent() == null ? attributes : new Attributes(attributes));
+                    sOut.add(new Attributes(attributes));
                 }
             }
         }

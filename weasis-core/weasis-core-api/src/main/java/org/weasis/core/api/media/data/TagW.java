@@ -53,8 +53,8 @@ public class TagW implements Transferable, Serializable {
 
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
-        String, StringArray, Text, URI, Sequence, Date, DateTime, Time, Period, Boolean, ByteArray, Integer,
-        IntegerArray, Float, FloatArray, Double, DoubleArray, Color, Thumbnail, Object, List, Array
+        String, StringArray, URI, Sequence, Date, DateTime, Time, Period, Boolean, ByteArray, Integer, IntegerArray,
+        Float, FloatArray, Double, DoubleArray, Color, Thumbnail, List, Object
 
     };
 
@@ -69,7 +69,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW TiledImagePath = new TagW("", TagType.String); //$NON-NLS-1$
     public static final TagW ExplorerModel = new TagW(Messages.getString("TagElement.exp_model"), TagType.Object); //$NON-NLS-1$
     public static final TagW MeasurementGraphics = new TagW(
-        Messages.getString("TagElement.measure_graph"), TagType.List);; //$NON-NLS-1$
+        Messages.getString("TagElement.measure_graph"), TagType.List); //$NON-NLS-1$
     public static final TagW SplitSeriesNumber = new TagW(Messages.getString("TagElement.split_no"), TagType.Integer); //$NON-NLS-1$
     public static final TagW SeriesSelected = new TagW(Messages.getString("TagElement.select"), TagType.Boolean); //$NON-NLS-1$
     public static final TagW SeriesOpen = new TagW(Messages.getString("TagElement.open"), TagType.Boolean); //$NON-NLS-1$
@@ -200,7 +200,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW PatientOrientation = new TagW(0x00200020, "Patient Orientation", TagType.StringArray); //$NON-NLS-1$
     public static final TagW FrameOfReferenceUID = new TagW(0x00200052, "Frame Of Reference UID", TagType.String); //$NON-NLS-1$
 
-    public static final TagW PixelData = new TagW(0x7FE00010, "Pixel Data", TagType.Text); //$NON-NLS-1$
+    public static final TagW PixelData = new TagW(0x7FE00010, "Pixel Data", TagType.URI); //$NON-NLS-1$
     public static final TagW PixelSpacing = new TagW(0x00280030, "Pixel Spacing", TagType.DoubleArray); //$NON-NLS-1$
     public static final TagW PixelAspectRatio = new TagW(0x00280034, "Pixel Aspect Ratio", TagType.IntegerArray); //$NON-NLS-1$
     public static final TagW PixelSpacingCalibrationDescription = new TagW(0x00280A04,
@@ -209,7 +209,7 @@ public class TagW implements Transferable, Serializable {
     // One or more Items shall be included in this sequence
     public static final TagW VOILUTSequence = new TagW(0x00283010, "VOI LUT Sequence", TagType.Sequence); //$NON-NLS-1$
     public static final TagW VOILUTsExplanation = new TagW("VOI LUTs Explanation", TagType.StringArray); //$NON-NLS-1$
-    public static final TagW VOILUTsData = new TagW("VOI LUTs Data", TagType.Array); //$NON-NLS-1$
+    public static final TagW VOILUTsData = new TagW("VOI LUTs Data", TagType.Object); //$NON-NLS-1$
 
     public static final TagW WindowWidth = new TagW(0x00281051, "Window Width", TagType.FloatArray); //$NON-NLS-1$
     public static final TagW WindowCenter = new TagW(0x00281050, "Window Center", TagType.FloatArray); //$NON-NLS-1$
@@ -678,8 +678,7 @@ public class TagW implements Transferable, Serializable {
             { TagW.PatientName, TagW.PatientID, TagW.PatientSex, TagW.PatientBirthDate, TagW.PatientBirthTime,
                 TagW.PatientComments, TagW.PatientPseudoUID, TagW.PatientWeight, TagW.AccessionNumber, TagW.StudyID,
                 TagW.InstitutionalDepartmentName, TagW.InstitutionName, TagW.ReferringPhysicianName,
-                TagW.StudyDescription, TagW.SeriesDescription, TagW.RequestAttributesSequence, TagW.StationName,
-                TagW.ImageComments };
+                TagW.StudyDescription, TagW.SeriesDescription, TagW.StationName, TagW.ImageComments };
         int type = activate ? 1 : 0;
         for (TagW t : list) {
             t.setAnonymizationType(type);

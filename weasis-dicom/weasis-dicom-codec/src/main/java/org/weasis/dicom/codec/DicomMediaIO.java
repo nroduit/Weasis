@@ -59,6 +59,7 @@ import javax.media.jai.operator.NullDescriptor;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
+import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
@@ -425,13 +426,23 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     public void setTag(TagW tag, Object value) {
         if (tag != null) {
-            tags.put(tag, value);
+            if (value instanceof Sequence) {
+                Sequence seq = (Sequence) value;
+                Attributes[] list = new Attributes[seq.size()];
+                for (int i = 0; i < list.length; i++) {
+                    Attributes attributes = seq.get(i);
+                    list[i] = attributes.getParent() == null ? attributes : new Attributes(attributes);
+                }
+                tags.put(tag, list);
+            } else {
+                tags.put(tag, value);
+            }
         }
     }
 
     public void setTagNoNull(TagW tag, Object value) {
-        if (tag != null && value != null) {
-            tags.put(tag, value);
+        if (value != null) {
+            setTag(tag, value);
         }
     }
 
