@@ -124,6 +124,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW PatientBirthDate = new TagW(0x00100030, "Patient Birth Date", TagType.Date, 1); //$NON-NLS-1$
     public static final TagW PatientBirthTime = new TagW(0x00100032, "Patient Birth Time", TagType.Time, 1); //$NON-NLS-1$
     public static final TagW PatientSex = new TagW(0x00100040, "Patient Sex", TagType.String, 1); //$NON-NLS-1$
+    public static final TagW PatientAge = new TagW(0x00101010, "Patient Age", TagType.Period, 1); //$NON-NLS-1$
     public static final TagW PatientWeight = new TagW(0x00101030, "Patient Weight", TagType.Float, 1); //$NON-NLS-1$
     public static final TagW PatientComments = new TagW(0x00104000, "Patient Comments", TagType.String, 1); //$NON-NLS-1$
 
@@ -398,14 +399,14 @@ public class TagW implements Transferable, Serializable {
             // For ex: DICOM (0010,1010) = 031Y
             str = value.toString();
             char[] tab = str.toCharArray();
-            for (int i = 0; i < tab.length; i++) {
+            for (int i = 0; i < 2; i++) {
                 if (tab[i] == '0') {
                     str = str.substring(1);
                 } else {
                     break;
                 }
             }
-            if (tab.length > 0) {
+            if (str.length() > 1 && tab.length > 0) {
                 switch (tab[tab.length - 1]) {
                     case 'Y':
                         str = str.replaceFirst("Y", " years"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -420,6 +421,8 @@ public class TagW implements Transferable, Serializable {
                         str = str.replaceFirst("D", " days"); //$NON-NLS-1$ //$NON-NLS-2$
                         break;
                 }
+            } else {
+                str = "";
             }
         } else if (value instanceof float[]) {
             float[] array = (float[]) value;
@@ -676,8 +679,8 @@ public class TagW implements Transferable, Serializable {
 
         TagW[] list =
             { TagW.PatientName, TagW.PatientID, TagW.PatientSex, TagW.PatientBirthDate, TagW.PatientBirthTime,
-                TagW.PatientComments, TagW.PatientPseudoUID, TagW.PatientWeight, TagW.AccessionNumber, TagW.StudyID,
-                TagW.InstitutionalDepartmentName, TagW.InstitutionName, TagW.ReferringPhysicianName,
+                TagW.PatientAge, TagW.PatientComments, TagW.PatientPseudoUID, TagW.PatientWeight, TagW.AccessionNumber,
+                TagW.StudyID, TagW.InstitutionalDepartmentName, TagW.InstitutionName, TagW.ReferringPhysicianName,
                 TagW.StudyDescription, TagW.SeriesDescription, TagW.StationName, TagW.ImageComments };
         int type = activate ? 1 : 0;
         for (TagW t : list) {
@@ -685,5 +688,4 @@ public class TagW implements Transferable, Serializable {
         }
 
     }
-
 }

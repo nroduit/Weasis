@@ -69,7 +69,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomFieldsView.class);
 
     private static final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.IssuerOfPatientID, TagW.PatientSex,
-        TagW.PatientBirthDate };
+        TagW.PatientBirthDate, TagW.PatientAge };
     private static final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
     private static final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID, TagW.AccessionNumber,
         TagW.StudyDescription, TagW.StudyComments };

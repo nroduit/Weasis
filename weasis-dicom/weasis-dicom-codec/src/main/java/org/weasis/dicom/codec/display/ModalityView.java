@@ -51,6 +51,7 @@ public class ModalityView {
         disElements[1] = new TagView(TagW.PatientBirthDate);
         disElements[2] = new TagView(Messages.getString("ModalityView.id"), TagW.PatientID); //$NON-NLS-1$
         disElements[3] = new TagView(Messages.getString("ModalityView.sex"), TagW.PatientSex); //$NON-NLS-1$
+        disElements[4] = new TagView(TagW.PatientAge);
 
         disElements = DEFAULT_MODALITY_VIEW.getCornerInfo(CornerDisplay.TOP_RIGHT).getInfos();
         disElements[0] = new TagView(TagW.InstitutionName);

@@ -20,10 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -328,6 +330,52 @@ public class DicomMediaUtils {
             return null;
         }
         return dicom.getDate(tag, defaultValue);
+    }
+
+    public static String getPatientAgeFromDicomElement(Attributes dicom, int tag, boolean computeIfNull) {
+        if (dicom == null) {
+            return null;
+        }
+        String s = dicom.getString(tag);
+        if (StringUtil.hasText(s) || !computeIfNull) {
+            return s;
+        }
+
+        Date date = dicom.getDate(Tag.ContentDate);
+        if (date == null) {
+            date = dicom.getDate(Tag.AcquisitionDate);
+            if (date == null) {
+                date = dicom.getDate(Tag.StudyDate);
+                if (date == null) {
+                    date = dicom.getDate(Tag.DateOfSecondaryCapture);
+                }
+            }
+        }
+
+        if (date != null) {
+            Date bithdate = dicom.getDate(Tag.PatientBirthDate);
+            if (bithdate != null) {
+                return String.format("%03dY", getDiffYears(bithdate, date));
+            }
+        }
+        return null;
+    }
+
+    public static int getDiffYears(Date first, Date last) {
+        Calendar a = getCalendar(first);
+        Calendar b = getCalendar(last);
+        int diff = b.get(Calendar.YEAR) - a.get(Calendar.YEAR);
+        if (a.get(Calendar.MONTH) > b.get(Calendar.MONTH)
+            || (a.get(Calendar.MONTH) == b.get(Calendar.MONTH) && a.get(Calendar.DATE) > b.get(Calendar.DATE))) {
+            diff--;
+        }
+        return diff;
+    }
+
+    private static Calendar getCalendar(Date date) {
+        Calendar cal = Calendar.getInstance(Locale.US);
+        cal.setTime(date);
+        return cal;
     }
 
     private static Float[] toFloatArray(float[] arrays) {
@@ -744,6 +792,7 @@ public class DicomMediaUtils {
 
             group.setTagNoNull(TagW.PatientBirthDate, getDateFromDicomElement(header, Tag.PatientBirthDate, null));
             group.setTagNoNull(TagW.PatientBirthTime, getDateFromDicomElement(header, Tag.PatientBirthTime, null));
+            group.setTagNoNull(TagW.PatientAge, getPatientAgeFromDicomElement(header, Tag.PatientAge, true));
             group.setTag(TagW.PatientSex, DicomMediaUtils.buildPatientSex(header.getString(Tag.PatientSex)));
             group.setTagNoNull(TagW.IssuerOfPatientID, header.getString(Tag.IssuerOfPatientID));
             group.setTagNoNull(TagW.PatientWeight, getFloatFromDicomElement(header, Tag.PatientWeight, null));
