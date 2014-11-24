@@ -1083,6 +1083,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 Attributes dataset;
                 dis = new DicomInputStream(in);
                 try {
+                    dis.setSkipPrivateTagLength(1000);
                     dis.setIncludeBulkData(IncludeBulkData.URI);
                     dataset = dis.readDataset(-1, -1);
                     tsuid = dis.getTransferSyntax();

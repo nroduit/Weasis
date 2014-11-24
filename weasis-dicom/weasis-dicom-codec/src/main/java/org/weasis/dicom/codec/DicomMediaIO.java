@@ -1463,6 +1463,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             }
             iis.seek(0L);
             dis = new DicomInputStream(new ImageInputStreamAdapter(iis));
+            dis.setSkipPrivateTagLength(1000);
             dis.setIncludeBulkData(IncludeBulkData.URI);
             dis.setBulkDataDescriptor(BulkDataDescriptor.DEFAULT);
             dis.setURI(uri.toString());
