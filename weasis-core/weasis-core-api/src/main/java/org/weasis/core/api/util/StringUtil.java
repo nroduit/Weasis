@@ -81,6 +81,13 @@ public class StringUtil {
         return 0;
     }
 
+    public static String integer2String(Integer val) {
+        if (val != null) {
+            return val.toString();
+        }
+        return null;
+    }
+
     public static boolean hasLength(CharSequence str) {
         return (str != null && str.length() > 0);
     }
