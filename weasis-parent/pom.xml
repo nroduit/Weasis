@@ -200,7 +200,7 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.scr.annotations</artifactId>
-			<version>1.9.8</version>
+			<version>1.9.10</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

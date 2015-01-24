@@ -229,19 +229,20 @@ public class WeasisLauncher {
 
         // Disabling extension framework is mandatory to work with Java Web Start.
         // From framework 4.4.1, See https://issues.apache.org/jira/browse/FELIX-4281.
-        // System.setProperty(FelixConstants.FELIX_EXTENSIONS_DISABLE, "true");
+        System.setProperty(FelixConstants.FELIX_EXTENSIONS_DISABLE, "true");
     }
 
     public static void launch(String[] argv) throws Exception {
         // Set system property for dynamically loading only native libraries corresponding of the current platform
         setSystemSpecification();
 
-        // transform "jnlp.weasis" System Properties to suffix name only System Properties
+        // Remove the prefix "jnlp.weasis" of JNLP Properties
+        // Workaround for having a fully trusted application with JWS,
+        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241
         setJnlpSystemProperties();
 
-        // Getting VM arguments, workaround for having a fully trusted application with JWS,
-        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241
         for (int i = 0; i < argv.length; i++) {
+            // @Deprecated : use properties with the prefix "jnlp.weasis" instead
             if (argv[i].startsWith("-VMP") && argv[i].length() > 4) { //$NON-NLS-1$
                 String[] vmarg = argv[i].substring(4).split("=", 2); //$NON-NLS-1$
                 if (vmarg.length == 2) {
@@ -840,7 +841,7 @@ public class WeasisLauncher {
         String osName = System.getProperty("os.name"); //$NON-NLS-1$
         String osArch = System.getProperty("os.arch"); //$NON-NLS-1$
         if (osName != null && !osName.trim().equals("") && osArch != null && !osArch.trim().equals("")) { //$NON-NLS-1$ //$NON-NLS-2$
-            if (osName.startsWith("Win")) { //$NON-NLS-1$
+            if (osName.toLowerCase().startsWith("win")) { //$NON-NLS-1$
                 // All Windows versions with a specific processor architecture (x86 or x86-64) are grouped under
                 // windows. If you need to make different native libraries for the Windows versions, define it in the
                 // Bundle-NativeCode tag of the bundle fragment.
