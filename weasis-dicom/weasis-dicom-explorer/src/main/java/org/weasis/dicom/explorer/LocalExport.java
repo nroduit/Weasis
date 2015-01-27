@@ -294,18 +294,18 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
 
-            ExplorerTask task = new ExplorerTask(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
+            final ExplorerTask task = new ExplorerTask(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
 
                     @Override
                     protected Boolean doInBackground() throws Exception {
                         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart,
                             dicomModel, null, this));
                         if (EXPORT_FORMAT[0].equals(format)) {
-                            writeDicom(exportDir, model, false);
+                            writeDicom(this, exportDir, model, false);
                         } else if (EXPORT_FORMAT[1].equals(format)) {
-                            writeDicom(exportDir, model, true);
+                            writeDicom(this, exportDir, model, true);
                         } else {
-                            writeOther(exportDir, model, format);
+                            writeOther(this, exportDir, model, format);
                         }
                         return true;
                     }
@@ -340,7 +340,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return (String) img.getTagValue(TagW.SOPInstanceUID);
     }
 
-    private void writeOther(File exportDir, CheckTreeModel model, String format) {
+    private void writeOther(ExplorerTask task, File exportDir, CheckTreeModel model, String format) {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         boolean keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
         int jpegQuality = JMVUtils.getIntValueFromString(pref.getProperty(IMG_QUALITY, null), 80);
@@ -350,6 +350,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         synchronized (model) {
             TreePath[] paths = model.getCheckingPaths();
             for (TreePath treePath : paths) {
+                if (task.isCancelled()) {
+                    return;
+                }
+
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
 
                 if (node.getUserObject() instanceof DicomImageElement) {
@@ -440,7 +444,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     }
 
-    private void writeDicom(File exportDir, CheckTreeModel model, boolean zipFile) throws IOException {
+    private void writeDicom(ExplorerTask task, File exportDir, CheckTreeModel model, boolean zipFile)
+        throws IOException {
         boolean keepNames;
         boolean writeDicomdir;
         boolean cdCompatible;
@@ -473,6 +478,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 ArrayList<String> uids = new ArrayList<String>();
                 TreePath[] paths = model.getCheckingPaths();
                 TreePath: for (TreePath treePath : paths) {
+                    if (task.isCancelled()) {
+                        return;
+                    }
 
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
 

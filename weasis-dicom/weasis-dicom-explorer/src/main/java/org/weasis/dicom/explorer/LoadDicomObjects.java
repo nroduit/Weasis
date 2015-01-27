@@ -80,6 +80,9 @@ public class LoadDicomObjects extends ExplorerTask {
         final ArrayList<SeriesThumbnail> thumbs = new ArrayList<SeriesThumbnail>(dicomObjectsToLoad.length);
 
         for (Attributes dicom : dicomObjectsToLoad) {
+            if (isCancelled()) {
+                return;
+            }
             DicomMediaIO loader = new DicomMediaIO(dicom);
 
             if (loader.isReadableDicom()) {

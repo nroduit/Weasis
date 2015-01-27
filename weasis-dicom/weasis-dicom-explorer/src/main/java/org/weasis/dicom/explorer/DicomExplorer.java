@@ -78,7 +78,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -115,7 +114,6 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 import bibliothek.gui.dock.common.CLocation;
@@ -135,17 +133,16 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
 
     private JPanel panel = null;
-    private JPanel panel_4 = null;
     private PatientPane selectedPatient = null;
-    final CircularProgressBar globalProgress = new CircularProgressBar(0, 100);
+
     private final List<PatientPane> patientPaneList = new ArrayList<PatientPane>();
     private final HashMap<MediaSeriesGroup, List<StudyPane>> patient2study =
         new HashMap<MediaSeriesGroup, List<StudyPane>>();
     private final HashMap<MediaSeriesGroup, List<SeriesPane>> study2series =
         new HashMap<MediaSeriesGroup, List<SeriesPane>>();
     private final JScrollPane thumnailView = new JScrollPane();
+    private final LoadingPanel loadingPanel = new LoadingPanel();
     private final SeriesSelectionModel selectionList;
-    private final ArrayList<ExplorerTask> tasks = new ArrayList<ExplorerTask>();
 
     private final DicomModel model;
 
@@ -243,53 +240,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final JButton btnImport = new JButton(importAction);
     private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), new ImageIcon( //$NON-NLS-1$
         DicomExplorer.class.getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
-
-    private final JLabel globalLoadingLabel = new JLabel();
-    private final JButton globalResumeButton = new JButton(new Icon() {
-
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setColor(Color.GREEN);
-            x += 3;
-            y += 3;
-            int[] xPoints = { x, x + 14, x };
-            int[] yPoints = { y, y + 7, y + 14 };
-            g2d.fillPolygon(xPoints, yPoints, xPoints.length);
-        }
-
-        @Override
-        public int getIconWidth() {
-            return 20;
-        }
-
-        @Override
-        public int getIconHeight() {
-            return 20;
-        }
-    });
-
-    private final JButton globalStopButton = new JButton(new Icon() {
-
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setColor(Color.RED);
-            x += 3;
-            y += 3;
-            g2d.fillRect(x, y, 14, 14);
-        }
-
-        @Override
-        public int getIconWidth() {
-            return 20;
-        }
-
-        @Override
-        public int getIconHeight() {
-            return 20;
-        }
-    });
 
     public DicomExplorer() {
         this(null);
@@ -1486,96 +1436,32 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         // }
         // }
         add(thumnailView, BorderLayout.CENTER);
-        if (tasks.size() > 0) {
-            add(getLoadingPanel(), vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
-        }
-
-    }
-
-    private JPanel getLoadingPanel() {
-        if (panel_4 == null) {
-            panel_4 = new JPanel();
-
-            globalResumeButton.setToolTipText(Messages.getString("DicomExplorer.resume_all")); //$NON-NLS-1$
-            globalResumeButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DownloadManager.resume();
-                }
-            });
-            panel_4.add(globalResumeButton);
-            globalStopButton.setToolTipText(Messages.getString("DicomExplorer.stop_all")); //$NON-NLS-1$
-            globalStopButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DownloadManager.stop();
-                }
-            });
-            panel_4.add(globalStopButton);
-            panel_4.add(globalProgress);
-            panel_4.add(globalLoadingLabel);
-        }
-        return panel_4;
+        add(loadingPanel, vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
     }
 
     public synchronized void addTaskToGlobalProgression(final ExplorerTask task) {
-        if (!tasks.contains(task)) {
-            tasks.add(task);
-            if (tasks.size() > 0) {
-                GuiExecutor.instance().invokeAndWait(new Runnable() {
-                    @Override
-                    public void run() {
-                        JPanel loadingPanel = getLoadingPanel();
-                        globalLoadingLabel.setText(task.getMessage());
-                        if (globalProgress.isVisible()) {
-                            if (task.isInterruptible()) {
-                                globalProgress.setVisible(false);
-                                globalResumeButton.setVisible(true);
-                                globalStopButton.setVisible(true);
-                            } else {
-                                globalResumeButton.setVisible(false);
-                                globalStopButton.setVisible(false);
-                            }
-                        }
-
-                        if (getComponentZOrder(loadingPanel) == -1) {
-                            if (globalProgress.isVisible()) {
-                                globalProgress.setIndeterminate(true);
-                            }
-                            boolean vertical = true;
-                            add(loadingPanel, vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
-                            revalidate();
-                            repaint();
-                        }
-                    }
-                });
+        GuiExecutor.instance().invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                loadingPanel.addTask(task);
+                revalidate();
+                repaint();
             }
-        }
-        add(thumnailView, BorderLayout.CENTER);
-        if (tasks.size() > 0) {
-            add(getLoadingPanel(), true ? BorderLayout.SOUTH : BorderLayout.EAST);
-        }
+        });
 
     }
 
-    public synchronized void removeTaskToGlobalProgression(ExplorerTask task) {
-        if (task != null) {
-            tasks.remove(task);
-            if (tasks.size() == 0) {
-                GuiExecutor.instance().invokeAndWait(new Runnable() {
+    public synchronized void removeTaskToGlobalProgression(final ExplorerTask task) {
+        GuiExecutor.instance().invokeAndWait(new Runnable() {
 
-                    @Override
-                    public void run() {
-                        remove(getLoadingPanel());
-                        globalProgress.setIndeterminate(false);
-                        globalProgress.setVisible(true);
-                        revalidate();
-                        repaint();
-                    }
-                });
-
+            @Override
+            public void run() {
+                if (loadingPanel.removeTask(task)) {
+                    revalidate();
+                    repaint();
+                }
             }
-        }
+        });
     }
 
     public static SeriesThumbnail createThumbnail(final Series series, final DicomModel dicomModel,

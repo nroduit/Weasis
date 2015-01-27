@@ -80,6 +80,10 @@ public class LoadLocalDicom extends ExplorerTask {
         final ArrayList<File> folders = new ArrayList<File>();
 
         for (int i = 0; i < file.length; i++) {
+            if (isCancelled()) {
+                return;
+            }
+
             if (file[i] == null) {
                 continue;
             } else if (file[i].isDirectory()) {
