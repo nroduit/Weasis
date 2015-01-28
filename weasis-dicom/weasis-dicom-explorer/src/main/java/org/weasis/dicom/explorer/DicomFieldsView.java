@@ -13,21 +13,33 @@ package org.weasis.dicom.explorer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
-import javax.swing.DefaultListModel;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JList;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Document;
+import javax.swing.text.Highlighter;
+import javax.swing.text.JTextComponent;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.Style;
@@ -52,6 +64,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -60,6 +73,7 @@ import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.RotatedIcon;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -86,30 +100,43 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
     private final JScrollPane allPane = new JScrollPane();
     private final JScrollPane limitedPane = new JScrollPane();
-    private final JTextPane jTextPane1 = new JTextPane();
+    private final JTextPane jTextPaneLimited = new JTextPane();
+    private final JTextPane jTextPaneAll = new JTextPane();
     private MediaElement<?> currentMedia;
     private MediaSeries<?> currentSeries;
     private boolean anonymize = false;
+
+    private final static Highlighter.HighlightPainter searchHighlightPainter = new SearchHighlightPainter(new Color(
+        255, 125, 0));
+    private final static Highlighter.HighlightPainter searchResultHighlightPainter = new SearchHighlightPainter(
+        Color.YELLOW);
 
     public DicomFieldsView() {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         addTab(Messages.getString("DicomFieldsView.limited"), null, panel, null); //$NON-NLS-1$
+        panel.add(new SearchPanel(jTextPaneLimited), BorderLayout.NORTH);
         panel.add(limitedPane, BorderLayout.CENTER);
-        jTextPane1.setBorder(new EmptyBorder(5, 5, 5, 5));
-        jTextPane1.setContentType("text/html"); //$NON-NLS-1$
-        jTextPane1.setEditable(false);
-        StyledDocument doc = jTextPane1.getStyledDocument();
+        jTextPaneLimited.setBorder(new EmptyBorder(5, 5, 5, 5));
+        jTextPaneLimited.setContentType("text/html"); //$NON-NLS-1$
+        jTextPaneLimited.setEditable(false);
+        StyledDocument doc = jTextPaneLimited.getStyledDocument();
         addStylesToDocument(doc, UIManager.getColor("TextPane.foreground")); //$NON-NLS-1$
 
         JPanel dump = new JPanel();
         dump.setLayout(new BorderLayout());
         dump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         addTab(Messages.getString("DicomFieldsView.all"), null, dump, null); //$NON-NLS-1$
+        dump.add(new SearchPanel(jTextPaneAll), BorderLayout.NORTH);
         dump.add(allPane, BorderLayout.CENTER);
+        jTextPaneAll.setBorder(new EmptyBorder(5, 5, 5, 5));
+        jTextPaneAll.setContentType("text/html"); //$NON-NLS-1$
+        jTextPaneAll.setEditable(false);
+        StyledDocument doc2 = jTextPaneAll.getStyledDocument();
+        addStylesToDocument(doc2, UIManager.getColor("TextPane.foreground")); //$NON-NLS-1$
 
-        setPreferredSize(new Dimension(4096, 4096));
+        setPreferredSize(new Dimension(400, 300));
         setMinimumSize(new Dimension(150, 50));
 
         ChangeListener changeListener = new ChangeListener() {
@@ -173,42 +200,45 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
 
     private void displayAllDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
-        // DefaultListModel<String> listModel = new DefaultListModel<String>(); // only compliant with in JAVA7
-        DefaultListModel listModel = new DefaultListModel();
-        if (media != null) {
-            MediaReader loader = media.getMediaReader();
-            if (loader instanceof DicomMediaIO) {
-                DicomMetaData metaData = null;
-                try {
-                    metaData = (DicomMetaData) ((DicomMediaIO) loader).getStreamMetadata();
-                } catch (IOException e) {
-                    LOGGER.error(e.getMessage());
+        StyledDocument doc = jTextPaneAll.getStyledDocument();
+        try {
+            // clear previous text
+            doc.remove(0, doc.getLength());
+            if (media != null) {
+                MediaReader loader = media.getMediaReader();
+                if (loader instanceof DicomMediaIO) {
+                    DicomMetaData metaData = null;
+                    try {
+                        metaData = (DicomMetaData) ((DicomMediaIO) loader).getStreamMetadata();
+                    } catch (IOException e) {
+                        LOGGER.error(e.getMessage());
+                    }
+                    if (metaData != null) {
+                        printAttribute(metaData.getFileMetaInformation(), doc);
+                        printAttribute(metaData.getAttributes(), doc);
+                    }
+                } else if (loader instanceof DcmMediaReader) {
+                    printAttribute(((DcmMediaReader) loader).getDicomObject(), doc);
                 }
-                if (metaData != null) {
-                    printAttribute(metaData.getFileMetaInformation(), listModel);
-                    printAttribute(metaData.getAttributes(), listModel);
-                }
-            } else if (loader instanceof DcmMediaReader) {
-                printAttribute(((DcmMediaReader) loader).getDicomObject(), listModel);
+                // Remove first return
+                doc.remove(0, 1);
             }
+        } catch (BadLocationException ble) {
+            ble.getStackTrace();
         }
-
-        JList jListElement = new JList(listModel);
-        jListElement.setLayoutOrientation(JList.VERTICAL);
-        jListElement.setBorder(new EmptyBorder(5, 5, 5, 5));
-        allPane.setViewportView(jListElement);
+        allPane.setViewportView(jTextPaneAll);
     }
 
-    private static void printAttribute(Attributes dcmObj, DefaultListModel listModel) {
+    private static void printAttribute(Attributes dcmObj, StyledDocument doc) {
         if (dcmObj != null) {
             int[] tags = dcmObj.tags();
             for (int tag : tags) {
-                printElement(dcmObj, tag, listModel);
+                printElement(dcmObj, tag, doc);
             }
         }
     }
 
-    private static void printElement(Attributes dcmObj, int tag, DefaultListModel listModel) {
+    private static void printElement(Attributes dcmObj, int tag, StyledDocument doc) {
         StringBuilder buf = new StringBuilder(TagUtils.toString(tag));
         buf.append(" ["); //$NON-NLS-1$
         VR vr = dcmObj.getVR(tag);
@@ -235,14 +265,19 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         Sequence seq = dcmObj.getSequence(tag);
         if (seq != null) {
             if (seq.size() > 0) {
-                printSequence(seq, listModel, buf);
+                printSequence(seq, doc, buf);
             } else {
-                listModel.addElement(buf.toString());
+                buf.insert(0, "\n"); //$NON-NLS-1$
+                printItem(doc, buf.toString(), doc.getStyle("regular"));
             }
         } else {
+            buf.insert(0, "\n"); //$NON-NLS-1$
             if (vr.isInlineBinary()) {
                 buf.append("binary data"); //$NON-NLS-1$
+                printItem(doc, buf.toString(), doc.getStyle("regular"));
             } else {
+                printItem(doc, buf.toString(), doc.getStyle("regular"));
+                buf = new StringBuilder();
                 String[] value = dcmObj.getStrings(privateCreator, tag);
                 if (value != null && value.length > 0) {
                     buf.append(value[0]);
@@ -255,12 +290,20 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                         buf.append("..."); //$NON-NLS-1$
                     }
                 }
+                printItem(doc, buf.toString(), doc.getStyle("bold"));
             }
-            listModel.addElement(buf.toString());
         }
     }
 
-    private static void printSequence(Sequence seq, DefaultListModel listModel, StringBuilder buf) {
+    private static void printItem(StyledDocument doc, String val, AttributeSet attribute) {
+        try {
+            doc.insertString(doc.getLength(), val, attribute);
+        } catch (BadLocationException e) {
+            AuditLog.logError(LOGGER, e, "Error on writing dicom item!");
+        }
+    }
+
+    private static void printSequence(Sequence seq, StyledDocument doc, StringBuilder buf) {
         if (seq != null) {
             buf.append(seq.size());
             if (seq.size() <= 1) {
@@ -268,7 +311,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             } else {
                 buf.append(" items"); //$NON-NLS-1$
             }
-            listModel.addElement(buf.toString());
+            buf.insert(0, "\n"); //$NON-NLS-1$
+            printItem(doc, buf.toString(), doc.getStyle("regular"));
 
             for (int i = 0; i < seq.size(); i++) {
                 Attributes attributes = seq.get(i);
@@ -282,20 +326,22 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 }
                 buffer.append(" ITEM #"); //$NON-NLS-1$
                 buffer.append(i + 1);
-                listModel.addElement(buffer.toString());
+                buffer.insert(0, "\n"); //$NON-NLS-1$
+                printItem(doc, buffer.toString(), doc.getStyle("regular"));
                 int[] tags = attributes.tags();
                 for (int tag : tags) {
-                    printElement(attributes, tag, listModel);
+                    printElement(attributes, tag, doc);
                 }
             }
         } else {
-            listModel.addElement(buf.toString());
+            buf.insert(0, "\n"); //$NON-NLS-1$
+            printItem(doc, buf.toString(), doc.getStyle("regular"));
         }
     }
 
     private void displayLimitedDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
 
-        StyledDocument doc = jTextPane1.getStyledDocument();
+        StyledDocument doc = jTextPaneLimited.getStyledDocument();
         try {
             // clear previous text
             doc.remove(0, doc.getLength());
@@ -322,7 +368,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         } catch (BadLocationException ble) {
             ble.getStackTrace();
         }
-        limitedPane.setViewportView(jTextPane1);
+        limitedPane.setViewportView(jTextPaneLimited);
     }
 
     private void writeItems(String title, TagW[] tags, MediaSeriesGroup group, StyledDocument doc) {
@@ -395,4 +441,127 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
     }
 
+    static class SearchHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
+        public SearchHighlightPainter(Color color) {
+            super(color);
+        }
+    }
+
+    static class SearchPanel extends JPanel {
+        private final List<Integer> searchPostions = new ArrayList<Integer>();
+        private final JTextComponent textComponent;
+        private int currentSearchIndex = 0;
+        private String currentSearchPattern;
+
+        public SearchPanel(JTextComponent textComponent) {
+            super();
+            this.textComponent = textComponent;
+            this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+            init();
+        }
+
+        private void init() {
+            this.add(new JLabel("Search" + StringUtil.COLON_AND_SPACE));
+            final JTextField tf = new JTextField();
+            JMVUtils.setPreferredWidth(tf, 300, 100);
+            tf.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent evt) {
+                    currentSearchPattern = tf.getText().trim();
+                    highlight(currentSearchPattern);
+                    if (searchPostions.size() > 0) {
+                        try {
+                            textComponent.scrollRectToVisible(textComponent.modelToView(searchPostions.get(0)));
+                        } catch (BadLocationException e) {
+                        }
+                    }
+                }
+            });
+            this.add(tf);
+            JButton up = new JButton(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")));
+            up.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent evt) {
+                    if (searchPostions.size() > 0) {
+                        currentSearchIndex =
+                            currentSearchIndex <= 0 ? searchPostions.size() - 1 : currentSearchIndex - 1;
+                        showCurrentSearch(currentSearchPattern);
+                    }
+                }
+            });
+            this.add(up);
+            JButton down =
+                new JButton(new RotatedIcon(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")),
+                    RotatedIcon.Rotate.UPSIDE_DOWN));
+            down.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent evt) {
+                    if (searchPostions.size() > 0) {
+                        currentSearchIndex =
+                            currentSearchIndex >= searchPostions.size() - 1 ? 0 : currentSearchIndex + 1;
+                        showCurrentSearch(currentSearchPattern);
+                    }
+                }
+            });
+            this.add(down);
+        }
+
+        public void highlight(String pattern) {
+            removeHighlights(textComponent);
+            searchPostions.clear();
+            if (StringUtil.hasText(pattern)) {
+                try {
+                    Highlighter hilite = textComponent.getHighlighter();
+                    Document doc = textComponent.getDocument();
+                    String text = doc.getText(0, doc.getLength()).toUpperCase();
+                    pattern = pattern.toUpperCase();
+                    int pos = 0;
+
+                    while ((pos = text.indexOf(pattern, pos)) >= 0) {
+                        if (searchPostions.size() == 0) {
+                            hilite.addHighlight(pos, pos + pattern.length(), searchHighlightPainter);
+                        } else {
+                            hilite.addHighlight(pos, pos + pattern.length(), searchResultHighlightPainter);
+                        }
+                        searchPostions.add(pos);
+                        pos += pattern.length();
+                    }
+                } catch (BadLocationException e) {
+                }
+            }
+        }
+
+        public void removeHighlights(JTextComponent textComonent) {
+            Highlighter hilite = textComonent.getHighlighter();
+            for (Highlighter.Highlight highlight : hilite.getHighlights()) {
+                if (highlight.getPainter() instanceof SearchHighlightPainter) {
+                    hilite.removeHighlight(highlight);
+                }
+            }
+        }
+
+        public void showCurrentSearch(String pattern) {
+            if (searchPostions.size() > 0 && StringUtil.hasText(pattern)) {
+                removeHighlights(textComponent);
+
+                try {
+                    if (currentSearchIndex < 0 || currentSearchIndex >= searchPostions.size()) {
+                        currentSearchIndex = 0;
+                    }
+                    int curPos = searchPostions.get(currentSearchIndex);
+                    Highlighter hilite = textComponent.getHighlighter();
+
+                    for (Integer pos : searchPostions) {
+                        if (pos == curPos) {
+                            hilite.addHighlight(pos, pos + pattern.length(), searchHighlightPainter);
+                        } else {
+                            hilite.addHighlight(pos, pos + pattern.length(), searchResultHighlightPainter);
+                        }
+                    }
+                    textComponent.scrollRectToVisible(textComponent.modelToView(curPos));
+                } catch (BadLocationException e) {
+                }
+            }
+        }
+    }
 }
