@@ -15,6 +15,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -146,6 +148,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             }
         };
         this.addChangeListener(changeListener);
+
     }
 
     public static void addStylesToDocument(StyledDocument doc, Color textColor) {
@@ -193,8 +196,10 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private void changeDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
         int index = getSelectedIndex();
         if (index == 0) {
+            jTextPaneLimited.requestFocusInWindow();
             displayLimitedDicomInfo(series, media);
         } else {
+            jTextPaneAll.requestFocusInWindow();
             displayAllDicomInfo(series, media);
         }
     }
@@ -472,6 +477,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     if (searchPostions.size() > 0) {
                         try {
                             textComponent.scrollRectToVisible(textComponent.modelToView(searchPostions.get(0)));
+                            textComponent.requestFocusInWindow();
                         } catch (BadLocationException e) {
                         }
                     }
@@ -479,31 +485,60 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             });
             this.add(tf);
             JButton up = new JButton(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")));
+            up.setToolTipText("Previous");
             up.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent evt) {
-                    if (searchPostions.size() > 0) {
-                        currentSearchIndex =
-                            currentSearchIndex <= 0 ? searchPostions.size() - 1 : currentSearchIndex - 1;
-                        showCurrentSearch(currentSearchPattern);
-                    }
+                    previous();
                 }
             });
             this.add(up);
             JButton down =
                 new JButton(new RotatedIcon(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")),
                     RotatedIcon.Rotate.UPSIDE_DOWN));
+            down.setToolTipText("Next");
             down.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent evt) {
-                    if (searchPostions.size() > 0) {
-                        currentSearchIndex =
-                            currentSearchIndex >= searchPostions.size() - 1 ? 0 : currentSearchIndex + 1;
-                        showCurrentSearch(currentSearchPattern);
-                    }
+                    next();
                 }
             });
             this.add(down);
+            textComponent.addKeyListener(new KeyListener() {
+
+                @Override
+                public void keyTyped(KeyEvent e) {
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    if (e.isShiftDown() && e.getKeyCode() == KeyEvent.VK_F3) {
+                        previous();
+                    } else if (e.getKeyCode() == KeyEvent.VK_F3) {
+                        next();
+                    }
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                }
+            });
+
+            textComponent.setFocusable(true);
+        }
+
+        private void previous() {
+            if (searchPostions.size() > 0) {
+                currentSearchIndex = currentSearchIndex <= 0 ? searchPostions.size() - 1 : currentSearchIndex - 1;
+                showCurrentSearch(currentSearchPattern);
+            }
+        }
+
+        private void next() {
+            if (searchPostions.size() > 0) {
+                currentSearchIndex = currentSearchIndex >= searchPostions.size() - 1 ? 0 : currentSearchIndex + 1;
+                showCurrentSearch(currentSearchPattern);
+            }
         }
 
         public void highlight(String pattern) {
