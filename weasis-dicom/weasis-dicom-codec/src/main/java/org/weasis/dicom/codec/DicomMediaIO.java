@@ -1087,6 +1087,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     private ImageInputStreamImpl iisOfFrame(int frameIndex) throws IOException {
+        // Extract compressed file
+        // FileUtil.writeFile(new SegmentedInputImageStream(iis, pixeldataFragments, frameIndex), new FileOutputStream(
+        // new File(AppProperties.FILE_CACHE_DIR, new File(uri).getName() + frameIndex + ".jpg")));
         SegmentedInputImageStream siis = new SegmentedInputImageStream(iis, pixeldataFragments, frameIndex);
         return patchJpegLS != null ? new PatchJPEGLSImageInputStream(siis, patchJpegLS) : siis;
     }
@@ -1476,17 +1479,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             DicomMetaData metadata = new DicomMetaData(fmi, ds);
             Object pixdata = ds.getValue(Tag.PixelData, pixeldataVR);
 
-            // TODO skip private tags in dcm4che3?
-            // if (isSkipLargePrivate()) {
-            // ih = new SizeSkipInputHandler(ih);
-            // }
-
-            // TODO fix non conformed compressed image
-            // while (dis.tag() == 0xFFFCFFFC) {
-            // dis.readBytes(dis.valueLength());
-            // dis.readDicomObject(ds, -1);
-            // }
-
             if (pixdata != null) {
                 tsuid = dis.getTransferSyntax();
                 numberOfFrame = ds.getInt(Tag.NumberOfFrames, 1);
@@ -1518,36 +1510,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                     }
                 }
             }
-
-            // if (dis.tag() == Tag.PixelData) {
-            // if (numberOfFrame == 0) {
-            // numberOfFrame = 1;
-            // }
-            // swapByteOrder = bigEndian && dis.vr() == VR.OW && dataType == DataBuffer.TYPE_BYTE;
-            // if (swapByteOrder && banded) {
-            // throw new UnsupportedOperationException(
-            // "Big Endian color-by-plane with Pixel Data VR=OW not implemented");
-            // }
-            // pixelDataPos = dis.getStreamPosition();
-            // pixelDataLen = dis.valueLength();
-            //
-            // compressed = pixelDataLen == -1;
-            // if (!compressed && tsuid.startsWith("1.2.840.10008.1.2.4")) {
-            // // Corrupted image where missing the encapsulated part for the identification the compressed dataset
-            // compressed = true;
-            // }
-            // if (compressed) {
-            // ImageReaderFactory f = ImageReaderFactory.getInstance();
-            // LOGGER.debug("Transfer syntax for image is " + tsuid + " with image reader class " + f.getClass());
-            // f.adjustDatasetForTransferSyntax(ds, tsuid);
-            // clampPixelValues = allocated == 16 && bitsStored < 12 && UID.JPEGExtended24.equals(tsuid);
-            // }
-            // } else if (ds.getString(Tag.PixelDataProviderURL) != null) {
-            // if (numberOfFrame == 0) {
-            // numberOfFrame = 1;
-            // compressed = true;
-            // }
-            // }
 
             HEADER_CACHE.put(this, metadata);
             return metadata;

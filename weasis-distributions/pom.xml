@@ -38,12 +38,6 @@
 		<slf4j.version>1.7.5</slf4j.version>
 		<sling.commons.log.version>3.0.2-r1</sling.commons.log.version>
 
-		<weasis.launcher.version>${project.version}</weasis.launcher.version>
-		<weasis.core.version>${project.version}</weasis.core.version>
-		<weasis.imageio.version>${project.version}</weasis.imageio.version>
-		<weasis.base.version>${project.version}</weasis.base.version>
-		<weasis.dicom.version>${project.version}</weasis.dicom.version>
-
 		<dockingframes.version>1.1.2-P8c2</dockingframes.version>
 		<substance.version>7.3</substance.version>
 		<jai.version>1.1.4-b05</jai.version>
@@ -54,18 +48,7 @@
 
 		<windowsName>weasis-native</windowsName>
 	</properties>
-	<repositories>
-		<repository>
-			<id>weasis</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
-		</repository>
-	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>weasis</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
-		</pluginRepository>
-	</pluginRepositories>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -96,7 +79,7 @@
 								<artifactItem>
 									<groupId>org.weasis.launcher</groupId>
 									<artifactId>weasis-launcher</artifactId>
-									<version>${weasis.launcher.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.dir}</outputDirectory>
 									<destFileName>weasis-launcher.jar</destFileName>
 								</artifactItem>
@@ -226,13 +209,13 @@
 								<artifactItem>
 									<groupId>org.weasis.core</groupId>
 									<artifactId>weasis-core-api</artifactId>
-									<version>${weasis.core.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.core</groupId>
 									<artifactId>weasis-core-ui</artifactId>
-									<version>${weasis.core.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 
@@ -243,7 +226,7 @@
 								<artifactItem>
 									<groupId>org.weasis.imageio</groupId>
 									<artifactId>weasis-imageio-codec</artifactId>
-									<version>${weasis.imageio.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
@@ -271,13 +254,13 @@
 								<artifactItem>
 									<groupId>org.weasis.base</groupId>
 									<artifactId>weasis-base-ui</artifactId>
-									<version>${weasis.base.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.base</groupId>
 									<artifactId>weasis-base-viewer2d</artifactId>
-									<version>${weasis.base.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 
@@ -287,31 +270,31 @@
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-codec</artifactId>
-									<version>${weasis.dicom.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-explorer</artifactId>
-									<version>${weasis.dicom.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-viewer2d</artifactId>
-									<version>${weasis.dicom.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-sr</artifactId>
-									<version>${weasis.dicom.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-au</artifactId>
-									<version>${weasis.dicom.version}</version>
+									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 							</artifactItems>

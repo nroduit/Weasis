@@ -345,6 +345,35 @@ public final class FileUtil {
         }
     }
 
+    public static int writeFile(ImageInputStream inputStream, OutputStream out) {
+        if (inputStream == null || out == null) {
+            return 0;
+        }
+        try {
+            byte[] buf = new byte[FILE_BUFFER];
+            int offset;
+            while ((offset = inputStream.read(buf)) > 0) {
+                out.write(buf, 0, offset);
+            }
+            out.flush();
+            return -1;
+        } catch (InterruptedIOException e) {
+            return e.bytesTransferred;
+        } catch (IOException e) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.error("Error when writing file", e); //$NON-NLS-1$
+            } else {
+                LOGGER.error(e.getMessage());
+            }
+            return 0;
+        }
+
+        finally {
+            FileUtil.safeClose(inputStream);
+            FileUtil.safeClose(out);
+        }
+    }
+
     public static String formatSize(double size) {
         StringBuilder buf = new StringBuilder();
         if (size >= GB) {

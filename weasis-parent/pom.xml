@@ -29,6 +29,12 @@
 			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
 		</repository>
 	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>weasis</id>
+			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
+		</pluginRepository>
+	</pluginRepositories>
 	<!-- Maven server for deploying releases -->
 	<distributionManagement>
 		<repository>

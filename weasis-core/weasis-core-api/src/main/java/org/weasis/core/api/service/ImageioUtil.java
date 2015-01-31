@@ -1,10 +1,13 @@
 package org.weasis.core.api.service;
 
 import java.lang.reflect.Field;
+import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.IIOServiceProvider;
+import javax.imageio.spi.ImageReaderWriterSpi;
+import javax.imageio.spi.ServiceRegistry;
 
 public final class ImageioUtil {
 
@@ -45,6 +48,53 @@ public final class ImageioUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static <T> void registerServiceProviderPriority(Class<? extends T> clazz, Class<T> category,
+        String formatName) {
+        try {
+            T spi = clazz.newInstance();
+            // Resister again the spi classes with the bundle classloader
+            registry.registerServiceProvider(clazz.newInstance(), category);
+            Iterator<T> list = registry.getServiceProviders(category, new ContainsFilter(formatName), true);
+            while (list.hasNext()) {
+                T item = list.next();
+                if (item != spi) {
+                    registry.setOrdering(category, spi, item);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static class ContainsFilter implements ServiceRegistry.Filter {
+
+        String name;
+
+        public ContainsFilter(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public boolean filter(Object spi) {
+            try {
+                if (spi instanceof ImageReaderWriterSpi) {
+                    return contains(((ImageReaderWriterSpi) spi).getFormatNames(), name);
+                }
+            } catch (Exception e) {
+            }
+            return false;
+        }
+    }
+
+    private static boolean contains(String[] names, String name) {
+        for (int i = 0; i < names.length; i++) {
+            if (name.equalsIgnoreCase(names[i])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void unRegisterServiceProvider(Class clazz) {

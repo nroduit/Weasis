@@ -40,16 +40,20 @@
 			class="com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageReader" />
 	</element>
 	<element tsuid="1.2.840.10008.1.2.4.90">
+	    <reader format="jpeg2000" priority="5" name="Native Kakadu decoder"
+			class="org.weasis.kdu.NativeJ2kImageReader" />
 		<reader format="jpeg2000" priority="10" name="Native OpenJPEG decoder"
-			class="org.weasis.jpeg.NativeJ2kImageReader" />
+			class="org.weasis.openjpeg.NativeJ2kImageReader" />
 		<reader format="jpeg2000" priority="20" name="Sun native j2k decoder"
 			class="com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReaderCodecLib" />
 		<reader format="jpeg2000" priority="30" name="Sun pure Java j2k decoder"
 			class="com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReader" />
 	</element>
 	<element tsuid="1.2.840.10008.1.2.4.91">
+	    <reader format="jpeg2000" priority="5" name="Native Kakadu decoder"
+			class="org.weasis.kdu.NativeJ2kImageReader" />
 		<reader format="jpeg2000" priority="10" name="Native OpenJPEG decoder"
-			class="org.weasis.jpeg.NativeJ2kImageReader" />
+			class="org.weasis.openjpeg.NativeJ2kImageReader" />
 		<reader format="jpeg2000" priority="20" name="Sun native j2k decoder"
 			class="com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReaderCodecLib" />
 		<reader format="jpeg2000" priority="30" name="Sun pure Java j2k decoder"
