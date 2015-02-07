@@ -32,9 +32,8 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.util.TitleMenuItem;
-import org.weasis.dicom.viewer2d.EventManager;
-import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
-import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.dicom.rt.EventManager;
+import org.weasis.dicom.rt.KOComponentFactory.KOViewButton.eState;
 
 /**
  * @author benoit jacquemoud
@@ -43,7 +42,7 @@ import org.weasis.dicom.viewer2d.View2d;
  */
 public final class KOComponentFactory {
 
-    public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/16x16/star_bw.png")); //$NON-NLS-1$
+    public static final ImageIcon KO_STAR_ICON = new ImageIcon(RTView.class.getResource("/icon/16x16/star_bw.png")); //$NON-NLS-1$
     public static final ImageIcon KO_STAR_ICON_SELECTED;
     public static final ImageIcon KO_STAR_ICON_EXIST;
 
@@ -64,7 +63,7 @@ public final class KOComponentFactory {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static ViewButton buildKoSelectionButton(final View2d view2d) {
+    public static ViewButton buildKoSelectionButton(final RTView view2d) {
 
         return new ViewButton(new ShowPopup() {
 
@@ -92,12 +91,12 @@ public final class KOComponentFactory {
                 popupMenu.setEnabled(koSelectionAction.isActionEnabled());
                 popupMenu.show(invoker, x, y);
             }
-        }, View2d.KO_ICON);
+        }, RTView.KO_ICON);
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static KOViewButton buildKoStarButton(final View2d view2d) {
+    public static KOViewButton buildKoStarButton(final RTView view2d) {
 
         return new KOViewButton(new ShowPopup() {
             @Override

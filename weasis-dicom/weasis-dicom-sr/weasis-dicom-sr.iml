@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="Osmorc" name="OSGi">
+      <configuration manifestGenerationMode="OsmorcControlled" manifestLocation="" jarfileLocation="weasis-dicom-sr-2.0.3-SNAPSHOT.jar" outputPathType="CompilerOutputPath" bndFileLocation="" bundlorFileLocation="" bundleActivator="org.weasis.dicom.sr.internal.Activator" bundleSymbolicName="weasis-dicom-sr" bundleVersion="2.0.3-SNAPSHOT" ignoreFilePattern="" useProjectDefaultManifestFileLocation="true" alwaysRebuildBundleJAR="false" doNotSynchronizeWithMaven="false">
+        <additionalProperties>
+          <property key="Bundle-RequiredExecutionEnvironment" value="JavaSE-1.6" />
+          <property key="-removeheaders" value="Bnd-LastModified,Include-Resource,Private-Package,Tool,Built-By,Build-Jdk,Created-By" />
+          <property key="-nouses" value="true" />
+          <property key="Embed-Dependency" value="*;scope=compile;inline=true" />
+          <property key="Embed-Directory" value="lib" />
+          <property key="Embed-StripGroup" value="true" />
+          <property key="Bundle-Name" value="DICOM Structured Report Viewer [weasis-dicom-sr]" />
+          <property key="Include-Resource" value="org/weasis/dicom/sr/messages.properties=$MODULE_DIR$/src/main/java/org/weasis/dicom/sr/messages.properties" />
+        </additionalProperties>
+        <additionalJARContents />
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="weasis-core-ui" scope="PROVIDED" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.simpleframework:simple-xml:2.7" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: stax:stax-api:1.0.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: it.cnr.imaa.essi:lablib-checkboxtree:3.3" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.swinglabs:jxlayer:3.0.4" level="project" />
+    <orderEntry type="module" module-name="weasis-dicom-codec" scope="PROVIDED" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.dcm4che:dcm4che-core:3.3.4" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.dcm4che:dcm4che-dict:3.3.4" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.slf4j:slf4j-log4j12:1.7.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: log4j:log4j:1.2.17" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: junit:junit:4.11" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.dcm4che:dcm4che-image:3.3.4" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.dcm4che:dcm4che-net:3.3.4" level="project" />
+    <orderEntry type="module" module-name="weasis-dicom-explorer" scope="PROVIDED" />
+    <orderEntry type="module" module-name="weasis-core-api" scope="PROVIDED" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.osgi:org.osgi.compendium:5.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.osgi:org.osgi.core:5.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.scr.annotations:1.9.8" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.sling:org.apache.sling.commons.log:3.0.2-r1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.slf4j:slf4j-api:1.7.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.gogo.command:0.14.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.bundlerepository:1.6.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.easymock:easymock:2.4" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.gogo.runtime:0.12.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.gogo.shell:0.10.0-r1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty.com.sun.media:jai-lib:1.1.4-b05" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty.com.sun.media:jai_core:1.1.4-b05" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty.com.sun.media:mlibwrapper_jai:1.1.4-b03" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty.com.sun.media:jai_codec:1.1.4-b03" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty:docking-frames:1.1.2-P8c2" level="project" />
+  </component>
+</module>

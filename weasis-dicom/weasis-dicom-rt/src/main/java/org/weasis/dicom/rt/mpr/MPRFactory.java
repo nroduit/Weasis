@@ -20,10 +20,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.mpr.MPRContainer;
-import org.weasis.dicom.viewer2d.mpr.MprView;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.rt.Messages;
 
 public class MPRFactory implements SeriesViewerFactory {
 
@@ -78,16 +75,16 @@ public class MPRFactory implements SeriesViewerFactory {
         while (enumVal.hasNext()) {
             Component val = enumVal.next();
             if (val instanceof MprView) {
-                SliceOrientation sliceOrientation;
+                MprView.SliceOrientation sliceOrientation;
                 switch (index) {
                     case 1:
-                        sliceOrientation = SliceOrientation.CORONAL;
+                        sliceOrientation = MprView.SliceOrientation.CORONAL;
                         break;
                     case 2:
-                        sliceOrientation = SliceOrientation.SAGITTAL;
+                        sliceOrientation = MprView.SliceOrientation.SAGITTAL;
                         break;
                     default:
-                        sliceOrientation = SliceOrientation.AXIAL;
+                        sliceOrientation = MprView.SliceOrientation.AXIAL;
                         break;
                 }
                 ((MprView) val).setType(sliceOrientation);

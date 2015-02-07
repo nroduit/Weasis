@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="weasis-core-api" scope="PROVIDED" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.osgi:org.osgi.compendium:5.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.osgi:org.osgi.core:5.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.scr.annotations:1.9.8" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.sling:org.apache.sling.commons.log:3.0.2-r1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.slf4j:slf4j-api:1.7.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.gogo.command:0.14.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.bundlerepository:1.6.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.easymock:easymock:2.4" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.gogo.runtime:0.12.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.felix:org.apache.felix.gogo.shell:0.10.0-r1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty.com.sun.media:jai-lib:1.1.4-b05" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty.com.sun.media:jai_core:1.1.4-b05" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty.com.sun.media:mlibwrapper_jai:1.1.4-b03" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty.com.sun.media:jai_codec:1.1.4-b03" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.weasis.thirdparty:docking-frames:1.1.2-P8c2" level="project" />
+  </component>
+</module>

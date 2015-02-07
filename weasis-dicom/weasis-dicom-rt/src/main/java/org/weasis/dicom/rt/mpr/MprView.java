@@ -18,9 +18,9 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
-import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.dicom.rt.RTView;
 
-public class MprView extends View2d {
+public class MprView extends RTView {
     private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
 
     public enum SliceOrientation {

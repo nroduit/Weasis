@@ -69,13 +69,9 @@ import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.RawImage;
-import org.weasis.dicom.viewer2d.mpr.MPRContainer;
-import org.weasis.dicom.viewer2d.mpr.MPRFactory;
-import org.weasis.dicom.viewer2d.mpr.MprView;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
-import org.weasis.dicom.viewer2d.mpr.RawImageIO;
+import org.weasis.dicom.rt.Messages;
+import org.weasis.dicom.rt.mpr.MprView.*;
+import org.weasis.dicom.rt.RawImage;
 
 public class SeriesBuilder {
     public static final File MPR_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(

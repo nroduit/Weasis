@@ -458,10 +458,10 @@ public final class KOManager {
                 if (newImage != null && !newImage.isImageAvailable()) {
                     newImage.getImage();
                 }
-                ((View2d) view2D).setImage(newImage);
+                ((RTView) view2D).setImage(newImage);
 
             }
-            ((View2d) view2D).updateKOButtonVisibleState();
+            ((RTView) view2D).updateKOButtonVisibleState();
         }
     }
 }

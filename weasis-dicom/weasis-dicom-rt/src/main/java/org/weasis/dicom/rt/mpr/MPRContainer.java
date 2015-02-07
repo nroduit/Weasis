@@ -71,16 +71,12 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
+import org.weasis.dicom.rt.RTContainer;
 import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.LutToolBar;
-import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.View2dContainer;
-import org.weasis.dicom.viewer2d.View2dFactory;
-import org.weasis.dicom.viewer2d.mpr.*;
-import org.weasis.dicom.viewer2d.mpr.MPRFactory;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
-import org.weasis.dicom.viewer2d.mpr.SeriesBuilder;
+import org.weasis.dicom.rt.Messages;
+import org.weasis.dicom.rt.RTFactory;
 
 public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(MPRContainer.class);
@@ -134,7 +130,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
-    public static final List<DockableTool> TOOLS = View2dContainer.TOOLS;
+    public static final List<DockableTool> TOOLS = RTContainer.TOOLS;
     private static volatile boolean INI_COMPONENTS = false;
 
     private volatile Thread process;
@@ -154,7 +150,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             props.putBooleanProperty("weasis.toolbar.synchbouton", false); //$NON-NLS-1$
 
             EventManager evtMg = EventManager.getInstance();
-            TOOLBARS.add(View2dContainer.TOOLBARS.get(0));
+            TOOLBARS.add(RTContainer.TOOLBARS.get(0));
             TOOLBARS.add(new MeasureToolBar(evtMg, 11));
             TOOLBARS.add(new ZoomToolBar(evtMg, 20));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
@@ -334,7 +330,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     @Override
     public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
-        return View2dFactory.getViewTypeNumber(layout, defaultClass);
+        return RTFactory.getViewTypeNumber(layout, defaultClass);
     }
 
     @Override
@@ -408,9 +404,9 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(org.weasis.dicom.viewer2d.mpr.MPRContainer.this);
+                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
                     PrintDialog dialog =
-                        new PrintDialog(SwingUtilities.getWindowAncestor(org.weasis.dicom.viewer2d.mpr.MPRContainer.this), title, eventManager);
+                        new PrintDialog(SwingUtilities.getWindowAncestor(MPRContainer.this), title, eventManager);
                     ColorLayerUI.showCenterScreen(dialog, layer);
                 }
             };
@@ -421,9 +417,9 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(org.weasis.dicom.viewer2d.mpr.MPRContainer.this);
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
                 DicomPrintDialog dialog =
-                    new DicomPrintDialog(SwingUtilities.getWindowAncestor(org.weasis.dicom.viewer2d.mpr.MPRContainer.this), title2, eventManager);
+                    new DicomPrintDialog(SwingUtilities.getWindowAncestor(MPRContainer.this), title2, eventManager);
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         };
@@ -431,7 +427,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         return actions;
     }
 
-    public MprView getMprView(SliceOrientation sliceOrientation) {
+    public MprView getMprView(MprView.SliceOrientation sliceOrientation) {
         for (DefaultView2d v : view2ds) {
             if (v instanceof MprView) {
                 if (sliceOrientation != null && sliceOrientation.equals(((MprView) v).getSliceOrientation())) {
@@ -453,16 +449,16 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         for (int i = 0; i < view2ds.size(); i++) {
             DefaultView2d<DicomImageElement> val = view2ds.get(i);
             if (val instanceof MprView) {
-                SliceOrientation sliceOrientation;
+                MprView.SliceOrientation sliceOrientation;
                 switch (i) {
                     case 1:
-                        sliceOrientation = SliceOrientation.CORONAL;
+                        sliceOrientation = MprView.SliceOrientation.CORONAL;
                         break;
                     case 2:
-                        sliceOrientation = SliceOrientation.SAGITTAL;
+                        sliceOrientation = MprView.SliceOrientation.SAGITTAL;
                         break;
                     default:
-                        sliceOrientation = SliceOrientation.AXIAL;
+                        sliceOrientation = MprView.SliceOrientation.AXIAL;
                         break;
                 }
                 ((MprView) val).setType(sliceOrientation);
@@ -483,7 +479,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                     @Override
                     public void run() {
                         try {
-                            SeriesBuilder.createMissingSeries(this, org.weasis.dicom.viewer2d.mpr.MPRContainer.this, view);
+                            SeriesBuilder.createMissingSeries(this, MPRContainer.this, view);
 
                             // Following actions need to be executed in EDT thread
                             GuiExecutor.instance().execute(new Runnable() {
@@ -492,7 +488,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                                 public void run() {
                                     ActionState synch = EventManager.getInstance().getAction(ActionW.SYNCH);
                                     if (synch instanceof ComboItemListener) {
-                                        ((ComboItemListener) synch).setSelectedItem(org.weasis.dicom.viewer2d.mpr.MPRContainer.DEFAULT_MPR);
+                                        ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
                                     }
                                     // Set the middle image (best choice to propagate the default preset of non CT
                                     // modalities)
@@ -571,11 +567,11 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                     String orientation =
                         ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3],
                             v[4], v[5]);
-                    SliceOrientation sliceOrientation = SliceOrientation.AXIAL;
+                    MprView.SliceOrientation sliceOrientation = MprView.SliceOrientation.AXIAL;
                     if (ImageOrientation.LABELS[3].equals(orientation)) {
-                        sliceOrientation = SliceOrientation.CORONAL;
+                        sliceOrientation = MprView.SliceOrientation.CORONAL;
                     } else if (ImageOrientation.LABELS[2].equals(orientation)) {
-                        sliceOrientation = SliceOrientation.SAGITTAL;
+                        sliceOrientation = MprView.SliceOrientation.SAGITTAL;
                     }
                     MprView view = getMprView(sliceOrientation);
                     if (view != null) {
