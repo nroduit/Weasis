@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Similar of the dcm4che dictionary "dictionary.xml" except that the alias attribute has been removed
+and the format attribute has been added.
+-->
+<dictionary>
+<element tag="00080020" vr="DA" vm="1" format="" ret="">Study Date</element>
+<element tag="00080022" vr="DA" vm="1" format="Acq.: $V" ret="">Acquisition Date</element>
+<element tag="00080030" vr="TM" vm="1" format="Study: $V" ret="">Study Time</element>
+<element tag="00080032" vr="TM" vm="1" format="Acq.: $V" ret="">Acquisition Time</element>
+<element tag="00080050" vr="SH" vm="1" format="" ret="">Accession Number</element>
+<element tag="00080060" vr="CS" vm="1" format="" ret="">Modality</element>
+<element tag="00080070" vr="LO" vm="1" format="" ret="">Manufacturer</element>
+<element tag="00080080" vr="LO" vm="1" format="" ret="">Institution Name</element>
+<element tag="00080090" vr="PN" vm="1" format="" ret="">Referring Physician's Name</element>
+<element tag="00081030" vr="LO" vm="1" format="" ret="">Study Description</element>
+<element tag="0008103E" vr="LO" vm="1" format="" ret="">Series Description</element>
+<element tag="00081050" vr="PN" vm="1-n" format="" ret="">Performing Physician's Name</element>
+<element tag="00081070" vr="PN" vm="1-n" format="" ret="">Operators' Name</element>
+<element tag="00081090" vr="LO" vm="1" format="" ret="">Manufacturer's Model Name</element>
+<element tag="00100010" vr="PN" vm="1" format="" ret="">Patient's Name</element>
+<element tag="00100020" vr="LO" vm="1" format="ID: $V" ret="">Patient ID</element>
+<element tag="00100030" vr="DA" vm="1" format="" ret="">Patient's Birth Date</element>
+<element tag="00100040" vr="CS" vm="1" format="" ret="">Patient's Sex</element>
+<element tag="00101010" vr="AS" vm="1" format="Age: $V" ret="">Patient's Age</element>
+<element tag="00180010" vr="LO" vm="1" format="" ret="">Contrast/Bolus Agent</element>
+<element tag="00180015" vr="CS" vm="1" format="" ret="">Body Part Examined</element>
+<element tag="00180050" vr="DS" vm="1" format="" ret="">Slice Thickness</element>
+<element tag="00180080" vr="DS" vm="1" format="" ret="">Repetition Time</element>
+<element tag="00180081" vr="DS" vm="1" format="" ret="">Echo Time</element>
+<element tag="00180088" vr="DS" vm="1" format="" ret="">Spacing Between Slices</element>
+<element tag="00181030" vr="LO" vm="1" format="Protocol: $V" ret="">Protocol Name</element>
+<element tag="00200011" vr="IS" vm="1" format="" ret="">Series Number</element>
+<element tag="00200013" vr="IS" vm="1" format="" ret="">Instance Number</element>
+<element tag="00201041" vr="DS" vm="1" format="Slice: $V:$#,##0.##$ mm" ret="">Slice Location</element>
+<element tag="00204000" vr="LT" vm="1" format="" ret="">Image Comments</element>
+<element tag="00541000" vr="CS" vm="2" format="" ret="">Series Type</element>
+</dictionary>
