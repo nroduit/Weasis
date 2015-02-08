@@ -34,8 +34,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
@@ -75,7 +77,9 @@ import org.weasis.core.api.gui.util.DynamicMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -979,7 +983,7 @@ public class WeasisWin {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                return dropDicomFiles(files, support.getDropLocation());
+                return dropFiles(files, support.getDropLocation());
             }
             // When dragging a file or group of files from a Gnome or Kde environment
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
@@ -992,14 +996,13 @@ public class WeasisWin {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                return dropDicomFiles(files, support.getDropLocation());
+                return dropFiles(files, support.getDropLocation());
             }
 
             Series seq;
             try {
                 seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
-                // Do not add series without medias. BUG WEA-100
-                if (seq == null || seq.size(null) == 0) {
+                if (seq == null) {
                     return false;
                 }
 
@@ -1029,7 +1032,7 @@ public class WeasisWin {
             return true;
         }
 
-        private boolean dropDicomFiles(final List<File> files, DropLocation dropLocation) {
+        private boolean dropFiles(final List<File> files, DropLocation dropLocation) {
             if (files != null) {
                 List<DataExplorerView> explorers = new ArrayList<DataExplorerView>(UIManager.EXPLORER_PLUGINS);
                 for (int i = explorers.size() - 1; i >= 0; i--) {
@@ -1038,49 +1041,72 @@ public class WeasisWin {
                     }
                 }
 
-                int size = explorers.size();
-
-                if (size == 1) {
-                    explorers.get(0).importFiles(files.toArray(new File[files.size()]), true);
-                } else {
-                    Point p;
-                    if (dropLocation == null) {
-                        Rectangle b = WeasisWin.this.getFrame().getBounds();
-                        p = new Point((int) b.getCenterX(), (int) b.getCenterY());
-                    } else {
-                        p = dropLocation.getDropPoint();
-                    }
-
-                    JPopupMenu popup = new JPopupMenu();
-
-                    for (final DataExplorerView dataExplorerView : explorers) {
-                        JMenuItem item = new JMenuItem(dataExplorerView.getUIName(), dataExplorerView.getIcon());
-                        item.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                dataExplorerView.importFiles(files.toArray(new File[files.size()]), true);
+                Map<Codec, List<File>> codecs = new HashMap<Codec, List<File>>();
+                for (File file : files) {
+                    MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
+                    if (reader != null) {
+                        Codec c = reader.getCodec();
+                        if (c != null) {
+                            List<File> cFiles = codecs.get(c);
+                            if (cFiles == null) {
+                                cFiles = new ArrayList<File>();
+                                codecs.put(c, cFiles);
                             }
-                        });
-                        popup.add(item);
+                            cFiles.add(file);
+                        }
                     }
-
-                    // popup.addSeparator();
-                    // JMenuItem item = new JMenuItem("Open files directly with associated viewers");
-                    // item.addActionListener(new ActionListener() {
-                    //
-                    // @Override
-                    // public void actionPerformed(ActionEvent e) {
-                    // for (File file : files) {
-                    // ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
-                    // }
-                    // }
-                    // });
-                    // popup.add(item);
-
-                    popup.show(WeasisWin.this.getFrame(), p.x, p.y);
                 }
 
+                for (Iterator<Entry<Codec, List<File>>> it = codecs.entrySet().iterator(); it.hasNext();) {
+                    Entry<Codec, List<File>> entry = it.next();
+                    final List<File> vals = entry.getValue();
+
+                    List<DataExplorerView> exps = new ArrayList<DataExplorerView>();
+                    for (final DataExplorerView dataExplorerView : explorers) {
+                        DataExplorerModel model = dataExplorerView.getDataExplorerModel();
+                        if (model != null) {
+                            List<Codec> cList = model.getCodecPlugins();
+                            if (cList != null && cList.contains(entry.getKey())) {
+                                exps.add(dataExplorerView);
+                            }
+                        }
+                    }
+
+                    if (exps.isEmpty()) {
+                        for (File file : vals) {
+                            ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
+                        }
+                    } else {
+                        if (exps.size() == 1) {
+                            exps.get(0).importFiles(vals.toArray(new File[vals.size()]), true);
+                        } else {
+                            Point p;
+                            if (dropLocation == null) {
+                                Rectangle b = WeasisWin.this.getFrame().getBounds();
+                                p = new Point((int) b.getCenterX(), (int) b.getCenterY());
+                            } else {
+                                p = dropLocation.getDropPoint();
+                            }
+
+                            JPopupMenu popup = new JPopupMenu();
+
+                            for (final DataExplorerView dataExplorerView : exps) {
+                                JMenuItem item =
+                                    new JMenuItem(dataExplorerView.getUIName(), dataExplorerView.getIcon());
+                                item.addActionListener(new ActionListener() {
+
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        dataExplorerView.importFiles(vals.toArray(new File[vals.size()]), true);
+                                    }
+                                });
+                                popup.add(item);
+                            }
+
+                            popup.show(WeasisWin.this.getFrame(), p.x, p.y);
+                        }
+                    }
+                }
                 return true;
             }
             return false;
