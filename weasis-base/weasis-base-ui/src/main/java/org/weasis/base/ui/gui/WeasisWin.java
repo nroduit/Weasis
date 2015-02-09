@@ -1041,8 +1041,13 @@ public class WeasisWin {
                     }
                 }
 
+                final List<File> dirs = new ArrayList<File>();
                 Map<Codec, List<File>> codecs = new HashMap<Codec, List<File>>();
                 for (File file : files) {
+                    if (file.isDirectory()) {
+                        dirs.add(file);
+                        continue;
+                    }
                     MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
                     if (reader != null) {
                         Codec c = reader.getCodec();
@@ -1055,6 +1060,10 @@ public class WeasisWin {
                             cFiles.add(file);
                         }
                     }
+                }
+
+                if (!dirs.isEmpty() && !explorers.isEmpty()) {
+                    importInExplorer(explorers, dirs, dropLocation);
                 }
 
                 for (Iterator<Entry<Codec, List<File>>> it = codecs.entrySet().iterator(); it.hasNext();) {
@@ -1077,39 +1086,42 @@ public class WeasisWin {
                             ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
                         }
                     } else {
-                        if (exps.size() == 1) {
-                            exps.get(0).importFiles(vals.toArray(new File[vals.size()]), true);
-                        } else {
-                            Point p;
-                            if (dropLocation == null) {
-                                Rectangle b = WeasisWin.this.getFrame().getBounds();
-                                p = new Point((int) b.getCenterX(), (int) b.getCenterY());
-                            } else {
-                                p = dropLocation.getDropPoint();
-                            }
-
-                            JPopupMenu popup = new JPopupMenu();
-
-                            for (final DataExplorerView dataExplorerView : exps) {
-                                JMenuItem item =
-                                    new JMenuItem(dataExplorerView.getUIName(), dataExplorerView.getIcon());
-                                item.addActionListener(new ActionListener() {
-
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        dataExplorerView.importFiles(vals.toArray(new File[vals.size()]), true);
-                                    }
-                                });
-                                popup.add(item);
-                            }
-
-                            popup.show(WeasisWin.this.getFrame(), p.x, p.y);
-                        }
+                        importInExplorer(exps, vals, dropLocation);
                     }
                 }
                 return true;
             }
             return false;
+        }
+
+        private void importInExplorer(List<DataExplorerView> exps, final List<File> vals, DropLocation dropLocation) {
+            if (exps.size() == 1) {
+                exps.get(0).importFiles(vals.toArray(new File[vals.size()]), true);
+            } else {
+                Point p;
+                if (dropLocation == null) {
+                    Rectangle b = WeasisWin.this.getFrame().getBounds();
+                    p = new Point((int) b.getCenterX(), (int) b.getCenterY());
+                } else {
+                    p = dropLocation.getDropPoint();
+                }
+
+                JPopupMenu popup = new JPopupMenu();
+
+                for (final DataExplorerView dataExplorerView : exps) {
+                    JMenuItem item = new JMenuItem(dataExplorerView.getUIName(), dataExplorerView.getIcon());
+                    item.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            dataExplorerView.importFiles(vals.toArray(new File[vals.size()]), true);
+                        }
+                    });
+                    popup.add(item);
+                }
+
+                popup.show(WeasisWin.this.getFrame(), p.x, p.y);
+            }
         }
     }
 
