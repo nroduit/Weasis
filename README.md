@@ -11,7 +11,7 @@ The master branch contains Weasis 2. The old branch is 1.2.x.
 ## Weasis 2.0 ##
 
 ### General Features: ###
-* Flexible integration to HIS or PHR
+* Flexible integration to HIS or PHR (see [weasis-pacs-connector](https://github.com/nroduit/weasis-pacs-connector))
 * Web based distribution ([embedded in a web page](https://github.com/nroduit/weasis-jnlp-distributions) or launch from an external window)
 * Desktop portable distribution (Windows, Mac OS X and Linux)
 * Embedded DICOM viewer (portable distribution) in CD/DVD or other portable media
