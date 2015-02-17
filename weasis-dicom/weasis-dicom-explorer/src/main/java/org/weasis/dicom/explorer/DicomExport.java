@@ -19,6 +19,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Properties;
 
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
+import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomExport extends AbstractWizardDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomExport.class);
@@ -144,6 +146,10 @@ public class DicomExport extends AbstractWizardDialog {
     public void dispose() {
         closeAllPages();
         super.dispose();
+    }
+
+    public static Properties getImportExportProperties() {
+        return Activator.IMPORT_EXPORT_PERSISTENCE;
     }
 
 }

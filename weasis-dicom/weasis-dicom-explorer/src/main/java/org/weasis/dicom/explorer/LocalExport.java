@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -78,7 +78,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static final char[] HEX_DIGIT = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
         'E', 'F' };
 
-    private static final String LAST_DIR = "lastExportDir";//$NON-NLS-1$
+    public static final String LAST_DIR = "lastExportDir";//$NON-NLS-1$
     private static final String INC_DICOMDIR = "exp.include.dicomdir";//$NON-NLS-1$
     private static final String KEEP_INFO_DIR = "exp.keep.dir.name";//$NON-NLS-1$
     private static final String IMG_QUALITY = "exp.img.quality";//$NON-NLS-1$
@@ -181,7 +181,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
             palenSlider1.setBorder(new TitledBorder(
-                Messages.getString("LocalExport.jpeg_quality") + StringUtil.COLON_AND_SPACE + slider.getValue())); //$NON-NLS-1$ 
+                Messages.getString("LocalExport.jpeg_quality") + StringUtil.COLON_AND_SPACE + slider.getValue())); //$NON-NLS-1$
 
             slider.setPaintTicks(true);
             slider.setSnapToTicks(false);
@@ -239,31 +239,67 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
 
     public void browseImgFile(String format) {
-        String directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_DIR, "");//$NON-NLS-1$
-        boolean saveFile = EXPORT_FORMAT[1].equals(format);
-        JFileChooser fileChooser = new JFileChooser(directory);
-        if (saveFile) {
+        String targetDirectoryPath = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_DIR, "");//$NON-NLS-1$
+
+        boolean isSaveFileMode = EXPORT_FORMAT[1].equals(format);
+
+        JFileChooser fileChooser = new JFileChooser(targetDirectoryPath);
+
+        if (isSaveFileMode) {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setAcceptAllFileFilterUsed(false);
             FileFormatFilter filter = new FileFormatFilter("zip", "ZIP"); //$NON-NLS-1$ //$NON-NLS-2$
             fileChooser.addChoosableFileFilter(filter);
             fileChooser.setFileFilter(filter);
+
         } else {
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            /**
+             * Idea is to show all the files in the directories to give the user some context, but only directories
+             * should be accepted as selections. As the effect is L&F dependent, consider using DIRECTORIES_ONLY on
+             * platforms that already meet your UI requirements. Empirically, it's platform-dependent, with files
+             * appearing gray in all supported L&Fs on Mac OS X. <br>
+             * Disabling file selection may be annoying. A solution is just to allow the user to select either a file or
+             * a directory and if the user select a file just use the directory where that file is located.
+             */
+
+            if (System.getProperty("os.name").startsWith("Mac OS X")) { //$NON-NLS-1$ //$NON-NLS-2$
+                fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            } else {
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+            }
+
         }
+
         fileChooser.setMultiSelectionEnabled(false);
-        File folder = null;
-        if (fileChooser.showSaveDialog(this) != 0 || (folder = fileChooser.getSelectedFile()) == null) {
+
+        // Set default selection name to enable save button
+        if (StringUtil.hasText(targetDirectoryPath)) {
+            File targetFile = new File(targetDirectoryPath);
+            if (targetFile.exists()) {
+                if (targetFile.isFile()) {
+                    fileChooser.setSelectedFile(targetFile);
+                } else if (targetFile.isDirectory()) {
+                    String newExportSelectionName = Messages.getString("LocalExport.newExportSelectionName"); //$NON-NLS-1$
+                    fileChooser.setSelectedFile(new File(newExportSelectionName));
+                }
+            }
+        }
+
+        File selectedFile = null;
+
+        if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION
+            || (selectedFile = fileChooser.getSelectedFile()) == null) {
             outputFolder = null;
             return;
         } else {
-            if (saveFile) {
+            if (isSaveFileMode) {
                 outputFolder =
-                    ".zip".equals(FileUtil.getExtension(folder.getName())) ? folder : new File(folder + ".zip"); //$NON-NLS-1$ //$NON-NLS-2$
+                    ".zip".equals(FileUtil.getExtension(selectedFile.getName())) ? selectedFile : new File(selectedFile + ".zip"); //$NON-NLS-1$ //$NON-NLS-2$
             } else {
-                outputFolder = folder;
+                outputFolder = selectedFile.isDirectory() ? selectedFile : selectedFile.getParentFile();
             }
-            Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DIR, saveFile ? folder.getParent() : folder.getPath());
+            Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DIR,
+                outputFolder.isDirectory() ? outputFolder.getPath() : outputFolder.getParent());
         }
     }
 
