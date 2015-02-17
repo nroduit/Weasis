@@ -29,6 +29,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -43,6 +44,7 @@ import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -62,6 +64,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.WindowConstants;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
@@ -84,6 +88,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.StringUtil;
@@ -822,22 +827,6 @@ public class WeasisWin {
     }
 
     private static void buildExportSubMenu(final JMenu exportMenu) {
-        // TODO export workspace in as preference
-
-        //                final AbstractAction saveAction = new AbstractAction("Save workspace layout") { //$NON-NLS-1$
-        //
-        // @Override
-        // public void actionPerformed(ActionEvent e) {
-        // // Handle workspace ui persistence
-        // PersistenceDelegate pstDelegate = UIManager.toolWindowManager.getPersistenceDelegate();
-        // try {
-        //                                pstDelegate.save(new FileOutputStream(new File("/home/nicolas/Documents/test.xml"))); //$NON-NLS-1$
-        // } catch (FileNotFoundException e1) {
-        // e1.printStackTrace();
-        // }
-        // }
-        // };
-        // exportMenu.add(saveAction);
 
         synchronized (UIManager.EXPLORER_PLUGINS) {
             if (selectedPlugin != null) {
@@ -893,6 +882,42 @@ public class WeasisWin {
             };
         toolMenu.addPopupMenuListener();
         menuView.add(toolMenu);
+
+        // TODO add save workspace layout
+        final AbstractAction saveAction = new AbstractAction("Save workspace layout") { //$NON-NLS-1$
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // Handle workspace ui persistence
+                    try {
+                        UIManager.DOCKING_CONTROL.save("lastLayout");
+                        final BundleContext context = FrameworkUtil.getBundle(WeasisWin.class).getBundleContext();
+                        File file = new File(BundlePreferences.getDataFolder(context), "lastLayout.xml");
+                        UIManager.DOCKING_CONTROL.writeXML(file);
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            };
+        menuView.add(saveAction);
+
+        final AbstractAction loadAction = new AbstractAction("Restore last workspace layout") { //$NON-NLS-1$
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        final BundleContext context = FrameworkUtil.getBundle(WeasisWin.class).getBundleContext();
+                        File file = new File(BundlePreferences.getDataFolder(context), "lastLayout.xml");
+                        if (file.canRead()) {
+                            UIManager.DOCKING_CONTROL.readXML(file);
+                            UIManager.DOCKING_CONTROL.load("lastLayout");
+                        }
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            };
+        menuView.add(loadAction);
     }
 
     private static void buildMenuFile() {
