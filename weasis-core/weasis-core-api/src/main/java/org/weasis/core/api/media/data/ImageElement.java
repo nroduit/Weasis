@@ -222,6 +222,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
         if (displayUnit == null) {
             unit = pixelSpacingUnit;
             unitRatio = getPixelSize();
+        } else if (displayUnit.equals(Unit.PIXEL)) {
+            unit = Unit.PIXEL;
+            unitRatio = 1.0;
         } else {
             unit = displayUnit;
             unitRatio = getPixelSize() * displayUnit.getConversionRatio(pixelSpacingUnit.getConvFactor());
