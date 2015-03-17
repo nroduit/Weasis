@@ -528,6 +528,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         imageLayer.setEnableDispOperations(false);
         if (img == null) {
             actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
+            ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+            if (spUnitAction instanceof ComboItemListener) {
+                ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
+                    .get(ActionW.SPATIAL_UNIT.cmd()));
+            }
             // Force the update for null image
             imageLayer.setEnableDispOperations(true);
             imageLayer.setImage(null, null);
@@ -539,6 +544,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (img != null && !img.equals(oldImage)) {
                 actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
                 actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
+                ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+                if (spUnitAction instanceof ComboItemListener) {
+                    ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
+                        .get(ActionW.SPATIAL_UNIT.cmd()));
+                }
 
                 final Rectangle modelArea = getImageBounds(img);
                 Rectangle2D area = getViewModel().getModelArea();
@@ -562,11 +572,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
                 imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
-                ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-                if (spUnitAction instanceof ComboItemListener) {
-                    ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
-                        .get(ActionW.SPATIAL_UNIT.cmd()));
-                }
                 AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
                 if (layer != null) {
                     synchronized (this) {
