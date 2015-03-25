@@ -17,18 +17,16 @@
 	</properties>
 	<build>
 		<plugins>
-			<!--<plugin> //Not working //Execution generate-scr-scrdescriptor of goal 
-				org.apache.felix:maven-scr-plugin:1.17.0:scr failed: Invalid signature file 
-				digest for Manifest main attributes <groupId>org.apache.felix</groupId> <artifactId>maven-scr-plugin</artifactId> 
-				</plugin> -->
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-scr-plugin</artifactId>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
 						<Bundle-Activator>br.com.animati.texture.mpr3dview.internal.Activator</Bundle-Activator>
-						<Service-Component>OSGI-INF/haPreferences.xml,
-							OSGI-INF/view3DFactory.xml</Service-Component>
 					</instructions>
 				</configuration>
 			</plugin>

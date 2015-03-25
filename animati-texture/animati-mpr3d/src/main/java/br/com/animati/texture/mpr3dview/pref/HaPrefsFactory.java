@@ -6,6 +6,9 @@
 package br.com.animati.texture.mpr3dview.pref;
 
 import java.util.Hashtable;
+
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -13,8 +16,11 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 /**
  *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
- * @version 
+ * @version
  */
+
+@Component(immediate = false)
+@Service
 public class HaPrefsFactory implements PreferencesPageFactory {
 
     @Override
@@ -23,7 +29,8 @@ public class HaPrefsFactory implements PreferencesPageFactory {
     }
 
     @Override
-    public void dispose(Insertable component) { }
+    public void dispose(Insertable component) {
+    }
 
     @Override
     public boolean isComponentCreatedByThisFactory(Insertable component) {

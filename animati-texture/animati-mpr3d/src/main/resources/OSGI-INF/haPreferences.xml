@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="br.com.animati.texture.mpr3dview.pref.HaPrefsFactory">
-   <implementation class="br.com.animati.texture.mpr3dview.pref.HaPrefsFactory"/>
-   <service>
-      <provide interface="org.weasis.core.api.gui.PreferencesPageFactory"/>
-   </service>
-</scr:component>
