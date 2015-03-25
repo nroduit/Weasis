@@ -133,7 +133,7 @@ public class View3DContainer extends AbstractViewsContainer {
             return;
         }
         try {
-            grid.addSeries(series, SortSeriesStack.instanceNumber);
+            grid.addSeries(series, SortSeriesStack.slicePosition);
         } catch (Exception ex) {
             close();
             showErrorMessage();

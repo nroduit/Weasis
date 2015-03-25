@@ -471,15 +471,6 @@ public class ViewsGrid3D extends ViewsGrid {
     private boolean pushImage(GridElement gridElement, DicomSeries series,
             DicomImageElement image, boolean textureUpdated) {
 
-        //A adição desta imagem muda o tipo de viewer?
-//        boolean serieForTexture = DualViewerFactory.isSerieForTexture(series);
-//        if (serieForTexture && gridElement.getComponent() instanceof ViewImage
-//                && ((GridViewUI) gridElement).getProfile() == null){
-//            Comparator sort = ((ViewImage) gridElement.getComponent()).getCurrentSortComparator();
-//            pushSeries(gridElement, series, sort, serieForTexture);
-//            return textureUpdated;
-//        }
-
         if (gridElement.getComponent() instanceof ViewTexture
                 && !textureUpdated) {
             TextureDicomSeries parentImageSeries =
@@ -501,8 +492,7 @@ public class ViewsGrid3D extends ViewsGrid {
                 }
             }
             textureUpdated = true;
-//        } else if (gridElement.getComponent() instanceof ViewImage) {
-//            gridElement.setSeries(series);
+            
         }
         return textureUpdated;
     }

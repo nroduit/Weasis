@@ -522,7 +522,7 @@ public class ViewTexture extends TextureImageCanvas
         
         actionsInView.put(ActionW.SORTSTACK.cmd(), new ActionDataModel(
                 ActionW.SORTSTACK, SortSeriesStack.getValues(),
-                SortSeriesStack.instanceNumber));
+                SortSeriesStack.slicePosition));
         actionsInView.put(ActionW.INVERSESTACK.cmd(),
                 new ActionDataModel(ActionW.INVERSESTACK, null, false));
         actionsInView.put(ActionW.ZOOM.cmd(), new ActionDataModel(
@@ -920,7 +920,12 @@ public class ViewTexture extends TextureImageCanvas
     public double[] getImagePatientOrientation() {
         if (getParentImageSeries() != null) {
             if (controlAxesToWatch != null) {
-                return null; //Means it's a volumetric view
+                Matrix3d mo = controlAxesToWatch.getOrientationForCanvas(this);
+                //System.out.println(" mo: " + mo);
+                if (mo != null) {
+                    return new double[]{
+                                mo.m00, mo.m10, mo.m20, mo.m01, mo.m11, mo.m21};
+                }
             }
             if (controlAxes == null) {
                 //TODO what if they have diferent orientations?
