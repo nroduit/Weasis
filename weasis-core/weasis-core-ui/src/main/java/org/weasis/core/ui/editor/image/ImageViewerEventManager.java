@@ -80,13 +80,13 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
             @Override
             public void stateChanged(BoundedRangeModel model) {
 
-                DefaultView2d<ImageElement> view2d = null;
+                ViewCanvas<ImageElement> view2d = null;
                 Series<ImageElement> series = null;
                 SynchCineEvent mediaEvent = null;
                 ImageElement image = null;
 
                 if (selectedView2dContainer != null) {
-                    view2d = (DefaultView2d<ImageElement>) selectedView2dContainer.getSelectedImagePane();
+                    view2d = (ViewCanvas<ImageElement>) selectedView2dContainer.getSelectedImagePane();
                 }
 
                 if (view2d != null && view2d.getSeries() instanceof Series) {
@@ -306,7 +306,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue())); 
+                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue()));
             }
 
         };
@@ -382,7 +382,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue())); 
+                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue()));
             }
 
         };
@@ -413,7 +413,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 if (object instanceof GridBagLayoutModel && selectedView2dContainer != null) {
                     // change layout
                     clearAllPropertyChangeListeners();
-                    DefaultView2d view = selectedView2dContainer.getSelectedImagePane();
+                    ViewCanvas view = selectedView2dContainer.getSelectedImagePane();
                     selectedView2dContainer.setLayoutModel((GridBagLayoutModel) object);
                     if (!selectedView2dContainer.isContainingView(view)) {
                         view = selectedView2dContainer.getSelectedImagePane();
@@ -497,7 +497,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
-    public abstract boolean updateComponentsListener(DefaultView2d<E> defaultView2d);
+    public abstract boolean updateComponentsListener(ViewCanvas<E> viewCanvas);
 
     private static double roundAndCropViewScale(double viewScale, double minViewScale, double maxViewScale) {
         viewScale *= 1000.0;
@@ -622,7 +622,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         }
     }
 
-    public DefaultView2d<E> getSelectedViewPane() {
+    public ViewCanvas<E> getSelectedViewPane() {
         ImageViewerPlugin<E> container = selectedView2dContainer;
         if (container != null) {
             return container.getSelectedImagePane();
@@ -645,7 +645,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     public void updateAllListeners(ImageViewerPlugin<E> viewerPlugin, SynchView synchView) {
         clearAllPropertyChangeListeners();
         if (viewerPlugin != null) {
-            DefaultView2d<E> viewPane = viewerPlugin.getSelectedImagePane();
+            ViewCanvas<E> viewPane = viewerPlugin.getSelectedImagePane();
             if (viewPane == null) {
                 return;
             }
@@ -654,7 +654,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
                 addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
 
-                final ArrayList<DefaultView2d<E>> panes = viewerPlugin.getImagePanels();
+                final ArrayList<ViewCanvas<E>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 if (SynchView.NONE.equals(synchView)) {
                     for (int i = 0; i < panes.size(); i++) {

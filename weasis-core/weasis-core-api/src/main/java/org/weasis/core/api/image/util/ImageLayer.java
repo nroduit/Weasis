@@ -47,4 +47,9 @@ public interface ImageLayer<E extends ImageElement> {
     boolean isEnableDispOperations();
 
     void setEnableDispOperations(boolean enabled);
+
+    void setVisible(boolean flag);
+
+    boolean isVisible();
+
 }

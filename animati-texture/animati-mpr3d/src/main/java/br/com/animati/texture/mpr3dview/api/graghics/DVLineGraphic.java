@@ -5,8 +5,6 @@
 
 package br.com.animati.texture.mpr3dview.api.graghics;
 
-import br.com.animati.texture.mpr3dview.EventPublisher;
-import br.com.animati.texture.mpr3dview.api.ViewCore;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -20,18 +18,22 @@ import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.GraphicLabel;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.MeasureItem;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.util.MouseEventDouble;
+
+import br.com.animati.texture.mpr3dview.EventPublisher;
+import br.com.animati.texture.mpr3dview.api.ViewCore;
 
 /**
  *
@@ -60,7 +62,7 @@ public class DVLineGraphic extends LineGraphic {
     
     /** Needed for GraphicsMode.updateAllLabels. */
     @Override
-    public void updateLabel(Object source, DefaultView2d view2d, Point2D pos) {
+    public void updateLabel(Object source, ViewCanvas view2d, Point2D pos) {
         if (source instanceof MouseEvent) {
             updateLabelDV((MouseEvent) source, null);
         }
@@ -82,7 +84,7 @@ public class DVLineGraphic extends LineGraphic {
             labels = DVGraphicLabel.buildLabelsList(measList);
         }
 
-        setLabel(labels, (Graphics2D) getGraphics((MouseEvent) source), pos);
+        setLabel(labels, (Graphics2D) getGraphics(source), pos);
 
         EventPublisher.getInstance().publish(new PropertyChangeEvent(
                     this, "graphics.data", null, measList));

@@ -227,7 +227,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     }
 
     protected AbstractLayerModel getCurrentLayerModel() {
-        DefaultView2d view = eventManager.getSelectedViewPane();
+        ViewCanvas<E> view = eventManager.getSelectedViewPane();
         if (view != null) {
             return view.getLayerModel();
         }

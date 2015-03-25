@@ -30,7 +30,7 @@ import org.weasis.core.api.gui.model.ViewModelChangeListener;
  * 
  * @author Nicolas Roduit
  */
-public class GraphicsPane extends JComponent {
+public class GraphicsPane extends JComponent implements Canvas {
 
     protected AbstractLayerModel layerModel;
     private ViewModel viewModel;
@@ -57,14 +57,17 @@ public class GraphicsPane extends JComponent {
         this.layerModel.addLayerModelChangeListener(layerModelHandler);
     }
 
+    @Override
     public AffineTransform getAffineTransform() {
         return affineTransform;
     }
 
+    @Override
     public AffineTransform getInverseTransform() {
         return inverseTransform;
     }
 
+    @Override
     public void dispose() {
         if (viewModel != null) {
             viewModel.removeViewModelChangeListener(viewModelHandler);
@@ -82,6 +85,7 @@ public class GraphicsPane extends JComponent {
      * 
      * @return the view model, never null
      */
+    @Override
     public ViewModel getViewModel() {
         return viewModel;
     }
@@ -92,6 +96,7 @@ public class GraphicsPane extends JComponent {
      * @param viewModel
      *            the view model, never null
      */
+    @Override
     public void setViewModel(ViewModel viewModel) {
         ViewModel viewModelOld = this.viewModel;
         if (viewModelOld != viewModel) {
@@ -106,10 +111,12 @@ public class GraphicsPane extends JComponent {
         }
     }
 
+    @Override
     public AbstractLayerModel getLayerModel() {
         return layerModel;
     }
 
+    @Override
     public void setLayerModel(AbstractLayerModel layerModel) {
         LayerModel layerModelOld = this.layerModel;
         if (layerModelOld != layerModel) {
@@ -124,6 +131,7 @@ public class GraphicsPane extends JComponent {
         }
     }
 
+    @Override
     public Object getActionValue(String action) {
         if (action == null) {
             return null;
@@ -131,6 +139,7 @@ public class GraphicsPane extends JComponent {
         return actionsInView.get(action);
     }
 
+    @Override
     public HashMap<String, Object> getActionsInView() {
         return actionsInView;
     }
@@ -142,6 +151,7 @@ public class GraphicsPane extends JComponent {
     // getViewModel().setModelArea(visibleBoundingBox);
     // }
 
+    @Override
     public void zoom(double viewScale) {
         double modelOffsetXOld = viewModel.getModelOffsetX();
         double modelOffsetYOld = viewModel.getModelOffsetY();
@@ -153,6 +163,7 @@ public class GraphicsPane extends JComponent {
         zoom(centerX, centerY, viewScale);
     }
 
+    @Override
     public void zoom(double centerX, double centerY, double viewScale) {
         viewScale = cropViewScale(viewScale);
         final double viewportWidth = getWidth() - 1;
@@ -162,6 +173,7 @@ public class GraphicsPane extends JComponent {
         getViewModel().setModelOffset(modelOffsetX, modelOffsetY, viewScale);
     }
 
+    @Override
     public void zoom(Rectangle2D zoomRect) {
         final double viewportWidth = getWidth() - 1;
         final double viewportHeight = getHeight() - 1;
@@ -169,6 +181,7 @@ public class GraphicsPane extends JComponent {
             Math.min(viewportWidth / zoomRect.getWidth(), viewportHeight / zoomRect.getHeight()));
     }
 
+    @Override
     public double getBestFitViewScale() {
         final double viewportWidth = getWidth() - 1;
         final double viewportHeight = getHeight() - 1;
@@ -176,30 +189,37 @@ public class GraphicsPane extends JComponent {
         return cropViewScale(Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight()));
     }
 
+    @Override
     public double viewToModelX(double viewX) {
         return viewModel.getModelOffsetX() + viewToModelLength(viewX);
     }
 
+    @Override
     public double viewToModelY(double viewY) {
         return viewModel.getModelOffsetY() + viewToModelLength(viewY);
     }
 
+    @Override
     public double viewToModelLength(double viewLength) {
         return viewLength / viewModel.getViewScale();
     }
 
+    @Override
     public double modelToViewX(double modelX) {
         return modelToViewLength(modelX - viewModel.getModelOffsetX());
     }
 
+    @Override
     public double modelToViewY(double modelY) {
         return modelToViewLength(modelY - viewModel.getModelOffsetY());
     }
 
+    @Override
     public double modelToViewLength(double modelLength) {
         return modelLength * viewModel.getViewScale();
     }
 
+    @Override
     public Point2D getImageCoordinatesFromMouse(int x, int y) {
         double viewScale = getViewModel().getViewScale();
         Point2D p2 =
@@ -209,6 +229,7 @@ public class GraphicsPane extends JComponent {
         return p2;
     }
 
+    @Override
     public Point getMouseCoordinatesFromImage(double x, double y) {
         Point2D p2 = new Point2D.Double(x, y);
         affineTransform.transform(p2, p2);
@@ -244,6 +265,7 @@ public class GraphicsPane extends JComponent {
     // /////////////////////////////////////////////////////////////////////////////////////
     // Drawing
 
+    @Override
     public void transformGraphics(final Graphics2D g2d, boolean forward) {
         if (forward) {
             // forward transform

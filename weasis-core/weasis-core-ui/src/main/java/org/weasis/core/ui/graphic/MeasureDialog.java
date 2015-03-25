@@ -24,15 +24,15 @@ import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 
 public class MeasureDialog extends PropertiesDialog {
     private List<AbstractDragGraphic> graphics;
     private JTextPane textPane = new JTextPane();
-    private DefaultView2d view2D;
+    private ViewCanvas view2D;
 
-    public MeasureDialog(DefaultView2d view2d, List<AbstractDragGraphic> selectedGraphic) {
-        super(SwingUtilities.getWindowAncestor(view2d), Messages.getString("MeasureDialog.draw_props")); //$NON-NLS-1$
+    public MeasureDialog(ViewCanvas view2d, List<AbstractDragGraphic> selectedGraphic) {
+        super(SwingUtilities.getWindowAncestor(view2d.getJComponent()), Messages.getString("MeasureDialog.draw_props")); //$NON-NLS-1$
         if (selectedGraphic == null) {
             throw new IllegalArgumentException("Selected Graphics cannot be null!"); //$NON-NLS-1$
         }
@@ -89,7 +89,8 @@ public class MeasureDialog extends PropertiesDialog {
             if (view2D != null && graphics.size() == 1 && graphic instanceof AnnotationGraphic) {
                 JScrollPane panel = new JScrollPane();
 
-                panel.setBorder(new CompoundBorder(new EmptyBorder(10, 15, 5, 15), new TitledBorder(null, Messages.getString("MeasureDialog.text"), //$NON-NLS-1$
+                panel.setBorder(new CompoundBorder(new EmptyBorder(10, 15, 5, 15), new TitledBorder(null, Messages
+                    .getString("MeasureDialog.text"), //$NON-NLS-1$
                     TitledBorder.LEADING, TitledBorder.TOP, null, null)));
                 panel.setPreferredSize(new Dimension(400, 140));
                 StringBuilder buf = new StringBuilder();

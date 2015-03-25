@@ -67,6 +67,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchData;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -155,7 +156,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     protected void initActionWState() {
         super.initActionWState();
         actionsInView.put(ActionW.ZOOM.cmd(), -1.0);
-        actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.PIXEL_SIZE);
+        actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.PIXEL_SIZE);
     }
 
     @Override

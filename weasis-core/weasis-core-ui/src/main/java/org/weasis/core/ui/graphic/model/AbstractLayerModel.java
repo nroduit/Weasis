@@ -209,7 +209,7 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     @Override
-    public GraphicsPane getGraphicsPane() {
+    public Canvas getGraphicsPane() {
         return canvas;
     }
 

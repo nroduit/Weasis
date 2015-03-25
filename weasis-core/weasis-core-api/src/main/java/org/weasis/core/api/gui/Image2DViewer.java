@@ -19,7 +19,7 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 
-public interface Image2DViewer {
+public interface Image2DViewer<E extends ImageElement> {
 
     MediaSeries getSeries();
 
@@ -29,11 +29,11 @@ public interface Image2DViewer {
 
     ViewModel getViewModel();
 
-    ImageLayer getImageLayer();
+    ImageLayer<E> getImageLayer();
 
     AffineTransform getAffineTransform();
 
-    ImageElement getImage();
+    E getImage();
 
     RenderedImage getSourceImage();
 

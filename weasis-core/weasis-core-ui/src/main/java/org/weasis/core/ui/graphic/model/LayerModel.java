@@ -120,5 +120,5 @@ public interface LayerModel {
 
     Rectangle getBounds();
 
-    GraphicsPane getGraphicsPane();
+    Canvas getGraphicsPane();
 }

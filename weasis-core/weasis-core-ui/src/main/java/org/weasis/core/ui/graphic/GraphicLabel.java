@@ -27,7 +27,7 @@ import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 
 @Root(name = "label")
 public class GraphicLabel implements Cloneable {
@@ -139,17 +139,18 @@ public class GraphicLabel implements Cloneable {
      * Sets label strings and compute bounding rectangle size and position in pixel world according to the DefaultView
      * which defines current "Font"<br>
      */
-    public void setLabel(DefaultView2d view2d, double xPos, double yPos, String... labels) {
+    public void setLabel(ViewCanvas view2d, double xPos, double yPos, String... labels) {
         if (view2d == null || labels == null || labels.length == 0) {
             reset();
         } else {
-            Graphics2D g2d = (Graphics2D) view2d.getGraphics();
+            Graphics2D g2d = (Graphics2D) view2d.getJComponent().getGraphics();
             if (g2d == null) {
                 return;
             }
             labelStringArray = labels;
             Font defaultFont = g2d.getFont();
-            FontRenderContext fontRenderContext = ((Graphics2D) view2d.getGraphics()).getFontRenderContext();
+            FontRenderContext fontRenderContext =
+                ((Graphics2D) view2d.getJComponent().getGraphics()).getFontRenderContext();
             updateBoundsSize(defaultFont, fontRenderContext);
 
             labelBounds =

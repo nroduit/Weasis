@@ -47,9 +47,9 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.Panner;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -147,13 +147,13 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
                     ImageViewerPlugin<DicomImageElement> container =
                         EventManager.getInstance().getSelectedView2dContainer();
-                    ArrayList<DefaultView2d<DicomImageElement>> views = null;
+                    ArrayList<ViewCanvas<DicomImageElement>> views = null;
                     if (container != null) {
                         if (applyAllViews.isSelected()) {
                             views = container.getImagePanels();
                         } else {
-                            views = new ArrayList<DefaultView2d<DicomImageElement>>(1);
-                            DefaultView2d<DicomImageElement> view = container.getSelectedImagePane();
+                            views = new ArrayList<ViewCanvas<DicomImageElement>>(1);
+                            ViewCanvas<DicomImageElement> view = container.getSelectedImagePane();
                             if (view != null) {
                                 views.add(view);
                             }
@@ -162,21 +162,21 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     if (views != null) {
                         if (rootNode.equals(parent)) {
                             if (image.equals(selObject)) {
-                                for (DefaultView2d<DicomImageElement> v : views) {
+                                for (ViewCanvas<DicomImageElement> v : views) {
                                     if (selected != v.getImageLayer().isVisible()) {
                                         v.getImageLayer().setVisible(selected);
-                                        v.repaint();
+                                        v.getJComponent().repaint();
                                     }
                                 }
                             } else if (dicomInfo.equals(selObject)) {
-                                for (DefaultView2d<DicomImageElement> v : views) {
+                                for (ViewCanvas<DicomImageElement> v : views) {
                                     if (selected != v.getInfoLayer().isVisible()) {
                                         v.getInfoLayer().setVisible(selected);
-                                        v.repaint();
+                                        v.getJComponent().repaint();
                                     }
                                 }
                             } else if (drawings.equals(selObject)) {
-                                for (DefaultView2d<DicomImageElement> v : views) {
+                                for (ViewCanvas<DicomImageElement> v : views) {
                                     v.setDrawingsVisibility(selected);
                                 }
                             }
@@ -192,17 +192,17 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                             }
                         } else if (dicomInfo.equals(parent)) {
                             if (selObject != null) {
-                                for (DefaultView2d<DicomImageElement> v : views) {
+                                for (ViewCanvas<DicomImageElement> v : views) {
                                     AnnotationsLayer layer = v.getInfoLayer();
                                     if (layer != null) {
                                         if (layer.setDisplayPreferencesValue(selObject.toString(), selected)) {
-                                            v.repaint();
+                                            v.getJComponent().repaint();
                                         }
                                     }
                                 }
                                 if (AnnotationsLayer.ANONYM_ANNOTATIONS.equals(selObject.toString())) {
                                     // Send message to listeners, only selected view
-                                    DefaultView2d<DicomImageElement> v = container.getSelectedImagePane();
+                                    ViewCanvas<DicomImageElement> v = container.getSelectedImagePane();
                                     Series series = (Series) v.getSeries();
                                     EventManager.getInstance().fireSeriesViewerListeners(
                                         new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
@@ -214,12 +214,12 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                                 if (((DefaultMutableTreeNode) selObject).getUserObject() instanceof Identifier) {
                                     Identifier layerID =
                                         (Identifier) ((DefaultMutableTreeNode) selObject).getUserObject();
-                                    for (DefaultView2d<DicomImageElement> v : views) {
+                                    for (ViewCanvas<DicomImageElement> v : views) {
                                         AbstractLayer layer = v.getLayerModel().getLayer(layerID);
                                         if (layer != null) {
                                             if (layer.isVisible() != selected) {
                                                 layer.setVisible(selected);
-                                                v.repaint();
+                                                v.getJComponent().repaint();
                                             }
                                         }
                                     }
@@ -249,8 +249,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         add(panel_foot, BorderLayout.SOUTH);
     }
 
-    private void sendPropertyChangeEvent(ArrayList<DefaultView2d<DicomImageElement>> views, String cmd, boolean selected) {
-        for (DefaultView2d<DicomImageElement> v : views) {
+    private void sendPropertyChangeEvent(ArrayList<ViewCanvas<DicomImageElement>> views, String cmd, boolean selected) {
+        for (ViewCanvas<DicomImageElement> v : views) {
             v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
         }
     }
@@ -271,7 +271,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         }
     }
 
-    public void iniTreeValues(DefaultView2d view) {
+    public void iniTreeValues(ViewCanvas view) {
         if (view != null) {
             initPathSelection = true;
             // Image node
@@ -389,7 +389,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 drawings.add(node);
                 dtm.nodesWereInserted(drawings, new int[] { drawings.getIndex(node) });
                 if (event.getSeriesViewer() instanceof ImageViewerPlugin && node.getUserObject() instanceof Identifier) {
-                    DefaultView2d<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
+                    ViewCanvas<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
                     if (pane != null) {
                         AbstractLayer l = pane.getLayerModel().getLayer((Identifier) node.getUserObject());
                         if (l != null && l.isVisible()) {

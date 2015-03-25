@@ -28,10 +28,10 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -67,7 +67,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
         new ImageViewerEventManager<DicomImageElement>() {
 
             @Override
-            public boolean updateComponentsListener(DefaultView2d<DicomImageElement> defaultView2d) {
+            public boolean updateComponentsListener(ViewCanvas<DicomImageElement> defaultView2d) {
                 // Do nothing
                 return true;
             }
@@ -108,7 +108,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     @Override
-    public void setSelectedImagePaneFromFocus(DefaultView2d<DicomImageElement> defaultView2d) {
+    public void setSelectedImagePaneFromFocus(ViewCanvas<DicomImageElement> defaultView2d) {
         setSelectedImagePane(defaultView2d);
     }
 
@@ -212,7 +212,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     @Override
-    public DefaultView2d<DicomImageElement> createDefaultView(String classType) {
+    public ViewCanvas<DicomImageElement> createDefaultView(String classType) {
         return null;
     }
 

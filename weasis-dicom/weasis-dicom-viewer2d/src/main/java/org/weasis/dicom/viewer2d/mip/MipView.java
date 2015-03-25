@@ -25,9 +25,9 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -57,7 +57,7 @@ public class MipView extends View2d {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
+        actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.BEST_FIT);
         actionsInView.put(MIP_THICKNESS.cmd(), 2);
         actionsInView.put(MipView.MIP.cmd(), MipView.Type.MAX);
         actionsInView.put("no.ko", true); //$NON-NLS-1$
@@ -68,7 +68,7 @@ public class MipView extends View2d {
         // disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), null);
     }
 
-    public void initMIPSeries(DefaultView2d selView) {
+    public void initMIPSeries(ViewCanvas selView) {
         if (selView != null) {
             actionsInView.put(ActionW.SORTSTACK.cmd(), selView.getActionValue(ActionW.SORTSTACK.cmd()));
             actionsInView.put(ActionW.INVERSESTACK.cmd(), selView.getActionValue(ActionW.INVERSESTACK.cmd()));

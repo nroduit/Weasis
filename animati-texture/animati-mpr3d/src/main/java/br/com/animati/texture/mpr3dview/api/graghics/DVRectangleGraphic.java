@@ -5,13 +5,6 @@
 
 package br.com.animati.texture.mpr3dview.api.graghics;
 
-import br.com.animati.texture.codec.TextureDicomSeries;
-import br.com.animati.texture.mpr3dview.EventPublisher;
-import br.com.animati.texture.mpr3dview.ViewTexture;
-import br.com.animati.texture.mpr3dview.api.ViewCore;
-import br.com.animati.texture.mpr3dview.api.RenderSupport;
-import br.com.animati.texturedicom.TextureData;
-import br.com.animati.texturedicom.TextureImageCanvas;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -31,11 +24,13 @@ import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
 import javax.media.jai.OpImage;
 import javax.media.jai.ROIShape;
 import javax.media.jai.RenderedOp;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.op.ImageStatistics2Descriptor;
@@ -45,11 +40,19 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.graphic.GraphicLabel;
 import org.weasis.core.ui.graphic.MeasureItem;
 import org.weasis.core.ui.graphic.Measurement;
 import org.weasis.core.ui.graphic.RectangleGraphic;
+
+import br.com.animati.texture.codec.TextureDicomSeries;
+import br.com.animati.texture.mpr3dview.EventPublisher;
+import br.com.animati.texture.mpr3dview.ViewTexture;
+import br.com.animati.texture.mpr3dview.api.RenderSupport;
+import br.com.animati.texture.mpr3dview.api.ViewCore;
+import br.com.animati.texturedicom.TextureData;
+import br.com.animati.texturedicom.TextureImageCanvas;
 
 /**
  *
@@ -65,7 +68,7 @@ public class DVRectangleGraphic extends RectangleGraphic {
     
     /** Needed for GraphicsMode.updateAllLabels. */
     @Override
-    public void updateLabel(Object source, DefaultView2d view2d, Point2D pos) {      
+    public void updateLabel(Object source, ViewCanvas view2d, Point2D pos) {      
         if (source instanceof MouseEvent) {
             updateLabelDV((MouseEvent) source, null);
         }
@@ -273,7 +276,7 @@ public class DVRectangleGraphic extends RectangleGraphic {
             //Para o modulo de MPR, o weasis assume que estes valores sao
             //constantes dentro da mesma serie, entao:
             Float slopeVal = (Float) seriesObject.getTagValue(TagW.RescaleSlope, 0);
-            Float interceptVal = (Float) (Float) seriesObject.getTagValue(TagW.RescaleIntercept, 0);
+            Float interceptVal = (Float) seriesObject.getTagValue(TagW.RescaleIntercept, 0);
             final double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
             
             //Intercept eh sempre zero quando Signed porque a imagem que volta 
@@ -536,7 +539,7 @@ public class DVRectangleGraphic extends RectangleGraphic {
             AffineTransform transform, Shape mShape) {
         
         //Just for debug:
-        Graphics2D graphics = (Graphics2D) image.createGraphics();
+        Graphics2D graphics = image.createGraphics();
         graphics.setStroke(new BasicStroke(2));
         graphics.setPaint(Color.yellow);
         graphics.draw(transform.createTransformedShape(mShape));

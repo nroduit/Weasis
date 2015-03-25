@@ -4,7 +4,6 @@
  */
 package br.com.animati.texture.mpr3dview;
 
-import br.com.animati.texture.mpr3dview.api.AbstractViewsContainer;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -13,21 +12,24 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+
+import br.com.animati.texture.mpr3dview.api.AbstractViewsContainer;
 
 /**
  * Deals with global events of interface:
@@ -142,7 +144,7 @@ public class GUIManager implements PropertyChangeListener {
         if (plugin instanceof AbstractViewsContainer) {
             return ((AbstractViewsContainer) plugin).getSelectedSeries();
         } else if (plugin instanceof ImageViewerPlugin) {
-            DefaultView2d pane = ((ImageViewerPlugin) plugin).getSelectedImagePane();
+            ViewCanvas pane = ((ImageViewerPlugin) plugin).getSelectedImagePane();
             if (pane != null) {
                 return pane.getSeries();
             }

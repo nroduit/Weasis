@@ -34,7 +34,7 @@ import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AdvancedShape.BasicShape;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
@@ -425,9 +425,9 @@ public abstract class BasicGraphic implements Graphic {
         return false;
     }
 
-    protected DefaultView2d getDefaultView2d(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof DefaultView2d) {
-            return (DefaultView2d) mouseevent.getSource();
+    protected ViewCanvas getDefaultView2d(MouseEvent mouseevent) {
+        if (mouseevent != null && mouseevent.getSource() instanceof ViewCanvas) {
+            return (ViewCanvas) mouseevent.getSource();
         }
         return null;
     }
@@ -504,7 +504,7 @@ public abstract class BasicGraphic implements Graphic {
     }
 
     @Override
-    public void setLabel(String[] labels, DefaultView2d view2d) {
+    public void setLabel(String[] labels, ViewCanvas view2d) {
         if (shape != null) {
             Rectangle2D rect;
 
@@ -523,7 +523,7 @@ public abstract class BasicGraphic implements Graphic {
         }
     }
 
-    public void setLabel(String[] labels, DefaultView2d view2d, Point2D pos) {
+    public void setLabel(String[] labels, ViewCanvas view2d, Point2D pos) {
         GraphicLabel oldLabel = (graphicLabel != null) ? graphicLabel.clone() : null;
 
         if (labels == null || labels.length == 0) {
@@ -549,11 +549,11 @@ public abstract class BasicGraphic implements Graphic {
     }
 
     @Override
-    public void updateLabel(Object source, DefaultView2d view2d) {
+    public void updateLabel(Object source, ViewCanvas view2d) {
         this.updateLabel(source, view2d, null);
     }
 
-    public void updateLabel(Object source, DefaultView2d view2d, Point2D pos) {
+    public void updateLabel(Object source, ViewCanvas view2d, Point2D pos) {
 
         boolean releasedEvent = false;
         ImageLayer layer = view2d == null ? null : view2d.getImageLayer();

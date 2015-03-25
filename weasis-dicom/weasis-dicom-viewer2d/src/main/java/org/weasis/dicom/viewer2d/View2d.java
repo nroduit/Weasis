@@ -97,6 +97,7 @@ import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -338,9 +339,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             ImageViewerPlugin<DicomImageElement> container =
                                 this.eventManager.getSelectedView2dContainer();
                             if (container != null) {
-                                ArrayList<DefaultView2d<DicomImageElement>> viewpanels = container.getImagePanels();
+                                ArrayList<ViewCanvas<DicomImageElement>> viewpanels = container.getImagePanels();
                                 if (p3 != null) {
-                                    for (DefaultView2d<DicomImageElement> v : viewpanels) {
+                                    for (ViewCanvas<DicomImageElement> v : viewpanels) {
                                         MediaSeries<DicomImageElement> s = v.getSeries();
                                         if (s == null) {
                                             continue;
@@ -366,14 +367,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                         }
                                     }
                                 }
-                                for (DefaultView2d<DicomImageElement> v : viewpanels) {
+                                for (ViewCanvas<DicomImageElement> v : viewpanels) {
                                     MediaSeries<DicomImageElement> s = v.getSeries();
                                     if (s == null) {
                                         continue;
                                     }
                                     if (v instanceof View2d && fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
                                         ((View2d) v).computeCrosshair(p3);
-                                        v.repaint();
+                                        v.getJComponent().repaint();
                                     }
                                 }
                             }
@@ -765,7 +766,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (image != null) {
             GeometryOfSlice sliceGeometry = image.getDispSliceGeometry();
             if (sliceGeometry != null) {
-                DefaultView2d<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
+                ViewCanvas<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
                 MediaSeries<DicomImageElement> selSeries = view2DPane == null ? null : view2DPane.getSeries();
                 if (selSeries != null) {
                     // Get the current image of the selected Series

@@ -36,11 +36,11 @@ import org.weasis.core.ui.graphic.Graphic;
 public class ExportImage<E extends ImageElement> extends DefaultView2d {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExportImage.class);
 
-    private final DefaultView2d<E> view2d;
+    private final ViewCanvas<E> view2d;
     private Graphics2D currentG2d;
 
-    public ExportImage(DefaultView2d<E> view2d) {
-        super(view2d.eventManager, view2d.getLayerModel(), null);
+    public ExportImage(ViewCanvas<E> view2d) {
+        super(view2d.getEventManager(), view2d.getLayerModel(), null);
         this.view2d = view2d;
         // No need to have random pixel iterator
         this.imageLayer.setBuildIterator(false);
@@ -70,7 +70,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         ViewModel model = view2d.getViewModel();
         Rectangle2D canvas =
             new Rectangle2D.Double(view2d.modelToViewLength(model.getModelOffsetX()), view2d.modelToViewLength(model
-                .getModelOffsetY()), view2d.getWidth(), view2d.getHeight());
+                .getModelOffsetY()), view2d.getJComponent().getWidth(), view2d.getJComponent().getHeight());
         Rectangle2D mArea = view2d.getViewModel().getModelArea();
         Rectangle2D viewFullImg =
             new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()), view2d.modelToViewLength(mArea

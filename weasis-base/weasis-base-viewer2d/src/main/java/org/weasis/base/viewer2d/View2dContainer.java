@@ -55,6 +55,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -203,7 +204,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
             @Override
             public void run() {
-                for (DefaultView2d v : view2ds) {
+                for (ViewCanvas v : view2ds) {
                     v.dispose();
                 }
             }
@@ -227,7 +228,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     if (SeriesEvent.Action.AddImage.equals(action2)) {
                         if (source instanceof Series) {
                             Series series = (Series) source;
-                            DefaultView2d view2DPane = eventManager.getSelectedViewPane();
+                            ViewCanvas view2DPane = eventManager.getSelectedViewPane();
                             ImageElement img = view2DPane.getImage();
                             if (img != null && view2DPane.getSeries() == series) {
                                 ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
@@ -255,9 +256,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     } else if (SeriesEvent.Action.loadImageInMemory.equals(action2)) {
                         if (source instanceof Series) {
                             Series s = (Series) source;
-                            for (DefaultView2d<ImageElement> v : view2ds) {
+                            for (ViewCanvas<ImageElement> v : view2ds) {
                                 if (s == v.getSeries()) {
-                                    v.repaint(v.getInfoLayer().getPreloadingProgressBound());
+                                    v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
                                 }
                             }
                         }
@@ -266,7 +267,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             } else if (ObservableEvent.BasicAction.Remove.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
-                    for (DefaultView2d<ImageElement> v : view2ds) {
+                    for (ViewCanvas<ImageElement> v : view2ds) {
                         MediaSeries<ImageElement> s = v.getSeries();
                         if (series.equals(s)) {
                             v.setSeries(null);
@@ -276,7 +277,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             } else if (ObservableEvent.BasicAction.Replace.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
-                    for (DefaultView2d<ImageElement> v : view2ds) {
+                    for (ViewCanvas<ImageElement> v : view2ds) {
                         MediaSeries<ImageElement> s = v.getSeries();
                         if (series.equals(s)) {
                             // Set to null to be sure that all parameters from the view are apply again to the Series

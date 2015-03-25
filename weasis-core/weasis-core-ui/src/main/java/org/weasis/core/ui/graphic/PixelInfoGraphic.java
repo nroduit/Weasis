@@ -33,8 +33,8 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AdvancedShape.ScaleInvariantShape;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
@@ -46,8 +46,10 @@ public class PixelInfoGraphic extends AnnotationGraphic {
 
     public static final Icon ICON = new ImageIcon(PixelInfoGraphic.class.getResource("/icon/22x22/draw-pixelinfo.png")); //$NON-NLS-1$
 
-    public static final Measurement ANCHOR_POINT_X = new Measurement(Messages.getString("PixelInfoGraphic.x"), 1, true, true, false); //$NON-NLS-1$
-    public static final Measurement ANCHOR_POINT_Y = new Measurement(Messages.getString("PixelInfoGraphic.y"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement ANCHOR_POINT_X = new Measurement(
+        Messages.getString("PixelInfoGraphic.x"), 1, true, true, false); //$NON-NLS-1$
+    public static final Measurement ANCHOR_POINT_Y = new Measurement(
+        Messages.getString("PixelInfoGraphic.y"), 2, true, true, false); //$NON-NLS-1$
 
     private PixelInfo pixelInfo;
 
@@ -85,7 +87,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
     protected void buildShape(MouseEventDouble mouseEvent) {
         updateTool();
         AdvancedShape newShape = null;
-        DefaultView2d view2d = getDefaultView2d(mouseEvent);
+        ViewCanvas view2d = getDefaultView2d(mouseEvent);
 
         if (ptBox != null) {
             if (labelStringArray == null) {
@@ -131,7 +133,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
     }
 
     @Override
-    public void setLabel(String[] labels, DefaultView2d view2d, Point2D pos) {
+    public void setLabel(String[] labels, ViewCanvas view2d, Point2D pos) {
         String[] lbs;
         if (view2d != null && ptAnchor != null) {
             pixelInfo =
@@ -202,7 +204,8 @@ public class PixelInfoGraphic extends AnnotationGraphic {
                     if (values != null) {
                         for (int i = 0; i < values.length; i++) {
                             Measurement m =
-                                new Measurement((channelNames == null || i >= channelNames.length) ? Messages.getString("PixelInfoGraphic.unknown") //$NON-NLS-1$
+                                new Measurement((channelNames == null || i >= channelNames.length)
+                                    ? Messages.getString("PixelInfoGraphic.unknown") //$NON-NLS-1$
                                     : channelNames[i], i + 2, true, true, false);
                             measVal.add(new MeasureItem(m, values[i], pixelInfo.getPixelValueUnit()));
                         }

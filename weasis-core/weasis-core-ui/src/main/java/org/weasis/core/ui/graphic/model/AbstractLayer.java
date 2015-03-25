@@ -195,7 +195,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     protected AffineTransform getAffineTransform() {
-        GraphicsPane graphicsPane = layerModel.getGraphicsPane();
+        Canvas graphicsPane = layerModel.getGraphicsPane();
         if (graphicsPane != null) {
             return graphicsPane.getAffineTransform();
         }

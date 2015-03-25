@@ -124,7 +124,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
                     double scale = panner.getViewModel().getViewScale();
                     setPoint(new PanPoint(PanPoint.STATE.Dragging, -((e.getX() - pickPoint.getX()) / scale),
                         -((e.getY() - pickPoint.getY()) / scale)));
-                    panner.addPointerType(DefaultView2d.CENTER_POINTER);
+                    panner.addPointerType(ViewCanvas.CENTER_POINTER);
                 }
             }
         }
@@ -136,7 +136,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         if (!e.isConsumed() && (e.getModifiers() & buttonMask) != 0) {
             DefaultView2d panner = getDefaultView2d(e);
             if (panner != null) {
-                panner.resetPointerType(DefaultView2d.CENTER_POINTER);
+                panner.resetPointerType(ViewCanvas.CENTER_POINTER);
                 panner.repaint();
             }
         }

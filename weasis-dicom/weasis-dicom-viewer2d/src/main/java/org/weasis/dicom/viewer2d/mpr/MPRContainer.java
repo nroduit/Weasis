@@ -59,6 +59,7 @@ import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -169,7 +170,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     }
 
     @Override
-    public void setSelectedImagePaneFromFocus(DefaultView2d<DicomImageElement> defaultView2d) {
+    public void setSelectedImagePaneFromFocus(ViewCanvas<DicomImageElement> defaultView2d) {
         setSelectedImagePane(defaultView2d);
     }
 
@@ -267,7 +268,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
             @Override
             public void run() {
-                for (DefaultView2d v : view2ds) {
+                for (ViewCanvas v : view2ds) {
                     v.dispose();
                 }
             }
@@ -284,7 +285,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             if (ObservableEvent.BasicAction.Remove.equals(action)) {
                 if (newVal instanceof DicomSeries) {
                     DicomSeries dicomSeries = (DicomSeries) newVal;
-                    for (DefaultView2d<DicomImageElement> v : view2ds) {
+                    for (ViewCanvas<DicomImageElement> v : view2ds) {
                         MediaSeries<DicomImageElement> s = v.getSeries();
                         if (dicomSeries.equals(s)) {
                             v.setSeries(null);
@@ -304,7 +305,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
                             for (MediaSeriesGroup s : model.getChildren(group)) {
-                                for (DefaultView2d<DicomImageElement> v : view2ds) {
+                                for (ViewCanvas<DicomImageElement> v : view2ds) {
                                     MediaSeries series = v.getSeries();
                                     if (s.equals(series)) {
                                         v.setSeries(null);
@@ -317,7 +318,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             } else if (ObservableEvent.BasicAction.Replace.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
-                    for (DefaultView2d<DicomImageElement> v : view2ds) {
+                    for (ViewCanvas<DicomImageElement> v : view2ds) {
                         MediaSeries<DicomImageElement> s = v.getSeries();
                         if (series.equals(s)) {
                             // It will reset MIP view
@@ -429,7 +430,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     }
 
     public MprView getMprView(SliceOrientation sliceOrientation) {
-        for (DefaultView2d v : view2ds) {
+        for (ViewCanvas v : view2ds) {
             if (v instanceof MprView) {
                 if (sliceOrientation != null && sliceOrientation.equals(((MprView) v).getSliceOrientation())) {
                     return (MprView) v;
@@ -448,7 +449,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         }
         // TODO Should be init elsewhere
         for (int i = 0; i < view2ds.size(); i++) {
-            DefaultView2d<DicomImageElement> val = view2ds.get(i);
+            ViewCanvas<DicomImageElement> val = view2ds.get(i);
             if (val instanceof MprView) {
                 SliceOrientation sliceOrientation;
                 switch (i) {
@@ -520,12 +521,12 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
                                 @Override
                                 public void run() {
-                                    for (DefaultView2d v : view2ds) {
+                                    for (ViewCanvas v : view2ds) {
                                         if (v != view && v instanceof MprView) {
                                             JProgressBar bar = ((MprView) v).getProgressBar();
                                             if (bar == null) {
                                                 bar = new JProgressBar();
-                                                Dimension dim = new Dimension(v.getWidth() / 2, 30);
+                                                Dimension dim = new Dimension(v.getJComponent().getWidth() / 2, 30);
                                                 bar.setSize(dim);
                                                 bar.setPreferredSize(dim);
                                                 bar.setMaximumSize(dim);
@@ -534,7 +535,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                                                 ((MprView) v).setProgressBar(bar);
                                             }
                                             bar.setString(e.getMessage());
-                                            v.repaint();
+                                            v.getJComponent().repaint();
                                         }
                                     }
                                 }

@@ -46,9 +46,9 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.Panner;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 
@@ -132,13 +132,13 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     }
 
                     ImageViewerPlugin<ImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
-                    ArrayList<DefaultView2d<ImageElement>> views = null;
+                    ArrayList<ViewCanvas<ImageElement>> views = null;
                     if (container != null) {
                         if (applyAllViews.isSelected()) {
                             views = container.getImagePanels();
                         } else {
-                            views = new ArrayList<DefaultView2d<ImageElement>>(1);
-                            DefaultView2d<ImageElement> view = container.getSelectedImagePane();
+                            views = new ArrayList<ViewCanvas<ImageElement>>(1);
+                            ViewCanvas<ImageElement> view = container.getSelectedImagePane();
                             if (view != null) {
                                 views.add(view);
                             }
@@ -147,32 +147,32 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     if (views != null) {
                         if (rootNode.equals(parent)) {
                             if (image.equals(selObject)) {
-                                for (DefaultView2d<ImageElement> v : views) {
+                                for (ViewCanvas<ImageElement> v : views) {
                                     if (selected != v.getImageLayer().isVisible()) {
                                         v.getImageLayer().setVisible(selected);
-                                        v.repaint();
+                                        v.getJComponent().repaint();
                                     }
                                 }
                             } else if (info.equals(selObject)) {
-                                for (DefaultView2d<ImageElement> v : views) {
+                                for (ViewCanvas<ImageElement> v : views) {
                                     if (selected != v.getInfoLayer().isVisible()) {
                                         v.getInfoLayer().setVisible(selected);
-                                        v.repaint();
+                                        v.getJComponent().repaint();
                                     }
                                 }
                             } else if (drawings.equals(selObject)) {
-                                for (DefaultView2d<ImageElement> v : views) {
+                                for (ViewCanvas<ImageElement> v : views) {
                                     v.setDrawingsVisibility(selected);
                                 }
                             }
 
                         } else if (info.equals(parent)) {
                             if (selObject != null) {
-                                for (DefaultView2d<ImageElement> v : views) {
+                                for (ViewCanvas<ImageElement> v : views) {
                                     AnnotationsLayer layer = v.getInfoLayer();
                                     if (layer != null) {
                                         if (layer.setDisplayPreferencesValue(selObject.toString(), selected)) {
-                                            v.repaint();
+                                            v.getJComponent().repaint();
                                         }
                                     }
                                 }
@@ -182,12 +182,12 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                                 if (((DefaultMutableTreeNode) selObject).getUserObject() instanceof Identifier) {
                                     Identifier layerID =
                                         (Identifier) ((DefaultMutableTreeNode) selObject).getUserObject();
-                                    for (DefaultView2d<ImageElement> v : views) {
+                                    for (ViewCanvas<ImageElement> v : views) {
                                         AbstractLayer layer = v.getLayerModel().getLayer(layerID);
                                         if (layer != null) {
                                             if (layer.isVisible() != selected) {
                                                 layer.setVisible(selected);
-                                                v.repaint();
+                                                v.getJComponent().repaint();
                                             }
                                         }
                                     }
@@ -225,7 +225,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         }
     }
 
-    public void iniTreeValues(DefaultView2d view) {
+    public void iniTreeValues(ViewCanvas view) {
         if (view != null) {
             initPathSelection = true;
             // Image node
