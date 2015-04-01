@@ -1,7 +1,15 @@
-# Ignore the eclipse configuration files
+# Eclipse configuration files
 .classpath
 .project
 .settings/
+
+# Neteans configuration files #
+nbactions.xml
+nb-configuration.xml
+
+# OS generated files
+.DS_Store
+Thumbs.db
 
 # Ignore Maven files
 target/
@@ -11,3 +19,6 @@ gen-cpp/
 
 # Other source repository archive directories (protects when importing)
 .svn/
+
+# crash file
+hs_err*.log
