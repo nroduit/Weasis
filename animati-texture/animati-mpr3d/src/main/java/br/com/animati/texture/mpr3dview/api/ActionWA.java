@@ -39,7 +39,7 @@ public class ActionWA {
             "Volumetric Lighting", "volumetricLighting", 0, 0, null);
     
     /** Mip option or state: enum TextureImageCanvas::MipOption. */
-    public static final ActionW MIP_OPTION = new ActionW("Mip Option", "mip-opt", 0, 0, null);
+    public static final ActionW MIP_OPTION = new ActionW("Mip Type", "mip-opt", 0, 0, null);
     /** Mip depth: double. */
     public static final ActionW MIP_DEPTH = new ActionW("Mip Depth", "mip-dep", 0, 0, null);
     
@@ -48,7 +48,7 @@ public class ActionWA {
     
     public static final ActionW BEST_FIT = new ActionW("Best Fit", "bestFit", 0, 0, null);
     
-    
+
     /** Private constructor. */
     private ActionWA() { }
     

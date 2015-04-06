@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -37,7 +38,9 @@ public class EventPublisher {
 
     /**
      * Util: get Action cmd assumming its the last part of expression.
-     * @param expression Expression containing cmd as last part after dot.
+     * 
+     * @param expression
+     *            Expression containing cmd as last part after dot.
      * @return the cmd, or null if cant find it.
      */
     public static String getActionCmd(final String expression) {
@@ -73,8 +76,7 @@ public class EventPublisher {
         addPropertyChangeListener(null, listener);
     }
 
-    public void addPropertyChangeListener(final String propertyRegex,
-            final PropertyChangeListener listener) {
+    public void addPropertyChangeListener(final String propertyRegex, final PropertyChangeListener listener) {
         if (listener != null) {
             List<PropertyChangeListener> list;
             if (listeners.containsKey(propertyRegex)) {
@@ -97,12 +99,11 @@ public class EventPublisher {
         }
         if (!wasRemoved) {
             LOGGER.error("Não foi possível remover PropertyChangeListener="
-                    + (listener == null ? "NULL" : listener.getClass().getName()));
+                + (listener == null ? "NULL" : listener.getClass().getName()));
         }
     }
 
-    public void removePropertyChangeListener(final String propertyRegex,
-            final PropertyChangeListener listener) {
+    public void removePropertyChangeListener(final String propertyRegex, final PropertyChangeListener listener) {
         if (listener != null) {
             if (listeners.containsKey(propertyRegex)) {
                 List<PropertyChangeListener> list = listeners.get(propertyRegex);
@@ -131,8 +132,7 @@ public class EventPublisher {
     }
 
     /**
-     * Publishes events to all registered PropertyChangeListener and the selected
-     * ViewerPlugin on EDT.
+     * Publishes events to all registered PropertyChangeListener and the selected ViewerPlugin on EDT.
      *
      * @param event
      */
@@ -144,8 +144,7 @@ public class EventPublisher {
 
     protected void publishOut(final PropertyChangeEvent event) {
         final String name = event.getPropertyName();
-        final PropertyChangeListener[] fireTo =
-                getPropertyChangeListeners(name);
+        final PropertyChangeListener[] fireTo = getPropertyChangeListeners(name);
 
         GuiExecutor.instance().execute(new Runnable() {
             @Override
@@ -157,20 +156,18 @@ public class EventPublisher {
                         listener.propertyChange(event);
                     }
 
-                    if (name != null && (name.startsWith(ALL_VIEWERS_DO_ACTION)
-                            || name.startsWith("texture")
-                            || name.startsWith("DicomModel"))) {
-                            List<ViewerPlugin<?>> allViewerPlugins =
-                                    GUIManager.getInstance().getAllViewerPlugins();
+                    if (name != null
+                        && (name.startsWith(ALL_VIEWERS_DO_ACTION) || name.startsWith("texture") || name
+                            .startsWith("DicomModel"))) {
+                        List<ViewerPlugin<?>> allViewerPlugins = GUIManager.getInstance().getAllViewerPlugins();
                         for (ViewerPlugin viewerPlugin : allViewerPlugins) {
                             if (viewerPlugin instanceof PropertyChangeListener) {
                                 ((PropertyChangeListener) viewerPlugin).propertyChange(event);
                             }
                         }
                     } else {
-                        //Selected Plugin
-                            ViewerPlugin selectedViewerPlugin =
-                                    GUIManager.getInstance().getSelectedViewerPlugin();
+                        // Selected Plugin
+                        ViewerPlugin selectedViewerPlugin = GUIManager.getInstance().getSelectedView2dContainer();
                         if (selectedViewerPlugin instanceof PropertyChangeListener) {
                             ((PropertyChangeListener) selectedViewerPlugin).propertyChange(event);
                         }
@@ -178,15 +175,14 @@ public class EventPublisher {
                 }
             }
         });
-    }   
+    }
 
     public void setPriority(int priority) {
         consumerThread.setPriority(priority);
     }
-    
+
     private static class Buffer {
-        private ConcurrentLinkedQueue<PropertyChangeEvent> contents
-                = new ConcurrentLinkedQueue<PropertyChangeEvent>();
+        private ConcurrentLinkedQueue<PropertyChangeEvent> contents = new ConcurrentLinkedQueue<PropertyChangeEvent>();
 
         public synchronized void put(PropertyChangeEvent evt) {
             contents.add(evt);
@@ -194,16 +190,16 @@ public class EventPublisher {
         }
 
         public synchronized PropertyChangeEvent get() throws InterruptedException {
-            while (contents.isEmpty()) { //wait till something appears in the buffer
+            while (contents.isEmpty()) { // wait till something appears in the buffer
                 try {
                     wait();
                 } catch (InterruptedException e) {
                     throw e;
                 }
             }
-            
+
             notify();
-            return (PropertyChangeEvent) contents.poll();
+            return contents.poll();
         }
     }
 
@@ -215,10 +211,11 @@ public class EventPublisher {
         private Buffer consBuf;
 
         public Consumer(Buffer buf) {
-            super("Events Thread"); 
+            super("Events Thread");
             consBuf = buf;
         }
 
+        @Override
         public void run() {
             PropertyChangeEvent value;
             while (true) {

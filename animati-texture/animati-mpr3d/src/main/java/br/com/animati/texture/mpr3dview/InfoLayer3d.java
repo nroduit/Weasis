@@ -10,18 +10,13 @@
  */
 package br.com.animati.texture.mpr3dview;
 
-import br.com.animati.texture.codec.TextureDicomSeries;
-import br.com.animati.texture.mpr3dview.api.AbstractInfoLayer;
-import br.com.animati.texture.mpr3dview.api.ActionWA;
-import br.com.animati.texture.mpr3dview.api.DisplayUtils;
-import br.com.animati.texture.mpr3dview.api.ViewCore;
-import br.com.animati.texture.mpr3dview.internal.Messages;
-import br.com.animati.texturedicom.ImageSeries;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+
 import javax.vecmath.Vector3d;
+
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.Unit;
@@ -45,18 +40,25 @@ import org.weasis.dicom.codec.display.TagView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomModel;
 
+import br.com.animati.texture.codec.TextureDicomSeries;
+import br.com.animati.texture.mpr3dview.api.AbstractInfoLayer;
+import br.com.animati.texture.mpr3dview.api.ActionWA;
+import br.com.animati.texture.mpr3dview.api.DisplayUtils;
+import br.com.animati.texture.mpr3dview.internal.Messages;
+import br.com.animati.texturedicom.ImageSeries;
+
 /**
  *
  * @author gabriela
  */
 public class InfoLayer3d extends AbstractInfoLayer {
     
-    protected ViewCore owner;
+    protected ViewTexture owner;
 
     private PixelInfo pixelInfo = null;
     private final Rectangle pixelInfoBound;
 
-    public InfoLayer3d(ViewCore view) {
+    public InfoLayer3d(ViewTexture view) {
         owner = view;
         initDisplayPrefs();
         pixelInfoBound = new Rectangle();
@@ -110,7 +112,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
 
     @Override
     protected Rectangle getOwnerBounds() {
-        return owner.getComponent().getBounds();
+        return owner.getJComponent().getBounds();
     }
 
     @Override
@@ -123,7 +125,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
 
         /* Informações no canto inferior esquerdo */
         if (owner instanceof ViewTexture) {
-            drawY = drawIrregularSpacingAlert(g2d, (ViewTexture) owner,
+            drawY = drawIrregularSpacingAlert(g2d, owner,
                     drawY, fontHeight);
         }
         
@@ -133,7 +135,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
         /* MODALITY - ORIENTATION */
         if (getDisplayPreferences(MODALITY)) {
             if (owner instanceof ViewTexture) {
-                ImageSeries imSeries = ((ViewTexture) owner).getParentImageSeries();
+                ImageSeries imSeries = owner.getParentImageSeries();
                 StringBuffer orientation = new StringBuffer();
                 if (imSeries instanceof TextureDicomSeries) {
                     TextureDicomSeries textureSeries = (TextureDicomSeries) imSeries;
@@ -237,7 +239,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
             final Series series = (Series) owner.getSeries();
             ImageElement dcm = null;
 
-            DicomModel model = (DicomModel) GUIManager.getInstance().getActiveDicomModel();
+            DicomModel model = GUIManager.getInstance().getActiveDicomModel();
             MediaSeriesGroup study = model.getParent(series, DicomModel.study);
             MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
             Modality mod = Modality.getModality((String) series.getTagValue(TagW.Modality));
@@ -283,9 +285,9 @@ public class InfoLayer3d extends AbstractInfoLayer {
                             if (tag.getTagName().equals("AcquisitionDate")
                                     || tag.getTagName().equals("AcquisitionTime")) {
                                 if (owner instanceof ViewTexture 
-                                        && ((ViewTexture) owner).isShowingAcquisitionAxis()) {
-                                    ViewTexture texture = (ViewTexture) owner;                            
-                                    value = ((TextureDicomSeries) owner.getSeriesObject()).
+                                        && owner.isShowingAcquisitionAxis()) {
+                                    ViewTexture texture = owner;                            
+                                    value = owner.getSeriesObject().
                                             getTagValue(tag, texture.getCurrentSlice() - 1);                            
                                 }                        
                             }
@@ -325,9 +327,9 @@ public class InfoLayer3d extends AbstractInfoLayer {
                             if (tag.getTagName().equals("SliceLocation") || 
                                     tag.getTagName().equals("SliceThickness")) {
                                 if (owner instanceof ViewTexture
-                                        && ((ViewTexture) owner).isShowingAcquisitionAxis()) {
-                                    ViewTexture texture = (ViewTexture) owner;
-                                    value = ((TextureDicomSeries) owner.getSeriesObject()).
+                                        && owner.isShowingAcquisitionAxis()) {
+                                    ViewTexture texture = owner;
+                                    value = owner.getSeriesObject().
                                             getTagValue(tag, texture.getCurrentSlice() - 1);
 
                                 }                        
@@ -364,7 +366,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
     @Override
     public Unit getOwnerPixelSpacingUnit() {
         if (owner instanceof ViewTexture) {
-            ImageSeries ser = ((ViewTexture) owner).getParentImageSeries();
+            ImageSeries ser = owner.getParentImageSeries();
             if (ser instanceof TextureDicomSeries) {
                     return ((TextureDicomSeries) ser).getPixelSpacingUnit();
             }
@@ -384,7 +386,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
     @Override
     public double getOwnerPixelSize() {
         if (owner instanceof ViewTexture) {
-            return ((ViewTexture) owner).getShowingPixelSize();
+            return owner.getShowingPixelSize();
         }
         return 0;
     }
@@ -392,7 +394,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
     @Override
     public Dimension getOwnerContentDimensions() {
         if (owner instanceof ViewTexture) {
-            Vector3d imageSize = ((ViewTexture) owner).getParentImageSeries()
+            Vector3d imageSize = owner.getParentImageSeries()
                     .getImageSize();
             return new Dimension((int) imageSize.x, (int) imageSize.y);
         }
@@ -414,7 +416,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
         Object tagValue = null;
         if (owner instanceof ViewTexture) {
             TextureDicomSeries ser = (TextureDicomSeries)
-                    ((ViewTexture) owner).getParentImageSeries();
+                    owner.getParentImageSeries();
             if (ser != null) {
                 tagValue = ser.getTagValue(
                         TagW.PixelSpacingCalibrationDescription);
@@ -471,10 +473,10 @@ public class InfoLayer3d extends AbstractInfoLayer {
         return drawY;
     }
 
-    private float checkAndPaintLossy(Graphics2D g2d, ViewCore owner, float drawY, float fontHeight) {
+    private float checkAndPaintLossy(Graphics2D g2d, ViewTexture owner, float drawY, float fontHeight) {
         String tsuid = null;
         if (owner instanceof ViewTexture) {
-            String tagVal = (String) ((ViewTexture) owner).getSeriesObject()
+            String tagVal = (String) owner.getSeriesObject()
                     .getTagValue(TagW.TransferSyntaxUID, 0);
             tsuid = DisplayUtils.getLossyTransferSyntaxUID(tagVal);
         }
@@ -509,7 +511,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
 
     private Object getOwnerContentInstanceNumber() {
         if (owner instanceof ViewTexture) {
-            ViewTexture vt = (ViewTexture) owner;
+            ViewTexture vt = owner;
             if (isOwnerContentReadable() && !isVolumetricView()
                    && vt.isShowingAcquisitionAxis()) {
                 int currentSlice = vt.getCurrentSlice() - 1;
@@ -526,8 +528,8 @@ public class InfoLayer3d extends AbstractInfoLayer {
     private Integer getOwnerContentFrameIndex() {
         if (ownerHasContent() && isOwnerContentReadable()) {
             if (owner instanceof ViewTexture
-                    && ((ViewTexture) owner).isShowingAcquisitionAxis()) {
-                return ((ViewTexture) owner).getCurrentSlice() - 1; //-1 para ficar iqual a numeracao do ImageViewer
+                    && owner.isShowingAcquisitionAxis()) {
+                return owner.getCurrentSlice() - 1; //-1 para ficar iqual a numeracao do ImageViewer
             }
         }
         return null;
@@ -535,7 +537,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
 
     private Integer getOwnerSeriesSize() {
         if (owner instanceof ViewTexture) {
-            return ((TextureDicomSeries) owner.getSeriesObject()).getSliceCount();
+            return owner.getSeriesObject().getSliceCount();
         }
         return owner.getSeries().size(null);
     }
@@ -543,10 +545,10 @@ public class InfoLayer3d extends AbstractInfoLayer {
     private void paintPreLoadingBar(final int drawY, final Graphics2D g2d, final int width, final int height) {
         boolean[] imagesLoadies = null;
         if(owner instanceof ViewTexture){
-            if(((ViewTexture)owner).getSeriesObject() == null){
+            if(owner.getSeriesObject() == null){
                 return;
             }
-            imagesLoadies = ((ViewTexture)owner).getSeriesObject().getPlacesInVideo();
+            imagesLoadies = owner.getSeriesObject().getPlacesInVideo();
         } else {
             if (owner.getSeries() == null || !(owner.getSeries() instanceof DicomSeries)) {
                 return;

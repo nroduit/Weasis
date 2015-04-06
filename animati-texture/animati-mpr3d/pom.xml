@@ -52,6 +52,12 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-viewer2d</artifactId>
+			<version>2.0.4-SNAPSHOT</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.weasis.base</groupId>
 			<artifactId>weasis-base-ui</artifactId>
 			<version>2.0.4-SNAPSHOT</version>

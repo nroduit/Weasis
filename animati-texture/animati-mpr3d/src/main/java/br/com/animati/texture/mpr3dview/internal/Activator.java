@@ -4,7 +4,6 @@
  */
 package br.com.animati.texture.mpr3dview.internal;
 
-import java.awt.Color;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -23,11 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.ui.graphic.SelectGraphic;
 
-import br.com.animati.texture.mpr3dview.GUIManager;
-import br.com.animati.texture.mpr3dview.api.graghics.DVLineGraphic;
-import br.com.animati.texture.mpr3dview.api.graghics.DVRectangleGraphic;
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.cl.CLManager;
 
@@ -60,8 +55,6 @@ public class Activator implements BundleActivator {
     @Override
     public void start(BundleContext context) throws Exception {
         LOGGER.info("Starting bundle Mpr 3D View [Animati].");
-
-        fillGraphicsList();
 
         Preferences dPrefs = BundlePreferences.getDefaultPreferences(context);
         if (dPrefs != null) {
@@ -177,14 +170,6 @@ public class Activator implements BundleActivator {
                 ex.printStackTrace();
             }
         }
-    }
-
-    private void fillGraphicsList() {
-        // Including a few graphics, just as a demonstration...
-        GUIManager.graphicList.clear();
-        GUIManager.graphicList.add(new SelectGraphic(1.0f, Color.YELLOW));
-        GUIManager.graphicList.add(new DVLineGraphic(1.0f, Color.YELLOW, true));
-        GUIManager.graphicList.add(new DVRectangleGraphic(1.0f, Color.YELLOW, true));
     }
 
 }

@@ -5,195 +5,175 @@
 
 package br.com.animati.texture.mpr3dview;
 
-import br.com.animati.texture.codec.ImageSeriesFactory;
-import br.com.animati.texture.codec.StaticHelpers;
-import br.com.animati.texture.codec.TextureDicomSeries;
-import br.com.animati.texture.mpr3dview.api.AbstractViewsContainer;
-import br.com.animati.texture.mpr3dview.api.ActionDataModel;
-import br.com.animati.texture.mpr3dview.api.ActionWA;
-import br.com.animati.texture.mpr3dview.api.DVLayerModel;
-import br.com.animati.texture.mpr3dview.api.DisplayUtils;
-import br.com.animati.texture.mpr3dview.api.GraphicsModel;
-import br.com.animati.texture.mpr3dview.api.GridElement;
-import br.com.animati.texture.mpr3dview.api.MeasureAdapter;
-import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
-import br.com.animati.texture.mpr3dview.api.ViewCore;
-import br.com.animati.texture.mpr3dview.api.ViewsGrid;
-import br.com.animati.texture.mpr3dview.internal.Messages;
-import br.com.animati.texturedicom.ColorMask;
-import br.com.animati.texturedicom.ControlAxes;
-import br.com.animati.texturedicom.ImageSeries;
-import br.com.animati.texturedicom.TextureImageCanvas;
-import br.com.animati.texturedicom.cl.CLConvolution;
-import br.com.animati.texture.mpr3dview.api.RenderSupport;
-import java.awt.Component;
-import java.awt.Container;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import javax.swing.BoundedRangeModel;
+import java.util.Map.Entry;
+
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Point2i;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector2d;
 import javax.vecmath.Vector3d;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.image.measure.MeasurementsAdapter;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
+import org.weasis.core.ui.editor.image.CalibrationView;
+import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
+import org.weasis.core.ui.editor.image.GraphicMouseHandler;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MouseActions;
+import org.weasis.core.ui.editor.image.Panner;
+import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.PixelInfo;
+import org.weasis.core.ui.editor.image.SynchData;
+import org.weasis.core.ui.editor.image.SynchData.Mode;
+import org.weasis.core.ui.editor.image.SynchEvent;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.graphic.AbstractDragGraphic;
+import org.weasis.core.ui.graphic.BasicGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
+import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.LineGraphic;
+import org.weasis.core.ui.graphic.MeasureDialog;
+import org.weasis.core.ui.graphic.PanPoint;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
-import org.weasis.dicom.codec.SortSeriesStack;
+import org.weasis.core.ui.graphic.model.MainLayerModel;
+import org.weasis.core.ui.pref.Monitor;
+import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.MouseEventDouble;
+import org.weasis.core.ui.util.TitleMenuItem;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+
+import br.com.animati.texture.codec.ImageSeriesFactory;
+import br.com.animati.texture.codec.StaticHelpers;
+import br.com.animati.texture.codec.TextureDicomSeries;
+import br.com.animati.texture.mpr3dview.api.ActionWA;
+import br.com.animati.texture.mpr3dview.api.DisplayUtils;
+import br.com.animati.texture.mpr3dview.api.GraphicsModel;
+import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
+import br.com.animati.texture.mpr3dview.api.RenderSupport;
+import br.com.animati.texture.mpr3dview.internal.Messages;
+import br.com.animati.texturedicom.ColorMask;
+import br.com.animati.texturedicom.ControlAxes;
+import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.TextureImageCanvas;
+import br.com.animati.texturedicom.cl.CLConvolution;
 
 /**
  *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  * @version 2013, 18 Jul.
  */
-public class ViewTexture extends TextureImageCanvas
-        implements ViewCore<TextureDicomSeries> {
-    
+public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomImageElement> {
+
     /** Class logger. */
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(ViewTexture.class);
-    
+    private static final Logger LOGGER = LoggerFactory.getLogger(ViewTexture.class);
+
+    public enum ViewType {
+        AXIAL, CORONAL, SAGITTAL, VOLUME3D
+    };
+
     /** Tolerance to consider an axix as the Acquisition Axis. */
     private double WARNING_TOLERANCE = 0.0001;
 
-    protected final HashMap<String, Object> actionsInView =
-            new HashMap<String, Object>();
-    
-    private MouseActionAdapter measureAdapter = new MeasureAdapter(this);
+    protected final HashMap<String, Object> actionsInView = new HashMap<String, Object>();
+
+    protected final FocusHandler focusHandler = new FocusHandler();
+    private final GraphicMouseHandler graphicMouseHandler = new GraphicMouseHandler(this);
+
     protected final GraphicsModel graphsLayer;
     private AnnotationsLayer infoLayer;
     public static boolean computePixelStats = true;
-    
+
     private final RenderSupport renderSupp = new RenderSupport(this);
-    
-    private static List<ColorMask> colorMaskList;
-    private static List<StaticHelpers.TextureKernel> kernelList;
-    
+
+    private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
     private Cross3dListener crosshairAction = new Cross3dListener();
-    
-    private SliderChangeListener windowAction = new SliderChangeListener(
-            ActionW.WINDOW, WINDOW_SMALLEST, WINDOW_LARGEST, WINDOW_DEFAULT,
-            true, 1.25) {
-        @Override
-        public void stateChanged(BoundedRangeModel model) {            
-            windowingWindow = (Integer) model.getValue();
-            repaint();
-            setActionsInView(ActionW.PRESET.cmd(), null, false);
-            //publish
-            EventPublisher.getInstance().publish(new PropertyChangeEvent(
-                    ViewTexture.this, EventPublisher.VIEWER_ACTION_CHANGED
-                    + ActionW.WINDOW.cmd(), null, model.getValue()));
-        }
-    };
-    
-    private SliderChangeListener levelAction = new SliderChangeListener(
-            ActionW.LEVEL, LEVEL_SMALLEST, LEVEL_LARGEST, LEVEL_DEFAULT,
-            true, 1.25) {
-        @Override
-        public void stateChanged(BoundedRangeModel model) {            
-            windowingLevel = (Integer) model.getValue();
-            repaint();
-            setActionsInView(ActionW.PRESET.cmd(), null, false);
-            EventPublisher.getInstance().publish(new PropertyChangeEvent(
-                    ViewTexture.this, EventPublisher.VIEWER_ACTION_CHANGED
-                    + ActionW.LEVEL.cmd(), null, model.getValue()));
-        }
-    };
-    
-    private SliderChangeListener zoomAction =
-        new SliderChangeListener(ActionW.ZOOM, ZOOM_SLIDER_MIN,
-            ZOOM_SLIDER_MAX, 1, true, 0.1) {
 
-        @Override
-        public void stateChanged(BoundedRangeModel model) { 
-            double oldZoom = (Double) getActionValue(ActionW.ZOOM.cmd());
-            double zoomVal =
-                    GridViewUI.sliderValueToViewScale(model.getValue());            
-            setActionsInView(ActionW.ZOOM.cmd(), zoomVal, true);   
-            
-            EventPublisher.getInstance().publish(new PropertyChangeEvent(
-                        ViewTexture.this, EventPublisher.VIEWER_ACTION_CHANGED
-                        + ActionW.ZOOM.cmd(), oldZoom, zoomVal));
-        }
-    };
-      
-    private SliderChangeListener scrollSeriesAction =
-            new SliderChangeListener(
-            ActionW.SCROLL_SERIES, 1, 100, 1, true, 0.1) {
-        @Override
-        public void stateChanged(BoundedRangeModel model) {
-            setSlice(model.getValue());
-            if (hasContent()) {
-                EventPublisher.getInstance().publish(new PropertyChangeEvent(
-                    ViewTexture.this, EventPublisher.VIEWER_ACTION_CHANGED
-                    + ActionW.SCROLL_SERIES.cmd(), null, getCurrentSlice()));
-            }
-        }
-        @Override
-        public void mouseWheelMoved(MouseWheelEvent e) {
-            setValue(getValue() + e.getWheelRotation());
-        }
-    };
+    protected final Border normalBorder = new EtchedBorder(BevelBorder.LOWERED, Color.gray, Color.white);
+    protected final Border focusBorder = new EtchedBorder(BevelBorder.LOWERED, focusColor, focusColor);
+    protected final Border lostFocusBorder = new EtchedBorder(BevelBorder.LOWERED, lostFocusColor, lostFocusColor);
 
-    private SliderChangeListener rotationAction =
-            new SliderChangeListener(
-            ActionW.ROTATION, 0, 360, 0, true, 0.25) {
-        @Override
-        public void stateChanged(BoundedRangeModel model) {
-            setRotationOffset(Math.toRadians(model.getValue()));
-            updateAffineTransform();
-            repaint();
-            EventPublisher.getInstance().publish(new PropertyChangeEvent(
-                    ViewTexture.this, EventPublisher.VIEWER_ACTION_CHANGED
-                    + ActionW.ROTATION.cmd(), null, model.getValue()));
-        }
-    }; 
-    
-    public ViewTexture(ImageSeries parentImageSeries) throws Exception {
+    private final ImageViewerEventManager<DicomImageElement> eventManager;
+
+    private ViewType viewType;
+
+    public ViewTexture(ImageViewerEventManager<DicomImageElement> eventManager, ImageSeries parentImageSeries)
+        throws Exception {
         super(parentImageSeries);
-        
-        graphsLayer = new GraphicsModel(
-                new DVLayerModel(this), new TextureViewModel());
-     
+        this.eventManager = eventManager;
+        graphsLayer = new GraphicsModel(new MainLayerModel(this), new TextureViewModel());
+
         infoLayer = new InfoLayer3d(this);
-        
-        DragLayer layer = new DragLayer(getLayerModel(),
-                AbstractLayer.CROSSLINES);
+
+        DragLayer layer = new DragLayer(getLayerModel(), AbstractLayer.CROSSLINES);
         layer.setLocked(true);
         getLayerModel().addLayer(layer);
         layer = new DragLayer(getLayerModel(), AbstractLayer.MEASURE) {
@@ -210,71 +190,36 @@ public class ViewTexture extends TextureImageCanvas
             }
         };
         getLayerModel().addLayer(layerTmp);
-        
+
         initActionWState();
 
-        //Defaults
-        cubeHelperScale = 0;
-        interpolate = true;
-        
         setFocusable(true);
-        
-        // WEA-258
-        // Must be larger to the screens to be resize correctly by the container
+
+        setBorder(normalBorder);
+        // WEA-258 Must be larger to the screens to be resize correctly by the container
         setPreferredSize(new Dimension(4096, 4096));
         setMinimumSize(new Dimension(50, 50));
-        
-        enableActions();
-    }   
-        
-    private void enableActions() {
-        zoomAction.enableAction(true);
-        windowAction.enableAction(true);
-        levelAction.enableAction(true);
-        rotationAction.enableAction(true);
-        scrollSeriesAction.enableAction(true);
-    }
-    
-    /* ViewCore implementation */
-	
-    @Override
-    public void fixPosition() {
-        //Center
-        setImageOffset(new Vector2d(0, 0));
-        EventPublisher.getInstance().publish(
-            new PropertyChangeEvent(ViewTexture.this, 
-            EventPublisher.VIEWER_ACTION_CHANGED 
-            + ActionW.PAN.cmd(), null, "center"));
-
-        repaint();
-
-    }
-    
-    /** @return the colorMaskList */
-    public List<ColorMask> getColorMaskList() {
-        if (colorMaskList == null) {
-            colorMaskList = StaticHelpers.buildColorMaskList();
-        }
-        return colorMaskList;
     }
 
-    /** @return the kernelList. */
-    public List<StaticHelpers.TextureKernel> getKernelList() {
-        if (kernelList == null) {
-            kernelList = StaticHelpers.buildKernelList();
-        }
-        return kernelList;
+    public ViewType getViewType() {
+        return viewType;
     }
-    
-    @Override
+
+    public void setViewType(ViewType viewType) {
+        this.viewType = viewType;
+    }
+
     public String getSeriesObjectClassName() {
         return TextureDicomSeries.class.getName();
     }
-    
+
     /**
      * Converts the geometric point to text information.
-     * @param point Geometric point
-     * @param position Position on view (to decide if its in or out of image.
+     * 
+     * @param point
+     *            Geometric point
+     * @param position
+     *            Position on view (to decide if its in or out of image.
      * @return Text information.
      */
     public PixelInfo getPixelInfo(final Point3d point, final Point2i position) {
@@ -284,35 +229,34 @@ public class ViewTexture extends TextureImageCanvas
         } else {
             pixelInfo.setPosition3d(point);
         }
-        
+
         return pixelInfo;
     }
-    
-    @Override
+
     public void showPixelInfos(MouseEvent mouseevent) {
         if (infoLayer != null && getParentImageSeries() != null) {
             Point2i position = new Point2i(mouseevent.getX(), mouseevent.getY());
             Rectangle oldBound = infoLayer.getPixelInfoBound();
             Vector3d coordinatesTexture = getTextureCoordinatesForPosition(position);
             Vector3d imageSize = getParentImageSeries().getImageSize();
-            Point3d pModel =
-                    getImageCoordinatesFromMouse(coordinatesTexture, imageSize);            
-            PixelInfo pixInfo =
-                getPixelInfo(pModel, position);
-            oldBound.width = Math.max(oldBound.width,
+            Point3d pModel = getImageCoordinatesFromMouse(coordinatesTexture, imageSize);
+            PixelInfo pixInfo = getPixelInfo(pModel, position);
+            oldBound.width =
+                Math.max(
+                    oldBound.width,
                     this.getGraphics().getFontMetrics(getLayerFont())
-                    .stringWidth(Messages.getString("InfoLayer3d.pixel") + pixInfo) + 4);
+                        .stringWidth(Messages.getString("InfoLayer3d.pixel") + pixInfo) + 4);
             infoLayer.setPixelInfo(pixInfo);
             repaint(oldBound);
         }
     }
-    
+
     /** required when used getGraphics().getFont() in GraphicLabel. */
     @Override
     public Font getFont() {
         return MeasureTool.viewSetting.getFont();
     }
-    
+
     @Override
     protected void paintComponent(Graphics graphs) {
         try {
@@ -329,24 +273,24 @@ public class ViewTexture extends TextureImageCanvas
             Font defaultFont = getFont();
             g2d.setFont(defaultFont);
 
-            drawLayers(g2d, graphsLayer.getAffineTransform(),
-                    graphsLayer.getInverseTransform());
+            drawLayers(g2d, graphsLayer.getAffineTransform(), graphsLayer.getInverseTransform());
 
             g2d.translate(offsetX, offsetY);
 
             if (infoLayer != null) {
-                 g2d.setFont(getLayerFont());
+                g2d.setFont(getLayerFont());
                 infoLayer.paint(g2d);
             }
             g2d.setFont(oldFont);
-            
+
         } catch (Exception ex) {
             LOGGER.error("Cant paint component!");
             ex.printStackTrace();
         }
     }
-    
-    private void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
+
+    @Override
+    public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         boolean draw = true;
         Object actionValue = getActionValue(ActionW.DRAW.cmd());
         if (actionValue instanceof Boolean) {
@@ -357,27 +301,26 @@ public class ViewTexture extends TextureImageCanvas
                 g2d,
                 transform,
                 inverseTransform,
-                new Rectangle2D.Double(graphsLayer.modelToViewLength(
-                    graphsLayer.getViewModel().getModelOffsetX()),
-                    graphsLayer.modelToViewLength(
-                    graphsLayer.getViewModel().getModelOffsetY()),
-                    getWidth(), getHeight()));
+                new Rectangle2D.Double(graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetX()),
+                    graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetY()), getWidth(),
+                    getHeight()));
         }
     }
-    
+
     /**
      * Get ImageRectangle without rotation.
-     * @return 
+     * 
+     * @return
      */
     public Rectangle getUnrotatedImageRect() {
         double currentRO = getRotationOffset();
         setRotationOffset(0);
         Rectangle imageRect = getImageRect(true);
         setRotationOffset(currentRO);
-        
+
         return imageRect;
     }
-    
+
     public void forceResize() {
         int width = getWidth();
         reshape(getX(), getY(), width - 1, getHeight());
@@ -388,333 +331,325 @@ public class ViewTexture extends TextureImageCanvas
     public void propertyChange(PropertyChangeEvent evt) {
         String propertyName = evt.getPropertyName();
         Object value = evt.getNewValue();
-        
+
         if (propertyName == null) {
             return;
         }
-        
-        if ("texture.loadComplete".equals(propertyName)
-                || "texture.doDisplay".equals(propertyName)) {
 
-            //Invert if necessary
-            setActionsInView(ActionW.INVERT_LUT.cmd(), false, false);
+        if (propertyName.equals(ActionW.SYNCH.cmd())) {
+            propertyChange((SynchEvent) evt.getNewValue());
+        }
 
-            Object actionData = getActionData(ActionW.PRESET.cmd());
-            int size = 0;
-            if (actionData instanceof List) {
-                size = ((List) actionData).size();
-                List<PresetWindowLevel> presetList =
-                        ((TextureDicomSeries) getParentImageSeries())
-                        .getPresetList(true, true);
-                if (presetList.size() > size) {
-                    Container parent = getParent();
-                    if (parent instanceof ViewsGrid) {
-                        List<GridElement> views = ((ViewsGrid) parent).getViews();
-                        for (GridElement gridElement : views) {
-                            if (gridElement.getComponent() instanceof ViewTexture) {
-                                ((ViewTexture) gridElement.getComponent())
-                                        .updateWindowLevelActions(
-                                        (TextureDicomSeries) getParentImageSeries());
-                            }
-                        }
-                    }  
-                }
-            }
-            
-            if (getParentImageSeries() != null && levelAction.getMax() != getParentImageSeries().windowingMaxInValue) {
-                updateWindowLevelLimits((TextureDicomSeries) getParentImageSeries());
-            }
+        if ("texture.loadComplete".equals(propertyName) || "texture.doDisplay".equals(propertyName)) {
+
+            // Invert if necessary
+            // setActionsInView(ActionW.INVERT_LUT.cmd(), false, false);
+
+            // Object actionData = getActionData(ActionW.PRESET.cmd());
+            // int size = 0;
+            // if (actionData instanceof List) {
+            // size = ((List) actionData).size();
+            // List<PresetWindowLevel> presetList =
+            // ((TextureDicomSeries) getParentImageSeries()).getPresetList(true, true);
+            // if (presetList.size() > size) {
+            // Container parent = getParent();
+            // if (parent instanceof ViewsGrid) {
+            // List<GridElement> views = ((ViewsGrid) parent).getViews();
+            // for (GridElement gridElement : views) {
+            // if (gridElement.getComponent() instanceof ViewTexture) {
+            // ((ViewTexture) gridElement.getComponent())
+            // .updateWindowLevelActions((TextureDicomSeries) getParentImageSeries());
+            // }
+            // }
+            // }
+            // }
+            // }
+
+            // if (getParentImageSeries() != null && levelAction.getMax() != getParentImageSeries().windowingMaxInValue)
+            // {
+            // updateWindowLevelLimits((TextureDicomSeries) getParentImageSeries());
+            // }
             repaint();
-        } else if (propertyName.endsWith("RefreshTexture")) {
-            refreshTexture();
-        
+            eventManager.updateComponentsListener(this);
         } else if (propertyName.startsWith(EventPublisher.VIEWER_DO_ACTION)) {
-            String action = propertyName.substring(
-                        propertyName.lastIndexOf(".") + 1);
+            String action = propertyName.substring(propertyName.lastIndexOf(".") + 1);
             setActionsInView(action, value, true);
         } else if (evt.getSource() instanceof ControlAxes) {
             if ("rotation".equals(propertyName)) {
-                scrollSeriesAction.setMinMaxValue(1, getTotalSlices(),
-                        getCurrentSlice());
+                // scrollSeriesAction.setMinMaxValue(1, getTotalSlices(), getCurrentSlice());
                 renderSupp.setDirty(true);
 
-                String old = GraphicsModel.getRotationDesc(
-                        (Quat4d) evt.getOldValue());
-                String current = GraphicsModel.getRotationDesc(
-                        (Quat4d) evt.getNewValue());
-                
+                String old = GraphicsModel.getRotationDesc((Quat4d) evt.getOldValue());
+                String current = GraphicsModel.getRotationDesc((Quat4d) evt.getNewValue());
+
                 if (old != null && !old.equals(current)) {
                     handleGraphicsLayer(-1);
                 }
-            } else if (propertyName.startsWith("slice")
-                    && controlAxes != null
-                    && propertyName.endsWith(
-                    Integer.toString(controlAxes.getIndex(this)))) {
+            } else if (propertyName.startsWith("slice") && controlAxes != null
+                && propertyName.endsWith(Integer.toString(controlAxes.getIndex(this)))) {
 
                 renderSupp.setDirty(true);
                 int old = (Integer) evt.getOldValue();
                 handleGraphicsLayer(old);
 
-                scrollSeriesAction.setValueWithoutTriggerAction(getCurrentSlice());
+                // scrollSeriesAction.setValueWithoutTriggerAction(getCurrentSlice());
             }
-        } 
+        }
     }
-    
+
+    private void propertyChange(final SynchEvent synch) {
+        SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+        if (synchData != null && Mode.None.equals(synchData.getMode())) {
+            return;
+        }
+
+        for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
+            String command = entry.getKey();
+            final Object val = entry.getValue();
+            if (synchData != null && !synchData.isActionEnable(command)) {
+                continue;
+            }
+            if (command.equals(ActionW.SCROLL_SERIES.cmd())) {
+                setSlice((Integer) val);
+            } else if (command.equals(ActionW.WINDOW.cmd())) {
+                windowingWindow = (Integer) val;
+                repaint();
+            } else if (command.equals(ActionW.LEVEL.cmd())) {
+                windowingLevel = (Integer) val;
+                repaint();
+            } else if (command.equals(ActionW.PRESET.cmd())) {
+                if(val instanceof PresetWindowLevel){
+                    PresetWindowLevel preset = (PresetWindowLevel) val;
+                    windowingWindow = preset.getWindow().intValue();
+                    windowingLevel = preset.getLevel().intValue();
+                    // TODO preset.getLutShape()
+                    
+                    repaint();
+                }
+                setActionsInView(ActionW.PRESET.cmd(), val, false);
+            } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
+                // TODO lut shape
+            } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer) {
+                actionsInView.put(ActionW.ROTATION.cmd(), val);
+                setRotationOffset(Math.toRadians((Integer) val));
+                // (int) Math.round(Math.toDegrees(getRotationOffset()));
+                updateAffineTransform();
+                repaint();
+            } else if (command.equals(ActionW.RESET.cmd())) {
+                reset();
+            } else if (command.equals(ActionW.ZOOM.cmd())) {
+                double value = (Double) val;
+                // Special Cases: -200.0 => best fit, -100.0 => real world size
+                if (value != -200.0 && value != -100.0) {
+                    zoom(value);
+                } else {
+                    Object zoomType = actionsInView.get(ViewCanvas.zoomTypeCmd);
+                    actionsInView.put(ViewCanvas.zoomTypeCmd, value == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
+                    zoom(0.0);
+                    actionsInView.put(ViewCanvas.zoomTypeCmd, zoomType);
+                }
+            } else if (command.equals(ActionW.PAN.cmd())) {
+                Object point = entry.getValue();
+                // ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
+                // if (view != null) {
+                // if(!view.getSynchView().isActionEnable(ActionW.ROTATION)){
+                //
+                // }
+                // }
+                if (point instanceof PanPoint) {
+                    moveOrigin((PanPoint) entry.getValue());
+                }
+
+            } else if (command.equals(ActionW.FLIP.cmd())) {
+                actionsInView.put(ActionW.FLIP.cmd(), val);
+                flippedHorizontally = JMVUtils.getNULLtoFalse(val);
+                updateAffineTransform();
+                repaint();
+            } else if (command.equals(ActionW.LUT.cmd())) {
+                if (val instanceof ColorMask) {
+                    actionsInView.put(ActionW.LUT.cmd(), val);
+                    if (val == StaticHelpers.LUT_NONE) {
+                        colorMaskEnabled = false;
+                    } else {
+                        setColorMask((ColorMask) val);
+                    }
+                    repaint();
+                }
+            } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
+                boolean res = isContentPhotometricInterpretationInverse();
+                if (res) {
+                    inverse = !(Boolean) val;
+                } else {
+                    inverse = (Boolean) val;
+                }
+                actionsInView.put(ActionW.INVERT_LUT.cmd(), inverse);
+                repaint();
+            } else if (command.equals(ActionW.FILTER.cmd())) {
+                if (val instanceof StaticHelpers.TextureKernel) {
+                    actionsInView.put(ActionW.FILTER.cmd(), val);
+                    if (val == GUIManager.kernelList.get(0)) {
+                        getSeriesObject().getTextureData().destroyReplacementTexture();
+                    } else {
+                        getSeriesObject().getTextureData().destroyReplacementTexture();
+                        new CLConvolution(ViewTexture.this, ((StaticHelpers.TextureKernel) val).getPreset()).work();
+                    }
+                    repaint();
+                }
+            } else if (command.equals(ActionW.SPATIAL_UNIT.cmd())) {
+                actionsInView.put(command, val);
+
+                // TODO update only measure and limit when selected view share graphics
+                List<Graphic> list = this.getLayerModel().getAllGraphics();
+                for (Graphic graphic : list) {
+                    graphic.updateLabel(true, this);
+                }
+            } else if (command.equals(ActionWA.MIP_OPTION.cmd())) {
+                if (val instanceof TextureImageCanvas.MipOption) {
+                    actionsInView.put(ActionWA.MIP_OPTION.cmd(), val);
+                    mipOption = (TextureImageCanvas.MipOption) val;
+                    renderSupp.setDirty(true);
+                    graphsLayer.updateAllLabels(ViewTexture.this);
+                    repaint();
+                }
+            } else if (command.equals(ActionWA.MIP_DEPTH.cmd())) {
+                if (val instanceof Integer) {
+                    actionsInView.put(ActionWA.MIP_DEPTH.cmd(), val);
+                    mipDepth = (Integer) val / (double) getTotalSlices();
+                    renderSupp.setDirty(true);
+                    graphsLayer.updateAllLabels(ViewTexture.this);
+                    repaint();
+                }
+            } else if (command.equals(ActionWA.VOLUM_QUALITY.cmd())) {
+                setActionsInView(ActionWA.VOLUM_QUALITY.cmd(), val, false);
+            } else if (command.equals(ActionWA.VOLUM_CENTER_SLICING.cmd())) {
+                setActionsInView(ActionWA.VOLUM_CENTER_SLICING.cmd(), val, true);
+            } else if (command.equals(ActionWA.VOLUM_LIGHT.cmd())) {
+                setActionsInView(ActionWA.VOLUM_LIGHT.cmd(), val, true);
+            } else if (command.equals(ActionWA.SMOOTHING.cmd())) {
+                setActionsInView(ActionWA.SMOOTHING.cmd(), val, true);
+            }
+        }
+    }
+
     @Override
     public void setSlice(final int slice) {
         if (hasContent()) {
             int old = getCurrentSlice();
             super.setSlice(slice);
-            
+
             if (controlAxes == null) {
                 renderSupp.setDirty(true);
                 handleGraphicsLayer(old);
             }
         }
     }
-    
+
     /*******************************************
-     *      Action State Suport
+     * Action State Suport
      ********************************************/
-    
+
     protected void initActionWState() {
+        // set unit when texture load (middle image)
+        actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
+        actionsInView.put(zoomTypeCmd, ZoomType.BEST_FIT);
+        actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
+        actionsInView.put(ActionW.LENS.cmd(), false);
+        actionsInView.put(ActionW.DRAW.cmd(), true);
+        actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
+        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
+
+        actionsInView.put(ActionW.INVERT_LUT.cmd(), false);
+        actionsInView.put(ActionW.ROTATION.cmd(), 0);
+        actionsInView.put(ActionW.FLIP.cmd(), false);
         
-        initWindowLevelActions();
-        
+        actionsInView.put(ActionW.FILTER.cmd(), GUIManager.kernelList.get(0));
+        actionsInView.put(ActionW.LUT.cmd(), StaticHelpers.LUT_NONE);
+
+        interpolate = true;
+        cubeHelperScale = 0;
+
         actionsInView.put(ActionWA.VOLUM_RENDERING.cmd(), volumetricRendering);
         actionsInView.put(ActionWA.VOLUM_CENTER_SLICING.cmd(), volumetricCenterSlicing);
         actionsInView.put(ActionWA.VOLUM_DITHERING.cmd(), volumetricDithering);
-        actionsInView.put(ActionWA.VOLUM_LIGHT.cmd(), volumetricLighting);        
+        actionsInView.put(ActionWA.VOLUM_LIGHT.cmd(), volumetricLighting);
         actionsInView.put(ActionWA.VOLUM_QUALITY.cmd(), volumetricQuality);
-        
-        actionsInView.put(ActionWA.SMOOTHING.cmd(), new ActionDataModel(
-                ActionWA.SMOOTHING, null, true) {
-                    @Override
-                    public void setActionValue(Object value) {
-                        super.setActionValue(value);
-                        interpolate = (Boolean) value;
-                        
-                        EventPublisher.getInstance().publish(new PropertyChangeEvent(
-                                ViewTexture.this, EventPublisher.VIEWER_ACTION_CHANGED
-                                + ActionWA.SMOOTHING.cmd(), null, interpolate));
-                    }
-                });
-        
-        actionsInView.put(ActionW.FLIP.cmd(), new ActionDataModel(
-                ActionW.FLIP, null, false) {
-                    @Override
-                    public void setActionValue(Object value) {
-                        super.setActionValue(value);
-                        flippedHorizontally = (Boolean) value;
-                        updateAffineTransform();
-                        EventPublisher.getInstance().publish(new PropertyChangeEvent(
-                            ViewTexture.this, EventPublisher.VIEWER_ACTION_CHANGED
-                            + ActionW.FLIP.cmd(), null, flippedHorizontally));                
-                    }                    
-                });
-        
-        actionsInView.put(ActionW.CROSSHAIR.cmd(),
-                new ActionDataModel(ActionW.CROSSHAIR, null, null) {
-                    public boolean isEnabled() {
-                        return (controlAxes != null || controlAxesToWatch != null);
-                    }
-                });
-        
-        actionsInView.put(ActionW.SORTSTACK.cmd(), new ActionDataModel(
-                ActionW.SORTSTACK, SortSeriesStack.getValues(),
-                SortSeriesStack.slicePosition));
-        actionsInView.put(ActionW.INVERSESTACK.cmd(),
-                new ActionDataModel(ActionW.INVERSESTACK, null, false));
-        actionsInView.put(ActionW.ZOOM.cmd(), new ActionDataModel(
-                ActionW.ZOOM, null, -1) {
-            @Override
-            public Object getActionData() {
-                return zoomAction.getModel();
-            }
-            @Override
-            public void setActionValue(final Object value) {
-                if (value instanceof Double) {
-                    double zoomVal = (Double) value;
-                    if ((Double) value <= 0.0) {                        
-                        zoomVal = graphsLayer.getBestFitViewScale(
-                                new Dimension(getWidth(), getHeight()));
-                        setActionsInView(ActionWA.BEST_FIT.cmd(), true, false);
-                    } else {
-                        setActionsInView(ActionWA.BEST_FIT.cmd(), false, false);
-                    }
-                    setZoom(zoomVal, true);
-                    if (zoomVal != GridViewUI.sliderValueToViewScale(
-                            zoomAction.getValue()) && hasContent()) {
-                        zoomAction.setValueWithoutTriggerAction(
-                               GridViewUI.viewScaleToSliderValue(
-                                getActualDisplayZoom()));
-                    }
-                    updateAffineTransform();
-                    fixPosition();
-                }
-            }
-            @Override
-            public Object getActionValue() {  
-                if (hasContent()) {
-                    return getActualDisplayZoom();
-                }
-                return 1;
-            }
-        });
-        actionsInView.put(ActionWA.BEST_FIT.cmd(), true);
-        
-        actionsInView.put(ActionW.SCROLL_SERIES.cmd(), new ActionDataModel(
-                ActionW.SCROLL_SERIES, null, 1) {
-            @Override
-            public Object getActionValue() {
-                if (hasContent()) {
-                    return getCurrentSlice();
-                }
-                return null;
-            }
-            @Override
-            public Object getActionData() {
-                return scrollSeriesAction.getModel();
-            }
-        });
-        actionsInView.put(ActionW.ROTATION.cmd(), new ActionDataModel(
-                ActionW.ROTATION, rotationAction.getModel(), 0) {
-            @Override
-            public Object getActionValue() {
-                return (int) Math.round(
-                        Math.toDegrees(getRotationOffset()));
-            }
-            @Override
-            public Object getActionData() {
-                return rotationAction.getModel();
-            }
-            @Override
-            public void setActionValue(Object value) {
-                if (value instanceof Integer) {
-                    rotationAction.setValue((Integer) value);
-                }
-            }
-        });
-        actionsInView.put(ActionW.DRAW.cmd(), true);
-        
-        //MIP Actions:
-        final TextureImageCanvas.MipOption[] options = new TextureImageCanvas.MipOption[] {
-            TextureImageCanvas.MipOption.None, TextureImageCanvas.MipOption.Minimum,
-            TextureImageCanvas.MipOption.Average, TextureImageCanvas.MipOption.Maximum};
-        actionsInView.put(ActionWA.MIP_OPTION.cmd(),
-                new ActionDataModel(ActionWA.MIP_OPTION,
-                options, mipOption) {
-            @Override
-            public void setActionValue(Object value) {
-                if (value instanceof TextureImageCanvas.MipOption) {                    
-                    super.setActionValue(value);
-                    mipOption = (TextureImageCanvas.MipOption) value;
-                    renderSupp.setDirty(true);
-                    graphsLayer.updateAllLabels(ViewTexture.this);
-                    repaint();
-                    
-                    EventPublisher.getInstance().publish(
-                        new PropertyChangeEvent(ViewTexture.this, 
-                        EventPublisher.VIEWER_ACTION_CHANGED 
-                        + ActionWA.MIP_OPTION.cmd(), null, mipOption));
-                }
-            }
-        });
-        actionsInView.put(ActionWA.MIP_DEPTH.cmd(),
-                new ActionDataModel(ActionWA.MIP_DEPTH, null, mipDepth) {
-            @Override
-            public void setActionValue(Object value) {
-                if (value instanceof Double) {
-                    super.setActionValue(value);
-                    mipDepth = (Double) value; 
-                    renderSupp.setDirty(true);
-                    graphsLayer.updateAllLabels(ViewTexture.this);
-                    repaint();
-                 }
-            }
-            @Override
-            public Object getActionData() {
-                if (hasContent()) {
-                    return getTotalSlices();
-                }
-                return 1;
-            }
-        });
-        actionsInView.put(ActionWA.LOCATION.cmd(), new ActionDataModel(
-                ActionWA.LOCATION, null, null) {
-            @Override
-            public Object getActionValue() {
-                if (hasContent() && isShowingAcquisitionAxis()) {
-                    int currentSlice = getCurrentSlice();
-                    double[] val = (double[]) getSeriesObject().getTagValue(
-                            TagW.SlicePosition, currentSlice - 1);
-                    if (val != null) {
-                        return (val[0] + val[1] + val[2]);
-                    }
-                }
-                return null;
-            }
-            @Override
-            public void setActionValue(Object value) {                   
-                if (value instanceof Double && hasContent()
-                        && isShowingAcquisitionAxis()) {
-                    
-                    int index = getSeriesObject().getNearestSliceIndex(
-                            (Double) value);
-                    if (index >= 0) {
-                        //Texture is 0 to N-1; action is 1 to N
-                        scrollSeriesAction.setValue(index + 1);
-                    }
-                }
-            }    
-        });
-        
+
+        actionsInView.put(ActionWA.MIP_OPTION.cmd(), TextureImageCanvas.MipOption.None);
+        actionsInView.put(ActionWA.MIP_DEPTH.cmd(), 5);
+
+        actionsInView.put(ActionWA.SMOOTHING.cmd(), true);
+
+        // actionsInView.put(ActionW.CROSSHAIR.cmd(), new ActionDataModel(ActionW.CROSSHAIR, null, null) {
+        // public boolean isEnabled() {
+        // return (controlAxes != null || controlAxesToWatch != null);
+        // }
+        // });
+
+        // FIXME what about this code
+        // actionsInView.put(ActionWA.LOCATION.cmd(), new ActionDataModel(ActionWA.LOCATION, null, null) {
+        // @Override
+        // public Object getActionValue() {
+        // if (hasContent() && isShowingAcquisitionAxis()) {
+        // int currentSlice = getCurrentSlice();
+        // double[] val = (double[]) getSeriesObject().getTagValue(TagW.SlicePosition, currentSlice - 1);
+        // if (val != null) {
+        // return (val[0] + val[1] + val[2]);
+        // }
+        // }
+        // return null;
+        // }
+        //
+        // @Override
+        // public void setActionValue(Object value) {
+        // if (value instanceof Double && hasContent() && isShowingAcquisitionAxis()) {
+        //
+        // int index = getSeriesObject().getNearestSliceIndex((Double) value);
+        // if (index >= 0) {
+        // // Texture is 0 to N-1; action is 1 to N
+        // // scrollSeriesAction.setValue(index + 1);
+        // }
+        // }
+        // }
+        // });
     }
-    
+
     @Override
     public Object getActionValue(String action) {
         if (action == null) {
             return null;
         }
-        Object get = actionsInView.get(action);
-        if (get instanceof ActionDataModel) {
-            return ((ActionDataModel) get).getActionValue();
-        }
-        return get;
+        return actionsInView.get(action);
     }
-        
+
     /**
      * Set an Action in this view.
      * 
-     * If repaint is true, it also calls "repaint()". This call gets the same
-     * result as a call to "display()".
+     * If repaint is true, it also calls "repaint()". This call gets the same result as a call to "display()".
      * 
-     * @param action Action name.
-     * @param value Action value.
-     * @param repaint True if view is to be repainted.
+     * @param action
+     *            Action name.
+     * @param value
+     *            Action value.
+     * @param repaint
+     *            True if view is to be repainted.
      */
-    public void setActionsInView(final String action, final Object value,
-            final boolean repaint) {
+    @Override
+    public void setActionsInView(final String action, final Object value, final boolean repaint) {
 
-        Object get = actionsInView.get(action);
-        if (get instanceof ActionDataModel) {
-            ((ActionDataModel) get).setActionValue(value);
-        } else {
-            actionsInView.put(action, value);
+        actionsInView.put(action, value);
 
-            if (ActionWA.VOLUM_QUALITY.cmd().equals(action)) {
-                volumetricQuality = (Integer) value;
-            } else if (ActionWA.VOLUM_CENTER_SLICING.cmd().equals(action)) {
-                volumetricCenterSlicing = (Boolean) value;
-            } else if (ActionWA.VOLUM_RENDERING.cmd().equals(action)) {
-                volumetricRendering = (Boolean) value;
-            } else if (ActionWA.VOLUM_DITHERING.cmd().equals(action)) {
-                volumetricDithering = (Boolean) value;
-            } else if (ActionWA.VOLUM_LIGHT.cmd().equals(action)) {
-                volumetricLighting = (Boolean) value;
-            } else if (ActionWA.SMOOTHING.cmd().equals(action)) {
-                interpolate = (Boolean) value;
-            }
+        if (ActionWA.VOLUM_QUALITY.cmd().equals(action)) {
+            volumetricQuality = (Integer) value;
+        } else if (ActionWA.VOLUM_CENTER_SLICING.cmd().equals(action)) {
+            volumetricCenterSlicing = (Boolean) value;
+        } else if (ActionWA.VOLUM_RENDERING.cmd().equals(action)) {
+            volumetricRendering = (Boolean) value;
+        } else if (ActionWA.VOLUM_DITHERING.cmd().equals(action)) {
+            volumetricDithering = (Boolean) value;
+        } else if (ActionWA.VOLUM_LIGHT.cmd().equals(action)) {
+            volumetricLighting = (Boolean) value;
+        } else if (ActionWA.SMOOTHING.cmd().equals(action)) {
+            interpolate = (Boolean) value;
         }
 
         if (repaint) {
@@ -722,65 +657,56 @@ public class ViewTexture extends TextureImageCanvas
         }
 
     }
-    
+
     private void updateAffineTransform() {
-        Boolean flip = (Boolean) getActionValue(ActionW.FLIP.cmd());  
+        Boolean flip = (Boolean) getActionValue(ActionW.FLIP.cmd());
         Integer rotationAngle = (Integer) getActionValue(ActionW.ROTATION.cmd());
         graphsLayer.updateAffineTransform(rotationAngle, flip);
-        
+
         renderSupp.setDirty(true);
     }
 
     @Override
     public Font getLayerFont() {
-        int fontSize = (int) Math.ceil(10 / ((this.getGraphics().getFontMetrics(
-                FontTools.getFont12()).stringWidth("0123456789") * 7.0)
-                / getWidth()));
+        int fontSize =
+            (int) Math
+                .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) / getWidth()));
         fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
         return new Font("SansSerif", 0, fontSize);
     }
-    
+
     /**
-     * Converts a position on texture`s coordinates system (0 to 1) to
-     * image`s coordinates system.
-     * X e Y: 0 to n-1; (number of pixels)
-     * Z: 1 to n. (n = number of slices)
+     * Converts a position on texture`s coordinates system (0 to 1) to image`s coordinates system. X e Y: 0 to n-1;
+     * (number of pixels) Z: 1 to n. (n = number of slices)
      * 
-     * @param coordinatesTexture position on texture`s coord. system.
-     * @param imageSize Size or images and stack.
+     * @param coordinatesTexture
+     *            position on texture`s coord. system.
+     * @param imageSize
+     *            Size or images and stack.
      * @return Position on image`s coordinates System.
      */
-    public Point3d getImageCoordinatesFromMouse(
-            final Vector3d coordinatesTexture, final Vector3d imageSize) {
-        Point3d p3 = new Point3d(
-                (Math.round(coordinatesTexture.x * imageSize.x)),
-                (Math.round(coordinatesTexture.y * imageSize.y)),
-                (Math.round((coordinatesTexture.z * imageSize.z) + 1)));
+    public Point3d getImageCoordinatesFromMouse(final Vector3d coordinatesTexture, final Vector3d imageSize) {
+        Point3d p3 =
+            new Point3d((Math.round(coordinatesTexture.x * imageSize.x)), (Math.round(coordinatesTexture.y
+                * imageSize.y)), (Math.round((coordinatesTexture.z * imageSize.z) + 1)));
         return p3;
     }
-    
-    @Override
+
     public void setSeries(TextureDicomSeries series) {
         if (hasContent()) {
             handleGraphicsLayer(getCurrentSlice());
-            
-            //Finds out if texture is present in other view. If not,
-            //must interrupt factory.
-            if (!getSeriesObject().equals(series)
-                    && !getSeriesObject().isFactoryDone()) { 
+
+            // Finds out if texture is present in other view. If not,
+            // must interrupt factory.
+            if (!getSeriesObject().equals(series) && !getSeriesObject().isFactoryDone()) {
                 boolean open = false;
                 synchronized (UIManager.VIEWER_PLUGINS) {
                     List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
                     pluginList: for (final ViewerPlugin plugin : plugins) {
-                        if (plugin instanceof AbstractViewsContainer) {
-                            List<GridElement> views =
-                                    ((AbstractViewsContainer) plugin)
-                                    .getViewsGrid().getViews();
-                            for (GridElement gridElement : views) {
-                                if (gridElement.getComponent() instanceof ViewTexture
-                                        && !gridElement.getComponent().equals(this)
-                                        && getSeriesObject().equals(
-                                        ((ViewTexture) gridElement.getComponent()).getSeriesObject())) {
+                        if (plugin instanceof View3DContainer) {
+                            for (ViewCanvas<DicomImageElement> view : ((View3DContainer) plugin).getImagePanels()) {
+                                if (view instanceof ViewTexture && !view.equals(this)
+                                    && getSeriesObject().equals(((ViewTexture) view).getSeriesObject())) {
                                     open = true;
                                     break pluginList;
                                 }
@@ -793,180 +719,232 @@ public class ViewTexture extends TextureImageCanvas
                 }
             }
         }
-        
+
         setImageSeries(series);
         if (series != null) {
-            final Rectangle modelArea = new Rectangle(0, 0,
-                    series.getSliceWidth(), series.getSliceHeight());
+            final Rectangle modelArea = new Rectangle(0, 0, series.getSliceWidth(), series.getSliceHeight());
             Rectangle2D area = graphsLayer.getViewModel().getModelArea();
             if (!modelArea.equals(area)) {
-                ((DefaultViewModel) graphsLayer.getViewModel())
-                        .adjustMinViewScaleFromImage(
-                        modelArea.width, modelArea.height);
+                ((DefaultViewModel) graphsLayer.getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
+                    modelArea.height);
                 graphsLayer.getViewModel().setModelArea(modelArea);
-            }            
-            
-            //internal defaults 
+            }
+
+            // internal defaults
             setSlice(0);
-            scrollSeriesAction.setMinMaxValueWithoutTriggerAction(
-                    1, getTotalSlices(), getCurrentSlice());
-            updateWindowLevelActions(series);
-            
+
+            // FIXME does not have unit at this stage
+            // actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), getPixelSpacingUnit());
+
             series.getSeries().setOpen(true);
         }
     }
-        
-    private void refreshTexture() {
+
+    void refreshTexture() {
         MediaSeries series = getSeries();
         if (series != null && getSeriesObject() != null) {
             TextureDicomSeries seriesObject = getSeriesObject();
             try {
-                TextureDicomSeries texture = new ImageSeriesFactory().createImageSeries(
-                series, seriesObject.getSeriesComparator(), true);
-                
+                TextureDicomSeries texture =
+                    new ImageSeriesFactory().createImageSeries(series, seriesObject.getSeriesComparator(), true);
+
                 setSeries(texture);
-                
+
                 seriesObject.dispose();
                 seriesObject.discardTexture();
             } catch (Exception ex) {
-                LOGGER.info(
-                        "Failed creating texture: " + ex.getMessage());
+                LOGGER.info("Failed creating texture: " + ex.getMessage());
                 ex.printStackTrace();
             }
         }
     }
 
-    @Override
     public boolean hasContent() {
         return (getParentImageSeries() != null);
     }
-    
-    @Override
+
     public boolean isContentReadable() {
         return hasContent();
     }
 
     @Override
     public void disposeView() {
+        disableMouseAndKeyListener();
+        removeFocusListener(this);
+        ToolTipManager.sharedInstance().unregisterComponent(this);
+
+        MediaSeries series = getSeries();
+        if (series != null) {
+            closingSeries(series);
+            series = null;
+        }
         graphsLayer.dispose();
         super.dispose();
     }
 
-    public void applyProfile(String profile, ControlAxes controlAxes) {
-        
-        //Clan ControlAxes listener
+    protected void closingSeries(MediaSeries mediaSeries) {
+        if (mediaSeries == null) {
+            return;
+        }
+        boolean open = false;
+        synchronized (UIManager.VIEWER_PLUGINS) {
+            List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
+            pluginList: for (final ViewerPlugin<?> plugin : plugins) {
+                List<? extends MediaSeries<?>> openSeries = plugin.getOpenSeries();
+                if (openSeries != null) {
+                    for (MediaSeries<?> s : openSeries) {
+                        if (mediaSeries == s) {
+                            // The sequence is still open in another view or plugin
+                            open = true;
+                            break pluginList;
+                        }
+                    }
+                }
+            }
+        }
+        mediaSeries.setOpen(open);
+        // TODO setSelected and setFocused must be global to all view as open
+        mediaSeries.setSelected(false, null);
+        mediaSeries.setFocused(false);
+    }
+
+    public void applyProfile(ViewType viewType2, ControlAxes controlAxes) {
+
+        // Clan ControlAxes listener
         if (this.controlAxes != null) {
             this.controlAxes.removePropertyChangeListener(this);
         }
-        
-        if (profile != null && profile.startsWith("MPR")
-                && controlAxes != null) {
-            
-            setActionsInView(ActionWA.SMOOTHING.cmd(), true, false);            
-            if (profile.endsWith("AXIAL")) {
+
+        if (viewType2 != null && controlAxes != null) {
+
+            setActionsInView(ActionWA.SMOOTHING.cmd(), true, false);
+            if (ViewType.AXIAL.equals(viewType2)) {
                 controlAxes.setControlledCanvas(0, this);
                 controlAxes.addPropertyChangeListener(this);
-            } else if (profile.endsWith("CORONAL")) {
+            } else if (ViewType.CORONAL.equals(viewType2)) {
                 fixedAxis = TextureImageCanvas.FixedAxis.HorizontalAxis;
                 controlAxes.setControlledCanvas(1, this);
                 controlAxes.addPropertyChangeListener(this);
-            } else if (profile.endsWith("SAGITTAL")) {
+            } else if (ViewType.SAGITTAL.equals(viewType2)) {
                 fixedAxis = TextureImageCanvas.FixedAxis.VerticalAxis;
                 controlAxes.setControlledCanvas(2, this);
-                //Works for the axial case!
+                // Works for the axial case!
                 setRotationOffset(-Math.PI / 2.0);
                 controlAxes.addPropertyChangeListener(this);
-            } else if (profile.endsWith("3D")) {
+            } else if (ViewType.VOLUME3D.equals(viewType2)) {
                 controlAxes.addWatchingCanvas(this);
                 setActionsInView(ActionWA.VOLUM_RENDERING.cmd(), true, false);
                 setActionsInView(ActionWA.VOLUM_CENTER_SLICING.cmd(), false, false);
                 setActionsInView(ActionWA.VOLUM_DITHERING.cmd(), true, false);
                 setActionsInView(ActionWA.VOLUM_LIGHT.cmd(), true, false);
                 setActionsInView(ActionWA.VOLUM_QUALITY.cmd(), 300, false);
-                
-                setActionsInView(ActionW.LUT.cmd(),
-                        StaticHelpers.LUT_VOLUMETRIC, false);
+
+                setActionsInView(ActionW.LUT.cmd(), StaticHelpers.LUT_VOLUMETRIC, false);
             }
-            
-            scrollSeriesAction.setMinMaxValueWithoutTriggerAction(
-                    1, getTotalSlices(), getCurrentSlice());           
-            repaint();
         } else {
-            //Clear profile (may be reusing a view)
+            // Clear profile (may be reusing a view)
             fixedAxis = TextureImageCanvas.FixedAxis.AcquisitionAxis;
             this.controlAxes = null;
             setRotationOffset(0);
             controlAxesToWatch = null;
             setActionsInView(ActionWA.VOLUM_RENDERING.cmd(), false, false);
-            
-            if (getParentImageSeries() != null) {
-                scrollSeriesAction.setMinMaxValueWithoutTriggerAction(
-                        1, getTotalSlices(), getCurrentSlice());  
-            }
-            repaint();
         }
+
+        repaint();
     }
 
     @Override
     public MediaSeries getSeries() {
-        ImageSeries pis= getParentImageSeries();
+        ImageSeries pis = getParentImageSeries();
         if (pis instanceof TextureDicomSeries) {
             return ((TextureDicomSeries) pis).getSeries();
         }
         return null;
     }
 
-    @Override
     public double[] getImagePatientOrientation() {
         if (getParentImageSeries() != null) {
             if (controlAxesToWatch != null) {
                 Matrix3d mo = controlAxesToWatch.getOrientationForCanvas(this);
-                //System.out.println(" mo: " + mo);
+                // System.out.println(" mo: " + mo);
                 if (mo != null) {
-                    return new double[]{
-                                mo.m00, mo.m10, mo.m20, mo.m01, mo.m11, mo.m21};
+                    return new double[] { mo.m00, mo.m10, mo.m20, mo.m01, mo.m11, mo.m21 };
                 }
             }
             if (controlAxes == null) {
-                //TODO what if they have diferent orientations?
-                return ((TextureDicomSeries) getParentImageSeries())
-                        .getOriginalSeriesOrientationPatient();
+                // TODO what if they have diferent orientations?
+                return ((TextureDicomSeries) getParentImageSeries()).getOriginalSeriesOrientationPatient();
             } else {
                 Matrix3d mo = controlAxes.getOrientationForCanvas(this);
                 if (mo != null) {
-                    return new double[]{
-                                mo.m00, mo.m10, mo.m20, mo.m01, mo.m11, mo.m21};
+                    return new double[] { mo.m00, mo.m10, mo.m20, mo.m01, mo.m11, mo.m21 };
                 }
             }
         }
         return null;
     }
-    
-    @Override
+
     public String[] getOrientationStrings() {
         double[] ipo = getImagePatientOrientation();
         if (ipo != null && ipo.length >= 6) {
             double rotation = 0;
             Boolean flip = false;
-            //Need to correct for rotation if does not came from controlAxes.
-            if (!isActionEnabled(ActionW.CROSSHAIR.cmd())) {
+            // Need to correct for rotation if does not came from controlAxes.
+            if (!crosshairAction.isActionEnabled()) {
                 Object actionValue = getActionValue(ActionW.ROTATION.cmd());
                 if (actionValue instanceof Integer) {
                     rotation = (Integer) actionValue;
                 }
             }
-            
+
             Object flipValue = getActionValue(ActionW.FLIP.cmd());
             if (flipValue instanceof Boolean) {
                 flip = (Boolean) flipValue;
             }
-            return DisplayUtils.getOrientationFromImgOrPat(
-                    ipo, (int) rotation, flip);
+            return DisplayUtils.getOrientationFromImgOrPat(ipo, (int) rotation, flip);
         }
         return null;
     }
-    
-    public void resetAction(String cmd) {    
+
+    public void resetAction(String cmd) {
+        // Pan
+        if (cmd == null || ActionW.PAN.cmd().equals(cmd)) {
+            resetPan();
+        }
+        // Win/Level and Preset
+        if (cmd == null || ActionW.WINLEVEL.cmd().equals(cmd) || ActionW.PRESET.cmd().equals(cmd)) {
+            // Object actionData = getActionData(ActionW.PRESET.cmd());
+            // if (actionData instanceof List) {
+            // Object get = ((List) actionData).get(0);
+            // setActionsInView(ActionW.PRESET.cmd(), get);
+            // }
+        }
+        // LUT
+        if (cmd == null || ActionW.LUT.cmd().equals(cmd)) {
+            setActionsInView(ActionW.LUT.cmd(), GUIManager.colorMaskList.get(0));
+        }
+        // Filter
+        if (cmd == null || ActionW.FILTER.cmd().equals(cmd)) {
+            setActionsInView(ActionW.FILTER.cmd(), GUIManager.kernelList.get(0));
+        }
+        // InverseLUT
+        if (cmd == null || ActionW.INVERT_LUT.cmd().equals(cmd)) {
+            setActionsInView(ActionW.INVERT_LUT.cmd(), false);
+        }
+        if (cmd == null || ActionW.ZOOM.cmd().equals(cmd)) {
+            setActionsInView(ActionW.ZOOM.cmd(), -100.0D);
+            resetZoom();
+        }
+        // Smoothing
+        if (cmd == null || ActionWA.SMOOTHING.cmd().equals(cmd)) {
+            setActionsInView(ActionWA.SMOOTHING.cmd(), true);
+        }
+        if (cmd == null || ActionW.ROTATION.cmd().equals(cmd)) {
+            setActionsInView(ActionW.ROTATION.cmd(), 0);
+        }
+        if (cmd == null || ActionW.FLIP.cmd().equals(cmd)) {
+            setActionsInView(cmd, false);
+        }
 
         // Mip Option
         if (cmd == null || ActionWA.MIP_OPTION.cmd().equals(cmd)) {
@@ -974,31 +952,21 @@ public class ViewTexture extends TextureImageCanvas
         }
         // Mip Depth
         if (cmd == null || ActionWA.MIP_DEPTH.cmd().equals(cmd)) {
-            setActionsInView(ActionWA.MIP_DEPTH.cmd(), 0.3, true);            
-            Object data = getActionData(ActionWA.MIP_DEPTH.cmd());
-                    
-            if (data instanceof Integer) {                
-                Object[] values = {data, mipDepth};
-                EventPublisher.getInstance().publish(
-                    new PropertyChangeEvent(ViewTexture.this, 
-                    EventPublisher.VIEWER_ACTION_CHANGED 
-                    + ActionWA.MIP_DEPTH.cmd(), null, values));
-            }
+            setActionsInView(ActionWA.MIP_DEPTH.cmd(), 5, true);
         }
 
         // ControlAxes
-        if ((cmd == null || "resetToAquisition".equals(cmd))
-                && controlAxes != null) {
+        if ((cmd == null || "resetToAquisition".equals(cmd)) && controlAxes != null) {
             controlAxes.reset();
-            //must repaint all views
+            // must repaint all views
             getParent().repaint();
         }
-        
+
         if ("resetToAxial".equals(cmd) && controlAxes != null) {
             controlAxes.resetWithOrientation();
-            //must repaint all views
+            // must repaint all views
             getParent().repaint();
-            
+
             TextureImageCanvas[] canvases = controlAxes.getCanvases();
             for (TextureImageCanvas canv : canvases) {
                 if (canv instanceof ViewTexture) {
@@ -1008,63 +976,15 @@ public class ViewTexture extends TextureImageCanvas
         }
     }
 
-    @Override
-    public Object getActionData(String command) {
-        Object get = actionsInView.get(command);
-        if (get instanceof ActionDataModel) {
-            return ((ActionDataModel) get).getActionData();
-        }
-        return null;
-    }
-
-    @Override
-    public boolean isActionEnabled(String command) {
-        if (ActionW.CROSSHAIR.cmd().equals(command)) {
-            return controlAxes != null;
-        }
-        Object get = actionsInView.get(command);
-        if (get instanceof ActionDataModel) {
-            return ((ActionDataModel) get).isActionEnabled();
-        } 
-        return false;
-    }
-
-
     private boolean isContentPhotometricInterpretationInverse() {
         TextureDicomSeries seriesObject = getSeriesObject();
         if (seriesObject != null) {
-            //Dont know any serie with mixed results here, so keep simple.
+            // Dont know any serie with mixed results here, so keep simple.
             return seriesObject.isPhotometricInterpretationInverse(0);
         }
         return false;
     }
 
-    private void updateWindowLevelActions(TextureDicomSeries series) {
-        updateWindowLevelLimits(series);
-        
-        //Presets:
-        Object get = actionsInView.get(ActionW.PRESET.cmd());
-        if (get instanceof ActionDataModel) {
-            ActionDataModel model = (ActionDataModel) get;
-            if (model.getActionData() instanceof List) {
-                model.setActionValue(((List) model.getActionData()).get(0));
-            }
-            EventPublisher.getInstance().publish(new PropertyChangeEvent(
-                    this, EventPublisher.VIEWER_ACTION_CHANGED
-                    + ActionW.PRESET.cmd(), null,
-                    model.getActionData()));
-            
-        }
-    }
-    
-    private void updateWindowLevelLimits(TextureDicomSeries series) {
-        int fullDynamicWidth = series.windowingMaxInValue
-                    - series.windowingMinInValue;
-        windowAction.setMinMax(1, fullDynamicWidth);
-        levelAction.setMinMax(series.windowingMinInValue,
-                series.windowingMaxInValue);
-    }
-    
     public boolean isShowingAcquisitionAxis() {
         double proximity = getProximityToOriginalAxis();
         if (TextureImageCanvas.FixedAxis.AcquisitionAxis.equals(fixedAxis)) {
@@ -1072,7 +992,7 @@ public class ViewTexture extends TextureImageCanvas
                 return false;
             }
         } else if (TextureImageCanvas.FixedAxis.VerticalAxis.equals(fixedAxis)
-                || TextureImageCanvas.FixedAxis.HorizontalAxis.equals(fixedAxis)) {
+            || TextureImageCanvas.FixedAxis.HorizontalAxis.equals(fixedAxis)) {
             if (Math.abs(proximity) > WARNING_TOLERANCE) {
                 return false;
             }
@@ -1081,197 +1001,150 @@ public class ViewTexture extends TextureImageCanvas
     }
 
     /**
-     * Content pixel size.
-     * Will return 0 if its unknown ot not trustable.
+     * Content pixel size. Will return 0 if its unknown ot not trustable.
+     * 
      * @return Content's pixel size.
      */
     public double getShowingPixelSize() {
-        //Se tem o pixelSpacing é consistente na textura
+        // Se tem o pixelSpacing é consistente na textura
         double acqSpacing = 0;
         if (getParentImageSeries() instanceof TextureDicomSeries) {
             TextureDicomSeries ser = (TextureDicomSeries) getParentImageSeries();
             double[] aps = ser.getAcquisitionPixelSpacing();
             Vector3d dimMultiplier = ser.getDimensionMultiplier();
 
-            if (aps != null && aps.length == 2 && aps[0] == aps[1]
-                    && dimMultiplier.x == dimMultiplier.y) {
+            if (aps != null && aps.length == 2 && aps[0] == aps[1] && dimMultiplier.x == dimMultiplier.y) {
                 acqSpacing = aps[0];// dimMultiplier.x;
-                
-                //Acquisition plane?
+
+                // Acquisition plane?
                 if (isShowingAcquisitionAxis() || ser.isSliceSpacingRegular()) {
                     return acqSpacing;
                 }
             }
 
-            if (aps == null &&  (isShowingAcquisitionAxis() || ser.isSliceSpacingRegular())) {
-                return 1;
+            if (aps == null && (isShowingAcquisitionAxis() || ser.isSliceSpacingRegular())) {
+                return 1.0;
             }
         }
         return 0;
     }
 
-
     @Override
-    public Component getComponent() {
+    public JComponent getJComponent() {
         return this;
     }
 
-    public MouseActionAdapter getMouseAdapter(String action) {
-        if (action.equals(ActionW.CROSSHAIR.cmd())) {
-            return crosshairAction;
-        } else if (action.equals(ActionW.WINDOW.cmd())) {
-            return windowAction;
-        } else if (action.equals(ActionW.LEVEL.cmd())) {
-            return levelAction;
-        } else if (action.equals(ActionW.WINLEVEL.cmd())) {
-            return levelAction;
-        } else if (action.equals(ActionW.ZOOM.cmd())) {
-            return zoomAction;
-        } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
-            return scrollSeriesAction;
-        } else if (action.equals(ActionW.ROTATION.cmd())) {
-            return rotationAction;
-        } else if (action.equals(ActionW.MEASURE.cmd())
-                && controlAxesToWatch == null) {
-            return measureAdapter;
+    protected MouseActionAdapter getAction(ActionW action) {
+        ActionState a = eventManager.getAction(action);
+        if (a instanceof MouseActionAdapter) {
+            return (MouseActionAdapter) a;
         }
         return null;
     }
 
-    @Override
+    public MouseActionAdapter getMouseAdapter(String action) {
+        if (action.equals(ActionW.MEASURE.cmd())) {
+            return graphicMouseHandler;
+        } else if (action.equals(ActionW.PAN.cmd())) {
+            return getAction(ActionW.PAN);
+        } else if (action.equals(ActionW.CONTEXTMENU.cmd())) {
+            return contextMenuHandler;
+        } else if (action.equals(ActionW.WINDOW.cmd())) {
+            return getAction(ActionW.WINDOW);
+        } else if (action.equals(ActionW.LEVEL.cmd())) {
+            return getAction(ActionW.LEVEL);
+        } else if (action.equals(ActionW.WINLEVEL.cmd())) {
+            return getAction(ActionW.LEVEL);
+        } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
+            return getAction(ActionW.SCROLL_SERIES);
+        } else if (action.equals(ActionW.ZOOM.cmd())) {
+            return getAction(ActionW.ZOOM);
+        } else if (action.equals(ActionW.CROSSHAIR.cmd())) {
+            // return getAction(ActionW.CROSSHAIR);
+            return crosshairAction;
+        } else if (action.equals(ActionW.ROTATION.cmd())) {
+            return getAction(ActionW.ROTATION);
+        }
+
+        return null;
+    }
+
     public TextureDicomSeries getSeriesObject() {
         return (TextureDicomSeries) getParentImageSeries();
     }
 
-    private void initWindowLevelActions() {
-        actionsInView.put(ActionW.PRESET.cmd(), new ActionDataModel(
-            ActionW.PRESET, null, null) {
-                @Override
-                public Object getActionData() {
-                    if (getParentImageSeries() instanceof TextureDicomSeries) {
-                        return ((TextureDicomSeries) getParentImageSeries())
-                                .getPresetList(true, false);
-                    }
-                    return null;
-                }
-                @Override
-                public void setActionValue(Object value) {
-                    Object oldVal = getActionValue();
-                    if (value instanceof PresetWindowLevel) {
-                        PresetWindowLevel preset = (PresetWindowLevel) value;
-                        windowAction.setValue(preset.getWindow().intValue());
-                        levelAction.setValue(preset.getLevel().intValue());
-                        repaint();
-                    }
-                    super.setActionValue(value);
-                    
-                    if (oldVal != value) {
-                        EventPublisher.getInstance().publish(
-                                new PropertyChangeEvent(ViewTexture.this,
-                                EventPublisher.VIEWER_ACTION_CHANGED
-                                + ActionW.PRESET.cmd(), oldVal, value));
-                    }
-                }
-            });
+    // private void initWindowLevelActions() {
+    // actionsInView.put(ActionW.PRESET.cmd(), new ActionDataModel(ActionW.PRESET, null, null) {
+    // @Override
+    // public Object getActionData() {
+    // if (getParentImageSeries() instanceof TextureDicomSeries) {
+    // return ((TextureDicomSeries) getParentImageSeries()).getPresetList(true, false);
+    // }
+    // return null;
+    // }
+    //
+    // @Override
+    // public void setActionValue(Object value) {
+    // Object oldVal = getActionValue();
+    // if (value instanceof PresetWindowLevel) {
+    // PresetWindowLevel preset = (PresetWindowLevel) value;
+    // windowAction.setValue(preset.getWindow().intValue());
+    // levelAction.setValue(preset.getLevel().intValue());
+    // repaint();
+    // }
+    // super.setActionValue(value);
+    //
+    // if (oldVal != value) {
+    // EventPublisher.getInstance().publish(
+    // new PropertyChangeEvent(ViewTexture.this, EventPublisher.VIEWER_ACTION_CHANGED
+    // + ActionW.PRESET.cmd(), oldVal, value));
+    // }
+    // }
+    // });
+    //
+    // actionsInView.put(ActionW.WINDOW.cmd(), new ActionDataModel(ActionW.WINDOW, null, null) {
+    // @Override
+    // public Object getActionData() {
+    // return windowAction.getModel();
+    // }
+    //
+    // @Override
+    // public Object getActionValue() {
+    // return (float) windowAction.getValue();
+    // }
+    //
+    // @Override
+    // public void setActionValue(Object value) {
+    // if (value instanceof Integer) {
+    // windowAction.setValue((Integer) value);
+    // } else if (value instanceof Float) {
+    // windowAction.setValue(Math.round((Float) value));
+    // }
+    // }
+    // });
+    // actionsInView.put(ActionW.LEVEL.cmd(), new ActionDataModel(ActionW.LEVEL, null, null) {
+    // @Override
+    // public Object getActionData() {
+    // return levelAction.getModel();
+    // }
+    //
+    // @Override
+    // public Object getActionValue() {
+    // return (float) levelAction.getValue();
+    // }
+    //
+    // @Override
+    // public void setActionValue(Object value) {
+    // if (value instanceof Integer) {
+    // levelAction.setValue((Integer) value);
+    // } else if (value instanceof Float) {
+    // levelAction.setValue(Math.round((Float) value));
+    // }
+    // }
+    // });
+    //
+    // }
 
-        actionsInView.put(ActionW.WINDOW.cmd(), new ActionDataModel(
-            ActionW.WINDOW, null, null) {
-                @Override
-                public Object getActionData() {
-                    return windowAction.getModel();
-                }
-                @Override
-                public Object getActionValue() {
-                    return (float) windowAction.getValue();
-                }
-                @Override
-                public void setActionValue(Object value) {
-                    if (value instanceof Integer) {                        
-                        windowAction.setValue((Integer) value);
-                    } else if (value instanceof Float) {
-                        windowAction.setValue((Integer) Math.round((Float) value));
-                    }
-                }
-            });
-        actionsInView.put(ActionW.LEVEL.cmd(), new ActionDataModel(
-            ActionW.LEVEL, null, null) {
-                @Override
-                public Object getActionData() {
-                    return levelAction.getModel();
-                }
-                @Override
-                public Object getActionValue() {
-                    return (float) levelAction.getValue();
-                }
-                @Override
-                public void setActionValue(Object value) {
-                    if (value instanceof Integer) {                        
-                        levelAction.setValue((Integer) value);        
-                    } else if (value instanceof Float) {
-                        levelAction.setValue((Integer) Math.round((Float) value));
-                    }
-                }
-            });
-        actionsInView.put(ActionW.INVERT_LUT.cmd(),
-                new ActionDataModel(ActionW.INVERT_LUT, null, false) {
-            public void setActionValue(Object value) {
-                super.setActionValue(value);
-                boolean res = isContentPhotometricInterpretationInverse();
-                if (res) {
-                    inverse = !(Boolean) value;
-                } else {
-                    inverse = (Boolean) value;
-                }
-                //publish
-                EventPublisher.getInstance().publish(
-                    new PropertyChangeEvent(ViewTexture.this,
-                    EventPublisher.VIEWER_ACTION_CHANGED
-                    + ActionW.INVERT_LUT.cmd(), null, (Boolean) value));
-            }
-        });
-        actionsInView.put(ActionW.LUT.cmd(), new ActionDataModel(ActionW.LUT,
-                getColorMaskList(), StaticHelpers.LUT_NONE) {
-        @Override
-        public void setActionValue(Object value) {
-            super.setActionValue(value);
-            if (value instanceof ColorMask) {
-                if (value == StaticHelpers.LUT_NONE) {
-                    colorMaskEnabled = false;
-                } else {
-                    setColorMask((ColorMask) value);
-                }
-                EventPublisher.getInstance().publish(
-                    new PropertyChangeEvent(ViewTexture.this,
-                    EventPublisher.VIEWER_ACTION_CHANGED
-                    + ActionW.LUT.cmd(), null, value));
-            }
-        }   
-     });
-        actionsInView.put(ActionW.FILTER.cmd(),
-                new ActionDataModel(ActionW.FILTER,
-                        getKernelList(), getKernelList().get(0)) {
-                @Override
-                public void setActionValue(Object value) {
-                    super.setActionValue(value);
-                    if (value instanceof StaticHelpers.TextureKernel) {
-                        if (value == getKernelList().get(0)) {
-                            getSeriesObject().getTextureData().destroyReplacementTexture();
-                        } else {
-                            getSeriesObject().getTextureData().destroyReplacementTexture();
-                            new CLConvolution(ViewTexture.this,
-                                    ((StaticHelpers.TextureKernel) value).getPreset()).work();
-                        }
-                        repaint();
-                        
-                        EventPublisher.getInstance().publish(
-                            new PropertyChangeEvent(ViewTexture.this,
-                            EventPublisher.VIEWER_ACTION_CHANGED
-                            + ActionW.FILTER.cmd(), null, value));
-                    }
-                }
-             });
-    }
-    
     @Override
     public void moveImageOffset(int width, int height) {
         if (hasContent()) {
@@ -1300,39 +1173,317 @@ public class ViewTexture extends TextureImageCanvas
         return graphsLayer.getAffineTransform();
     }
 
-    public MeasurementsAdapter getMeasurementsAdapter() {
-        if (hasContent()) {
-            String abr = getSeriesObject().getPixelSpacingUnit().getAbbreviation();
-            double[] pixelSpacing = getSeriesObject().getAcquisitionPixelSpacing();
-            double pixelSize = 1;
-            if (pixelSpacing != null) {
-                pixelSize = pixelSpacing[0];
-            }
-            return new MeasurementsAdapter(pixelSize, 0, 0, false, 0, abr);
-        }
-        return null;
-    }
+    // @Override
+    // public MeasurementsAdapter getMeasuremantAdapter(Unit displayUnit) {
+    // //TODO: support other displayUnits
+    // if (hasContent()) {
+    // String abr = getSeriesObject().getPixelSpacingUnit().getAbbreviation();
+    // double[] pixelSpacing = getSeriesObject().getAcquisitionPixelSpacing();
+    // double pixelSize = 1;
+    // if (pixelSpacing != null) {
+    // pixelSize = pixelSpacing[0];
+    // }
+    // return new MeasurementsAdapter(pixelSize, 0, 0, false, 0, abr);
+    // }
+    // return null;
+    // }
 
     @Override
     public void registerDefaultListeners() {
+        addFocusListener(this);
+        ToolTipManager.sharedInstance().registerComponent(this);
+
         addComponentListener(new ComponentAdapter() {
             @Override
-            public void componentResized(ComponentEvent e) { 
-                if ((Boolean) getActionValue(ActionWA.BEST_FIT.cmd())) {
-                    setActionsInView(ActionW.ZOOM.cmd(), 0.0, false); 
+            public void componentResized(ComponentEvent e) {
+                Double currentZoom = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+                /*
+                 * Negative value means a default value according to the zoom type (pixel size, best fit...). Set again
+                 * to default value to compute again the position. For instance, the image cannot be center aligned
+                 * until the view has been repaint once (because the size is null).
+                 */
+                if (currentZoom <= 0.0) {
+                    zoom(0.0);
                 }
-                fixPosition();
-                updateAffineTransform();
                 repaint();
             }
         });
+    }
+
+    /* ********************************************************************
+     * MOUSE LISTENERS ******************************************************************
+     */
+
+    @Override
+    public void enableMouseAndKeyListener(MouseActions actions) {
+        disableMouseAndKeyListener();
+        iniDefaultMouseListener();
+        iniDefaultKeyListener();
+        // Set the butonMask to 0 of all the actions
+        resetMouseAdapter();
+
+        this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+
+        addMouseAdapter(actions.getLeft(), InputEvent.BUTTON1_DOWN_MASK); // left mouse button
+        if (actions.getMiddle().equals(actions.getLeft())) {
+            // If mouse action is already registered, only add the modifier mask
+            MouseActionAdapter adapter = getMouseAdapter(actions.getMiddle());
+            if (adapter != null) {
+                adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON2_DOWN_MASK);
+            }
+        } else {
+            addMouseAdapter(actions.getMiddle(), InputEvent.BUTTON2_DOWN_MASK);// middle mouse button
+        }
+        if (actions.getRight().equals(actions.getLeft()) || actions.getRight().equals(actions.getMiddle())) {
+            // If mouse action is already registered, only add the modifier mask
+            MouseActionAdapter adapter = getMouseAdapter(actions.getRight());
+            if (adapter != null) {
+                adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON3_DOWN_MASK);
+            }
+        } else {
+            addMouseAdapter(actions.getRight(), InputEvent.BUTTON3_DOWN_MASK); // right mouse button
+        }
+        this.addMouseWheelListener(getMouseAdapter(actions.getWheel()));
+    }
+
+    protected void resetMouseAdapter() {
+        for (ActionState adapter : eventManager.getAllActionValues()) {
+            if (adapter instanceof MouseActionAdapter) {
+                ((MouseActionAdapter) adapter).setButtonMaskEx(0);
+            }
+        }
+        // reset context menu that is a field of this instance
+        contextMenuHandler.setButtonMaskEx(0);
+        graphicMouseHandler.setButtonMaskEx(0);
+    }
+
+    /**
+     * Need to remove all to clear.
+     */
+
+    @Override
+    public synchronized void disableMouseAndKeyListener() {
+        MouseListener[] listener = this.getMouseListeners();
+
+        MouseMotionListener[] motionListeners = this.getMouseMotionListeners();
+        KeyListener[] keyListeners = this.getKeyListeners();
+        MouseWheelListener[] wheelListeners = this.getMouseWheelListeners();
+        for (int i = 0; i < listener.length; i++) {
+            this.removeMouseListener(listener[i]);
+        }
+        for (int i = 0; i < motionListeners.length; i++) {
+            this.removeMouseMotionListener(motionListeners[i]);
+        }
+        for (int i = 0; i < keyListeners.length; i++) {
+            this.removeKeyListener(keyListeners[i]);
+        }
+        for (int i = 0; i < wheelListeners.length; i++) {
+            this.removeMouseWheelListener(wheelListeners[i]);
+        }
+    }
+
+    @Override
+    public synchronized void iniDefaultMouseListener() {
+        // focus listener is always on
+        this.addMouseListener(focusHandler);
+        this.addMouseMotionListener(focusHandler);
+    }
+
+    @Override
+    public synchronized void iniDefaultKeyListener() {
+        this.addKeyListener(this);
+    }
+
+    // private void initDefaultMouseListeners() {
+    // addMouseListener(new MouseAdapter() {
+    //
+    // @Override
+    // public void mouseClicked(MouseEvent e) {
+    // requestFocus();
+    // }
+    //
+    // @Override
+    // public void mousePressed(MouseEvent e) {
+    // if (e.getClickCount() == 2) {
+    // Container parent = getParent();
+    // // if (parent instanceof ViewsGrid) {
+    // // ((ViewsGrid) parent).maximizeElement(GridViewUI.this);
+    // // return;
+    // // }
+    // }
+    // requestFocus();
+    // changeCursor(e.getModifiersEx());
+    // }
+    //
+    // @Override
+    // public void mouseMoved(MouseEvent e) {
+    // showPixelInfos(e);
+    // }
+    //
+    // @Override
+    // public void mouseReleased(MouseEvent e) {
+    // setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+    // }
+    //
+    // private void changeCursor(int modifiers) {
+    // MouseActions mouseActions = GUIManager.getInstance().getMouseActions();
+    // ActionW action = null;
+    // // left mouse button, always active
+    // if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
+    // action = getActionMouseBtnActFromCommand(mouseActions.getLeft());
+    // } // middle mouse button
+    // else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0
+    // && ((mouseActions.getActiveButtons() & InputEvent.BUTTON2_DOWN_MASK) != 0)) {
+    // action = getActionMouseBtnActFromCommand(mouseActions.getMiddle());
+    // } // right mouse button
+    // else if ((modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0
+    // && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
+    // action = getActionMouseBtnActFromCommand(mouseActions.getRight());
+    // }
+    // setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
+    // }
+    // });
+    //
+    // addMouseMotionListener(new MouseAdapter() {
+    // @Override
+    // public void mouseMoved(MouseEvent e) {
+    // showPixelInfos(e);
+    // }
+    // });
+    //
+    // // addMouseWheelListener(new MouseAdapter() {
+    // // @Override
+    // // public void mouseWheelMoved(MouseWheelEvent mwe) {
+    // // ViewerPlugin container = GUIManager.getInstance().getSelectedViewerPlugin();
+    // //
+    // // // if (container instanceof AbstractViewsContainer
+    // // // && ((AbstractViewsContainer) container).isContainingView(
+    // // // GridViewUI.this)
+    // // // && ((AbstractViewsContainer) container).getSelectedPane()
+    // // // != GridViewUI.this) {
+    // // // ((AbstractViewsContainer) container)
+    // // // .setSelectedImagePaneFromFocus(GridViewUI.this);
+    // // // }
+    // //
+    // // }
+    // // });
+    // }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+            if (e.isControlDown()) {
+                // Ctrl + Space passa para a proxima action.
+                EventPublisher.getInstance().publish(new PropertyChangeEvent(this, "MouseActions.left", null, null));
+            } else {
+                // Liga/desliga informacoes do paciente.
+                boolean visible = getInfoLayer().isVisible();
+                getInfoLayer().setVisible(!visible);
+                repaint();
+            }
+        } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_H) {
+            // Flip horizontal
+            Object actionValue = getActionValue(ActionW.FLIP.cmd());
+            boolean val = JMVUtils.getNULLtoFalse(actionValue);
+            setActionsInView(ActionW.FLIP.cmd(), !val);
+            repaint();
+        } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
+            // Rotaciona para a esquerda
+            rotateImage(90);
+        } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_R) {
+            // Rotaciona para a esquerda
+            rotateImage(-90);
+        } else {
+            handleMouseActionKeys(e);
+        }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) { /* Empty */
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) { /* TODO: ctrl + c */
+    }
+
+    private void handleMouseActionKeys(KeyEvent e) {
+        ActionW action = GUIManager.getInstance().getActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
+        if (action == null) {
+            if (e.getKeyCode() == KeyEvent.VK_H) {
+                if (crosshairAction.isActionEnabled()) {
+                    EventPublisher.getInstance().publish(
+                        new PropertyChangeEvent(this, "MouseActions.left", null, ActionW.CROSSHAIR.cmd()));
+                }
+            } else {
+                // Object actionData = getActionData(ActionW.PRESET.cmd());
+                // int keyCode = e.getKeyCode();
+                // if (actionData instanceof List) {
+                // for (Object object : (List) actionData) {
+                // if (object instanceof PresetWindowLevel) {
+                // PresetWindowLevel val = (PresetWindowLevel) object;
+                // if (keyCode == val.getKeyCode()) {
+                // setActionsInView(ActionW.PRESET.cmd(), val);
+                // }
+                // }
+                // }
+                // }
+            }
+        } else {
+            EventPublisher.getInstance()
+                .publish(new PropertyChangeEvent(this, "MouseActions.left", null, action.cmd()));
+        }
+    }
+
+    private void rotateImage(int angle) {
+        Object actionValue = getActionValue(ActionW.ROTATION.cmd());
+        if (actionValue instanceof Integer) {
+            Integer actual = (Integer) actionValue;
+            if (angle > 0) {
+                setActionsInView(ActionW.ROTATION.cmd(), (actual + angle) % 360);
+            } else {
+                setActionsInView(ActionW.ROTATION.cmd(), (actual + angle + 360) % 360);
+            }
+        }
+    }
+
+    private void addMouseAdapter(String actionName, int buttonMask) {
+        MouseActionAdapter adapter = getMouseAdapter(actionName);
+        if (adapter == null) {
+            return;
+        }
+        adapter.setButtonMaskEx(adapter.getButtonMaskEx() | buttonMask);
+        if (adapter == graphicMouseHandler) {
+            // TODO add key listener
+            // this.addKeyListener(drawingsKeyListeners);
+        } else if (adapter instanceof PannerListener) {
+            ((PannerListener) adapter).reset();
+            this.addKeyListener((PannerListener) adapter);
+        }
+
+        if (actionName.equals(ActionW.WINLEVEL.cmd())) {
+            // For window/level action set window action on x axis
+            MouseActionAdapter win = getAction(ActionW.WINDOW);
+            if (win != null) {
+                win.setButtonMaskEx(win.getButtonMaskEx() | buttonMask);
+                win.setMoveOnX(true);
+                this.addMouseListener(win);
+                this.addMouseMotionListener(win);
+            }
+            // set level action with inverse progression (move the cursor down will decrease the values)
+            adapter.setInverse(true);
+        } else if (actionName.equals(ActionW.WINDOW.cmd())) {
+            adapter.setMoveOnX(false);
+        } else if (actionName.equals(ActionW.LEVEL.cmd())) {
+            adapter.setInverse(true);
+        }
+        this.addMouseListener(adapter);
+        this.addMouseMotionListener(adapter);
     }
 
     public RenderSupport getRenderSupport() {
         return renderSupp;
     }
 
-    @Override
     public GeometryOfSlice getSliceGeometry() {
         if (hasContent() && isShowingAcquisitionAxis()) {
             return getSeriesObject().getSliceGeometry(getCurrentSlice());
@@ -1340,11 +1491,10 @@ public class ViewTexture extends TextureImageCanvas
         return null;
     }
 
-
+    @Override
     public AnnotationsLayer getInfoLayer() {
         return infoLayer;
     }
-
 
     private void handleGraphicsLayer(int old) {
         if (old != getCurrentSlice()) {
@@ -1352,7 +1502,6 @@ public class ViewTexture extends TextureImageCanvas
         }
     }
 
-    
     public class Cross3dListener extends MouseActionAdapter implements ActionState {
         @Override
         public void mousePressed(final MouseEvent evt) {
@@ -1360,43 +1509,57 @@ public class ViewTexture extends TextureImageCanvas
                 mouseDragReset(evt.getPoint());
             }
         }
+
         @Override
         public void mouseEntered(MouseEvent e) {
             onMouseMoved(e.getPoint());
         }
+
         @Override
         public void mouseExited(MouseEvent e) {
             onMouseMoved(e.getPoint());
         }
+
         @Override
         public void mouseMoved(MouseEvent e) {
             onMouseMoved(e.getPoint());
         }
+
         @Override
         public void mouseDragged(MouseEvent e) {
             if (!e.isConsumed() && (e.getModifiersEx() & getButtonMaskEx()) != 0) {
                 onMouseDragged(e.getPoint());
             }
         }
-        @Override
-        public void enableAction(boolean enabled) { /*Empty*/ }
-        @Override
-        public ActionW getActionW() {return ActionW.CROSSHAIR;}
 
         @Override
-        public boolean registerActionState(Object c) { return false; }
+        public void enableAction(boolean enabled) { /* Empty */
+        }
 
         @Override
-        public void unregisterActionState(Object c) { /*Empty*/ }
+        public ActionW getActionW() {
+            return ActionW.CROSSHAIR;
+        }
 
         @Override
-        public boolean isActionEnabled() { return true; }
-        
+        public boolean registerActionState(Object c) {
+            return false;
+        }
+
+        @Override
+        public void unregisterActionState(Object c) { /* Empty */
+        }
+
+        @Override
+        public boolean isActionEnabled() {
+            return (controlAxes != null || controlAxesToWatch != null);
+        }
+
     }
 
     /**
-     * Uses DefaultViewModel to reuse the Listerer system, but all the
-     * information cames from the TextureImageCanvas state.
+     * Uses DefaultViewModel to reuse the Listener system, but all the information came from the TextureImageCanvas
+     * state.
      */
     private class TextureViewModel extends DefaultViewModel {
 
@@ -1415,12 +1578,12 @@ public class ViewTexture extends TextureImageCanvas
             }
             return 0;
         }
-        
+
         @Override
         public double getViewScale() {
             if (hasContent()) {
                 double displayZoom = ViewTexture.this.getActualDisplayZoom();
-                if (displayZoom <= 0) { //avoid error trying to generate inverseAffine
+                if (displayZoom <= 0) { // avoid error trying to generate inverseAffine
                     displayZoom = 1;
                 }
                 return displayZoom;
@@ -1428,5 +1591,831 @@ public class ViewTexture extends TextureImageCanvas
             return 1;
         }
     }
-    
+
+    @Override
+    public ImageViewerEventManager getEventManager() {
+        return eventManager;
+    }
+
+    @Override
+    public void copyActionWState(HashMap actionsInView) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void updateSynchState() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public PixelInfo getPixelInfo(Point p, ImageLayer imageLayer) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Panner getPanner() {
+        // Not relevant
+        return null;
+    }
+
+    @Override
+    public void setSeries(MediaSeries series) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setFocused(boolean focused) {
+        MediaSeries series = getSeries();
+        if (series != null) {
+            series.setFocused(focused);
+        }
+        if (focused && getBorder() == lostFocusBorder) {
+            setBorder(focusBorder);
+        } else if (!focused && getBorder() == focusBorder) {
+            setBorder(lostFocusBorder);
+        }
+    }
+
+    @Override
+    public double getBestFitViewScale() {
+        return adjustViewScale(graphsLayer.getBestFitViewScale(new Dimension(getWidth(), getHeight())));
+    }
+
+    @Override
+    public double getRealWorldViewScale() {
+        double viewScale = 0.0;
+        TextureDicomSeries s = getSeriesObject();
+        if (s != null) {
+            Window win = SwingUtilities.getWindowAncestor(this);
+            if (win != null) {
+                GraphicsConfiguration config = win.getGraphicsConfiguration();
+                Monitor monitor = MeasureTool.viewSetting.getMonitor(config.getDevice());
+                if (monitor != null) {
+                    double realFactor = monitor.getRealScaleFactor();
+                    if (realFactor > 0.0) {
+                        Unit imgUnit = s.getPixelSpacingUnit();
+                        double pixSize = getShowingPixelSize();
+                        if (!Unit.PIXEL.equals(imgUnit) && pixSize != 0.0) {
+                            viewScale = imgUnit.getConvFactor() * pixSize / realFactor;
+                            viewScale = -adjustViewScale(viewScale);
+                        }
+                    }
+                }
+            }
+        }
+        return viewScale;
+    }
+
+    protected double adjustViewScale(double viewScale) {
+        ActionState zoom = eventManager.getAction(ActionW.ZOOM);
+        if (zoom instanceof SliderChangeListener) {
+            SliderChangeListener z = (SliderChangeListener) zoom;
+            // Adjust the best fit value according to the possible range of the model zoom action.
+            int sliderValue = ImageViewerEventManager.viewScaleToSliderValue(viewScale);
+            if (eventManager.getSelectedViewPane() == this) {
+                // Set back the value to UI components as this value cannot be computed early.
+                z.setValueWithoutTriggerAction(sliderValue);
+                viewScale = ImageViewerEventManager.sliderValueToViewScale(z.getValue());
+            } else {
+                DefaultBoundedRangeModel model = z.getModel();
+                if (sliderValue < model.getMinimum()) {
+                    sliderValue = model.getMinimum();
+                } else if (sliderValue > model.getMaximum()) {
+                    sliderValue = model.getMaximum();
+                }
+                viewScale = ImageViewerEventManager.sliderValueToViewScale(sliderValue);
+            }
+        }
+        return viewScale;
+    }
+
+    @Override
+    public int getTileOffset() {
+        // Not relevant
+        return 0;
+    }
+
+    @Override
+    public void setTileOffset(int tileOffset) {
+        // Not relevant
+    }
+
+    @Override
+    public void center() {
+        setImageOffset(new Vector2d(0, 0));
+    }
+
+    @Override
+    public void setCenter(double x, double y) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setOrigin(double x, double y) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void moveOrigin(double x, double y) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void moveOrigin(PanPoint point) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Comparator getCurrentSortComparator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setActionsInView(String action, Object value) {
+        setActionsInView(action, value, false);
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+        setBorder(selected ? focusBorder : normalBorder);
+        // Remove the selection of graphics
+        getLayerModel().setSelectedGraphics(null);
+        // Throws to the tool listener the current graphic selection.
+        getLayerModel().fireGraphicsSelectionChanged(getImageLayer());
+    }
+
+    @Override
+    public void setDrawingsVisibility(boolean visible) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Object getLensActionValue(String action) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void changeZoomInterpolation(int interpolation) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public OpManager getDisplayOpManager() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int getPointerType() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public void setPointerType(int pointerType) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void addPointerType(int i) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void resetPointerType(int i) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Point2D getHighlightedPosition() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void drawPointer(Graphics2D g, double x, double y) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public List getExportToClipboardAction() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private void resetActions(String[] cmd) {
+        if (cmd == null) {
+            resetAction(null);
+            return;
+        }
+        for (String string : cmd) {
+            resetAction(string);
+        }
+    }
+
+    @Override
+    public void resetZoom() {
+        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        if (!ZoomType.CURRENT.equals(type)) {
+            zoom(0.0);
+        }
+    }
+
+    @Override
+    public void resetPan() {
+        center();
+    }
+
+    @Override
+    public void reset() {
+        ImageViewerPlugin pane = eventManager.getSelectedView2dContainer();
+        if (pane != null) {
+            pane.resetMaximizedSelectedImagePane(this);
+        }
+
+        initActionWState();
+
+        String[] resets =
+            new String[] { ActionW.WINLEVEL.cmd(), ActionW.PRESET.cmd(), ActionW.LUT.cmd(), ActionW.LUT_SHAPE.cmd(),
+                ActionW.FILTER.cmd(), ActionW.INVERT_LUT.cmd(), "mip-opt", "mip-dep", ActionW.ZOOM.cmd(),
+                ActionW.ROTATION.cmd(), ActionW.PAN.cmd(), ActionW.FLIP.cmd(), "interpolate", "resetToAxial" };
+
+        resetActions(resets);
+        eventManager.updateComponentsListener(this);
+    }
+
+    @Override
+    public List getViewButtons() {
+        // Not relevant
+        return null;
+    }
+
+    @Override
+    public void closeLens() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public AffineTransform getInverseTransform() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setViewModel(ViewModel viewModel) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setLayerModel(AbstractLayerModel layerModel) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public HashMap<String, Object> getActionsInView() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void zoom(double viewScale) {
+        boolean defSize = viewScale == 0.0;
+        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        if (defSize) {
+            if (ZoomType.BEST_FIT.equals(type)) {
+                viewScale = -getBestFitViewScale();
+            } else if (ZoomType.REAL.equals(type)) {
+                viewScale = -getRealWorldViewScale();
+            }
+
+            if (viewScale == 0.0) {
+                viewScale = -adjustViewScale(1.0);
+            }
+        }
+
+        actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
+        setZoom(Math.abs(viewScale), true);
+        // FIXME is that possible that the value is modified in setZoom(Math.abs(viewScale), true). Should keep the sign
+        // actionsInView.put(ActionW.ZOOM.cmd(), getActualDisplayZoom());
+        if (defSize) {
+            /*
+             * If the view has not been repainted once (the width and the height of the view is 0), it will be done
+             * later and the componentResized event will call again the zoom.
+             */
+            center();
+        }
+        updateAffineTransform();
+    }
+
+    @Override
+    public void zoom(double centerX, double centerY, double viewScale) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void zoom(Rectangle2D zoomRect) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public double viewToModelX(double viewX) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public double viewToModelY(double viewY) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public double viewToModelLength(double viewLength) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public double modelToViewX(double modelX) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public double modelToViewY(double modelY) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public double modelToViewLength(double modelLength) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Point getMouseCoordinatesFromImage(double x, double y) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void transformGraphics(Graphics2D g2d, boolean forward) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void focusGained(FocusEvent e) {
+        if (!e.isTemporary()) {
+            ImageViewerPlugin<DicomImageElement> pane = eventManager.getSelectedView2dContainer();
+            if (pane != null && pane.isContainingView(this)) {
+                pane.setSelectedImagePaneFromFocus(this);
+            }
+        }
+    }
+
+    @Override
+    public void focusLost(FocusEvent e) {
+    }
+
+    @Override
+    public void handleLayerChanged(ImageLayer layer) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setSeries(MediaSeries<DicomImageElement> newSeries, DicomImageElement selectedMedia) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public ImageLayer<DicomImageElement> getImageLayer() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int getFrameIndex() {
+        return getCurrentSlice();
+    }
+
+    @Override
+    public DicomImageElement getImage() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public RenderedImage getSourceImage() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final ArrayList<Graphic> selected) {
+        if (selected != null) {
+            final JPopupMenu popupMenu = new JPopupMenu();
+            TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets()); //$NON-NLS-1$
+            popupMenu.add(itemTitle);
+            popupMenu.addSeparator();
+            boolean graphicComplete = true;
+            if (selected.size() == 1) {
+                final Graphic graph = selected.get(0);
+                if (graph instanceof AbstractDragGraphic) {
+                    final AbstractDragGraphic absgraph = (AbstractDragGraphic) graph;
+                    if (!absgraph.isGraphicComplete()) {
+                        graphicComplete = false;
+                    }
+                    if (absgraph.isVariablePointsNumber()) {
+                        if (graphicComplete) {
+                            /*
+                             * Convert mouse event point to real image coordinate point (without geometric
+                             * transformation)
+                             */
+                            final MouseEventDouble mouseEvt =
+                                new MouseEventDouble(ViewTexture.this, MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16, 0,
+                                    0, 0, 0, 1, true, 1);
+                            mouseEvt.setSource(ViewTexture.this);
+                            mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
+                            final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
+                            if (ptIndex >= 0) {
+                                JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.rmv_pt")); //$NON-NLS-1$
+                                menuItem.addActionListener(new ActionListener() {
+
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        absgraph.removeHandlePoint(ptIndex, mouseEvt);
+                                    }
+                                });
+                                popupMenu.add(menuItem);
+
+                                menuItem = new JMenuItem(Messages.getString("View2d.draw_pt")); //$NON-NLS-1$
+                                menuItem.addActionListener(new ActionListener() {
+
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        absgraph.forceToAddPoints(ptIndex);
+                                        MouseEventDouble evt2 =
+                                            new MouseEventDouble(ViewTexture.this, MouseEvent.MOUSE_PRESSED, evt
+                                                .getWhen(), 16, evt.getX(), evt.getY(), evt.getXOnScreen(), evt
+                                                .getYOnScreen(), 1, true, 1);
+                                        graphicMouseHandler.mousePressed(evt2);
+                                    }
+                                });
+                                popupMenu.add(menuItem);
+                                popupMenu.add(new JSeparator());
+                            }
+                        } else if (graphicMouseHandler.getDragSequence() != null
+                            && absgraph.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
+                            final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
+                            item2.addActionListener(new ActionListener() {
+
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    MouseEventDouble event =
+                                        new MouseEventDouble(ViewTexture.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
+                                    graphicMouseHandler.getDragSequence().completeDrag(event);
+                                    graphicMouseHandler.mouseReleased(event);
+                                }
+                            });
+                            popupMenu.add(item2);
+                            popupMenu.add(new JSeparator());
+                        }
+                    }
+                }
+            }
+            if (graphicComplete) {
+                JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_sel")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        ViewTexture.this.getLayerModel().deleteSelectedGraphics(true);
+                    }
+                });
+                popupMenu.add(menuItem);
+
+                menuItem = new JMenuItem(Messages.getString("View2d.cut")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                        ViewTexture.this.getLayerModel().deleteSelectedGraphics(false);
+                    }
+                });
+                popupMenu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2d.copy")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                    }
+                });
+                popupMenu.add(menuItem);
+                popupMenu.add(new JSeparator());
+            }
+            // TODO separate AbstractDragGraphic and ClassGraphic for properties
+            final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
+            for (Graphic graphic : selected) {
+                if (graphic instanceof AbstractDragGraphic) {
+                    list.add((AbstractDragGraphic) graphic);
+                }
+            }
+
+            if (selected.size() == 1) {
+                final Graphic graph = selected.get(0);
+                JMenuItem item = new JMenuItem(Messages.getString("View2d.to_front")); //$NON-NLS-1$
+                item.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        graph.toFront();
+                    }
+                });
+                popupMenu.add(item);
+                item = new JMenuItem(Messages.getString("View2d.to_back")); //$NON-NLS-1$
+                item.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        graph.toBack();
+                    }
+                });
+                popupMenu.add(item);
+                popupMenu.add(new JSeparator());
+
+                if (graphicComplete && graph instanceof LineGraphic) {
+
+                    final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.chg_calib")); //$NON-NLS-1$
+                    calibMenu.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
+                            CalibrationView calibrationDialog =
+                                new CalibrationView((LineGraphic) graph, ViewTexture.this);
+                            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(ViewTexture.this);
+                            int res =
+                                JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
+                                    title, JOptionPane.OK_CANCEL_OPTION);
+                            if (layer != null) {
+                                layer.hideUI();
+                            }
+                            if (res == JOptionPane.OK_OPTION) {
+                                calibrationDialog.applyNewCalibration();
+                            }
+                        }
+                    });
+                    popupMenu.add(calibMenu);
+                    popupMenu.add(new JSeparator());
+                }
+            }
+            if (list.size() > 0) {
+                JMenuItem properties = new JMenuItem(Messages.getString("View2d.draw_prop")); //$NON-NLS-1$
+                properties.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(ViewTexture.this);
+                        JDialog dialog = new MeasureDialog(ViewTexture.this, list);
+                        ColorLayerUI.showCenterScreen(dialog, layer);
+                    }
+                });
+                popupMenu.add(properties);
+            }
+            return popupMenu;
+        }
+        return null;
+    }
+
+    protected JPopupMenu buildContexMenu(final MouseEvent evt) {
+        JPopupMenu popupMenu = new JPopupMenu();
+        TitleMenuItem itemTitle = new TitleMenuItem("Left mouse actions" + StringUtil.COLON, popupMenu.getInsets()); //$NON-NLS-1$
+        popupMenu.add(itemTitle);
+        popupMenu.setLabel(MouseActions.LEFT);
+        String action = eventManager.getMouseActions().getLeft();
+        ButtonGroup groupButtons = new ButtonGroup();
+        int count = popupMenu.getComponentCount();
+        ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
+        if (view != null) {
+            final ViewerToolBar toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                ActionListener leftButtonAction = new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (e.getSource() instanceof JRadioButtonMenuItem) {
+                            JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
+                            toolBar.changeButtonState(MouseActions.LEFT, item.getActionCommand());
+                        }
+                    }
+                };
+
+                List<ActionW> actionsButtons = ViewerToolBar.actionsButtons;
+                synchronized (actionsButtons) {
+                    for (int i = 0; i < actionsButtons.size(); i++) {
+                        ActionW b = actionsButtons.get(i);
+                        JRadioButtonMenuItem radio =
+                            new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+                        radio.setActionCommand(b.cmd());
+                        radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+                        // Trigger the selected mouse action
+                        radio.addActionListener(toolBar);
+                        // Update the state of the button in the toolbar
+                        radio.addActionListener(leftButtonAction);
+                        popupMenu.add(radio);
+                        groupButtons.add(radio);
+                    }
+                }
+            }
+        }
+
+        if (count < popupMenu.getComponentCount()) {
+            popupMenu.add(new JSeparator());
+            count = popupMenu.getComponentCount();
+        }
+
+        if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
+            JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
+            menuItem.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    List<Graphic> graphs = AbstractLayerModel.GraphicClipboard.getGraphics();
+                    if (graphs != null) {
+                        Rectangle2D area = ViewTexture.this.getViewModel().getModelArea();
+                        for (Graphic g : graphs) {
+                            if (!g.getBounds(null).intersects(area)) {
+                                int option =
+                                    JOptionPane.showConfirmDialog(ViewTexture.this,
+                                        "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
+                                if (option == JOptionPane.YES_OPTION) {
+                                    break;
+                                } else {
+                                    return;
+                                }
+                            }
+                        }
+                        for (Graphic g : graphs) {
+                            AbstractLayer layer = ViewTexture.this.getLayerModel().getLayer(g.getLayerID());
+                            if (layer != null) {
+                                Graphic graph = g.deepCopy();
+                                if (graph != null) {
+                                    graph.updateLabel(true, ViewTexture.this);
+                                    layer.addGraphic(graph);
+                                }
+                            }
+                        }
+                        // Repaint all because labels are not drawn
+                        ViewTexture.this.getLayerModel().repaint();
+                    }
+                }
+            });
+            popupMenu.add(menuItem);
+        }
+
+        if (count < popupMenu.getComponentCount()) {
+            popupMenu.add(new JSeparator());
+            count = popupMenu.getComponentCount();
+        }
+
+        if (eventManager instanceof GUIManager) {
+            GUIManager manager = (GUIManager) eventManager;
+            JMVUtils.addItemToMenu(popupMenu, manager.getPresetMenu("weasis.contextmenu.presets"));
+            JMVUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu("weasis.contextmenu.lutShape"));
+            JMVUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
+            JMVUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
+            JMVUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
+
+            if (count < popupMenu.getComponentCount()) {
+                popupMenu.add(new JSeparator());
+                count = popupMenu.getComponentCount();
+            }
+
+            JMVUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
+            JMVUtils.addItemToMenu(popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
+            JMVUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
+
+            if (count < popupMenu.getComponentCount()) {
+                popupMenu.add(new JSeparator());
+                count = popupMenu.getComponentCount();
+            }
+
+            JMVUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
+        }
+
+        return popupMenu;
+    }
+
+    class ContextMenuHandler extends MouseActionAdapter {
+
+        @Override
+        public void mousePressed(final MouseEvent evt) {
+            showPopup(evt);
+        }
+
+        @Override
+        public void mouseReleased(final MouseEvent evt) {
+            showPopup(evt);
+        }
+
+        private void showPopup(final MouseEvent evt) {
+            // Context menu
+            if ((evt.getModifiersEx() & getButtonMaskEx()) != 0) {
+                JPopupMenu popupMenu = null;
+                final ArrayList<Graphic> selected =
+                    new ArrayList<Graphic>(ViewTexture.this.getLayerModel().getSelectedGraphics());
+                if (selected.size() > 0) {
+                    popupMenu = ViewTexture.this.buildGraphicContextMenu(evt, selected);
+                } else if (ViewTexture.this.getSeries() != null) {
+                    popupMenu = ViewTexture.this.buildContexMenu(evt);
+                }
+                if (popupMenu != null) {
+                    popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
+                }
+            }
+        }
+    }
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    class FocusHandler extends MouseActionAdapter {
+
+        @Override
+        public void mousePressed(MouseEvent evt) {
+            ImageViewerPlugin<DicomImageElement> pane = eventManager.getSelectedView2dContainer();
+            if (pane == null) {
+                return;
+            }
+
+            if (evt.getClickCount() == 2) {
+                pane.maximizedSelectedImagePane(ViewTexture.this, evt);
+                return;
+            }
+
+            if (pane.isContainingView(ViewTexture.this) && pane.getSelectedImagePane() != ViewTexture.this) {
+                // register all actions of the EventManager with this view waiting the focus gained in some cases is not
+                // enough, because others mouseListeners are triggered before the focus event (that means before
+                // registering the view in the EventManager)
+                pane.setSelectedImagePane(ViewTexture.this);
+            }
+            // request the focus even it is the same pane selected
+            requestFocusInWindow();
+
+            int modifiers = evt.getModifiersEx();
+            MouseActions mouseActions = eventManager.getMouseActions();
+            ActionW action = null;
+            // left mouse button, always active
+            if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
+                action = eventManager.getActionFromCommand(mouseActions.getLeft());
+            }
+            // middle mouse button
+            else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0
+                && ((mouseActions.getActiveButtons() & InputEvent.BUTTON2_DOWN_MASK) != 0)) {
+                action = eventManager.getActionFromCommand(mouseActions.getMiddle());
+            }
+            // right mouse button
+            else if ((modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0
+                && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
+                action = eventManager.getActionFromCommand(mouseActions.getRight());
+            }
+
+            ViewTexture.this.setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            showPixelInfos(e);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            ViewTexture.this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+        }
+    }
+
 }

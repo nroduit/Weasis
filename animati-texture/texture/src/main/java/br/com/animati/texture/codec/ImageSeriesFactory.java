@@ -5,9 +5,6 @@
 
 package br.com.animati.texture.codec;
 
-import br.com.animati.texturedicom.ImageSeries;
-import br.com.animati.texturedicom.ImageSeriesSliceAddedListener;
-import br.com.animati.texturedicom.TextureData;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
@@ -24,12 +21,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+
 import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.LookupDescriptor;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.vecmath.Vector3d;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
@@ -43,23 +42,22 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.LutParameters;
 
+import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.ImageSeriesSliceAddedListener;
+import br.com.animati.texturedicom.TextureData;
+
 /**
  * Builds the texturedicom ImageSeries.
  * 
- * Orientation Tags:
- * - ImageOrientationPatient (0020,0037): double[] lenth=6
- * - ImageOrientationPlane: label, generated using ImageOrientationPatient:
- *   The method is ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient,
- *   and "allow some deviation" on Axial, Sagital, Coronal; Oblique can mean anything!
- *   So, even it ImageOrientationPlane is a splitting rule, there is no garanty
- *   of even ImageOrientationPatient.
+ * Orientation Tags: - ImageOrientationPatient (0020,0037): double[] lenth=6 - ImageOrientationPlane: label, generated
+ * using ImageOrientationPatient: The method is ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient,
+ * and "allow some deviation" on Axial, Sagital, Coronal; Oblique can mean anything! So, even it ImageOrientationPlane
+ * is a splitting rule, there is no garanty of even ImageOrientationPatient.
  * 
- * Location Tags:
- * - SliceLocation (0020, 1041) : float (dz)
- * - ImagePositionPatient (0020,0032) : double[] lenth=3 (dx, dy, dz)
- * - SlicePosition (weasis-generated, @see DicomMediaUtils.computeSlicePositionVector)
- *    Uses ImagePositionPatient (0020,0032) & ImageOrientationPatient (0020,0037).
- *    It's the value used to calculate distance between frames for the 3-D model.
+ * Location Tags: - SliceLocation (0020, 1041) : float (dz) - ImagePositionPatient (0020,0032) : double[] lenth=3 (dx,
+ * dy, dz) - SlicePosition (weasis-generated, @see DicomMediaUtils.computeSlicePositionVector) Uses ImagePositionPatient
+ * (0020,0032) & ImageOrientationPatient (0020,0037). It's the value used to calculate distance between frames for the
+ * 3-D model.
  * 
  *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
@@ -68,12 +66,11 @@ import org.weasis.dicom.codec.utils.LutParameters;
 public class ImageSeriesFactory {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(ImageSeriesFactory.class);
-    
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImageSeriesFactory.class);
+
     /** Max pixel value, assuming 16-bits. */
     public static final int MAX_16 = (int) Math.pow(2, 16);
-    
+
     /* Event names: */
     /** Texture of newValue series has been replaced. */
     public static final String TEXTURE_REPLACED = "texture.replaced";
@@ -82,18 +79,14 @@ public class ImageSeriesFactory {
     /** Series is completely loaded. */
     public static final String TEXTURE_LOAD_COMPLETE = "texture.loadComplete";
 
-    
     private static final SoftHashMap<MediaSeries, TextureDicomSeries> texCache =
-            new SoftHashMap<MediaSeries, TextureDicomSeries>();
-    private static final ImageSeriesSliceAddedListener addSliceListener =
-            new ImageSeriesSliceAddedListener() {
+        new SoftHashMap<MediaSeries, TextureDicomSeries>();
+    private static final ImageSeriesSliceAddedListener addSliceListener = new ImageSeriesSliceAddedListener() {
 
         @Override
-        public void onSliceAdded(ImageSeries imageSeries, int sliceIndex,
-                int glErrorCode, String glErrorMessage) {
+        public void onSliceAdded(ImageSeries imageSeries, int sliceIndex, int glErrorCode, String glErrorMessage) {
             if (glErrorCode != 0) {
-                String msg = "Error trying to add " + sliceIndex
-                        + ": " + glErrorMessage;
+                String msg = "Error trying to add " + sliceIndex + ": " + glErrorMessage;
                 LOGGER.error(msg);
                 if (imageSeries instanceof TextureDicomSeries) {
                     ((TextureDicomSeries) imageSeries).textureLogInfo.writeText(msg);
@@ -103,36 +96,34 @@ public class ImageSeriesFactory {
                     ((TextureDicomSeries) imageSeries).setInVideo(sliceIndex, true);
                 }
             }
-            
+
         }
     };
 
     /** Register when series was sent to here to build texture. */
     private long timeStarted;
-    
+
     private double[] pixSpacing;
     private double zSpacing;
-    
+
     private Comparator comparator;
-    
+
     private static PropertyChangeSupport pcSupport;
-    
+
     public static void removeFromCache(TextureDicomSeries texture) {
         texCache.remove(texture.getSeries());
     }
-    
+
     public ImageSeriesFactory() {
         if (pcSupport == null) {
             pcSupport = new PropertyChangeSupport(this);
         }
     }
-    
-    public TextureDicomSeries createImageSeries(final MediaSeries series)
-            throws Exception {
-        return this.createImageSeries(series, SortSeriesStack.instanceNumber,
-                false);
+
+    public TextureDicomSeries createImageSeries(final MediaSeries series) throws Exception {
+        return this.createImageSeries(series, SortSeriesStack.slicePosition, false);
     }
-    
+
     /**
      * Creates or recovers a texture from cache.
      * 
@@ -142,60 +133,54 @@ public class ImageSeriesFactory {
      * @param sorter
      * @param force
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
-    public TextureDicomSeries createImageSeries( final MediaSeries series,
-            Comparator sorter, final boolean force) throws Exception {
-        
+    public TextureDicomSeries createImageSeries(final MediaSeries series, Comparator sorter, final boolean force)
+        throws Exception {
+
         if (sorter == null) {
-            comparator = SortSeriesStack.instanceNumber;
+            comparator = SortSeriesStack.slicePosition;
         } else {
             comparator = sorter;
         }
-        
+
         TextureDicomSeries imSeries = texCache.get(series);
         boolean changed = false;
-        if (force || imSeries == null
-                || imSeries.getSeriesComparator() != comparator) {
+        if (force || imSeries == null || imSeries.getSeriesComparator() != comparator) {
 
-            //Start counting time to log texture build time information.
+            // Start counting time to log texture build time information.
             timeStarted = System.currentTimeMillis();
-            
-            //Discard old
+
+            // Discard old
             if (imSeries != null) {
                 imSeries.interruptFactory();
                 imSeries.discardTexture();
                 changed = true;
             }
-            
-            String log1 = "Building texture from series: "
-                    + series.getTagValue(TagW.SeriesDescription)
-                    + " / " + series.getTagValue(TagW.SeriesInstanceUID)
-                    + " / sorded by " + comparator;
+
+            String log1 =
+                "Building texture from series: " + series.getTagValue(TagW.SeriesDescription) + " / "
+                    + series.getTagValue(TagW.SeriesInstanceUID) + " / sorded by " + comparator;
             LOGGER.info(log1);
 
             final int dims[] = getDimentions(series);
-            String log2 = "Dimensions: w = " + dims[0] + " h = " + dims[1]
-                    + " d = " + dims[2];    
+            String log2 = "Dimensions: w = " + dims[0] + " h = " + dims[1] + " d = " + dims[2];
             LOGGER.info(log2);
 
-            final TextureData.Format imageDataFormat
-                    = getImageDataFormat(series);
+            final TextureData.Format imageDataFormat = getImageDataFormat(series);
             String log3 = "DataFormat by tag: " + imageDataFormat;
             LOGGER.info(log3);
-            
+
             if (imageDataFormat == null) {
                 throw new IllegalArgumentException("Invalid data format.");
             }
 
-            imSeries = new TextureDicomSeries(
-                    dims[0], dims[1], dims[2], imageDataFormat, series,
-                    comparator);
+            imSeries = new TextureDicomSeries(dims[0], dims[1], dims[2], imageDataFormat, series, comparator);
 
             imSeries.textureLogInfo.writeText(log1);
             imSeries.textureLogInfo.writeText(log2);
             imSeries.textureLogInfo.writeText(log3);
-            
+
             executeLoader(imSeries, series);
 
             texCache.put(series, imSeries);
@@ -203,12 +188,10 @@ public class ImageSeriesFactory {
                 fireProperyChange(this, TEXTURE_REPLACED, imSeries);
             }
         } else {
-            LOGGER.info("Returning from cache: "
-                    + imSeries.getTagValue(TagW.SeriesDescription));
+            LOGGER.info("Returning from cache: " + imSeries.getTagValue(TagW.SeriesDescription));
 
             if (!imSeries.isAllInVideo() && imSeries.isFactoryDone()) {
-                if (series.getSeriesLoader() == null
-                        && (imSeries.getSliceCount() != series.size(null))) {
+                if (series.getSeriesLoader() == null && (imSeries.getSliceCount() != series.size(null))) {
                     return createImageSeries(series, sorter, true);
                 } else {
                     timeStarted = System.currentTimeMillis();
@@ -218,24 +201,23 @@ public class ImageSeriesFactory {
         }
         return imSeries;
     }
-    
+
     /**
      * Call the safer loader for the given series.
      * 
-     * LoaderThread: only one that will work if sorter!=instanceNumber. Its also
-     * safer if series has ben splitted.
+     * LoaderThread: only one that will work if sorter!=instanceNumber. Its also safer if series has ben splitted.
      * 
-     * WadoSafeLoader: gives the correct result if series is still downloading,
-     * and random placed images are still missing. Dont works if
-     * sorter!=instanceNumber and may go wrong if series has been slitted.
+     * WadoSafeLoader: gives the correct result if series is still downloading, and random placed images are still
+     * missing. Dont works if sorter!=instanceNumber and may go wrong if series has been slitted.
      * 
-     * @param imSeries texture
-     * @param series mediaSeries
+     * @param imSeries
+     *            texture
+     * @param series
+     *            mediaSeries
      */
     private void executeLoader(TextureDicomSeries imSeries, MediaSeries series) {
-        if (SortSeriesStack.instanceNumber == comparator
-                && series.getSeriesLoader() != null
-                && (series.getTagValue(TagW.SplitSeriesNumber) == null)) {
+        if (SortSeriesStack.slicePosition == comparator && series.getSeriesLoader() != null
+            && (series.getTagValue(TagW.SplitSeriesNumber) == null)) {
             try {
                 imSeries.textureLogInfo.writeText("Using Wado-safe factory.");
                 LoaderThread thread = new WadoSafeLoader(imSeries, series);
@@ -244,7 +226,7 @@ public class ImageSeriesFactory {
                 imSeries.isToCountObjects = false;
             } catch (IllegalArgumentException ex) {
                 LOGGER.warn(ex.getMessage());
-                //start again
+                // start again
                 imSeries.textureLogInfo.writeText("Using SingleThread factory.");
                 LoaderThread thread = new LoaderThread(imSeries, series);
                 thread.execute();
@@ -253,7 +235,7 @@ public class ImageSeriesFactory {
             }
 
         } else {
-            //Inicia thread de envio para a placa de video (one thread)
+            // Inicia thread de envio para a placa de video (one thread)
             imSeries.textureLogInfo.writeText("Using SingleThread factory.");
             LoaderThread thread = new LoaderThread(imSeries, series);
             thread.execute();
@@ -261,7 +243,7 @@ public class ImageSeriesFactory {
             imSeries.isToCountObjects = true;
         }
     }
-    
+
     public static void addPropertyChangeListener(PropertyChangeListener listener) {
         if (pcSupport == null) {
             pcSupport = new PropertyChangeSupport(new ImageSeriesFactory());
@@ -269,21 +251,17 @@ public class ImageSeriesFactory {
         pcSupport.addPropertyChangeListener(listener);
     }
 
-
     public static void removePropertyChangeListener(PropertyChangeListener listener) {
         if (pcSupport != null) {
             pcSupport.removePropertyChangeListener(listener);
         }
 
     }
-    
-       
-    protected static void fireProperyChange(final Object source,
-            final String name, final Object newValue) {
-        
-        final PropertyChangeEvent event = new PropertyChangeEvent(
-                source, name, null, newValue);
-        
+
+    protected static void fireProperyChange(final Object source, final String name, final Object newValue) {
+
+        final PropertyChangeEvent event = new PropertyChangeEvent(source, name, null, newValue);
+
         if (pcSupport != null) {
             if (SwingUtilities.isEventDispatchThread()) {
                 pcSupport.firePropertyChange(event);
@@ -298,16 +276,13 @@ public class ImageSeriesFactory {
             }
         }
     }
-    
-    
-    private static void feedInValues(final DicomImageElement elmt,
-            final TextureDicomSeries imSeries,
-            ArrayList<Float[]> windowValues, ArrayList<Float[]> levelValues) {
 
-        //values of inValues based on DicomImageUtils::setWindowLevelLinearLut
-   
+    private static void feedInValues(final DicomImageElement elmt, final TextureDicomSeries imSeries,
+        ArrayList<Float[]> windowValues, ArrayList<Float[]> levelValues) {
 
-        //ActionW.IMAGE_PIX_PADDING is true by default, so we just use true for now.
+        // values of inValues based on DicomImageUtils::setWindowLevelLinearLut
+
+        // ActionW.IMAGE_PIX_PADDING is true by default, so we just use true for now.
         boolean pixelPadding = true;
 
         int minValue = (int) elmt.getMinValue(pixelPadding);
@@ -315,7 +290,7 @@ public class ImageSeriesFactory {
 
         int minInValue = Math.min(maxValue, minValue);
         int maxInValue = Math.max(maxValue, minValue);
-        
+
         if (minInValue < imSeries.windowingMinInValue) {
             imSeries.windowingMinInValue = minInValue;
         }
@@ -329,13 +304,10 @@ public class ImageSeriesFactory {
             windowValues.add(tempListWindow);
             levelValues.add(tempListLevel);
         }
-        
-        if (levelValues != null && windowValues != null
-                && !levelValues.isEmpty() && !windowValues.isEmpty()) {
-            Float[] listOfLevelValues =
-                    getHigherOccurrenceOfValues(levelValues, levelValues.get(0).length);        
-            Float[] listOfWindowValues =
-                    getHigherOccurrenceOfValues(windowValues, windowValues.get(0).length);
+
+        if (levelValues != null && windowValues != null && !levelValues.isEmpty() && !windowValues.isEmpty()) {
+            Float[] listOfLevelValues = getHigherOccurrenceOfValues(levelValues, levelValues.get(0).length);
+            Float[] listOfWindowValues = getHigherOccurrenceOfValues(windowValues, windowValues.get(0).length);
 
             imSeries.setTag(TagW.WindowWidth, listOfWindowValues);
             imSeries.setTag(TagW.WindowCenter, listOfLevelValues);
@@ -344,19 +316,19 @@ public class ImageSeriesFactory {
     }
 
     /**
-     * Get series dimentions (width and height from tags or from first image,
-     * depht from slice count - series.size(null) )).
+     * Get series dimentions (width and height from tags or from first image, depht from slice count - series.size(null)
+     * )).
      *
-     * @param series Series to get dimentions from.
+     * @param series
+     *            Series to get dimentions from.
      * @return { width, height, depth }
      */
-    private static int[] getDimentions(final MediaSeries series)
-            throws IllegalStateException {
-        
+    private static int[] getDimentions(final MediaSeries series) throws IllegalStateException {
+
         int[] dims = new int[3];
         Object tagValue = series.getTagValue(TagW.ImageWidth);
         Object tagValueH = series.getTagValue(TagW.ImageHeight);
-        
+
         if (tagValue instanceof Integer && tagValueH instanceof Integer) {
             dims[0] = (Integer) tagValue;
             dims[1] = (Integer) tagValueH;
@@ -373,19 +345,17 @@ public class ImageSeriesFactory {
                         dims[1] = image.getHeight();
                         foundDims = true;
                     }
-                } else { 
+                } else {
                     LOGGER.info("found next not ImageElement: " + next);
                 }
             }
-            
+
             if (!foundDims) {
-                throw new IllegalStateException(
-                        "Impossible to calculate dimensions:"
-                        + " no readable image found.");
+                throw new IllegalStateException("Impossible to calculate dimensions:" + " no readable image found.");
             }
         }
-        
-        //Num of images:
+
+        // Num of images:
         Object wado = series.getTagValue(TagW.WadoInstanceReferenceList);
         if (wado instanceof List) {
             List<DicomInstance> sopList = (List<DicomInstance>) wado;
@@ -399,30 +369,27 @@ public class ImageSeriesFactory {
         return dims;
     }
 
-
     /**
      * Find image data format.
      * 
-     * @param origin Series to get data-format from.
+     * @param origin
+     *            Series to get data-format from.
      * @return Data format flag.
      */
-    private static TextureData.Format getImageDataFormat(
-            final MediaSeries origin) {
+    private static TextureData.Format getImageDataFormat(final MediaSeries origin) {
 
-        Object media = origin.getMedia(
-                MediaSeries.MEDIA_POSITION.FIRST, null, null);
+        Object media = origin.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
 
         if (media instanceof ImageElement) {
             ImageElement imgElement = (ImageElement) media;
-            Object tagValue = imgElement.getTagValue(
-                    TagW.PixelRepresentation);
+            Object tagValue = imgElement.getTagValue(TagW.PixelRepresentation);
             if (tagValue instanceof Integer && (Integer) tagValue == 1) {
                 return TextureData.Format.SignedShort;
             }
             tagValue = imgElement.getTagValue(TagW.SamplesPerPixel);
             if (tagValue instanceof Integer && (Integer) tagValue > 1) {
                 // Color images has "Samples Per Pixel" equal to 3
-                if((Integer) tagValue == 3){
+                if ((Integer) tagValue == 3) {
                     return TextureData.Format.RGB8;
                 }
                 return null;
@@ -435,17 +402,18 @@ public class ImageSeriesFactory {
         return TextureData.Format.UnsignedShort;
     }
 
-
     /**
      * Takes a BufferedImage and sends the bytes to the ImageSeries objetct.
      *
-     * @param place Relative location of the image plane on volume.
-     * @param image The image.
-     * @param imgSeries ImageSeries to receive the bytes data.
+     * @param place
+     *            Relative location of the image plane on volume.
+     * @param image
+     *            The image.
+     * @param imgSeries
+     *            ImageSeries to receive the bytes data.
      * @return the buffer class found.
      */
-    public static String putBytesInImageSeries(final int place,
-            final BufferedImage image, final ImageSeries imgSeries) {
+    public static String putBytesInImageSeries(final int place, final BufferedImage image, final ImageSeries imgSeries) {
 
         String bufferClass = ".";
         if (imgSeries != null && image != null) {
@@ -454,13 +422,11 @@ public class ImageSeriesFactory {
             if (dataBuffer instanceof DataBufferByte) {
                 bufferClass = "DataBufferByte";
                 bytesOut = ((DataBufferByte) dataBuffer).getData();
-                
-            } else if (dataBuffer instanceof DataBufferShort
-                    || dataBuffer instanceof DataBufferUShort) {
+
+            } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
                 bufferClass = dataBuffer.getClass().getSimpleName();
                 short[] data =
-                    dataBuffer instanceof DataBufferShort ? (
-                        (DataBufferShort) dataBuffer).getData()
+                    dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
                         : ((DataBufferUShort) dataBuffer).getData();
                 bytesOut = new byte[data.length * 2];
                 for (int i = 0; i < data.length; i++) {
@@ -470,42 +436,41 @@ public class ImageSeriesFactory {
             }
             if (bytesOut != null) {
                 if (imgSeries.getTextureData() != null) {
-                    LOGGER.debug("place " + place + ": bytesOut: " + bytesOut.length
-                            + " /expected: " + imgSeries.getTextureData().getTotalSize());
+                    LOGGER.debug("place " + place + ": bytesOut: " + bytesOut.length + " /expected: "
+                        + imgSeries.getTextureData().getTotalSize());
                 }
                 imgSeries.AddSliceData(place, bytesOut, addSliceListener);
                 return bufferClass;
             }
         } else {
-            ((TextureDicomSeries) imgSeries).textureLogInfo.writeText(
-                    "Image not included! place = " + place);
+            ((TextureDicomSeries) imgSeries).textureLogInfo.writeText("Image not included! place = " + place);
         }
         return "No-data";
     }
 
-
     /**
-     * Normalize vector to obtain a valid parameter fot dimendionMultiplier:
-     * divide all by the smaller.
+     * Normalize vector to obtain a valid parameter fot dimendionMultiplier: divide all by the smaller.
      * 
-     * @param xSp x-spacing.
-     * @param ySp y-spacing.
-     * @param zSp z-spacing.
+     * @param xSp
+     *            x-spacing.
+     * @param ySp
+     *            y-spacing.
+     * @param zSp
+     *            z-spacing.
      * @return A valid parameter fot dimendionMultiplier.
      */
-    private static Vector3d getNormalizedVector(final double xSp,
-            final double ySp, final double zSp) {
+    private static Vector3d getNormalizedVector(final double xSp, final double ySp, final double zSp) {
 
-            if (xSp <= 0 || ySp <= 0 || zSp <= 0) {
-                return new Vector3d(1, 1, 1);
-            }
-
-            double min = Math.min(xSp, ySp);
-            if (zSp < min) {
-                min = zSp;
-            }
-            return new Vector3d(xSp / min, ySp / min, zSp / min);
+        if (xSp <= 0 || ySp <= 0 || zSp <= 0) {
+            return new Vector3d(1, 1, 1);
         }
+
+        double min = Math.min(xSp, ySp);
+        if (zSp < min) {
+            min = zSp;
+        }
+        return new Vector3d(xSp / min, ySp / min, zSp / min);
+    }
 
     private static int getAverage(ArrayList<Integer> listOfKeys) {
         int sunOfKeys = 0;
@@ -514,84 +479,74 @@ public class ImageSeriesFactory {
         }
         return (Math.round(sunOfKeys / listOfKeys.size()));
     }
-    
+
     private static int findHigherOccurrence(HashMap<Integer, Integer> map) {
-        Set<Integer> keys = map.keySet();                
+        Set<Integer> keys = map.keySet();
         ArrayList<Integer> keysWithSameOccurrence = null;
-        int max = 0;        
+        int max = 0;
         for (int key : keys) {
             int value = map.get(key);
             if (value >= max) {
                 if (value == max) {
                     if (keysWithSameOccurrence != null) {
                         keysWithSameOccurrence.add(key);
-                    }                    
-                }
-                else {
+                    }
+                } else {
                     max = value;
                     keysWithSameOccurrence = new ArrayList<Integer>();
                     keysWithSameOccurrence.add(key);
-                }                                
+                }
             }
-        }   
+        }
         return getAverage(keysWithSameOccurrence);
     }
-    
-    private static Float[] getHigherOccurrenceOfValues(
-            ArrayList<Float[]> listValues, int size) {               
+
+    private static Float[] getHigherOccurrenceOfValues(ArrayList<Float[]> listValues, int size) {
         Float[] higherOccurrenceValues = new Float[size];
-        for (int i = 0; i < size; i++) {            
-            HashMap<Integer, Integer> mapOfOccurrence = new HashMap<Integer, Integer>();            
-            for (Float[] values: listValues) {
+        for (int i = 0; i < size; i++) {
+            HashMap<Integer, Integer> mapOfOccurrence = new HashMap<Integer, Integer>();
+            for (Float[] values : listValues) {
                 int value = values[i].intValue();
                 if (mapOfOccurrence.containsKey(value)) {
-                    int cont = mapOfOccurrence.get(value) + 1;                    
+                    int cont = mapOfOccurrence.get(value) + 1;
                     mapOfOccurrence.put(value, cont);
-                }
-                else {
+                } else {
                     int cont = 1;
                     mapOfOccurrence.put(value, cont);
                 }
             }
-            higherOccurrenceValues[i] = ((Integer) findHigherOccurrence(mapOfOccurrence)).floatValue();                  
+            higherOccurrenceValues[i] = ((Integer) findHigherOccurrence(mapOfOccurrence)).floatValue();
         }
         return higherOccurrenceValues;
     }
 
-   
     /**
      * DICOM PS 3.3 $C.11.1 Modality LUT Module
      * 
      * The LUT Data contains the LUT entry values.
      * 
-     * The output range of the Modality LUT Module depends on whether or not
-     * Rescale Slope (0028,1053) and Rescale Intercept (0028,1052) or the
-     * Modality LUT Sequence (0028,3000) are used. In the case where
-     * Rescale Slope and Rescale Intercept are used, the output ranges from
-     * (minimum pixel value*Rescale Slope+Rescale Intercept) to
-     * (maximum pixel value*Rescale - Slope+Rescale Intercept), where
-     * the minimum and maximum pixel values are determined by Bits Stored
-     * and Pixel Representation. Note: This range may be signed even if
-     * Pixel Representation is unsigned.
+     * The output range of the Modality LUT Module depends on whether or not Rescale Slope (0028,1053) and Rescale
+     * Intercept (0028,1052) or the Modality LUT Sequence (0028,3000) are used. In the case where Rescale Slope and
+     * Rescale Intercept are used, the output ranges from (minimum pixel value*Rescale Slope+Rescale Intercept) to
+     * (maximum pixel value*Rescale - Slope+Rescale Intercept), where the minimum and maximum pixel values are
+     * determined by Bits Stored and Pixel Representation. Note: This range may be signed even if Pixel Representation
+     * is unsigned.
      * 
-     * In the case where the Modality LUT Sequence is used, the output range
-     * is from 0 to 2n-1 where n is the third value of LUT Descriptor.
-     * This range is always unsigned.
+     * In the case where the Modality LUT Sequence is used, the output range is from 0 to 2n-1 where n is the third
+     * value of LUT Descriptor. This range is always unsigned.
      * 
      * @param pixelPadding
      * @return The modality lookup table.
      */
-    public static LookupTableJAI getModalityLookup(final DicomImageElement elmt,
-            final boolean pixelPadding) {
-        
+    public static LookupTableJAI getModalityLookup(final DicomImageElement elmt, final boolean pixelPadding) {
+
         Integer paddingValue = elmt.getPaddingValue();
-        
-        //Always false, becouse inversion will be done by the texture.
+
+        // Always false, becouse inversion will be done by the texture.
         final boolean inverseLUTAction = false;
 
-        final LookupTableJAI mLUTSeq = (LookupTableJAI) elmt.getTagValue(
-                TagW.ModalityLUTData);
-        
+        final LookupTableJAI mLUTSeq = (LookupTableJAI) elmt.getTagValue(TagW.ModalityLUTData);
+
         if (mLUTSeq != null && (!pixelPadding || paddingValue == null)) {
             return mLUTSeq;
         }
@@ -601,8 +556,7 @@ public class ImageSeriesFactory {
             inverseLut ^= inverseLUTAction;
         }
 
-        LutParameters lutparams = elmt.getLutParameters(
-                pixelPadding, modSeqLUT, inverseLut);
+        LutParameters lutparams = elmt.getLutParameters(pixelPadding, modSeqLUT, inverseLut);
         // Not required to have a modality lookup table
         if (lutparams == null) {
             return null;
@@ -614,61 +568,56 @@ public class ImageSeriesFactory {
                 if (mLUTSeq.getDataType() == DataBuffer.TYPE_BYTE) {
                     byte[] data = mLUTSeq.getByteData(0);
                     if (data != null) {
-                        modalityLookup = new LookupTableJAI(
-                                data, mLUTSeq.getOffset(0));
+                        modalityLookup = new LookupTableJAI(data, mLUTSeq.getOffset(0));
                     }
                 } else {
                     short[] data = mLUTSeq.getShortData(0);
                     if (data != null) {
                         modalityLookup =
-                                new LookupTableJAI(data, mLUTSeq.getOffset(0),
+                            new LookupTableJAI(data, mLUTSeq.getOffset(0),
                                 mLUTSeq.getData() instanceof DataBufferUShort);
                     }
                 }
             }
             if (modalityLookup == null) {
-                modalityLookup = mLUTSeq == null
-                        ? DicomImageUtils.createRescaleRampLut(lutparams)
-                        : mLUTSeq;
+                modalityLookup = mLUTSeq == null ? DicomImageUtils.createRescaleRampLut(lutparams) : mLUTSeq;
             }
         } else {
             modalityLookup = DicomImageUtils.createRescaleRampLut(lutparams);
         }
 
         if (elmt.isPhotometricInterpretationMonochrome()) {
-            DicomImageUtils.applyPixelPaddingToModalityLUT(
-                    modalityLookup, lutparams);
+            DicomImageUtils.applyPixelPaddingToModalityLUT(modalityLookup, lutparams);
         }
         return modalityLookup;
     }
-    
+
     /**
      * Loads one image to a texture.
+     * 
      * @param element
      * @param imSeries
-     * @param place 
+     * @param place
      */
-    public static void loadOneImageToImageSeries(DicomImageElement element,
-            TextureDicomSeries imSeries, int place) {
+    public static void loadOneImageToImageSeries(DicomImageElement element, TextureDicomSeries imSeries, int place) {
         new LoadOneImageThread(imSeries, element, place).execute();
     }
-    
-    private static String putElementInImageSeries(DicomImageElement dicomElement,
-            TextureDicomSeries seriesToLoad, int place) {
+
+    private static String putElementInImageSeries(DicomImageElement dicomElement, TextureDicomSeries seriesToLoad,
+        int place) {
 
         final PlanarImage image = dicomElement.getImage();
 
-        //Just to log pixel size: can drop after it gets stable.
+        // Just to log pixel size: can drop after it gets stable.
         ColorModel colorModel = image.getColorModel();
         int pixelSize = -1;
         if (colorModel != null) {
-            //// just for debug
+            // // just for debug
             pixelSize = colorModel.getPixelSize();
         }
-                        
-        //Modality LUT
-        final LookupTableJAI modalityLookup =
-                getModalityLookup(dicomElement, true);
+
+        // Modality LUT
+        final LookupTableJAI modalityLookup = getModalityLookup(dicomElement, true);
 
         boolean hasModalityLUT = false;
         PlanarImage imageMLUT;
@@ -681,26 +630,23 @@ public class ImageSeriesFactory {
 
         // TODO colorModel bug?
         // BUG fix: for some images the color model is null.
-        //Creating 8 bits gray model layout fixes this issue.
-        //image = LookupDescriptor.create(image, voiLookup, LayoutUtil.createGrayRenderedImage());
+        // Creating 8 bits gray model layout fixes this issue.
+        // image = LookupDescriptor.create(image, voiLookup, LayoutUtil.createGrayRenderedImage());
         String dataBufferType = "";
         if (imageMLUT.getColorModel() == null) {
-            dataBufferType = putBytesInImageSeries(place,
-                    image.getAsBufferedImage(), seriesToLoad);
+            dataBufferType = putBytesInImageSeries(place, image.getAsBufferedImage(), seriesToLoad);
         } else {
-            dataBufferType = putBytesInImageSeries(place,
-                    imageMLUT.getAsBufferedImage(), seriesToLoad);
+            dataBufferType = putBytesInImageSeries(place, imageMLUT.getAsBufferedImage(), seriesToLoad);
         }
-                    
-        //Log info:
-        String colorTransformInfo = "Modality LUT: " + hasModalityLUT
-                + " / ColorModel: " + true + "PixelSize = " + pixelSize
+
+        // Log info:
+        String colorTransformInfo =
+            "Modality LUT: " + hasModalityLUT + " / ColorModel: " + true + "PixelSize = " + pixelSize
                 + " / DataBufferType: " + dataBufferType;
         return colorTransformInfo;
     }
-    
-    private static void updateOrientationTag(TextureDicomSeries seriesToLoad,
-            DicomImageElement elmt) {
+
+    private static void updateOrientationTag(TextureDicomSeries seriesToLoad, DicomImageElement elmt) {
         double[] imOri = (double[]) elmt.getTagValue(TagW.ImageOrientationPatient);
         if (imOri != null && imOri.length == 6) {
             double[] serieOri = seriesToLoad.getOriginalSeriesOrientationPatient();
@@ -714,24 +660,23 @@ public class ImageSeriesFactory {
                 LOGGER.info(bd.toString());
                 seriesToLoad.textureLogInfo.writeText(bd.toString());
             } else {
-                if (serieOri.length == 6 && !isSameOrientation(imOri,
-                        seriesToLoad.getOriginalSeriesOrientationPatient())) {
+                if (serieOri.length == 6
+                    && !isSameOrientation(imOri, seriesToLoad.getOriginalSeriesOrientationPatient())) {
 
-                    //Could not find a case yet, but its possible!
-                    seriesToLoad.textureLogInfo.writeText(
-                            "Found variable ImageOrientationPatient.");
-                    seriesToLoad.setOrientationPatient(new double[] {0});
+                    // Could not find a case yet, but its possible!
+                    seriesToLoad.textureLogInfo.writeText("Found variable ImageOrientationPatient.");
+                    seriesToLoad.setOrientationPatient(new double[] { 0 });
                 }
             }
         }
     }
-    
-    //See ImageOrientation.hasSameOrientation
+
+    // See ImageOrientation.hasSameOrientation
     private static boolean isSameOrientation(double[] v1, double[] v2) {
         if (v1 != null && v1.length == 6 && v2 != null && v2.length == 6) {
             String label1 =
-                ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
-                    v1[0], v1[1], v1[2], v1[3], v1[4], v1[5]);
+                ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v1[0], v1[1], v1[2], v1[3],
+                    v1[4], v1[5]);
             String label2 =
                 ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1], v2[2], v2[3],
                     v2[4], v2[5]);
@@ -752,22 +697,21 @@ public class ImageSeriesFactory {
         }
         return false;
     }
-    
+
     private static void updateMultiplier(TextureDicomSeries seriesToLoad) {
-        
+
         synchronized (seriesToLoad.getSeries()) {
-            Iterator iterator = seriesToLoad.getSeries().getMedias(null,
-                seriesToLoad.getSeriesComparator()).iterator();
+            Iterator iterator = seriesToLoad.getSeries().getMedias(null, seriesToLoad.getSeriesComparator()).iterator();
 
             int place = 0;
             double lastPos = 0;
             double zSpacing = 1;
-            double[] pixSpacing = new double[] {1, 1};
+            double[] pixSpacing = new double[] { 1, 1 };
             boolean variablePixSpacing = false;
 
             while (iterator.hasNext()) {
-                //dimensionMultiplier//////////////////////////////////////
-                //take from SlicePosition (see SeriesBuilder::writeBlock)
+                // dimensionMultiplier//////////////////////////////////////
+                // take from SlicePosition (see SeriesBuilder::writeBlock)
                 Object next = iterator.next();
                 if (next instanceof DicomImageElement) {
                     DicomImageElement elmt = (DicomImageElement) next;
@@ -781,95 +725,84 @@ public class ImageSeriesFactory {
                             zSpacing = space;
                             seriesToLoad.addZSpacingOccurence(space);
 
-                            if (place == 1) { //is second
-                                    Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1],
-                                            Math.abs(zSpacing));
-                                    seriesToLoad.setDimensionMultiplier(vector);
-                                } else if (place == seriesToLoad.getSeries().size(null) - 1) { //is last
-                                    zSpacing = seriesToLoad.getMostCommonSpacing();
-                                    Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1],
-                                            Math.abs(zSpacing));
-                                    seriesToLoad.setDimensionMultiplier(vector);
-                                    seriesToLoad.textureLogInfo.writeText(
-                                            "Last dimension multiplier vector: "
-                                            + vector);
-                                }
+                            if (place == 1) { // is second
+                                Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1], Math.abs(zSpacing));
+                                seriesToLoad.setDimensionMultiplier(vector);
+                            } else if (place == seriesToLoad.getSeries().size(null) - 1) { // is last
+                                zSpacing = seriesToLoad.getMostCommonSpacing();
+                                Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1], Math.abs(zSpacing));
+                                seriesToLoad.setDimensionMultiplier(vector);
+                                seriesToLoad.textureLogInfo.writeText("Last dimension multiplier vector: " + vector);
+                            }
 
-                                //Verify pixelSpacing
-                                double[] pixSp =(double[]) elmt.getTagValue(TagW.PixelSpacing);
-                                if (pixSp == null || pixSpacing == null) {
-                                    variablePixSpacing = true;
-                                } else {
-                                    for (int i = 0; i < pixSp.length; i++) {
-                                        if (pixSpacing[1] != pixSp[i]) {
-                                            variablePixSpacing = true;
-                                        }
+                            // Verify pixelSpacing
+                            double[] pixSp = (double[]) elmt.getTagValue(TagW.PixelSpacing);
+                            if (pixSp == null || pixSpacing == null) {
+                                variablePixSpacing = true;
+                            } else {
+                                for (int i = 0; i < pixSp.length; i++) {
+                                    if (pixSpacing[1] != pixSp[i]) {
+                                        variablePixSpacing = true;
                                     }
                                 }
+                            }
 
-                            } else {
-                                pixSpacing =
-                                        (double[]) elmt.getTagValue(TagW.PixelSpacing);
-                            }
-                            lastPos = pos;
-                            if (!variablePixSpacing && pixSpacing != null) {
-                                seriesToLoad.setAcquisitionPixelSpacing(pixSpacing);
-                            } else {
-                                seriesToLoad.textureLogInfo.writeText(
-                                        "Found variable or unknown pixel-spacing.");
-                            }
+                        } else {
+                            pixSpacing = (double[]) elmt.getTagValue(TagW.PixelSpacing);
                         }
+                        lastPos = pos;
+                        if (!variablePixSpacing && pixSpacing != null) {
+                            seriesToLoad.setAcquisitionPixelSpacing(pixSpacing);
+                        } else {
+                            seriesToLoad.textureLogInfo.writeText("Found variable or unknown pixel-spacing.");
+                        }
+                    }
                 }
                 place++;
             }
         }
     }
-    
+
     /**
      * Loads one image and updates some related parameters.
+     * 
      * @param seriesToLoad
      * @param element
-     * @param place 
+     * @param place
      */
-    private static void updateTextureElement(
-            final TextureDicomSeries seriesToLoad,
-            final DicomImageElement element, final int place) {
-        
-        //Must call getImage here to make ImageElement calculate MinMax values.
-            if (!element.isImageAvailable()) {
-                element.getImage();
-            }
+    private static void updateTextureElement(final TextureDicomSeries seriesToLoad, final DicomImageElement element,
+        final int place) {
 
-            Object tagWidth = seriesToLoad.getTagValue(TagW.WindowWidth);
-            Object tagCenter = seriesToLoad.getTagValue(TagW.WindowCenter);
-            if (tagWidth instanceof ArrayList && tagCenter instanceof ArrayList) {
-                feedInValues(element, seriesToLoad,
-                            (ArrayList) tagWidth, (ArrayList) tagCenter);
-            } else {
-                feedInValues(element, seriesToLoad,
-                            new ArrayList<Float[]>(), new ArrayList<Float[]>());
-            }
-            
-            String info = putElementInImageSeries(element, seriesToLoad, place);
-            
-            updateOrientationTag(seriesToLoad, element);
-            LOGGER.debug("Series.size: " + seriesToLoad.getSeries().size(null)
-                    + " / Loaded: " + place + ": " + info);
+        // Must call getImage here to make ImageElement calculate MinMax values.
+        if (!element.isImageAvailable()) {
+            element.getImage();
+        }
+
+        Object tagWidth = seriesToLoad.getTagValue(TagW.WindowWidth);
+        Object tagCenter = seriesToLoad.getTagValue(TagW.WindowCenter);
+        if (tagWidth instanceof ArrayList && tagCenter instanceof ArrayList) {
+            feedInValues(element, seriesToLoad, (ArrayList) tagWidth, (ArrayList) tagCenter);
+        } else {
+            feedInValues(element, seriesToLoad, new ArrayList<Float[]>(), new ArrayList<Float[]>());
+        }
+
+        String info = putElementInImageSeries(element, seriesToLoad, place);
+
+        updateOrientationTag(seriesToLoad, element);
+        LOGGER.debug("Series.size: " + seriesToLoad.getSeries().size(null) + " / Loaded: " + place + ": " + info);
     }
 
-
-    private static class LoadOneImageThread extends SwingWorker<Void, Void>{
+    private static class LoadOneImageThread extends SwingWorker<Void, Void> {
         private TextureDicomSeries seriesToLoad;
         private DicomImageElement element;
         private int place;
-        
-        protected LoadOneImageThread(TextureDicomSeries imSeries,
-                DicomImageElement elmt, int place) {
+
+        protected LoadOneImageThread(TextureDicomSeries imSeries, DicomImageElement elmt, int place) {
             seriesToLoad = imSeries;
             element = elmt;
             this.place = place;
         }
-        
+
         @Override
         protected Void doInBackground() throws Exception {
             updateTextureElement(seriesToLoad, element, place);
@@ -878,14 +811,13 @@ public class ImageSeriesFactory {
                 updateMultiplier(seriesToLoad);
             }
             if (seriesToLoad.getSeries().size(null) == seriesToLoad.getSliceCount()) {
-                fireProperyChange(this,
-                    "texture.loadComplete", seriesToLoad.getSeries());
+                fireProperyChange(this, "texture.loadComplete", seriesToLoad.getSeries());
             }
-            
+
             fireProperyChange(seriesToLoad, "texture.doDisplay", seriesToLoad.getSeries());
             return null;
         }
-        
+
         @Override
         public void done() {
             try {
@@ -899,10 +831,8 @@ public class ImageSeriesFactory {
         }
     }
 
-
     /**
-     * Inner class Loader.
-     * Loads all imagens in order, using a secondary thread.
+     * Inner class Loader. Loads all imagens in order, using a secondary thread.
      */
     protected class LoaderThread extends SwingWorker<Void, Void> {
         protected TextureDicomSeries seriesToLoad;
@@ -913,31 +843,31 @@ public class ImageSeriesFactory {
             this.seriesToLoad = seriesToLoad;
             this.series = series;
         }
-        
+
         protected void setToCancel() {
             LOGGER.debug("Factory of " + series + "marked to cancel.");
             pleaseCancel = true;
         }
-        
+
         @Override
         protected Void doInBackground() throws Exception {
             ArrayList<Float[]> windowValues = new ArrayList<Float[]>();
             ArrayList<Float[]> levelValues = new ArrayList<Float[]>();
-            
+
             String lastInfo = "";
 
             zSpacing = 1;
             double lastPos = 0;
             boolean variableOP = false;
             boolean variablePixSpacing = false;
-            
+
             seriesToLoad.windowingMinInValue = MAX_16;
-            seriesToLoad.windowingMaxInValue = - MAX_16;
-            
-            //Se o comparator for Instance number dá para acrescentar as outras depois,
-            //mas nao dá para usar  Object media = series.getMedia(place, null, comparator);
-            //enquanto wado nao acabou!
-            
+            seriesToLoad.windowingMaxInValue = -MAX_16;
+
+            // Se o comparator for Instance number dá para acrescentar as outras depois,
+            // mas nao dá para usar Object media = series.getMedia(place, null, comparator);
+            // enquanto wado nao acabou!
+
             for (int place = 0; place < series.size(null); place++) {
                 if (pleaseCancel) {
                     return null;
@@ -948,42 +878,38 @@ public class ImageSeriesFactory {
                 Object media = series.getMedia(place, null, comparator);
                 if (media instanceof DicomImageElement) {
                     DicomImageElement elmt = (DicomImageElement) media;
-                    
-                    //Must call getImage here to make ImageElement calculate MinMax values.
+
+                    // Must call getImage here to make ImageElement calculate MinMax values.
                     if (!elmt.isImageAvailable()) {
                         elmt.getImage();
                     }
-                    
+
                     feedInValues(elmt, seriesToLoad, windowValues, levelValues);
-                    
-                    //dimensionMultiplier//////////////////////////////////////
-                    //take from SlicePosition (see SeriesBuilder::writeBlock)
+
+                    // dimensionMultiplier//////////////////////////////////////
+                    // take from SlicePosition (see SeriesBuilder::writeBlock)
                     double[] sp = (double[]) elmt.getTagValue(TagW.SlicePosition);
                     if (sp != null) {
 
                         double pos = (sp[0] + sp[1] + sp[2]);
                         if (place > 0) {
                             double space = pos - lastPos;
-                            
+
                             zSpacing = space;
                             seriesToLoad.addZSpacingOccurence(space);
-                                   
-                            if (place == 1) { //is second
-                                Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1],
-                                        Math.abs(zSpacing));
+
+                            if (place == 1) { // is second
+                                Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1], Math.abs(zSpacing));
                                 seriesToLoad.setDimensionMultiplier(vector);
-                            } else if (place == series.size(null) - 1) { //is last
+                            } else if (place == series.size(null) - 1) { // is last
                                 zSpacing = seriesToLoad.getMostCommonSpacing();
-                                Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1],
-                                        Math.abs(zSpacing));
+                                Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1], Math.abs(zSpacing));
                                 seriesToLoad.setDimensionMultiplier(vector);
-                                seriesToLoad.textureLogInfo.writeText(
-                                        "Last dimension multiplier vector: "
-                                        + vector);
+                                seriesToLoad.textureLogInfo.writeText("Last dimension multiplier vector: " + vector);
                             }
-                            
-                            //Verify pixelSpacing
-                            double[] pixSp =(double[]) elmt.getTagValue(TagW.PixelSpacing);
+
+                            // Verify pixelSpacing
+                            double[] pixSp = (double[]) elmt.getTagValue(TagW.PixelSpacing);
                             if (pixSp == null || pixSpacing == null) {
                                 variablePixSpacing = true;
                             } else {
@@ -995,19 +921,17 @@ public class ImageSeriesFactory {
                             }
 
                         } else {
-                            pixSpacing =
-                                    (double[]) elmt.getTagValue(TagW.PixelSpacing);
+                            pixSpacing = (double[]) elmt.getTagValue(TagW.PixelSpacing);
                         }
                         lastPos = pos;
                         if (!variablePixSpacing && pixSpacing != null) {
                             seriesToLoad.setAcquisitionPixelSpacing(pixSpacing);
                         } else {
-                            seriesToLoad.textureLogInfo.writeText(
-                                    "Found variable or unknown pixel-spacing.");
+                            seriesToLoad.textureLogInfo.writeText("Found variable or unknown pixel-spacing.");
                         }
                     }
-                    /////////////////////////////////////////////////////////
-                    
+                    // ///////////////////////////////////////////////////////
+
                     // ImageOrientationPatient //////////////////////////////
                     double[] imOri = (double[]) elmt.getTagValue(TagW.ImageOrientationPatient);
                     if (imOri != null && imOri.length == 6) {
@@ -1021,30 +945,27 @@ public class ImageSeriesFactory {
                             LOGGER.info(bd.toString());
                             seriesToLoad.textureLogInfo.writeText(bd.toString());
                         } else {
-                            if (!variableOP && !isSameOrientation(imOri,
-                                seriesToLoad.getOriginalSeriesOrientationPatient())) {
-                                    
-                                //Could not find a case yet, but its possible!
-                                seriesToLoad.textureLogInfo.writeText(
-                                        "Found variable ImageOrientationPatient.");
+                            if (!variableOP
+                                && !isSameOrientation(imOri, seriesToLoad.getOriginalSeriesOrientationPatient())) {
+
+                                // Could not find a case yet, but its possible!
+                                seriesToLoad.textureLogInfo.writeText("Found variable ImageOrientationPatient.");
                                 variableOP = true;
-                                seriesToLoad.setOrientationPatient(new double[] {0}); 
+                                seriesToLoad.setOrientationPatient(new double[] { 0 });
                             }
                         }
                     }
-                    
-                    String info = putElementInImageSeries(
-                            elmt, seriesToLoad, place);
+
+                    String info = putElementInImageSeries(elmt, seriesToLoad, place);
                     if (!info.equals(lastInfo)) {
                         lastInfo = info;
                         LOGGER.info(lastInfo);
                         seriesToLoad.textureLogInfo.writeText(lastInfo);
                     }
                 }
-                
+
                 if (place % 10 == 0) {
-                    fireProperyChange(ImageSeriesFactory.this,
-                            TEXTURE_DO_DISPLAY, seriesToLoad.getSeries());
+                    fireProperyChange(ImageSeriesFactory.this, TEXTURE_DO_DISPLAY, seriesToLoad.getSeries());
                 }
             }
 
@@ -1053,13 +974,11 @@ public class ImageSeriesFactory {
             LOGGER.info(log);
             seriesToLoad.textureLogInfo.writeText(log);
             seriesToLoad.setFactoryDone(true);
-            fireProperyChange(ImageSeriesFactory.this, TEXTURE_LOAD_COMPLETE,
-                    seriesToLoad.getSeries());
-            
+            fireProperyChange(ImageSeriesFactory.this, TEXTURE_LOAD_COMPLETE, seriesToLoad.getSeries());
+
             return null;
         }
-        
-        
+
         @Override
         public void done() {
             try {
@@ -1073,8 +992,7 @@ public class ImageSeriesFactory {
                 Throwable cause = ex.getCause();
                 seriesToLoad.setFactoryDone(true);
                 seriesToLoad.setFactorySW(null);
-                seriesToLoad.textureLogInfo.writeText(
-                        "done with error: " + ex + " cause: " + cause);
+                seriesToLoad.textureLogInfo.writeText("done with error: " + ex + " cause: " + cause);
                 if (cause != null) {
                     cause.printStackTrace();
                 } else {
@@ -1083,18 +1001,17 @@ public class ImageSeriesFactory {
             }
         }
     }
-    
+
     protected class WadoSafeLoader extends LoaderThread {
 
         public WadoSafeLoader(TextureDicomSeries imSeries, MediaSeries series) {
             super(imSeries, series);
         }
-        
+
         @Override
         protected Void doInBackground() throws Exception {
-            Iterator iterator = series.copyOfMedias(null,
-                    SortSeriesStack.instanceNumber).iterator();
-            
+            Iterator iterator = series.copyOfMedias(null, SortSeriesStack.instanceNumber).iterator();
+
             boolean[] placesInVideo = seriesToLoad.getPlacesInVideo();
 
             while (iterator.hasNext()) {
@@ -1107,19 +1024,17 @@ public class ImageSeriesFactory {
                     DicomImageElement element = (DicomImageElement) next;
                     Integer inst = (Integer) element.getTagValue(TagW.InstanceNumber);
                     if (inst == null) {
-                        throw new IllegalArgumentException(
-                                "Cant load images in multiple threads without"
-                                + " InstanceNumber information.");
+                        throw new IllegalArgumentException("Cant load images in multiple threads without"
+                            + " InstanceNumber information.");
                     }
                     if (!placesInVideo[inst - 1]) {
                         updateTextureElement(seriesToLoad, element, inst - 1);
                     }
                 }
             }
-            
+
             updateMultiplier(seriesToLoad);
-            fireProperyChange(this,
-                TEXTURE_LOAD_COMPLETE, seriesToLoad.getSeries());
+            fireProperyChange(this, TEXTURE_LOAD_COMPLETE, seriesToLoad.getSeries());
 
             final long stop = System.currentTimeMillis();
             String log = "Loading time: " + ((stop - timeStarted) / 1000) + " s";

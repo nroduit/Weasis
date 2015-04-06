@@ -11,7 +11,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+
 import javax.vecmath.Quat4d;
+
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
@@ -27,13 +29,13 @@ import org.weasis.core.ui.graphic.model.GraphicList;
  */
 public class GraphicsModel {
     
-    protected DVLayerModel layerModel;
+    protected AbstractLayerModel layerModel;
     private ViewModel viewModel;
     protected final AffineTransform affineTransform = new AffineTransform();
     protected final AffineTransform inverseTransform = new AffineTransform();
     
     
-    public GraphicsModel(final DVLayerModel lModel, final ViewModel vModel) {
+    public GraphicsModel(final AbstractLayerModel lModel, final ViewModel vModel) {
         layerModel = lModel;
         viewModel = vModel;
     }
