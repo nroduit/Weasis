@@ -205,7 +205,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             return;
         }
         adapter.setButtonMaskEx(adapter.getButtonMaskEx() | buttonMask);
-        if (adapter == mouseClickHandler) {
+        if (adapter == graphicMouseHandler) {
             this.addKeyListener(drawingsKeyListeners);
         } else if (adapter instanceof PannerListener) {
             ((PannerListener) adapter).reset();
@@ -234,7 +234,7 @@ public class View2d extends DefaultView2d<ImageElement> {
 
     private MouseActionAdapter getMouseAdapter(String action) {
         if (action.equals(ActionW.MEASURE.cmd())) {
-            return mouseClickHandler;
+            return graphicMouseHandler;
         } else if (action.equals(ActionW.PAN.cmd())) {
             return getAction(ActionW.PAN);
         } else if (action.equals(ActionW.CONTEXTMENU.cmd())) {
@@ -265,7 +265,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         }
         // reset context menu that is a field of this instance
         contextMenuHandler.setButtonMaskEx(0);
-        mouseClickHandler.setButtonMaskEx(0);
+        graphicMouseHandler.setButtonMaskEx(0);
     }
 
     private MouseActionAdapter getAction(ActionW action) {
@@ -341,13 +341,14 @@ public class View2d extends DefaultView2d<ImageElement> {
                                             new MouseEventDouble(View2d.this, MouseEvent.MOUSE_PRESSED, evt.getWhen(),
                                                 16, evt.getX(), evt.getY(), evt.getXOnScreen(), evt.getYOnScreen(), 1,
                                                 true, 1);
-                                        mouseClickHandler.mousePressed(evt2);
+                                        graphicMouseHandler.mousePressed(evt2);
                                     }
                                 });
                                 popupMenu.add(menuItem);
                                 popupMenu.add(new JSeparator());
                             }
-                        } else if (ds != null && absgraph.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
+                        } else if (graphicMouseHandler.getDragSequence() != null
+                            && absgraph.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
                             final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                             item2.addActionListener(new ActionListener() {
 
@@ -355,8 +356,8 @@ public class View2d extends DefaultView2d<ImageElement> {
                                 public void actionPerformed(ActionEvent e) {
                                     MouseEventDouble event =
                                         new MouseEventDouble(View2d.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
-                                    ds.completeDrag(event);
-                                    mouseClickHandler.mouseReleased(event);
+                                    graphicMouseHandler.getDragSequence().completeDrag(event);
+                                    graphicMouseHandler.mouseReleased(event);
                                 }
                             });
                             popupMenu.add(item2);

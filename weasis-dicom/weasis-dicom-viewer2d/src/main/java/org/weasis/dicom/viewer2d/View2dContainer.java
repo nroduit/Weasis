@@ -158,7 +158,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ZoomToolBar.class), key, true)) {
-                TOOLBARS.add(new ZoomToolBar(evtMg, 20));
+                TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(RotationToolBar.class), key, true)) {
@@ -166,11 +166,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(DcmHeaderToolBar.class), key, true)) {
-                TOOLBARS.add(new DcmHeaderToolBar<DicomImageElement>(35));
+                TOOLBARS.add(new DcmHeaderToolBar(evtMg, 35));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(LutToolBar.class), key, true)) {
-                TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
+                TOOLBARS.add(new LutToolBar(evtMg, 40));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(Basic3DToolBar.class), key, true)) {
@@ -337,7 +337,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             public void run() {
                 for (ViewCanvas v : view2ds) {
                     resetMaximizedSelectedImagePane(v);
-                    v.dispose();
+                    v.disposeView();
                 }
             }
         });

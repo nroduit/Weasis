@@ -120,7 +120,7 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
             if (handlePt != null) {
                 Point mousePt = graphPane.getMouseCoordinatesFromImage(handlePt.getX(), handlePt.getY());
 
-                if (event.getX() != mousePt.x || event.getY() != mousePt.y) {
+                if (mousePt != null && (event.getX() != mousePt.x || event.getY() != mousePt.y)) {
                     try {
                         event.translatePoint(mousePt.x - event.getX(), mousePt.y - event.getY());
                         event.setImageCoordinates(handlePt);

@@ -550,7 +550,7 @@ public class DicomPrintDialog extends JDialog {
                     this,
                     Messages.getString("DicomPrintDialog.error_print"), Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
         } finally {
-            exportImage.dispose();
+            exportImage.disposeView();
         }
         dispose();
     }

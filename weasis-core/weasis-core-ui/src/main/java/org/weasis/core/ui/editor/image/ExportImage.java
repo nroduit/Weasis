@@ -88,7 +88,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     }
 
     @Override
-    public void dispose() {
+    public void disposeView() {
         disableMouseAndKeyListener();
         removeFocusListener(this);
         ToolTipManager.sharedInstance().unregisterComponent(this);

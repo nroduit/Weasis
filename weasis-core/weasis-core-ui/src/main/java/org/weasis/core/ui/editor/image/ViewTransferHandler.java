@@ -109,7 +109,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
                 g.dispose();
             }
         } finally {
-            exportImage.dispose();
+            exportImage.disposeView();
         }
         return image;
     }

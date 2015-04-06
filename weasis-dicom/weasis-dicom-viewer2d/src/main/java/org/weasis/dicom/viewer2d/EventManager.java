@@ -237,10 +237,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         initializeParameters();
     }
 
-    private void iniAction(ActionState action) {
-        actions.put(action.getActionW(), action);
-    }
-
     private void initializeParameters() {
         enableActions(false);
     }

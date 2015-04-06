@@ -7,15 +7,19 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 
+import javax.swing.JComponent;
+
 import org.weasis.core.api.gui.model.ViewModel;
 
 public interface Canvas {
+
+    JComponent getJComponent();
 
     AffineTransform getAffineTransform();
 
     AffineTransform getInverseTransform();
 
-    void dispose();
+    void disposeView();
 
     /**
      * Gets the view model.

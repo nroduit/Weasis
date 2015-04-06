@@ -70,6 +70,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         super();
     }
 
+    protected void iniAction(ActionState action) {
+        actions.put(action.getActionW(), action);
+    }
+
     protected SliderCineListener getMoveTroughSliceAction(int speed, final TIME time, double mouseSensivity) {
         return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensivity) {
 

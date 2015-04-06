@@ -267,7 +267,7 @@ public class PrintDialog extends javax.swing.JDialog {
             exportImage.getInfoLayer().setBorder(2);
             ImagePrint print = new ImagePrint(exportImage, printOptions);
             print.print();
-            exportImage.dispose();
+            exportImage.disposeView();
         }
 
     }

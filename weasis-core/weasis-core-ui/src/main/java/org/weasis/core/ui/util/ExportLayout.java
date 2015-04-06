@@ -82,7 +82,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
 
     public void dispose() {
         for (ExportImage<E> v : viewList) {
-            v.dispose();
+            v.disposeView();
         }
     }
 

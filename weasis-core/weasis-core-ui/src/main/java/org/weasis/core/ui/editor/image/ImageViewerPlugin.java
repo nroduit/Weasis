@@ -65,7 +65,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
 
     // A model must have at least one view that inherited of DefaultView2d
-    public static final Class view2dClass = DefaultView2d.class;
+    public static final Class view2dClass = ViewCanvas.class;
     public static final GridBagLayoutModel VIEWS_1x1 =
         new GridBagLayoutModel(
             "1x1", //$NON-NLS-1$
@@ -280,7 +280,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             if (v.getSeries() != null && v.getImage() != null) {
                 oldViews.add(v);
             } else {
-                v.dispose();
+                v.disposeView();
             }
         }
         view2ds.clear();
@@ -288,7 +288,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         int nbview = getViewTypeNumber(layoutModel, view2dClass);
         if (oldViews.size() > nbview) {
             for (int i = oldViews.size() - 1; i >= nbview; i--) {
-                oldViews.remove(i).dispose();
+                oldViews.remove(i).disposeView();
             }
         }
         for (Component c : components) {
@@ -373,7 +373,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     if (selectedImagePane == oldView2d) {
                         selectedImagePane = newView2d;
                     }
-                    oldView2d.dispose();
+                    oldView2d.disposeView();
                     int index = view2ds.indexOf(oldView2d);
                     if (index >= 0) {
                         view2ds.set(index, newView2d);

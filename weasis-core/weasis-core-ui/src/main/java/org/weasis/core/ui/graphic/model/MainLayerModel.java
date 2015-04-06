@@ -17,7 +17,7 @@ package org.weasis.core.ui.graphic.model;
  */
 public class MainLayerModel extends AbstractLayerModel {
 
-    public MainLayerModel(GraphicsPane mainCanvas) {
+    public MainLayerModel(Canvas mainCanvas) {
         super(mainCanvas);
     }
 

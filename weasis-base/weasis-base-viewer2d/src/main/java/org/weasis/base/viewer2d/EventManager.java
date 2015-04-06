@@ -171,10 +171,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         initializeParameters();
     }
 
-    private void iniAction(ActionState action) {
-        actions.put(action.getActionW(), action);
-    }
-
     private void initializeParameters() {
         enableActions(false);
     }

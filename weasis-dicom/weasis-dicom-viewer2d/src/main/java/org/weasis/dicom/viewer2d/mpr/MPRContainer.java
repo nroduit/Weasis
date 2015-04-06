@@ -154,10 +154,10 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             EventManager evtMg = EventManager.getInstance();
             TOOLBARS.add(View2dContainer.TOOLBARS.get(0));
             TOOLBARS.add(new MeasureToolBar(evtMg, 11));
-            TOOLBARS.add(new ZoomToolBar(evtMg, 20));
+            TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
-            TOOLBARS.add(new DcmHeaderToolBar<DicomImageElement>(35));
-            TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
+            TOOLBARS.add(new DcmHeaderToolBar(evtMg, 35));
+            TOOLBARS.add(new LutToolBar(evtMg, 40));
 
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             Preferences prefs = BundlePreferences.getDefaultPreferences(context);
@@ -269,7 +269,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             @Override
             public void run() {
                 for (ViewCanvas v : view2ds) {
-                    v.dispose();
+                    v.disposeView();
                 }
             }
         });

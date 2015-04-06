@@ -1,5 +1,6 @@
 package org.weasis.core.ui.editor.image;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -13,7 +14,6 @@ import java.util.List;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
-import javax.swing.JComponent;
 
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.OpManager;
@@ -32,7 +32,8 @@ public interface ViewCanvas<E extends ImageElement> extends Canvas, Image2DViewe
     public static final int CENTER_POINTER = 1 << 1;
     public static final int HIGHLIGHTED_POINTER = 1 << 2;
 
-    JComponent getJComponent();
+    public static final Color focusColor = Color.orange;
+    public static final Color lostFocusColor = new Color(255, 224, 178);
 
     void registerDefaultListeners();
 

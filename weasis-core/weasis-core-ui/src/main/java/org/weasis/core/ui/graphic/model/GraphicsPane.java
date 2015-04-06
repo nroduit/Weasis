@@ -68,7 +68,7 @@ public class GraphicsPane extends JComponent implements Canvas {
     }
 
     @Override
-    public void dispose() {
+    public void disposeView() {
         if (viewModel != null) {
             viewModel.removeViewModelChangeListener(viewModelHandler);
             viewModel = null;
@@ -352,5 +352,10 @@ public class GraphicsPane extends JComponent implements Canvas {
         @Override
         public void keyTyped(KeyEvent e) {
         }
+    }
+
+    @Override
+    public JComponent getJComponent() {
+        return this;
     }
 }
