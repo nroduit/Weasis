@@ -538,6 +538,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             E oldImage = imageLayer.getSourceImage();
             if (img != null && !img.equals(oldImage)) {
                 actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
+                if ((eventManager.getSelectedViewPane() == this)) {
+                    ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+                    if (spUnitAction instanceof ComboItemListener) {
+                        ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
+                            .get(ActionW.SPATIAL_UNIT.cmd()));
+                    }
+                }
                 actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
                 final Rectangle modelArea = getImageBounds(img);
@@ -562,11 +569,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
                 imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
-                ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-                if (spUnitAction instanceof ComboItemListener) {
-                    ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
-                        .get(ActionW.SPATIAL_UNIT.cmd()));
-                }
                 AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
                 if (layer != null) {
                     synchronized (this) {
@@ -874,7 +876,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
             if (viewScale == 0.0) {
-                viewScale = -1.0;
+                viewScale = -adjustViewScale(1.0);
             }
         }
 
@@ -1529,7 +1531,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (drawOnceAction instanceof ToggleButtonListener) {
                     if (((ToggleButtonListener) drawOnceAction).isSelected()) {
                         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
-                        if (measure instanceof ComboItemListener) {
+                        if (measure instanceof ComboItemListener
+                            && eventManager.getSelectedViewPane() == DefaultView2d.this) {
                             ((ComboItemListener) measure).setSelectedItem(MeasureToolBar.selectionGraphic);
                         }
                     }
