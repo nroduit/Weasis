@@ -55,7 +55,6 @@ import org.weasis.core.ui.graphic.ImageLayerChangeListener;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
-import org.weasis.core.ui.graphic.model.MainLayerModel;
 import org.weasis.core.ui.pref.ZoomSetting;
 
 // TODO: Auto-generated Javadoc
@@ -182,9 +181,11 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     public void hideZoom() {
-        ActionState lens = view2d.getEventManager().getAction(ActionW.LENS);
-        if (lens instanceof ToggleButtonListener) {
-            ((ToggleButtonListener) lens).setSelected(false);
+        if (view2d.getEventManager().getSelectedViewPane() == view2d) {
+            ActionState lens = view2d.getEventManager().getAction(ActionW.LENS);
+            if (lens instanceof ToggleButtonListener) {
+                ((ToggleButtonListener) lens).setSelected(false);
+            }
         }
     }
 

@@ -543,6 +543,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             E oldImage = imageLayer.getSourceImage();
             if (img != null && !img.equals(oldImage)) {
                 actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
+                if ((eventManager.getSelectedViewPane() == this)) {
+                    ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+                    if (spUnitAction instanceof ComboItemListener) {
+                        ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
+                            .get(ActionW.SPATIAL_UNIT.cmd()));
+                    }
+                }
                 actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
                 ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
                 if (spUnitAction instanceof ComboItemListener) {
@@ -879,7 +886,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
             if (viewScale == 0.0) {
-                viewScale = -1.0;
+                viewScale = -adjustViewScale(1.0);
             }
         }
 
@@ -1534,7 +1541,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (drawOnceAction instanceof ToggleButtonListener) {
                     if (((ToggleButtonListener) drawOnceAction).isSelected()) {
                         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
-                        if (measure instanceof ComboItemListener) {
+                        if (measure instanceof ComboItemListener
+                            && eventManager.getSelectedViewPane() == DefaultView2d.this) {
                             ((ComboItemListener) measure).setSelectedItem(MeasureToolBar.selectionGraphic);
                         }
                     }
