@@ -488,7 +488,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
                                 @Override
                                 public void run() {
-                                    ActionState synch = EventManager.getInstance().getAction(ActionW.SYNCH);
+                                    ActionState synch = eventManager.getAction(ActionW.SYNCH);
                                     if (synch instanceof ComboItemListener) {
                                         ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
                                     }
@@ -499,13 +499,13 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                                         SliderCineListener sliceAction = (SliderCineListener) seqAction;
                                         sliceAction.setValue(sliceAction.getMax() / 2);
                                     }
-                                    ActionState cross = EventManager.getInstance().getAction(ActionW.CROSSHAIR);
+                                    ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
                                     if (cross instanceof CrosshairListener) {
                                         ((CrosshairListener) cross).setPoint(view.getImageCoordinatesFromMouse(
                                             view.getWidth() / 2, view.getHeight() / 2));
                                     }
                                     // Force to propagate the default preset
-                                    ActionState presetAction = EventManager.getInstance().getAction(ActionW.PRESET);
+                                    ActionState presetAction = eventManager.getAction(ActionW.PRESET);
                                     if (presetAction instanceof ComboItemListener) {
                                         ComboItemListener p = (ComboItemListener) presetAction;
                                         p.setSelectedItemWithoutTriggerAction(null);

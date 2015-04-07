@@ -195,7 +195,7 @@ public class CalibrationView extends JPanel {
                             updateLabel(image, view2d);
                         }
 
-                        if (!unit.equals(imgUnit)) {
+                        if (!unit.equals(imgUnit) && view2d.getEventManager().getSelectedViewPane() == view2d) {
                             ActionState spUnitAction = view2d.getEventManager().getAction(ActionW.SPATIAL_UNIT);
                             if (spUnitAction instanceof ComboItemListener) {
                                 ((ComboItemListener) spUnitAction).setSelectedItem(unit);

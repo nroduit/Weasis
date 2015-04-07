@@ -289,7 +289,7 @@ public final class KOManager {
                 }
 
                 boolean filter = JMVUtils.getNULLtoFalse(view2d.getActionValue(ActionW.KO_FILTER.cmd()));
-                if (filter) {
+                if (filter && (view2d.getEventManager().getSelectedViewPane() == view2d)) {
                     // When unchecking an image, force to call the filter action to resize the views
                     ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
                     if (koFilterAction instanceof ToggleButtonListener) {
