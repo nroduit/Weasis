@@ -111,7 +111,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             TOOLBARS.add(new ViewerToolBar<ImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
                 BundleTools.SYSTEM_PREFERENCES, 10));
             TOOLBARS.add(new MeasureToolBar(evtMg, 11));
-            TOOLBARS.add(new ZoomToolBar(evtMg, 20));
+            TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
 
             PluginTool tool = new MiniTool(MiniTool.BUTTON_NAME) {
