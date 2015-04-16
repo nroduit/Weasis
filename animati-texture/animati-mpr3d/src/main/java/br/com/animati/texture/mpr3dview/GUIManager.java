@@ -54,7 +54,6 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
-import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
@@ -82,6 +81,7 @@ import br.com.animati.texture.mpr3dview.ViewTexture.ViewType;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
 import br.com.animati.texturedicom.ColorMask;
 import br.com.animati.texturedicom.TextureImageCanvas;
+import java.awt.Dimension;
 
 /**
  * Deals with global events of interface: - Selected Container; - Mouse Actions; - Measurements list, next graphic to
@@ -127,7 +127,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
     private final ComboItemListener spUnitAction;
     private final ComboItemListener mipOptionAction;
 
-    private final PannerListener panAction;
+    private final TexturePannerListener panAction;
     private final CrosshairListener crosshairAction;
 
     private GUIManager() {
@@ -163,7 +163,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
         iniAction(spUnitAction = newSpatialUnit(Unit.values()));
         iniAction(mipOptionAction = newMipOption());
 
-        iniAction(panAction = newPanAction());
+        iniAction(panAction = buildPanAction());
         iniAction(crosshairAction = newCrosshairAction());
         iniAction(new BasicActionState(ActionW.RESET));
         iniAction(new BasicActionState(ActionW.SHOW_HEADER));
@@ -178,6 +178,19 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
 
     private void initializeParameters() {
         enableActions(false);
+    }
+    
+    protected TexturePannerListener buildPanAction() {
+        return new TexturePannerListener(ActionW.PAN) {
+
+            @Override
+            public void pointChanged(int x, int y) {
+                Dimension offset = (Dimension) new Dimension(x, y);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
+                    offset));
+            }
+
+        };
     }
 
     private SliderChangeListener newScrollSeries() {

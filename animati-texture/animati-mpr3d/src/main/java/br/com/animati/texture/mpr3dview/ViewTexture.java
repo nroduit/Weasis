@@ -164,7 +164,7 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
     private final ImageViewerEventManager<DicomImageElement> eventManager;
 
     private ViewType viewType;
-
+    
     public ViewTexture(ImageViewerEventManager<DicomImageElement> eventManager, ImageSeries parentImageSeries)
         throws Exception {
         super(parentImageSeries);
@@ -449,15 +449,9 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
                     actionsInView.put(ViewCanvas.zoomTypeCmd, zoomType);
                 }
             } else if (command.equals(ActionW.PAN.cmd())) {
-                Object point = entry.getValue();
-                // ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
-                // if (view != null) {
-                // if(!view.getSynchView().isActionEnable(ActionW.ROTATION)){
-                //
-                // }
-                // }
-                if (point instanceof PanPoint) {
-                    moveOrigin((PanPoint) entry.getValue());
+                if (entry.getValue() instanceof Dimension) {
+                    Dimension offset = (Dimension) entry.getValue();
+                    moveImageOffset(offset.width, offset.height);
                 }
 
             } else if (command.equals(ActionW.FLIP.cmd())) {
@@ -1073,77 +1067,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         return (TextureDicomSeries) getParentImageSeries();
     }
 
-    // private void initWindowLevelActions() {
-    // actionsInView.put(ActionW.PRESET.cmd(), new ActionDataModel(ActionW.PRESET, null, null) {
-    // @Override
-    // public Object getActionData() {
-    // if (getParentImageSeries() instanceof TextureDicomSeries) {
-    // return ((TextureDicomSeries) getParentImageSeries()).getPresetList(true, false);
-    // }
-    // return null;
-    // }
-    //
-    // @Override
-    // public void setActionValue(Object value) {
-    // Object oldVal = getActionValue();
-    // if (value instanceof PresetWindowLevel) {
-    // PresetWindowLevel preset = (PresetWindowLevel) value;
-    // windowAction.setValue(preset.getWindow().intValue());
-    // levelAction.setValue(preset.getLevel().intValue());
-    // repaint();
-    // }
-    // super.setActionValue(value);
-    //
-    // if (oldVal != value) {
-    // EventPublisher.getInstance().publish(
-    // new PropertyChangeEvent(ViewTexture.this, EventPublisher.VIEWER_ACTION_CHANGED
-    // + ActionW.PRESET.cmd(), oldVal, value));
-    // }
-    // }
-    // });
-    //
-    // actionsInView.put(ActionW.WINDOW.cmd(), new ActionDataModel(ActionW.WINDOW, null, null) {
-    // @Override
-    // public Object getActionData() {
-    // return windowAction.getModel();
-    // }
-    //
-    // @Override
-    // public Object getActionValue() {
-    // return (float) windowAction.getValue();
-    // }
-    //
-    // @Override
-    // public void setActionValue(Object value) {
-    // if (value instanceof Integer) {
-    // windowAction.setValue((Integer) value);
-    // } else if (value instanceof Float) {
-    // windowAction.setValue(Math.round((Float) value));
-    // }
-    // }
-    // });
-    // actionsInView.put(ActionW.LEVEL.cmd(), new ActionDataModel(ActionW.LEVEL, null, null) {
-    // @Override
-    // public Object getActionData() {
-    // return levelAction.getModel();
-    // }
-    //
-    // @Override
-    // public Object getActionValue() {
-    // return (float) levelAction.getValue();
-    // }
-    //
-    // @Override
-    // public void setActionValue(Object value) {
-    // if (value instanceof Integer) {
-    // levelAction.setValue((Integer) value);
-    // } else if (value instanceof Float) {
-    // levelAction.setValue(Math.round((Float) value));
-    // }
-    // }
-    // });
-    //
-    // }
 
     @Override
     public void moveImageOffset(int width, int height) {
