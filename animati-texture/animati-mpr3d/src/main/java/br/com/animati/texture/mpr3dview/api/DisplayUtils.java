@@ -7,16 +7,16 @@ package br.com.animati.texture.mpr3dview.api;
 import java.awt.Component;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+
 import javax.vecmath.Vector3d;
+
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 
 /**
@@ -257,25 +257,7 @@ public class DisplayUtils {
             return patient.getTagValue(tag);
         }
         return null;
-    }
-    
-    public static String getBirthAndDate(final MediaSeriesGroup patient,
-            final MediaSeriesGroup study, final Series series, final ImageElement dcm) {
-        Object birthDate = getTagValue(TagW.PatientBirthDate, patient, study, series, dcm);
-        String age = (String) getTagValue(TagW.PatientAge, patient, study, series, dcm);
-        StringBuilder info = new StringBuilder();
-        if (birthDate != null) { 
-            String str = TagW.PatientBirthDate.getFormattedText(birthDate, null);
-            if (StringUtil.hasText(str)) {
-                info.append(str);
-            }
-        }
-        if (age != null && StringUtil.hasText(age) && !DicomMediaIO.NO_VALUE.equals(age)) {
-            info.append(" - ").append(age);
-        }
-
-        return info.toString();
-    }
+    }  
     
     public static int convertStringToNumber(String number) {
         try {

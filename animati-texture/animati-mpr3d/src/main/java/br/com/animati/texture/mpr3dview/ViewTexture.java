@@ -459,7 +459,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
                     windowingWindow = preset.getWindow().intValue();
                     windowingLevel = preset.getLevel().intValue();
                     // TODO preset.getLutShape()
-
                     repaint();
                 }
                 setActionsInView(ActionW.PRESET.cmd(), val, false);

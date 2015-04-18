@@ -187,8 +187,8 @@ public class InfoLayer3d extends AbstractInfoLayer {
         if (getDisplayPreferences(WINDOW_LEVEL)) {
             GraphicLabel.paintFontOutline(g2d,
                     Messages.getString("InfoLayer3d.WL")
-                    + " " + owner.getActionValue(ActionW.WINDOW.cmd())
-                    + " / " + owner.getActionValue(ActionW.LEVEL.cmd()),
+                    + " " + owner.windowingWindow
+                    + " / " + owner.windowingLevel,
                     border, drawY);
             drawY -= fontHeight;
         }
@@ -252,21 +252,16 @@ public class InfoLayer3d extends AbstractInfoLayer {
             TagView[] infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
+                    Object value = null;
                     for (TagW tag : infos[j].getTag()) {
                         if (!anonymize || tag.getAnonymizationType() != 1) {
-                            String str = "";
-                            if (tag.equals(TagW.PatientBirthDate)) {
-                                str = DisplayUtils.getBirthAndDate(patient, study, series, dcm);
-                            } else {
-                                Object value = DisplayUtils.getTagValue(tag, patient, study, series, dcm);
-                                if (value != null) {
-                                    str = tag.getFormattedText(value, infos[j].getFormat());
+                            value = DisplayUtils.getTagValue(tag, patient, study, series, dcm);
+                            if (value != null) {
+                                String str = tag.getFormattedText(value, infos[j].getFormat());
+                                if (StringUtil.hasText(str)) {
+                                    GraphicLabel.paintFontOutline(g2d, str, border, drawY);
+                                    drawY += fontHeight;
                                 }
-                            }
-
-                            if (StringUtil.hasText(str)) {
-                                GraphicLabel.paintFontOutline(g2d, str, border, drawY);
-                                drawY += fontHeight;
                                 break;
                             }
                         }
@@ -289,7 +284,10 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                     ViewTexture texture = owner;                            
                                     value = owner.getSeriesObject().
                                             getTagValue(tag, texture.getCurrentSlice() - 1);                            
-                                }                        
+                                } 
+                                else if (tag.getTagName().equals("AcquisitionTime")) {
+                                    break;
+                                }
                             }
                             
                             if (tag.getTagName().equals("DisableReports")
@@ -378,7 +376,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
     public double getOwnerZoomFactor() {
         Object zoom = owner.getActionValue(ActionW.ZOOM.cmd());
         if (zoom instanceof Double) {
-            return (Double) zoom;
+            return Math.abs((Double) zoom);
         }
         return 0;
     }
