@@ -5,6 +5,7 @@
 
 package br.com.animati.texture.mpr3dview;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -13,6 +14,8 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,6 +30,8 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
@@ -98,6 +103,7 @@ import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.PanPoint;
+import org.weasis.core.ui.graphic.PanPoint.STATE;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
@@ -140,6 +146,21 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         AXIAL, CORONAL, SAGITTAL, VOLUME3D
     };
 
+    static final Shape[] pointer;
+    static {
+        pointer = new Shape[5];
+        pointer[0] = new Ellipse2D.Double(-27.0, -27.0, 54.0, 54.0);
+        pointer[1] = new Line2D.Double(-40.0, 0.0, -5.0, 0.0);
+        pointer[2] = new Line2D.Double(5.0, 0.0, 40.0, 0.0);
+        pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
+        pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
+    }
+    private final PanPoint highlightedPosition = new PanPoint(STATE.Center);
+    private int pointerType = 0;
+
+    protected final Color pointerColor1 = Color.black;
+    protected final Color pointerColor2 = Color.white;
+
     /** Tolerance to consider an axix as the Acquisition Axis. */
     private double WARNING_TOLERANCE = 0.0001;
 
@@ -164,7 +185,7 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
     private final ImageViewerEventManager<DicomImageElement> eventManager;
 
     private ViewType viewType;
-    
+
     public ViewTexture(ImageViewerEventManager<DicomImageElement> eventManager, ImageSeries parentImageSeries)
         throws Exception {
         super(parentImageSeries);
@@ -277,6 +298,7 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
 
             g2d.translate(offsetX, offsetY);
 
+            drawPointer(g2d);
             if (infoLayer != null) {
                 g2d.setFont(getLayerFont());
                 infoLayer.paint(g2d);
@@ -304,6 +326,20 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
                 new Rectangle2D.Double(graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetX()),
                     graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetY()), getWidth(),
                     getHeight()));
+        }
+    }
+
+    private void drawPointer(Graphics2D g) {
+        if (pointerType < 1) {
+            return;
+        }
+        if ((pointerType & CENTER_POINTER) == CENTER_POINTER) {
+            drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5);
+        }
+        if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER && highlightedPosition.isHighlightedPosition()) {
+            // Display the position on the center of the pixel (constant position even with a high zoom factor)
+            drawPointer(g, modelToViewX(highlightedPosition.getX() + 0.5),
+                modelToViewY(highlightedPosition.getY() + 0.5));
         }
     }
 
@@ -418,12 +454,12 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
                 windowingLevel = (Integer) val;
                 repaint();
             } else if (command.equals(ActionW.PRESET.cmd())) {
-                if(val instanceof PresetWindowLevel){
+                if (val instanceof PresetWindowLevel) {
                     PresetWindowLevel preset = (PresetWindowLevel) val;
                     windowingWindow = preset.getWindow().intValue();
                     windowingLevel = preset.getLevel().intValue();
                     // TODO preset.getLutShape()
-                    
+
                     repaint();
                 }
                 setActionsInView(ActionW.PRESET.cmd(), val, false);
@@ -449,11 +485,9 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
                     actionsInView.put(ViewCanvas.zoomTypeCmd, zoomType);
                 }
             } else if (command.equals(ActionW.PAN.cmd())) {
-                if (entry.getValue() instanceof Dimension) {
-                    Dimension offset = (Dimension) entry.getValue();
-                    moveImageOffset(offset.width, offset.height);
+                if (val instanceof PanPoint) {
+                    moveOrigin((PanPoint) entry.getValue());
                 }
-
             } else if (command.equals(ActionW.FLIP.cmd())) {
                 actionsInView.put(ActionW.FLIP.cmd(), val);
                 flippedHorizontally = JMVUtils.getNULLtoFalse(val);
@@ -555,7 +589,7 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         actionsInView.put(ActionW.INVERT_LUT.cmd(), false);
         actionsInView.put(ActionW.ROTATION.cmd(), 0);
         actionsInView.put(ActionW.FLIP.cmd(), false);
-        
+
         actionsInView.put(ActionW.FILTER.cmd(), GUIManager.kernelList.get(0));
         actionsInView.put(ActionW.LUT.cmd(), StaticHelpers.LUT_NONE);
 
@@ -1066,7 +1100,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
     public TextureDicomSeries getSeriesObject() {
         return (TextureDicomSeries) getParentImageSeries();
     }
-
 
     @Override
     public void moveImageOffset(int width, int height) {
@@ -1629,18 +1662,16 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
 
     @Override
     public void center() {
-        setImageOffset(new Vector2d(0, 0));
+        setCenter(0, 0);
     }
 
     @Override
     public void setCenter(double x, double y) {
-        // TODO Auto-generated method stub
-
+        setImageOffset(new Vector2d(x, y));
     }
 
     @Override
     public void setOrigin(double x, double y) {
-        // TODO Auto-generated method stub
 
     }
 
@@ -1652,8 +1683,11 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
 
     @Override
     public void moveOrigin(PanPoint point) {
-        // TODO Auto-generated method stub
-
+        if (point != null) {
+            if (PanPoint.STATE.Dragging.equals(point.getState())) {
+                moveImageOffset((int) point.getX(), (int) point.getY());
+            }
+        }
     }
 
     @Override
@@ -1702,38 +1736,46 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
 
     @Override
     public int getPointerType() {
-        // TODO Auto-generated method stub
-        return 0;
+        return pointerType;
     }
 
     @Override
     public void setPointerType(int pointerType) {
-        // TODO Auto-generated method stub
-
+        this.pointerType = pointerType;
     }
 
     @Override
     public void addPointerType(int i) {
-        // TODO Auto-generated method stub
-
+        this.pointerType |= i;
     }
 
     @Override
     public void resetPointerType(int i) {
-        // TODO Auto-generated method stub
-
+        this.pointerType &= ~i;
     }
 
     @Override
     public Point2D getHighlightedPosition() {
-        // TODO Auto-generated method stub
-        return null;
+        return highlightedPosition;
     }
 
     @Override
     public void drawPointer(Graphics2D g, double x, double y) {
-        // TODO Auto-generated method stub
-
+        float dash[] = { 5.0f };
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.translate(x, y);
+        g.setStroke(new BasicStroke(3.0f));
+        g.setPaint(pointerColor1);
+        for (int i = 1; i < pointer.length; i++) {
+            g.draw(pointer[i]);
+        }
+        g.setStroke(new BasicStroke(1.0F, 0, 0, 5.0f, dash, 0.0f));
+        g.setPaint(pointerColor2);
+        for (int i = 1; i < pointer.length; i++) {
+            g.draw(pointer[i]);
+        }
+        g.translate(-x, -y);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
     @Override

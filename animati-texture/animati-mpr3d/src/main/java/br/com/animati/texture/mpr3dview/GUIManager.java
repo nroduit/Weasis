@@ -5,10 +5,13 @@
 package br.com.animati.texture.mpr3dview;
 
 import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -54,6 +57,7 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
+import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
@@ -65,6 +69,7 @@ import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
+import org.weasis.core.ui.graphic.PanPoint;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -81,7 +86,6 @@ import br.com.animati.texture.mpr3dview.ViewTexture.ViewType;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
 import br.com.animati.texturedicom.ColorMask;
 import br.com.animati.texturedicom.TextureImageCanvas;
-import java.awt.Dimension;
 
 /**
  * Deals with global events of interface: - Selected Container; - Mouse Actions; - Measurements list, next graphic to
@@ -127,7 +131,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
     private final ComboItemListener spUnitAction;
     private final ComboItemListener mipOptionAction;
 
-    private final TexturePannerListener panAction;
+    private final PannerListener panAction;
     private final CrosshairListener crosshairAction;
 
     private GUIManager() {
@@ -180,14 +184,38 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
         enableActions(false);
     }
     
-    protected TexturePannerListener buildPanAction() {
-        return new TexturePannerListener(ActionW.PAN) {
+    protected PannerListener buildPanAction() {       
+        return new PannerListener(ActionW.PAN, null) {
 
             @Override
-            public void pointChanged(int x, int y) {
-                Dimension offset = (Dimension) new Dimension(x, y);
+            public void pointChanged(Point2D point) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    offset));
+                    point));
+            }
+            
+            @Override
+            public void mousePressed(MouseEvent e) {
+                int buttonMask = getButtonMaskEx();
+                if ((e.getModifiersEx() & buttonMask) != 0) {
+                        pickPoint = e.getPoint();
+                }
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                int buttonMask = getButtonMaskEx();
+                if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
+                    ViewCanvas panner = getViewCanvas(e);
+                    if (panner != null) {
+                        if (pickPoint != null && panner.getViewModel() != null) {
+                            Point pt = e.getPoint();
+                            setPoint(new PanPoint(PanPoint.STATE.Dragging, pt.x - pickPoint.x,
+                                pt.y - pickPoint.y));
+                            pickPoint = pt;
+                            panner.addPointerType(ViewCanvas.CENTER_POINTER);
+                        }
+                    }
+                }
             }
 
         };
