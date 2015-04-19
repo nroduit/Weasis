@@ -455,13 +455,10 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
                 repaint();
             } else if (command.equals(ActionW.PRESET.cmd())) {
                 if (val instanceof PresetWindowLevel) {
-                    PresetWindowLevel preset = (PresetWindowLevel) val;
-                    windowingWindow = preset.getWindow().intValue();
-                    windowingLevel = preset.getLevel().intValue();
-                    // TODO preset.getLutShape()
-                    repaint();
+                    setPresetWindowLevel((PresetWindowLevel) val);
+                } else if (val == null) {
+                    setActionsInView(ActionW.PRESET.cmd(), val, false);
                 }
-                setActionsInView(ActionW.PRESET.cmd(), val, false);
             } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
                 // TODO lut shape
             } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer) {
@@ -693,6 +690,16 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         renderSupp.setDirty(true);
     }
 
+    private void setPresetWindowLevel(PresetWindowLevel preset) {
+        if (preset != null) {
+            windowingWindow = preset.getWindow().intValue();
+            windowingLevel = preset.getLevel().intValue();
+            // TODO preset.getLutShape()
+            repaint();
+        }
+        setActionsInView(ActionW.PRESET.cmd(), preset, false);
+    }
+
     @Override
     public Font getLayerFont() {
         int fontSize =
@@ -720,12 +727,14 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
     }
 
     public void setSeries(TextureDicomSeries series) {
+        TextureDicomSeries old = getSeriesObject();
+        
         if (hasContent()) {
             handleGraphicsLayer(getCurrentSlice());
 
             // Finds out if texture is present in other view. If not,
             // must interrupt factory.
-            if (!getSeriesObject().equals(series) && !getSeriesObject().isFactoryDone()) {
+            if (!old.equals(series) && !getSeriesObject().isFactoryDone()) {
                 boolean open = false;
                 synchronized (UIManager.VIEWER_PLUGINS) {
                     List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
@@ -760,10 +769,15 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
             // internal defaults
             setSlice(0);
 
+            resetAction(null);
+
             // FIXME does not have unit at this stage
             // actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), getPixelSpacingUnit());
 
             series.getSeries().setOpen(true);
+        }
+        if (old != null && (series == null || !old.getSeries().equals(series.getSeries()))) {
+            closingSeries(old.getSeries());
         }
     }
 
@@ -940,11 +954,15 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         }
         // Win/Level and Preset
         if (cmd == null || ActionW.WINLEVEL.cmd().equals(cmd) || ActionW.PRESET.cmd().equals(cmd)) {
-            // Object actionData = getActionData(ActionW.PRESET.cmd());
-            // if (actionData instanceof List) {
-            // Object get = ((List) actionData).get(0);
-            // setActionsInView(ActionW.PRESET.cmd(), get);
-            // }
+            TextureDicomSeries s = getSeriesObject();
+            if (s != null) {
+                List<PresetWindowLevel> list = s.getPresetList(true, false);
+                if (list.isEmpty()) {
+                    setActionsInView(ActionW.PRESET.cmd(), null, false);
+                } else {
+                    setPresetWindowLevel(list.get(0));
+                }
+            }
         }
         // LUT
         if (cmd == null || ActionW.LUT.cmd().equals(cmd)) {

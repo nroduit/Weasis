@@ -183,8 +183,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
     private void initializeParameters() {
         enableActions(false);
     }
-    
-    protected PannerListener buildPanAction() {       
+
+    protected PannerListener buildPanAction() {
         return new PannerListener(ActionW.PAN, null) {
 
             @Override
@@ -192,12 +192,12 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
                     point));
             }
-            
+
             @Override
             public void mousePressed(MouseEvent e) {
                 int buttonMask = getButtonMaskEx();
                 if ((e.getModifiersEx() & buttonMask) != 0) {
-                        pickPoint = e.getPoint();
+                    pickPoint = e.getPoint();
                 }
             }
 
@@ -209,8 +209,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
                     if (panner != null) {
                         if (pickPoint != null && panner.getViewModel() != null) {
                             Point pt = e.getPoint();
-                            setPoint(new PanPoint(PanPoint.STATE.Dragging, pt.x - pickPoint.x,
-                                pt.y - pickPoint.y));
+                            setPoint(new PanPoint(PanPoint.STATE.Dragging, pt.x - pickPoint.x, pt.y - pickPoint.y));
                             pickPoint = pt;
                             panner.addPointerType(ViewCanvas.CENTER_POINTER);
                         }
@@ -337,13 +336,13 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
             @Override
             public void itemStateChanged(Object object) {
                 ImageViewerPlugin<DicomImageElement> container = GUIManager.getInstance().getSelectedView2dContainer();
-                if(container != null){
+                if (container != null) {
                     container.addSeries(GUIManager.getInstance().getSelectedSeries());
                 }
             }
         };
     }
-    
+
     @Override
     protected ToggleButtonListener newInverseStackAction() {
         return new ToggleButtonListener(ActionW.INVERSESTACK, false) {
@@ -351,7 +350,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
             @Override
             public void actionPerformed(boolean selected) {
                 ImageViewerPlugin<DicomImageElement> container = GUIManager.getInstance().getSelectedView2dContainer();
-                if(container != null){
+                if (container != null) {
                     container.addSeries(GUIManager.getInstance().getSelectedSeries());
                 }
             }
@@ -658,12 +657,12 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
             levelAction.setMinMaxValueWithoutTriggerAction(series.windowingMinInValue, series.windowingMaxInValue,
                 view2d.windowingLevel);
 
-            if (presetAction.getFirstItem() == null) {
-                List<PresetWindowLevel> presetList = series.getPresetList(true, true);
-                if(presetList != null){
-                    presetAction.setDataListWithoutTriggerAction(presetList.toArray());
-                }
+            List<PresetWindowLevel> presetList = series.getPresetList(true, false);
+            if (presetList != null) {
+                presetAction.setDataListWithoutTriggerAction(presetList.toArray());
             }
+
+            presetAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.PRESET.cmd()));
         }
     }
 
