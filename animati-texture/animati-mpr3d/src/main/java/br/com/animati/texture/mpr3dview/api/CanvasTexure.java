@@ -113,18 +113,6 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     }
 
     @Override
-    public void zoom(double centerX, double centerY, double viewScale) {
-        //TODO: realy needed?
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void zoom(Rectangle2D zoomRect) {
-        //TODO: realy needed?
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
     public double getBestFitViewScale() {
         return graphsLayer.getBestFitViewScale(new Dimension(getWidth(), getHeight()));
     }

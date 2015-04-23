@@ -4,7 +4,6 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 
 import javax.swing.JComponent;
@@ -45,10 +44,6 @@ public interface Canvas {
     HashMap<String, Object> getActionsInView();
 
     void zoom(double viewScale);
-
-    void zoom(double centerX, double centerY, double viewScale);
-
-    void zoom(Rectangle2D zoomRect);
 
     double getBestFitViewScale();
 

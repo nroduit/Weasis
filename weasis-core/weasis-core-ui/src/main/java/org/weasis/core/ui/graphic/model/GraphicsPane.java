@@ -163,7 +163,6 @@ public class GraphicsPane extends JComponent implements Canvas {
         zoom(centerX, centerY, viewScale);
     }
 
-    @Override
     public void zoom(double centerX, double centerY, double viewScale) {
         viewScale = cropViewScale(viewScale);
         final double viewportWidth = getWidth() - 1;
@@ -173,7 +172,6 @@ public class GraphicsPane extends JComponent implements Canvas {
         getViewModel().setModelOffset(modelOffsetX, modelOffsetY, viewScale);
     }
 
-    @Override
     public void zoom(Rectangle2D zoomRect) {
         final double viewportWidth = getWidth() - 1;
         final double viewportHeight = getHeight() - 1;
