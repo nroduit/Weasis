@@ -335,8 +335,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             propertyChange((SynchEvent) evt.getNewValue());
         }
 
-        if ("texture.loadComplete".equals(propertyName) || "texture.doDisplay".equals(propertyName)) {
-
+        if (ImageSeriesFactory.TEXTURE_LOAD_COMPLETE.equals(propertyName)
+                || ImageSeriesFactory.TEXTURE_DO_DISPLAY.equals(propertyName)) {
             // Invert if necessary
             // setActionsInView(ActionW.INVERT_LUT.cmd(), false, false);
 
@@ -561,39 +561,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         actionsInView.put(ActionWA.MIP_DEPTH.cmd(), 5);
 
         actionsInView.put(ActionWA.SMOOTHING.cmd(), true);
-
-        // actionsInView.put(ActionW.CROSSHAIR.cmd(), new ActionDataModel(ActionW.CROSSHAIR, null, null) {
-        // public boolean isEnabled() {
-        // return (controlAxes != null || controlAxesToWatch != null);
-        // }
-        // });
-
-        // FIXME what about this code
-        // actionsInView.put(ActionWA.LOCATION.cmd(), new ActionDataModel(ActionWA.LOCATION, null, null) {
-        // @Override
-        // public Object getActionValue() {
-        // if (hasContent() && isShowingAcquisitionAxis()) {
-        // int currentSlice = getCurrentSlice();
-        // double[] val = (double[]) getSeriesObject().getTagValue(TagW.SlicePosition, currentSlice - 1);
-        // if (val != null) {
-        // return (val[0] + val[1] + val[2]);
-        // }
-        // }
-        // return null;
-        // }
-        //
-        // @Override
-        // public void setActionValue(Object value) {
-        // if (value instanceof Double && hasContent() && isShowingAcquisitionAxis()) {
-        //
-        // int index = getSeriesObject().getNearestSliceIndex((Double) value);
-        // if (index >= 0) {
-        // // Texture is 0 to N-1; action is 1 to N
-        // // scrollSeriesAction.setValue(index + 1);
-        // }
-        // }
-        // }
-        // });
     }
 
     /**

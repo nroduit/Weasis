@@ -12,7 +12,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import javax.swing.JComponent;
 import javax.vecmath.Point2i;
@@ -109,7 +108,7 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
 
     @Override
     public void zoom(double viewScale) {
-        setZoom(viewScale, true); //tre for repait texture.
+        setZoom(viewScale, true); //true for repait texture.
     }
 
     @Override

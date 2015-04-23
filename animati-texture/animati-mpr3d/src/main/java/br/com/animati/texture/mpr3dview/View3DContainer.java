@@ -311,9 +311,14 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             String[] resets = new String[] { "resetToAxial" };
             EventPublisher.getInstance().publish(
                 new PropertyChangeEvent(this, EventPublisher.VIEWER_DO_ACTION + ActionW.RESET.cmd(), null, resets));
-
         }
-        // super.updateViewersWithSeries(mediaSeries, event);
+
+        for (ViewCanvas<DicomImageElement> gridElement : getImagePanels()) {
+            if (mediaSeries != null
+                    && mediaSeries.equals(gridElement.getSeries())) {
+                gridElement.propertyChange(event);
+            }
+        } 
     }
 
     protected void setControlAxesBaseOrientation(MediaSeries mediaSeries, double[] op) {
@@ -398,36 +403,35 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
     // }
     // }
 
-    // @Override
-    // protected void handleLoadCompleteEvent(PropertyChangeEvent event) {
-    // MediaSeries ms = (MediaSeries) event.getNewValue();
-    //
-    // Component firstView = grid.getViews().get(0).getComponent();
-    // if (firstView instanceof ViewTexture) {
-    // final ViewTexture view = (ViewTexture) firstView;
-    //
-    // TextureDicomSeries ser = view.getSeriesObject();
-    //
-    // if (ser != null) {
-    // // Must set after loadComplete
-    // double[] op = ser.getOriginalSeriesOrientationPatient();
-    // if (op != null && op.length == 6) {
-    // grid.updateViewersWithSeries(ms, new PropertyChangeEvent(this, "texture.orientationPatient", null,
-    // op));
-    //
-    // // BUGfix:
-    // for (GridElement gridElement : grid.getViews()) {
-    // if (gridElement.getComponent() instanceof ViewTexture) {
-    // ((ViewTexture) gridElement.getComponent()).forceResize();
-    // }
-    // }
-    // }
-    // }
-    // }
-    // }
+
+    protected void handleLoadCompleteEvent(PropertyChangeEvent event) {
+        MediaSeries ms = (MediaSeries) event.getNewValue();
+
+        Component firstView = getImagePanels().get(0).getJComponent();
+        if (firstView instanceof ViewTexture) {
+            final ViewTexture view = (ViewTexture) firstView;
+
+            TextureDicomSeries ser = view.getSeriesObject();
+
+            if (ser != null) {
+                // Must set after loadComplete
+                double[] op = ser.getOriginalSeriesOrientationPatient();
+                if (op != null && op.length == 6) {
+                    updateViewersWithSeries(ms, new PropertyChangeEvent(this,
+                            "texture.orientationPatient", null, op));
+
+                    // BUGfix:
+                    for (ViewCanvas gridElement : getImagePanels()) {
+                        if (gridElement instanceof ViewTexture) {
+                            ((ViewTexture) gridElement).forceResize();
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     
-
     @Override
     public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
         if (menuRoot != null) {
@@ -513,9 +517,9 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         
         if (command.startsWith("texture") && event.getNewValue() instanceof MediaSeries) {
             MediaSeries ms = (MediaSeries) event.getNewValue();
-      //      grid.updateViewersWithSeries(ms, event);
-            if ("texture.loadComplete".equals(command)) {
-      //         handleLoadCompleteEvent(event);
+            updateViewersWithSeries(ms, event);
+            if (ImageSeriesFactory.TEXTURE_LOAD_COMPLETE.equals(command)) {
+               handleLoadCompleteEvent(event);
             }
         } else {
             if (command.startsWith(EventPublisher.VIEWER_DO_ACTION)

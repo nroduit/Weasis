@@ -811,10 +811,10 @@ public class ImageSeriesFactory {
                 updateMultiplier(seriesToLoad);
             }
             if (seriesToLoad.getSeries().size(null) == seriesToLoad.getSliceCount()) {
-                fireProperyChange(this, "texture.loadComplete", seriesToLoad.getSeries());
+                fireProperyChange(this, TEXTURE_LOAD_COMPLETE, seriesToLoad.getSeries());
             }
 
-            fireProperyChange(seriesToLoad, "texture.doDisplay", seriesToLoad.getSeries());
+            fireProperyChange(seriesToLoad, TEXTURE_DO_DISPLAY, seriesToLoad.getSeries());
             return null;
         }
 
