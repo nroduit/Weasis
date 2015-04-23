@@ -44,7 +44,6 @@ import java.util.Map.Entry;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -58,7 +57,6 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.vecmath.Matrix3d;
-import javax.vecmath.Point2i;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector2d;
@@ -66,7 +64,6 @@ import javax.vecmath.Vector3d;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -108,7 +105,6 @@ import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
-import org.weasis.core.ui.graphic.model.MainLayerModel;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -121,6 +117,7 @@ import br.com.animati.texture.codec.ImageSeriesFactory;
 import br.com.animati.texture.codec.StaticHelpers;
 import br.com.animati.texture.codec.TextureDicomSeries;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
+import br.com.animati.texture.mpr3dview.api.CanvasTexure;
 import br.com.animati.texture.mpr3dview.api.DisplayUtils;
 import br.com.animati.texture.mpr3dview.api.GraphicsModel;
 import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
@@ -137,7 +134,7 @@ import br.com.animati.texturedicom.cl.CLConvolution;
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  * @version 2013, 18 Jul.
  */
-public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomImageElement> {
+public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageElement> {
 
     /** Class logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewTexture.class);
@@ -164,12 +161,9 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
     /** Tolerance to consider an axix as the Acquisition Axis. */
     private double WARNING_TOLERANCE = 0.0001;
 
-    protected final HashMap<String, Object> actionsInView = new HashMap<String, Object>();
-
     protected final FocusHandler focusHandler = new FocusHandler();
     private final GraphicMouseHandler graphicMouseHandler = new GraphicMouseHandler(this);
 
-    protected final GraphicsModel graphsLayer;
     private AnnotationsLayer infoLayer;
     public static boolean computePixelStats = true;
 
@@ -186,11 +180,9 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
 
     private ViewType viewType;
 
-    public ViewTexture(ImageViewerEventManager<DicomImageElement> eventManager, ImageSeries parentImageSeries)
-        throws Exception {
+    public ViewTexture(ImageViewerEventManager<DicomImageElement> eventManager, ImageSeries parentImageSeries) {
         super(parentImageSeries);
         this.eventManager = eventManager;
-        graphsLayer = new GraphicsModel(new MainLayerModel(this), new TextureViewModel());
 
         infoLayer = new InfoLayer3d(this);
 
@@ -234,34 +226,15 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         return TextureDicomSeries.class.getName();
     }
 
-    /**
-     * Converts the geometric point to text information.
-     * 
-     * @param point
-     *            Geometric point
-     * @param position
-     *            Position on view (to decide if its in or out of image.
-     * @return Text information.
-     */
-    public PixelInfo getPixelInfo(final Point3d point, final Point2i position) {
-        PixelInfo3d pixelInfo = new PixelInfo3d();
-        if (isShowingAcquisitionAxis()) {
-            pixelInfo.setPosition(new Point((int) point.x, (int) point.y));
-        } else {
-            pixelInfo.setPosition3d(point);
-        }
-
-        return pixelInfo;
-    }
-
     public void showPixelInfos(MouseEvent mouseevent) {
         if (infoLayer != null && getParentImageSeries() != null) {
-            Point2i position = new Point2i(mouseevent.getX(), mouseevent.getY());
+            Point3d pOriginal = getOriginalSystemCoordinatesFromMouse(
+                    mouseevent.getX(), mouseevent.getY());
+            
+            PixelInfo3d pixInfo = new PixelInfo3d();
+            pixInfo.setPosition3d(pOriginal);
+            
             Rectangle oldBound = infoLayer.getPixelInfoBound();
-            Vector3d coordinatesTexture = getTextureCoordinatesForPosition(position);
-            Vector3d imageSize = getParentImageSeries().getImageSize();
-            Point3d pModel = getImageCoordinatesFromMouse(coordinatesTexture, imageSize);
-            PixelInfo pixInfo = getPixelInfo(pModel, position);
             oldBound.width =
                 Math.max(
                     oldBound.width,
@@ -341,20 +314,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
             drawPointer(g, modelToViewX(highlightedPosition.getX() + 0.5),
                 modelToViewY(highlightedPosition.getY() + 0.5));
         }
-    }
-
-    /**
-     * Get ImageRectangle without rotation.
-     * 
-     * @return
-     */
-    public Rectangle getUnrotatedImageRect() {
-        double currentRO = getRotationOffset();
-        setRotationOffset(0);
-        Rectangle imageRect = getImageRect(true);
-        setRotationOffset(currentRO);
-
-        return imageRect;
     }
 
     public void forceResize() {
@@ -637,14 +596,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         // });
     }
 
-    @Override
-    public Object getActionValue(String action) {
-        if (action == null) {
-            return null;
-        }
-        return actionsInView.get(action);
-    }
-
     /**
      * Set an Action in this view.
      * 
@@ -709,22 +660,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         return new Font("SansSerif", 0, fontSize);
     }
 
-    /**
-     * Converts a position on texture`s coordinates system (0 to 1) to image`s coordinates system. X e Y: 0 to n-1;
-     * (number of pixels) Z: 1 to n. (n = number of slices)
-     * 
-     * @param coordinatesTexture
-     *            position on texture`s coord. system.
-     * @param imageSize
-     *            Size or images and stack.
-     * @return Position on image`s coordinates System.
-     */
-    public Point3d getImageCoordinatesFromMouse(final Vector3d coordinatesTexture, final Vector3d imageSize) {
-        Point3d p3 =
-            new Point3d((Math.round(coordinatesTexture.x * imageSize.x)), (Math.round(coordinatesTexture.y
-                * imageSize.y)), (Math.round((coordinatesTexture.z * imageSize.z) + 1)));
-        return p3;
-    }
 
     public void setSeries(TextureDicomSeries series) {
         TextureDicomSeries old = getSeriesObject();
@@ -800,9 +735,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         }
     }
 
-    public boolean hasContent() {
-        return (getParentImageSeries() != null);
-    }
 
     public boolean isContentReadable() {
         return hasContent();
@@ -819,8 +751,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
             closingSeries(series);
             series = null;
         }
-        graphsLayer.dispose();
-        super.dispose();
     }
 
     protected void closingSeries(MediaSeries mediaSeries) {
@@ -1074,11 +1004,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         return 0;
     }
 
-    @Override
-    public JComponent getJComponent() {
-        return this;
-    }
-
     protected MouseActionAdapter getAction(ActionW action) {
         ActionState a = eventManager.getAction(action);
         if (a instanceof MouseActionAdapter) {
@@ -1124,26 +1049,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
             super.moveImageOffset(width, height);
         }
         renderSupp.setDirty(true);
-    }
-
-    @Override
-    public ViewModel getViewModel() {
-        return graphsLayer.getViewModel();
-    }
-
-    @Override
-    public AbstractLayerModel getLayerModel() {
-        return graphsLayer.getLayerModel();
-    }
-
-    @Override
-    public Point2D getImageCoordinatesFromMouse(int x, int y) {
-        return graphsLayer.getImageCoordinatesFromMouse(x, y);
-    }
-
-    @Override
-    public AffineTransform getAffineTransform() {
-        return graphsLayer.getAffineTransform();
     }
 
     // @Override
@@ -1530,40 +1435,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
 
     }
 
-    /**
-     * Uses DefaultViewModel to reuse the Listener system, but all the information came from the TextureImageCanvas
-     * state.
-     */
-    private class TextureViewModel extends DefaultViewModel {
-
-        @Override
-        public double getModelOffsetX() {
-            if (hasContent()) {
-                return -(getUnrotatedImageRect().getX() / getActualDisplayZoom());
-            }
-            return 0;
-        }
-
-        @Override
-        public double getModelOffsetY() {
-            if (hasContent()) {
-                return -(getUnrotatedImageRect().getY() / getActualDisplayZoom());
-            }
-            return 0;
-        }
-
-        @Override
-        public double getViewScale() {
-            if (hasContent()) {
-                double displayZoom = ViewTexture.this.getActualDisplayZoom();
-                if (displayZoom <= 0) { // avoid error trying to generate inverseAffine
-                    displayZoom = 1;
-                }
-                return displayZoom;
-            }
-            return 1;
-        }
-    }
 
     @Override
     public ImageViewerEventManager getEventManager() {
@@ -1615,7 +1486,7 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
 
     @Override
     public double getBestFitViewScale() {
-        return adjustViewScale(graphsLayer.getBestFitViewScale(new Dimension(getWidth(), getHeight())));
+        return adjustViewScale(super.getBestFitViewScale());
     }
 
     @Override
@@ -1855,30 +1726,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
     }
 
     @Override
-    public AffineTransform getInverseTransform() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void setViewModel(ViewModel viewModel) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void setLayerModel(AbstractLayerModel layerModel) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public HashMap<String, Object> getActionsInView() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public void zoom(double viewScale) {
         boolean defSize = viewScale == 0.0;
         ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
@@ -1895,7 +1742,7 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
         }
 
         actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
-        setZoom(Math.abs(viewScale), true);
+        super.zoom(Math.abs(viewScale));
         // FIXME is that possible that the value is modified in setZoom(Math.abs(viewScale), true). Should keep the sign
         // actionsInView.put(ActionW.ZOOM.cmd(), getActualDisplayZoom());
         if (defSize) {
@@ -1906,66 +1753,6 @@ public class ViewTexture extends TextureImageCanvas implements ViewCanvas<DicomI
             center();
         }
         updateAffineTransform();
-    }
-
-    @Override
-    public void zoom(double centerX, double centerY, double viewScale) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void zoom(Rectangle2D zoomRect) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public double viewToModelX(double viewX) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double viewToModelY(double viewY) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double viewToModelLength(double viewLength) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double modelToViewX(double modelX) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double modelToViewY(double modelY) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double modelToViewLength(double modelLength) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public Point getMouseCoordinatesFromImage(double x, double y) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void transformGraphics(Graphics2D g2d, boolean forward) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override

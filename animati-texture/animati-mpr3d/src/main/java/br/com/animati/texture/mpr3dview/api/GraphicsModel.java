@@ -7,6 +7,7 @@ package br.com.animati.texture.mpr3dview.api;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -75,8 +76,32 @@ public class GraphicsModel {
         return p2;
     }
     
+    public Point getMouseCoordinatesFromImage(double x, double y) {
+        Point2D p2 = new Point2D.Double(x, y);
+        affineTransform.transform(p2, p2);
+        double viewScale = getViewModel().getViewScale();
+        return new Point((int) Math.floor(p2.getX() - getViewModel().getModelOffsetX() * viewScale + 0.5),
+            (int) Math.floor(p2.getY() - getViewModel().getModelOffsetY() * viewScale + 0.5));
+    }
+    
+    public double viewToModelX(double viewX) {
+        return viewModel.getModelOffsetX() + viewToModelLength(viewX);
+    }
+    
+    public double viewToModelY(double viewY) {
+        return viewModel.getModelOffsetY() + viewToModelLength(viewY);
+    }
+    
     public double modelToViewLength(double modelLength) {
         return modelLength * viewModel.getViewScale();
+    }
+    
+    public double modelToViewX(double modelX) {
+        return modelToViewLength(modelX - viewModel.getModelOffsetX());
+    }
+    
+    public double modelToViewY(double modelY) {
+        return modelToViewLength(modelY - viewModel.getModelOffsetY());
     }
     
     public double viewToModelLength(double viewLength) {
@@ -159,6 +184,14 @@ public class GraphicsModel {
      */
     public void updateAllLabels(final Component source) {
         //TODO
+    }
+
+    public void setViewModel(ViewModel viewModel) {
+        this.viewModel = viewModel;
+    }
+
+    public void setLayerModel(AbstractLayerModel layerModel) {
+        this.layerModel = layerModel;
     }
     
 }
