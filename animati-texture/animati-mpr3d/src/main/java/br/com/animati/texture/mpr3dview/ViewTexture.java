@@ -128,6 +128,7 @@ import br.com.animati.texturedicom.ControlAxes;
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
 import br.com.animati.texturedicom.cl.CLConvolution;
+import org.weasis.core.api.gui.util.ComboItemListener;
 
 /**
  *
@@ -337,33 +338,29 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
         if (ImageSeriesFactory.TEXTURE_LOAD_COMPLETE.equals(propertyName)
                 || ImageSeriesFactory.TEXTURE_DO_DISPLAY.equals(propertyName)) {
+            
             // Invert if necessary
-            // setActionsInView(ActionW.INVERT_LUT.cmd(), false, false);
-
-            // Object actionData = getActionData(ActionW.PRESET.cmd());
-            // int size = 0;
-            // if (actionData instanceof List) {
-            // size = ((List) actionData).size();
-            // List<PresetWindowLevel> presetList =
-            // ((TextureDicomSeries) getParentImageSeries()).getPresetList(true, true);
-            // if (presetList.size() > size) {
-            // Container parent = getParent();
-            // if (parent instanceof ViewsGrid) {
-            // List<GridElement> views = ((ViewsGrid) parent).getViews();
-            // for (GridElement gridElement : views) {
-            // if (gridElement.getComponent() instanceof ViewTexture) {
-            // ((ViewTexture) gridElement.getComponent())
-            // .updateWindowLevelActions((TextureDicomSeries) getParentImageSeries());
-            // }
-            // }
-            // }
-            // }
-            // }
-
-            // if (getParentImageSeries() != null && levelAction.getMax() != getParentImageSeries().windowingMaxInValue)
-            // {
-            // updateWindowLevelLimits((TextureDicomSeries) getParentImageSeries());
-            // }
+            //In case of PhotometricInterpretationInverse, it has to be corrected here.
+            if (isContentPhotometricInterpretationInverse()) {
+                inverse = true;
+                actionsInView.put(ActionW.INVERT_LUT.cmd(), inverse);
+            }
+            
+            //Need to force building preset list again: for cases like neuro-MR:
+            //(DICOM preset diferent for each image).
+            int size = 0;
+            ActionState action = eventManager.getAction(ActionW.PRESET);
+            if (action instanceof ComboItemListener) {
+                Object[] allItem = ((ComboItemListener) action).getAllItem();
+                size = allItem.length;
+                
+                List<PresetWindowLevel> presetList =
+                        ((TextureDicomSeries) getParentImageSeries()).getPresetList(true, true);
+                if (presetList.size() > size) {
+                    ((ComboItemListener) action).setDataList(allItem);
+                }
+            }
+            
             repaint();
             eventManager.updateComponentsListener(this);
         } else if (propertyName.startsWith(EventPublisher.VIEWER_DO_ACTION)) {
