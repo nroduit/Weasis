@@ -632,6 +632,9 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
         volumeLighting.enableAction(volume);
         volumeSlicing.enableAction(volume);
         volumeQuality.enableAction(volume);
+        
+        sortStackAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SORTSTACK.cmd()));
+        inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());

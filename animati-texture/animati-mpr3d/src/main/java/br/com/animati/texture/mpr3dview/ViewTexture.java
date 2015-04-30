@@ -129,6 +129,8 @@ import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
 import br.com.animati.texturedicom.cl.CLConvolution;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.media.data.SeriesComparator;
+import org.weasis.dicom.codec.SortSeriesStack;
 
 /**
  *
@@ -664,6 +666,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                     modelArea.height);
                 graphsLayer.getViewModel().setModelArea(modelArea);
             }
+            updateSortStackActions(series);
 
             // internal defaults
             setSlice(0);
@@ -679,14 +682,29 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             closingSeries(old.getSeries());
         }
     }
+    
+    private void updateSortStackActions(TextureDicomSeries series) {
+        Comparator seriesSorter = series.getSeriesSorter();
+        if (seriesSorter instanceof SeriesComparator) {
+            setActionsInView(ActionW.SORTSTACK.cmd(), seriesSorter, false);
+            setActionsInView(ActionW.INVERSESTACK.cmd(), false, false);
+        } else {
+            for (SeriesComparator sorter : SortSeriesStack.getValues()) {
+                if (sorter.getReversOrderComparator().equals(seriesSorter)) {
+                    setActionsInView(ActionW.SORTSTACK.cmd(), sorter, false);
+                    setActionsInView(ActionW.INVERSESTACK.cmd(), true, false);
+                }
+            }
+        }
+    }
 
-    void refreshTexture() {
+    public void refreshTexture() {
         MediaSeries series = getSeries();
         if (series != null && getSeriesObject() != null) {
             TextureDicomSeries seriesObject = getSeriesObject();
             try {
                 TextureDicomSeries texture =
-                    new ImageSeriesFactory().createImageSeries(series, seriesObject.getSeriesComparator(), true);
+                    new ImageSeriesFactory().createImageSeries(series, seriesObject.getSeriesSorter(), true);
 
                 setSeries(texture);
 

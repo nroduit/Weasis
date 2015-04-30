@@ -23,10 +23,8 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 
@@ -56,7 +54,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     /** Information about the build process of the series`s texture. */
     public TextureLogInfo textureLogInfo;
 
-    /** Map of slice-spacing occurences. */
+    /** Map of slice-spacing occurrences. */
     private Map<String, Integer> zSpacings;
 
     /** Window / Level presets list. */
@@ -376,24 +374,9 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     public double[] getOriginalSeriesOrientationPatient() {
         return originalSeriesOrientationPatient;
     }
-
-    public SeriesComparator getSeriesComparator() {
-        if (seriesComparator instanceof SeriesComparator) {
-            return (SeriesComparator) seriesComparator;
-        }
-        for (SeriesComparator sorter : SortSeriesStack.getValues()) {
-            if (sorter.getReversOrderComparator().equals(seriesComparator)) {
-                return sorter;
-            }
-        }
-        return null;
-    }
-
-    public boolean isSeriesComparatorReverse() {
-        if (seriesComparator instanceof SeriesComparator) {
-            return false;
-        }
-        return true;
+    
+    public Comparator<E> getSeriesSorter() {
+        return seriesComparator;
     }
 
     public void setAcquisitionPixelSpacing(double[] pixSpacing) {

@@ -146,7 +146,7 @@ public class ImageSeriesFactory {
 
         TextureDicomSeries imSeries = texCache.get(series);
         boolean changed = false;
-        if (force || imSeries == null || imSeries.getSeriesComparator() != comparator) {
+        if (force || imSeries == null || imSeries.getSeriesSorter() != comparator) {
 
             // Start counting time to log texture build time information.
             timeStarted = System.currentTimeMillis();
@@ -701,7 +701,7 @@ public class ImageSeriesFactory {
     private static void updateMultiplier(TextureDicomSeries seriesToLoad) {
 
         synchronized (seriesToLoad.getSeries()) {
-            Iterator iterator = seriesToLoad.getSeries().getMedias(null, seriesToLoad.getSeriesComparator()).iterator();
+            Iterator iterator = seriesToLoad.getSeries().getMedias(null, seriesToLoad.getSeriesSorter()).iterator();
 
             int place = 0;
             double lastPos = 0;

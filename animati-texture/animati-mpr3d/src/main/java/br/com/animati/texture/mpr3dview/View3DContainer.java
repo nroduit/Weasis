@@ -249,7 +249,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         setPluginName((String) series.getTagValue(TagW.PatientName));
         setSelected(true);
     }
-
+    
     @Override
     protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
         TextureDicomSeries series = null;
@@ -444,12 +444,9 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         ImageViewerPlugin<DicomImageElement> container = eventManager.getSelectedView2dContainer();
-
-                        for (ViewCanvas<DicomImageElement> view : container.getImagePanels()) {
-                            if (view instanceof ViewTexture) {
-                                ((ViewTexture) view).refreshTexture();
-                                break;
-                            }
+                        ViewCanvas<DicomImageElement> view = container.getSelectedImagePane();
+                        if (view instanceof ViewTexture) {
+                            ((ViewTexture) view).refreshTexture();
                         }
                     }
                 });
@@ -493,26 +490,19 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
     @Override
     public void propertyChange(final PropertyChangeEvent event) {
         String command = event.getPropertyName();
-        if ("texture.replaced".equals(command)) {
+        if (ImageSeriesFactory.TEXTURE_REPLACED.equals(command)) {
             if (event.getNewValue() instanceof TextureDicomSeries) {
                 TextureDicomSeries texture = (TextureDicomSeries) event.getNewValue();
-                // GridElement selectedView = grid.getSelectedView();
-                // if (selectedView != null && texture.getSeries().equals(selectedView.getSeries())
-                // && !texture.equals(((ViewTexture) selectedView.getComponent()).getParentImageSeries())) {
-                // try {
-                // grid.addSeries(texture.getSeries(), texture.getSeriesComparator());
-                // } catch (Exception ex) {
-                // ex.printStackTrace();
-                // }
-                // }
-               // addSeries(texture.getSeries());
+                ViewCanvas<DicomImageElement> selected = getSelectedImagePane();
+                if (selected != null && texture.getSeries().equals(selected.getSeries())
+                    && !texture.equals(((ViewTexture) selected).getParentImageSeries())) {
+                    try {
+                        addSeries(texture.getSeries());
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
             }
-            // } else if ((EventPublisher.VIEWER_DO_ACTION + ActionW.SORTSTACK.cmd()).equals(command)
-            // || (EventPublisher.VIEWER_DO_ACTION + ActionW.INVERSESTACK.cmd()).equals(command)) {
-            // // Must be done by the grid
-            // grid.changeSeriesComparator(grid.getSelectedView(), event.getNewValue());
-            // } else {
-            // super.propertyChange(event);
         }
         
         if (command.startsWith("texture") && event.getNewValue() instanceof MediaSeries) {
