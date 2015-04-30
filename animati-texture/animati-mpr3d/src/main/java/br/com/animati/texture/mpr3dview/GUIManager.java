@@ -12,8 +12,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +29,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
@@ -43,7 +40,6 @@ import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
@@ -88,13 +84,12 @@ import br.com.animati.texturedicom.ColorMask;
 import br.com.animati.texturedicom.TextureImageCanvas;
 
 /**
- * Deals with global events of interface: - Selected Container; - Mouse Actions; - Measurements list, next graphic to
- * create;
+ * 
  * 
  * @author Gabriela Carla Bauerman (gabriela@animati.com.br)
- * @version 2013, 11 sep.
+ * @version 2013, 11 Sep.
  */
-public class GUIManager extends ImageViewerEventManager<DicomImageElement> implements PropertyChangeListener {
+public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
@@ -419,33 +414,6 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> imple
 
     public List<ViewerPlugin<?>> getAllViewerPlugins() {
         return UIManager.VIEWER_PLUGINS;
-    }
-
-    public void initDefaultListeners(DataExplorerModel model) {
-        // EventPublisher.getInstance().addPropertyChangeListener(
-        // ActionW.DRAW_MEASURE.cmd() + "|graphics.dragComplete|", this);
-
-        // Publish DicomModel events without lock thread.
-        if (model != null) {
-            model.addPropertyChangeListener(new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getNewValue() instanceof SeriesEvent) {
-                        SeriesEvent event = (SeriesEvent) evt.getNewValue();
-                        if (SeriesEvent.Action.AddImage.equals(event.getActionCommand())) {
-                            EventPublisher.getInstance().publish(
-                                new PropertyChangeEvent(evt.getSource(), "DicomModel.AddImage", evt.getOldValue(), evt
-                                    .getNewValue()));
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-
     }
 
     public MediaSeries<DicomImageElement> getSelectedSeries() {

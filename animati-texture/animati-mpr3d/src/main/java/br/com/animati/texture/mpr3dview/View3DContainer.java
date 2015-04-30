@@ -42,6 +42,7 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
@@ -64,6 +65,7 @@ import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
@@ -367,41 +369,40 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         View3DFactory.showHANotAvailableMsg(this);
     }
 
-    // @Override
-    // protected void removeContent(final ObservableEvent event) {
-    // Object newVal = event.getNewValue();
-    // // Only one series on this container...
-    // if (newVal instanceof DicomSeries) {
-    // DicomSeries dicomSeries = (DicomSeries) newVal;
-    // for (GridElement view : grid.getViews()) {
-    // MediaSeries<DicomImageElement> ser = view.getSeries();
-    // if (dicomSeries.equals(ser)) {
-    // close();
-    // }
-    // }
-    // } else if (newVal instanceof MediaSeriesGroup) {
-    // MediaSeriesGroup group = (MediaSeriesGroup) newVal;
-    // // Patient Group
-    // if (TagW.PatientPseudoUID.equals(group.getTagID())) {
-    // if (group.equals(getGroupID())) {
-    // close();
-    // }
-    // // Study Group
-    // } else if (TagW.StudyInstanceUID.equals(group.getTagID())) {
-    // if (event.getSource() instanceof DicomModel) {
-    // DicomModel model = (DicomModel) event.getSource();
-    // for (MediaSeriesGroup removedSerie : model.getChildren(group)) {
-    // for (GridElement view : grid.getViews()) {
-    // MediaSeries<DicomImageElement> ser = view.getSeries();
-    // if (removedSerie.equals(ser)) {
-    // close();
-    // }
-    // }
-    // }
-    // }
-    // }
-    // }
-    // }
+     protected void removeContent(final ObservableEvent event) {
+        Object newVal = event.getNewValue();
+        // Only one series on this container...
+        if (newVal instanceof DicomSeries) {
+            DicomSeries dicomSeries = (DicomSeries) newVal;
+            for (ViewCanvas<DicomImageElement> view : getImagePanels()) {
+                MediaSeries<DicomImageElement> ser = view.getSeries();
+                if (dicomSeries.equals(ser)) {
+                    close();
+                }
+            }
+        } else if (newVal instanceof MediaSeriesGroup) {
+            MediaSeriesGroup group = (MediaSeriesGroup) newVal;
+            // Patient Group
+            if (TagW.PatientPseudoUID.equals(group.getTagID())) {
+                if (group.equals(getGroupID())) {
+                    close();
+                }
+                // Study Group
+            } else if (TagW.StudyInstanceUID.equals(group.getTagID())) {
+                if (event.getSource() instanceof DicomModel) {
+                    DicomModel model = (DicomModel) event.getSource();
+                    for (MediaSeriesGroup removedSerie : model.getChildren(group)) {
+                        for (ViewCanvas<DicomImageElement> view : getImagePanels()) {
+                            MediaSeries<DicomImageElement> ser = view.getSeries();
+                            if (removedSerie.equals(ser)) {
+                                close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 
     protected void handleLoadCompleteEvent(PropertyChangeEvent event) {
@@ -517,14 +518,25 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
                 selectedImagePane.propertyChange(event);
             } else {
                 if (event instanceof ObservableEvent) {
-           //         handlesObservEvent(event);
-                } else {
-                    if ("DicomModel.AddImage".equals(command)) {
-            //            handlesAddImage(event);
-                    }
+                    handlesObservEvent(event);
                 }
             }
         }
+    }
+    
+    private void handlesObservEvent(final PropertyChangeEvent event){
+        ObservableEvent obEvt = (ObservableEvent) event;
+        ObservableEvent.BasicAction action = obEvt.getActionCommand();
+        if (ObservableEvent.BasicAction.Remove.equals(action)) {
+            removeContent(obEvt);
+        } 
+        //TODO: threat AddImage events or not? MPR doesn't.
+//        else if (event.getNewValue() instanceof SeriesEvent) {
+//            SeriesEvent seriesEvt = (SeriesEvent) event.getNewValue();
+//            if (SeriesEvent.Action.AddImage.equals(seriesEvt.getActionCommand())) {
+//                
+//            }
+//        }
     }
 
     /**
@@ -585,7 +597,6 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             TOOLBARS.add(new ViewerToolBar<DicomImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
                 BundleTools.SYSTEM_PREFERENCES, 10));
 
-            // TOOLBARS.add(View2dContainer.TOOLBARS.get(0));
             TOOLBARS.add(new MeasureToolBar(evtMg, 11));
             TOOLBARS.add(new ZoomToolBar(evtMg, 20, false));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
@@ -595,9 +606,6 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             TOOLS.add(tool);
 
             TOOLS.add(new ImageTool());
-
-            // TODO should elsewhere
-            evtMg.initDefaultListeners(evtMg.getActiveDicomModel());
         }
     }
 
