@@ -60,15 +60,12 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.util.ColorLayerUI;
-import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.LutToolBar;
 
 import br.com.animati.texture.codec.ImageSeriesFactory;
@@ -187,7 +184,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             return;
         }
         try {
-            if (layoutModel.getId().startsWith("mpr") && Activator.useHardwareAcceleration) {
+            if (Activator.useHardwareAcceleration) {
                 ImageSeriesFactory factory = new ImageSeriesFactory();
                 try {
                     Comparator  sort = null;
@@ -231,16 +228,8 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
                     // Video card memory full.
                     throw ex; // Expected to be javax.media.opengl.GLException
                 }
-            } else { // TODO: vai vir aqui se for 1X1!
-                controlAxes = null;
-                // int firstFreeViewIndex = getFirstFreeViewIndex();
-                // if (firstFreeViewIndex >= 0) {
-                // pushSeries(viewsList.get(firstFreeViewIndex), series, comparator, true);
-                // // Need to get from list again, because it may have been replaced
-                // setSelectedView(viewsList.get(firstFreeViewIndex));
-                // } else {
-                // LOGGER.info("Nao tinha nenhum viewer livre!");
-                // }
+            } else {
+                showErrorMessage();
             }
         } catch (Exception ex) {
             close();
@@ -673,40 +662,14 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public List<Action> getExportActions() {
-        // TODO Auto-generated method stub
+        //Doesn't export yet.
         return null;
     }
 
     @Override
     public List<Action> getPrintActions() {
-        ArrayList<Action> actions = new ArrayList<Action>(2);
-        final String title = "Print 2D viewer layout";
-        AbstractAction printStd =
-            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View3DContainer.this);
-                    PrintDialog dialog =
-                        new PrintDialog(SwingUtilities.getWindowAncestor(View3DContainer.this), title, eventManager);
-                    ColorLayerUI.showCenterScreen(dialog, layer);
-                }
-            };
-        actions.add(printStd);
-
-        final String title2 = "DICOM Print";
-        AbstractAction printStd2 = new AbstractAction(title2, null) {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View3DContainer.this);
-                DicomPrintDialog dialog =
-                    new DicomPrintDialog(SwingUtilities.getWindowAncestor(View3DContainer.this), title2, eventManager);
-                ColorLayerUI.showCenterScreen(dialog, layer);
-            }
-        };
-        actions.add(printStd2);
-        return actions;
+        //Doesn't have anything printable yet.
+        return null;
     }
 
     @Override

@@ -370,7 +370,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             setActionsInView(action, value, true);
         } else if (evt.getSource() instanceof ControlAxes) {
             if ("rotation".equals(propertyName)) {
-                // scrollSeriesAction.setMinMaxValue(1, getTotalSlices(), getCurrentSlice());
                 renderSupp.setDirty(true);
 
                 String old = GraphicsModel.getRotationDesc((Quat4d) evt.getOldValue());
@@ -385,8 +384,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 renderSupp.setDirty(true);
                 int old = (Integer) evt.getOldValue();
                 handleGraphicsLayer(old);
-
-                // scrollSeriesAction.setValueWithoutTriggerAction(getCurrentSlice());
             }
         }
     }
@@ -422,7 +419,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer) {
                 actionsInView.put(ActionW.ROTATION.cmd(), val);
                 setRotationOffset(Math.toRadians((Integer) val));
-                // (int) Math.round(Math.toDegrees(getRotationOffset()));
                 updateAffineTransform();
                 repaint();
             } else if (command.equals(ActionW.RESET.cmd())) {
@@ -673,8 +669,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
             resetAction(null);
 
-            // FIXME does not have unit at this stage
-            // actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), getPixelSpacingUnit());
+            actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), series.getPixelSpacingUnit());
 
             series.getSeries().setOpen(true);
         }
@@ -1032,6 +1027,18 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
         renderSupp.setDirty(true);
     }
+    
+    private void rotateImage(int angle) {
+        Object actionValue = getActionValue(ActionW.ROTATION.cmd());
+        if (actionValue instanceof Integer) {
+            Integer actual = (Integer) actionValue;
+            if (angle > 0) {
+                setActionsInView(ActionW.ROTATION.cmd(), (actual + angle) % 360);
+            } else {
+                setActionsInView(ActionW.ROTATION.cmd(), (actual + angle + 360) % 360);
+            }
+        }
+    }
 
     // @Override
     // public MeasurementsAdapter getMeasuremantAdapter(Unit displayUnit) {
@@ -1154,87 +1161,21 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         this.addKeyListener(this);
     }
 
-    // private void initDefaultMouseListeners() {
-    // addMouseListener(new MouseAdapter() {
-    //
-    // @Override
-    // public void mouseClicked(MouseEvent e) {
-    // requestFocus();
-    // }
-    //
-    // @Override
-    // public void mousePressed(MouseEvent e) {
-    // if (e.getClickCount() == 2) {
-    // Container parent = getParent();
-    // // if (parent instanceof ViewsGrid) {
-    // // ((ViewsGrid) parent).maximizeElement(GridViewUI.this);
-    // // return;
-    // // }
-    // }
-    // requestFocus();
-    // changeCursor(e.getModifiersEx());
-    // }
-    //
-    // @Override
-    // public void mouseMoved(MouseEvent e) {
-    // showPixelInfos(e);
-    // }
-    //
-    // @Override
-    // public void mouseReleased(MouseEvent e) {
-    // setCursor(AbstractLayerModel.DEFAULT_CURSOR);
-    // }
-    //
-    // private void changeCursor(int modifiers) {
-    // MouseActions mouseActions = GUIManager.getInstance().getMouseActions();
-    // ActionW action = null;
-    // // left mouse button, always active
-    // if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
-    // action = getActionMouseBtnActFromCommand(mouseActions.getLeft());
-    // } // middle mouse button
-    // else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0
-    // && ((mouseActions.getActiveButtons() & InputEvent.BUTTON2_DOWN_MASK) != 0)) {
-    // action = getActionMouseBtnActFromCommand(mouseActions.getMiddle());
-    // } // right mouse button
-    // else if ((modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0
-    // && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
-    // action = getActionMouseBtnActFromCommand(mouseActions.getRight());
-    // }
-    // setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
-    // }
-    // });
-    //
-    // addMouseMotionListener(new MouseAdapter() {
-    // @Override
-    // public void mouseMoved(MouseEvent e) {
-    // showPixelInfos(e);
-    // }
-    // });
-    //
-    // // addMouseWheelListener(new MouseAdapter() {
-    // // @Override
-    // // public void mouseWheelMoved(MouseWheelEvent mwe) {
-    // // ViewerPlugin container = GUIManager.getInstance().getSelectedViewerPlugin();
-    // //
-    // // // if (container instanceof AbstractViewsContainer
-    // // // && ((AbstractViewsContainer) container).isContainingView(
-    // // // GridViewUI.this)
-    // // // && ((AbstractViewsContainer) container).getSelectedPane()
-    // // // != GridViewUI.this) {
-    // // // ((AbstractViewsContainer) container)
-    // // // .setSelectedImagePaneFromFocus(GridViewUI.this);
-    // // // }
-    // //
-    // // }
-    // // });
-    // }
-
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
             if (e.isControlDown()) {
                 // Ctrl + Space passa para a proxima action.
-                EventPublisher.getInstance().publish(new PropertyChangeEvent(this, "MouseActions.left", null, null));
+                ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
+                if (view != null) {
+                    ViewerToolBar toolBar = view.getViewerToolBar();
+                    if (toolBar != null) {
+                        String command =
+                            ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
+                                toolBar.getMouseLeft().getActionCommand()).cmd();
+                        changeLeftMouseAction(command);
+                    }
+                }
             } else {
                 // Liga/desliga informacoes do paciente.
                 boolean visible = getInfoLayer().isVisible();
@@ -1254,7 +1195,10 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             // Rotaciona para a esquerda
             rotateImage(-90);
         } else {
-            handleMouseActionKeys(e);
+            ActionW action = GUIManager.getInstance().getActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
+            if (action != null) {
+                changeLeftMouseAction(action.cmd());
+            }
         }
     }
 
@@ -1265,43 +1209,20 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     @Override
     public void keyReleased(KeyEvent e) { /* TODO: ctrl + c */
     }
-
-    private void handleMouseActionKeys(KeyEvent e) {
-        ActionW action = GUIManager.getInstance().getActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
-        if (action == null) {
-            if (e.getKeyCode() == KeyEvent.VK_H) {
-                if (crosshairAction.isActionEnabled()) {
-                    EventPublisher.getInstance().publish(
-                        new PropertyChangeEvent(this, "MouseActions.left", null, ActionW.CROSSHAIR.cmd()));
+    
+    private void changeLeftMouseAction(String command) {
+        ImageViewerPlugin view = eventManager.getSelectedView2dContainer();
+        if (view != null) {
+            ViewerToolBar toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                MouseActions mouseActions = eventManager.getMouseActions();
+                if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
+                    mouseActions.setAction(MouseActions.LEFT, command);
+                    if (view != null) {
+                        view.setMouseActions(mouseActions);
+                    }
+                    toolBar.changeButtonState(MouseActions.LEFT, command);
                 }
-            } else {
-                // Object actionData = getActionData(ActionW.PRESET.cmd());
-                // int keyCode = e.getKeyCode();
-                // if (actionData instanceof List) {
-                // for (Object object : (List) actionData) {
-                // if (object instanceof PresetWindowLevel) {
-                // PresetWindowLevel val = (PresetWindowLevel) object;
-                // if (keyCode == val.getKeyCode()) {
-                // setActionsInView(ActionW.PRESET.cmd(), val);
-                // }
-                // }
-                // }
-                // }
-            }
-        } else {
-            EventPublisher.getInstance()
-                .publish(new PropertyChangeEvent(this, "MouseActions.left", null, action.cmd()));
-        }
-    }
-
-    private void rotateImage(int angle) {
-        Object actionValue = getActionValue(ActionW.ROTATION.cmd());
-        if (actionValue instanceof Integer) {
-            Integer actual = (Integer) actionValue;
-            if (angle > 0) {
-                setActionsInView(ActionW.ROTATION.cmd(), (actual + angle) % 360);
-            } else {
-                setActionsInView(ActionW.ROTATION.cmd(), (actual + angle + 360) % 360);
             }
         }
     }
@@ -1425,19 +1346,23 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void copyActionWState(HashMap actionsInView) {
-        // TODO Auto-generated method stub
-
+        actionsInView.putAll(this.actionsInView);
     }
 
     @Override
     public void updateSynchState() {
         // TODO Auto-generated method stub
-
     }
 
     @Override
     public PixelInfo getPixelInfo(Point p, ImageLayer imageLayer) {
-        // TODO Auto-generated method stub
+        //TODO:
+        //p is a point on the measurements coordinates system.
+        //imageLayer is not relevant...
+        //It's missing the conversion from the measurement's to the
+        //original coordinates system, to be able to do this.
+       
+        //Its necessary just for the PixelInfoGraphic.
         return null;
     }
 
@@ -1449,8 +1374,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void setSeries(MediaSeries series) {
-        // TODO Auto-generated method stub
-
+        //Used on ImageViewerPlugin.addSeries
+        //If it had to be implemented, would have to return RuntimeException in case
+        //series is too big to video card...
     }
 
     @Override
@@ -1562,7 +1488,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public Comparator getCurrentSortComparator() {
-        // TODO Auto-generated method stub
+        if (getParentImageSeries() != null) {
+            ((TextureDicomSeries) getParentImageSeries()).getSeriesSorter();
+        }
         return null;
     }
 
@@ -2155,6 +2083,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
 
+            
+            System.out.println(" action: " + action);
+            if (action != null ) {
+                System.out.println(" /cursor: " + action.getCursor());
+            }
             ViewTexture.this.setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
         }
 

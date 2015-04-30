@@ -436,6 +436,19 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
     public void setMouseActions(final MouseActions mActions) {
         mouseActions = mActions;
     }
+    
+    @Override
+    public ActionW getActionFromCommand(String command) {
+        ActionW action = super.getActionFromCommand(command);
+        if (action == null && command != null) {
+            for (ActionW a : keyEventActions) {
+                if (a.cmd().equals(command)) {
+                    return a;
+                }
+            }
+        }
+        return action;
+    }
 
     @Override
     public ActionW getActionFromkeyEvent(int keyEvent, int modifier) {
