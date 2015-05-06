@@ -342,7 +342,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 || ImageSeriesFactory.TEXTURE_DO_DISPLAY.equals(propertyName)) {
             
             // Invert if necessary
-            //In case of PhotometricInterpretationInverse, it has to be corrected here.
+            // In case of PhotometricInterpretationInverse, it has to be corrected here.
             if (isContentPhotometricInterpretationInverse()) {
                 inverse = true;
                 actionsInView.put(ActionW.INVERT_LUT.cmd(), inverse);
@@ -359,7 +359,20 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 List<PresetWindowLevel> presetList =
                         ((TextureDicomSeries) getParentImageSeries()).getPresetList(true, true);
                 if (presetList.size() > size) {
-                    ((ComboItemListener) action).setDataList(allItem);
+                    ((ComboItemListener) action).setDataList(presetList.toArray());
+                    //Apply to model, and selected view..
+                    ((ComboItemListener) action).setSelectedItem(presetList.get(0));
+                    //Apply to all viewers!
+                    ImageViewerPlugin<DicomImageElement> container = GUIManager.getInstance().getSelectedView2dContainer();
+                    ArrayList<ViewCanvas<DicomImageElement>> imagePanels = container.getImagePanels();
+                    for (ViewCanvas<DicomImageElement> panel : imagePanels) {
+                        if (panel != GUIManager.getInstance().getSelectedViewPane()
+                                && panel instanceof ViewTexture) {
+                            if (presetList.get(0) instanceof PresetWindowLevel) {
+                                ((ViewTexture) panel).setPresetWindowLevel(presetList.get(0));
+                            }
+                        }
+                    }
                 }
             }
             
@@ -2083,11 +2096,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
 
-            
-            System.out.println(" action: " + action);
-            if (action != null ) {
-                System.out.println(" /cursor: " + action.getCursor());
-            }
             ViewTexture.this.setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
         }
 
