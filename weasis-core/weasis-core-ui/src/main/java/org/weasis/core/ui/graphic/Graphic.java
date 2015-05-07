@@ -20,7 +20,7 @@ import java.util.List;
 
 import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GUIEntry;
-import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
@@ -79,7 +79,7 @@ public interface Graphic extends GUIEntry, Cloneable {
 
     Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform);
 
-    List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit);
+    List<MeasureItem> computeMeasurements(MeasurableLayer layer, boolean releaseEvent, Unit displayUnit);
 
     List<Measurement> getMeasurementList();
 

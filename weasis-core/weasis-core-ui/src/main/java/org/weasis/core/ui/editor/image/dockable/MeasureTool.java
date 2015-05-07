@@ -53,7 +53,6 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.JToogleButtonGroup;
 import org.weasis.core.api.gui.util.TableHeaderRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
@@ -82,6 +81,7 @@ import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.ui.util.TableNumberRenderer;
 
 import bibliothek.gui.dock.common.CLocation;
+import org.weasis.core.api.image.util.MeasurableLayer;
 
 public class MeasureTool extends PluginTool implements GraphicsListener {
 
@@ -390,7 +390,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         table.getColumnModel().getColumn(1).setHeaderRenderer(new TableHeaderRenderer());
     }
 
-    public void setSelectedGraphic(Graphic graph, ImageLayer layer) {
+    public void setSelectedGraphic(Graphic graph, MeasurableLayer layer) {
         List<MeasureItem> measList = null;
 
         if (graph != null && layer != null) {
@@ -462,7 +462,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     }
 
     @Override
-    public void handle(List<Graphic> selectedGraphicList, ImageLayer layer) {
+    public void handle(List<Graphic> selectedGraphicList, MeasurableLayer layer) {
         Graphic g = null;
         List<AbstractDragGraphic> list = null;
 

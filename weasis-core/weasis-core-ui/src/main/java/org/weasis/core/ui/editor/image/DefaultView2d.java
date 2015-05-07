@@ -91,8 +91,8 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.KernelData;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -301,7 +301,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public PixelInfo getPixelInfo(final Point p, ImageLayer<E> imageLayer) {
+    public PixelInfo getPixelInfo(final Point p) {
         PixelInfo pixelInfo = new PixelInfo();
         E imageElement = imageLayer.getSourceImage();
         if (imageElement != null && imageLayer.getReadIterator() != null) {
@@ -689,6 +689,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public RenderedImageLayer<E> getImageLayer() {
+        return imageLayer;
+    }
+    
+    @Override
+    public MeasurableLayer getMeasurableLayer() {
         return imageLayer;
     }
 
@@ -1379,7 +1384,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             Point2D pModel = getImageCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
             Rectangle oldBound = infoLayer.getPixelInfoBound();
             PixelInfo pixelInfo =
-                getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())), imageLayer);
+                getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())));
             oldBound.width =
                 Math.max(
                     oldBound.width,

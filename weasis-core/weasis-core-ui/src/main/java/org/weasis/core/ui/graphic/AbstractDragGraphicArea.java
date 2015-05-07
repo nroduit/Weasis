@@ -26,8 +26,7 @@ import javax.media.jai.RenderedOp;
 
 import org.weasis.core.api.image.op.ImageStatistics2Descriptor;
 import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
-import org.weasis.core.api.image.util.ImageLayer;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.TagW;
 
 /**
@@ -67,10 +66,9 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
         }
     }
 
-    public List<MeasureItem> getImageStatistics(ImageLayer layer, boolean releaseEvent) {
+    public List<MeasureItem> getImageStatistics(MeasurableLayer layer, boolean releaseEvent) {
         if (layer != null) {
-            ImageElement imageElement = layer.getSourceImage();
-            if (imageElement != null && isShapeValid()) {
+            if (layer.hasContent() && isShapeValid()) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
 
                 if (IMAGE_MIN.isComputed() || IMAGE_MAX.isComputed() || IMAGE_MEAN.isComputed()) {
@@ -84,13 +82,14 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
 
                     if (releaseEvent && shape != null) {
                         RenderedImage image = layer.getSourceRenderedImage();
+                        if (image == null) {
+                            return null;
+                        }
                         // long startTime = System.currentTimeMillis();
-                        double scaleX = imageElement.getRescaleX();
-                        double scaleY = imageElement.getRescaleY();
+                        AffineTransform transform = layer.getShapeTransform();
                         ROIShape roi;
-                        if (scaleX != scaleY) {
-                            // Rescale ROI for non-square pixel image
-                            AffineTransform transform = AffineTransform.getScaleInstance(1.0 / scaleX, 1.0 / scaleY);
+                        if (transform != null) {
+                            // Rescale ROI, if needed
                             roi = new ROIShape(transform.createTransformedShape(shape));
                         } else {
                             roi = new ROIShape(shape);
@@ -98,8 +97,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         // Get padding values => exclude values
                         Double excludedMin = null;
                         Double excludedMax = null;
-                        Integer paddingValue = (Integer) imageElement.getTagValue(TagW.PixelPaddingValue);
-                        Integer paddingLimit = (Integer) imageElement.getTagValue(TagW.PixelPaddingRangeLimit);
+                        Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.PixelPaddingValue);
+                        Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.PixelPaddingRangeLimit);
                         if (paddingValue != null) {
                             if (paddingLimit == null) {
                                 paddingLimit = paddingValue;
@@ -126,8 +125,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
 
                         // LOGGER.error("Basic stats [ms]: {}", System.currentTimeMillis() - startTime);
                         // unit = pixelValue * rescale slope + rescale intercept
-                        Float slopeVal = (Float) imageElement.getTagValue(TagW.RescaleSlope);
-                        Float interceptVal = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
+                        Float slopeVal = (Float) layer.getSourceTagValue(TagW.RescaleSlope);
+                        Float interceptVal = (Float) layer.getSourceTagValue(TagW.RescaleIntercept);
                         double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
                         double intercept = interceptVal == null ? 0.0f : interceptVal.doubleValue();
                         for (int i = 0; i < extrema[0].length; i++) {
@@ -160,7 +159,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         }
                     }
 
-                    String unit = imageElement.getPixelValueUnit();
+                    String unit = layer.getPixelValueUnit();
                     if (IMAGE_MIN.isComputed()) {
                         addMeasure(measVal, IMAGE_MIN, min, unit);
                     }
@@ -181,7 +180,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         addMeasure(measVal, IMAGE_KURTOSIS, kurtosis, unit);
                     }
 
-                    Double suv = (Double) imageElement.getTagValue(TagW.SuvFactor);
+                    Double suv = (Double) layer.getSourceTagValue(TagW.SuvFactor);
                     if (suv != null) {
                         unit = "SUVbw"; //$NON-NLS-1$
                         if (IMAGE_MIN.isComputed()) {

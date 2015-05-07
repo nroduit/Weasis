@@ -16,6 +16,7 @@ import java.awt.image.RenderedImage;
 
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 
@@ -30,6 +31,8 @@ public interface Image2DViewer<E extends ImageElement> {
     ViewModel getViewModel();
 
     ImageLayer<E> getImageLayer();
+    
+    MeasurableLayer getMeasurableLayer();
 
     AffineTransform getAffineTransform();
 

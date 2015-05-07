@@ -32,8 +32,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.LayoutUtil;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -489,7 +489,7 @@ public class AbstractLayerModel implements LayerModel {
         }
     }
 
-    public void fireGraphicsSelectionChanged(ImageLayer layer) {
+    public void fireGraphicsSelectionChanged(MeasurableLayer layer) {
         for (int i = 0; i < selectedGraphicsListener.size(); i++) {
             (selectedGraphicsListener.get(i)).handle((List<Graphic>) selectedGraphicList.clone(), layer);
         }

@@ -17,7 +17,6 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.graphic.ImageLayerChangeListener;
@@ -43,7 +42,7 @@ public interface ViewCanvas<E extends ImageElement> extends Canvas, Image2DViewe
 
     void updateSynchState();
 
-    PixelInfo getPixelInfo(Point p, ImageLayer<E> imageLayer);
+    PixelInfo getPixelInfo(Point p);
 
     Panner getPanner();
 

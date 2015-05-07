@@ -122,6 +122,7 @@ import br.com.animati.texture.mpr3dview.api.DisplayUtils;
 import br.com.animati.texture.mpr3dview.api.GraphicsModel;
 import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
 import br.com.animati.texture.mpr3dview.api.RenderSupport;
+import br.com.animati.texture.mpr3dview.api.TextureMeasurableLayer;
 import br.com.animati.texture.mpr3dview.internal.Messages;
 import br.com.animati.texturedicom.ColorMask;
 import br.com.animati.texturedicom.ControlAxes;
@@ -129,6 +130,7 @@ import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
 import br.com.animati.texturedicom.cl.CLConvolution;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.dicom.codec.SortSeriesStack;
 
@@ -171,6 +173,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     public static boolean computePixelStats = true;
 
     private final RenderSupport renderSupp = new RenderSupport(this);
+    protected final TextureMeasurableLayer measurableLayer;
 
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
     private Cross3dListener crosshairAction = new Cross3dListener();
@@ -186,6 +189,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     public ViewTexture(ImageViewerEventManager<DicomImageElement> eventManager, ImageSeries parentImageSeries) {
         super(parentImageSeries);
         this.eventManager = eventManager;
+        
+        measurableLayer = new TextureMeasurableLayer(this);
 
         infoLayer = new InfoLayer3d(this);
 
@@ -1052,21 +1057,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             }
         }
     }
-
-    // @Override
-    // public MeasurementsAdapter getMeasuremantAdapter(Unit displayUnit) {
-    // //TODO: support other displayUnits
-    // if (hasContent()) {
-    // String abr = getSeriesObject().getPixelSpacingUnit().getAbbreviation();
-    // double[] pixelSpacing = getSeriesObject().getAcquisitionPixelSpacing();
-    // double pixelSize = 1;
-    // if (pixelSpacing != null) {
-    // pixelSize = pixelSpacing[0];
-    // }
-    // return new MeasurementsAdapter(pixelSize, 0, 0, false, 0, abr);
-    // }
-    // return null;
-    // }
+ 
 
     @Override
     public void registerDefaultListeners() {
@@ -1368,10 +1359,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     @Override
-    public PixelInfo getPixelInfo(Point p, ImageLayer imageLayer) {
+    public PixelInfo getPixelInfo(Point p) {
         //TODO:
         //p is a point on the measurements coordinates system.
-        //imageLayer is not relevant...
         //It's missing the conversion from the measurement's to the
         //original coordinates system, to be able to do this.
        
@@ -1517,8 +1507,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         setBorder(selected ? focusBorder : normalBorder);
         // Remove the selection of graphics
         getLayerModel().setSelectedGraphics(null);
+        
         // Throws to the tool listener the current graphic selection.
-        getLayerModel().fireGraphicsSelectionChanged(getImageLayer());
+        getLayerModel().fireGraphicsSelectionChanged(getMeasurableLayer());
     }
 
     @Override
@@ -1708,6 +1699,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     public ImageLayer<DicomImageElement> getImageLayer() {
         // TODO Auto-generated method stub
         return null;
+    }
+    
+    @Override
+    public MeasurableLayer getMeasurableLayer() {
+        return measurableLayer;
     }
 
     @Override

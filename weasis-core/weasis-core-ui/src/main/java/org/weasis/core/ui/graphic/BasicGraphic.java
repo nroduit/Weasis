@@ -31,7 +31,7 @@ import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
-import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -439,20 +439,6 @@ public abstract class BasicGraphic implements Graphic {
         return null;
     }
 
-    protected ImageElement getImageElement(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
-            return ((Image2DViewer) mouseevent.getSource()).getImage();
-        }
-        return null;
-    }
-
-    protected ImageLayer getImageLayer(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
-            return ((Image2DViewer) mouseevent.getSource()).getImageLayer();
-        }
-        return null;
-    }
-
     public void setShape(Shape newShape, MouseEvent mouseevent) {
         Shape oldShape = this.shape;
         this.shape = newShape;
@@ -556,7 +542,7 @@ public abstract class BasicGraphic implements Graphic {
     public void updateLabel(Object source, ViewCanvas view2d, Point2D pos) {
 
         boolean releasedEvent = false;
-        ImageLayer layer = view2d == null ? null : view2d.getImageLayer();
+        MeasurableLayer layer = view2d == null ? null : view2d.getMeasurableLayer();
 
         if (source instanceof MouseEvent) {
             releasedEvent = ((MouseEvent) source).getID() == MouseEvent.MOUSE_RELEASED;

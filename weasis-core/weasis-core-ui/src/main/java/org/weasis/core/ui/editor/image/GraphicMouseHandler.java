@@ -129,7 +129,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         }
 
         // Throws to the tool listener the current graphic selection.
-        layerModel.fireGraphicsSelectionChanged(vImg.getImageLayer());
+        layerModel.fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
 
     }
 
@@ -215,7 +215,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         }
 
         // Throws to the tool listener the current graphic selection.
-        layerModel.fireGraphicsSelectionChanged(vImg.getImageLayer());
+        layerModel.fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
 
         Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
 
