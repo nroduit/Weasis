@@ -19,7 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -27,7 +26,6 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
-import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +36,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
@@ -60,6 +59,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -83,12 +83,13 @@ import br.com.animati.texturedicom.ImageSeries;
  * @author Gabriela Carla Bauermann (gabriela@animati.com.br)
  * @version 2013, 16 Jul.
  */
-public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
+public class View3DContainer extends ImageViewerPlugin<DicomImageElement>implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(View3DContainer.class);
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
 
     static SynchView DEFAULT_MPR;
+
     static {
         SYNCH_LIST.add(SynchView.NONE);
 
@@ -111,9 +112,10 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         SYNCH_LIST.add(DEFAULT_MPR);
     }
 
-    public static final GridBagLayoutModel VIEWS_2x1_mpr = new GridBagLayoutModel(
-        new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", "MPR Views", new ImageIcon(
-            View3DContainer.class.getResource("/icon/22x22/layout_mpr3.png")));
+    public static final GridBagLayoutModel VIEWS_2x1_mpr =
+        new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", "MPR Views",
+            new ImageIcon(View3DContainer.class.getResource("/icon/22x22/layout_mpr3.png")));
+
     static {
         LinkedHashMap<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
         constraints.put(new LayoutConstraints(ViewTexture.class.getName(), 0, 0, 0, 1, 2, 0.5, 1.0,
@@ -124,9 +126,10 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
     }
 
-    public static final GridBagLayoutModel VIEWS_2x2_mpr = new GridBagLayoutModel(
-        new LinkedHashMap<LayoutConstraints, Component>(4), "mpr4", "MPR-3D Views", new ImageIcon(
-            ViewerPlugin.class.getResource("/icon/22x22/layout2x2.png")));
+    public static final GridBagLayoutModel VIEWS_2x2_mpr =
+        new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(4), "mpr4", "MPR-3D Views",
+            new ImageIcon(ViewerPlugin.class.getResource("/icon/22x22/layout2x2.png")));
+
     static {
         LinkedHashMap<LayoutConstraints, Component> constraints = VIEWS_2x2_mpr.getConstraints();
         constraints.put(new LayoutConstraints(ViewTexture.class.getName(), 0, 0, 0, 1, 1, 0.5, 0.5,
@@ -139,8 +142,9 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
     }
 
-    public static final List<GridBagLayoutModel> LAYOUT_LIST = Collections
-        .synchronizedList(new ArrayList<GridBagLayoutModel>());
+    public static final List<GridBagLayoutModel> LAYOUT_LIST =
+        Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
+
     static {
         LAYOUT_LIST.add(VIEWS_2x1_mpr);
         LAYOUT_LIST.add(VIEWS_2x2_mpr);
@@ -187,21 +191,21 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             if (Activator.useHardwareAcceleration) {
                 ImageSeriesFactory factory = new ImageSeriesFactory();
                 try {
-                    Comparator  sort = null;
+                    Comparator sort = null;
                     ActionState action = eventManager.getAction(ActionW.SORTSTACK);
-                    if (action instanceof ComboItemListener && action.isActionEnabled()) {                       
-                         sort = (Comparator) ((ComboItemListener)action).getSelectedItem();
-                        if(sort != null){
+                    if (action instanceof ComboItemListener && action.isActionEnabled()) {
+                        sort = (Comparator) ((ComboItemListener) action).getSelectedItem();
+                        if (sort != null) {
                             ActionState inverse = eventManager.getAction(ActionW.INVERSESTACK);
-                            if (inverse instanceof ToggleButtonListener && action.isActionEnabled() && sort instanceof SeriesComparator) {
-                                if(((ToggleButtonListener)inverse).isSelected()){
+                            if (inverse instanceof ToggleButtonListener && action.isActionEnabled()
+                                && sort instanceof SeriesComparator) {
+                                if (((ToggleButtonListener) inverse).isSelected()) {
                                     sort = ((SeriesComparator) sort).getReversOrderComparator();
                                 }
                             }
                         }
                     }
-                    
-                    
+
                     TextureDicomSeries imSeries = factory.createImageSeries(series, sort, false);
                     controlAxes = new ControlAxes(imSeries);
                     double[] op = imSeries.getOriginalSeriesOrientationPatient();
@@ -240,7 +244,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         setPluginName((String) series.getTagValue(TagW.PatientName));
         setSelected(true);
     }
-    
+
     @Override
     protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
         TextureDicomSeries series = null;
@@ -305,11 +309,10 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         }
 
         for (ViewCanvas<DicomImageElement> gridElement : getImagePanels()) {
-            if (mediaSeries != null
-                    && mediaSeries.equals(gridElement.getSeries())) {
+            if (mediaSeries != null && mediaSeries.equals(gridElement.getSeries())) {
                 gridElement.propertyChange(event);
             }
-        } 
+        }
     }
 
     protected void setControlAxesBaseOrientation(MediaSeries mediaSeries, double[] op) {
@@ -358,7 +361,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         View3DFactory.showHANotAvailableMsg(this);
     }
 
-     protected void removeContent(final ObservableEvent event) {
+    protected void removeContent(final ObservableEvent event) {
         Object newVal = event.getNewValue();
         // Only one series on this container...
         if (newVal instanceof DicomSeries) {
@@ -393,7 +396,6 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         }
     }
 
-
     protected void handleLoadCompleteEvent(PropertyChangeEvent event) {
         MediaSeries ms = (MediaSeries) event.getNewValue();
 
@@ -407,8 +409,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
                 // Must set after loadComplete
                 double[] op = ser.getOriginalSeriesOrientationPatient();
                 if (op != null && op.length == 6) {
-                    updateViewersWithSeries(ms, new PropertyChangeEvent(this,
-                            "texture.orientationPatient", null, op));
+                    updateViewersWithSeries(ms, new PropertyChangeEvent(this, "texture.orientationPatient", null, op));
 
                     // BUGfix:
                     for (ViewCanvas gridElement : getImagePanels()) {
@@ -421,7 +422,6 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         }
     }
 
-    
     @Override
     public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
         if (menuRoot != null) {
@@ -494,16 +494,15 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
                 }
             }
         }
-        
+
         if (command.startsWith("texture") && event.getNewValue() instanceof MediaSeries) {
             MediaSeries ms = (MediaSeries) event.getNewValue();
             updateViewersWithSeries(ms, event);
             if (ImageSeriesFactory.TEXTURE_LOAD_COMPLETE.equals(command)) {
-               handleLoadCompleteEvent(event);
+                handleLoadCompleteEvent(event);
             }
         } else {
-            if (command.startsWith(EventPublisher.VIEWER_DO_ACTION)
-                    && selectedImagePane != null) {
+            if (command.startsWith(EventPublisher.VIEWER_DO_ACTION) && selectedImagePane != null) {
                 selectedImagePane.propertyChange(event);
             } else {
                 if (event instanceof ObservableEvent) {
@@ -512,20 +511,20 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
         }
     }
-    
-    private void handlesObservEvent(final PropertyChangeEvent event){
+
+    private void handlesObservEvent(final PropertyChangeEvent event) {
         ObservableEvent obEvt = (ObservableEvent) event;
         ObservableEvent.BasicAction action = obEvt.getActionCommand();
         if (ObservableEvent.BasicAction.Remove.equals(action)) {
             removeContent(obEvt);
-        } 
-        //TODO: threat AddImage events or not? MPR doesn't.
-//        else if (event.getNewValue() instanceof SeriesEvent) {
-//            SeriesEvent seriesEvt = (SeriesEvent) event.getNewValue();
-//            if (SeriesEvent.Action.AddImage.equals(seriesEvt.getActionCommand())) {
-//                
-//            }
-//        }
+        }
+        // TODO: threat AddImage events or not? MPR doesn't.
+        // else if (event.getNewValue() instanceof SeriesEvent) {
+        // SeriesEvent seriesEvt = (SeriesEvent) event.getNewValue();
+        // if (SeriesEvent.Action.AddImage.equals(seriesEvt.getActionCommand())) {
+        //
+        // }
+        // }
     }
 
     /**
@@ -591,8 +590,30 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
             TOOLBARS.add(new LutToolBar(evtMg, 40));
 
-            MeasureTool tool = new MeasureTool(evtMg);
+            MiniTool tool = new MiniTool(MiniTool.BUTTON_NAME) {
+
+                @Override
+                public SliderChangeListener[] getActions() {
+
+                    ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                    if (seqAction instanceof SliderChangeListener) {
+                        listeners.add((SliderChangeListener) seqAction);
+                    }
+                    ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                    if (zoomAction instanceof SliderChangeListener) {
+                        listeners.add((SliderChangeListener) zoomAction);
+                    }
+                    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                    if (rotateAction instanceof SliderChangeListener) {
+                        listeners.add((SliderChangeListener) rotateAction);
+                    }
+                    return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                }
+            };
             TOOLS.add(tool);
+
+            TOOLS.add(new MeasureTool(evtMg));
 
             TOOLS.add(new ImageTool());
         }
@@ -662,13 +683,13 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public List<Action> getExportActions() {
-        //Doesn't export yet.
+        // Doesn't export yet.
         return null;
     }
 
     @Override
     public List<Action> getPrintActions() {
-        //Doesn't have anything printable yet.
+        // Doesn't have anything printable yet.
         return null;
     }
 
