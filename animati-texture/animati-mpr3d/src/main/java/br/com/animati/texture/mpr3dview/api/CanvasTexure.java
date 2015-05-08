@@ -4,19 +4,18 @@
  */
 package br.com.animati.texture.mpr3dview.api;
 
-import br.com.animati.texturedicom.ImageSeries;
-import br.com.animati.texturedicom.TextureImageCanvas;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
+
 import javax.swing.JComponent;
 import javax.vecmath.Point2i;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.model.ViewModel;
@@ -24,6 +23,9 @@ import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.Canvas;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.MainLayerModel;
+
+import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.TextureImageCanvas;
 
 /**
  *
@@ -163,12 +165,6 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     public Point getMouseCoordinatesFromImage(double x, double y) {
         //not realy ImageCoordenates... see: Wikipage 'Coordinate Systems'
         return graphsLayer.getMouseCoordinatesFromImage(x, y);
-    }
-
-    @Override
-    public void transformGraphics(Graphics2D g2d, boolean forward) {
-        // TODO: used for what?
-        // TODO Auto-generated method stub
     }
     
     /**

@@ -11,7 +11,6 @@
 package org.weasis.core.ui.graphic.model;
 
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -220,9 +219,8 @@ public class GraphicsPane extends JComponent implements Canvas {
     @Override
     public Point2D getImageCoordinatesFromMouse(int x, int y) {
         double viewScale = getViewModel().getViewScale();
-        Point2D p2 =
-            new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale, y + getViewModel().getModelOffsetY()
-                * viewScale);
+        Point2D p2 = new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale,
+            y + getViewModel().getModelOffsetY() * viewScale);
         inverseTransform.transform(p2, p2);
         return p2;
     }
@@ -257,22 +255,6 @@ public class GraphicsPane extends JComponent implements Canvas {
         if (isOpaque()) {
             g.setColor(getBackground());
             g.fillRect(0, 0, getWidth(), getHeight());
-        }
-    }
-
-    // /////////////////////////////////////////////////////////////////////////////////////
-    // Drawing
-
-    @Override
-    public void transformGraphics(final Graphics2D g2d, boolean forward) {
-        if (forward) {
-            // forward transform
-            g2d.scale(viewModel.getViewScale(), viewModel.getViewScale());
-            g2d.translate(-viewModel.getModelOffsetX(), -viewModel.getModelOffsetY());
-        } else {
-            // inverse transform
-            g2d.translate(viewModel.getModelOffsetX(), viewModel.getModelOffsetY());
-            g2d.scale(1.0 / viewModel.getViewScale(), 1.0 / viewModel.getViewScale());
         }
     }
 
