@@ -481,7 +481,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
         
         if (tsuid != null) {
             GraphicLabel.paintColorFontOutline(g2d,
-                        Messages.getString("DualInfoLayer.lossy") + " " + tsuid,
+                        Messages.getString("InfoLayer.lossy") + " " + tsuid,
                         border, drawY, Color.RED);
             drawY -= fontHeight;
         }  
