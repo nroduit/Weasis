@@ -54,8 +54,8 @@ public class ImageTool extends PluginTool {
     private final JScrollPane rootPane = new JScrollPane();
 
     public ImageTool() {
-        super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 6);
-
+        super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 20);
+        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/mpr3d.png"))); //$NON-NLS-1$
         setDockableWidth(290);
         init();
 

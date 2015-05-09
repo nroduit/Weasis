@@ -44,8 +44,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.docking.DockableTool;
@@ -80,7 +78,7 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
-public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
+public class MPRContainer extends ImageViewerPlugin<DicomImageElement>implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(MPRContainer.class);
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
@@ -109,6 +107,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     public static final GridBagLayoutModel VIEWS_2x1_mpr = new GridBagLayoutModel(
         new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", Messages.getString("MPRContainer.title"), null); //$NON-NLS-1$ //$NON-NLS-2$
+
     static {
         LinkedHashMap<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
         constraints.put(new LayoutConstraints(MprView.class.getName(), 0, 0, 0, 1, 2, 0.5, 1.0,
@@ -120,8 +119,9 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     }
 
-    public static final List<GridBagLayoutModel> LAYOUT_LIST = Collections
-        .synchronizedList(new ArrayList<GridBagLayoutModel>());
+    public static final List<GridBagLayoutModel> LAYOUT_LIST =
+        Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
+
     static {
         LAYOUT_LIST.add(VIEWS_2x1_mpr);
         LAYOUT_LIST.add(VIEWS_2x2_f2);
@@ -148,8 +148,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
             // Add standard toolbars
-            WProperties props = (WProperties) BundleTools.SYSTEM_PREFERENCES.clone();
-            props.putBooleanProperty("weasis.toolbar.synchbouton", false); //$NON-NLS-1$
+            // WProperties props = (WProperties) BundleTools.SYSTEM_PREFERENCES.clone();
+            // props.putBooleanProperty("weasis.toolbar.synchbouton", false); //$NON-NLS-1$
 
             EventManager evtMg = EventManager.getInstance();
             TOOLBARS.add(View2dContainer.TOOLBARS.get(0));
@@ -478,72 +478,72 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             }
             view.repaint();
             process = new Thread(Messages.getString("MPRContainer.build")) { //$NON-NLS-1$
-                    @Override
-                    public void run() {
-                        try {
-                            SeriesBuilder.createMissingSeries(this, MPRContainer.this, view);
+                @Override
+                public void run() {
+                    try {
+                        SeriesBuilder.createMissingSeries(this, MPRContainer.this, view);
 
-                            // Following actions need to be executed in EDT thread
-                            GuiExecutor.instance().execute(new Runnable() {
+                        // Following actions need to be executed in EDT thread
+                        GuiExecutor.instance().execute(new Runnable() {
 
-                                @Override
-                                public void run() {
-                                    ActionState synch = eventManager.getAction(ActionW.SYNCH);
-                                    if (synch instanceof ComboItemListener) {
-                                        ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
-                                    }
-                                    // Set the middle image (best choice to propagate the default preset of non CT
-                                    // modalities)
-                                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                                    if (seqAction instanceof SliderChangeListener) {
-                                        SliderCineListener sliceAction = (SliderCineListener) seqAction;
-                                        sliceAction.setValue(sliceAction.getMax() / 2);
-                                    }
-                                    ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
-                                    if (cross instanceof CrosshairListener) {
-                                        ((CrosshairListener) cross).setPoint(view.getImageCoordinatesFromMouse(
-                                            view.getWidth() / 2, view.getHeight() / 2));
-                                    }
-                                    // Force to propagate the default preset
-                                    ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-                                    if (presetAction instanceof ComboItemListener) {
-                                        ComboItemListener p = (ComboItemListener) presetAction;
-                                        p.setSelectedItemWithoutTriggerAction(null);
-                                        p.setSelectedItem(p.getFirstItem());
-                                    }
+                            @Override
+                            public void run() {
+                                ActionState synch = eventManager.getAction(ActionW.SYNCH);
+                                if (synch instanceof ComboItemListener) {
+                                    ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
                                 }
-                            });
+                                // Set the middle image (best choice to propagate the default preset of non CT
+                                // modalities)
+                                ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                                if (seqAction instanceof SliderChangeListener) {
+                                    SliderCineListener sliceAction = (SliderCineListener) seqAction;
+                                    sliceAction.setValue(sliceAction.getMax() / 2);
+                                }
+                                ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
+                                if (cross instanceof CrosshairListener) {
+                                    ((CrosshairListener) cross).setPoint(
+                                        view.getImageCoordinatesFromMouse(view.getWidth() / 2, view.getHeight() / 2));
+                                }
+                                // Force to propagate the default preset
+                                ActionState presetAction = eventManager.getAction(ActionW.PRESET);
+                                if (presetAction instanceof ComboItemListener) {
+                                    ComboItemListener p = (ComboItemListener) presetAction;
+                                    p.setSelectedItemWithoutTriggerAction(null);
+                                    p.setSelectedItem(p.getFirstItem());
+                                }
+                            }
+                        });
 
-                        } catch (final Exception e) {
-                            e.printStackTrace();
-                            // Following actions need to be executed in EDT thread
-                            GuiExecutor.instance().execute(new Runnable() {
+                    } catch (final Exception e) {
+                        e.printStackTrace();
+                        // Following actions need to be executed in EDT thread
+                        GuiExecutor.instance().execute(new Runnable() {
 
-                                @Override
-                                public void run() {
-                                    for (ViewCanvas v : view2ds) {
-                                        if (v != view && v instanceof MprView) {
-                                            JProgressBar bar = ((MprView) v).getProgressBar();
-                                            if (bar == null) {
-                                                bar = new JProgressBar();
-                                                Dimension dim = new Dimension(v.getJComponent().getWidth() / 2, 30);
-                                                bar.setSize(dim);
-                                                bar.setPreferredSize(dim);
-                                                bar.setMaximumSize(dim);
-                                                bar.setValue(0);
-                                                bar.setStringPainted(true);
-                                                ((MprView) v).setProgressBar(bar);
-                                            }
-                                            bar.setString(e.getMessage());
-                                            v.getJComponent().repaint();
+                            @Override
+                            public void run() {
+                                for (ViewCanvas v : view2ds) {
+                                    if (v != view && v instanceof MprView) {
+                                        JProgressBar bar = ((MprView) v).getProgressBar();
+                                        if (bar == null) {
+                                            bar = new JProgressBar();
+                                            Dimension dim = new Dimension(v.getJComponent().getWidth() / 2, 30);
+                                            bar.setSize(dim);
+                                            bar.setPreferredSize(dim);
+                                            bar.setMaximumSize(dim);
+                                            bar.setValue(0);
+                                            bar.setStringPainted(true);
+                                            ((MprView) v).setProgressBar(bar);
                                         }
+                                        bar.setString(e.getMessage());
+                                        v.getJComponent().repaint();
                                     }
                                 }
-                            });
-                        }
+                            }
+                        });
                     }
+                }
 
-                };
+            };
             process.start();
         }
     }
@@ -566,9 +566,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             if (img instanceof DicomImageElement) {
                 double[] v = (double[]) ((DicomImageElement) img).getTagValue(TagW.ImageOrientationPatient);
                 if (v != null && v.length == 6) {
-                    String orientation =
-                        ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3],
-                            v[4], v[5]);
+                    String orientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
+                        v[1], v[2], v[3], v[4], v[5]);
                     SliceOrientation sliceOrientation = SliceOrientation.AXIAL;
                     if (ImageOrientation.LABELS[3].equals(orientation)) {
                         sliceOrientation = SliceOrientation.CORONAL;

@@ -27,10 +27,15 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -44,8 +49,10 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -73,6 +80,7 @@ import br.com.animati.texture.codec.TextureDicomSeries;
 import br.com.animati.texture.mpr3dview.ViewTexture.ViewType;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
 import br.com.animati.texture.mpr3dview.internal.Activator;
+import br.com.animati.texture.mpr3dview.tool.DisplayTool;
 import br.com.animati.texture.mpr3dview.tool.ImageTool;
 import br.com.animati.texturedicom.ControlAxes;
 import br.com.animati.texturedicom.ImageSeries;
@@ -577,46 +585,99 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
     }
 
     private void initStaticComponents() {
+        setSynchView(DEFAULT_MPR);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
 
-            GUIManager evtMg = GUIManager.getInstance();
+            // Add standard toolbars
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
 
-            TOOLBARS.add(new ViewerToolBar<DicomImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
-                BundleTools.SYSTEM_PREFERENCES, 10));
+            String bundleName = context.getBundle().getSymbolicName();
+            String componentName = InsertableUtil.getCName(this.getClass());
+            String key = "enable"; //$NON-NLS-1$
 
-            TOOLBARS.add(new MeasureToolBar(evtMg, 11));
-            TOOLBARS.add(new ZoomToolBar(evtMg, 20, false));
-            TOOLBARS.add(new RotationToolBar(evtMg, 30));
-            TOOLBARS.add(new LutToolBar(evtMg, 40));
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
+                TOOLBARS.add(new ViewerToolBar<DicomImageElement>(eventManager, eventManager.getMouseActions().getActiveButtons(),
+                    BundleTools.SYSTEM_PREFERENCES, 10));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(MeasureToolBar.class), key, true)) {
+                TOOLBARS.add(new MeasureToolBar(eventManager, 11));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ZoomToolBar.class), key, true)) {
+                TOOLBARS.add(new ZoomToolBar(eventManager, 20, false));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(RotationToolBar.class), key, true)) {
+                TOOLBARS.add(new RotationToolBar(eventManager, 30));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(LutToolBar.class), key, true)) {
+                TOOLBARS.add(new LutToolBar(eventManager, 40));
+            }
 
-            MiniTool tool = new MiniTool(MiniTool.BUTTON_NAME) {
+            PluginTool tool = null;
 
-                @Override
-                public SliderChangeListener[] getActions() {
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(MiniTool.class), key, true)) {
+                tool = new MiniTool(MiniTool.BUTTON_NAME) {
 
-                    ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                    if (seqAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) seqAction);
+                    @Override
+                    public SliderChangeListener[] getActions() {
+
+                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                        if (seqAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) seqAction);
+                        }
+                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                        if (zoomAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) zoomAction);
+                        }
+                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                        if (rotateAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) rotateAction);
+                        }
+                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
                     }
-                    ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                    if (zoomAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) zoomAction);
-                    }
-                    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                    if (rotateAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) rotateAction);
-                    }
-                    return listeners.toArray(new SliderChangeListener[listeners.size()]);
-                }
-            };
-            TOOLS.add(tool);
+                };
+                TOOLS.add(tool);
+            }
 
-            TOOLS.add(new MeasureTool(evtMg));
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ImageTool.class), key, true)) {
+                TOOLS.add(new ImageTool());
+            }
 
-            TOOLS.add(new ImageTool());
-        }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(DisplayTool.class), key, true)) {
+                tool = new DisplayTool(DisplayTool.BUTTON_NAME);
+                TOOLS.add(tool);
+                eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
+            }
+
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(MeasureTool.class), key, true)) {
+                tool = new MeasureTool(eventManager);
+                TOOLS.add(tool);
+            }
+
+            InsertableUtil.sortInsertable(TOOLS);
+
+            // Send event to synchronize the series selection.
+            DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+            if (dicomView != null) {
+                eventManager.addSeriesViewerListener((SeriesViewerListener) dicomView);
+            }
+
+            Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+            if (prefs != null) {
+                InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, componentName, Type.TOOLBAR);
+                InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, componentName, Type.TOOL);
+            }
+        }       
     }
 
     @Override

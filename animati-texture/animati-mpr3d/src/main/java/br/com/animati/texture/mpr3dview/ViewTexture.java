@@ -66,13 +66,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
@@ -110,6 +113,7 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 
@@ -129,10 +133,6 @@ import br.com.animati.texturedicom.ControlAxes;
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
 import br.com.animati.texturedicom.cl.CLConvolution;
-import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.image.util.MeasurableLayer;
-import org.weasis.core.api.media.data.SeriesComparator;
-import org.weasis.dicom.codec.SortSeriesStack;
 
 /**
  *
@@ -1514,13 +1514,15 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void setDrawingsVisibility(boolean visible) {
-        // TODO Auto-generated method stub
-
+        if ((Boolean) actionsInView.get(ActionW.DRAW.cmd()) != visible) {
+            actionsInView.put(ActionW.DRAW.cmd(), visible);
+            repaint();
+        }
     }
 
     @Override
     public Object getLensActionValue(String action) {
-        // TODO Auto-generated method stub
+        // Lens not implemented
         return null;
     }
 
@@ -1635,8 +1637,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void closeLens() {
-        // TODO Auto-generated method stub
-
+     // Lens not implemented
     }
 
     @Override

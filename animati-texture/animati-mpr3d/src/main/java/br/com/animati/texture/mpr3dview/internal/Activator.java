@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.dicom.viewer2d.EventManager;
 
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.cl.CLManager;
@@ -85,6 +86,8 @@ public class Activator implements BundleActivator {
     @Override
     public void stop(BundleContext context) throws Exception {
         LOGGER.info("Stopping bundle Mpr 3D View [Animati].");
+        // Save preferences
+        EventManager.getInstance().savePreferences(context);
         isAlive = false;
     }
 
