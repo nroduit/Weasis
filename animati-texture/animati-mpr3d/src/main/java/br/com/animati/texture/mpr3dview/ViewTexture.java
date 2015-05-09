@@ -145,7 +145,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewTexture.class);
 
     public enum ViewType {
-        AXIAL, CORONAL, SAGITTAL, VOLUME3D
+                          AXIAL, CORONAL, SAGITTAL, VOLUME3D
     };
 
     static final Shape[] pointer;
@@ -157,6 +157,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
+
     private final PanPoint highlightedPosition = new PanPoint(STATE.Center);
     private int pointerType = 0;
 
@@ -189,7 +190,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     public ViewTexture(ImageViewerEventManager<DicomImageElement> eventManager, ImageSeries parentImageSeries) {
         super(parentImageSeries);
         this.eventManager = eventManager;
-        
+
         measurableLayer = new TextureMeasurableLayer(this);
 
         infoLayer = new InfoLayer3d(this);
@@ -236,18 +237,14 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     public void showPixelInfos(MouseEvent mouseevent) {
         if (infoLayer != null && getParentImageSeries() != null) {
-            Point3d pOriginal = getOriginalSystemCoordinatesFromMouse(
-                    mouseevent.getX(), mouseevent.getY());
-            
+            Point3d pOriginal = getOriginalSystemCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
+
             PixelInfo3d pixInfo = new PixelInfo3d();
             pixInfo.setPosition3d(pOriginal);
-            
+
             Rectangle oldBound = infoLayer.getPixelInfoBound();
-            oldBound.width =
-                Math.max(
-                    oldBound.width,
-                    this.getGraphics().getFontMetrics(getLayerFont())
-                        .stringWidth(Messages.getString("InfoLayer3d.pixel") + pixInfo) + 4);
+            oldBound.width = Math.max(oldBound.width, this.getGraphics().getFontMetrics(getLayerFont())
+                .stringWidth(Messages.getString("InfoLayer3d.pixel") + pixInfo) + 4);
             infoLayer.setPixelInfo(pixInfo);
             repaint(oldBound);
         }
@@ -300,10 +297,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             draw = (Boolean) actionValue;
         }
         if (hasContent() && draw) {
-            getLayerModel().draw(
-                g2d,
-                transform,
-                inverseTransform,
+            getLayerModel().draw(g2d, transform, inverseTransform,
                 new Rectangle2D.Double(graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetX()),
                     graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetY()), getWidth(),
                     getHeight()));
@@ -344,35 +338,35 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
 
         if (ImageSeriesFactory.TEXTURE_LOAD_COMPLETE.equals(propertyName)
-                || ImageSeriesFactory.TEXTURE_DO_DISPLAY.equals(propertyName)) {
-            
+            || ImageSeriesFactory.TEXTURE_DO_DISPLAY.equals(propertyName)) {
+
             // Invert if necessary
             // In case of PhotometricInterpretationInverse, it has to be corrected here.
             if (isContentPhotometricInterpretationInverse()) {
                 inverse = true;
                 actionsInView.put(ActionW.INVERT_LUT.cmd(), inverse);
             }
-            
-            //Need to force building preset list again: for cases like neuro-MR:
-            //(DICOM preset diferent for each image).
+
+            // Need to force building preset list again: for cases like neuro-MR:
+            // (DICOM preset diferent for each image).
             int size = 0;
             ActionState action = eventManager.getAction(ActionW.PRESET);
             if (action instanceof ComboItemListener) {
                 Object[] allItem = ((ComboItemListener) action).getAllItem();
                 size = allItem.length;
-                
+
                 List<PresetWindowLevel> presetList =
-                        ((TextureDicomSeries) getParentImageSeries()).getPresetList(true, true);
+                    ((TextureDicomSeries) getParentImageSeries()).getPresetList(true, true);
                 if (presetList.size() > size) {
                     ((ComboItemListener) action).setDataList(presetList.toArray());
-                    //Apply to model, and selected view..
+                    // Apply to model, and selected view..
                     ((ComboItemListener) action).setSelectedItem(presetList.get(0));
-                    //Apply to all viewers!
-                    ImageViewerPlugin<DicomImageElement> container = GUIManager.getInstance().getSelectedView2dContainer();
+                    // Apply to all viewers!
+                    ImageViewerPlugin<DicomImageElement> container =
+                        GUIManager.getInstance().getSelectedView2dContainer();
                     ArrayList<ViewCanvas<DicomImageElement>> imagePanels = container.getImagePanels();
                     for (ViewCanvas<DicomImageElement> panel : imagePanels) {
-                        if (panel != GUIManager.getInstance().getSelectedViewPane()
-                                && panel instanceof ViewTexture) {
+                        if (panel != GUIManager.getInstance().getSelectedViewPane() && panel instanceof ViewTexture) {
                             if (presetList.get(0) instanceof PresetWindowLevel) {
                                 ((ViewTexture) panel).setPresetWindowLevel(presetList.get(0));
                             }
@@ -380,7 +374,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                     }
                 }
             }
-            
+
             repaint();
             eventManager.updateComponentsListener(this);
         } else if (propertyName.startsWith(EventPublisher.VIEWER_DO_ACTION)) {
@@ -633,17 +627,16 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public Font getLayerFont() {
-        int fontSize =
-            (int) Math
-                .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) / getWidth()));
+        int fontSize = (int) Math
+            .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0)
+                / getWidth()));
         fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
         return new Font("SansSerif", 0, fontSize);
     }
 
-
     public void setSeries(TextureDicomSeries series) {
         TextureDicomSeries old = getSeriesObject();
-        
+
         if (hasContent()) {
             handleGraphicsLayer(getCurrentSlice());
 
@@ -695,7 +688,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             closingSeries(old.getSeries());
         }
     }
-    
+
     private void updateSortStackActions(TextureDicomSeries series) {
         Comparator seriesSorter = series.getSeriesSorter();
         if (seriesSorter instanceof SeriesComparator) {
@@ -729,7 +722,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             }
         }
     }
-
 
     public boolean isContentReadable() {
         return hasContent();
@@ -892,14 +884,17 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         // LUT
         if (cmd == null || ActionW.LUT.cmd().equals(cmd)) {
             setActionsInView(ActionW.LUT.cmd(), GUIManager.colorMaskList.get(0));
+            colorMaskEnabled = false;
         }
         // Filter
         if (cmd == null || ActionW.FILTER.cmd().equals(cmd)) {
             setActionsInView(ActionW.FILTER.cmd(), GUIManager.kernelList.get(0));
+            getSeriesObject().getTextureData().destroyReplacementTexture();
         }
         // InverseLUT
         if (cmd == null || ActionW.INVERT_LUT.cmd().equals(cmd)) {
             setActionsInView(ActionW.INVERT_LUT.cmd(), false);
+            inverse = false;
         }
         if (cmd == null || ActionW.ZOOM.cmd().equals(cmd)) {
             setActionsInView(ActionW.ZOOM.cmd(), -100.0D);
@@ -911,22 +906,33 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
         if (cmd == null || ActionW.ROTATION.cmd().equals(cmd)) {
             setActionsInView(ActionW.ROTATION.cmd(), 0);
+            setRotationOffset(Math.toRadians(0));
+            updateAffineTransform();
+
         }
         if (cmd == null || ActionW.FLIP.cmd().equals(cmd)) {
-            setActionsInView(cmd, false);
+            setActionsInView(ActionW.FLIP.cmd(), false);
+            flippedHorizontally = false;
+            updateAffineTransform();
         }
 
         // Mip Option
         if (cmd == null || ActionWA.MIP_OPTION.cmd().equals(cmd)) {
             setActionsInView(ActionWA.MIP_OPTION.cmd(), TextureImageCanvas.MipOption.None, true);
+            mipOption = TextureImageCanvas.MipOption.None;
+            renderSupp.setDirty(true);
+            graphsLayer.updateAllLabels(ViewTexture.this);
         }
         // Mip Depth
         if (cmd == null || ActionWA.MIP_DEPTH.cmd().equals(cmd)) {
             setActionsInView(ActionWA.MIP_DEPTH.cmd(), 5, true);
+            mipDepth = 5 / (double) getTotalSlices();
+            renderSupp.setDirty(true);
+            graphsLayer.updateAllLabels(this);
         }
 
         // ControlAxes
-        if ((cmd == null || "resetToAquisition".equals(cmd)) && controlAxes != null) {
+        if ((cmd == null || "resetToAquisition".equals(cmd)) && controlAxes != null){
             controlAxes.reset();
             // must repaint all views
             getParent().repaint();
@@ -1045,7 +1051,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
         renderSupp.setDirty(true);
     }
-    
+
     private void rotateImage(int angle) {
         Object actionValue = getActionValue(ActionW.ROTATION.cmd());
         if (actionValue instanceof Integer) {
@@ -1057,7 +1063,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             }
         }
     }
- 
 
     @Override
     public void registerDefaultListeners() {
@@ -1081,8 +1086,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         });
     }
 
-    /* ********************************************************************
-     * MOUSE LISTENERS ******************************************************************
+    /*
+     * ******************************************************************** MOUSE LISTENERS
+     * ******************************************************************
      */
 
     @Override
@@ -1174,9 +1180,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 if (view != null) {
                     ViewerToolBar toolBar = view.getViewerToolBar();
                     if (toolBar != null) {
-                        String command =
-                            ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
-                                toolBar.getMouseLeft().getActionCommand()).cmd();
+                        String command = ViewerToolBar
+                            .getNextCommand(ViewerToolBar.actionsButtons, toolBar.getMouseLeft().getActionCommand())
+                            .cmd();
                         changeLeftMouseAction(command);
                     }
                 }
@@ -1213,7 +1219,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     @Override
     public void keyReleased(KeyEvent e) { /* TODO: ctrl + c */
     }
-    
+
     private void changeLeftMouseAction(String command) {
         ImageViewerPlugin view = eventManager.getSelectedView2dContainer();
         if (view != null) {
@@ -1342,7 +1348,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     }
 
-
     @Override
     public ImageViewerEventManager getEventManager() {
         return eventManager;
@@ -1360,12 +1365,12 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public PixelInfo getPixelInfo(Point p) {
-        //TODO:
-        //p is a point on the measurements coordinates system.
-        //It's missing the conversion from the measurement's to the
-        //original coordinates system, to be able to do this.
-       
-        //Its necessary just for the PixelInfoGraphic.
+        // TODO:
+        // p is a point on the measurements coordinates system.
+        // It's missing the conversion from the measurement's to the
+        // original coordinates system, to be able to do this.
+
+        // Its necessary just for the PixelInfoGraphic.
         return null;
     }
 
@@ -1377,9 +1382,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void setSeries(MediaSeries series) {
-        //Used on ImageViewerPlugin.addSeries
-        //If it had to be implemented, would have to return RuntimeException in case
-        //series is too big to video card...
+        // Used on ImageViewerPlugin.addSeries
+        // If it had to be implemented, would have to return RuntimeException in case
+        // series is too big to video card...
     }
 
     @Override
@@ -1507,7 +1512,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         setBorder(selected ? focusBorder : normalBorder);
         // Remove the selection of graphics
         getLayerModel().setSelectedGraphics(null);
-        
+
         // Throws to the tool listener the current graphic selection.
         getLayerModel().fireGraphicsSelectionChanged(getMeasurableLayer());
     }
@@ -1620,11 +1625,10 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
         initActionWState();
 
-        String[] resets =
-            new String[] { ActionW.WINLEVEL.cmd(), ActionW.PRESET.cmd(), ActionW.LUT.cmd(), 
-                //ActionW.LUT_SHAPE.cmd(),
-                ActionW.FILTER.cmd(), ActionW.INVERT_LUT.cmd(), "mip-opt", "mip-dep", ActionW.ZOOM.cmd(),
-                ActionW.ROTATION.cmd(), ActionW.PAN.cmd(), ActionW.FLIP.cmd(), "interpolate", "resetToAxial" };
+        String[] resets = new String[] { ActionW.WINLEVEL.cmd(), ActionW.PRESET.cmd(), ActionW.LUT.cmd(),
+            // ActionW.LUT_SHAPE.cmd(),
+            ActionW.FILTER.cmd(), ActionW.INVERT_LUT.cmd(), "mip-opt", "mip-dep", ActionW.ZOOM.cmd(),
+            ActionW.ROTATION.cmd(), ActionW.PAN.cmd(), ActionW.FLIP.cmd(), "interpolate", "resetToAxial" };
 
         resetActions(resets);
         eventManager.updateComponentsListener(this);
@@ -1638,7 +1642,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void closeLens() {
-     // Lens not implemented
+        // Lens not implemented
     }
 
     @Override
@@ -1702,7 +1706,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         // TODO Auto-generated method stub
         return null;
     }
-    
+
     @Override
     public MeasurableLayer getMeasurableLayer() {
         return measurableLayer;
@@ -1745,9 +1749,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                              * Convert mouse event point to real image coordinate point (without geometric
                              * transformation)
                              */
-                            final MouseEventDouble mouseEvt =
-                                new MouseEventDouble(ViewTexture.this, MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16, 0,
-                                    0, 0, 0, 1, true, 1);
+                            final MouseEventDouble mouseEvt = new MouseEventDouble(ViewTexture.this,
+                                MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16, 0, 0, 0, 0, 1, true, 1);
                             mouseEvt.setSource(ViewTexture.this);
                             mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
                             final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
@@ -1768,10 +1771,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
                                         absgraph.forceToAddPoints(ptIndex);
-                                        MouseEventDouble evt2 =
-                                            new MouseEventDouble(ViewTexture.this, MouseEvent.MOUSE_PRESSED, evt
-                                                .getWhen(), 16, evt.getX(), evt.getY(), evt.getXOnScreen(), evt
-                                                .getYOnScreen(), 1, true, 1);
+                                        MouseEventDouble evt2 = new MouseEventDouble(ViewTexture.this,
+                                            MouseEvent.MOUSE_PRESSED, evt.getWhen(), 16, evt.getX(), evt.getY(),
+                                            evt.getXOnScreen(), evt.getYOnScreen(), 1, true, 1);
                                         graphicMouseHandler.mousePressed(evt2);
                                     }
                                 });
@@ -1870,9 +1872,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                             CalibrationView calibrationDialog =
                                 new CalibrationView((LineGraphic) graph, ViewTexture.this);
                             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(ViewTexture.this);
-                            int res =
-                                JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
-                                    title, JOptionPane.OK_CANCEL_OPTION);
+                            int res = JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer),
+                                calibrationDialog, title, JOptionPane.OK_CANCEL_OPTION);
                             if (layer != null) {
                                 layer.hideUI();
                             }
@@ -1961,9 +1962,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                         Rectangle2D area = ViewTexture.this.getViewModel().getModelArea();
                         for (Graphic g : graphs) {
                             if (!g.getBounds(null).intersects(area)) {
-                                int option =
-                                    JOptionPane.showConfirmDialog(ViewTexture.this,
-                                        "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
+                                int option = JOptionPane.showConfirmDialog(ViewTexture.this,
+                                    "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
                                 if (option == JOptionPane.YES_OPTION) {
                                     break;
                                 } else {
@@ -1997,7 +1997,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         if (eventManager instanceof GUIManager) {
             GUIManager manager = (GUIManager) eventManager;
             JMVUtils.addItemToMenu(popupMenu, manager.getPresetMenu("weasis.contextmenu.presets"));
-         //   JMVUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu("weasis.contextmenu.lutShape"));
+            // JMVUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu("weasis.contextmenu.lutShape"));
             JMVUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
             JMVUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
             JMVUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
