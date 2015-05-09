@@ -116,7 +116,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
     private final ToggleButtonListener volumeLighting;
 
     private final ComboItemListener presetAction;
-    private final ComboItemListener lutShapeAction;
+    // private final ComboItemListener lutShapeAction;
     private final ComboItemListener lutAction;
     private final ComboItemListener filterAction;
     private final ComboItemListener sortStackAction;
@@ -147,13 +147,12 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         iniAction(volumeLighting = newVolumeLighting());
 
         iniAction(presetAction = newPresetAction());
-        iniAction(lutShapeAction = newLutShapeAction());
+        // iniAction(lutShapeAction = newLutShapeAction());
         iniAction(lutAction = newLutAction());
         iniAction(filterAction = newFilterAction());
         iniAction(sortStackAction = newSortStackAction());
-        iniAction(layoutAction =
-            newLayoutAction(View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST
-                .size()])));
+        iniAction(layoutAction = newLayoutAction(
+            View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST.size()])));
         iniAction(synchAction =
             newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
@@ -184,8 +183,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    point));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
             }
 
             @Override
@@ -219,8 +218,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         return new SliderChangeListener(ActionW.SCROLL_SERIES, 1, 100, 1, true, 0.1) {
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), model.getValue()));
             }
 
             @Override
@@ -234,8 +233,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         return new SliderChangeListener(ActionWA.VOLUM_QUALITY, 75, 2000, 300, true) {
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), model.getValue()));
             }
         };
     }
@@ -246,8 +245,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
             @Override
             public void itemStateChanged(Object object) {
                 if (object instanceof StaticHelpers.TextureKernel) {
-                    firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW()
-                        .cmd(), object));
+                    firePropertyChange(ActionW.SYNCH.cmd(), null,
+                        new SynchEvent(getSelectedViewPane(), getActionW().cmd(), object));
                 }
             }
         };
@@ -282,7 +281,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
             preset = (PresetWindowLevel) object;
             windowAction.setValueWithoutTriggerAction(preset.getWindow().intValue());
             levelAction.setValueWithoutTriggerAction(preset.getLevel().intValue());
-            lutShapeAction.setSelectedItemWithoutTriggerAction(preset.getLutShape());
+            // lutShapeAction.setSelectedItemWithoutTriggerAction(preset.getLutShape());
         } else {
             preset = (PresetWindowLevel) (object instanceof PresetWindowLevel ? object : null);
             presetAction.setSelectedItemWithoutTriggerAction(preset);
@@ -319,8 +318,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
             @Override
             public void itemStateChanged(Object object) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    object));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), object));
             }
         };
     }
@@ -354,15 +353,16 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
     private ComboItemListener newMipOption() {
 
-        return new ComboItemListener(ActionWA.MIP_OPTION, new TextureImageCanvas.MipOption[] {
-            TextureImageCanvas.MipOption.None, TextureImageCanvas.MipOption.Minimum,
-            TextureImageCanvas.MipOption.Average, TextureImageCanvas.MipOption.Maximum }) {
+        return new ComboItemListener(ActionWA.MIP_OPTION,
+            new TextureImageCanvas.MipOption[] { TextureImageCanvas.MipOption.None,
+                TextureImageCanvas.MipOption.Minimum, TextureImageCanvas.MipOption.Average,
+                TextureImageCanvas.MipOption.Maximum }) {
 
             @Override
             public void itemStateChanged(Object object) {
                 mipDepthAction.enableAction(!(TextureImageCanvas.MipOption.None.equals(object)));
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    object));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), object));
             }
         };
     }
@@ -372,8 +372,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), model.getValue()));
             }
         };
     }
@@ -382,8 +382,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         return new ToggleButtonListener(ActionWA.VOLUM_LIGHT, true) {
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
         };
     }
@@ -392,8 +392,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         return new ToggleButtonListener(ActionWA.VOLUM_CENTER_SLICING, false) {
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
         };
     }
@@ -402,8 +402,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         return new ToggleButtonListener(ActionWA.SMOOTHING, true) {
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
         };
     }
@@ -436,7 +436,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
     public void setMouseActions(final MouseActions mActions) {
         mouseActions = mActions;
     }
-    
+
     @Override
     public ActionW getActionFromCommand(String command) {
         ActionW action = super.getActionFromCommand(command);
@@ -556,8 +556,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
             ViewCanvas<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
                 pane.setFocused(true);
-                fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null,
-                    EVENT.SELECT_VIEW));
+                fireSeriesViewerListeners(
+                    new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null, EVENT.SELECT_VIEW));
             }
         }
     }
@@ -593,8 +593,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
         smoothing.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionWA.SMOOTHING.cmd()));
 
-        zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) view2d
-            .getActionValue(ActionW.ZOOM.cmd()))));
+        zoomAction.setValueWithoutTriggerAction(
+            viewScaleToSliderValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd()))));
         spUnitAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd()));
         mipOptionAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionWA.MIP_OPTION.cmd()));
 
@@ -606,14 +606,14 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         boolean volume = ViewType.VOLUME3D.equals(((ViewTexture) view2d).getViewType());
         if (volume) {
             volumeLighting.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionWA.VOLUM_LIGHT.cmd()));
-            volumeSlicing.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionWA.VOLUM_CENTER_SLICING
-                .cmd()));
+            volumeSlicing
+                .setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionWA.VOLUM_CENTER_SLICING.cmd()));
             volumeQuality.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionWA.VOLUM_QUALITY.cmd()));
         }
         volumeLighting.enableAction(volume);
         volumeSlicing.enableAction(volume);
         volumeQuality.enableAction(volume);
-        
+
         sortStackAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SORTSTACK.cmd()));
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
@@ -658,8 +658,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
     public void reset(ResetTools action) {
         AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
         if (ResetTools.All.equals(action)) {
-            firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(),
-                true));
+            firePropertyChange(ActionW.SYNCH.cmd(), null,
+                new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));
         } else if (ResetTools.Zoom.equals(action)) {
             // Pass the value 0.0 (convention: default value according the zoom type) directly to the property change,
             // otherwise the value is adjusted by the BoundedRangeModel
@@ -753,7 +753,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             ButtonGroup group = new ButtonGroup();
             menu = new JMenu("Reset");
-            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$ 
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$
             menu.setEnabled(getSelectedSeries() != null);
 
             if (menu.isEnabled()) {
@@ -793,7 +793,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
     public JMenu getLutShapeMenu(String prop) {
         JMenu menu = null;
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
-            menu = lutShapeAction.createUnregisteredRadioMenu(ActionW.LUT_SHAPE.getTitle());
+            // menu = lutShapeAction.createUnregisteredRadioMenu(ActionW.LUT_SHAPE.getTitle());
         }
         return menu;
     }

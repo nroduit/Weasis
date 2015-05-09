@@ -1621,7 +1621,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         initActionWState();
 
         String[] resets =
-            new String[] { ActionW.WINLEVEL.cmd(), ActionW.PRESET.cmd(), ActionW.LUT.cmd(), ActionW.LUT_SHAPE.cmd(),
+            new String[] { ActionW.WINLEVEL.cmd(), ActionW.PRESET.cmd(), ActionW.LUT.cmd(), 
+                //ActionW.LUT_SHAPE.cmd(),
                 ActionW.FILTER.cmd(), ActionW.INVERT_LUT.cmd(), "mip-opt", "mip-dep", ActionW.ZOOM.cmd(),
                 ActionW.ROTATION.cmd(), ActionW.PAN.cmd(), ActionW.FLIP.cmd(), "interpolate", "resetToAxial" };
 
@@ -1996,7 +1997,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         if (eventManager instanceof GUIManager) {
             GUIManager manager = (GUIManager) eventManager;
             JMVUtils.addItemToMenu(popupMenu, manager.getPresetMenu("weasis.contextmenu.presets"));
-            JMVUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu("weasis.contextmenu.lutShape"));
+         //   JMVUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu("weasis.contextmenu.lutShape"));
             JMVUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
             JMVUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
             JMVUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));

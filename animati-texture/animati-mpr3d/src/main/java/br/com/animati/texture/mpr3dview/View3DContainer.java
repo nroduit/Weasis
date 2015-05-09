@@ -107,7 +107,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
         actions.put(ActionW.WINDOW.cmd(), true);
         actions.put(ActionW.LEVEL.cmd(), true);
         actions.put(ActionW.PRESET.cmd(), true);
-        actions.put(ActionW.LUT_SHAPE.cmd(), true);
+   //     actions.put(ActionW.LUT_SHAPE.cmd(), true);
         actions.put(ActionW.LUT.cmd(), true);
         actions.put(ActionW.INVERT_LUT.cmd(), true);
         actions.put(ActionW.FILTER.cmd(), true);
@@ -452,7 +452,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
                 // menu.add(getComparatorMenu());
                 menuRoot.add(new JSeparator());
                 JMVUtils.addItemToMenu(menuRoot, manager.getPresetMenu(null));
-                JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
+         //       JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
                 JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
                 JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu(null));
                 JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu(null));
