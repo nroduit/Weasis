@@ -80,8 +80,10 @@ import br.com.animati.texture.codec.TextureDicomSeries;
 import br.com.animati.texture.mpr3dview.ViewTexture.ViewType;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
 import br.com.animati.texture.mpr3dview.internal.Activator;
+import br.com.animati.texture.mpr3dview.internal.Messages;
 import br.com.animati.texture.mpr3dview.tool.DisplayTool;
 import br.com.animati.texture.mpr3dview.tool.ImageTool;
+import br.com.animati.texture.mpr3dview.tool.TextureToolbar;
 import br.com.animati.texturedicom.ControlAxes;
 import br.com.animati.texturedicom.ImageSeries;
 
@@ -437,7 +439,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
             if (eventManager instanceof GUIManager) {
                 GUIManager manager = (GUIManager) eventManager;
 
-                final JMenuItem refresh = new JMenuItem("Refresh texture");
+                final JMenuItem refresh = new JMenuItem(Messages.getString("View3DContainer.refreshTexture"));
                 refresh.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -616,6 +618,10 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(LutToolBar.class), key, true)) {
                 TOOLBARS.add(new LutToolBar(eventManager, 40));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(TextureToolbar.class), key, true)) {
+                TOOLBARS.add(new TextureToolbar(eventManager, 50));
             }
 
             PluginTool tool = null;
