@@ -1249,11 +1249,10 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
         adapter.setButtonMaskEx(adapter.getButtonMaskEx() | buttonMask);
         if (adapter == graphicMouseHandler) {
-            // TODO add key listener
-            // this.addKeyListener(drawingsKeyListeners);
+            addKeyListener(drawingsKeyListeners);
         } else if (adapter instanceof PannerListener) {
             ((PannerListener) adapter).reset();
-            this.addKeyListener((PannerListener) adapter);
+            addKeyListener((PannerListener) adapter);
         }
 
         if (actionName.equals(ActionW.WINLEVEL.cmd())) {

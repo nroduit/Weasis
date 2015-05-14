@@ -26,6 +26,8 @@ import org.weasis.core.ui.graphic.model.MainLayerModel;
 
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 /**
  *
@@ -39,6 +41,7 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     
     protected final GraphicsModel graphsLayer;
     protected final HashMap<String, Object> actionsInView = new HashMap<String, Object>();
+    protected final DrawingsKeyListeners drawingsKeyListeners = new DrawingsKeyListeners();
 
     public CanvasTexure(ImageSeries parentImageSeries) {
         super(parentImageSeries);
@@ -235,6 +238,23 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
             }
             return 1;
         }
+    }
+    
+    private class DrawingsKeyListeners implements KeyListener {
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+                getLayerModel().deleteSelectedGraphics(false);
+            } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_D) {
+                getLayerModel().setSelectedGraphics(null);
+            } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_A) {
+                getLayerModel().setSelectedGraphics(getLayerModel().getAllGraphics());
+            }
+        }
+
+        @Override public void keyReleased(KeyEvent e) { }
+        @Override public void keyTyped(KeyEvent e) { }
     }
     
 }
