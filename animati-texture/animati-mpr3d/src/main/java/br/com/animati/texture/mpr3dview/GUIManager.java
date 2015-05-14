@@ -705,7 +705,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                 panes.remove(viewPane);
                 viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
-                if (SynchView.NONE.equals(synchView)) {
+                if (SynchView.NONE.equals(synchView) || (viewPane instanceof ViewTexture
+                        && ((ViewTexture) viewPane).getViewType() == ViewType.VOLUME3D)) {
                     for (int i = 0; i < panes.size(); i++) {
                         ViewCanvas<DicomImageElement> pane = panes.get(i);
                         AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
@@ -734,7 +735,9 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                                 if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                     oldSynch = synch.clone();
                                 }
-                                addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
+                                if (pane instanceof ViewTexture && ((ViewTexture) pane).getViewType() != ViewType.VOLUME3D) {
+                                    addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
+                                }
 
                                 pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
                                 // pane.updateSynchState();

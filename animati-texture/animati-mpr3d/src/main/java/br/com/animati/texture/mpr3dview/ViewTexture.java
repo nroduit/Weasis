@@ -460,15 +460,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 updateAffineTransform();
                 repaint();
             } else if (command.equals(ActionW.LUT.cmd())) {
-                if (val instanceof ColorMask) {
-                    actionsInView.put(ActionW.LUT.cmd(), val);
-                    if (val == StaticHelpers.LUT_NONE) {
-                        colorMaskEnabled = false;
-                    } else {
-                        setColorMask((ColorMask) val);
-                    }
-                    repaint();
-                }
+                setActionsInView(ActionW.LUT.cmd(), val, true);
             } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
                 boolean res = isContentPhotometricInterpretationInverse();
                 if (res) {
@@ -603,6 +595,15 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             volumetricLighting = (Boolean) value;
         } else if (ActionWA.SMOOTHING.cmd().equals(action)) {
             interpolate = (Boolean) value;
+        } else if (ActionW.LUT.cmd().equals(action)) {
+            if (value instanceof ColorMask) {
+                actionsInView.put(ActionW.LUT.cmd(), value);
+                if (value == StaticHelpers.LUT_NONE) {
+                    colorMaskEnabled = false;
+                } else {
+                    setColorMask((ColorMask) value);
+                }
+            }
         }
 
         if (repaint) {
