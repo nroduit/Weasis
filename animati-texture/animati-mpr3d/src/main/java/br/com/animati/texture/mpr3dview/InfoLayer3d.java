@@ -290,15 +290,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                 }
                             }
                             
-                            if (tag.getTagName().equals("DisableReports")
-                                    && value instanceof Boolean && ((Boolean) value)) {
-                                String str = "* NÃO LAUDAR *";
-                                GraphicLabel.paintColorFontOutline(g2d, str,
-                                        bound.width - g2d.getFontMetrics().stringWidth(str)
-                                        - border, drawY, Color.red);
-                                drawY += fontHeight;
-                                break;
-                            } else if (value != null) {                        
+                            if (value != null) {                        
                                 String str = tag.getFormattedText(value, infos[j].getFormat());
                                 if (StringUtil.hasText(str)) {
                                     GraphicLabel.paintFontOutline(g2d, str, bound.width - g2d.getFontMetrics().stringWidth(str)
@@ -325,7 +317,8 @@ public class InfoLayer3d extends AbstractInfoLayer {
                             if (tag.getTagName().equals("SliceLocation") || 
                                     tag.getTagName().equals("SliceThickness")) {
                                 if (owner instanceof ViewTexture
-                                        && owner.isShowingAcquisitionAxis()) {
+                                        && owner.isShowingAcquisitionAxis()
+                                        && !isVolumetricView()) {
                                     ViewTexture texture = owner;
                                     value = owner.getSeriesObject().
                                             getTagValue(tag, texture.getCurrentSlice() - 1);

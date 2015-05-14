@@ -413,7 +413,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 continue;
             }
             if (command.equals(ActionW.SCROLL_SERIES.cmd())) {
-                setSlice((Integer) val);
+                if (getViewType() != viewType.VOLUME3D) { //If its not a volumetric view
+                    setSlice((Integer) val);
+                }
             } else if (command.equals(ActionW.WINDOW.cmd())) {
                 windowingWindow = (Integer) val;
                 repaint();
@@ -429,10 +431,12 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
                 // TODO lut shape
             } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer) {
-                actionsInView.put(ActionW.ROTATION.cmd(), val);
-                setRotationOffset(Math.toRadians((Integer) val));
-                updateAffineTransform();
-                repaint();
+                if (getViewType() != viewType.VOLUME3D) { //If its not a volumetric view
+                    actionsInView.put(ActionW.ROTATION.cmd(), val);
+                    setRotationOffset(Math.toRadians((Integer) val));
+                    updateAffineTransform();
+                    repaint();
+                }
             } else if (command.equals(ActionW.RESET.cmd())) {
                 reset();
             } else if (command.equals(ActionW.ZOOM.cmd())) {
