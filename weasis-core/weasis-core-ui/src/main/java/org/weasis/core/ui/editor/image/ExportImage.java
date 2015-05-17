@@ -68,19 +68,17 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
 
         setPreferredSize(new Dimension(1024, 1024));
         ViewModel model = view2d.getViewModel();
-        Rectangle2D canvas =
-            new Rectangle2D.Double(view2d.modelToViewLength(model.getModelOffsetX()), view2d.modelToViewLength(model
-                .getModelOffsetY()), view2d.getWidth(), view2d.getHeight());
+        Rectangle2D canvas = new Rectangle2D.Double(view2d.modelToViewLength(model.getModelOffsetX()),
+            view2d.modelToViewLength(model.getModelOffsetY()), view2d.getWidth(), view2d.getHeight());
         Rectangle2D mArea = view2d.getViewModel().getModelArea();
-        Rectangle2D viewFullImg =
-            new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()), view2d.modelToViewLength(mArea
-                .getHeight()));
+        Rectangle2D viewFullImg = new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()),
+            view2d.modelToViewLength(mArea.getHeight()));
         Rectangle2D.intersect(canvas, viewFullImg, viewFullImg);
         actionsInView.put("origin.image.bound", viewFullImg); //$NON-NLS-1$
         actionsInView.put("origin.zoom", view2d.getActionValue(ActionW.ZOOM.cmd())); //$NON-NLS-1$
-        Point2D p =
-            new Point2D.Double(view2d.viewToModelX(viewFullImg.getX() - canvas.getX() + (viewFullImg.getWidth() - 1)
-                * 0.5), view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
+        Point2D p = new Point2D.Double(
+            view2d.viewToModelX(viewFullImg.getX() - canvas.getX() + (viewFullImg.getWidth() - 1) * 0.5),
+            view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
         actionsInView.put("origin.center", p); //$NON-NLS-1$
         // Do not use setSeries() because the view will be reset
         this.series = view2d.getSeries();
@@ -105,13 +103,6 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         }
         return super.getGraphics();
     }
-
-    // @Override
-    // public final Font getLayerFont() {
-    // double fontSize =
-    //                    (this.getGraphics().getFontMetrics(FontTools.getFont10()).stringWidth("0123456789") * 6.0) / getWidth(); //$NON-NLS-1$ 
-    //                return new Font("SansSerif", 0, (int) Math.ceil(10 / fontSize)); //$NON-NLS-1$
-    // }
 
     @Override
     public void paintComponent(Graphics g) {

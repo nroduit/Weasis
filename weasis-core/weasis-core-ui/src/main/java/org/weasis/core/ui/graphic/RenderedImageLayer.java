@@ -134,9 +134,8 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
 
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
-            Rectangle2D rect =
-                new Rectangle2D.Double(displayImage.getMinX(), displayImage.getMinY(), displayImage.getWidth() - 1,
-                    displayImage.getHeight() - 1);
+            Rectangle2D rect = new Rectangle2D.Double(displayImage.getMinX(), displayImage.getMinY(),
+                displayImage.getWidth() - 1, displayImage.getHeight() - 1);
             rect = rect.createIntersection((Rectangle2D) clip);
             if (rect.isEmpty()) {
                 return;
@@ -147,7 +146,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         }
 
         try {
-            g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0, 0));
+            g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0.0, 0.0));
         } catch (Throwable t) {
             if ("java.io.IOException: closed".equals(t.getMessage())) { //$NON-NLS-1$
                 // Issue when the stream has been closed of a tiled image (problem that readAsRendered do not read data

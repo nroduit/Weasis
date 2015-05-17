@@ -48,7 +48,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         // For having a black background with any Look and Feel
         grid.setUI(new PanelUI() {
         });
-        grid.setBackground(Color.BLACK);
+        setGridBackground(Color.BLACK);
         this.layoutModel = layoutModel;
         try {
             this.layoutModel = (GridBagLayoutModel) this.layoutModel.clone();
@@ -57,7 +57,10 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         }
         setLayoutModel();
         add(grid, BorderLayout.CENTER);
+    }
 
+    public void setGridBackground(Color bg) {
+        grid.setBackground(bg);
     }
 
     /** Get the layout of this view panel. */
