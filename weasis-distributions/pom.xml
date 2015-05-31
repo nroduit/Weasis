@@ -537,9 +537,9 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.weasis.maven.plugins.launch4j</groupId>
+						<groupId>com.akathist.maven.plugins.launch4j</groupId>
 						<artifactId>launch4j-maven-plugin</artifactId>
-						<version>1.5.2</version>
+						<version>1.7.7</version>
 						<executions>
 							<execution>
 								<id>l4j-clui</id>
@@ -553,11 +553,13 @@
 									<outfile>${project.build.directory}/tmp/weasis-win32.exe</outfile>
 									<jar>weasis/weasis-launcher.jar</jar>
 									<errTitle>weasis</errTitle>
+									<!-- The custom process feature was dropped in 3.1.0-beta2, this 
+										was designed for windows 98/xp. -->
 									<!-- Set the process name as the executable filename -->
-									<customProcName>true</customProcName>
+									<!-- <customProcName>true</customProcName> -->
 									<icon>etc/weasis.ico</icon>
-									<!-- Setting it to . will change the current dir to the same directory as the executable -->
 									<cmdLine>$dicom:get --portable</cmdLine>
+									<!-- Setting it to . will change the current dir to the same directory as the executable -->
 									<chdir>.</chdir>
 									<classPath>
 										<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
@@ -575,6 +577,17 @@
 										<minVersion>1.6.0</minVersion>
 										<initialHeapSize>64</initialHeapSize>
 										<maxHeapSize>512</maxHeapSize>
+										<!-- Optional, defaults to 64/32; Allows to select between 64-bit 
+											and 32-bit runtimes: 1) "64" Use only 64-bit runtimes. 2) "64/32" Use 64-bit runtimes 
+											if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes if available, 
+											otherwise use 64-bit. 4) "32" Use only 32-bit runtimes  -->
+										<runtimeBits>32/64</runtimeBits>
+										<!-- Optional, defaults to false which treats the bundled JRE as 
+											the primary runtime. When set to true, the bundled JRE will only be used 
+											in case the mix/max version search fails. This can be used as a fallback 
+											option if the user does not have the required Java installed and the bundled 
+											JRE is provided on a CD or shared network location. -->
+										<bundledJreAsFallback>true</bundledJreAsFallback>
 										<opts>
 											<opt>-Dweasis.portable.dir=&quot;%EXEDIR%&quot;</opt>
 										</opts>
