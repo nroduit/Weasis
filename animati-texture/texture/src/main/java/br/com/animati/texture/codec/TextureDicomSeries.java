@@ -30,7 +30,6 @@ import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureData;
-import javax.vecmath.Vector3d;
 
 /**
  * Implements methods to get the ImageSeries of texturedicom more usable by weasis components.
@@ -74,7 +73,6 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     private ImageSeriesFactory.LoaderThread factoryReference;
 
     private boolean[] inVideo;
-    private Vector3d originalDimMultiplier;
 
     /**
      * Builds an empty TextureImageSeries. Its best to use ImageSeriesFactory.
@@ -247,17 +245,6 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
             }
         }
         return false;
-    }
-
-    @Override
-    public void setDimensionMultiplier(Vector3d vctrd) {
-        originalDimMultiplier = vctrd;
-        super.setDimensionMultiplier(vctrd);
-    }
-    
-    
-    public Vector3d getOriginalDimensionMultiplier() {
-        return originalDimMultiplier;
     }
 
     /**
