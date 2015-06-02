@@ -16,6 +16,7 @@ import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
@@ -40,8 +41,12 @@ import org.weasis.core.api.image.util.ImageFiler;
 public class RenderSupport {
     
     private final ViewTexture owner;
+    
     private RenderedImage renderedAsSource;
     private volatile boolean dirty = true;
+    
+    private BufferedImage bufferedImage;
+    private volatile boolean bufferedDirty;
     
     public RenderSupport(ViewTexture view) {
         owner = view;
@@ -56,12 +61,12 @@ public class RenderSupport {
         }
         return renderedAsSource;
     }
-
-    /**
-     * @return the dirty
-     */
-    public boolean isDirty() {
-        return dirty;
+    
+    public BufferedImage getBufferedImage() {
+        if (bufferedDirty) {
+            return null;
+        }
+        return bufferedImage;
     }
 
     /**
@@ -69,38 +74,51 @@ public class RenderSupport {
      */
     public void setDirty(boolean dirty) {
         this.dirty = dirty;
+        bufferedDirty = dirty;
+    }
+    
+    public void startRendering(final ActionListener listener) {
+        startRendering(listener, true);
     }
 
-    public void startRendering(final ActionListener listener) {
+    public void startRendering(final ActionListener listener, final boolean renderAsRaw) {
+        final String msg = renderAsRaw ? "renderedAsSource" : "renderedAsBuffered";
+
         final TextureData.Format format = owner.getParentImageSeries().getTextureData().getFormat();
         RenderHelper helper = new RenderHelper(owner,
                 new RenderResultListener() {
             @Override
             public void onRenderResultReceived(RenderResult renderResult) {
                 try {
-                    ByteBuffer asByteBuffer = renderResult.asByteBuffer();
-                    if (TextureData.Format.Byte.equals(format)) {
-                        renderedAsSource = make8BitsImage(asByteBuffer, owner.getBounds());
+                    if (renderAsRaw) {
+                        ByteBuffer asByteBuffer = renderResult.asByteBuffer();
+                        if (TextureData.Format.Byte.equals(format)) {
+                            renderedAsSource = make8BitsImage(asByteBuffer, owner.getBounds());
+                        } else {
+                            renderedAsSource = makeBufferedImage(asByteBuffer,
+                                    owner.getBounds());
+                        }
+                        dirty = false;
+                        
                     } else {
-                        renderedAsSource = makeBufferedImage(asByteBuffer,
-                                owner.getBounds());
+                        BufferedImage asBuff = renderResult.asBufferedImage();
+                        bufferedImage = asBuff;
+                        
+                        bufferedDirty = false;
                     }
-                    setDirty(false);
                     
-                    listener.actionPerformed(new ActionEvent(
-                            renderedAsSource, 0, "renderedAsSource"));
+                    listener.actionPerformed(new ActionEvent(renderedAsSource, 0, msg));
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
 
             }
-        }, true);
+        }, renderAsRaw);
 
         helper.getParametersCanvas().setRotationOffset(0);
         helper.getParametersCanvas().flippedHorizontally = false;
         helper.getParametersCanvas().flippedVertically = false;
         helper.renderFrame();
-
     }
     
     private static RenderedImage makeBufferedImage(final ByteBuffer asByteBuffer,
@@ -212,4 +230,5 @@ public class RenderSupport {
 
     
 
+    
 }

@@ -47,11 +47,16 @@ public class Activator implements BundleActivator {
     /** Hardware acceleration crash flag. */
     public static final String CRASH_FLAG = "HAcrash";
 
-    /** Will be true if hardware acceleration is to be tryed. */
+    /** Will be true if hardware acceleration is to be tried. */
     public static Boolean useHardwareAcceleration = true;
+    
     public static boolean useOpenCL = true;
     private JDialog infoHALoading = null;
     public static boolean isAlive = false;
+    
+    //Debug functions
+    public static boolean showModelArea = false;
+    public static boolean showMeasurementsOnFrame = false;
 
     @Override
     public void start(BundleContext context) throws Exception {

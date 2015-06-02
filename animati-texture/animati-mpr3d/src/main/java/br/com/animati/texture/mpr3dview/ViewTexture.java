@@ -127,12 +127,14 @@ import br.com.animati.texture.mpr3dview.api.GraphicsModel;
 import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
 import br.com.animati.texture.mpr3dview.api.RenderSupport;
 import br.com.animati.texture.mpr3dview.api.TextureMeasurableLayer;
+import br.com.animati.texture.mpr3dview.internal.Activator;
 import br.com.animati.texture.mpr3dview.internal.Messages;
 import br.com.animati.texturedicom.ColorMask;
 import br.com.animati.texturedicom.ControlAxes;
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
 import br.com.animati.texturedicom.cl.CLConvolution;
+import java.awt.Stroke;
 
 /**
  *
@@ -297,10 +299,22 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             draw = (Boolean) actionValue;
         }
         if (hasContent() && draw) {
-            getLayerModel().draw(g2d, transform, inverseTransform,
-                new Rectangle2D.Double(graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetX()),
+            Rectangle2D clip = new Rectangle2D.Double(graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetX()),
                     graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetY()), getWidth(),
-                    getHeight()));
+                    getHeight());
+            getLayerModel().draw(g2d, transform, inverseTransform, clip);
+        
+            if (Activator.showModelArea) {
+                Stroke oldStr = g2d.getStroke();
+                Color oldColor = g2d.getColor();
+
+                g2d.setStroke(new BasicStroke(2));
+                g2d.setColor(Color.white);
+                g2d.draw(graphsLayer.getAffineTransform().createTransformedShape(getViewModel().getModelArea()));
+
+                g2d.setColor(oldColor);
+                g2d.setStroke(oldStr);
+            }
         }
     }
 
@@ -340,13 +354,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         if (ImageSeriesFactory.TEXTURE_LOAD_COMPLETE.equals(propertyName)
             || ImageSeriesFactory.TEXTURE_DO_DISPLAY.equals(propertyName)) {
             
-            Rectangle modelArea = calculateModelArea(getSeriesObject());
-            Rectangle2D area = graphsLayer.getViewModel().getModelArea();
-            if (modelArea != null && !modelArea.equals(area)) {
-                ((DefaultViewModel) graphsLayer.getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
-                    modelArea.height);
-                graphsLayer.getViewModel().setModelArea(modelArea);
-            }
+            updateModelArea();
             
             // Invert if necessary
             // In case of PhotometricInterpretationInverse, it has to be corrected here.
@@ -399,6 +407,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
                 if (old != null && !old.equals(current)) {
                     handleGraphicsLayer(-1);
+                    updateModelArea();
+                    updateAffineTransform();
                 }
             } else if (propertyName.startsWith("slice") && controlAxes != null
                 && propertyName.endsWith(Integer.toString(controlAxes.getIndex(this)))) {
@@ -633,10 +643,10 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     private void updateAffineTransform() {
         Boolean flip = (Boolean) getActionValue(ActionW.FLIP.cmd());
-        Integer rotationAngle = (Integer) getActionValue(ActionW.ROTATION.cmd());
-        if (ViewType.SAGITTAL.equals(getViewType())) {
-            rotationAngle = rotationAngle + 90;
-        }
+        Integer rotationAngle = (int) Math.toDegrees(getRotationOffset());
+        if (rotationAngle < 0) {
+            rotationAngle = (rotationAngle + 360) % 360;
+        } 
         graphsLayer.updateAffineTransform(rotationAngle, flip);
 
         renderSupp.setDirty(true);
@@ -693,21 +703,13 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
         setImageSeries(series);
         if (series != null) {
-            final Rectangle modelArea = calculateModelArea(series);
-            System.out.println(" setSeries: calculateModelArea: " + modelArea);
-            //final Rectangle modelArea = new Rectangle(0, 0, series.getSliceWidth(), series.getSliceHeight());
-            Rectangle2D area = graphsLayer.getViewModel().getModelArea();
-            if (modelArea != null && !modelArea.equals(area)) {
-                ((DefaultViewModel) graphsLayer.getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
-                    modelArea.height);
-                graphsLayer.getViewModel().setModelArea(modelArea);
-            }
             updateSortStackActions(series);
 
             // internal defaults
             setSlice(0);
 
             resetAction(null);
+            updateModelArea();
 
             actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), series.getPixelSpacingUnit());
 
@@ -718,28 +720,18 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
     }
     
-    private Rectangle calculateModelArea(TextureDicomSeries series) {
-        if (series != null) {
-            Vector3d mult = series.getOriginalDimensionMultiplier();
-            System.out.println(" originalMultiplier: " + mult);
-            if (mult == null) {
-                mult = new Vector3d(1.0, 1.0, 1.0);
-            }
-
-            int wid = (int) Math.round(series.getSliceWidth() * mult.x);
-            int hei = (int) Math.round(series.getSliceHeight() * mult.y);
-            System.out.println(" sliceCount: " + series.getSliceCount() + " /z: " + mult.z);
-            int z = (int) Math.round(series.getSliceCount() * mult.z);
-            System.out.println(" dims: " + wid + " / " + hei + " / " + z);
-            if (ViewType.AXIAL.equals(getViewType()) || ViewType.VOLUME3D.equals(getViewType())) {
-                return new Rectangle(0, 0, wid, hei);
-            } else if (ViewType.CORONAL.equals(getViewType())) {
-                return new Rectangle(0, 0, wid, z);
-            } else if (ViewType.SAGITTAL.equals(getViewType())) {
-                return new Rectangle(0, 0, z, hei);
+    private void updateModelArea() {
+        Rectangle un = getUntransformedImageRect();
+        if (un != null) {
+            Rectangle modelArea = new Rectangle(0, 0, un.width, un.height);
+            
+            Rectangle2D area = graphsLayer.getViewModel().getModelArea();
+            if (modelArea != null && !modelArea.equals(area)) {
+                ((DefaultViewModel) graphsLayer.getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
+                    modelArea.height);
+                graphsLayer.getViewModel().setModelArea(modelArea);
             }
         }
-        return null;
     }
 
     private void updateSortStackActions(TextureDicomSeries series) {
