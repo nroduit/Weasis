@@ -339,7 +339,15 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
         if (ImageSeriesFactory.TEXTURE_LOAD_COMPLETE.equals(propertyName)
             || ImageSeriesFactory.TEXTURE_DO_DISPLAY.equals(propertyName)) {
-
+            
+            Rectangle modelArea = calculateModelArea(getSeriesObject());
+            Rectangle2D area = graphsLayer.getViewModel().getModelArea();
+            if (modelArea != null && !modelArea.equals(area)) {
+                ((DefaultViewModel) graphsLayer.getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
+                    modelArea.height);
+                graphsLayer.getViewModel().setModelArea(modelArea);
+            }
+            
             // Invert if necessary
             // In case of PhotometricInterpretationInverse, it has to be corrected here.
             if (isContentPhotometricInterpretationInverse()) {
@@ -364,11 +372,13 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                     // Apply to all viewers!
                     ImageViewerPlugin<DicomImageElement> container =
                         GUIManager.getInstance().getSelectedView2dContainer();
-                    ArrayList<ViewCanvas<DicomImageElement>> imagePanels = container.getImagePanels();
-                    for (ViewCanvas<DicomImageElement> panel : imagePanels) {
-                        if (panel != GUIManager.getInstance().getSelectedViewPane() && panel instanceof ViewTexture) {
-                            if (presetList.get(0) instanceof PresetWindowLevel) {
-                                ((ViewTexture) panel).setPresetWindowLevel(presetList.get(0));
+                    if (container != null) {
+                        ArrayList<ViewCanvas<DicomImageElement>> imagePanels = container.getImagePanels();
+                        for (ViewCanvas<DicomImageElement> panel : imagePanels) {
+                            if (panel != GUIManager.getInstance().getSelectedViewPane() && panel instanceof ViewTexture) {
+                                if (presetList.get(0) instanceof PresetWindowLevel) {
+                                    ((ViewTexture) panel).setPresetWindowLevel(presetList.get(0));
+                                }
                             }
                         }
                     }
@@ -432,10 +442,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 // TODO lut shape
             } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer) {
                 if (getViewType() != viewType.VOLUME3D) { //If its not a volumetric view
-                    actionsInView.put(ActionW.ROTATION.cmd(), val);
-                    setRotationOffset(Math.toRadians((Integer) val));
-                    updateAffineTransform();
-                    repaint();
+                    setRotation((Integer) val);
                 }
             } else if (command.equals(ActionW.RESET.cmd())) {
                 reset();
@@ -515,6 +522,18 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 setActionsInView(ActionWA.SMOOTHING.cmd(), val, true);
             }
         }
+    }
+    
+    private void setRotation(Integer val) {
+        int rotate = val;
+        if (ViewType.SAGITTAL.equals(getViewType())) {
+            rotate = val - 90;
+        }
+        
+        setRotationOffset(Math.toRadians(rotate));
+        actionsInView.put(ActionW.ROTATION.cmd(), val);
+        updateAffineTransform();
+        repaint();
     }
 
     @Override
@@ -615,6 +634,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     private void updateAffineTransform() {
         Boolean flip = (Boolean) getActionValue(ActionW.FLIP.cmd());
         Integer rotationAngle = (Integer) getActionValue(ActionW.ROTATION.cmd());
+        if (ViewType.SAGITTAL.equals(getViewType())) {
+            rotationAngle = rotationAngle + 90;
+        }
         graphsLayer.updateAffineTransform(rotationAngle, flip);
 
         renderSupp.setDirty(true);
@@ -671,9 +693,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
         setImageSeries(series);
         if (series != null) {
-            final Rectangle modelArea = new Rectangle(0, 0, series.getSliceWidth(), series.getSliceHeight());
+            final Rectangle modelArea = calculateModelArea(series);
+            System.out.println(" setSeries: calculateModelArea: " + modelArea);
+            //final Rectangle modelArea = new Rectangle(0, 0, series.getSliceWidth(), series.getSliceHeight());
             Rectangle2D area = graphsLayer.getViewModel().getModelArea();
-            if (!modelArea.equals(area)) {
+            if (modelArea != null && !modelArea.equals(area)) {
                 ((DefaultViewModel) graphsLayer.getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
                     modelArea.height);
                 graphsLayer.getViewModel().setModelArea(modelArea);
@@ -692,6 +716,30 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         if (old != null && (series == null || !old.getSeries().equals(series.getSeries()))) {
             closingSeries(old.getSeries());
         }
+    }
+    
+    private Rectangle calculateModelArea(TextureDicomSeries series) {
+        if (series != null) {
+            Vector3d mult = series.getOriginalDimensionMultiplier();
+            System.out.println(" originalMultiplier: " + mult);
+            if (mult == null) {
+                mult = new Vector3d(1.0, 1.0, 1.0);
+            }
+
+            int wid = (int) Math.round(series.getSliceWidth() * mult.x);
+            int hei = (int) Math.round(series.getSliceHeight() * mult.y);
+            System.out.println(" sliceCount: " + series.getSliceCount() + " /z: " + mult.z);
+            int z = (int) Math.round(series.getSliceCount() * mult.z);
+            System.out.println(" dims: " + wid + " / " + hei + " / " + z);
+            if (ViewType.AXIAL.equals(getViewType()) || ViewType.VOLUME3D.equals(getViewType())) {
+                return new Rectangle(0, 0, wid, hei);
+            } else if (ViewType.CORONAL.equals(getViewType())) {
+                return new Rectangle(0, 0, wid, z);
+            } else if (ViewType.SAGITTAL.equals(getViewType())) {
+                return new Rectangle(0, 0, z, hei);
+            }
+        }
+        return null;
     }
 
     private void updateSortStackActions(TextureDicomSeries series) {
@@ -792,7 +840,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 fixedAxis = TextureImageCanvas.FixedAxis.VerticalAxis;
                 controlAxes.setControlledCanvas(2, this);
                 // Works for the axial case!
-                setRotationOffset(-Math.PI / 2.0);
+                setRotation(0);
                 controlAxes.addPropertyChangeListener(this);
             } else if (ViewType.VOLUME3D.equals(viewType2)) {
                 controlAxes.addWatchingCanvas(this);
@@ -808,7 +856,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             // Clear profile (may be reusing a view)
             fixedAxis = TextureImageCanvas.FixedAxis.AcquisitionAxis;
             this.controlAxes = null;
-            setRotationOffset(0);
+            setRotation(0);
             controlAxesToWatch = null;
             setActionsInView(ActionWA.VOLUM_RENDERING.cmd(), false, false);
         }
@@ -910,10 +958,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             setActionsInView(ActionWA.SMOOTHING.cmd(), true);
         }
         if (cmd == null || ActionW.ROTATION.cmd().equals(cmd)) {
-            setActionsInView(ActionW.ROTATION.cmd(), 0);
-            setRotationOffset(Math.toRadians(0));
-            updateAffineTransform();
-
+            setRotation(0);
         }
         if (cmd == null || ActionW.FLIP.cmd().equals(cmd)) {
             setActionsInView(ActionW.FLIP.cmd(), false);
@@ -1061,10 +1106,13 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         Object actionValue = getActionValue(ActionW.ROTATION.cmd());
         if (actionValue instanceof Integer) {
             Integer actual = (Integer) actionValue;
+            if (ViewType.SAGITTAL.equals(getViewType())) {
+                actual = actual + 90;
+            }
             if (angle > 0) {
-                setActionsInView(ActionW.ROTATION.cmd(), (actual + angle) % 360);
+                setRotation((actual + angle) % 360);
             } else {
-                setActionsInView(ActionW.ROTATION.cmd(), (actual + angle + 360) % 360);
+                setRotation((actual + angle + 360) % 360);
             }
         }
     }
