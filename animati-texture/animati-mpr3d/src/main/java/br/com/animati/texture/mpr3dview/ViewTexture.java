@@ -125,7 +125,6 @@ import br.com.animati.texture.mpr3dview.api.CanvasTexure;
 import br.com.animati.texture.mpr3dview.api.DisplayUtils;
 import br.com.animati.texture.mpr3dview.api.GraphicsModel;
 import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
-import br.com.animati.texture.mpr3dview.api.RenderSupport;
 import br.com.animati.texture.mpr3dview.api.TextureMeasurableLayer;
 import br.com.animati.texture.mpr3dview.internal.Activator;
 import br.com.animati.texture.mpr3dview.internal.Messages;
@@ -175,7 +174,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     private AnnotationsLayer infoLayer;
     public static boolean computePixelStats = true;
 
-    private final RenderSupport renderSupp = new RenderSupport(this);
     protected final TextureMeasurableLayer measurableLayer;
 
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
@@ -400,7 +398,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             setActionsInView(action, value, true);
         } else if (evt.getSource() instanceof ControlAxes) {
             if ("rotation".equals(propertyName)) {
-                renderSupp.setDirty(true);
+                measurableLayer.setDirty(true);
 
                 String old = GraphicsModel.getRotationDesc((Quat4d) evt.getOldValue());
                 String current = GraphicsModel.getRotationDesc((Quat4d) evt.getNewValue());
@@ -413,7 +411,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             } else if (propertyName.startsWith("slice") && controlAxes != null
                 && propertyName.endsWith(Integer.toString(controlAxes.getIndex(this)))) {
 
-                renderSupp.setDirty(true);
+                measurableLayer.setDirty(true);
                 int old = (Integer) evt.getOldValue();
                 handleGraphicsLayer(old);
             }
@@ -510,7 +508,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 if (val instanceof TextureImageCanvas.MipOption) {
                     actionsInView.put(ActionWA.MIP_OPTION.cmd(), val);
                     mipOption = (TextureImageCanvas.MipOption) val;
-                    renderSupp.setDirty(true);
+                    measurableLayer.setDirty(true);
                     graphsLayer.updateAllLabels(ViewTexture.this);
                     repaint();
                 }
@@ -518,7 +516,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 if (val instanceof Integer) {
                     actionsInView.put(ActionWA.MIP_DEPTH.cmd(), val);
                     mipDepth = (Integer) val / (double) getTotalSlices();
-                    renderSupp.setDirty(true);
+                    measurableLayer.setDirty(true);
                     graphsLayer.updateAllLabels(ViewTexture.this);
                     repaint();
                 }
@@ -553,7 +551,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             super.setSlice(slice);
 
             if (controlAxes == null) {
-                renderSupp.setDirty(true);
+                measurableLayer.setDirty(true);
                 handleGraphicsLayer(old);
             }
         }
@@ -649,7 +647,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         } 
         graphsLayer.updateAffineTransform(rotationAngle, flip);
 
-        renderSupp.setDirty(true);
+        measurableLayer.setDirty(true);
     }
 
     private void setPresetWindowLevel(PresetWindowLevel preset) {
@@ -962,14 +960,14 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         if (cmd == null || ActionWA.MIP_OPTION.cmd().equals(cmd)) {
             setActionsInView(ActionWA.MIP_OPTION.cmd(), TextureImageCanvas.MipOption.None, true);
             mipOption = TextureImageCanvas.MipOption.None;
-            renderSupp.setDirty(true);
+            measurableLayer.setDirty(true);
             graphsLayer.updateAllLabels(ViewTexture.this);
         }
         // Mip Depth
         if (cmd == null || ActionWA.MIP_DEPTH.cmd().equals(cmd)) {
             setActionsInView(ActionWA.MIP_DEPTH.cmd(), 5, true);
             mipDepth = 5 / (double) getTotalSlices();
-            renderSupp.setDirty(true);
+            measurableLayer.setDirty(true);
             graphsLayer.updateAllLabels(this);
         }
 
@@ -1091,7 +1089,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         if (hasContent()) {
             super.moveImageOffset(width, height);
         }
-        renderSupp.setDirty(true);
+        measurableLayer.setDirty(true);
     }
 
     private void rotateImage(int angle) {
@@ -1313,10 +1311,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
         this.addMouseListener(adapter);
         this.addMouseMotionListener(adapter);
-    }
-
-    public RenderSupport getRenderSupport() {
-        return renderSupp;
     }
 
     public GeometryOfSlice getSliceGeometry() {

@@ -6,25 +6,27 @@ package br.com.animati.texture.mpr3dview.api;
 
 import br.com.animati.texture.mpr3dview.ViewTexture;
 import br.com.animati.texture.mpr3dview.internal.Activator;
-import com.sun.media.jai.widget.DisplayJAI;
+import br.com.animati.texturedicom.TextureData;
+import br.com.animati.texturedicom.rendering.RenderHelper;
+import br.com.animati.texturedicom.rendering.RenderResult;
+import br.com.animati.texturedicom.rendering.RenderResultListener;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Shape;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
+import java.nio.ByteBuffer;
 import java.util.List;
-import javax.media.jai.PlanarImage;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.vecmath.Vector2d;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -41,6 +43,14 @@ public class TextureMeasurableLayer implements MeasurableLayer {
     
     private ViewTexture owner;
     
+    private RenderedImage renderedAsSource;
+    private volatile boolean dirty = true;
+    
+    //Just for debug
+    private BufferedImage bufferedImage;
+    private volatile boolean bufferedDirty;
+    
+    
     public TextureMeasurableLayer(ViewTexture parent) {
         owner = parent;
     }
@@ -48,6 +58,14 @@ public class TextureMeasurableLayer implements MeasurableLayer {
     @Override
     public boolean hasContent() {
         return owner.hasContent();
+    }
+    
+    /**
+     * @param dirty the dirty to set
+     */
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
+        bufferedDirty = dirty;
     }
 
     @Override
@@ -67,16 +85,10 @@ public class TextureMeasurableLayer implements MeasurableLayer {
     
     @Override
     public AffineTransform getShapeTransform() {
-        //TODO Rename??
-        //_________Affine para posicionar e escalar shape
-            //Necessario porque a imagem retornada pelo renderizador terah o
-            //tamanho do canvas, nao da imagem original.
-        if (hasContent()) {
+        // Only scale !
+        if (hasContent()) { 
             double scale = owner.getActualDisplayZoom();
-            final AffineTransform affineTransform = AffineTransform.getScaleInstance(scale, scale);
-            Rectangle imageRect = owner.getUnrotatedImageRect();
-            affineTransform.translate(imageRect.getX() / scale, imageRect.getY() / scale);
-            return affineTransform;
+            return AffineTransform.getScaleInstance(scale, scale);
         }
         return null;
     }
@@ -104,69 +116,22 @@ public class TextureMeasurableLayer implements MeasurableLayer {
 
     @Override
     public RenderedImage getSourceRenderedImage() {
-        RenderSupport rs= owner.getRenderSupport();
-        RenderedImage rendered = rs.getRenderedAsSource();
-        if (rendered == null) {
-            rs.startRendering(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if ("renderedAsSource".equals(e.getActionCommand())) {
-                        //TODO: for now the only use of this method is for graphics
-                        //statistic. If is has more uses, maybe this listener will
-                        //have to be variable.
-                        GuiExecutor.instance().execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                List<Graphic> list = owner.getLayerModel().getAllGraphics();
-                                for (Graphic graphic : list) {
-                                    graphic.updateLabel(true, owner);
-                                }
-                            }
-                        });
-                    }
-                }
-            });
+        if (dirty) {
+            startRendering(true);
         }
         
         if (Activator.showMeasurementsOnFrame) {
-            BufferedImage bufferedImage = rs.getBufferedImage();
-            if (bufferedImage == null) {
-                rs.startRendering(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if ("renderedAsBuffered".equals(e.getActionCommand())) {
-                        //TODO: for now the only use of this method is for graphics
-                        //statistic. If is has more uses, maybe this listener will
-                        //have to be variable.
-                        GuiExecutor.instance().execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                List<Graphic> list = owner.getLayerModel().getAllGraphics();
-                                System.out.println(" SHOW ON FRAME (evt)");
-                                BufferedImage buff = owner.getRenderSupport().getBufferedImage();
-                                
-                                if (buff != null) {
-                                    //Copy the image, so we dont draw over the original one!
-                                    showOnFrame(deepCopy(buff), getShapeTransform(), list);
-                                }
-                            }
-                        });
-                    }
-                }
-                }, false); 
+            if (bufferedDirty) {
+                startRendering(false);
             } else {
                 List<Graphic> list = owner.getLayerModel().getAllGraphics();
-                System.out.println(" SHOW ON FRAME");
-                BufferedImage buff = owner.getRenderSupport().getBufferedImage();
-                if (buff != null) {
-                    showOnFrame(deepCopy(buff), getShapeTransform(), list);
+                if (bufferedImage != null) {
+                    showOnFrame(deepCopy(bufferedImage), getShapeTransform(), list);
                 }
             }
         }
         
-        return rendered;
+        return renderedAsSource;
     }
     
     /**
@@ -209,5 +174,71 @@ public class TextureMeasurableLayer implements MeasurableLayer {
         WritableRaster raster = bi.copyData(bi.getRaster().createCompatibleWritableRaster());
         return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
     }
+
+    private void startRendering(final boolean renderAsRaw) {
+        final TextureData.Format format = owner.getParentImageSeries().getTextureData().getFormat();
+        
+        //Img needs to correspond to the scaled modelArea.
+        Rectangle2D modelArea = owner.getViewModel().getModelArea();
+        double scale = owner.getActualDisplayZoom();
+        Rectangle2D scaledMA = new Rectangle2D.Double(0, 0,
+                modelArea.getWidth() * scale, modelArea.getHeight() * scale);
+        Rectangle bounds = scaledMA.getBounds();
+        
+        //Has to be final
+        final Rectangle imgBounds = bounds;
+        
+        RenderHelper helper = new RenderHelper(owner,
+                new RenderResultListener() {
+            @Override
+            public void onRenderResultReceived(RenderResult renderResult) {
+                try {
+                    if (renderAsRaw) {
+                        ByteBuffer asByteBuffer = renderResult.asByteBuffer();
+                        if (TextureData.Format.Byte.equals(format)) {
+                            renderedAsSource = RenderSupport.make8BitsImage(asByteBuffer, imgBounds);
+                        } else {
+                            renderedAsSource = RenderSupport.makeBufferedImage(asByteBuffer, imgBounds);
+                        }
+                        dirty = false;
+                        
+                    } else {
+                        BufferedImage asBuff = renderResult.asBufferedImage();
+                        bufferedImage = asBuff;
+                        
+                        bufferedDirty = false;
+                    }
+                    
+                    if (renderAsRaw) {
+                        updateGraphics();
+                    }
+                    
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+        }, renderAsRaw);
+        
+        helper.getParametersCanvas().setBounds(bounds);
+        
+        helper.getParametersCanvas().setImageOffset(new Vector2d(0, 0));
+        helper.getParametersCanvas().setRotationOffset(0);
+        helper.getParametersCanvas().flippedHorizontally = false;
+        helper.getParametersCanvas().flippedVertically = false;
+        helper.renderFrame();
+    }
     
+    
+    private void updateGraphics() {
+        GuiExecutor.instance().execute(new Runnable() {
+            @Override
+            public void run() {
+                List<Graphic> list = owner.getLayerModel().getAllGraphics();
+                for (Graphic graphic : list) {
+                    graphic.updateLabel(true, owner);
+                }
+            }
+        });
+    }
 }
