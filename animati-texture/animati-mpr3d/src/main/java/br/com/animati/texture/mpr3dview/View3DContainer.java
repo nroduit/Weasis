@@ -313,9 +313,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
         if ("texture.orientationPatient".equals(event.getPropertyName()) && controlAxes != null) {
             setControlAxesBaseOrientation(mediaSeries, (double[]) event.getNewValue());
             // Reset to Axial
-            String[] resets = new String[] { "resetToAxial" };
-            EventPublisher.getInstance().publish(
-                new PropertyChangeEvent(this, EventPublisher.VIEWER_DO_ACTION + ActionW.RESET.cmd(), null, resets));
+            ((ViewTexture) selectedImagePane).resetAction("resetToAxial");
         }
 
         for (ViewCanvas<DicomImageElement> gridElement : getImagePanels()) {
@@ -461,7 +459,9 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
                 menuRoot.add(new JSeparator());
                 JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
                 JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
-                JMVUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
+                if (Activator.sortOpt) {
+                    JMVUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
+                }
                 menuRoot.add(new JSeparator());
                 menuRoot.add(manager.getResetMenu(null));
             }
@@ -511,14 +511,6 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
             if (ImageSeriesFactory.TEXTURE_LOAD_COMPLETE.equals(command)) {
                 handleLoadCompleteEvent(event);
             }
-        } else {
-            if (command.startsWith(EventPublisher.VIEWER_DO_ACTION) && selectedImagePane != null) {
-                selectedImagePane.propertyChange(event);
-            } else {
-                if (event instanceof ObservableEvent) {
-                    handlesObservEvent(event);
-                }
-            }
         }
     }
 
@@ -528,13 +520,6 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
         if (ObservableEvent.BasicAction.Remove.equals(action)) {
             removeContent(obEvt);
         }
-        // TODO: threat AddImage events or not? MPR doesn't.
-        // else if (event.getNewValue() instanceof SeriesEvent) {
-        // SeriesEvent seriesEvt = (SeriesEvent) event.getNewValue();
-        // if (SeriesEvent.Action.AddImage.equals(seriesEvt.getActionCommand())) {
-        //
-        // }
-        // }
     }
 
     /**

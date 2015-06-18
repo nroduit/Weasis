@@ -220,7 +220,7 @@ public class TextureMeasurableLayer implements MeasurableLayer {
             }
         }, renderAsRaw);
         
-        helper.getParametersCanvas().setBounds(bounds);
+        helper.getParametersCanvas().setSize(bounds.width, bounds.height);
         
         helper.getParametersCanvas().setImageOffset(new Vector2d(0, 0));
         helper.getParametersCanvas().setRotationOffset(0);

@@ -393,9 +393,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
             repaint();
             eventManager.updateComponentsListener(this);
-        } else if (propertyName.startsWith(EventPublisher.VIEWER_DO_ACTION)) {
-            String action = propertyName.substring(propertyName.lastIndexOf(".") + 1);
-            setActionsInView(action, value, true);
         } else if (evt.getSource() instanceof ControlAxes) {
             if ("rotation".equals(propertyName)) {
                 measurableLayer.setDirty(true);
@@ -976,6 +973,13 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             controlAxes.reset();
             // must repaint all views
             getParent().repaint();
+            
+            TextureImageCanvas[] canvases = controlAxes.getCanvases();
+            for (TextureImageCanvas canv : canvases) {
+                if (canv instanceof ViewTexture) {
+                    ((ViewTexture) canv).handleGraphicsLayer(-1);
+                }
+            }
         }
 
         if ("resetToAxial".equals(cmd) && controlAxes != null) {
@@ -2047,7 +2051,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
             JMVUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
             JMVUtils.addItemToMenu(popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
-            JMVUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
+            if (Activator.sortOpt) {
+                JMVUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
+            }
 
             if (count < popupMenu.getComponentCount()) {
                 popupMenu.add(new JSeparator());
