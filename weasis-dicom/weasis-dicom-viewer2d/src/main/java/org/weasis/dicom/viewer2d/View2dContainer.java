@@ -11,6 +11,7 @@
 package org.weasis.dicom.viewer2d;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -30,6 +31,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import org.dcm4che3.data.Attributes;
@@ -729,6 +731,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     ColorLayerUI.showCenterScreen(dialog, layer);
                 }
             };
+        printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
         actions.add(printStd);
 
         final String title2 = Messages.getString("View2dContainer.dcm_print"); //$NON-NLS-1$

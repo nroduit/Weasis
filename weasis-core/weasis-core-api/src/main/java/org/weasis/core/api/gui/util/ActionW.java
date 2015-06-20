@@ -22,7 +22,7 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.Messages;
 
-public class ActionW {
+public class ActionW implements KeyActionValue {
 
     public static final ActionW NO_ACTION = new ActionW(
         Messages.getString("ActionW.no"), "none", KeyEvent.VK_N, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
@@ -146,6 +146,7 @@ public class ActionW {
         return icon;
     }
 
+    @Override
     public int getKeyCode() {
         return keyCode;
     }
@@ -154,6 +155,7 @@ public class ActionW {
         return cursor;
     }
 
+    @Override
     public int getModifier() {
         return modifier;
     }

@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
+import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
@@ -46,7 +47,7 @@ import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
 
-public abstract class ImageViewerEventManager<E extends ImageElement> {
+public abstract class ImageViewerEventManager<E extends ImageElement> implements KeyListener {
     public static final int ZOOM_SLIDER_MIN = -100;
     public static final int ZOOM_SLIDER_MAX = 100;
     public static final int WINDOW_SMALLEST = 0;
@@ -306,7 +307,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue())); 
+                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue()));
             }
 
         };
@@ -382,7 +383,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue())); 
+                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue()));
             }
 
         };
@@ -575,7 +576,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         return null;
     }
 
-    public ActionW getActionFromkeyEvent(int keyEvent, int modifier) {
+    public ActionW getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
         if (keyEvent != 0) {
             for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
                 ActionW action = iterator.next();
@@ -585,6 +586,36 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
             }
         }
         return null;
+    }
+
+    public void changeLeftMouseAction(String command) {
+        ImageViewerPlugin<E> view = getSelectedView2dContainer();
+        if (view != null) {
+            ViewerToolBar<E> toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                MouseActions mouseActions = getMouseActions();
+                if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
+                    mouseActions.setAction(MouseActions.LEFT, command);
+                    if (view != null) {
+                        view.setMouseActions(mouseActions);
+                    }
+                    toolBar.changeButtonState(MouseActions.LEFT, command);
+                }
+            }
+        }
+    }
+
+    public void nextLeftMouseAction() {
+        ImageViewerPlugin<E> view = getSelectedView2dContainer();
+        if (view != null) {
+            ViewerToolBar<E> toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                String command =
+                    ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
+                        toolBar.getMouseLeft().getActionCommand()).cmd();
+                changeLeftMouseAction(command);
+            }
+        }
     }
 
     public Collection<ActionState> getAllActionValues() {

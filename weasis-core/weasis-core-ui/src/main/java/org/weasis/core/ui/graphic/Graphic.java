@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.gui.util.KeyActionValue;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -31,7 +32,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
  * @author Nicolas Roduit , Benoit Jacquemoud
  */
 @Root()
-public interface Graphic extends GUIEntry, Cloneable {
+public interface Graphic extends GUIEntry, KeyActionValue, Cloneable {
 
     Graphic deepCopy();
 

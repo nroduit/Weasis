@@ -3,6 +3,7 @@ package org.weasis.dicom.sr;
 import java.awt.BorderLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
@@ -102,6 +103,20 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                 this.selectedView2dContainer = selectedView2dContainer;
             }
 
+            @Override
+            public void keyTyped(KeyEvent e) {
+                // Do nothing
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                // Do nothing
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                // Do nothing
+            }
         };
 
     protected SRView srview;

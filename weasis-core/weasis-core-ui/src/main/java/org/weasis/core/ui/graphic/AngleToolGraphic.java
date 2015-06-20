@@ -13,6 +13,7 @@ package org.weasis.core.ui.graphic;
 import java.awt.Color;
 import java.awt.Paint;
 import java.awt.Shape;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -85,6 +86,17 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     @Override
     public String getUIName() {
         return Messages.getString("measure.angle"); //$NON-NLS-1$
+    }
+
+    @Override
+    public int getKeyCode() {
+        // No modifier, otherwise it will conflict with other shortcuts like ctrl+a
+        return KeyEvent.VK_A;
+    }
+
+    @Override
+    public int getModifier() {
+        return 0;
     }
 
     @Override
