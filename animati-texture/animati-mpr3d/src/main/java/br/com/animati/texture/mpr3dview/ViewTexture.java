@@ -1471,17 +1471,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     @Override
-    public void setOrigin(double x, double y) {
-
-    }
-
-    @Override
-    public void moveOrigin(double x, double y) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public void moveOrigin(PanPoint point) {
         if (point != null) {
             if (PanPoint.STATE.Dragging.equals(point.getState())) {

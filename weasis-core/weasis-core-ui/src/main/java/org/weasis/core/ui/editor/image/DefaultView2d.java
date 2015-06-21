@@ -144,7 +144,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected final FocusHandler focusHandler = new FocusHandler();
-    protected final GraphicMouseHandler graphicMouseHandler;
+    protected final GraphicMouseHandler<E> graphicMouseHandler;
 
     private final PanPoint highlightedPosition = new PanPoint(STATE.Center);
     private final PanPoint startedDragPoint = new PanPoint(STATE.DragStart);
@@ -691,7 +691,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public RenderedImageLayer<E> getImageLayer() {
         return imageLayer;
     }
-    
+
     @Override
     public MeasurableLayer getMeasurableLayer() {
         return imageLayer;
@@ -749,7 +749,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     /** Provides panning */
-    @Override
     public final void setOrigin(double x, double y) {
         getViewModel().setModelOffset(x, y);
         if (panner != null) {
@@ -761,7 +760,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     /** Provides panning */
-    @Override
     public final void moveOrigin(double x, double y) {
         setOrigin(getViewModel().getModelOffsetX() + x, getViewModel().getModelOffsetY() + y);
     }

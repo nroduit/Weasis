@@ -64,12 +64,6 @@ public interface ViewCanvas<E extends ImageElement> extends Canvas, Image2DViewe
 
     void setCenter(double x, double y);
 
-    /** Provides panning */
-    void setOrigin(double x, double y);
-
-    /** Provides panning */
-    void moveOrigin(double x, double y);
-
     void moveOrigin(PanPoint point);
 
     Comparator<E> getCurrentSortComparator();
