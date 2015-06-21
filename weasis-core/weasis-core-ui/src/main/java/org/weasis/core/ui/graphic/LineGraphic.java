@@ -14,6 +14,7 @@ package org.weasis.core.ui.graphic;
 import java.awt.Color;
 import java.awt.Paint;
 import java.awt.Shape;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -103,6 +104,17 @@ public class LineGraphic extends AbstractDragGraphic {
     @Override
     public String getUIName() {
         return Messages.getString("MeasureToolBar.line"); //$NON-NLS-1$
+    }
+
+    @Override
+    public int getKeyCode() {
+        // No modifier, otherwise it will conflict with other shortcuts like ctrl+d
+        return KeyEvent.VK_D;
+    }
+
+    @Override
+    public int getModifier() {
+        return 0;
     }
 
     @Override

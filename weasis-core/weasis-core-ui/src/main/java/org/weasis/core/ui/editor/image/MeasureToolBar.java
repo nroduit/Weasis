@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.ListDataEvent;
 
@@ -32,6 +33,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
+import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
@@ -155,6 +157,16 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             ComboItemListener m = (ComboItemListener) measure;
             menu = new MeasureGroupMenu();
             m.registerActionState(menu);
+
+            for (Component mitem : menu.getRadioMenuItemListCopy()) {
+                RadioMenuItem ritem = ((RadioMenuItem) mitem);
+                if (ritem.getUserObject() instanceof Graphic) {
+                    Graphic g = (Graphic) ritem.getUserObject();
+                    if (g.getKeyCode() != 0) {
+                        ritem.setAccelerator(KeyStroke.getKeyStroke(g.getKeyCode(), g.getModifier()));
+                    }
+                }
+            }
         }
         measureButton = new DropDownButton(ActionW.DRAW_MEASURE.cmd(), buildIcon(selectionGraphic), menu) {
             @Override

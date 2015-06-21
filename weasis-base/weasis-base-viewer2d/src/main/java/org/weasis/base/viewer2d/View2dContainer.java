@@ -11,6 +11,7 @@
 package org.weasis.base.viewer2d;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import org.osgi.framework.BundleContext;
@@ -375,6 +377,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     ColorLayerUI.showCenterScreen(dialog, layer);
                 }
             };
+        printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
         actions.add(printStd);
         return actions;
     }

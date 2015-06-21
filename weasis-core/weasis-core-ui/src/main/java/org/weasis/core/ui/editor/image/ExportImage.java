@@ -33,7 +33,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.graphic.Graphic;
 
-public class ExportImage<E extends ImageElement> extends DefaultView2d {
+public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExportImage.class);
 
     private final ViewCanvas<E> view2d;
@@ -105,13 +105,6 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         }
         return super.getGraphics();
     }
-
-    // @Override
-    // public final Font getLayerFont() {
-    // double fontSize =
-    //                    (this.getGraphics().getFontMetrics(FontTools.getFont10()).stringWidth("0123456789") * 6.0) / getWidth(); //$NON-NLS-1$ 
-    //                return new Font("SansSerif", 0, (int) Math.ceil(10 / fontSize)); //$NON-NLS-1$
-    // }
 
     @Override
     public void paintComponent(Graphics g) {

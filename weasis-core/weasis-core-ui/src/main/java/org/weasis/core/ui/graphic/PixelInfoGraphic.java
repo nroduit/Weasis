@@ -84,6 +84,11 @@ public class PixelInfoGraphic extends AnnotationGraphic {
     }
 
     @Override
+    public int getKeyCode() {
+        return 0;
+    }
+
+    @Override
     protected void buildShape(MouseEventDouble mouseEvent) {
         updateTool();
         AdvancedShape newShape = null;

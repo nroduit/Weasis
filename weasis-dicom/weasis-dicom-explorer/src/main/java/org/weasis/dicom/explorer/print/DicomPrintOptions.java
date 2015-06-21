@@ -11,6 +11,9 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer.print;
 
+import org.weasis.dicom.explorer.print.DicomPrintDialog.DotPerInches;
+import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
+
 /**
  * 
  * @author Marcelo Porto (marcelo@animati.com.br)
@@ -22,17 +25,19 @@ public class DicomPrintOptions {
     private String priority;
     private String filmDestination;
     private String imageDisplayFormat;
-    private String filmSizeId;
+    private FilmSize filmSizeId;
     private String filmOrientation;
     private String magnificationType;
     private String smoothingType;
     private String borderDensity;
+    private String emptyDensity;
     private String trim;
     private Integer numOfCopies;
     private Integer minDensity;
     private Integer maxDensity;
     private boolean printInColor = true;
     private DicomPrinter dicomPrinter;
+    private DotPerInches dpi;
 
     public Boolean isPrintInColor() {
         return printInColor;
@@ -48,6 +53,14 @@ public class DicomPrintOptions {
 
     public void setBorderDensity(String borderDensity) {
         this.borderDensity = borderDensity;
+    }
+
+    public String getEmptyDensity() {
+        return emptyDensity;
+    }
+
+    public void setEmptyDensity(String emptyDensity) {
+        this.emptyDensity = emptyDensity;
     }
 
     public String getFilmDestination() {
@@ -66,12 +79,12 @@ public class DicomPrintOptions {
         this.filmOrientation = filmOrientation;
     }
 
-    public String getFilmSizeId() {
+    public FilmSize getFilmSizeId() {
         return filmSizeId;
     }
 
-    public void setFilmSizeId(String filmSizeId) {
-        this.filmSizeId = filmSizeId;
+    public void setFilmSizeId(FilmSize filmSize) {
+        this.filmSizeId = filmSize;
     }
 
     public String getImageDisplayFormat() {
@@ -152,6 +165,14 @@ public class DicomPrintOptions {
 
     public void setDicomPrinter(DicomPrinter dicomPrinter) {
         this.dicomPrinter = dicomPrinter;
+    }
+
+    public DotPerInches getDpi() {
+        return dpi;
+    }
+
+    public void setDpi(DotPerInches dpi) {
+        this.dpi = dpi;
     }
 
 }

@@ -79,6 +79,8 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
@@ -1178,25 +1180,13 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-            if (e.isControlDown()) {
-                // Ctrl + Space passa para a proxima action.
-                ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
-                if (view != null) {
-                    ViewerToolBar toolBar = view.getViewerToolBar();
-                    if (toolBar != null) {
-                        String command = ViewerToolBar
-                            .getNextCommand(ViewerToolBar.actionsButtons, toolBar.getMouseLeft().getActionCommand())
-                            .cmd();
-                        changeLeftMouseAction(command);
-                    }
-                }
-            } else {
-                // Liga/desliga informacoes do paciente.
-                boolean visible = getInfoLayer().isVisible();
-                getInfoLayer().setVisible(!visible);
-                repaint();
-            }
+        if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
+         // Ctrl + Space passa para a proxima action.
+            eventManager.nextLeftMouseAction();
+        } else if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
+         // Liga/desliga informacoes do paciente.
+            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
+                null, null, EVENT.TOOGLE_INFO));
         } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_H) {
             // Flip horizontal
             Object actionValue = getActionValue(ActionW.FLIP.cmd());
@@ -1210,9 +1200,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             // Rotaciona para a esquerda
             rotateImage(-90);
         } else {
-            ActionW action = GUIManager.getInstance().getActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
-            if (action != null) {
-                changeLeftMouseAction(action.cmd());
+            ActionW action = eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
+            if (action == null) {
+                eventManager.keyPressed(e);
+            } else {
+                eventManager.changeLeftMouseAction(action.cmd());
             }
         }
     }

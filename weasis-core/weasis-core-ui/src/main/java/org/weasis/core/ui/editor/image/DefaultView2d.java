@@ -1277,46 +1277,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-
-            // TODO - should be handled in EventManager !!!
-            if (e.isControlDown()) {
-                ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
-                if (view != null) {
-                    ViewerToolBar<E> toolBar = view.getViewerToolBar();
-                    if (toolBar != null) {
-                        String command =
-                            ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
-                                toolBar.getMouseLeft().getActionCommand()).cmd();
-                        changeLeftMouseAction(command);
-                    }
-                }
-            } else {
-                eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
-                    null, null, EVENT.TOOGLE_INFO));
-            }
+        if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            eventManager.nextLeftMouseAction();
+        } else if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
+            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
+                null, null, EVENT.TOOGLE_INFO));
         } else {
-            ActionW action = eventManager.getActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
-            if (action != null) {
-                changeLeftMouseAction(action.cmd());
-            }
-        }
-
-    }
-
-    private void changeLeftMouseAction(String command) {
-        ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
-        if (view != null) {
-            ViewerToolBar<E> toolBar = view.getViewerToolBar();
-            if (toolBar != null) {
-                MouseActions mouseActions = eventManager.getMouseActions();
-                if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
-                    mouseActions.setAction(MouseActions.LEFT, command);
-                    if (view != null) {
-                        view.setMouseActions(mouseActions);
-                    }
-                    toolBar.changeButtonState(MouseActions.LEFT, command);
-                }
+            ActionW action = eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
+            if (action == null) {
+                eventManager.keyPressed(e);
+            } else {
+                eventManager.changeLeftMouseAction(action.cmd());
             }
         }
     }

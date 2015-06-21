@@ -113,6 +113,7 @@ public class InfoLayer implements AnnotationsLayer {
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
         displayPreferences.put(PRELOADING_BAR, true);
+        displayPreferences.put(MIN_DISPLAY, false);
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
 
@@ -140,6 +141,7 @@ public class InfoLayer implements AnnotationsLayer {
         prefs.put(ROTATION, getDisplayPreferences(ROTATION));
         prefs.put(FRAME, getDisplayPreferences(FRAME));
         prefs.put(PRELOADING_BAR, getDisplayPreferences(PRELOADING_BAR));
+        prefs.put(MIN_DISPLAY, getDisplayPreferences(MIN_DISPLAY));
         return layer;
     }
 
@@ -182,6 +184,7 @@ public class InfoLayer implements AnnotationsLayer {
 
         g2.setPaint(color);
 
+        boolean hideMin = !getDisplayPreferences(MIN_DISPLAY);
         final float fontHeight = FontTools.getAccurateFontHeight(g2);
         final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
         float drawY = bound.height - border - 1.5f; // -1.5 for outline
@@ -213,10 +216,11 @@ public class InfoLayer implements AnnotationsLayer {
                 }
             }
         }
+
         if (image.isReadable() && getDisplayPreferences(SCALE)) {
             drawScale(g2, bound, fontHeight);
         }
-        if (image.isReadable() && getDisplayPreferences(LUT)) {
+        if (image.isReadable() && getDisplayPreferences(LUT) && hideMin) {
             drawLUT(g2, bound, midfontHeight);
             // drawLUTgraph(g2, bound, midfontHeight);
         }
@@ -251,7 +255,7 @@ public class InfoLayer implements AnnotationsLayer {
             }
         }
 
-        if (getDisplayPreferences(PIXEL)) {
+        if (getDisplayPreferences(PIXEL) && hideMin) {
             StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel")); //$NON-NLS-1$
             sb.append(StringUtil.COLON_AND_SPACE);
             if (pixelInfo != null) {
@@ -266,7 +270,7 @@ public class InfoLayer implements AnnotationsLayer {
                 .stringWidth(str) + 4, (int) fontHeight + 2);
             // g2.draw(pixelInfoBound);
         }
-        if (getDisplayPreferences(WINDOW_LEVEL)) {
+        if (getDisplayPreferences(WINDOW_LEVEL) && hideMin) {
             StringBuilder sb = new StringBuilder();
             Number window = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
             Number level = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
@@ -298,7 +302,7 @@ public class InfoLayer implements AnnotationsLayer {
             }
             drawY -= fontHeight;
         }
-        if (getDisplayPreferences(ZOOM)) {
+        if (getDisplayPreferences(ZOOM) && hideMin) {
             GraphicLabel
                 .paintFontOutline(
                     g2,
@@ -306,7 +310,7 @@ public class InfoLayer implements AnnotationsLayer {
                     , border, drawY);
             drawY -= fontHeight;
         }
-        if (getDisplayPreferences(ROTATION)) {
+        if (getDisplayPreferences(ROTATION) && hideMin) {
             GraphicLabel
                 .paintFontOutline(
                     g2,
@@ -314,7 +318,7 @@ public class InfoLayer implements AnnotationsLayer {
             drawY -= fontHeight;
         }
 
-        if (getDisplayPreferences(FRAME)) {
+        if (getDisplayPreferences(FRAME) && hideMin) {
             String instance = StringUtil.COLON_AND_SPACE;
             if (dcm != null) {
                 Integer inst = (Integer) dcm.getTagValue(TagW.InstanceNumber);
@@ -351,17 +355,19 @@ public class InfoLayer implements AnnotationsLayer {
             TagView[] infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
-                    Object value = null;
-                    for (TagW tag : infos[j].getTag()) {
-                        if (!anonymize || tag.getAnonymizationType() != 1) {
-                            value = getTagValue(tag, patient, study, series, dcm);
-                            if (value != null) {
-                                String str = tag.getFormattedText(value, infos[j].getFormat());
-                                if (StringUtil.hasText(str)) {
-                                    GraphicLabel.paintFontOutline(g2, str, border, drawY);
-                                    drawY += fontHeight;
+                    if (hideMin || infos[j].containsTag(TagW.PatientName)) {
+                        Object value = null;
+                        for (TagW tag : infos[j].getTag()) {
+                            if (!anonymize || tag.getAnonymizationType() != 1) {
+                                value = getTagValue(tag, patient, study, series, dcm);
+                                if (value != null) {
+                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    if (StringUtil.hasText(str)) {
+                                        GraphicLabel.paintFontOutline(g2, str, border, drawY);
+                                        drawY += fontHeight;
+                                    }
+                                    break;
                                 }
-                                break;
                             }
                         }
                     }
@@ -374,18 +380,20 @@ public class InfoLayer implements AnnotationsLayer {
             infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
-                    Object value = null;
-                    for (TagW tag : infos[j].getTag()) {
-                        if (!anonymize || tag.getAnonymizationType() != 1) {
-                            value = getTagValue(tag, patient, study, series, dcm);
-                            if (value != null) {
-                                String str = tag.getFormattedText(value, infos[j].getFormat());
-                                if (StringUtil.hasText(str)) {
-                                    GraphicLabel.paintFontOutline(g2, str, bound.width
-                                        - g2.getFontMetrics().stringWidth(str) - border, drawY);
-                                    drawY += fontHeight;
+                    if (hideMin || infos[j].containsTag(TagW.SeriesDate)) {
+                        Object value = null;
+                        for (TagW tag : infos[j].getTag()) {
+                            if (!anonymize || tag.getAnonymizationType() != 1) {
+                                value = getTagValue(tag, patient, study, series, dcm);
+                                if (value != null) {
+                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    if (StringUtil.hasText(str)) {
+                                        GraphicLabel.paintFontOutline(g2, str, bound.width
+                                            - g2.getFontMetrics().stringWidth(str) - border, drawY);
+                                        drawY += fontHeight;
+                                    }
+                                    break;
                                 }
-                                break;
                             }
                         }
                     }
@@ -393,30 +401,32 @@ public class InfoLayer implements AnnotationsLayer {
             }
             positions[1] = new Point2D.Float(bound.width - border, drawY - fontHeight + 5);
 
-            corner = modality.getCornerInfo(CornerDisplay.BOTTOM_RIGHT);
             drawY = bound.height - border - 1.5f; // -1.5 for outline
-            infos = corner.getInfos();
-            for (int j = infos.length - 1; j >= 0; j--) {
-                if (infos[j] != null) {
-                    Object value = null;
-                    for (TagW tag : infos[j].getTag()) {
-                        if (!anonymize || tag.getAnonymizationType() != 1) {
-                            value = getTagValue(tag, patient, study, series, dcm);
-                            if (value != null) {
-                                String str = tag.getFormattedText(value, infos[j].getFormat());
-                                if (StringUtil.hasText(str)) {
-                                    GraphicLabel.paintFontOutline(g2, str, bound.width
-                                        - g2.getFontMetrics().stringWidth(str) - border, drawY);
-                                    drawY -= fontHeight;
+            if (hideMin) {
+                corner = modality.getCornerInfo(CornerDisplay.BOTTOM_RIGHT);
+                infos = corner.getInfos();
+                for (int j = infos.length - 1; j >= 0; j--) {
+                    if (infos[j] != null) {
+                        Object value = null;
+                        for (TagW tag : infos[j].getTag()) {
+                            if (!anonymize || tag.getAnonymizationType() != 1) {
+                                value = getTagValue(tag, patient, study, series, dcm);
+                                if (value != null) {
+                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    if (StringUtil.hasText(str)) {
+                                        GraphicLabel.paintFontOutline(g2, str, bound.width
+                                            - g2.getFontMetrics().stringWidth(str) - border, drawY);
+                                        drawY -= fontHeight;
+                                    }
+                                    break;
                                 }
-                                break;
                             }
                         }
                     }
                 }
+                drawY -= 5;
+                drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - border, (int) (drawY));
             }
-            drawY -= 5;
-            drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - border, (int) (drawY));
             positions[2] = new Point2D.Float(bound.width - border, drawY - 5);
 
             // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);

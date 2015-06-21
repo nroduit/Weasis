@@ -1,5 +1,6 @@
 package org.weasis.dicom.au;
 
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -82,6 +83,20 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
                 this.selectedView2dContainer = selectedView2dContainer;
             }
 
+            @Override
+            public void keyTyped(KeyEvent e) {
+                // Do nothing
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                // Do nothing
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                // Do nothing
+            }
         };
     protected AuView auview;
 

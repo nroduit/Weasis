@@ -13,10 +13,16 @@
 
 package org.weasis.dicom.explorer.print;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
@@ -26,6 +32,9 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 
 import org.dcm4che3.data.Attributes;
@@ -41,9 +50,15 @@ import org.dcm4che3.net.DimseRSP;
 import org.dcm4che3.net.pdu.AAssociateRQ;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
+import org.weasis.core.api.image.LayoutConstraints;
+import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ExportImage;
+import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
+import org.weasis.dicom.explorer.print.DicomPrintDialog.DotPerInches;
+import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 
 public class DicomPrint {
 
@@ -53,36 +68,147 @@ public class DicomPrint {
         this.dicomPrintOptions = dicomPrintOptions;
     }
 
-    public static BufferedImage printImage(ExportImage image, PrintOptions printOptions) {
-        if ((image == null)) {
+    public BufferedImage printImage(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
+        if (layout == null) {
             return null;
         }
-        if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
-            image.getInfoLayer().setVisible(false);
+        Dimension dimGrid = layout.getLayoutModel().getGridSize();
+        FilmSize filmSize = dicomPrintOptions.getFilmSizeId();
+        DotPerInches dpi = dicomPrintOptions.getDpi();
+
+        int width = filmSize.getWidth(dpi);
+        int height = filmSize.getHeight(dpi);
+
+        if ("LANDSCAPE".equals(dicomPrintOptions.getFilmOrientation())) {
+            int tmp = width;
+            width = height;
+            height = tmp;
         }
-        RenderedImage img = image.getSourceImage();
-        double w = img == null ? image.getWidth() : img.getWidth() * image.getImage().getRescaleX();
-        double h = img == null ? image.getHeight() : img.getHeight() * image.getImage().getRescaleY();
-        double scaleFactor = printOptions.getImageScale();
-        // Set the print area in pixel
-        int cw = (int) (w * scaleFactor + 0.5);
-        int ch = (int) (h * scaleFactor + 0.5);
-        image.setSize(cw, ch);
 
-        image.zoom(scaleFactor);
-        image.center();
+        Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK;
+        Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK;
 
-        boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
+        String mType = dicomPrintOptions.getMagnificationType();
+        int interpolation = 1;
+
+        if ("REPLICATE".equals(mType)) {
+            interpolation = 0;
+        } else if ("CUBIC".equals(mType)) {
+            interpolation = 2;
+        }
+
+        // Printable size
+        double placeholderX = width - (dimGrid.width + 1) * 5;
+        double placeholderY = height - (dimGrid.height + 1) * 5;
+
+        int lastx = 0;
+        double lastwx = 0.0;
+        double[] lastwy = new double[dimGrid.width];
+        double wx = 0.0;
+
         BufferedImage bufferedImage;
         if (printOptions.isColor()) {
-            bufferedImage = createRGBBufferedImage(image.getWidth(), image.getHeight());
+            bufferedImage = createRGBBufferedImage(width, height);
         } else {
-            bufferedImage = createGrayBufferedImage(image.getWidth(), image.getHeight());
+            bufferedImage = createGrayBufferedImage(width, height);
         }
         Graphics2D g2d = (Graphics2D) bufferedImage.getGraphics();
-        g2d.setClip(image.getBounds());
-        image.draw(g2d);
-        ImagePrint.restoreDoubleBuffering(image, wasBuffered);
+
+        if (g2d != null) {
+            g2d.setBackground(background);
+            if (!Color.BLACK.equals(background)) {
+                // Change background color
+                g2d.clearRect(0, 0, width, height);
+            }
+            final LinkedHashMap<LayoutConstraints, Component> elements = layout.getLayoutModel().getConstraints();
+            Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
+            while (enumVal.hasNext()) {
+                Entry<LayoutConstraints, Component> e = enumVal.next();
+                LayoutConstraints key = e.getKey();
+                ExportImage<? extends ImageElement> image = (ExportImage<? extends ImageElement>) e.getValue();
+                if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
+                    image.getInfoLayer().setVisible(false);
+                }
+
+                double padX = 0.0;
+                double padY = 0.0;
+                Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
+                Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+                Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
+                RenderedImage img = image.getSourceImage();
+                if (img != null && originCenter != null && originZoom != null) {
+                    boolean bestfit = originZoom <= 0.0;
+                    double canvasWidth;
+                    double canvasHeight;
+                    if (bestfit || originSize == null) {
+                        canvasWidth = img.getWidth() * image.getImage().getRescaleX();
+                        canvasHeight = img.getHeight() * image.getImage().getRescaleY();
+                    } else {
+                        canvasWidth = originSize.getWidth() / originZoom;
+                        canvasHeight = originSize.getHeight() / originZoom;
+                    }
+                    double scaleCanvas =
+                        Math.min(placeholderX * key.weightx / canvasWidth, placeholderY * key.weighty / canvasHeight);
+
+                    // Set the print area in pixel
+                    double cw = canvasWidth * scaleCanvas;
+                    double ch = canvasHeight * scaleCanvas;
+                    image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
+
+                    if (printOptions.isCenter()) {
+                        padX = (placeholderX * key.weightx - cw) * 0.5;
+                        padY = (placeholderY * key.weighty - ch) * 0.5;
+                    } else {
+                        padX = 0.0;
+                        padY = 0.0;
+                    }
+
+                    image.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
+                    double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
+                    // Resize in best fit window
+                    image.zoom(scaleFactor);
+                    if (bestfit) {
+                        image.center();
+                    } else {
+                        image.setCenter(originCenter.getX(), originCenter.getY());
+                    }
+                }
+
+                if (key.gridx == 0) {
+                    wx = 0.0;
+                } else if (lastx < key.gridx) {
+                    wx += lastwx;
+                }
+                double wy = lastwy[key.gridx];
+
+                double x = 5 + (placeholderX * wx) + (wx == 0.0 ? 0 : key.gridx * 5) + padX;
+                double y = 5 + (placeholderY * wy) + (wy == 0.0 ? 0 : key.gridy * 5) + padY;
+                lastx = key.gridx;
+                lastwx = key.weightx;
+                for (int i = key.gridx; i < key.gridx + key.gridwidth; i++) {
+                    lastwy[i] += key.weighty;
+                }
+
+                boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
+
+                // Set us to the upper left corner
+                g2d.translate(x, y);
+                g2d.setClip(image.getBounds());
+                image.draw(g2d);
+                ImagePrint.restoreDoubleBuffering(image, wasBuffered);
+                g2d.translate(-x, -y);
+
+                if (!borderColor.equals(background)) {
+                    // Change background color
+                    g2d.setClip(null);
+                    g2d.setColor(borderColor);
+                    g2d.setStroke(new BasicStroke(2));
+                    Dimension viewSize = image.getSize();
+                    g2d.drawRect((int) x - 1, (int) y - 1, viewSize.width + 1, viewSize.height + 1);
+                }
+            }
+        }
+
         return bufferedImage;
     }
 
@@ -95,7 +221,6 @@ public class DicomPrint {
         ColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
         WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
         BufferedImage dest = new BufferedImage(cm, r, false, null);
-
         return dest;
     }
 
@@ -104,7 +229,6 @@ public class DicomPrint {
         ColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
         WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
         BufferedImage dest = new BufferedImage(cm, r, false, null);
-
         return dest;
     }
 
@@ -126,7 +250,7 @@ public class DicomPrint {
         Device device = new Device("WEASIS_AE"); //$NON-NLS-1$
         ApplicationEntity ae = new ApplicationEntity("WEASIS_AE"); //$NON-NLS-1$
         Connection conn = new Connection();
-        //    Executor executor = new NewThreadExecutor("WEASIS_AE"); //$NON-NLS-1$
+        // Executor executor = new NewThreadExecutor("WEASIS_AE"); //$NON-NLS-1$
         ApplicationEntity remoteAE = new ApplicationEntity(dicomPrintOptions.getDicomPrinter().getAeTitle());
         Connection remoteConn = new Connection();
 
@@ -151,7 +275,7 @@ public class DicomPrint {
         filmSessionAttrs.setString(Tag.PrintPriority, VR.CS, dicomPrintOptions.getPriority());
         filmSessionAttrs.setString(Tag.MediumType, VR.CS, dicomPrintOptions.getMediumType());
         filmSessionAttrs.setString(Tag.FilmDestination, VR.CS, dicomPrintOptions.getFilmDestination());
-        filmBoxAttrs.setString(Tag.FilmSizeID, VR.CS, dicomPrintOptions.getFilmSizeId());
+        filmBoxAttrs.setString(Tag.FilmSizeID, VR.CS, dicomPrintOptions.getFilmSizeId().toString());
         filmBoxAttrs.setString(Tag.FilmOrientation, VR.CS, dicomPrintOptions.getFilmOrientation());
         filmBoxAttrs.setString(Tag.MagnificationType, VR.CS, dicomPrintOptions.getMagnificationType());
         filmBoxAttrs.setString(Tag.SmoothingType, VR.CS, dicomPrintOptions.getSmoothingType());
@@ -178,26 +302,34 @@ public class DicomPrint {
         rq.addPresentationContext(new PresentationContext(1, printManagementSOPClass, UID.ImplicitVRLittleEndian));
         rq.setCallingAET(ae.getAETitle());
         rq.setCalledAET(remoteAE.getAETitle());
-        Association association = ae.connect(remoteConn, rq);
-        // Create a Basic Film Session
-        dimseRSPHandler(association.ncreate(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID,
-            filmSessionAttrs, UID.ImplicitVRLittleEndian));
-        // Create a Basic Film Box. We need to get the Image Box UID from the response
-        DimseRSP ncreateFilmBoxRSP =
-            association.ncreate(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, filmBoxAttrs,
-                UID.ImplicitVRLittleEndian);
-        dimseRSPHandler(ncreateFilmBoxRSP);
-        ncreateFilmBoxRSP.next();
-        Attributes imageBoxSequence = ncreateFilmBoxRSP.getDataset().getNestedDataset(Tag.ReferencedImageBoxSequence);
-        // Send N-SET message with the Image Box
-        dimseRSPHandler(association.nset(printManagementSOPClass, imageBoxSOPClass,
-            imageBoxSequence.getString(Tag.ReferencedSOPInstanceUID), imageBoxAttrs, UID.ImplicitVRLittleEndian));
-        // Send N-ACTION message with the print action
-        dimseRSPHandler(association.naction(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, 1, null,
-            UID.ImplicitVRLittleEndian));
-        // The print action ends here. This will only delete the Film Box and Film Session
-        association.ndelete(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID);
-        association.ndelete(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID);
+        Association as = ae.connect(remoteConn, rq);
+        try {
+            // Create a Basic Film Session
+            dimseRSPHandler(as.ncreate(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID,
+                filmSessionAttrs, UID.ImplicitVRLittleEndian));
+            // Create a Basic Film Box. We need to get the Image Box UID from the response
+            DimseRSP ncreateFilmBoxRSP =
+                as.ncreate(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, filmBoxAttrs,
+                    UID.ImplicitVRLittleEndian);
+            dimseRSPHandler(ncreateFilmBoxRSP);
+            ncreateFilmBoxRSP.next();
+            Attributes imageBoxSequence =
+                ncreateFilmBoxRSP.getDataset().getNestedDataset(Tag.ReferencedImageBoxSequence);
+            // Send N-SET message with the Image Box
+            dimseRSPHandler(as.nset(printManagementSOPClass, imageBoxSOPClass,
+                imageBoxSequence.getString(Tag.ReferencedSOPInstanceUID), imageBoxAttrs, UID.ImplicitVRLittleEndian));
+            // Send N-ACTION message with the print action
+            dimseRSPHandler(as.naction(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, 1, null,
+                UID.ImplicitVRLittleEndian));
+            // The print action ends here. This will only delete the Film Box and Film Session
+            as.ndelete(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID);
+            as.ndelete(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID);
+        } finally {
+            if (as != null && as.isReadyForDataTransfer()) {
+                as.waitForOutstandingRSP();
+                as.release();
+            }
+        }
 
     }
 

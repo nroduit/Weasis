@@ -15,6 +15,7 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
@@ -99,6 +100,16 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     @Override
     public String getUIName() {
         return Messages.getString("Tools.Anno"); //$NON-NLS-1$
+    }
+
+    @Override
+    public int getKeyCode() {
+        return KeyEvent.VK_B;
+    }
+
+    @Override
+    public int getModifier() {
+        return 0;
     }
 
     public String[] getLabelStringArray() {

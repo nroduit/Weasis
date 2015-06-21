@@ -18,6 +18,7 @@ import org.weasis.core.ui.graphic.model.Layer;
 
 public interface AnnotationsLayer extends Layer {
 
+    String MIN_DISPLAY = "min.diplay"; //$NON-NLS-1$
     String ANNOTATIONS = Messages.getString("AnnotationsLayer.anno"); //$NON-NLS-1$
     String ANONYM_ANNOTATIONS = Messages.getString("AnnotationsLayer.anonym"); //$NON-NLS-1$
     String SCALE = Messages.getString("AnnotationsLayer.scale"); //$NON-NLS-1$

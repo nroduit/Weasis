@@ -15,6 +15,7 @@ import static java.lang.Double.NaN;
 import java.awt.Color;
 import java.awt.Paint;
 import java.awt.Shape;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -126,6 +127,16 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     @Override
     public String getUIName() {
         return Messages.getString("MeasureToolBar.polygon"); //$NON-NLS-1$
+    }
+
+    @Override
+    public int getKeyCode() {
+        return KeyEvent.VK_Y;
+    }
+
+    @Override
+    public int getModifier() {
+        return 0;
     }
 
     @Override

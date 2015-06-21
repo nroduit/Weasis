@@ -17,6 +17,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.plaf.PanelUI;
@@ -24,8 +25,8 @@ import javax.swing.plaf.PanelUI;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ExportImage;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 
 public class ExportLayout<E extends ImageElement> extends JPanel {
 
@@ -37,9 +38,9 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     protected final JPanel grid;
     protected GridBagLayoutModel layoutModel;
 
-    public ExportLayout(ArrayList<DefaultView2d<E>> view2ds, GridBagLayoutModel layoutModel) {
+    public ExportLayout(List<ViewCanvas<E>> view2ds, GridBagLayoutModel layoutModel) {
         this.viewList = new ArrayList<ExportImage<E>>(view2ds.size());
-        for (DefaultView2d<E> v : view2ds) {
+        for (ViewCanvas<E> v : view2ds) {
             ExportImage export = new ExportImage(v);
             export.getInfoLayer().setBorder(3);
             viewList.add(export);
@@ -48,7 +49,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         // For having a black background with any Look and Feel
         grid.setUI(new PanelUI() {
         });
-        grid.setBackground(Color.BLACK);
+        setGridBackground(Color.BLACK);
         this.layoutModel = layoutModel;
         try {
             this.layoutModel = (GridBagLayoutModel) this.layoutModel.clone();
@@ -57,7 +58,10 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         }
         setLayoutModel();
         add(grid, BorderLayout.CENTER);
+    }
 
+    public void setGridBackground(Color bg) {
+        grid.setBackground(bg);
     }
 
     /** Get the layout of this view panel. */

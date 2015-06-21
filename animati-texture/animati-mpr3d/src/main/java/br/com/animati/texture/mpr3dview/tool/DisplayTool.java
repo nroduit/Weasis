@@ -143,10 +143,17 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                         if (rootNode.equals(parent)) {
                             if (dicomInfo.equals(selObject)) {
                                 for (ViewCanvas<DicomImageElement> v : views) {
-                                    if (selected != v.getInfoLayer().isVisible()) {
-                                        v.getInfoLayer().setVisible(selected);
-                                        v.getJComponent().repaint();
+                                    AnnotationsLayer layer = v.getInfoLayer();
+                                    if (layer != null) {
+                                        if (layer.setDisplayPreferencesValue(AnnotationsLayer.MIN_DISPLAY, false)) {
+                                            v.getJComponent().repaint();
+                                        }
+                                        if (selected != v.getInfoLayer().isVisible()) {
+                                            v.getInfoLayer().setVisible(selected);
+                                            v.getJComponent().repaint();
+                                        }
                                     }
+
                                 }
                             } else if (drawings.equals(selObject)) {
                                 for (ViewCanvas<DicomImageElement> v : views) {
@@ -299,7 +306,45 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             iniTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
         } else if (EVENT.TOOGLE_INFO.equals(e)) {
             TreeCheckingModel model = tree.getCheckingModel();
-            model.toggleCheckingPath(new TreePath(dicomInfo.getPath()));
+            TreePath path = new TreePath(dicomInfo.getPath());
+
+            boolean checked = model.isPathChecked(path);
+            ViewCanvas<DicomImageElement> selView = GUIManager.getInstance().getSelectedViewPane();
+            // Use an intermediate state of the minimal DICOM information. Triggered only from the shortcut SPACE or I
+            boolean minDisp =
+                selView != null && selView.getInfoLayer().getDisplayPreferences(AnnotationsLayer.MIN_DISPLAY);
+
+            if (checked && !minDisp) {
+                ImageViewerPlugin<DicomImageElement> container =
+                                GUIManager.getInstance().getSelectedView2dContainer();
+                ArrayList<ViewCanvas<DicomImageElement>> views = null;
+                if (container != null) {
+                    if (applyAllViews.isSelected()) {
+                        views = container.getImagePanels();
+                    } else {
+                        views = new ArrayList<ViewCanvas<DicomImageElement>>(1);
+                        ViewCanvas<DicomImageElement> view = container.getSelectedImagePane();
+                        if (view != null) {
+                            views.add(view);
+                        }
+                    }
+                }
+                if (views != null) {
+                    for (ViewCanvas<DicomImageElement> v : views) {
+                        AnnotationsLayer layer = v.getInfoLayer();
+                        if (layer != null) {
+                            layer.setVisible(true);
+                            if (layer.setDisplayPreferencesValue(AnnotationsLayer.MIN_DISPLAY, true)) {
+                                v.getJComponent().repaint();
+                            }
+                        }
+                    }
+                }
+            } else if (checked) {
+                model.removeCheckingPath(path);
+            } else {
+                model.addCheckingPath(path);
+            }
         } else if (EVENT.ADD_LAYER.equals(e)) {
             Object obj = event.getSharedObject();
             if (obj instanceof Identifier) {
