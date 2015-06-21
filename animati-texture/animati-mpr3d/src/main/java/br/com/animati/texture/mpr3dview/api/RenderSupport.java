@@ -5,17 +5,10 @@
 
 package br.com.animati.texture.mpr3dview.api;
 
-import br.com.animati.texture.mpr3dview.ViewTexture;
-import br.com.animati.texturedicom.TextureData;
-import br.com.animati.texturedicom.rendering.RenderHelper;
-import br.com.animati.texturedicom.rendering.RenderResult;
-import br.com.animati.texturedicom.rendering.RenderResultListener;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
@@ -33,77 +26,14 @@ import javax.media.jai.TiledImage;
 import org.weasis.core.api.image.util.ImageFiler;
 
 /**
- *
+ * Just static image-makers for now.
+ * 
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  * @version 2013, 27 Dec.
  */
 public class RenderSupport {
     
-    private final ViewTexture owner;
-    private RenderedImage renderedAsSource;
-    private volatile boolean dirty = true;
-    
-    public RenderSupport(ViewTexture view) {
-        owner = view;
-    }
-
-    /**
-     * @return the rendered
-     */
-    public RenderedImage getRenderedAsSource() {
-        if (dirty) {
-            return null;
-        }
-        return renderedAsSource;
-    }
-
-    /**
-     * @return the dirty
-     */
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    /**
-     * @param dirty the dirty to set
-     */
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
-    }
-
-    public void startRendering(final ActionListener listener) {
-        final TextureData.Format format = owner.getParentImageSeries().getTextureData().getFormat();
-        RenderHelper helper = new RenderHelper(owner,
-                new RenderResultListener() {
-            @Override
-            public void onRenderResultReceived(RenderResult renderResult) {
-                try {
-                    ByteBuffer asByteBuffer = renderResult.asByteBuffer();
-                    if (TextureData.Format.Byte.equals(format)) {
-                        renderedAsSource = make8BitsImage(asByteBuffer, owner.getBounds());
-                    } else {
-                        renderedAsSource = makeBufferedImage(asByteBuffer,
-                                owner.getBounds());
-                    }
-                    setDirty(false);
-                    
-                    listener.actionPerformed(new ActionEvent(
-                            renderedAsSource, 0, "renderedAsSource"));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-
-            }
-        }, true);
-
-        helper.getParametersCanvas().setRotationOffset(0);
-        helper.getParametersCanvas().flippedHorizontally = false;
-        helper.getParametersCanvas().flippedVertically = false;
-        helper.renderFrame();
-
-    }
-    
-    private static RenderedImage makeBufferedImage(final ByteBuffer asByteBuffer,
+    public static RenderedImage makeBufferedImage(final ByteBuffer asByteBuffer,
             final Rectangle canvasBounds) {
         //dimensoes da imagem
         int width = canvasBounds.width;
@@ -163,7 +93,7 @@ public class RenderSupport {
          
     }
     
-    private RenderedImage make8BitsImage(ByteBuffer asByteBuffer, Rectangle canvasBounds) {
+    public static RenderedImage make8BitsImage(ByteBuffer asByteBuffer, Rectangle canvasBounds) {
         //dimensoes da imagem
         int width = canvasBounds.width;
         int height = canvasBounds.height;
@@ -212,4 +142,5 @@ public class RenderSupport {
 
     
 
+    
 }

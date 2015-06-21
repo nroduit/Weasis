@@ -51,8 +51,8 @@ import br.com.animati.texturedicom.TextureData;
  * 
  * Orientation Tags: - ImageOrientationPatient (0020,0037): double[] lenth=6 - ImageOrientationPlane: label, generated
  * using ImageOrientationPatient: The method is ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient,
- * and "allow some deviation" on Axial, Sagital, Coronal; Oblique can mean anything! So, even it ImageOrientationPlane
- * is a splitting rule, there is no garanty of even ImageOrientationPatient.
+ * and "allow some deviation" on Axial, Sagital, Coronal; Oblique can mean anything! So, even if ImageOrientationPlane
+ * is a splitting rule, there is no warranty to have consistent ImageOrientationPatient.
  * 
  * Location Tags: - SliceLocation (0020, 1041) : float (dz) - ImagePositionPatient (0020,0032) : double[] lenth=3 (dx,
  * dy, dz) - SlicePosition (weasis-generated, @see DicomMediaUtils.computeSlicePositionVector) Uses ImagePositionPatient
@@ -216,7 +216,7 @@ public class ImageSeriesFactory {
      *            mediaSeries
      */
     private void executeLoader(TextureDicomSeries imSeries, MediaSeries series) {
-        if (SortSeriesStack.slicePosition == comparator && series.getSeriesLoader() != null
+        if (SortSeriesStack.instanceNumber == comparator && series.getSeriesLoader() != null
             && (series.getTagValue(TagW.SplitSeriesNumber) == null)) {
             try {
                 imSeries.textureLogInfo.writeText("Using Wado-safe factory.");

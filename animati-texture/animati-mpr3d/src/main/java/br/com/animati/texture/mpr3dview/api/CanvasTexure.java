@@ -206,6 +206,24 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     }
     
     /**
+     * @return Unrotated and "unzoomed" image rectangle.
+     */
+    public Rectangle getUntransformedImageRect() {
+        double currentRO = getRotationOffset();
+        double zoom = getActualDisplayZoom();
+        
+        setRotationOffset(0);
+        setZoom(1);
+        
+        Rectangle imageRect = getImageRect(true);
+        
+        setRotationOffset(currentRO);
+        setZoom(zoom);
+
+        return imageRect;
+    }
+    
+    /**
      * Uses DefaultViewModel to reuse the Listener system, but all the information came from the TextureImageCanvas
      * state.
      */

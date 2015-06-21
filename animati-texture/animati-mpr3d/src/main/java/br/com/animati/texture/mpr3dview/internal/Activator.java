@@ -26,6 +26,7 @@ import org.weasis.dicom.viewer2d.EventManager;
 
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.cl.CLManager;
+import org.weasis.core.api.service.BundleTools;
 
 /**
  *
@@ -36,6 +37,7 @@ public class Activator implements BundleActivator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
+    public static String SORT_OPT = "animatitexture.sortOpt";
     public static String CONFIG_HARDWARE = "Video card: Not detected!";
     public static String LOG_MESSAGE;
     public static String TRACE;
@@ -47,11 +49,18 @@ public class Activator implements BundleActivator {
     /** Hardware acceleration crash flag. */
     public static final String CRASH_FLAG = "HAcrash";
 
-    /** Will be true if hardware acceleration is to be tryed. */
+    /** Will be true if hardware acceleration is to be tried. */
     public static Boolean useHardwareAcceleration = true;
+    
     public static boolean useOpenCL = true;
     private JDialog infoHALoading = null;
     public static boolean isAlive = false;
+    
+    public static boolean sortOpt = false;
+    
+    //Debug functions
+    public static boolean showModelArea = false;
+    public static boolean showMeasurementsOnFrame = false;
 
     @Override
     public void start(BundleContext context) throws Exception {
@@ -81,6 +90,8 @@ public class Activator implements BundleActivator {
             }
             checkFor3dSupport();
         }
+        
+        sortOpt = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(SORT_OPT, false);        
     }
 
     @Override
