@@ -15,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
@@ -318,7 +317,7 @@ public class DownloadManager {
                 tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                 FileUtil.writeStream(stream, new FileOutputStream(tempFile));
             }
-            xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
+            xmler = xmlif.createXMLStreamReader(new FileInputStream(tempFile));
 
             Source xmlFile = new StAXSource(xmler);
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -335,7 +334,7 @@ public class DownloadManager {
                 e.printStackTrace();
             }
             // Try to read the xml even it is not valid.
-            xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
+            xmler = xmlif.createXMLStreamReader(new FileInputStream(tempFile));
             int eventType;
             if (xmler.hasNext()) {
                 eventType = xmler.next();

@@ -11,9 +11,9 @@
 package org.weasis.core.api.service;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -129,11 +129,11 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
         final File file = this.getFile(desc);
         if (file != null && file.exists()) {
             XMLStreamReader xmler = null;
-            FileReader fileReader = null;
+            FileInputStream fileReader = null;
             try {
                 final PreferencesImpl root = new PreferencesImpl(desc, manager);
                 XMLInputFactory xmlif = XMLInputFactory.newInstance();
-                fileReader = new FileReader(file);
+                fileReader = new FileInputStream(file);
                 xmler = xmlif.createXMLStreamReader(fileReader);
                 int eventType;
                 while (xmler.hasNext()) {

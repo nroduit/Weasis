@@ -14,8 +14,8 @@
 package org.weasis.dicom.explorer.print;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
@@ -47,10 +47,10 @@ public class DicomPrinter {
         final BundleContext context = FrameworkUtil.getBundle(DicomPrinter.class).getBundleContext();
         try {
             writer =
-                factory.createXMLStreamWriter(new FileWriter(new File(BundlePreferences.getDataFolder(context),
-                    "dicomPrinters.xml"))); //$NON-NLS-1$
+                factory.createXMLStreamWriter(new FileOutputStream(new File(BundlePreferences.getDataFolder(context),
+                    "dicomPrinters.xml")), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
 
-            writer.writeStartDocument();
+            writer.writeStartDocument("UTF-8", "1.0"); //$NON-NLS-1$ //$NON-NLS-2$
             writer.writeStartElement("printers"); //$NON-NLS-1$
             for (int i = 0; i < printersComboBox.getItemCount(); i++) {
                 DicomPrinter printer = (DicomPrinter) printersComboBox.getItemAt(i);
@@ -79,7 +79,7 @@ public class DicomPrinter {
             XMLStreamReader xmler = null;
             XMLInputFactory factory = XMLInputFactory.newInstance();
             try {
-                xmler = factory.createXMLStreamReader(new FileReader(prefs));
+                xmler = factory.createXMLStreamReader(new FileInputStream(prefs));
                 int eventType;
                 while (xmler.hasNext()) {
                     eventType = xmler.next();
