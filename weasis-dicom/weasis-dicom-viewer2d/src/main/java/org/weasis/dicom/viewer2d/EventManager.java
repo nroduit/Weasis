@@ -31,6 +31,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -92,11 +93,11 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
-import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
+import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -720,53 +721,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     @Override
-    public ActionW getActionFromkeyEvent(int keyEvent, int modifier) {
-        // TODO this method should be renamed getLeftMouseActionFromkeyEvent
+    public ActionW getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
 
-        ActionW action = super.getActionFromkeyEvent(keyEvent, modifier);
+        ActionW action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
 
         if (action == null && keyEvent != 0) {
             for (ActionW a : keyEventActions) {
                 if (a.getKeyCode() == keyEvent && a.getModifier() == modifier) {
                     return a;
-                }
-            }
-
-            // TODO - following key action handling do not return nothing and execute code instead
-            // should be called from within an outer method like keyPressed(KeyEvent e)
-
-            if (keyEvent == ActionW.CINESTART.getKeyCode() && ActionW.CINESTART.getModifier() == modifier
-                && moveTroughSliceAction.isActionEnabled()) {
-                if (moveTroughSliceAction.isCining()) {
-                    moveTroughSliceAction.stop();
-                } else {
-                    moveTroughSliceAction.start();
-                }
-            } else if (modifier == 0) {
-                // No modifier, otherwise it will conflict with other shortcuts like ctrl+a and ctrl+d
-                if (keyEvent == KeyEvent.VK_D && measureAction.isActionEnabled()) {
-                    for (Object obj : measureAction.getAllItem()) {
-                        if (obj instanceof LineGraphic) {
-                            setMeasurement(obj);
-                            break;
-                        }
-                    }
-                } else if (keyEvent == KeyEvent.VK_A && measureAction.isActionEnabled()) {
-                    for (Object obj : measureAction.getAllItem()) {
-                        if (obj instanceof AngleToolGraphic) {
-                            setMeasurement(obj);
-                            break;
-                        }
-                    }
-                } else if (presetAction.isActionEnabled()) {
-                    DefaultComboBoxModel model = presetAction.getModel();
-                    for (int i = 0; i < model.getSize(); i++) {
-                        PresetWindowLevel val = (PresetWindowLevel) model.getElementAt(i);
-                        if (val.getKeyCode() == keyEvent) {
-                            presetAction.setSelectedItem(val);
-                            break;
-                        }
-                    }
                 }
             }
         }
@@ -780,22 +742,77 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return null;
     }
 
-    private void setMeasurement(Object obj) {
-        ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-        if (view != null) {
-            final ViewerToolBar toolBar = view.getViewerToolBar();
-            if (toolBar != null) {
-                String cmd = ActionW.MEASURE.cmd();
-                if (!toolBar.isCommandActive(cmd)) {
-                    mouseActions.setAction(MouseActions.LEFT, cmd);
-                    if (view != null) {
-                        view.setMouseActions(mouseActions);
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+        int keyEvent = e.getKeyCode();
+        int modifiers = e.getModifiers();
+
+        if (keyEvent == KeyEvent.VK_ESCAPE) {
+            resetDisplay();
+        } else if (keyEvent == ActionW.CINESTART.getKeyCode() && ActionW.CINESTART.getModifier() == modifiers
+            && moveTroughSliceAction.isActionEnabled()) {
+            if (moveTroughSliceAction.isCining()) {
+                moveTroughSliceAction.stop();
+            } else {
+                moveTroughSliceAction.start();
+            }
+            return;
+        } else if (keyEvent == KeyEvent.VK_P && modifiers == 0) {
+            ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+            if (view != null) {
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
+                PrintDialog dialog =
+                    new PrintDialog(SwingUtilities.getWindowAncestor(view),
+                        Messages.getString("View2dContainer.print_layout"), this); //$NON-NLS-1$
+                ColorLayerUI.showCenterScreen(dialog, layer);
+            }
+        } else {
+            if (measureAction.isActionEnabled()) {
+                for (Object obj : measureAction.getAllItem()) {
+                    if (obj instanceof Graphic) {
+                        Graphic g = (Graphic) obj;
+                        if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
+                            ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+                            if (view != null) {
+                                final ViewerToolBar toolBar = view.getViewerToolBar();
+                                if (toolBar != null) {
+                                    String cmd = ActionW.MEASURE.cmd();
+                                    if (!toolBar.isCommandActive(cmd)) {
+                                        mouseActions.setAction(MouseActions.LEFT, cmd);
+                                        if (view != null) {
+                                            view.setMouseActions(mouseActions);
+                                        }
+                                        toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                                    }
+                                }
+                            }
+                            measureAction.setSelectedItem(obj);
+                            return;
+                        }
                     }
-                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                }
+            }
+
+            if (modifiers == 0 && presetAction.isActionEnabled()) {
+                DefaultComboBoxModel model = presetAction.getModel();
+                for (int i = 0; i < model.getSize(); i++) {
+                    PresetWindowLevel val = (PresetWindowLevel) model.getElementAt(i);
+                    if (val.getKeyCode() == keyEvent) {
+                        presetAction.setSelectedItem(val);
+                        return;
+                    }
                 }
             }
         }
-        measureAction.setSelectedItem(obj);
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
     }
 
     @Override

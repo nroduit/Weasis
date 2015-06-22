@@ -23,4 +23,13 @@ public class TagView {
         return format;
     }
 
+    public boolean containsTag(TagW tag) {
+        for (TagW tagW : this.tag) {
+            if(tagW.equals(tag)){
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

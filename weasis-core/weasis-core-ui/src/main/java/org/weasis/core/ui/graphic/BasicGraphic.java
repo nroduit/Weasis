@@ -862,6 +862,16 @@ public abstract class BasicGraphic implements Graphic {
     }
 
     @Override
+    public int getKeyCode() {
+        return 0;
+    }
+
+    @Override
+    public int getModifier() {
+        return 0;
+    }
+
+    @Override
     public BasicGraphic clone() {
         BasicGraphic newGraphic = null;
         try {
