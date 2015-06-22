@@ -950,7 +950,14 @@ public class WeasisLauncher {
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         // Empty string make the file log writer disable
-        getGeneralProperty("org.apache.sling.commons.log.file", "", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        String logActivatation =
+            getGeneralProperty("org.apache.sling.commons.log.file.activate", "false", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        if ("true".equalsIgnoreCase(logActivatation)) {
+            String logFile = dir + File.separator + "log" + File.separator + "default.log";
+            s_prop.setProperty("org.apache.sling.commons.log.file", logFile);
+            l_prop.remove("org.apache.sling.commons.log.file");
+        }
+
         getGeneralProperty("org.apache.sling.commons.log.file.number", "5", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty(

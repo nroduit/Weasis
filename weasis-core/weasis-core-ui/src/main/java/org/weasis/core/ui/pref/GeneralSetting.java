@@ -355,6 +355,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
         LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
+        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_ACTIVATION,
+            String.valueOf(chckbxFileLog.isSelected()));
         String logFile =
             chckbxFileLog.isSelected() ? AppProperties.WEASIS_PATH + File.separator + "log" + File.separator //$NON-NLS-1$
                 + "default.log" : ""; //$NON-NLS-1$ //$NON-NLS-2$
