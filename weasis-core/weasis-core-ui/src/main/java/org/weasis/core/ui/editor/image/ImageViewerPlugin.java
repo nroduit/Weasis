@@ -452,7 +452,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         if (grid.getComponentCount() == 1) {
             Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
             if (fullscreenDialog != null
-                && fullscreenDialog.getTitle().equals(Messages.getString("ImageViewerPlugin.fullscreen"))) {
+                && fullscreenDialog.getTitle().equals(Messages.getString("ImageViewerPlugin.fullscreen"))) { //$NON-NLS-1$
                 maximizedSelectedImagePane(defaultView2d, null);
             }
         }

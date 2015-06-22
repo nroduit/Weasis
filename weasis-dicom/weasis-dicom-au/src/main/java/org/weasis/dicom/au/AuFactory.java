@@ -26,7 +26,7 @@ import org.weasis.dicom.explorer.DicomModel;
 @Property(name = "service.name", value = "AU Player")
 public class AuFactory implements SeriesViewerFactory {
 
-    public static final String NAME = "DICOM AU";
+    public static final String NAME = "DICOM AU"; //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MediaElement.class.getResource("/icon/22x22/audio-x-generic.png")); //$NON-NLS-1$
 
     public AuFactory() {
@@ -44,7 +44,7 @@ public class AuFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return "DICOM Voice Audio Waveform";
+        return Messages.getString("AuFactory.dcm_audio"); //$NON-NLS-1$
     }
 
     @Override

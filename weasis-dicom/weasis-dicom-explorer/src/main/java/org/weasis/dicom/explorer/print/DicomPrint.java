@@ -80,21 +80,21 @@ public class DicomPrint {
         int width = filmSize.getWidth(dpi);
         int height = filmSize.getHeight(dpi);
 
-        if ("LANDSCAPE".equals(dicomPrintOptions.getFilmOrientation())) {
+        if ("LANDSCAPE".equals(dicomPrintOptions.getFilmOrientation())) { //$NON-NLS-1$
             int tmp = width;
             width = height;
             height = tmp;
         }
 
-        Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK;
-        Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK;
+        Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
+        Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
 
         String mType = dicomPrintOptions.getMagnificationType();
         int interpolation = 1;
 
-        if ("REPLICATE".equals(mType)) {
+        if ("REPLICATE".equals(mType)) { //$NON-NLS-1$
             interpolation = 0;
-        } else if ("CUBIC".equals(mType)) {
+        } else if ("CUBIC".equals(mType)) { //$NON-NLS-1$
             interpolation = 2;
         }
 
@@ -248,7 +248,7 @@ public class DicomPrint {
 
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
-        String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE");
+        String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE"); //$NON-NLS-1$ //$NON-NLS-2$
 
         Device device = new Device(weasisAet);
         ApplicationEntity ae = new ApplicationEntity(weasisAet);

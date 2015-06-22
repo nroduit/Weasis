@@ -45,6 +45,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
@@ -100,8 +101,8 @@ public class SeriesBuilder {
 
             Arrays.sort(COPIED_ATTRS);
             final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
-            cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MIP]");
-            cpTags.setString(Tag.ImageType, VR.CS, new String[] { "DERIVED", "SECONDARY", "PROJECTION IMAGE" });
+            cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MIP]"); //$NON-NLS-1$ //$NON-NLS-2$
+            cpTags.setString(Tag.ImageType, VR.CS, new String[] { "DERIVED", "SECONDARY", "PROJECTION IMAGE" }); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             String imageType = DicomMediaUtils.getStringFromDicomElement(cpTags, Tag.ImageType);
             String seriesUID = UIDUtils.createUID();
 
@@ -216,7 +217,7 @@ public class SeriesBuilder {
                     dicoms.add(dicom);
 
                     if (taskMonitor != null && taskMonitor.isCanceled()) {
-                        throw new TaskInterruptionException("Rebuilding MIP series has been canceled!");
+                        throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
                     }
                     final int progress = index - minImg;
                     GuiExecutor.instance().execute(new Runnable() {
@@ -225,10 +226,10 @@ public class SeriesBuilder {
                         public void run() {
                             if (taskMonitor != null) {
                                 taskMonitor.setProgress(progress);
-                                StringBuilder buf = new StringBuilder("Image");
+                                StringBuilder buf = new StringBuilder(Messages.getString("SeriesBuilder.image")); //$NON-NLS-1$
                                 buf.append(StringUtil.COLON_AND_SPACE);
                                 buf.append(progress);
-                                buf.append("/");
+                                buf.append("/"); //$NON-NLS-1$
                                 buf.append(taskMonitor.getMaximum());
                                 taskMonitor.setNote(buf.toString());
                             }

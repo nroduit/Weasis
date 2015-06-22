@@ -58,7 +58,7 @@ public class ActionW implements KeyActionValue {
     public static final ActionW LUT_SHAPE = new ActionW(
         Messages.getString("ActionW.lut_shape"), "lut_shape", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW LUT = new ActionW(Messages.getString("ActionW.lut"), "lut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW INVERT_LUT = new ActionW("Invert LUT", "inverseLut", 0, 0, null); //$NON-NLS-2$
+    public static final ActionW INVERT_LUT = new ActionW(Messages.getString("ActionW.invert_lut"), "inverseLut", 0, 0, null);  //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW RESET = new ActionW(Messages.getString("ActionW.Reset"), "reset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW SHOW_HEADER = new ActionW(
         Messages.getString("ActionW.show_header"), "reset", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$

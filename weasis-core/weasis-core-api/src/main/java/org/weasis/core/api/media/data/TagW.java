@@ -422,7 +422,7 @@ public class TagW implements Transferable, Serializable {
                         break;
                 }
             } else {
-                str = "";
+                str = ""; //$NON-NLS-1$
             }
         } else if (value instanceof float[]) {
             float[] array = (float[]) value;
@@ -552,11 +552,11 @@ public class TagW implements Transferable, Serializable {
                     if (!Character.isDigit(date.charAt(4))) {
                         // Format yyyy.mm.dd (prior DICOM3.0)
                         StringBuilder buf = new StringBuilder(10);
-                        buf.append("yyyy");
+                        buf.append("yyyy"); //$NON-NLS-1$
                         buf.append(c);
-                        buf.append("MM");
+                        buf.append("MM"); //$NON-NLS-1$
                         buf.append(c);
-                        buf.append("dd");
+                        buf.append("dd"); //$NON-NLS-1$
                         return new SimpleDateFormat(buf.toString()).parse(date);
                     }
                 }

@@ -229,7 +229,7 @@ public class WeasisLauncher {
 
         // Disabling extension framework is mandatory to work with Java Web Start.
         // From framework 4.4.1, See https://issues.apache.org/jira/browse/FELIX-4281.
-        System.setProperty(FelixConstants.FELIX_EXTENSIONS_DISABLE, "true");
+        System.setProperty(FelixConstants.FELIX_EXTENSIONS_DISABLE, "true"); //$NON-NLS-1$
     }
 
     public static void launch(String[] argv) throws Exception {
@@ -367,7 +367,7 @@ public class WeasisLauncher {
             // Start telnet after all other bundles. This will ensure that all the plugins commands are activated once
             // telnet is available
             for (Bundle b : m_felix.getBundleContext().getBundles()) {
-                if (b.getSymbolicName().equals("org.apache.felix.gogo.shell") && b.getState() == Bundle.INSTALLED) {
+                if (b.getSymbolicName().equals("org.apache.felix.gogo.shell") && b.getState() == Bundle.INSTALLED) { //$NON-NLS-1$
                     b.start();
                     break;
                 }
@@ -431,7 +431,7 @@ public class WeasisLauncher {
     private static void resetBundleCache() {
         // Set flag to clean cache at next launch
         File sourceID_props =
-            new File(System.getProperty(P_WEASIS_PATH, ""), System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
+            new File(System.getProperty(P_WEASIS_PATH, ""), System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         Properties localSourceProp = readProperties(sourceID_props);
         localSourceProp.setProperty("weasis.clean.cache", "true"); //$NON-NLS-1$ //$NON-NLS-2$
         FileUtil.storeProperties(sourceID_props, localSourceProp, null);
@@ -923,10 +923,10 @@ public class WeasisLauncher {
         // Empty string make the file log writer disable
         String logActivatation =
             getGeneralProperty("org.apache.sling.commons.log.file.activate", "false", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
-        if ("true".equalsIgnoreCase(logActivatation)) {
-            String logFile = dir + File.separator + "log" + File.separator + "default.log";
-            s_prop.setProperty("org.apache.sling.commons.log.file", logFile);
-            l_prop.remove("org.apache.sling.commons.log.file");
+        if ("true".equalsIgnoreCase(logActivatation)) { //$NON-NLS-1$
+            String logFile = dir + File.separator + "log" + File.separator + "default.log"; //$NON-NLS-1$ //$NON-NLS-2$
+            s_prop.setProperty("org.apache.sling.commons.log.file", logFile); //$NON-NLS-1$
+            l_prop.remove("org.apache.sling.commons.log.file"); //$NON-NLS-1$
         }
 
         getGeneralProperty("org.apache.sling.commons.log.file.number", "5", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1265,9 +1265,9 @@ public class WeasisLauncher {
 
     private static void registerAdditionalShutdownHook() {
         try {
-            Class.forName("sun.misc.Signal");
-            Class.forName("sun.misc.SignalHandler");
-            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), new sun.misc.SignalHandler() {
+            Class.forName("sun.misc.Signal"); //$NON-NLS-1$
+            Class.forName("sun.misc.SignalHandler"); //$NON-NLS-1$
+            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), new sun.misc.SignalHandler() { //$NON-NLS-1$
                 @Override
                 public void handle(sun.misc.Signal arg0) {
                     shutdownHook();
@@ -1276,7 +1276,7 @@ public class WeasisLauncher {
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
-            System.err.println("Cannot find sun.misc.Signal for shutdown hook exstension");
+            System.err.println("Cannot find sun.misc.Signal for shutdown hook exstension"); //$NON-NLS-1$
         }
     }
 
@@ -1311,7 +1311,7 @@ public class WeasisLauncher {
         if (REMOTE_PREFS != null) {
             try {
                 REMOTE_PREFS.store();
-                System.out.println("End of storing remote preferences.");
+                System.out.println("End of storing remote preferences."); //$NON-NLS-1$
             } catch (Exception e) {
                 System.out.println("Cannot store preferences remotely: " + e.getMessage()); //$NON-NLS-1$
             }

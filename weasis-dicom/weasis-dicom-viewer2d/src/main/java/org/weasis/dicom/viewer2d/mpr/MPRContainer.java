@@ -183,26 +183,26 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
                 int count = menuRoot.getItemCount();
 
-                JMVUtils.addItemToMenu(menuRoot, manager.getPresetMenu("weasis.pluginMenu.presets"));
-                JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu("weasis.pluginMenu.lutShape"));
-                JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu("weasis.pluginMenu.lut"));
-                JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu("weasis.pluginMenu.invertLut"));
-                JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu("weasis.pluginMenu.filter"));
+                JMVUtils.addItemToMenu(menuRoot, manager.getPresetMenu("weasis.pluginMenu.presets")); //$NON-NLS-1$
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu("weasis.pluginMenu.lutShape")); //$NON-NLS-1$
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu("weasis.pluginMenu.lut")); //$NON-NLS-1$
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu("weasis.pluginMenu.invertLut")); //$NON-NLS-1$
+                JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu("weasis.pluginMenu.filter")); //$NON-NLS-1$
 
                 if (count < menuRoot.getItemCount()) {
                     menuRoot.add(new JSeparator());
                     count = menuRoot.getItemCount();
                 }
 
-                JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu("weasis.pluginMenu.zoom"));
-                JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu("weasis.pluginMenu.orientation"));
+                JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu("weasis.pluginMenu.zoom")); //$NON-NLS-1$
+                JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu("weasis.pluginMenu.orientation")); //$NON-NLS-1$
 
                 if (count < menuRoot.getItemCount()) {
                     menuRoot.add(new JSeparator());
                     count = menuRoot.getItemCount();
                 }
 
-                menuRoot.add(manager.getResetMenu("weasis.pluginMenu.reset"));
+                menuRoot.add(manager.getResetMenu("weasis.pluginMenu.reset")); //$NON-NLS-1$
             }
 
         }
