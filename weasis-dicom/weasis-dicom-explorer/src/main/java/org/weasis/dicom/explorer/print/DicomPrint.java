@@ -53,6 +53,7 @@ import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.ImagePrint;
@@ -237,25 +238,27 @@ public class DicomPrint {
         Attributes filmBoxAttrs = new Attributes();
         Attributes imageBoxAttrs = new Attributes();
         Attributes dicomImage = new Attributes();
-        final String printManagementSOPClass = dicomPrintOptions.isPrintInColor()
-            ? UID.BasicColorPrintManagementMetaSOPClass : UID.BasicGrayscalePrintManagementMetaSOPClass;
+        final String printManagementSOPClass =
+            dicomPrintOptions.isPrintInColor() ? UID.BasicColorPrintManagementMetaSOPClass
+                : UID.BasicGrayscalePrintManagementMetaSOPClass;
         final String imageBoxSOPClass =
             dicomPrintOptions.isPrintInColor() ? UID.BasicColorImageBoxSOPClass : UID.BasicGrayscaleImageBoxSOPClass;
 
         storeRasterInDicom(image, dicomImage, dicomPrintOptions.isPrintInColor());
 
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
+        String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE");
 
-        Device device = new Device("WEASIS_AE"); //$NON-NLS-1$
-        ApplicationEntity ae = new ApplicationEntity("WEASIS_AE"); //$NON-NLS-1$
+        Device device = new Device(weasisAet);
+        ApplicationEntity ae = new ApplicationEntity(weasisAet);
         Connection conn = new Connection();
-        // Executor executor = new NewThreadExecutor("WEASIS_AE"); //$NON-NLS-1$
+        // Executor executor = new NewThreadExecutor(weasisAet);
         ApplicationEntity remoteAE = new ApplicationEntity(dicomPrintOptions.getDicomPrinter().getAeTitle());
         Connection remoteConn = new Connection();
 
         ae.addConnection(conn);
         ae.setAssociationInitiator(true);
-        ae.setAETitle("WEASIS_AE"); //$NON-NLS-1$
+        ae.setAETitle(weasisAet);
 
         remoteConn.setPort(dicomPrintOptions.getDicomPrinter().getPort());
         remoteConn.setHostname(dicomPrintOptions.getDicomPrinter().getHostname());
@@ -285,8 +288,9 @@ public class DicomPrint {
         filmBoxAttrs.setString(Tag.ImageDisplayFormat, VR.ST, dicomPrintOptions.getImageDisplayFormat());
         imageBoxAttrs.setInt(Tag.ImageBoxPosition, VR.US, 1);
 
-        Sequence seq = imageBoxAttrs.ensureSequence(
-            dicomPrintOptions.isPrintInColor() ? Tag.BasicColorImageSequence : Tag.BasicGrayscaleImageSequence, 1);
+        Sequence seq =
+            imageBoxAttrs.ensureSequence(dicomPrintOptions.isPrintInColor() ? Tag.BasicColorImageSequence
+                : Tag.BasicGrayscaleImageSequence, 1);
         seq.add(dicomImage);
         final String filmSessionUID = UIDUtils.createUID();
         final String filmBoxUID = UIDUtils.createUID();
@@ -306,8 +310,9 @@ public class DicomPrint {
             dimseRSPHandler(as.ncreate(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID,
                 filmSessionAttrs, UID.ImplicitVRLittleEndian));
             // Create a Basic Film Box. We need to get the Image Box UID from the response
-            DimseRSP ncreateFilmBoxRSP = as.ncreate(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID,
-                filmBoxAttrs, UID.ImplicitVRLittleEndian);
+            DimseRSP ncreateFilmBoxRSP =
+                as.ncreate(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, filmBoxAttrs,
+                    UID.ImplicitVRLittleEndian);
             dimseRSPHandler(ncreateFilmBoxRSP);
             ncreateFilmBoxRSP.next();
             Attributes imageBoxSequence =
@@ -363,8 +368,9 @@ public class DicomPrint {
             if (dataBuffer instanceof DataBufferByte) {
                 bytesOut = ((DataBufferByte) dataBuffer).getData();
             } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-                short[] data = dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                    : ((DataBufferUShort) dataBuffer).getData();
+                short[] data =
+                    dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
+                        : ((DataBufferUShort) dataBuffer).getData();
                 bytesOut = new byte[data.length * 2];
                 for (int i = 0; i < data.length; i++) {
                     bytesOut[i * 2] = (byte) (data[i] & 0xFF);
