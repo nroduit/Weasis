@@ -327,38 +327,9 @@ public class WeasisLauncher {
 
         // If enabled, register a shutdown hook to make sure the framework is
         // cleanly shutdown when the VM exits.
-        Runtime.getRuntime().addShutdownHook(new Thread("Felix Shutdown Hook") { //$NON-NLS-1$
-
-                @Override
-                public void run() {
-                    try {
-                        if (m_felix != null) {
-                            m_felix.stop();
-                            // wait asynchronous stop (max 7 seconds to stop all bundles)
-                            m_felix.waitForStop(7000);
-                        }
-                    } catch (Exception ex) {
-                        System.err.println("Error stopping framework: " + ex); //$NON-NLS-1$
-                    } finally {
-                        // After all bundles has been stopped, we can copy the preferences
-                        if (REMOTE_PREFS != null) {
-                            try {
-                                REMOTE_PREFS.store();
-                            } catch (Exception e) {
-                                System.out.println("Cannot store preferences remotely: " + e.getMessage()); //$NON-NLS-1$
-                            }
-                        }
-                        // Clean temp folder.
-                        String dir = System.getProperty("weasis.tmp.dir"); //$NON-NLS-1$
-                        if (dir != null) {
-                            FileUtil.deleteDirectoryContents(new File(dir), 3, 0);
-                        }
-                        // If System.exit() hangs call Runtime.getRuntime().halt(1) to kill the application
-                        Timer timer = new Timer();
-                        timer.schedule(new HaltTask(), 7000);
-                    }
-                }
-            });
+        JVMShutdownHook shutdownHook = new JVMShutdownHook();
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+        registerAdditionalShutdownHook();
 
         System.out.println("\nWeasis Starting..."); //$NON-NLS-1$
         System.out.println("========================\n"); //$NON-NLS-1$
@@ -1292,4 +1263,66 @@ public class WeasisLauncher {
         return new Locale(language, country, variant);
     }
 
+    private static void registerAdditionalShutdownHook() {
+        try {
+            Class.forName("sun.misc.Signal");
+            Class.forName("sun.misc.SignalHandler");
+            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), new sun.misc.SignalHandler() {
+                @Override
+                public void handle(sun.misc.Signal arg0) {
+                    shutdownHook();
+                }
+            });
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            System.err.println("Cannot find sun.misc.Signal for shutdown hook exstension");
+        }
+    }
+
+    private static class JVMShutdownHook extends Thread {
+        @Override
+        public void run() {
+            shutdownHook();
+        }
+    }
+
+    private static void shutdownHook() {
+        try {
+            if (m_felix != null) {
+                m_felix.stop();
+                // wait asynchronous stop (max 7 seconds to stop all bundles)
+                m_felix.waitForStop(30000);
+            }
+        } catch (Exception ex) {
+            System.err.println("Error stopping framework: " + ex); //$NON-NLS-1$
+        } finally {
+
+            cleanImageCache();
+
+            // If System.exit() hangs call Runtime.getRuntime().halt(1) to kill the application
+            Timer timer = new Timer();
+            timer.schedule(new HaltTask(), 7000);
+        }
+    }
+
+    static void storeRemotePreferences() {
+        // After all bundles has been stopped, we can copy the preferences
+        if (REMOTE_PREFS != null) {
+            try {
+                REMOTE_PREFS.store();
+                System.out.println("End of storing remote preferences.");
+            } catch (Exception e) {
+                System.out.println("Cannot store preferences remotely: " + e.getMessage()); //$NON-NLS-1$
+            }
+        }
+    }
+
+    static void cleanImageCache() {
+        // Clean temp folder.
+        String dir = System.getProperty("weasis.tmp.dir"); //$NON-NLS-1$
+        if (dir != null) {
+            FileUtil.deleteDirectoryContents(new File(dir), 3, 0);
+        }
+    }
 }
