@@ -247,6 +247,7 @@ public class DicomPrint {
         storeRasterInDicom(image, dicomImage, dicomPrintOptions.isPrintInColor());
 
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
+
         String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE");
 
         Device device = new Device(weasisAet);
