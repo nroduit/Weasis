@@ -520,23 +520,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
                                 @Override
                                 public void run() {
-                                    for (DefaultView2d v : view2ds) {
-                                        if (v != view && v instanceof MprView) {
-                                            JProgressBar bar = ((MprView) v).getProgressBar();
-                                            if (bar == null) {
-                                                bar = new JProgressBar();
-                                                Dimension dim = new Dimension(v.getWidth() / 2, 30);
-                                                bar.setSize(dim);
-                                                bar.setPreferredSize(dim);
-                                                bar.setMaximumSize(dim);
-                                                bar.setValue(0);
-                                                bar.setStringPainted(true);
-                                                ((MprView) v).setProgressBar(bar);
-                                            }
-                                            bar.setString(e.getMessage());
-                                            v.repaint();
-                                        }
-                                    }
+                                    showErrorMessage(view2ds, view, e.getMessage());
                                 }
                             });
                         }
@@ -544,6 +528,29 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
                 };
             process.start();
+        } else {
+            showErrorMessage(view2ds, null, Messages.getString("MPRContainer.mesg_missing_3d")); //$NON-NLS-1$
+        }
+    }
+
+    public static void showErrorMessage(ArrayList<DefaultView2d<DicomImageElement>> view2ds,
+        DefaultView2d<DicomImageElement> view, String message) {
+        for (DefaultView2d<DicomImageElement> v : view2ds) {
+            if (v != view && v instanceof MprView) {
+                JProgressBar bar = ((MprView) v).getProgressBar();
+                if (bar == null) {
+                    bar = new JProgressBar();
+                    Dimension dim = new Dimension(v.getWidth() / 2, 30);
+                    bar.setSize(dim);
+                    bar.setPreferredSize(dim);
+                    bar.setMaximumSize(dim);
+                    bar.setValue(0);
+                    bar.setStringPainted(true);
+                    ((MprView) v).setProgressBar(bar);
+                }
+                bar.setString(message);
+                v.repaint();
+            }
         }
     }
 
