@@ -273,15 +273,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 printSequence(seq, doc, buf);
             } else {
                 buf.insert(0, "\n"); //$NON-NLS-1$
-                printItem(doc, buf.toString(), doc.getStyle("regular"));
+                printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
             }
         } else {
             buf.insert(0, "\n"); //$NON-NLS-1$
             if (vr.isInlineBinary()) {
                 buf.append("binary data"); //$NON-NLS-1$
-                printItem(doc, buf.toString(), doc.getStyle("regular"));
+                printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
             } else {
-                printItem(doc, buf.toString(), doc.getStyle("regular"));
+                printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
                 buf = new StringBuilder();
                 String[] value = dcmObj.getStrings(privateCreator, tag);
                 if (value != null && value.length > 0) {
@@ -295,7 +295,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                         buf.append("..."); //$NON-NLS-1$
                     }
                 }
-                printItem(doc, buf.toString(), doc.getStyle("bold"));
+                printItem(doc, buf.toString(), doc.getStyle("bold")); //$NON-NLS-1$
             }
         }
     }
@@ -304,7 +304,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         try {
             doc.insertString(doc.getLength(), val, attribute);
         } catch (BadLocationException e) {
-            AuditLog.logError(LOGGER, e, "Error on writing dicom item!");
+            AuditLog.logError(LOGGER, e, "Error on writing dicom item!"); //$NON-NLS-1$
         }
     }
 
@@ -317,7 +317,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 buf.append(" items"); //$NON-NLS-1$
             }
             buf.insert(0, "\n"); //$NON-NLS-1$
-            printItem(doc, buf.toString(), doc.getStyle("regular"));
+            printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
 
             for (int i = 0; i < seq.size(); i++) {
                 Attributes attributes = seq.get(i);
@@ -332,7 +332,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 buffer.append(" ITEM #"); //$NON-NLS-1$
                 buffer.append(i + 1);
                 buffer.insert(0, "\n"); //$NON-NLS-1$
-                printItem(doc, buffer.toString(), doc.getStyle("regular"));
+                printItem(doc, buffer.toString(), doc.getStyle("regular")); //$NON-NLS-1$
                 int[] tags = attributes.tags();
                 for (int tag : tags) {
                     printElement(attributes, tag, doc);
@@ -340,7 +340,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             }
         } else {
             buf.insert(0, "\n"); //$NON-NLS-1$
-            printItem(doc, buf.toString(), doc.getStyle("regular"));
+            printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
         }
     }
 
@@ -466,7 +466,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
 
         private void init() {
-            this.add(new JLabel("Search" + StringUtil.COLON_AND_SPACE));
+            this.add(new JLabel(Messages.getString("DicomFieldsView.search") + StringUtil.COLON_AND_SPACE)); //$NON-NLS-1$
             final JTextField tf = new JTextField();
             JMVUtils.setPreferredWidth(tf, 300, 100);
             tf.addActionListener(new ActionListener() {
@@ -484,8 +484,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 }
             });
             this.add(tf);
-            JButton up = new JButton(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")));
-            up.setToolTipText("Previous");
+            JButton up = new JButton(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png"))); //$NON-NLS-1$
+            up.setToolTipText(Messages.getString("DicomFieldsView.previous")); //$NON-NLS-1$
             up.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent evt) {
@@ -494,9 +494,9 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             });
             this.add(up);
             JButton down =
-                new JButton(new RotatedIcon(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")),
+                new JButton(new RotatedIcon(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")), //$NON-NLS-1$
                     RotatedIcon.Rotate.UPSIDE_DOWN));
-            down.setToolTipText("Next");
+            down.setToolTipText(Messages.getString("DicomFieldsView.next")); //$NON-NLS-1$
             down.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent evt) {

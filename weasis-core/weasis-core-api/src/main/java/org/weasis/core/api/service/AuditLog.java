@@ -17,6 +17,7 @@ public class AuditLog {
     public static final Logger LOGGER = LoggerFactory.getLogger(AuditLog.class);
 
     public static final String LOG_LEVEL = "org.apache.sling.commons.log.level"; //$NON-NLS-1$
+    public static final String LOG_FILE_ACTIVATION = "org.apache.sling.commons.log.file.activate"; //$NON-NLS-1$
     public static final String LOG_FILE = "org.apache.sling.commons.log.file"; //$NON-NLS-1$
     public static final String LOG_FILE_NUMBER = "org.apache.sling.commons.log.file.number"; //$NON-NLS-1$
     public static final String LOG_FILE_SIZE = "org.apache.sling.commons.log.file.size"; //$NON-NLS-1$
@@ -46,7 +47,7 @@ public class AuditLog {
                 if (confAdmin != null) {
                     try {
                         Dictionary<String, Object> loggingProperties;
-                        Configuration logConfiguration = getLogConfiguration(confAdmin, loggerKey, loggerVal[0]); 
+                        Configuration logConfiguration = getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
                         if (logConfiguration == null) {
                             logConfiguration =
                                 confAdmin.createFactoryConfiguration(
@@ -98,7 +99,7 @@ public class AuditLog {
 
     public static void logError(Logger log, Throwable t, String message) {
         if (log.isDebugEnabled()) {
-            log.error(message, t); 
+            log.error(message, t);
         } else {
             log.error(t.getMessage());
         }

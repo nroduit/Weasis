@@ -133,7 +133,7 @@ public class WeasisWin {
 
     private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
     private static final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
-    private static final DynamicMenu menuSelectedPlugin = new DynamicMenu("") {
+    private static final DynamicMenu menuSelectedPlugin = new DynamicMenu("") { //$NON-NLS-1$
 
         @Override
         public void popupMenuWillBecomeVisible() {

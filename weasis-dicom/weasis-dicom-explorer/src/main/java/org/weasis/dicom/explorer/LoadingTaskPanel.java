@@ -102,19 +102,19 @@ public class LoadingTaskPanel extends JPanel {
             this.add(globalStopButton);
         } else {
             JButton cancelButton =
-                new JButton(new ImageIcon(UIManager.class.getResource("/icon/22x22/process-stop.png")));
+                new JButton(new ImageIcon(UIManager.class.getResource("/icon/22x22/process-stop.png"))); //$NON-NLS-1$
             cancelButton.addActionListener(new ActionListener() {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     // TODO set inderterminate false
-                    message.setText("Abording...");
+                    message.setText(Messages.getString("LoadingTaskPanel.abording")); //$NON-NLS-1$
                     if (task != null) {
                         task.cancel(true);
                     }
                 }
             });
-            cancelButton.setToolTipText("Process stop");
+            cancelButton.setToolTipText(Messages.getString("LoadingTaskPanel.stop_process")); //$NON-NLS-1$
             this.add(cancelButton);
             CircularProgressBar globalProgress = new CircularProgressBar(0, 100);
             globalProgress.setIndeterminate(true);

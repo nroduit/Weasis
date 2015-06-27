@@ -42,7 +42,7 @@ public class MipView extends View2d {
     public static final ImageIcon MIP_ICON_SETTING = new ImageIcon(
         MipView.class.getResource("/icon/22x22/mip-setting.png")); //$NON-NLS-1$
     public static final ActionW MIP = new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW MIP_THICKNESS = new ActionW("Image Extension", "mip_thick", 0, 0, null); //$NON-NLS-2$
+    public static final ActionW MIP_THICKNESS = new ActionW(Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null);  //$NON-NLS-1$//$NON-NLS-2$
 
     public enum Type {
         MIN, MEAN, MAX;
@@ -127,7 +127,7 @@ public class MipView extends View2d {
 
         view.process =
             new MipProcess(
-                Messages.getString("MipView.build"), new TaskMonitor(dialog == null ? view : dialog, "Monitoring Progress", "Initializing...", 0, 2 * extend + 1)) { //$NON-NLS-1$
+                Messages.getString("MipView.build"), new TaskMonitor(dialog == null ? view : dialog, Messages.getString("MipView.monitoring_proc"), Messages.getString("MipView.init"), 0, 2 * extend + 1)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 @Override
                 public void run() {
                     final List<DicomImageElement> dicoms = new ArrayList<DicomImageElement>();
@@ -139,7 +139,7 @@ public class MipView extends View2d {
                         LOGGER.info(e.getMessage());
                     } catch (Throwable t) {
                         dicoms.clear();
-                        AuditLog.logError(LOGGER, t, "Mip renderding error");
+                        AuditLog.logError(LOGGER, t, "Mip renderding error"); //$NON-NLS-1$
                     } finally {
                         // Following actions need to be executed in EDT thread
                         GuiExecutor.instance().execute(new Runnable() {

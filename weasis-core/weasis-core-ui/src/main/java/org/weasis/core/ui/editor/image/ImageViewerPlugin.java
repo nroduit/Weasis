@@ -66,54 +66,46 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     // A model must have at least one view that inherited of DefaultView2d
     public static final Class view2dClass = ViewCanvas.class;
-    public static final GridBagLayoutModel VIEWS_1x1 =
-        new GridBagLayoutModel(
-            "1x1", //$NON-NLS-1$
-            String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), 1, 1, view2dClass.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_2x1 =
-        new GridBagLayoutModel(
-            "2x1", //$NON-NLS-1$
-            String.format(Messages.getString("ImageViewerPlugin.2"), "2x1"), 2, 1, view2dClass.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout2x1.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_1x2 =
-        new GridBagLayoutModel(
-            "1x2", //$NON-NLS-1$
-            String.format(Messages.getString("ImageViewerPlugin.2"), "1x2"), 1, 2, view2dClass.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout1x2.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1", //$NON-NLS-1$
+        String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), 1, 1, view2dClass.getName(), //$NON-NLS-1$ //$NON-NLS-2$
+        new ImageIcon(ImageViewerPlugin.class
+            .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_2x1 = new GridBagLayoutModel("2x1", //$NON-NLS-1$
+        String.format(Messages.getString("ImageViewerPlugin.2"), "2x1"), 2, 1, view2dClass.getName(), //$NON-NLS-1$ //$NON-NLS-2$
+        new ImageIcon(ImageViewerPlugin.class
+            .getResource("/icon/22x22/layout2x1.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_1x2 = new GridBagLayoutModel("1x2", //$NON-NLS-1$
+        String.format(Messages.getString("ImageViewerPlugin.2"), "1x2"), 1, 2, view2dClass.getName(), //$NON-NLS-1$ //$NON-NLS-2$
+        new ImageIcon(ImageViewerPlugin.class
+            .getResource("/icon/22x22/layout1x2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_2x2_f2 =
-        new GridBagLayoutModel(
-            ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), "layout_c2x1", Messages.getString("ImageViewerPlugin.layout_c2x1"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        new GridBagLayoutModel(ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), //$NON-NLS-1$
+            "layout_c2x1", Messages.getString("ImageViewerPlugin.layout_c2x1"), //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout2x2_f2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_2_f1x2 =
-        new GridBagLayoutModel(
-            ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), "layout_c1x2", Messages.getString("ImageViewerPlugin.layout_c1x2"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        new GridBagLayoutModel(ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), //$NON-NLS-1$
+            "layout_c1x2", Messages.getString("ImageViewerPlugin.layout_c1x2"), //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout2_f1x2.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_2x2 =
-        new GridBagLayoutModel(
-            "2x2", //$NON-NLS-1$
-            String.format(Messages.getString("ImageViewerPlugin.2"), "2x2"), 2, 2, view2dClass.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout2x2.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_3x2 =
-        new GridBagLayoutModel(
-            "3x2", //$NON-NLS-1$
-            String.format(Messages.getString("ImageViewerPlugin.2"), "3x2"), 3, 2, view2dClass.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout3x2.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_3x3 =
-        new GridBagLayoutModel(
-            "3x3", //$NON-NLS-1$
-            String.format(Messages.getString("ImageViewerPlugin.2"), "3x3"), 3, 3, view2dClass.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout3x3.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_4x3 =
-        new GridBagLayoutModel(
-            "4x3", //$NON-NLS-1$
-            String.format(Messages.getString("ImageViewerPlugin.2"), "4x3"), 4, 3, view2dClass.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout4x3.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_4x4 =
-        new GridBagLayoutModel(
-            "4x4", //$NON-NLS-1$
-            String.format(Messages.getString("ImageViewerPlugin.2"), "4x4"), 4, 4, view2dClass.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout4x4.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_2x2 = new GridBagLayoutModel("2x2", //$NON-NLS-1$
+        String.format(Messages.getString("ImageViewerPlugin.2"), "2x2"), 2, 2, view2dClass.getName(), //$NON-NLS-1$ //$NON-NLS-2$
+        new ImageIcon(ImageViewerPlugin.class
+            .getResource("/icon/22x22/layout2x2.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_3x2 = new GridBagLayoutModel("3x2", //$NON-NLS-1$
+        String.format(Messages.getString("ImageViewerPlugin.2"), "3x2"), 3, 2, view2dClass.getName(), //$NON-NLS-1$ //$NON-NLS-2$
+        new ImageIcon(ImageViewerPlugin.class
+            .getResource("/icon/22x22/layout3x2.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_3x3 = new GridBagLayoutModel("3x3", //$NON-NLS-1$
+        String.format(Messages.getString("ImageViewerPlugin.2"), "3x3"), 3, 3, view2dClass.getName(), //$NON-NLS-1$ //$NON-NLS-2$
+        new ImageIcon(ImageViewerPlugin.class
+            .getResource("/icon/22x22/layout3x3.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_4x3 = new GridBagLayoutModel("4x3", //$NON-NLS-1$
+        String.format(Messages.getString("ImageViewerPlugin.2"), "4x3"), 4, 3, view2dClass.getName(), //$NON-NLS-1$ //$NON-NLS-2$
+        new ImageIcon(ImageViewerPlugin.class
+            .getResource("/icon/22x22/layout4x3.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_4x4 = new GridBagLayoutModel("4x4", //$NON-NLS-1$
+        String.format(Messages.getString("ImageViewerPlugin.2"), "4x4"), 4, 4, view2dClass.getName(), //$NON-NLS-1$ //$NON-NLS-2$
+        new ImageIcon(ImageViewerPlugin.class
+            .getResource("/icon/22x22/layout4x4.png"))); //$NON-NLS-1$
 
     /**
      * The current focused <code>ImagePane</code>. The default is 0.
@@ -441,18 +433,18 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             eventManager.updateComponentsListener(viewCanvas);
         }
         if (newView && viewCanvas.getSeries() instanceof Series) {
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, selectedImagePane.getSeries(),
-                selectedImagePane.getImage(), EVENT.SELECT));
+            eventManager.fireSeriesViewerListeners(
+                new SeriesViewerEvent(this, selectedImagePane.getSeries(), selectedImagePane.getImage(), EVENT.SELECT));
         }
-        eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, viewCanvas == null ? null : viewCanvas
-            .getSeries(), null, EVENT.SELECT_VIEW));
+        eventManager.fireSeriesViewerListeners(
+            new SeriesViewerEvent(this, viewCanvas == null ? null : viewCanvas.getSeries(), null, EVENT.SELECT_VIEW));
     }
 
     public void resetMaximizedSelectedImagePane(final ViewCanvas<E> ViewCanvas) {
         if (grid.getComponentCount() == 1) {
             Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
             if (fullscreenDialog != null
-                && fullscreenDialog.getTitle().equals(Messages.getString("ImageViewerPlugin.fullscreen"))) {
+                && fullscreenDialog.getTitle().equals(Messages.getString("ImageViewerPlugin.fullscreen"))) { //$NON-NLS-1$
                 maximizedSelectedImagePane(ViewCanvas, null);
             }
         }
@@ -520,9 +512,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 fullscreenDialog.setBounds(frame.getBounds());
                 fullscreenDialog.setVisible(true);
             } else {
-                Monitor monitor =
-                    Monitor.getMonitor(detachedWindow ? oldDialog.getGraphicsConfiguration() : frame
-                        .getGraphicsConfiguration());
+                Monitor monitor = Monitor.getMonitor(
+                    detachedWindow ? oldDialog.getGraphicsConfiguration() : frame.getGraphicsConfiguration());
                 if (monitor != null) {
                     fullscreenDialog.setBounds(monitor.getFullscreenBounds());
                     fullscreenDialog.setVisible(true);
@@ -894,8 +885,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 for (DragLayoutElement element : list) {
                     Component c = element.getComponent();
                     LayoutConstraints l = element.getConstraints();
-                    c.setPreferredSize(new Dimension((int) Math.round(totalWidth * l.weightx), (int) Math
-                        .round(totalHeight * l.weighty)));
+                    c.setPreferredSize(new Dimension((int) Math.round(totalWidth * l.weightx),
+                        (int) Math.round(totalHeight * l.weighty)));
                     grid.add(c, l);
                 }
                 setCursor(Cursor.getPredefinedCursor(splitVertical ? Cursor.E_RESIZE_CURSOR : Cursor.S_RESIZE_CURSOR));
@@ -923,11 +914,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 Component c = entry.getValue();
                 if (c != null) {
                     Rectangle rect = c.getBounds();
-                    if ((Math.abs(rect.x - p.x) <= LayoutConstraints.SPACE || Math.abs(rect.x + rect.width - p.x) <= LayoutConstraints.SPACE)
+                    if ((Math.abs(rect.x - p.x) <= LayoutConstraints.SPACE
+                        || Math.abs(rect.x + rect.width - p.x) <= LayoutConstraints.SPACE)
                         && (p.y >= rect.y && p.y <= rect.y + rect.height)) {
                         return Cursor.E_RESIZE_CURSOR;
-                    } else if ((Math.abs(rect.y - p.y) <= LayoutConstraints.SPACE || Math.abs(rect.y + rect.height
-                        - p.y) <= LayoutConstraints.SPACE)
+                    } else if ((Math.abs(rect.y - p.y) <= LayoutConstraints.SPACE
+                        || Math.abs(rect.y + rect.height - p.y) <= LayoutConstraints.SPACE)
                         && (p.x >= rect.x && p.x <= rect.x + rect.width)) {
                         return Cursor.S_RESIZE_CURSOR;
                     }

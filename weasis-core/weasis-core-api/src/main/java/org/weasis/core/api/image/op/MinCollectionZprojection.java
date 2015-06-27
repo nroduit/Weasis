@@ -11,6 +11,7 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.RasterAccessor;
 import javax.media.jai.RasterFormatTag;
 
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.task.TaskMonitor;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -36,7 +37,7 @@ public class MinCollectionZprojection {
             return;
         }
         if (taskMonitor.isCanceled()) {
-            throw new TaskInterruptionException("Operation from " + this.getClass().getName() + " has been canceled");
+            throw new TaskInterruptionException("Operation from " + this.getClass().getName() + " has been canceled"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         if (taskMonitor.isShowProgression()) {
             GuiExecutor.instance().execute(new Runnable() {
@@ -44,10 +45,10 @@ public class MinCollectionZprojection {
                 @Override
                 public void run() {
                     taskMonitor.setProgress(progress);
-                    StringBuilder buf = new StringBuilder("Operation");
+                    StringBuilder buf = new StringBuilder(Messages.getString("MinCollectionZprojection.operation")); //$NON-NLS-1$
                     buf.append(StringUtil.COLON_AND_SPACE);
                     buf.append(progress);
-                    buf.append("/");
+                    buf.append("/"); //$NON-NLS-1$
                     buf.append(taskMonitor.getMaximum());
                     taskMonitor.setNote(buf.toString());
                 }

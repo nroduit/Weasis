@@ -25,6 +25,8 @@ public class HostActivator implements BundleActivator {
 
     @Override
     public void stop(BundleContext bundleContext) {
+        WeasisLauncher.storeRemotePreferences();
+        WeasisLauncher.cleanImageCache();
         this.bundleContext = null;
     }
 

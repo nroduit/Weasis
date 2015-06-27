@@ -63,7 +63,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     private static final int DPI = 200;
 
     enum DotPerInches {
-        DPI_150(150), DPI_200(200), DPI_300(300);
+                       DPI_150(150), DPI_200(200), DPI_300(300);
 
         private final int dpi;
 
@@ -82,13 +82,17 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     }
 
     enum FilmSize {
-        IN8X10("8INX10IN", 8, 10), IN8_5X11("8_5INX11IN", 8.5, 11), IN10X12("10INX12IN", 10, 12), IN10X14("10INX14IN",
-                                                                                                          10, 14),
-        IN11X14("11INX14IN", 11, 14), IN11X17("11INX17IN", 11, 17), IN14X14("14INX14IN", 14, 14), IN14X17("14INX17IN",
-                                                                                                          14, 17),
-        CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), CM24X30("24CMX30CM", convertMM2Inch(240),
-                                                                                convertMM2Inch(300)),
-        A4("A4", convertMM2Inch(210), convertMM2Inch(297)), A3("A3", convertMM2Inch(297), convertMM2Inch(420));
+                   IN8X10("8INX10IN", 8, 10), IN8_5X11("8_5INX11IN", 8.5, 11), IN10X12("10INX12IN", 10, 12), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                   IN10X14("10INX14IN", //$NON-NLS-1$
+                           10, 14),
+                   IN11X14("11INX14IN", 11, 14), IN11X17("11INX17IN", 11, 17), IN14X14("14INX14IN", 14, 14), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                   IN14X17("14INX17IN", //$NON-NLS-1$
+                           14, 17),
+                   CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), //$NON-NLS-1$
+                   CM24X30("24CMX30CM", convertMM2Inch(240), //$NON-NLS-1$
+                           convertMM2Inch(300)),
+                   A4("A4", convertMM2Inch(210), convertMM2Inch(297)), //$NON-NLS-1$
+                   A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //$NON-NLS-1$
 
         private final String name;
         private final double width;
@@ -176,7 +180,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         super(parent, ModalityType.APPLICATION_MODAL);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        portraitDisplayFormatsModel = new DefaultComboBoxModel(new String[] { "STANDARD\\1,1" });
+        portraitDisplayFormatsModel = new DefaultComboBoxModel(new String[] { "STANDARD\\1,1" }); //$NON-NLS-1$
 
         this.eventManager = eventManager;
         initComponents();
@@ -217,8 +221,8 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         content.add(mediumTypeLabel, gbc_mediumTypeLabel);
         mediumTypeComboBox = new JComboBox();
 
-        mediumTypeComboBox.setModel(new DefaultComboBoxModel(new String[] {
-            "BLUE FILM", "CLEAR FILM", "MAMMO CLEAR FILM", "MAMMO BLUE FILM", "PAPER" })); //$NON-NLS-1$ //$NON-NLS-2$
+        mediumTypeComboBox.setModel(new DefaultComboBoxModel(
+            new String[] { "BLUE FILM", "CLEAR FILM", "MAMMO CLEAR FILM", "MAMMO BLUE FILM", "PAPER" })); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
         GridBagConstraints gbc_mediumTypeComboBox = new GridBagConstraints();
         gbc_mediumTypeComboBox.anchor = GridBagConstraints.WEST;
         gbc_mediumTypeComboBox.insets = new Insets(0, 0, 5, 5);
@@ -464,7 +468,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         content.add(trimComboBox, gbc_trimComboBox);
 
         labelEmpty = new JLabel();
-        labelEmpty.setText("Empty Image Density" + StringUtil.COLON);
+        labelEmpty.setText(Messages.getString("DicomPrintDialog.empty_density") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_label_1 = new GridBagConstraints();
         gbc_label_1.anchor = GridBagConstraints.EAST;
         gbc_label_1.insets = new Insets(0, 0, 5, 5);
@@ -553,7 +557,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         this.getContentPane().add(content, BorderLayout.CENTER);
 
         label = new JLabel();
-        label.setText("DPI" + StringUtil.COLON);
+        label.setText(Messages.getString("DicomPrintDialog.dpi") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_label = new GridBagConstraints();
         gbc_label.anchor = GridBagConstraints.EAST;
         gbc_label.insets = new Insets(0, 0, 0, 5);
@@ -641,7 +645,8 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
             }
         }
         if (!isPrintable) {
-            JOptionPane.showMessageDialog(this, Messages.getString("PrintDialog.no_print"), null, //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString(Messages.getString("DicomPrintDialog.no_print")), //$NON-NLS-1$
+                null,
                 JOptionPane.ERROR_MESSAGE);
             doClose();
             return;
@@ -661,9 +666,9 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         try {
             dicomPrint.printImage(dicomPrint.printImage(layout, printOptions));
         } catch (Exception ex) {
-            AuditLog.logError(LOGGER, ex, Messages.getString("DicomPrintDialog.0")); //$NON-NLS-1$
-            JOptionPane.showMessageDialog(this, Messages.getString("DicomPrintDialog.error_print"), // $NON-NLS-1$
-                Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); // $NON-NLS-1$
+            AuditLog.logError(LOGGER, ex, "DICOM Print Service"); //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString(Messages.getString("DicomPrintDialog.error_print")), // $NON-NLS-1$ //$NON-NLS-1$
+                Messages.getString(Messages.getString("DicomPrintDialog.error")), JOptionPane.ERROR_MESSAGE); // $NON-NLS-1$ //$NON-NLS-1$
         } finally {
             layout.dispose();
         }

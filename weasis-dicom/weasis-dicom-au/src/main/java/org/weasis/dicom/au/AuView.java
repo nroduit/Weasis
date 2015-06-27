@@ -176,9 +176,9 @@ public class AuView extends JPanel implements SeriesViewerListener {
         // Get the clip length in microseconds and convert to milliseconds
         audioLength = (int) (clip.getMicrosecondLength() / 1000);
 
-        play = new JButton("Play"); // Play/stop button
+        play = new JButton(Messages.getString("AuView.play")); // Play/stop button //$NON-NLS-1$
         progress = new JSlider(0, audioLength, 0); // Shows position in sound
-        time = new JLabel("0"); // Shows position as a #
+        time = new JLabel("0"); // Shows position as a # //$NON-NLS-1$
 
         // When clicked, start or stop playing the sound
         play.addActionListener(new ActionListener() {
@@ -196,7 +196,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int value = progress.getValue();
-                time.setText(String.format("%.2f s", value / 1000.0));
+                time.setText(String.format("%.2f s", value / 1000.0)); //$NON-NLS-1$
 
                 // If we're not already there, skip there.
                 if (value != audioPosition) {
@@ -226,7 +226,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
         addSampledControls();
 
-        JButton export = new JButton("Export Audio File");
+        JButton export = new JButton(Messages.getString("AuView.export_audio")); //$NON-NLS-1$
         export.addActionListener(new ActionListener() {
 
             @Override
@@ -236,21 +236,21 @@ public class AuView extends JPanel implements SeriesViewerListener {
                     JFileChooser fileChooser = new JFileChooser();
                     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                     fileChooser.setAcceptAllFileFilterUsed(false);
-                    FileFormatFilter filter = new FileFormatFilter("au", "AU");
+                    FileFormatFilter filter = new FileFormatFilter("au", "AU"); //$NON-NLS-1$ //$NON-NLS-2$
                     fileChooser.addChoosableFileFilter(filter);
-                    fileChooser.addChoosableFileFilter(new FileFormatFilter("wav", "WAVE"));
+                    fileChooser.addChoosableFileFilter(new FileFormatFilter("wav", "WAVE")); //$NON-NLS-1$ //$NON-NLS-2$
                     fileChooser.setFileFilter(filter);
 
                     if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                         if (fileChooser.getSelectedFile() != null) {
                             File file = fileChooser.getSelectedFile();
                             filter = (FileFormatFilter) fileChooser.getFileFilter();
-                            String extension = filter == null ? ".au" : "." + filter.getDefaultExtension();
+                            String extension = filter == null ? ".au" : "." + filter.getDefaultExtension(); //$NON-NLS-1$ //$NON-NLS-2$
                             String filename =
                                 file.getName().endsWith(extension) ? file.getPath() : file.getPath() + extension;
 
                             try {
-                                if (".wav".equals(extension)) {
+                                if (".wav".equals(extension)) { //$NON-NLS-1$
                                     AudioSystem.write(stream, AudioFileFormat.Type.WAVE, new File(filename));
                                 } else {
                                     AudioSystem.write(stream, AudioFileFormat.Type.AU, new File(filename));
@@ -276,7 +276,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         clip.start();
 
         timer.start();
-        play.setText("Stop");
+        play.setText(Messages.getString("AuView.stop")); //$NON-NLS-1$
         playing = true;
     }
 
@@ -286,7 +286,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
         clip.stop();
 
-        play.setText("Play");
+        play.setText(Messages.getString("AuView.play")); //$NON-NLS-1$
         playing = false;
     }
 
@@ -371,7 +371,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         s.setLabelTable(labels);
         s.setPaintLabels(true);
 
-        s.setBorder(new TitledBorder(c.getType().toString() + " " + c.getUnits()));
+        s.setBorder(new TitledBorder(c.getType().toString() + " " + c.getUnits())); //$NON-NLS-1$
 
         s.addChangeListener(new ChangeListener() {
             @Override
@@ -416,17 +416,17 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
                             AudioFormat audioFormat;
 
-                            if ("MB".equals(spInterpretation) || "AB".equals(spInterpretation)) {
+                            if ("MB".equals(spInterpretation) || "AB".equals(spInterpretation)) { //$NON-NLS-1$ //$NON-NLS-2$
                                 int frameSize =
                                     (numChannels == AudioSystem.NOT_SPECIFIED || bitsPerSample == AudioSystem.NOT_SPECIFIED)
                                         ? AudioSystem.NOT_SPECIFIED : ((bitsPerSample + 7) / 8) * numChannels;
                                 audioFormat =
-                                    new AudioFormat("AB".equals(spInterpretation) ? Encoding.ALAW : Encoding.ULAW,
+                                    new AudioFormat("AB".equals(spInterpretation) ? Encoding.ALAW : Encoding.ULAW, //$NON-NLS-1$
                                         (float) sampleRate, bitsPerSample, numChannels, frameSize, (float) sampleRate,
                                         attritutes.bigEndian());
                             } else {
                                 boolean signed =
-                                    "UB".equals(spInterpretation) || "US".equals(spInterpretation) ? false : true;
+                                    "UB".equals(spInterpretation) || "US".equals(spInterpretation) ? false : true; //$NON-NLS-1$ //$NON-NLS-2$
                                 audioFormat =
                                     new AudioFormat((float) sampleRate, bitsPerSample, numChannels, signed,
                                         attritutes.bigEndian());

@@ -346,7 +346,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         synchronized (BundleTools.CODEC_PLUGINS) {
             for (Codec codec : BundleTools.CODEC_PLUGINS) {
                 if (codec != null
-                    && "Sun java imageio".equals(codec.getCodecName()) == false && codec.isMimeTypeSupported("application/dicom") && !codecPlugins.contains(codec)) { //$NON-NLS-1$
+                    && "Sun java imageio".equals(codec.getCodecName()) == false && codec.isMimeTypeSupported("application/dicom") && !codecPlugins.contains(codec)) { //$NON-NLS-1$ //$NON-NLS-2$
                     codecPlugins.add(codec);
                 }
             }

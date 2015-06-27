@@ -13,7 +13,7 @@ import org.weasis.dicom.codec.DicomSpecialElementFactory;
 public class AuElementFactory implements DicomSpecialElementFactory {
 
     public static final String SERIES_AU_MIMETYPE = "au/dicom"; //$NON-NLS-1$
-    public static final String[] modalities = { "AU" };
+    public static final String[] modalities = { "AU" }; //$NON-NLS-1$
 
     @Override
     public String getSeriesMimeType() {

@@ -382,8 +382,8 @@ public class SeriesBuilder {
 
         Arrays.sort(COPIED_ATTRS);
         final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
-        cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MPR]");
-        cpTags.setString(Tag.ImageType, VR.CS, new String[] { "DERIVED", "SECONDARY", "MPR" });
+        cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MPR]"); //$NON-NLS-1$ //$NON-NLS-2$
+        cpTags.setString(Tag.ImageType, VR.CS, new String[] { "DERIVED", "SECONDARY", "MPR" }); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         cpTags.setString(Tag.FrameOfReferenceUID, VR.UI, params.frameOfReferenceUID);
         String imageType = DicomMediaUtils.getStringFromDicomElement(cpTags, Tag.ImageType);
 

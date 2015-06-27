@@ -210,7 +210,7 @@ public class MipPopup {
             panel.setBorder(new EmptyBorder(20, 15, 10, 15));
             getContentPane().add(panel);
 
-            JButton btnExitMipMode = new JButton("Rebuild Series");
+            JButton btnExitMipMode = new JButton(Messages.getString("MipPopup.rebuild_series")); //$NON-NLS-1$
             btnExitMipMode.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -247,11 +247,11 @@ public class MipPopup {
                 DicomImageElement limg = series.getMedia(max, filter, sortFilter);
 
                 if (fimg != null && limg != null) {
-                    buf.append(" (");
+                    buf.append(" ("); //$NON-NLS-1$
                     buf.append(DecFormater.oneDecimal(SeriesBuilder.getThickness(fimg, limg)));
-                    buf.append(" ");
+                    buf.append(" "); //$NON-NLS-1$
                     buf.append(fimg.getPixelSpacingUnit().getAbbreviation());
-                    buf.append(")");
+                    buf.append(")"); //$NON-NLS-1$
                 }
             }
             updateSliderProoperties(sliderThickness, buf.toString());

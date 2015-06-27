@@ -53,6 +53,7 @@ import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.ImagePrint;
@@ -79,21 +80,21 @@ public class DicomPrint {
         int width = filmSize.getWidth(dpi);
         int height = filmSize.getHeight(dpi);
 
-        if ("LANDSCAPE".equals(dicomPrintOptions.getFilmOrientation())) {
+        if ("LANDSCAPE".equals(dicomPrintOptions.getFilmOrientation())) { //$NON-NLS-1$
             int tmp = width;
             width = height;
             height = tmp;
         }
 
-        Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK;
-        Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK;
+        Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
+        Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
 
         String mType = dicomPrintOptions.getMagnificationType();
         int interpolation = 1;
 
-        if ("REPLICATE".equals(mType)) {
+        if ("REPLICATE".equals(mType)) { //$NON-NLS-1$
             interpolation = 0;
-        } else if ("CUBIC".equals(mType)) {
+        } else if ("CUBIC".equals(mType)) { //$NON-NLS-1$
             interpolation = 2;
         }
 
@@ -247,16 +248,18 @@ public class DicomPrint {
 
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
-        Device device = new Device("WEASIS_AE"); //$NON-NLS-1$
-        ApplicationEntity ae = new ApplicationEntity("WEASIS_AE"); //$NON-NLS-1$
+        String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        Device device = new Device(weasisAet);
+        ApplicationEntity ae = new ApplicationEntity(weasisAet);
         Connection conn = new Connection();
-        // Executor executor = new NewThreadExecutor("WEASIS_AE"); //$NON-NLS-1$
+        // Executor executor = new NewThreadExecutor(weasisAet);
         ApplicationEntity remoteAE = new ApplicationEntity(dicomPrintOptions.getDicomPrinter().getAeTitle());
         Connection remoteConn = new Connection();
 
         ae.addConnection(conn);
         ae.setAssociationInitiator(true);
-        ae.setAETitle("WEASIS_AE"); //$NON-NLS-1$
+        ae.setAETitle(weasisAet);
 
         remoteConn.setPort(dicomPrintOptions.getDicomPrinter().getPort());
         remoteConn.setHostname(dicomPrintOptions.getDicomPrinter().getHostname());
