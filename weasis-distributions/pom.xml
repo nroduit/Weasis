@@ -15,8 +15,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
-			in config.properties) -->
+		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
 
@@ -48,7 +47,7 @@
 
 		<windowsName>weasis-native</windowsName>
 	</properties>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -263,6 +262,12 @@
 									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.base</groupId>
+									<artifactId>weasis-base-explorer</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
 
 								<!-- ===================================== -->
 								<!-- Weasis DICOM bundles -->
@@ -355,11 +360,9 @@
 						<configuration>
 							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
-									classpath="${project.build.directory}/lib/bindex.jar" />
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask" classpath="${project.build.directory}/lib/bindex.jar" />
 								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
-									name="Weasis Bundle Repository">
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</target>
@@ -449,8 +452,7 @@
 									<goal>packFiles</goal>
 								</goals>
 								<configuration>
-									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars 
-										are normalized -->
+									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars are normalized -->
 									<signed>${jarsigner.alias}</signed>
 									<normalizeOnly>true</normalizeOnly>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
@@ -493,8 +495,8 @@
 		<profile>
 			<id>jar.signer</id>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
-					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
+					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>
@@ -553,8 +555,7 @@
 									<outfile>${project.build.directory}/tmp/weasis-win32.exe</outfile>
 									<jar>weasis/weasis-launcher.jar</jar>
 									<errTitle>weasis</errTitle>
-									<!-- The custom process feature was dropped in 3.1.0-beta2, this 
-										was designed for windows 98/xp. -->
+									<!-- The custom process feature was dropped in 3.1.0-beta2, this was designed for windows 98/xp. -->
 									<!-- Set the process name as the executable filename -->
 									<!-- <customProcName>true</customProcName> -->
 									<icon>etc/weasis.ico</icon>
@@ -577,16 +578,13 @@
 										<minVersion>1.6.0</minVersion>
 										<initialHeapSize>64</initialHeapSize>
 										<maxHeapSize>512</maxHeapSize>
-										<!-- Optional, defaults to 64/32; Allows to select between 64-bit 
-											and 32-bit runtimes: 1) "64" Use only 64-bit runtimes. 2) "64/32" Use 64-bit runtimes 
-											if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes if available, 
-											otherwise use 64-bit. 4) "32" Use only 32-bit runtimes  -->
+										<!-- Optional, defaults to 64/32; Allows to select between 64-bit and 32-bit runtimes: 1) "64" Use only 64-bit 
+											runtimes. 2) "64/32" Use 64-bit runtimes if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes if available, 
+											otherwise use 64-bit. 4) "32" Use only 32-bit runtimes -->
 										<runtimeBits>32/64</runtimeBits>
-										<!-- Optional, defaults to false which treats the bundled JRE as 
-											the primary runtime. When set to true, the bundled JRE will only be used 
-											in case the mix/max version search fails. This can be used as a fallback 
-											option if the user does not have the required Java installed and the bundled 
-											JRE is provided on a CD or shared network location. -->
+										<!-- Optional, defaults to false which treats the bundled JRE as the primary runtime. When set to true, the bundled 
+											JRE will only be used in case the mix/max version search fails. This can be used as a fallback option if the user does not 
+											have the required Java installed and the bundled JRE is provided on a CD or shared network location. -->
 										<bundledJreAsFallback>true</bundledJreAsFallback>
 										<opts>
 											<opt>-Dweasis.portable.dir=&quot;%EXEDIR%&quot;</opt>
