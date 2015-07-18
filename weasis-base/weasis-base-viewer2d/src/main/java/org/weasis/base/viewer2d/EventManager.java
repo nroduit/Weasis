@@ -70,6 +70,7 @@ import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.graphic.Graphic;
@@ -169,10 +170,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             zoomAction.setMouseSensivity(prefNode.getDouble(zoomAction.getActionW().cmd(), 0.1));
         }
         initializeParameters();
-    }
-
-    private void iniAction(ActionState action) {
-        actions.put(action.getActionW(), action);
     }
 
     private void initializeParameters() {
@@ -323,7 +320,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     synchAction.setDataListWithoutTriggerAction(selectedView2dContainer.getSynchList().toArray());
                     layoutAction.setDataListWithoutTriggerAction(selectedView2dContainer.getLayoutList().toArray());
                 }
-                DefaultView2d<ImageElement> pane = oldContainer.getSelectedImagePane();
+                ViewCanvas<ImageElement> pane = oldContainer.getSelectedImagePane();
                 if (pane != null) {
                     pane.setFocused(false);
                 }
@@ -338,7 +335,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
             }
             selectedView2dContainer.setDrawActions(graphic);
-            DefaultView2d<ImageElement> pane = selectedView2dContainer.getSelectedImagePane();
+            ViewCanvas<ImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
                 fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null,
                     EVENT.SELECT_VIEW));
@@ -381,7 +378,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             rotateAction.setValue(0);
         } else if (ResetTools.WindowLevel.equals(action)) {
             if (selectedView2dContainer != null) {
-                DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
+                ViewCanvas<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
                 if (defaultView2d != null) {
                     ImageElement img = defaultView2d.getImage();
                     if (img != null) {
@@ -395,7 +392,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             }
         } else if (ResetTools.Pan.equals(action)) {
             if (selectedView2dContainer != null) {
-                DefaultView2d viewPane = selectedView2dContainer.getSelectedImagePane();
+                ViewCanvas viewPane = selectedView2dContainer.getSelectedImagePane();
                 if (viewPane != null) {
                     viewPane.resetPan();
                 }
@@ -404,7 +401,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     @Override
-    public synchronized boolean updateComponentsListener(DefaultView2d<ImageElement> view2d) {
+    public synchronized boolean updateComponentsListener(ViewCanvas<ImageElement> view2d) {
         if (view2d == null) {
             return false;
         }
@@ -517,7 +514,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     public MediaSeries<ImageElement> getSelectedSeries() {
-        DefaultView2d<ImageElement> pane = getSelectedViewPane();
+        ViewCanvas<ImageElement> pane = getSelectedViewPane();
         if (pane != null) {
             return pane.getSeries();
         }

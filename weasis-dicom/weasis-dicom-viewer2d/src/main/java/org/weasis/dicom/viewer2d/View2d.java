@@ -97,6 +97,7 @@ import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -338,9 +339,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             ImageViewerPlugin<DicomImageElement> container =
                                 this.eventManager.getSelectedView2dContainer();
                             if (container != null) {
-                                ArrayList<DefaultView2d<DicomImageElement>> viewpanels = container.getImagePanels();
+                                ArrayList<ViewCanvas<DicomImageElement>> viewpanels = container.getImagePanels();
                                 if (p3 != null) {
-                                    for (DefaultView2d<DicomImageElement> v : viewpanels) {
+                                    for (ViewCanvas<DicomImageElement> v : viewpanels) {
                                         MediaSeries<DicomImageElement> s = v.getSeries();
                                         if (s == null) {
                                             continue;
@@ -366,14 +367,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                         }
                                     }
                                 }
-                                for (DefaultView2d<DicomImageElement> v : viewpanels) {
+                                for (ViewCanvas<DicomImageElement> v : viewpanels) {
                                     MediaSeries<DicomImageElement> s = v.getSeries();
                                     if (s == null) {
                                         continue;
                                     }
                                     if (v instanceof View2d && fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
                                         ((View2d) v).computeCrosshair(p3);
-                                        v.repaint();
+                                        v.getJComponent().repaint();
                                     }
                                 }
                             }
@@ -765,7 +766,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (image != null) {
             GeometryOfSlice sliceGeometry = image.getDispSliceGeometry();
             if (sliceGeometry != null) {
-                DefaultView2d<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
+                ViewCanvas<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
                 MediaSeries<DicomImageElement> selSeries = view2DPane == null ? null : view2DPane.getSeries();
                 if (selSeries != null) {
                     // Get the current image of the selected Series
@@ -880,7 +881,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             return;
         }
         adapter.setButtonMaskEx(adapter.getButtonMaskEx() | buttonMask);
-        if (adapter == mouseClickHandler) {
+        if (adapter == graphicMouseHandler) {
             this.addKeyListener(drawingsKeyListeners);
         } else if (adapter instanceof PannerListener) {
             ((PannerListener) adapter).reset();
@@ -909,7 +910,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     protected MouseActionAdapter getMouseAdapter(String action) {
         if (action.equals(ActionW.MEASURE.cmd())) {
-            return mouseClickHandler;
+            return graphicMouseHandler;
         } else if (action.equals(ActionW.PAN.cmd())) {
             return getAction(ActionW.PAN);
         } else if (action.equals(ActionW.CONTEXTMENU.cmd())) {
@@ -1029,7 +1030,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
         // reset context menu that is a field of this instance
         contextMenuHandler.setButtonMaskEx(0);
-        mouseClickHandler.setButtonMaskEx(0);
+        graphicMouseHandler.setButtonMaskEx(0);
     }
 
     protected MouseActionAdapter getAction(ActionW action) {
@@ -1290,13 +1291,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                             new MouseEventDouble(View2d.this, MouseEvent.MOUSE_PRESSED, evt.getWhen(),
                                                 16, evt.getX(), evt.getY(), evt.getXOnScreen(), evt.getYOnScreen(), 1,
                                                 true, 1);
-                                        mouseClickHandler.mousePressed(evt2);
+                                        graphicMouseHandler.mousePressed(evt2);
                                     }
                                 });
                                 popupMenu.add(menuItem);
                                 popupMenu.add(new JSeparator());
                             }
-                        } else if (ds != null && absgraph.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
+                        } else if (graphicMouseHandler.getDragSequence() != null
+                            && absgraph.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
                             final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                             item2.addActionListener(new ActionListener() {
 
@@ -1304,8 +1306,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 public void actionPerformed(ActionEvent e) {
                                     MouseEventDouble event =
                                         new MouseEventDouble(View2d.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
-                                    ds.completeDrag(event);
-                                    mouseClickHandler.mouseReleased(event);
+                                    graphicMouseHandler.getDragSequence().completeDrag(event);
+                                    graphicMouseHandler.mouseReleased(event);
                                 }
                             });
                             popupMenu.add(item2);
@@ -1424,9 +1426,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         TitleMenuItem itemTitle =
             new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets()); //$NON-NLS-1$
         popupMenu.add(itemTitle);
-        final EventManager event = EventManager.getInstance();
         popupMenu.setLabel(MouseActions.LEFT);
-        String action = event.getMouseActions().getLeft();
+        String action = eventManager.getMouseActions().getLeft();
         ButtonGroup groupButtons = new ButtonGroup();
         int count = popupMenu.getComponentCount();
         ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
@@ -1543,7 +1544,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    event.getSelectedView2dContainer();
+                    eventManager.getSelectedView2dContainer();
                     View2d.this.setSeries(null, null);
                 }
             });

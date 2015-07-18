@@ -21,10 +21,10 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -96,11 +96,11 @@ public class SelectGraphic extends RectangleGraphic {
 
     // Do not draw any labels
     @Override
-    public void updateLabel(Object source, DefaultView2d view2d) {
+    public void updateLabel(Object source, ViewCanvas view2d) {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit) {
+    public List<MeasureItem> computeMeasurements(MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
         return null;
     };
 

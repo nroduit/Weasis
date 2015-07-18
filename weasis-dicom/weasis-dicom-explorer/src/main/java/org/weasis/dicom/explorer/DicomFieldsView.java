@@ -72,8 +72,8 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.RotatedIcon;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -184,7 +184,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             currentMedia = event.getMediaElement();
             currentSeries = event.getSeries();
             if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
-                DefaultView2d<?> sel = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
+                ViewCanvas<?> sel = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
                 if (sel != null) {
                     anonymize = sel.getInfoLayer().getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
                 }
@@ -408,7 +408,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
     public static void displayHeader(ImageViewerPlugin<?> container) {
         if (container != null) {
-            DefaultView2d<?> selView = container.getSelectedImagePane();
+            ViewCanvas<?> selView = container.getSelectedImagePane();
             if (selView != null) {
                 ImageElement img = selView.getImage();
                 if (img != null) {

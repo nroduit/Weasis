@@ -46,9 +46,9 @@ import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.dicom.explorer.Messages;
@@ -57,7 +57,7 @@ import org.weasis.dicom.explorer.Messages;
  * 
  * @author Marcelo Porto (marcelo@animati.com.br)
  */
-public class DicomPrintDialog extends JDialog {
+public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrintDialog.class);
 
     private static final int DPI = 200;
@@ -82,13 +82,17 @@ public class DicomPrintDialog extends JDialog {
     }
 
     enum FilmSize {
-        IN8X10("8INX10IN", 8, 10), IN8_5X11("8_5INX11IN", 8.5, 11), IN10X12("10INX12IN", 10, 12), IN10X14("10INX14IN", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                                                                                                          10, 14),
-        IN11X14("11INX14IN", 11, 14), IN11X17("11INX17IN", 11, 17), IN14X14("14INX14IN", 14, 14), IN14X17("14INX17IN", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                                                                                                          14, 17),
-        CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), CM24X30("24CMX30CM", convertMM2Inch(240), //$NON-NLS-1$ //$NON-NLS-2$
-                                                                                convertMM2Inch(300)),
-        A4("A4", convertMM2Inch(210), convertMM2Inch(297)), A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //$NON-NLS-1$ //$NON-NLS-2$
+        IN8X10("8INX10IN", 8, 10), IN8_5X11("8_5INX11IN", 8.5, 11), IN10X12("10INX12IN", 10, 12), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        IN10X14("10INX14IN", //$NON-NLS-1$
+                        10, 14),
+        IN11X14("11INX14IN", 11, 14), IN11X17("11INX17IN", 11, 17), IN14X14("14INX14IN", 14, 14), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        IN14X17("14INX17IN", //$NON-NLS-1$
+                        14, 17),
+        CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), //$NON-NLS-1$
+        CM24X30("24CMX30CM", convertMM2Inch(240), //$NON-NLS-1$
+                        convertMM2Inch(300)),
+        A4("A4", convertMM2Inch(210), convertMM2Inch(297)), //$NON-NLS-1$
+        A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //$NON-NLS-1$
 
         private final String name;
         private final double width;
@@ -163,7 +167,7 @@ public class DicomPrintDialog extends JDialog {
     private JLabel trimLabel;
     private DefaultComboBoxModel portraitDisplayFormatsModel;
     private JCheckBox chckbxSelctedView;
-    private ImageViewerEventManager eventManager;
+    private ImageViewerEventManager<I> eventManager;
     private Component horizontalStrut;
     private JPanel footPanel;
     private JLabel label;
@@ -172,7 +176,7 @@ public class DicomPrintDialog extends JDialog {
     private JComboBox comboBoxEmpty;
 
     /** Creates new form DicomPrintDialog */
-    public DicomPrintDialog(Window parent, String title, ImageViewerEventManager eventManager) {
+    public DicomPrintDialog(Window parent, String title, ImageViewerEventManager<I> eventManager) {
         super(parent, ModalityType.APPLICATION_MODAL);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -217,8 +221,8 @@ public class DicomPrintDialog extends JDialog {
         content.add(mediumTypeLabel, gbc_mediumTypeLabel);
         mediumTypeComboBox = new JComboBox();
 
-        mediumTypeComboBox.setModel(new DefaultComboBoxModel(new String[] {
-            "BLUE FILM", "CLEAR FILM", "MAMMO CLEAR FILM", "MAMMO BLUE FILM", "PAPER" })); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+        mediumTypeComboBox.setModel(new DefaultComboBoxModel(
+            new String[] { "BLUE FILM", "CLEAR FILM", "MAMMO CLEAR FILM", "MAMMO BLUE FILM", "PAPER" })); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
         GridBagConstraints gbc_mediumTypeComboBox = new GridBagConstraints();
         gbc_mediumTypeComboBox.anchor = GridBagConstraints.WEST;
         gbc_mediumTypeComboBox.insets = new Insets(0, 0, 5, 5);
@@ -624,7 +628,7 @@ public class DicomPrintDialog extends JDialog {
         PrintOptions printOptions = new PrintOptions(printAnnotationsCheckBox.isSelected(), 1.0);
         printOptions.setColor(dicomPrintOptions.isPrintInColor());
 
-        ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
+        ImageViewerPlugin<I> container = eventManager.getSelectedView2dContainer();
         // TODO make printable component
         boolean isPrintable = true;
         Iterator<LayoutConstraints> enumVal = container.getLayoutModel().getConstraints().keySet().iterator();
@@ -641,24 +645,23 @@ public class DicomPrintDialog extends JDialog {
             }
         }
         if (!isPrintable) {
-            JOptionPane.showMessageDialog(this,
-                Messages.getString(Messages.getString("DicomPrintDialog.no_print")), null, //$NON-NLS-1$
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Messages.getString(Messages.getString("DicomPrintDialog.no_print")), //$NON-NLS-1$
+                null, JOptionPane.ERROR_MESSAGE);
             doClose();
             return;
         }
         doClose();
 
-        ArrayList<DefaultView2d<ImageElement>> views;
+        ArrayList<ViewCanvas<I>> views;
         if (chckbxSelctedView.isSelected()) {
             // One View
-            views = new ArrayList<DefaultView2d<ImageElement>>(1);
+            views = new ArrayList<ViewCanvas<I>>(1);
             views.add(eventManager.getSelectedViewPane());
         } else {
             // Several views
             views = container.getImagePanels();
         }
-        ExportLayout<ImageElement> layout = new ExportLayout<ImageElement>(views, container.getLayoutModel());
+        ExportLayout<I> layout = new ExportLayout<I>(views, container.getLayoutModel());
         try {
             dicomPrint.printImage(dicomPrint.printImage(layout, printOptions));
         } catch (Exception ex) {

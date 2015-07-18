@@ -506,7 +506,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         this.addMouseWheelListener((MouseActionAdapter) view2d.getEventManager().getAction(ActionW.LENSZOOM));
     }
 
-    public DefaultView2d<E> getView2d() {
+    public ViewCanvas<E> getView2d() {
         return view2d;
     }
 

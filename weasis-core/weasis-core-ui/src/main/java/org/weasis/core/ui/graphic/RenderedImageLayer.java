@@ -29,8 +29,11 @@ import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.OpEventListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
@@ -288,6 +291,50 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     @Override
     public Identifier getIdentifier() {
         return identifier;
+    }
+
+    @Override
+    public boolean hasContent() {
+        return getSourceImage() != null;
+    }
+
+    @Override
+    public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit) {
+        if (hasContent()) {
+            return getSourceImage().getMeasurementAdapter(displayUnit);
+        }
+        return null;
+    }
+
+    @Override
+    public AffineTransform getShapeTransform() {
+        E imageElement = getSourceImage();
+        if (imageElement != null) {
+            double scaleX = imageElement.getRescaleX();
+            double scaleY = imageElement.getRescaleY();
+            if (scaleX != scaleY) {
+                return AffineTransform.getScaleInstance(1.0 / scaleX, 1.0 / scaleY);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Object getSourceTagValue(TagW tagW) {
+        E imageElement = getSourceImage();
+        if (imageElement != null) {
+            return imageElement.getTagValue(tagW);
+        }
+        return null;
+    }
+
+    @Override
+    public String getPixelValueUnit() {
+        E imageElement = getSourceImage();
+        if (imageElement != null) {
+            return imageElement.getPixelValueUnit();
+        }
+        return null;
     }
 
 }

@@ -48,7 +48,7 @@ import org.weasis.core.ui.graphic.model.GraphicList;
 
 public class CalibrationView extends JPanel {
 
-    private final DefaultView2d view2d;
+    private final ViewCanvas view2d;
     private final LineGraphic line;
 
     private final JComboBox jComboBoxUnit = new JComboBox(Unit.getUnitExceptPixel().toArray());
@@ -64,7 +64,7 @@ public class CalibrationView extends JPanel {
     private final JRadioButton radioButtonSeries = new JRadioButton(Messages.getString("CalibrationView.series")); //$NON-NLS-1$
     private final JRadioButton radioButtonImage = new JRadioButton(Messages.getString("CalibrationView.current")); //$NON-NLS-1$
 
-    public CalibrationView(LineGraphic line, DefaultView2d view2d) {
+    public CalibrationView(LineGraphic line, ViewCanvas view2d) {
         this.line = line;
         this.view2d = view2d;
         try {
@@ -207,7 +207,7 @@ public class CalibrationView extends JPanel {
         }
     }
 
-    private void updateLabel(ImageElement image, DefaultView2d view2d) {
+    private void updateLabel(ImageElement image, ViewCanvas view2d) {
         GraphicList gl = (GraphicList) image.getTagValue(TagW.MeasurementGraphics);
         if (gl != null) {
             synchronized (gl.list) {

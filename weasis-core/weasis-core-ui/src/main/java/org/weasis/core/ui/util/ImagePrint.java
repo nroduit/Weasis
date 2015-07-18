@@ -56,13 +56,13 @@ public class ImagePrint implements Printable {
         this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
     }
 
-    public ImagePrint(ExportImage<ImageElement> exportImage, PrintOptions printOptions) {
+    public ImagePrint(ExportImage<? extends ImageElement> exportImage, PrintOptions printOptions) {
         this.printable = exportImage;
         printLoc = new Point(0, 0);
         this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
     }
 
-    public ImagePrint(ExportLayout<ImageElement> layout, PrintOptions printOptions) {
+    public ImagePrint(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
         this.printable = layout;
         printLoc = new Point(0, 0);
         this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;

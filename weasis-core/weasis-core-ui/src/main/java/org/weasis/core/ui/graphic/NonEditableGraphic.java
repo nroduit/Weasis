@@ -18,7 +18,7 @@ import java.util.List;
 
 import javax.swing.Icon;
 
-import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -51,7 +51,7 @@ public class NonEditableGraphic extends BasicGraphic {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit) {
+    public List<MeasureItem> computeMeasurements(MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
         return null;
     }
 

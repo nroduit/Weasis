@@ -91,6 +91,7 @@ import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.graphic.Graphic;
@@ -237,10 +238,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         initializeParameters();
     }
 
-    private void iniAction(ActionState action) {
-        actions.put(action.getActionW(), action);
-    }
-
     private void initializeParameters() {
         enableActions(false);
     }
@@ -268,7 +265,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             @Override
             public void stateChanged(BoundedRangeModel model) {
 
-                DefaultView2d<DicomImageElement> view2d = null;
+                ViewCanvas<DicomImageElement> view2d = null;
                 Series<DicomImageElement> series = null;
                 SynchCineEvent mediaEvent = null;
                 DicomImageElement image = null;
@@ -309,9 +306,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         }
                     } else {
                         if (selectedView2dContainer != null) {
-                            final ArrayList<DefaultView2d<DicomImageElement>> panes =
+                            final ArrayList<ViewCanvas<DicomImageElement>> panes =
                                 selectedView2dContainer.getImagePanels();
-                            for (DefaultView2d<DicomImageElement> p : panes) {
+                            for (ViewCanvas<DicomImageElement> p : panes) {
                                 Boolean cutlines = (Boolean) p.getActionValue(ActionW.SYNCH_CROSSLINE.cmd());
                                 if (cutlines != null && cutlines) {
                                     double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
@@ -634,7 +631,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private void koAction(ActionW action, Object selected) {
         SynchView synchView = (SynchView) synchAction.getSelectedItem();
         boolean tileMode = synchView != null && SynchData.Mode.Tile.equals(synchView.getSynchData().getMode());
-        DefaultView2d<DicomImageElement> selectedView = getSelectedViewPane();
+        ViewCanvas<DicomImageElement> selectedView = getSelectedViewPane();
         if (tileMode) {
             if (selectedView2dContainer instanceof View2dContainer && selectedView != null) {
                 View2dContainer container = (View2dContainer) selectedView2dContainer;
@@ -643,11 +640,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     filterSelection ? selectedView.getActionValue(ActionW.KO_SELECTION.cmd()) : selected;
                 Boolean enableFilter =
                     (Boolean) (filterSelection ? selected : selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
-                DefaultView2d<DicomImageElement> viewPane = container.getSelectedImagePane();
+                ViewCanvas<DicomImageElement> viewPane = container.getSelectedImagePane();
                 int frameIndex =
                     JMVUtils.getNULLtoFalse(enableFilter) ? 0 : viewPane.getFrameIndex() - viewPane.getTileOffset();
 
-                for (DefaultView2d<DicomImageElement> view : container.getImagePanels(true)) {
+                for (ViewCanvas<DicomImageElement> view : container.getImagePanels(true)) {
                     if ((view.getSeries() instanceof DicomSeries) == false || (view instanceof View2d) == false) {
                         continue;
                     }
@@ -657,7 +654,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
                 container.updateTileOffset();
                 if ((selectedView.getSeries() instanceof DicomSeries) == false) {
-                    ArrayList<DefaultView2d<DicomImageElement>> panes = selectedView2dContainer.getImagePanels(false);
+                    ArrayList<ViewCanvas<DicomImageElement>> panes = selectedView2dContainer.getImagePanels(false);
                     if (panes.size() > 0) {
                         selectedView2dContainer.setSelectedImagePane(panes.get(0));
                         return;
@@ -832,7 +829,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 layoutAction.setDataListWithoutTriggerAction(selectedView2dContainer.getLayoutList().toArray());
             }
             if (oldContainer != null) {
-                DefaultView2d<DicomImageElement> pane = oldContainer.getSelectedImagePane();
+                ViewCanvas<DicomImageElement> pane = oldContainer.getSelectedImagePane();
                 if (pane != null) {
                     pane.setFocused(false);
                 }
@@ -847,7 +844,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
             }
             selectedView2dContainer.setDrawActions(graphic);
-            DefaultView2d<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
+            ViewCanvas<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
                 pane.setFocused(true);
                 fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null,
@@ -895,7 +892,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             presetAction.setSelectedItem(presetAction.getFirstItem());
         } else if (ResetTools.Pan.equals(action)) {
             if (selectedView2dContainer != null) {
-                DefaultView2d viewPane = selectedView2dContainer.getSelectedImagePane();
+                ViewCanvas viewPane = selectedView2dContainer.getSelectedImagePane();
                 if (viewPane != null) {
                     viewPane.resetPan();
                 }
@@ -904,7 +901,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     @Override
-    public synchronized boolean updateComponentsListener(DefaultView2d<DicomImageElement> view2d) {
+    public synchronized boolean updateComponentsListener(ViewCanvas<DicomImageElement> view2d) {
         if (view2d == null) {
             return false;
         }
@@ -979,7 +976,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return true;
     }
 
-    public void updateKeyObjectComponentsListener(DefaultView2d<DicomImageElement> view2d) {
+    public void updateKeyObjectComponentsListener(ViewCanvas<DicomImageElement> view2d) {
         if (view2d != null) {
             if (JMVUtils.getNULLtoFalse(view2d.getActionValue("no.ko"))) { //$NON-NLS-1$
                 koToggleAction.enableAction(false);
@@ -1005,7 +1002,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     }
 
-    private void updateWindowLevelComponentsListener(DicomImageElement image, DefaultView2d<DicomImageElement> view2d) {
+    private void updateWindowLevelComponentsListener(DicomImageElement image, ViewCanvas<DicomImageElement> view2d) {
 
         ImageOpNode node = view2d.getDisplayOpManager().getNode(WindowOp.OP_NAME);
         if (node != null) {
@@ -1077,7 +1074,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         clearAllPropertyChangeListeners();
 
         if (viewerPlugin != null) {
-            DefaultView2d<DicomImageElement> viewPane = viewerPlugin.getSelectedImagePane();
+            ViewCanvas<DicomImageElement> viewPane = viewerPlugin.getSelectedImagePane();
             // if (viewPane == null || viewPane.getSeries() == null) {
             if (viewPane == null) {
                 return;
@@ -1099,13 +1096,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 // } else {
                 moveTroughSliceAction.enableAction(true);
                 // }
-                final ArrayList<DefaultView2d<DicomImageElement>> panes = viewerPlugin.getImagePanels();
+                final ArrayList<ViewCanvas<DicomImageElement>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
                 if (SynchView.NONE.equals(synchView)) {
                     for (int i = 0; i < panes.size(); i++) {
-                        DefaultView2d<DicomImageElement> pane = panes.get(i);
+                        ViewCanvas<DicomImageElement> pane = panes.get(i);
                         AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
                         if (layer != null) {
                             layer.deleteAllGraphic();
@@ -1138,7 +1135,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         double[] val = img == null ? null : (double[]) img.getTagValue(TagW.SlicePosition);
 
                         for (int i = 0; i < panes.size(); i++) {
-                            DefaultView2d<DicomImageElement> pane = panes.get(i);
+                            ViewCanvas<DicomImageElement> pane = panes.get(i);
                             AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
                             if (layer != null) {
                                 layer.deleteAllGraphic();
@@ -1200,7 +1197,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             JMVUtils.getNULLtoFalse(enableFilter) ? 0 : viewPane.getFrameIndex()
                                 - viewPane.getTileOffset();
                         for (int i = 0; i < panes.size(); i++) {
-                            DefaultView2d<DicomImageElement> pane = panes.get(i);
+                            ViewCanvas<DicomImageElement> pane = panes.get(i);
                             oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                 oldSynch = synch.clone();
@@ -1271,7 +1268,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public MediaSeries<DicomImageElement> getSelectedSeries() {
-        DefaultView2d<DicomImageElement> pane = getSelectedViewPane();
+        ViewCanvas<DicomImageElement> pane = getSelectedViewPane();
         if (pane != null) {
             return pane.getSeries();
         }

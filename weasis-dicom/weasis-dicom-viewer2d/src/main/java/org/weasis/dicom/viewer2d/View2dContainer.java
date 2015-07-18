@@ -72,6 +72,7 @@ import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -159,7 +160,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ZoomToolBar.class), key, true)) {
-                TOOLBARS.add(new ZoomToolBar(evtMg, 20));
+                TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(RotationToolBar.class), key, true)) {
@@ -167,11 +168,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(DcmHeaderToolBar.class), key, true)) {
-                TOOLBARS.add(new DcmHeaderToolBar<DicomImageElement>(35));
+                TOOLBARS.add(new DcmHeaderToolBar(evtMg, 35));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(LutToolBar.class), key, true)) {
-                TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
+                TOOLBARS.add(new LutToolBar(evtMg, 40));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(Basic3DToolBar.class), key, true)) {
@@ -254,13 +255,15 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public void setSelectedImagePaneFromFocus(DefaultView2d<DicomImageElement> defaultView2d) {
-        setSelectedImagePane(defaultView2d);
-        if (defaultView2d != null && defaultView2d.getSeries() instanceof DicomSeries) {
-            DicomSeries series = (DicomSeries) defaultView2d.getSeries();
-            DicomSeries.startPreloading(series, series.copyOfMedias(
-                (Filter<DicomImageElement>) defaultView2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
-                defaultView2d.getCurrentSortComparator()), defaultView2d.getFrameIndex());
+    public void setSelectedImagePaneFromFocus(ViewCanvas<DicomImageElement> viewCanvas) {
+        setSelectedImagePane(viewCanvas);
+        if (viewCanvas != null && viewCanvas.getSeries() instanceof DicomSeries) {
+            DicomSeries series = (DicomSeries) viewCanvas.getSeries();
+            DicomSeries.startPreloading(
+                series,
+                series.copyOfMedias(
+                    (Filter<DicomImageElement>) viewCanvas.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                    viewCanvas.getCurrentSortComparator()), viewCanvas.getFrameIndex());
         }
     }
 
@@ -334,9 +337,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             @Override
             public void run() {
-                for (DefaultView2d v : view2ds) {
+                for (ViewCanvas v : view2ds) {
                     resetMaximizedSelectedImagePane(v);
-                    v.dispose();
+                    v.disposeView();
                 }
             }
         });
@@ -363,7 +366,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     if (SeriesEvent.Action.AddImage.equals(action2)) {
                         if (source instanceof DicomSeries) {
                             DicomSeries series = (DicomSeries) source;
-                            DefaultView2d<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
+                            ViewCanvas<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
                             if (view2DPane != null) {
                                 DicomImageElement img = view2DPane.getImage();
                                 if (img != null && view2DPane.getSeries() == series) {
@@ -394,7 +397,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     } else if (SeriesEvent.Action.UpdateImage.equals(action2)) {
                         if (source instanceof DicomImageElement) {
                             DicomImageElement dcm = (DicomImageElement) source;
-                            for (DefaultView2d<DicomImageElement> v : view2ds) {
+                            for (ViewCanvas<DicomImageElement> v : view2ds) {
                                 if (dcm == v.getImage()) {
                                     // Force to repaint the same image
                                     if (v.getImageLayer().getDisplayImage() == null) {
@@ -412,9 +415,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     } else if (SeriesEvent.Action.loadImageInMemory.equals(action2)) {
                         if (source instanceof DicomSeries) {
                             DicomSeries dcm = (DicomSeries) source;
-                            for (DefaultView2d<DicomImageElement> v : view2ds) {
+                            for (ViewCanvas<DicomImageElement> v : view2ds) {
                                 if (dcm == v.getSeries()) {
-                                    v.repaint(v.getInfoLayer().getPreloadingProgressBound());
+                                    v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
                                 }
                             }
                         }
@@ -429,7 +432,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             } else if (ObservableEvent.BasicAction.Remove.equals(action)) {
                 if (newVal instanceof DicomSeries) {
                     DicomSeries dicomSeries = (DicomSeries) newVal;
-                    for (DefaultView2d<DicomImageElement> v : view2ds) {
+                    for (ViewCanvas<DicomImageElement> v : view2ds) {
                         MediaSeries<DicomImageElement> s = v.getSeries();
                         if (dicomSeries.equals(s)) {
                             v.setSeries(null);
@@ -449,7 +452,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
                             for (MediaSeriesGroup s : model.getChildren(group)) {
-                                for (DefaultView2d<DicomImageElement> v : view2ds) {
+                                for (ViewCanvas<DicomImageElement> v : view2ds) {
                                     MediaSeries series = v.getSeries();
                                     if (s.equals(series)) {
                                         v.setSeries(null);
@@ -462,7 +465,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             } else if (ObservableEvent.BasicAction.Replace.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
-                    for (DefaultView2d<DicomImageElement> v : view2ds) {
+                    for (ViewCanvas<DicomImageElement> v : view2ds) {
                         MediaSeries<DicomImageElement> s = v.getSeries();
                         if (series.equals(s)) {
                             /*
@@ -492,7 +495,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 }
 
                 if (specialElement instanceof PRSpecialElement) {
-                    for (DefaultView2d<DicomImageElement> view : view2ds) {
+                    for (ViewCanvas<DicomImageElement> view : view2ds) {
                         if (view instanceof View2d) {
                             DicomImageElement img = view.getImage();
                             if (img != null) {
@@ -527,7 +530,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     private void setKOSpecialElement(KOSpecialElement updatedKOSelection, Boolean enableFilter, boolean forceUpdate,
         boolean updateAll) {
-        DefaultView2d<DicomImageElement> selectedView = getSelectedImagePane();
+        ViewCanvas<DicomImageElement> selectedView = getSelectedImagePane();
 
         if (updatedKOSelection != null && selectedView instanceof View2d) {
             if (SynchData.Mode.Tile.equals(this.getSynchView().getSynchData().getMode())) {
@@ -549,8 +552,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 }
 
                 if (updateAll) {
-                    ArrayList<DefaultView2d<DicomImageElement>> viewList = getImagePanels(true);
-                    for (DefaultView2d<DicomImageElement> view : viewList) {
+                    ArrayList<ViewCanvas<DicomImageElement>> viewList = getImagePanels(true);
+                    for (ViewCanvas<DicomImageElement> view : viewList) {
                         ((View2d) view).updateKOButtonVisibleState();
                     }
                 } else {
@@ -562,9 +565,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                  * Set the selected view at the end of the list to trigger the synchronization of the SCROLL_SERIES
                  * action at the end of the process
                  */
-                ArrayList<DefaultView2d<DicomImageElement>> viewList = getImagePanels(true);
+                ArrayList<ViewCanvas<DicomImageElement>> viewList = getImagePanels(true);
 
-                for (DefaultView2d<DicomImageElement> view : viewList) {
+                for (ViewCanvas<DicomImageElement> view : viewList) {
 
                     if ((view.getSeries() instanceof DicomSeries) == false || (view instanceof View2d) == false) {
                         continue;
@@ -726,8 +729,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                    PrintDialog dialog =
-                        new PrintDialog(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
+                    PrintDialog<DicomImageElement> dialog =
+                        new PrintDialog<DicomImageElement>(SwingUtilities.getWindowAncestor(View2dContainer.this),
+                            title, eventManager);
                     ColorLayerUI.showCenterScreen(dialog, layer);
                 }
             };
@@ -740,8 +744,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             @Override
             public void actionPerformed(ActionEvent e) {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                DicomPrintDialog dialog =
-                    new DicomPrintDialog(SwingUtilities.getWindowAncestor(View2dContainer.this), title2, eventManager);
+                DicomPrintDialog<DicomImageElement> dialog =
+                    new DicomPrintDialog<DicomImageElement>(SwingUtilities.getWindowAncestor(View2dContainer.this),
+                        title2, eventManager);
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         };

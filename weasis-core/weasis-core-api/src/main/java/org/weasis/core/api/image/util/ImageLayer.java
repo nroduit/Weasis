@@ -19,18 +19,11 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
 
-public interface ImageLayer<E extends ImageElement> {
+public interface ImageLayer<E extends ImageElement> extends MeasurableLayer {
 
     RandomIter getReadIterator();
 
     E getSourceImage();
-
-    /**
-     * Returns the source image for display. All preprocessing operations has been applied to this image.
-     * 
-     * @return the source image for display
-     */
-    RenderedImage getSourceRenderedImage();
 
     RenderedImage getDisplayImage();
 
@@ -47,4 +40,9 @@ public interface ImageLayer<E extends ImageElement> {
     boolean isEnableDispOperations();
 
     void setEnableDispOperations(boolean enabled);
+
+    void setVisible(boolean flag);
+
+    boolean isVisible();
+
 }

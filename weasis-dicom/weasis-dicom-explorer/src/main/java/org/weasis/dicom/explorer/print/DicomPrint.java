@@ -69,7 +69,7 @@ public class DicomPrint {
         this.dicomPrintOptions = dicomPrintOptions;
     }
 
-    public BufferedImage printImage(ExportLayout<ImageElement> layout, PrintOptions printOptions) {
+    public BufferedImage printImage(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
         if (layout == null) {
             return null;
         }
@@ -126,7 +126,7 @@ public class DicomPrint {
             while (enumVal.hasNext()) {
                 Entry<LayoutConstraints, Component> e = enumVal.next();
                 LayoutConstraints key = e.getKey();
-                ExportImage image = (ExportImage) e.getValue();
+                ExportImage<? extends ImageElement> image = (ExportImage<? extends ImageElement>) e.getValue();
                 if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
                     image.getInfoLayer().setVisible(false);
                 }

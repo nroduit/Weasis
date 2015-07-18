@@ -71,6 +71,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         super();
     }
 
+    protected void iniAction(ActionState action) {
+        actions.put(action.getActionW(), action);
+    }
+
     protected SliderCineListener getMoveTroughSliceAction(int speed, final TIME time, double mouseSensivity) {
         return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensivity) {
 
@@ -81,13 +85,13 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             @Override
             public void stateChanged(BoundedRangeModel model) {
 
-                DefaultView2d<ImageElement> view2d = null;
+                ViewCanvas<ImageElement> view2d = null;
                 Series<ImageElement> series = null;
                 SynchCineEvent mediaEvent = null;
                 ImageElement image = null;
 
                 if (selectedView2dContainer != null) {
-                    view2d = (DefaultView2d<ImageElement>) selectedView2dContainer.getSelectedImagePane();
+                    view2d = (ViewCanvas<ImageElement>) selectedView2dContainer.getSelectedImagePane();
                 }
 
                 if (view2d != null && view2d.getSeries() instanceof Series) {
@@ -414,7 +418,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 if (object instanceof GridBagLayoutModel && selectedView2dContainer != null) {
                     // change layout
                     clearAllPropertyChangeListeners();
-                    DefaultView2d view = selectedView2dContainer.getSelectedImagePane();
+                    ViewCanvas view = selectedView2dContainer.getSelectedImagePane();
                     selectedView2dContainer.setLayoutModel((GridBagLayoutModel) object);
                     if (!selectedView2dContainer.isContainingView(view)) {
                         view = selectedView2dContainer.getSelectedImagePane();
@@ -498,7 +502,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
 
-    public abstract boolean updateComponentsListener(DefaultView2d<E> defaultView2d);
+    public abstract boolean updateComponentsListener(ViewCanvas<E> viewCanvas);
 
     private static double roundAndCropViewScale(double viewScale, double minViewScale, double maxViewScale) {
         viewScale *= 1000.0;
@@ -653,7 +657,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         }
     }
 
-    public DefaultView2d<E> getSelectedViewPane() {
+    public ViewCanvas<E> getSelectedViewPane() {
         ImageViewerPlugin<E> container = selectedView2dContainer;
         if (container != null) {
             return container.getSelectedImagePane();
@@ -676,7 +680,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     public void updateAllListeners(ImageViewerPlugin<E> viewerPlugin, SynchView synchView) {
         clearAllPropertyChangeListeners();
         if (viewerPlugin != null) {
-            DefaultView2d<E> viewPane = viewerPlugin.getSelectedImagePane();
+            ViewCanvas<E> viewPane = viewerPlugin.getSelectedImagePane();
             if (viewPane == null) {
                 return;
             }
@@ -685,7 +689,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
                 addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
 
-                final ArrayList<DefaultView2d<E>> panes = viewerPlugin.getImagePanels();
+                final ArrayList<ViewCanvas<E>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 if (SynchView.NONE.equals(synchView)) {
                     for (int i = 0; i < panes.size(); i++) {

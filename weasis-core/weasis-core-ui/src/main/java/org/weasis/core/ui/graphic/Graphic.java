@@ -21,9 +21,9 @@ import java.util.List;
 import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.gui.util.KeyActionValue;
-import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 
 /**
@@ -38,7 +38,7 @@ public interface Graphic extends GUIEntry, KeyActionValue, Cloneable {
 
     Area getArea(AffineTransform transform);
 
-    void setLabel(String[] label, DefaultView2d view2d);
+    void setLabel(String[] label, ViewCanvas view2d);
 
     void setSelected(boolean flag);
 
@@ -48,7 +48,7 @@ public interface Graphic extends GUIEntry, KeyActionValue, Cloneable {
 
     void paintLabel(Graphics2D g2, AffineTransform transform);
 
-    void updateLabel(Object source, DefaultView2d view2d);
+    void updateLabel(Object source, ViewCanvas view2d);
 
     Rectangle getBounds(AffineTransform transform);
 
@@ -80,7 +80,7 @@ public interface Graphic extends GUIEntry, KeyActionValue, Cloneable {
 
     Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform);
 
-    List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit);
+    List<MeasureItem> computeMeasurements(MeasurableLayer layer, boolean releaseEvent, Unit displayUnit);
 
     List<Measurement> getMeasurementList();
 

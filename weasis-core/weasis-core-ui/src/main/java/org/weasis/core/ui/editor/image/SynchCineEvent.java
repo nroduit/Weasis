@@ -7,11 +7,11 @@ public class SynchCineEvent extends SynchEvent {
     private final int seriesIndex;
     private Number location;
 
-    public SynchCineEvent(DefaultView2d<?> view, MediaElement<?> media, int seriesIndex) {
+    public SynchCineEvent(ViewCanvas<?> view, MediaElement<?> media, int seriesIndex) {
         this(view, media, seriesIndex, null);
     }
 
-    public SynchCineEvent(DefaultView2d<?> view, MediaElement<?> media, int seriesIndex, Number location) {
+    public SynchCineEvent(ViewCanvas<?> view, MediaElement<?> media, int seriesIndex, Number location) {
         super(view);
         this.media = media;
         this.seriesIndex = seriesIndex;

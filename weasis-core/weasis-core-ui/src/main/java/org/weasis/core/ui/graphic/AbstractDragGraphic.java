@@ -24,7 +24,7 @@ import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -108,7 +108,7 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
      * @param event
      */
     public void moveMouseOverHandlePoint(int handlePtIndex, MouseEventDouble event) {
-        DefaultView2d<?> graphPane = getDefaultView2d(event);
+        ViewCanvas graphPane = getDefaultView2d(event);
 
         if (graphPane != null) {
             Point2D handlePt = null;
@@ -120,11 +120,11 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
             if (handlePt != null) {
                 Point mousePt = graphPane.getMouseCoordinatesFromImage(handlePt.getX(), handlePt.getY());
 
-                if (event.getX() != mousePt.x || event.getY() != mousePt.y) {
+                if (mousePt != null && (event.getX() != mousePt.x || event.getY() != mousePt.y)) {
                     try {
                         event.translatePoint(mousePt.x - event.getX(), mousePt.y - event.getY());
                         event.setImageCoordinates(handlePt);
-                        SwingUtilities.convertPointToScreen(mousePt, graphPane);
+                        SwingUtilities.convertPointToScreen(mousePt, graphPane.getJComponent());
                         new Robot().mouseMove(mousePt.x, mousePt.y);
                     } catch (Exception doNothing) {
                     }
@@ -247,7 +247,7 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
                     shape = null;
                     buildShape(mouseEvent);
                     if (mouseEvent.getClickCount() == 2) {
-                        DefaultView2d<?> graphPane = getDefaultView2d(mouseEvent);
+                        ViewCanvas graphPane = getDefaultView2d(mouseEvent);
                         if (graphPane != null) {
                             // Do not open properties dialog for graphic with undefined points (like polyline) => double
                             // click conflict
@@ -267,7 +267,7 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
                                 }
                             }
                             if (!isEditingGraph) {
-                                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(graphPane);
+                                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(graphPane.getJComponent());
                                 final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
                                 list.add(AbstractDragGraphic.this);
                                 JDialog dialog = new MeasureDialog(graphPane, list);

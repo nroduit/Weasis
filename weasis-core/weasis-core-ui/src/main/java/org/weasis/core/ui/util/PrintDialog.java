@@ -39,12 +39,8 @@ import org.weasis.core.ui.util.PrintOptions.SCALE;
  * 
  * @author Marcelo Porto (marcelo@animati.com.br)
  */
-public class PrintDialog extends javax.swing.JDialog {
+public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
 
-    /** A return status code - returned if Cancel button has been pressed */
-    public static final int RET_CANCEL = 0;
-    /** A return status code - returned if OK button has been pressed */
-    public static final int RET_OK = 1;
     private javax.swing.JCheckBox annotationsCheckBox;
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel customImageSizeLabel;
@@ -54,13 +50,12 @@ public class PrintDialog extends javax.swing.JDialog {
     private javax.swing.JLabel positionLabel;
     private javax.swing.JButton printButton;
 
-    private int returnStatus = RET_CANCEL;
-    private ImageViewerEventManager eventManager;
+    private ImageViewerEventManager<I> eventManager;
     private JCheckBox chckbxSelctedView;
     private JSpinner spinner;
 
     /** Creates new form PrintDialog */
-    public PrintDialog(Window parent, String title, ImageViewerEventManager eventManager) {
+    public PrintDialog(Window parent, String title, ImageViewerEventManager<I> eventManager) {
         super(parent, ModalityType.APPLICATION_MODAL);
         this.eventManager = eventManager;
         boolean layout = eventManager.getSelectedView2dContainer().getImagePanels().size() > 1;
@@ -230,7 +225,7 @@ public class PrintDialog extends javax.swing.JDialog {
             printOptions.setCenter(false);
         }
 
-        ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
+        ImageViewerPlugin<I> container = eventManager.getSelectedView2dContainer();
         // TODO make printable component
         boolean isPrintable = true;
         Iterator<LayoutConstraints> enumVal = container.getLayoutModel().getConstraints().keySet().iterator();
@@ -256,18 +251,17 @@ public class PrintDialog extends javax.swing.JDialog {
 
         if (container.getImagePanels().size() > 1 && !chckbxSelctedView.isSelected()) {
             // Several views
-            ExportLayout<ImageElement> layout =
-                new ExportLayout<ImageElement>(container.getImagePanels(), container.getLayoutModel());
+            ExportLayout<I> layout = new ExportLayout<I>(container.getImagePanels(), container.getLayoutModel());
             ImagePrint print = new ImagePrint(layout, printOptions);
             print.print();
             layout.dispose();
         } else {
             // One View
-            ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(eventManager.getSelectedViewPane());
+            ExportImage<I> exportImage = new ExportImage<I>(eventManager.getSelectedViewPane());
             exportImage.getInfoLayer().setBorder(2);
             ImagePrint print = new ImagePrint(exportImage, printOptions);
             print.print();
-            exportImage.dispose();
+            exportImage.disposeView();
         }
 
     }

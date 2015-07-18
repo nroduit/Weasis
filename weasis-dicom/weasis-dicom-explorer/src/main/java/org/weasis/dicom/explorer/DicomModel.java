@@ -105,7 +105,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public static final Executor loadingExecutor = Executors.newSingleThreadExecutor();
     private static final Collator collator = Collator.getInstance(Locale.getDefault());
 
-    public static final Comparator PATIENT_COMPARATOR = new Comparator() {
+    public static final Comparator<Object> PATIENT_COMPARATOR = new Comparator<Object>() {
 
         @Override
         public int compare(Object o1, Object o2) {
@@ -113,7 +113,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
     };
 
-    public static final Comparator STUDY_COMPARATOR = new Comparator() {
+    public static final Comparator<Object> STUDY_COMPARATOR = new Comparator<Object>() {
 
         @Override
         public int compare(Object o1, Object o2) {
@@ -178,7 +178,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
     };
 
-    public static final Comparator SERIES_COMPARATOR = new Comparator() {
+    public static final Comparator<Object> SERIES_COMPARATOR = new Comparator<Object>() {
 
         @Override
         public int compare(Object o1, Object o2) {
@@ -218,8 +218,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                     if ((c == 0 || (date1 == null && date2 == null)) && st1 instanceof MediaSeries
                         && st2 instanceof MediaSeries) {
-                        MediaElement media1 = (MediaElement) ((MediaSeries) st1).getMedia(0, null, null);
-                        MediaElement media2 = (MediaElement) ((MediaSeries) st2).getMedia(0, null, null);
+                        MediaElement<?> media1 = ((MediaSeries<? extends MediaElement<?>>) st1).getMedia(0, null, null);
+                        MediaElement<?> media2 = ((MediaSeries<? extends MediaElement<?>>) st2).getMedia(0, null, null);
                         if (media1 != null && media2 != null) {
 
                             date1 =

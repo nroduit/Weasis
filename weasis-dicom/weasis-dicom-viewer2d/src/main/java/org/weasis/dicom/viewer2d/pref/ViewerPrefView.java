@@ -37,7 +37,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
@@ -264,7 +264,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
             for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
                 if (p instanceof View2dContainer) {
                     View2dContainer viewer = (View2dContainer) p;
-                    for (DefaultView2d<DicomImageElement> v : viewer.getImagePanels()) {
+                    for (ViewCanvas<DicomImageElement> v : viewer.getImagePanels()) {
                         OpManager disOp = v.getDisplayOpManager();
                         disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
                         v.changeZoomInterpolation(interpolation);

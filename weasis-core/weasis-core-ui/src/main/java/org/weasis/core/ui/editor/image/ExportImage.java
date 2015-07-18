@@ -33,14 +33,14 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.graphic.Graphic;
 
-public class ExportImage<E extends ImageElement> extends DefaultView2d {
+public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExportImage.class);
 
-    private final DefaultView2d<E> view2d;
+    private final ViewCanvas<E> view2d;
     private Graphics2D currentG2d;
 
-    public ExportImage(DefaultView2d<E> view2d) {
-        super(view2d.eventManager, view2d.getLayerModel(), null);
+    public ExportImage(ViewCanvas<E> view2d) {
+        super(view2d.getEventManager(), view2d.getLayerModel(), null);
         this.view2d = view2d;
         // No need to have random pixel iterator
         this.imageLayer.setBuildIterator(false);
@@ -68,17 +68,19 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
 
         setPreferredSize(new Dimension(1024, 1024));
         ViewModel model = view2d.getViewModel();
-        Rectangle2D canvas = new Rectangle2D.Double(view2d.modelToViewLength(model.getModelOffsetX()),
-            view2d.modelToViewLength(model.getModelOffsetY()), view2d.getWidth(), view2d.getHeight());
+        Rectangle2D canvas =
+            new Rectangle2D.Double(view2d.modelToViewLength(model.getModelOffsetX()), view2d.modelToViewLength(model
+                .getModelOffsetY()), view2d.getJComponent().getWidth(), view2d.getJComponent().getHeight());
         Rectangle2D mArea = view2d.getViewModel().getModelArea();
-        Rectangle2D viewFullImg = new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()),
-            view2d.modelToViewLength(mArea.getHeight()));
+        Rectangle2D viewFullImg =
+            new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()), view2d.modelToViewLength(mArea
+                .getHeight()));
         Rectangle2D.intersect(canvas, viewFullImg, viewFullImg);
         actionsInView.put("origin.image.bound", viewFullImg); //$NON-NLS-1$
         actionsInView.put("origin.zoom", view2d.getActionValue(ActionW.ZOOM.cmd())); //$NON-NLS-1$
-        Point2D p = new Point2D.Double(
-            view2d.viewToModelX(viewFullImg.getX() - canvas.getX() + (viewFullImg.getWidth() - 1) * 0.5),
-            view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
+        Point2D p =
+            new Point2D.Double(view2d.viewToModelX(viewFullImg.getX() - canvas.getX() + (viewFullImg.getWidth() - 1)
+                * 0.5), view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
         actionsInView.put("origin.center", p); //$NON-NLS-1$
         // Do not use setSeries() because the view will be reset
         this.series = view2d.getSeries();
@@ -86,7 +88,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     }
 
     @Override
-    public void dispose() {
+    public void disposeView() {
         disableMouseAndKeyListener();
         removeFocusListener(this);
         ToolTipManager.sharedInstance().unregisterComponent(this);

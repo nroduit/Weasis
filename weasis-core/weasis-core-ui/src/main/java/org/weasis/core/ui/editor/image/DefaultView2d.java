@@ -13,7 +13,6 @@ package org.weasis.core.ui.editor.image;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -32,7 +31,6 @@ import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -50,7 +48,6 @@ import java.awt.image.ColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -61,8 +58,8 @@ import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -83,7 +80,6 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpEvent;
@@ -96,6 +92,7 @@ import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.KernelData;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -114,11 +111,9 @@ import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragSequence;
 import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.ImageLayerChangeListener;
 import org.weasis.core.ui.graphic.PanPoint;
 import org.weasis.core.ui.graphic.PanPoint.STATE;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
-import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
@@ -131,18 +126,13 @@ import org.weasis.core.ui.util.TitleMenuItem;
 /**
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
-public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
-    FocusListener, Image2DViewer, ImageLayerChangeListener<E>, KeyListener {
+public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements ViewCanvas<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultView2d.class);
 
     public enum ZoomType {
         CURRENT, BEST_FIT, PIXEL_SIZE, REAL
     };
 
-    public static final String zoomTypeCmd = "zoom.type"; //$NON-NLS-1$
-    public static final ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png")); //$NON-NLS-1$
-    public static final int CENTER_POINTER = 1 << 1;
-    public static final int HIGHLIGHTED_POINTER = 1 << 2;
     static final Shape[] pointer;
     static {
         pointer = new Shape[5];
@@ -152,11 +142,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
-    protected static final Color focusColor = Color.orange;
-    protected static final Color lostFocusColor = new Color(255, 224, 178);
 
     protected final FocusHandler focusHandler = new FocusHandler();
-    protected final MouseHandler mouseClickHandler = new MouseHandler();
+    protected final GraphicMouseHandler<E> graphicMouseHandler;
 
     private final PanPoint highlightedPosition = new PanPoint(STATE.Center);
     private final PanPoint startedDragPoint = new PanPoint(STATE.DragStart);
@@ -168,7 +156,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected final Border focusBorder = new EtchedBorder(BevelBorder.LOWERED, focusColor, focusColor);
     protected final Border lostFocusBorder = new EtchedBorder(BevelBorder.LOWERED, lostFocusColor, lostFocusColor);
 
-    protected DragSequence ds;
     protected final RenderedImageLayer<E> imageLayer;
     protected Panner<?> panner;
     protected ZoomWin<E> lens;
@@ -196,7 +183,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         imageLayer = new RenderedImageLayer<E>(true);
         initActionWState();
-        // infoLayer = new InfoLayer(this);
+        graphicMouseHandler = new GraphicMouseHandler<E>(this);
 
         setBorder(normalBorder);
         setFocusable(true);
@@ -205,10 +192,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         setMinimumSize(new Dimension(50, 50));
     }
 
+    @Override
     public void registerDefaultListeners() {
         addFocusListener(this);
         ToolTipManager.sharedInstance().registerComponent(this);
         imageLayer.addLayerChangeListener(this);
+    }
+
+    @Override
+    public JComponent getJComponent() {
+        return this;
     }
 
     protected void buildPanner() {
@@ -217,6 +210,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public void copyActionWState(HashMap<String, Object> actionsInView) {
         actionsInView.putAll(this.actionsInView);
     }
@@ -242,10 +236,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, false);
     }
 
+    @Override
     public ImageViewerEventManager<E> getEventManager() {
         return eventManager;
     }
 
+    @Override
     public void updateSynchState() {
         if (getActionValue(ActionW.SYNCH_LINK.cmd()) != null) {
             if (synchButton == null) {
@@ -304,7 +300,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    public PixelInfo getPixelInfo(final Point p, RenderedImageLayer<E> imageLayer) {
+    @Override
+    public PixelInfo getPixelInfo(final Point p) {
         PixelInfo pixelInfo = new PixelInfo();
         E imageElement = imageLayer.getSourceImage();
         if (imageElement != null && imageLayer.getReadIterator() != null) {
@@ -400,11 +397,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     }
 
+    @Override
     public Panner getPanner() {
         return panner;
     }
 
-    protected void closeLens() {
+    @Override
+    public void closeLens() {
         if (lens != null) {
             lens.showLens(false);
             this.remove(lens);
@@ -412,10 +411,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public void setSeries(MediaSeries<E> series) {
         setSeries(series, null);
     }
 
+    @Override
     public void setSeries(MediaSeries<E> newSeries, E selectedMedia) {
         MediaSeries<E> oldsequence = this.series;
         this.series = newSeries;
@@ -490,6 +491,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         mediaSeries.setFocused(false);
     }
 
+    @Override
     public void setFocused(boolean focused) {
         if (series != null) {
             series.setFocused(focused);
@@ -638,6 +640,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return adjustViewScale(super.getBestFitViewScale());
     }
 
+    @Override
     public double getRealWorldViewScale() {
         double viewScale = 0.0;
         E img = getImage();
@@ -689,14 +692,22 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return imageLayer;
     }
 
+    @Override
+    public MeasurableLayer getMeasurableLayer() {
+        return imageLayer;
+    }
+
+    @Override
     public AnnotationsLayer getInfoLayer() {
         return infoLayer;
     }
 
+    @Override
     public int getTileOffset() {
         return tileOffset;
     }
 
+    @Override
     public void setTileOffset(int tileOffset) {
         this.tileOffset = tileOffset;
     }
@@ -720,11 +731,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return getPreprocessedImage(image);
     }
 
+    @Override
     public final void center() {
         Rectangle2D bound = getViewModel().getModelArea();
         setCenter(bound.getWidth() / 2.0, bound.getHeight() / 2.0);
     }
 
+    @Override
     public final void setCenter(double x, double y) {
         int w = getWidth();
         int h = getHeight();
@@ -751,6 +764,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         setOrigin(getViewModel().getModelOffsetX() + x, getViewModel().getModelOffsetY() + y);
     }
 
+    @Override
     public final void moveOrigin(PanPoint point) {
         if (point != null) {
             if (PanPoint.STATE.Center.equals(point.getState())) {
@@ -767,6 +781,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public Comparator<E> getCurrentSortComparator() {
         SeriesComparator<E> sort = (SeriesComparator<E>) actionsInView.get(ActionW.SORTSTACK.cmd());
         Boolean reverse = (Boolean) actionsInView.get(ActionW.INVERSESTACK.cmd());
@@ -782,10 +797,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return -1;
     }
 
+    @Override
     public void setActionsInView(String action, Object value) {
         setActionsInView(action, value, false);
     }
 
+    @Override
     public void setActionsInView(String action, Object value, boolean repaint) {
         if (action != null) {
             actionsInView.put(action, value);
@@ -795,6 +812,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public void setSelected(boolean selected) {
         setBorder(selected ? focusBorder : normalBorder);
         // Remove the selection of graphics
@@ -813,6 +831,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return MeasureTool.viewSetting.getFont();
     }
 
+    @Override
     public Font getLayerFont() {
         int fontSize =
             // Set font size according to the view size
@@ -953,6 +972,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public void setDrawingsVisibility(boolean visible) {
         if ((Boolean) actionsInView.get(ActionW.DRAW.cmd()) != visible) {
             actionsInView.put(ActionW.DRAW.cmd(), visible);
@@ -960,6 +980,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public Object getLensActionValue(String action) {
         if (lens == null) {
             return null;
@@ -967,6 +988,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return lens.getActionValue(action);
     }
 
+    @Override
     public void changeZoomInterpolation(int interpolation) {
         Integer val = (Integer) getDisplayOpManager().getParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION);
         boolean update = val == null || val != interpolation;
@@ -980,6 +1002,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public OpManager getDisplayOpManager() {
         return imageLayer.getDisplayOpManager();
     }
@@ -1049,10 +1072,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 // Avoid to reset zoom when the mode is not best fit
                 if (zoomFactor != null && zoomFactor >= 0.0) {
-                    Object zoomType = actionsInView.get(DefaultView2d.zoomTypeCmd);
-                    actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.CURRENT);
+                    Object zoomType = actionsInView.get(ViewCanvas.zoomTypeCmd);
+                    actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.CURRENT);
                     setImage(imgElement);
-                    actionsInView.put(DefaultView2d.zoomTypeCmd, zoomType);
+                    actionsInView.put(ViewCanvas.zoomTypeCmd, zoomType);
                 } else {
                     setImage(imgElement);
                 }
@@ -1110,10 +1133,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (val != -200.0 && val != -100.0) {
                     zoom(val);
                 } else {
-                    Object zoomType = actionsInView.get(DefaultView2d.zoomTypeCmd);
-                    actionsInView.put(DefaultView2d.zoomTypeCmd, val == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
+                    Object zoomType = actionsInView.get(ViewCanvas.zoomTypeCmd);
+                    actionsInView.put(ViewCanvas.zoomTypeCmd, val == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
                     zoom(0.0);
-                    actionsInView.put(DefaultView2d.zoomTypeCmd, zoomType);
+                    actionsInView.put(ViewCanvas.zoomTypeCmd, zoomType);
                 }
             } else if (command.equals(ActionW.LENSZOOM.cmd())) {
                 if (lens != null) {
@@ -1189,7 +1212,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public void dispose() {
+    public void disposeView() {
         disableMouseAndKeyListener();
         removeFocusListener(this);
         ToolTipManager.sharedInstance().unregisterComponent(this);
@@ -1198,9 +1221,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             closingSeries(series);
             series = null;
         }
-        super.dispose();
+        super.disposeView();
     }
 
+    @Override
     public synchronized void disableMouseAndKeyListener() {
         MouseListener[] listener = this.getMouseListeners();
 
@@ -1224,12 +1248,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public synchronized void iniDefaultMouseListener() {
         // focus listener is always on
         this.addMouseListener(focusHandler);
         this.addMouseMotionListener(focusHandler);
     }
 
+    @Override
     public synchronized void iniDefaultKeyListener() {
         this.addKeyListener(this);
     }
@@ -1278,26 +1304,32 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public int getPointerType() {
         return pointerType;
     }
 
+    @Override
     public void setPointerType(int pointerType) {
         this.pointerType = pointerType;
     }
 
+    @Override
     public void addPointerType(int i) {
         this.pointerType |= i;
     }
 
+    @Override
     public void resetPointerType(int i) {
         this.pointerType &= ~i;
     }
 
+    @Override
     public Point2D getHighlightedPosition() {
         return highlightedPosition;
     }
 
+    @Override
     public void drawPointer(Graphics2D g, double x, double y) {
         float dash[] = { 5.0f };
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1321,7 +1353,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             Point2D pModel = getImageCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
             Rectangle oldBound = infoLayer.getPixelInfoBound();
             PixelInfo pixelInfo =
-                getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())), imageLayer);
+                getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())));
             oldBound.width =
                 Math.max(
                     oldBound.width,
@@ -1339,302 +1371,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void focusLost(FocusEvent e) {
-    }
-
-    protected class MouseHandler extends MouseActionAdapter {
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-            int buttonMask = getButtonMaskEx();
-
-            // Check if extended modifier of mouse event equals the current buttonMask
-            // Also asserts that Mouse adapter is not disable
-            if (e.isConsumed() || (e.getModifiersEx() & buttonMask) == 0) {
-                return;
-            }
-
-            // Convert mouse event point to real image coordinate point (without geometric transformation)
-            MouseEventDouble mouseEvt = new MouseEventDouble(e);
-            mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(e.getX(), e.getY()));
-
-            // Do nothing and return if current dragSequence is not completed
-            if (ds != null && !ds.completeDrag(mouseEvt)) {
-                return;
-            }
-
-            Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
-
-            // Avoid any dragging on selection when Shift Button is Down
-            if (!mouseEvt.isShiftDown()) {
-                // Evaluates if mouse is on a dragging position, creates a DragSequence and changes cursor consequently
-                Graphic firstGraphicIntersecting = getLayerModel().getFirstGraphicIntersecting(mouseEvt);
-
-                if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
-                    AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
-                    List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
-
-                    if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
-
-                        if ((selectedDragGraphList.size() > 1)) {
-                            ds = new BulkDragSequence(selectedDragGraphList, mouseEvt);
-                            newCursor = AbstractLayerModel.MOVE_CURSOR;
-
-                        } else if (selectedDragGraphList.size() == 1) {
-
-                            if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                                ds = dragGraph.createDragLabelSequence();
-                                newCursor = AbstractLayerModel.HAND_CURSOR;
-
-                            } else {
-                                int handlePtIndex = dragGraph.getHandlePointIndex(mouseEvt);
-
-                                if (handlePtIndex >= 0) {
-                                    dragGraph.moveMouseOverHandlePoint(handlePtIndex, mouseEvt);
-                                    ds = dragGraph.createResizeDrag(handlePtIndex);
-                                    newCursor = AbstractLayerModel.EDIT_CURSOR;
-
-                                } else {
-                                    ds = dragGraph.createMoveDrag();
-                                    newCursor = AbstractLayerModel.MOVE_CURSOR;
-                                }
-                            }
-                        }
-                    } else {
-                        if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                            ds = dragGraph.createDragLabelSequence();
-                            newCursor = AbstractLayerModel.HAND_CURSOR;
-
-                        } else {
-                            ds = dragGraph.createMoveDrag();
-                            newCursor = AbstractLayerModel.MOVE_CURSOR;
-                        }
-                        getLayerModel().setSelectedGraphic(dragGraph);
-                    }
-                }
-            }
-
-            if (ds == null) {
-                AbstractDragGraphic dragGraph = getLayerModel().createDragGraphic(mouseEvt);
-
-                if (dragGraph != null) {
-                    ds = dragGraph.createResizeDrag();
-                    if (dragGraph instanceof SelectGraphic) {
-                        getLayerModel().setSelectGraphic((SelectGraphic) dragGraph);
-                    } else {
-                        getLayerModel().setSelectedGraphic(dragGraph);
-                    }
-                }
-            }
-
-            getLayerModel().setCursor(newCursor);
-
-            if (ds != null) {
-                ds.startDrag(mouseEvt);
-            } else {
-                getLayerModel().setSelectedGraphics(null);
-            }
-
-            // Throws to the tool listener the current graphic selection.
-            getLayerModel().fireGraphicsSelectionChanged(imageLayer);
-
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            int buttonMask = getButtonMask();
-
-            // Check if extended modifier of mouse event equals the current buttonMask
-            // Note that extended modifiers are not triggered in mouse released
-            // Also asserts that Mouse adapter is not disable
-            if ((e.getModifiers() & buttonMask) == 0) {
-                return;
-            }
-
-            // Do nothing and return if no dragSequence exist
-            if (ds == null) {
-                return;
-            }
-
-            // Convert mouse event point to real image coordinate point (without geometric transformation)
-            MouseEventDouble mouseEvt = new MouseEventDouble(e);
-            mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(e.getX(), e.getY()));
-
-            SelectGraphic selectGraphic = getLayerModel().getSelectGraphic();
-
-            if (selectGraphic != null) {
-
-                AffineTransform transform = getAffineTransform(mouseEvt);
-                Rectangle selectionRect = selectGraphic.getBounds(transform);
-
-                // Little size rectangle in selection click is interpreted as a single clic
-                boolean isSelectionSingleClic =
-                    (selectionRect == null || (selectionRect.width < 5 && selectionRect.height < 5));
-
-                List<Graphic> newSelectedGraphList = null;
-
-                if (!isSelectionSingleClic) {
-                    newSelectedGraphList = getLayerModel().getSelectedAllGraphicsIntersecting(selectionRect, transform);
-                } else {
-                    Graphic selectedGraph = getLayerModel().getFirstGraphicIntersecting(mouseEvt);
-                    if (selectedGraph != null) {
-                        newSelectedGraphList = new ArrayList<Graphic>(1);
-                        newSelectedGraphList.add(selectedGraph);
-                    }
-                }
-
-                // Add all graphics inside selection rectangle at any level in layers instead in the case of single
-                // click where top level first graphic found is removed from list if already selected
-                if (mouseEvt.isShiftDown()) {
-                    List<Graphic> selectedGraphList = new ArrayList<Graphic>(getLayerModel().getSelectedGraphics());
-
-                    if (selectedGraphList != null && selectedGraphList.size() > 0) {
-                        if (newSelectedGraphList == null) {
-                            newSelectedGraphList = new ArrayList<Graphic>(selectedGraphList);
-                        } else {
-                            for (Graphic graphic : selectedGraphList) {
-                                if (!newSelectedGraphList.contains(graphic)) {
-                                    newSelectedGraphList.add(graphic);
-                                } else if (isSelectionSingleClic) {
-                                    newSelectedGraphList.remove(graphic);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                getLayerModel().setSelectedGraphics(newSelectedGraphList);
-                getLayerModel().setSelectGraphic(null);
-            }
-
-            if (ds.completeDrag(mouseEvt)) {
-
-                ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
-                if (drawOnceAction instanceof ToggleButtonListener) {
-                    if (((ToggleButtonListener) drawOnceAction).isSelected()) {
-                        ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
-                        if (measure instanceof ComboItemListener
-                            && eventManager.getSelectedViewPane() == DefaultView2d.this) {
-                            ((ComboItemListener) measure).setSelectedItem(MeasureToolBar.selectionGraphic);
-                        }
-                    }
-                }
-                ds = null;
-            }
-
-            // Throws to the tool listener the current graphic selection.
-            getLayerModel().fireGraphicsSelectionChanged(imageLayer);
-
-            Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
-
-            // TODO below is the same code as this is in mouseMoved, can be a function instead
-            // Evaluates if mouse is on a dragging position, and changes cursor image consequently
-            List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
-            Graphic firstGraphicIntersecting = getLayerModel().getFirstGraphicIntersecting(mouseEvt);
-
-            if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
-                AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
-
-                if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
-
-                    if ((selectedDragGraphList.size() > 1)) {
-                        newCursor = AbstractLayerModel.MOVE_CURSOR;
-
-                    } else if (selectedDragGraphList.size() == 1) {
-
-                        if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                            newCursor = AbstractLayerModel.HAND_CURSOR;
-
-                        } else {
-                            if (dragGraph.getHandlePointIndex(mouseEvt) >= 0) {
-                                newCursor = AbstractLayerModel.EDIT_CURSOR;
-                            } else {
-                                newCursor = AbstractLayerModel.MOVE_CURSOR;
-                            }
-                        }
-                    }
-                } else {
-                    if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                        newCursor = AbstractLayerModel.HAND_CURSOR;
-                    } else {
-                        newCursor = AbstractLayerModel.MOVE_CURSOR;
-                    }
-                }
-            }
-
-            getLayerModel().setCursor(newCursor);
-
-        }
-
-        @Override
-        public void mouseDragged(MouseEvent e) {
-            int buttonMask = getButtonMaskEx();
-
-            // Check if extended modifier of mouse event equals the current buttonMask
-            // Also asserts that Mouse adapter is not disable
-            if (e.isConsumed() || (e.getModifiersEx() & buttonMask) == 0) {
-                return;
-            }
-
-            if (ds != null) {
-                // Convert mouse event point to real image coordinate point (without geometric transformation)
-                MouseEventDouble mouseEvt = new MouseEventDouble(e);
-                mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(e.getX(), e.getY()));
-
-                ds.drag(mouseEvt);
-            }
-        }
-
-        @Override
-        public void mouseMoved(MouseEvent e) {
-
-            // Convert mouse event point to real image coordinate point (without geometric transformation)
-            MouseEventDouble mouseEvt = new MouseEventDouble(e);
-            mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(e.getX(), e.getY()));
-
-            if (ds != null) {
-                ds.drag(mouseEvt);
-            } else {
-
-                Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
-
-                if (!mouseEvt.isShiftDown()) {
-                    // Evaluates if mouse is on a dragging position, and changes cursor image consequently
-                    Graphic firstGraphicIntersecting = getLayerModel().getFirstGraphicIntersecting(mouseEvt);
-
-                    if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
-                        AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
-                        List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
-
-                        if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
-
-                            if ((selectedDragGraphList.size() > 1)) {
-                                newCursor = AbstractLayerModel.MOVE_CURSOR;
-
-                            } else if (selectedDragGraphList.size() == 1) {
-
-                                if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                                    newCursor = AbstractLayerModel.HAND_CURSOR;
-
-                                } else {
-                                    if (dragGraph.getHandlePointIndex(mouseEvt) >= 0) {
-                                        newCursor = AbstractLayerModel.EDIT_CURSOR;
-                                    } else {
-                                        newCursor = AbstractLayerModel.MOVE_CURSOR;
-                                    }
-                                }
-                            }
-                        } else {
-                            if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                                newCursor = AbstractLayerModel.HAND_CURSOR;
-                            } else {
-                                newCursor = AbstractLayerModel.MOVE_CURSOR;
-                            }
-                        }
-                    }
-                }
-                getLayerModel().setCursor(newCursor);
-            }
-        }
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1710,6 +1446,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public List<Action> getExportToClipboardAction() {
         List<Action> list = new ArrayList<Action>();
 
@@ -1741,6 +1478,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return list;
     }
 
+    @Override
     public abstract void enableMouseAndKeyListener(MouseActions mouseActions);
 
     public static final AffineTransform getAffineTransform(MouseEvent mouseevent) {
@@ -1750,6 +1488,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return null;
     }
 
+    @Override
     public void resetZoom() {
         ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
         if (!ZoomType.CURRENT.equals(type)) {
@@ -1757,10 +1496,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public void resetPan() {
         center();
     }
 
+    @Override
     public void reset() {
         imageLayer.setEnableDispOperations(false);
         ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
@@ -1776,6 +1517,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         eventManager.updateComponentsListener(this);
     }
 
+    @Override
     public List<ViewButton> getViewButtons() {
         return viewButtons;
     }

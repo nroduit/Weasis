@@ -30,11 +30,11 @@ import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
-import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AdvancedShape.ScaleInvariantShape;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
@@ -92,7 +92,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
     protected void buildShape(MouseEventDouble mouseEvent) {
         updateTool();
         AdvancedShape newShape = null;
-        DefaultView2d view2d = getDefaultView2d(mouseEvent);
+        ViewCanvas view2d = getDefaultView2d(mouseEvent);
 
         if (ptBox != null) {
             if (labelStringArray == null) {
@@ -138,18 +138,22 @@ public class PixelInfoGraphic extends AnnotationGraphic {
     }
 
     @Override
-    public void setLabel(String[] labels, DefaultView2d view2d, Point2D pos) {
-        String[] lbs;
+    public void setLabel(String[] labels, ViewCanvas view2d, Point2D pos) {
+        String[] lbs = null;
         if (view2d != null && ptAnchor != null) {
             pixelInfo =
-                view2d.getPixelInfo(new Point((int) Math.floor(ptAnchor.getX()), (int) Math.floor(ptAnchor.getY())),
-                    view2d.getImageLayer());
-            lbs = new String[] { pixelInfo.getPixelValueText() };
+                view2d.getPixelInfo(new Point((int) Math.floor(ptAnchor.getX()), (int) Math.floor(ptAnchor.getY())));
+            if (pixelInfo != null) {
+                lbs = new String[] { pixelInfo.getPixelValueText() };
+            }
         } else {
             lbs = labels;
         }
+        if (lbs == null) {
+            lbs = new String[] { "No info" };
+        }
         super.setLabel(lbs, view2d, pos);
-        ImageLayer layer = view2d == null ? null : view2d.getImageLayer();
+        MeasurableLayer layer = view2d == null ? null : view2d.getMeasurableLayer();
         AbstractLayerModel model = (view2d != null) ? view2d.getLayerModel() : null;
         if (model != null) {
             ArrayList<Graphic> selectedGraphics = model.getSelectedGraphics();
@@ -177,10 +181,10 @@ public class PixelInfoGraphic extends AnnotationGraphic {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit) {
+    public List<MeasureItem> computeMeasurements(MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
 
-        if (layer != null && layer.getSourceImage() != null && isShapeValid()) {
-            MeasurementsAdapter adapter = layer.getSourceImage().getMeasurementAdapter(displayUnit);
+        if (layer != null && layer.hasContent() && isShapeValid()) {
+            MeasurementsAdapter adapter = layer.getMeasurementAdapter(displayUnit);
 
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();

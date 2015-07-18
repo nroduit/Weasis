@@ -28,7 +28,7 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
-    public ZoomToolBar(final ImageViewerEventManager<E> eventManager, int index) {
+    public ZoomToolBar(final ImageViewerEventManager<E> eventManager, int index, boolean showLens) {
         super(Messages.getString("ZoomToolBar.zoomBar"), index); //$NON-NLS-1$
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
@@ -50,14 +50,16 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
             zoomAction.registerActionState(zoom);
         }
 
-        final JToggleButton jButtonLens =
-            new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-lens.png"))); //$NON-NLS-1$
-        jButtonLens.setToolTipText(Messages.getString("ViewerToolBar.show_lens")); //$NON-NLS-1$
-        ActionState lens = eventManager.getAction(ActionW.LENS);
-        if (lens instanceof ToggleButtonListener) {
-            ((ToggleButtonListener) lens).registerActionState(jButtonLens);
+        if (showLens) {
+            final JToggleButton jButtonLens =
+                new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-lens.png"))); //$NON-NLS-1$
+            jButtonLens.setToolTipText(Messages.getString("ViewerToolBar.show_lens")); //$NON-NLS-1$
+            ActionState lens = eventManager.getAction(ActionW.LENS);
+            if (lens instanceof ToggleButtonListener) {
+                ((ToggleButtonListener) lens).registerActionState(jButtonLens);
+            }
+            add(jButtonLens);
         }
-        add(jButtonLens);
     }
 
     private JPopupMenu getZoomPopupMenuButton(DropDownButton dropDownButton,

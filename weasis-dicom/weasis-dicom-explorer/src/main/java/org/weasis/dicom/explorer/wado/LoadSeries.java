@@ -66,8 +66,8 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -1024,7 +1024,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                                             for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
                                                 if (entry1.equals(p.getGroupID())) {
                                                     if (p instanceof ImageViewerPlugin) {
-                                                        DefaultView2d pane =
+                                                        ViewCanvas pane =
                                                             ((ImageViewerPlugin) p).getSelectedImagePane();
                                                         if (pane != null
                                                             && pane.getImageLayer().getSourceImage() == null) {

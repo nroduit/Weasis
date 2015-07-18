@@ -34,11 +34,11 @@ import org.simpleframework.xml.ElementArray;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GeomUtil;
-import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.graphic.AdvancedShape.BasicShape;
 import org.weasis.core.ui.graphic.AdvancedShape.ScaleInvariantShape;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -117,12 +117,12 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void updateLabel(Object source, DefaultView2d view2d) {
+    public void updateLabel(Object source, ViewCanvas view2d) {
         setLabel(labelStringArray, view2d);
     }
 
     @Override
-    public void updateLabel(Object source, DefaultView2d view2d, Point2D pos) {
+    public void updateLabel(Object source, ViewCanvas view2d, Point2D pos) {
         setLabel(labelStringArray, view2d, pos);
     }
 
@@ -132,7 +132,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         AdvancedShape newShape = null;
 
         if (ptBox != null) {
-            DefaultView2d view = getDefaultView2d(mouseEvent);
+            ViewCanvas view = getDefaultView2d(mouseEvent);
             if (labelStringArray == null) {
                 if (view != null) {
                     setLabel(new String[] { getInitialText(view) }, view, ptBox);
@@ -170,7 +170,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         setShape(newShape, mouseEvent);
     }
 
-    protected String getInitialText(DefaultView2d view) {
+    protected String getInitialText(ViewCanvas view) {
         return Messages.getString("AnnotationGraphic.text_box"); //$NON-NLS-1$
     }
 
@@ -232,7 +232,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit) {
+    public List<MeasureItem> computeMeasurements(MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
         return null;
     }
 
@@ -267,7 +267,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void setLabel(String[] labels, DefaultView2d view2d) {
+    public void setLabel(String[] labels, ViewCanvas view2d) {
         Point2D pt = getBoxPoint();
         if (pt == null) {
             pt = getAnchorPoint();
@@ -278,17 +278,18 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void setLabel(String[] labels, DefaultView2d view2d, Point2D pos) {
+    public void setLabel(String[] labels, ViewCanvas view2d, Point2D pos) {
         if (view2d == null || labels == null || labels.length == 0 || pos == null) {
             reset();
         } else {
-            Graphics2D g2d = (Graphics2D) view2d.getGraphics();
+            Graphics2D g2d = (Graphics2D) view2d.getJComponent().getGraphics();
             if (g2d == null) {
                 return;
             }
             labelStringArray = labels;
             Font defaultFont = g2d.getFont();
-            FontRenderContext fontRenderContext = ((Graphics2D) view2d.getGraphics()).getFontRenderContext();
+            FontRenderContext fontRenderContext =
+                ((Graphics2D) view2d.getJComponent().getGraphics()).getFontRenderContext();
 
             updateBoundsSize(defaultFont, fontRenderContext);
 

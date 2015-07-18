@@ -32,8 +32,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.LayoutUtil;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -60,7 +60,7 @@ public class AbstractLayerModel implements LayerModel {
 
     protected Cursor cursor = DEFAULT_CURSOR;
 
-    protected final GraphicsPane canvas;
+    protected final Canvas canvas;
     /* List of layers (sorted by level number, ascending order, the highest number is the latest painted layer) */
     private final ArrayList<AbstractLayer> layers;
 
@@ -80,7 +80,7 @@ public class AbstractLayerModel implements LayerModel {
 
     // private final boolean crossHairMode = false;
 
-    public AbstractLayerModel(GraphicsPane canvas) {
+    public AbstractLayerModel(Canvas canvas) {
         this.canvas = canvas;
         layers = new ArrayList<AbstractLayer>();
         selectedGraphicList = new ArrayList<Graphic>();
@@ -111,7 +111,7 @@ public class AbstractLayerModel implements LayerModel {
             if (!layer.isVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAW.cmd())) {
                 JOptionPane
                     .showMessageDialog(
-                        canvas,
+                        canvas.getJComponent(),
                         Messages.getString("AbstractLayerModel.msg_not_vis"), Messages.getString("AbstractLayerModel.draw"), //$NON-NLS-1$ //$NON-NLS-2$
                         JOptionPane.ERROR_MESSAGE);
             } else {
@@ -126,7 +126,7 @@ public class AbstractLayerModel implements LayerModel {
 
     @Override
     public void repaint() {
-        canvas.repaint();
+        canvas.getJComponent().repaint();
     }
 
     @Override
@@ -136,7 +136,7 @@ public class AbstractLayerModel implements LayerModel {
             double viewScale = canvas.getViewModel().getViewScale();
             int x = (int) (rectangle.x - canvas.getViewModel().getModelOffsetX() * viewScale);
             int y = (int) (rectangle.y - canvas.getViewModel().getModelOffsetY() * viewScale);
-            canvas.repaint(new Rectangle(x, y, rectangle.width, rectangle.height));
+            canvas.getJComponent().repaint(new Rectangle(x, y, rectangle.width, rectangle.height));
         }
     }
 
@@ -152,7 +152,7 @@ public class AbstractLayerModel implements LayerModel {
 
     public void setCursor(Cursor cursor) {
         this.cursor = cursor;
-        canvas.setCursor(this.cursor);
+        canvas.getJComponent().setCursor(this.cursor);
     }
 
     public void resetCursor() {
@@ -205,16 +205,16 @@ public class AbstractLayerModel implements LayerModel {
 
     @Override
     public Rectangle getBounds() {
-        return canvas.getBounds();
+        return canvas.getJComponent().getBounds();
     }
 
     @Override
-    public GraphicsPane getGraphicsPane() {
+    public Canvas getGraphicsPane() {
         return canvas;
     }
 
     public void repaintWithRelativeCoord(Rectangle rectangle) {
-        canvas.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        canvas.getJComponent().repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
     }
 
     public void SortLayersFromLevel() {
@@ -347,7 +347,7 @@ public class AbstractLayerModel implements LayerModel {
                 response =
                     JOptionPane
                         .showConfirmDialog(
-                            canvas,
+                            canvas.getJComponent(),
                             String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()), Messages.getString("AbstractLayerModel.del_graphs"), //$NON-NLS-1$ //$NON-NLS-2$
                             JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             }
@@ -489,7 +489,7 @@ public class AbstractLayerModel implements LayerModel {
         }
     }
 
-    public void fireGraphicsSelectionChanged(ImageLayer layer) {
+    public void fireGraphicsSelectionChanged(MeasurableLayer layer) {
         for (int i = 0; i < selectedGraphicsListener.size(); i++) {
             (selectedGraphicsListener.get(i)).handle((List<Graphic>) selectedGraphicList.clone(), layer);
         }

@@ -8,14 +8,19 @@ import javax.swing.JButton;
 
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.explorer.DicomFieldsView;
 
-public class DcmHeaderToolBar<DicomImageElement> extends WtoolBar {
+public class DcmHeaderToolBar extends WtoolBar {
 
-    public DcmHeaderToolBar(int index) {
+    public DcmHeaderToolBar(final ImageViewerEventManager<DicomImageElement> eventManager, int index) {
         super(Messages.getString("DcmHeaderToolBar.title"), index); //$NON-NLS-1$
+        if (eventManager == null) {
+            throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+        }
 
         final JButton metaButton =
             new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
@@ -24,7 +29,7 @@ public class DcmHeaderToolBar<DicomImageElement> extends WtoolBar {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                DicomFieldsView.displayHeader(EventManager.getInstance().getSelectedView2dContainer());
+                DicomFieldsView.displayHeader(eventManager.getSelectedView2dContainer());
             }
         });
         add(metaButton);

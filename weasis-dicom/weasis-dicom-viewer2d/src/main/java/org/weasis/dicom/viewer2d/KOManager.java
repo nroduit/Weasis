@@ -22,7 +22,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -35,7 +35,7 @@ import org.weasis.dicom.explorer.LoadDicomObjects;
 
 public final class KOManager {
 
-    public static List<Object> getKOElementListWithNone(DefaultView2d<DicomImageElement> currentView) {
+    public static List<Object> getKOElementListWithNone(ViewCanvas<DicomImageElement> currentView) {
 
         Collection<KOSpecialElement> koElements =
             currentView != null ? DicomModel.getKoSpecialElements(currentView.getSeries()) : null;
@@ -58,7 +58,7 @@ public final class KOManager {
      * if there is a more suitable new KEY_OBJECT element. Ask the user if needed.
      */
 
-    public static KOSpecialElement getValidKOSelection(final DefaultView2d<DicomImageElement> view2d) {
+    public static KOSpecialElement getValidKOSelection(final ViewCanvas<DicomImageElement> view2d) {
 
         KOSpecialElement currentSelectedKO = getCurrentKOSelection(view2d);
         DicomImageElement currentImage = view2d.getImage();
@@ -76,18 +76,20 @@ public final class KOManager {
                 Object[] options =
                     { Messages.getString("KOManager.select_last_ko"), Messages.getString("KOManager.new_ko") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-                int response = JOptionPane.showOptionDialog(view2d, message, Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
-                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                int response =
+                    JOptionPane.showOptionDialog(view2d.getJComponent(), message,
+                        Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                 if (response == 0) {
                     newKOSelection = validKOSelection;
                 } else if (response == 1) {
-                    newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                    newDicomKO = createNewDicomKeyObject(currentImage, view2d.getJComponent());
                 } else if (response == JOptionPane.CLOSED_OPTION) {
                     return null;
                 }
             } else {
-                newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                newDicomKO = createNewDicomKeyObject(currentImage, view2d.getJComponent());
             }
 
         } else {
@@ -106,13 +108,14 @@ public final class KOManager {
                         { Messages.getString("KOManager.use_ko"), Messages.getString("KOManager.new_ko") }; //$NON-NLS-1$ //$NON-NLS-2$
 
                     int response =
-                        JOptionPane.showOptionDialog(view2d, message, Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                        JOptionPane.showOptionDialog(view2d.getJComponent(), message,
+                            Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
                             JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                     if (response == 0) {
                         newKOSelection = currentSelectedKO;
                     } else if (response == 1) {
-                        newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                        newDicomKO = createNewDicomKeyObject(currentImage, view2d.getJComponent());
                     } else if (response == JOptionPane.CLOSED_OPTION) {
                         return null;
                     }
@@ -124,13 +127,15 @@ public final class KOManager {
                 Object[] options =
                     { Messages.getString("KOManager.new_ko"), Messages.getString("KOManager.new_ko_from") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-                int response = JOptionPane.showOptionDialog(view2d, message, Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
-                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                int response =
+                    JOptionPane.showOptionDialog(view2d.getJComponent(), message,
+                        Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                 if (response == 0) {
-                    newDicomKO = createNewDicomKeyObject(currentImage, view2d);
+                    newDicomKO = createNewDicomKeyObject(currentImage, view2d.getJComponent());
                 } else if (response == 1) {
-                    newDicomKO = createNewDicomKeyObject(currentSelectedKO, view2d);
+                    newDicomKO = createNewDicomKeyObject(currentSelectedKO, view2d.getJComponent());
                 } else if (response == JOptionPane.CLOSED_OPTION) {
                     return null;
                 }
@@ -206,7 +211,7 @@ public final class KOManager {
      * reference the studyInstanceUID of the current Dicom Image or simply be empty ...
      */
 
-    public static KOSpecialElement findValidKOSelection(final DefaultView2d<DicomImageElement> view2d) {
+    public static KOSpecialElement findValidKOSelection(final ViewCanvas<DicomImageElement> view2d) {
 
         MediaSeries<DicomImageElement> dicomSeries = view2d.getSeries();
         DicomImageElement currentImage = view2d.getImage();
@@ -239,7 +244,7 @@ public final class KOManager {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static KOSpecialElement getCurrentKOSelection(final DefaultView2d<DicomImageElement> view2d) {
+    public static KOSpecialElement getCurrentKOSelection(final ViewCanvas<DicomImageElement> view2d) {
 
         Object actionValue = view2d.getActionValue(ActionW.KO_SELECTION.cmd());
         if (actionValue instanceof KOSpecialElement) {
@@ -249,7 +254,7 @@ public final class KOManager {
         return null;
     }
 
-    public static boolean setKeyObjectReference(boolean selectedState, final DefaultView2d<DicomImageElement> view2d) {
+    public static boolean setKeyObjectReference(boolean selectedState, final ViewCanvas<DicomImageElement> view2d) {
 
         KOSpecialElement validKOSelection = getValidKOSelection(view2d);
 
@@ -299,7 +304,7 @@ public final class KOManager {
     }
 
     public static boolean setKeyObjectReferenceAllSeries(boolean selectedState,
-        final DefaultView2d<DicomImageElement> view2d) {
+        final ViewCanvas<DicomImageElement> view2d) {
 
         KOSpecialElement validKOSelection = getValidKOSelection(view2d);
 
@@ -340,13 +345,13 @@ public final class KOManager {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static void updateKOFilter(DefaultView2d<DicomImageElement> view2D, Object newSelectedKO,
-        Boolean enableFilter, int imgSelectionIndex) {
+    public static void updateKOFilter(ViewCanvas<DicomImageElement> view2D, Object newSelectedKO, Boolean enableFilter,
+        int imgSelectionIndex) {
         updateKOFilter(view2D, newSelectedKO, enableFilter, imgSelectionIndex, true);
     }
 
-    public static void updateKOFilter(DefaultView2d<DicomImageElement> view2D, Object newSelectedKO,
-        Boolean enableFilter, int imgSelectionIndex, boolean updateImage) {
+    public static void updateKOFilter(ViewCanvas<DicomImageElement> view2D, Object newSelectedKO, Boolean enableFilter,
+        int imgSelectionIndex, boolean updateImage) {
 
         if (view2D instanceof View2d) {
             boolean tiledMode = imgSelectionIndex >= 0;

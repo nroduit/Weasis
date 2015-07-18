@@ -14,8 +14,8 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.viewer2d.View2d;
@@ -42,7 +42,7 @@ public class MprView extends View2d {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.CURRENT);
+        actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.CURRENT);
         /*
          * Get the radiologist way to see stack (means in axial, the first image is from feet and last image is in the
          * head direction) This option may not be changed. Sorting stack must be disabled from menu in UI.
