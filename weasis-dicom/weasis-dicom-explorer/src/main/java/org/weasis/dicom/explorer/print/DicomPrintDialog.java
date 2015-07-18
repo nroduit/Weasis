@@ -63,7 +63,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     private static final int DPI = 200;
 
     enum DotPerInches {
-                       DPI_150(150), DPI_200(200), DPI_300(300);
+        DPI_150(150), DPI_200(200), DPI_300(300);
 
         private final int dpi;
 
@@ -82,17 +82,17 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     }
 
     enum FilmSize {
-                   IN8X10("8INX10IN", 8, 10), IN8_5X11("8_5INX11IN", 8.5, 11), IN10X12("10INX12IN", 10, 12), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                   IN10X14("10INX14IN", //$NON-NLS-1$
-                           10, 14),
-                   IN11X14("11INX14IN", 11, 14), IN11X17("11INX17IN", 11, 17), IN14X14("14INX14IN", 14, 14), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                   IN14X17("14INX17IN", //$NON-NLS-1$
-                           14, 17),
-                   CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), //$NON-NLS-1$
-                   CM24X30("24CMX30CM", convertMM2Inch(240), //$NON-NLS-1$
-                           convertMM2Inch(300)),
-                   A4("A4", convertMM2Inch(210), convertMM2Inch(297)), //$NON-NLS-1$
-                   A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //$NON-NLS-1$
+        IN8X10("8INX10IN", 8, 10), IN8_5X11("8_5INX11IN", 8.5, 11), IN10X12("10INX12IN", 10, 12), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        IN10X14("10INX14IN", //$NON-NLS-1$
+                        10, 14),
+        IN11X14("11INX14IN", 11, 14), IN11X17("11INX17IN", 11, 17), IN14X14("14INX14IN", 14, 14), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        IN14X17("14INX17IN", //$NON-NLS-1$
+                        14, 17),
+        CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), //$NON-NLS-1$
+        CM24X30("24CMX30CM", convertMM2Inch(240), //$NON-NLS-1$
+                        convertMM2Inch(300)),
+        A4("A4", convertMM2Inch(210), convertMM2Inch(297)), //$NON-NLS-1$
+        A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //$NON-NLS-1$
 
         private final String name;
         private final double width;
@@ -646,8 +646,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         }
         if (!isPrintable) {
             JOptionPane.showMessageDialog(this, Messages.getString(Messages.getString("DicomPrintDialog.no_print")), //$NON-NLS-1$
-                null,
-                JOptionPane.ERROR_MESSAGE);
+                null, JOptionPane.ERROR_MESSAGE);
             doClose();
             return;
         }

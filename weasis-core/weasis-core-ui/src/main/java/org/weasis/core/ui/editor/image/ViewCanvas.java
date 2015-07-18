@@ -23,8 +23,8 @@ import org.weasis.core.ui.graphic.ImageLayerChangeListener;
 import org.weasis.core.ui.graphic.PanPoint;
 import org.weasis.core.ui.graphic.model.Canvas;
 
-public interface ViewCanvas<E extends ImageElement> extends Canvas, Image2DViewer<E>, PropertyChangeListener,
-    FocusListener, ImageLayerChangeListener<E>, KeyListener {
+public interface ViewCanvas<E extends ImageElement>
+    extends Canvas, Image2DViewer<E>, PropertyChangeListener, FocusListener, ImageLayerChangeListener<E>, KeyListener {
 
     public static final String zoomTypeCmd = "zoom.type"; //$NON-NLS-1$
     public static final ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png")); //$NON-NLS-1$

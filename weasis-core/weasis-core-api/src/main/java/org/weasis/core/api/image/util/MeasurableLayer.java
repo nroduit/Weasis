@@ -12,6 +12,7 @@ package org.weasis.core.api.image.util;
 
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
+
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.TagW;
 
@@ -20,24 +21,24 @@ import org.weasis.core.api.media.data.TagW;
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  */
 public interface MeasurableLayer {
-    
+
     boolean hasContent();
-    
+
     MeasurementsAdapter getMeasurementAdapter(Unit displayUnit);
-    
+
     // Only for statistics:
-    
+
     AffineTransform getShapeTransform();
-    
+
     Object getSourceTagValue(TagW tagW);
-    
+
     String getPixelValueUnit();
-    
+
     /**
      * Returns the source image for display. All preprocessing operations has been applied to this image.
      * 
      * @return the source image for display
      */
     RenderedImage getSourceRenderedImage();
-    
+
 }
