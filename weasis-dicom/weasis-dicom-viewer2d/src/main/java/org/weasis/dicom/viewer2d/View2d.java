@@ -851,19 +851,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         addMouseAdapter(actions.getLeft(), InputEvent.BUTTON1_DOWN_MASK); // left mouse button
         if (actions.getMiddle().equals(actions.getLeft())) {
             // If mouse action is already registered, only add the modifier mask
-            MouseActionAdapter adapter = getMouseAdapter(actions.getMiddle());
-            if (adapter != null) {
-                adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON2_DOWN_MASK);
-            }
+            addModifierMask(actions.getMiddle(), InputEvent.BUTTON2_DOWN_MASK);
         } else {
             addMouseAdapter(actions.getMiddle(), InputEvent.BUTTON2_DOWN_MASK);// middle mouse button
         }
         if (actions.getRight().equals(actions.getLeft()) || actions.getRight().equals(actions.getMiddle())) {
             // If mouse action is already registered, only add the modifier mask
-            MouseActionAdapter adapter = getMouseAdapter(actions.getRight());
-            if (adapter != null) {
-                adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON3_DOWN_MASK);
-            }
+            addModifierMask(actions.getRight(), InputEvent.BUTTON3_DOWN_MASK);
         } else {
             addMouseAdapter(actions.getRight(), InputEvent.BUTTON3_DOWN_MASK); // right mouse button
         }
@@ -873,7 +867,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             lens.enableMouseListener();
         }
     }
-
+    
     private void addMouseAdapter(String actionName, int buttonMask) {
         MouseActionAdapter adapter = getMouseAdapter(actionName);
         if (adapter == null) {
@@ -905,6 +899,19 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
         this.addMouseListener(adapter);
         this.addMouseMotionListener(adapter);
+    }
+    
+    private void addModifierMask(String action, int mask) {
+        MouseActionAdapter adapter = getMouseAdapter(action);
+        if (adapter != null) {
+            adapter.setButtonMaskEx(adapter.getButtonMaskEx() | mask);
+            if (ActionW.WINLEVEL.cmd().equals(action)) {
+                MouseActionAdapter win = getMouseAdapter(ActionW.WINDOW.cmd());
+                if (win != null) {
+                    win.setButtonMaskEx(win.getButtonMaskEx() | mask);
+                }
+            }
+        }
     }
 
     protected MouseActionAdapter getMouseAdapter(String action) {
