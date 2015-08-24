@@ -39,6 +39,7 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.graphic.algo.MinimumEnclosingRectangle;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -53,19 +54,23 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polygon.png")); //$NON-NLS-1$
 
     public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
-    public static final Measurement PERIMETER = new Measurement(
-        Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement PERIMETER =
+        new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
     public static final Measurement WIDTH = new Measurement(Messages.getString("measure.width"), 3, true, true, false); //$NON-NLS-1$
     public static final Measurement HEIGHT =
         new Measurement(Messages.getString("measure.height"), 4, true, true, false); //$NON-NLS-1$
-    public static final Measurement TOP_LEFT_POINT_X = new Measurement(
-        Messages.getString("measure.topx"), 5, true, true, false); //$NON-NLS-1$
-    public static final Measurement TOP_LEFT_POINT_Y = new Measurement(
-        Messages.getString("measure.topy"), 6, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_X = new Measurement(
-        Messages.getString("measure.centerx"), 7, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_Y = new Measurement(
-        Messages.getString("measure.centery"), 8, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_X =
+        new Measurement(Messages.getString("measure.topx"), 5, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_Y =
+        new Measurement(Messages.getString("measure.topy"), 6, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_X =
+        new Measurement(Messages.getString("measure.centerx"), 7, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_Y =
+        new Measurement(Messages.getString("measure.centery"), 8, true, true, false); //$NON-NLS-1$
+    public static final Measurement WIDTH_MBR =
+        new Measurement(Messages.getString("measure.width") + " (MBR)", 9, false, true, false); //$NON-NLS-1$
+    public static final Measurement HEIGHT_MBR =
+        new Measurement(Messages.getString("measure.height") + " (MBR)", 10, false, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -265,6 +270,24 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                     }
                     val = (lineSegmentList != null) ? getPerimeter(lineSegmentList) * ratio : null;
                     measVal.add(new MeasureItem(PERIMETER, val, unitStr));
+                }
+                if (releaseEvent && (WIDTH_MBR.isComputed() || HEIGHT_MBR.isComputed())) {
+                    Double w = null;
+                    Double h = null;
+
+                    MinimumEnclosingRectangle rect = new MinimumEnclosingRectangle(handlePointList, false);
+                    List<java.awt.geom.Point2D.Double> minRect = rect.getMinimumRectangle();
+                    if (minRect != null && minRect.size() == 4) {
+                        w = ratio * minRect.get(0).distance(minRect.get(1));
+                        h = ratio * minRect.get(1).distance(minRect.get(2));
+                        if (w < h) {
+                            double tmp = w;
+                            w = h;
+                            h = tmp;
+                        }
+                    }
+                    measVal.add(new MeasureItem(WIDTH_MBR, w, unitStr));
+                    measVal.add(new MeasureItem(HEIGHT_MBR, h, unitStr));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(layer, releaseEvent);
