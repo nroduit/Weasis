@@ -434,10 +434,10 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                     setSlice((Integer) val);
                 }
             } else if (command.equals(ActionW.WINDOW.cmd())) {
-                windowingWindow = (Integer) val;
+                windowingWindow = getSeriesObject().getCorrectedValueForWindow((Integer) val);
                 repaint();
             } else if (command.equals(ActionW.LEVEL.cmd())) {
-                windowingLevel = (Integer) val;
+                windowingLevel = getSeriesObject().getCorrectedValueForLevel((Integer) val);
                 repaint();
             } else if (command.equals(ActionW.PRESET.cmd())) {
                 if (val instanceof PresetWindowLevel) {
@@ -557,7 +557,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     /*******************************************
-     * Action State Suport
+     * Action State Support
      ********************************************/
 
     protected void initActionWState() {
@@ -651,8 +651,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     private void setPresetWindowLevel(PresetWindowLevel preset) {
         if (preset != null) {
-            windowingWindow = preset.getWindow().intValue();
-            windowingLevel = preset.getLevel().intValue();
+            windowingWindow = getSeriesObject().getCorrectedValueForWindow(preset.getWindow().intValue());
+            windowingLevel = getSeriesObject().getCorrectedValueForLevel(preset.getLevel().intValue());
             // TODO preset.getLutShape()
             repaint();
         }

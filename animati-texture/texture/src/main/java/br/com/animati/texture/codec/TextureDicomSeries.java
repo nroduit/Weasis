@@ -205,9 +205,9 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     }
 
     /**
-     * Stores an occurence of the given slice-spacing om a Map<String, Integer>.
+     * Stores an occurrence of the given slice-spacing om a Map<String, Integer>.
      * 
-     * Uses a String convertion of 3-decimals to limit the tolerance to 0.001, like the MPR of weasis.dicom.view2d.
+     * Uses a String conversion of 3-decimals to limit the tolerance to 0.001, like the MPR of weasis.dicom.view2d.
      * 
      * @param space
      */
@@ -249,7 +249,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
 
     /**
      * Consults the slice-spacing map to get the most common one. If there are two or more spacing with the same higher
-     * occurence value, the first one found is returned.
+     * occurrence value, the first one found is returned.
      * 
      * @return The most common slice spacing. Can be negative!
      */
@@ -357,6 +357,44 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         return windowingMinInValue + (windowingMaxInValue - windowingMinInValue) / 2.0f;
     }
 
+    /**
+     * Correct the level value by rescale factors and the transformation made
+     * to the values to fit the video-card range.
+     * 
+     * Still not tested for SignedShort with RescaleSlope not 1.
+     * 
+     * @param level Level value as shown to the user.
+     * @return the corrected level to be applied to this series.
+     */
+    public int getCorrectedValueForLevel(int level) {
+        Float interceptVal = (Float) getTagValue(TagW.RescaleIntercept);
+        double intercept = 0.0d;
+        if (TextureData.Format.UnsignedShort.equals(getTextureData().getFormat())
+                && interceptVal != null){
+            intercept = interceptVal;
+        } 
+        Float slopeVal = (Float) getTagValue(TagW.RescaleSlope);
+        final double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
+        
+        double lev = (level / slope) + (windowingMinInValue - (intercept / slope));
+        return (int) Math.round(lev);
+    }
+    
+    /**
+     * Correct the level value by rescale-slope to fit the video-card range.
+     * 
+     * Still not tested for SignedShort with RescaleSlope not 1.
+     * 
+     * @param window Window value as shown to the user.
+     * @return the corrected window to be applied to this series.
+     */
+    public int getCorrectedValueForWindow(int window) {
+        Float slopeVal = (Float) getTagValue(TagW.RescaleSlope);
+        final double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
+        
+        return (int) Math.round(window / slope);
+    }
+    
     /**
      * Valid if has 6 double s. Set to a double[] of one element to make not-valid.
      * 

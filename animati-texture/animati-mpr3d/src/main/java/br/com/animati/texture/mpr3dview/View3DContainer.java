@@ -43,6 +43,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -75,6 +76,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.LutToolBar;
 
+import br.com.animati.texture.codec.FormattedException;
 import br.com.animati.texture.codec.ImageSeriesFactory;
 import br.com.animati.texture.codec.TextureDicomSeries;
 import br.com.animati.texture.mpr3dview.ViewTexture.ViewType;
@@ -503,6 +505,22 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
                     }
                 }
             }
+        } else if (ImageSeriesFactory.TEXTURE_ERROR.equals(command)) {
+            if (event.getSource() instanceof TextureDicomSeries && event.getNewValue() instanceof FormattedException) {
+                TextureDicomSeries texture = (TextureDicomSeries) event.getSource();
+                for (ViewCanvas ge : getImagePanels()) {
+                    if (ge instanceof ViewTexture
+                            && texture.equals(((ViewTexture) ge)
+                            .getParentImageSeries())) {
+
+                        close();
+                        ExceptionUtil.showUserMessage((FormattedException) event.getNewValue(),
+                               WinUtil.getParentWindow(this));
+                        return;
+                        
+                    }
+                }
+            }
         }
 
         if (command.startsWith("texture") && event.getNewValue() instanceof MediaSeries) {
@@ -523,7 +541,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
     }
 
     /**
-     * Overriden because this Countainer can be closed before the first call to setSelected.
+     * Overridden because this Container can be closed before the first call to setSelected.
      * 
      * If that happens, all toolbars get visible and viewer not. Need a way out.
      * 

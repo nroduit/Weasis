@@ -78,6 +78,8 @@ public class ImageSeriesFactory {
     public static final String TEXTURE_DO_DISPLAY = "texture.doDisplay";
     /** Series is completely loaded. */
     public static final String TEXTURE_LOAD_COMPLETE = "texture.loadComplete";
+    /** Can't create a Valid ImageSeries. */
+    public static final String TEXTURE_ERROR = "texture.error";
 
     private static final SoftHashMap<MediaSeries, TextureDicomSeries> texCache =
         new SoftHashMap<MediaSeries, TextureDicomSeries>();
@@ -312,15 +314,49 @@ public class ImageSeriesFactory {
             imSeries.setTag(TagW.WindowWidth, listOfWindowValues);
             imSeries.setTag(TagW.WindowCenter, listOfLevelValues);
         }
-
+        
+        // Values of RescaleSlope & RescaleIntercept (#2852)
+        // Intercept ans slope are used to correct the wondow/level values;
+        // Some series (more common in PET) can have variable values on them,
+        // and this would make impossible to use the same window/level values
+        // for the hole series.
+        
+        Float interceptVal = (Float) elmt.getTagValue(TagW.RescaleIntercept);
+        Float actualIntercept = (Float) imSeries.getTagValue(TagW.RescaleIntercept);
+        if (interceptVal != null) {
+            if (actualIntercept == null) {
+                imSeries.setTag(TagW.RescaleIntercept, interceptVal);
+            } else if (!interceptVal.equals(actualIntercept)) {
+                sendError(ErrorCode.err500, imSeries);
+            }
+        }
+        
+        Float slopeVal = (Float) elmt.getTagValue(TagW.RescaleSlope);
+        Float actualSlope = (Float) imSeries.getTagValue(TagW.RescaleSlope);
+        if (slopeVal != null) {
+            if (actualSlope == null) {
+                imSeries.setTag(TagW.RescaleSlope, slopeVal);
+            } else if (!slopeVal.equals(actualSlope)) {
+                sendError(ErrorCode.err500, imSeries);
+            }
+        }
+    }
+    
+    private static void sendError(ErrorCode error, TextureDicomSeries imSeries) {
+        FormattedException ex = new FormattedException(error.getCode(),
+                error.getLogMessage(), error.getUserMessage());
+        imSeries.interruptFactory();
+        
+        fireProperyChange(imSeries, TEXTURE_ERROR, ex); 
+        LOGGER.warn("Code: " + ex.getErrorCode() + " - " + ex.getLogMessage());
     }
 
     /**
-     * Get series dimentions (width and height from tags or from first image, depht from slice count - series.size(null)
+     * Get series dimensions (width and height from tags or from first image, depth from slice count - series.size(null)
      * )).
      *
      * @param series
-     *            Series to get dimentions from.
+     *            Series to get dimensions from.
      * @return { width, height, depth }
      */
     private static int[] getDimentions(final MediaSeries series) throws IllegalStateException {
@@ -403,7 +439,7 @@ public class ImageSeriesFactory {
     }
 
     /**
-     * Takes a BufferedImage and sends the bytes to the ImageSeries objetct.
+     * Takes a BufferedImage and sends the bytes to the ImageSeries object.
      *
      * @param place
      *            Relative location of the image plane on volume.
@@ -413,7 +449,7 @@ public class ImageSeriesFactory {
      *            ImageSeries to receive the bytes data.
      * @return the buffer class found.
      */
-    public static String putBytesInImageSeries(final int place, final BufferedImage image, final ImageSeries imgSeries) {
+    public static String putBytesInImageSeries(final int place, final BufferedImage image, final TextureDicomSeries imgSeries) {
 
         String bufferClass = ".";
         if (imgSeries != null && image != null) {
@@ -436,11 +472,16 @@ public class ImageSeriesFactory {
             }
             if (bytesOut != null) {
                 if (imgSeries.getTextureData() != null) {
-                    LOGGER.debug("place " + place + ": bytesOut: " + bytesOut.length + " /expected: "
-                        + imgSeries.getTextureData().getTotalSize());
+                    String str = "place " + place + ": bytesOut: " + bytesOut.length
+                            + " /expected: " + imgSeries.getTextureData().getTotalSize();
+                    LOGGER.debug(str);
+                    if (bytesOut.length != imgSeries.getTextureData().getTotalSize()) {
+                        sendError(ErrorCode.err501, imgSeries);
+                    } else {
+                        imgSeries.AddSliceData(place, bytesOut, addSliceListener);
+                        return bufferClass; 
+                    }
                 }
-                imgSeries.AddSliceData(place, bytesOut, addSliceListener);
-                return bufferClass;
             }
         } else {
             ((TextureDicomSeries) imgSeries).textureLogInfo.writeText("Image not included! place = " + place);
@@ -449,7 +490,7 @@ public class ImageSeriesFactory {
     }
 
     /**
-     * Normalize vector to obtain a valid parameter fot dimendionMultiplier: divide all by the smaller.
+     * Normalize vector to obtain a valid parameter for dimendionMultiplier: divide all by the smaller.
      * 
      * @param xSp
      *            x-spacing.
@@ -457,7 +498,7 @@ public class ImageSeriesFactory {
      *            y-spacing.
      * @param zSp
      *            z-spacing.
-     * @return A valid parameter fot dimendionMultiplier.
+     * @return A valid parameter for dimendionMultiplier.
      */
     private static Vector3d getNormalizedVector(final double xSp, final double ySp, final double zSp) {
 
