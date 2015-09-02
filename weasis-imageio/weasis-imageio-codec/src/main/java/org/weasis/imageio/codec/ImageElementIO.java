@@ -76,26 +76,12 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
             }
             PlanarImage img;
             RenderingHints hints = LayoutUtil.createTiledLayoutHints();
-            if ("it.geosolutions.imageio.plugins.jp2k.JP2KKakaduImageReader".equals(reader.getClass().getName())) { //$NON-NLS-1$
-                ParameterBlockJAI pb = new ParameterBlockJAI("ImageReadMT"); //$NON-NLS-1$
-                pb.setParameter("Input", media.getFile()); //$NON-NLS-1$
-                pb.setParameter("ImageChoice", 0); //$NON-NLS-1$
-                pb.setParameter("ReadMetadata", true); //$NON-NLS-1$
-                pb.setParameter("ReadThumbnails", false); //$NON-NLS-1$
-                pb.setParameter("VerifyInput", true); //$NON-NLS-1$
-                pb.setParameter("Listeners", null); // java.util.EventListener[] //$NON-NLS-1$
-                pb.setParameter("Locale", null); // java.util.Locale //$NON-NLS-1$
-                pb.setParameter("ReadParam", reader.getDefaultReadParam()); // javax.imageio.ImageReadParam //$NON-NLS-1$
-                pb.setParameter("Reader", reader); // javax.imageio.ImageReader //$NON-NLS-1$
-                img = JAI.create("ImageReadMT", pb, hints); //$NON-NLS-1$
-            } else {
-                ImageInputStream in = new FileImageInputStream(new RandomAccessFile(media.getFile(), "r")); //$NON-NLS-1$
-                // hints.add(new RenderingHints(JAI.KEY_TILE_CACHE, null));
-                ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
-                pb.setParameter("Input", in); //$NON-NLS-1$
-                pb.setParameter("Reader", reader); //$NON-NLS-1$
-                img = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
-            }
+            ImageInputStream in = new FileImageInputStream(new RandomAccessFile(media.getFile(), "r")); //$NON-NLS-1$
+            // hints.add(new RenderingHints(JAI.KEY_TILE_CACHE, null));
+            ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
+            pb.setParameter("Input", in); //$NON-NLS-1$
+            pb.setParameter("Reader", reader); //$NON-NLS-1$
+            img = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
 
             // to avoid problem with alpha channel and png encoded in 24 and 32 bits
             img = PlanarImage.wrapRenderedImage(ImageFiler.getReadableImage(img));
@@ -144,30 +130,30 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
         if (sUID == null) {
             sUID = uri == null ? "unknown" : uri.toString(); //$NON-NLS-1$
         }
-        MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, TagW.FileName) { //$NON-NLS-1$
+        MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, TagW.FileName) { // $NON-NLS-1$
 
-                @Override
-                public String getMimeType() {
-                    synchronized (this) {
-                        for (ImageElement img : medias) {
-                            return img.getMimeType();
-                        }
-                    }
-                    return null;
-                }
-
-                @Override
-                public void addMedia(MediaElement media) {
-                    if (media instanceof ImageElement) {
-                        this.add((ImageElement) media);
-                        DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
-                        if (model != null) {
-                            model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                                new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
-                        }
+            @Override
+            public String getMimeType() {
+                synchronized (this) {
+                    for (ImageElement img : medias) {
+                        return img.getMimeType();
                     }
                 }
-            };
+                return null;
+            }
+
+            @Override
+            public void addMedia(MediaElement media) {
+                if (media instanceof ImageElement) {
+                    this.add((ImageElement) media);
+                    DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                    if (model != null) {
+                        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
+                            new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
+                    }
+                }
+            }
+        };
 
         ImageElement img = getSingleImage();
         if (img != null) {

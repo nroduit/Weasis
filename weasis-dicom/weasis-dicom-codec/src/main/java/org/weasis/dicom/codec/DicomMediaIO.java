@@ -36,6 +36,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -48,6 +49,7 @@ import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageInputStreamImpl;
 import javax.media.jai.JAI;
@@ -59,6 +61,7 @@ import javax.media.jai.operator.NullDescriptor;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
+import org.dcm4che3.data.ItemPointer;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
@@ -73,10 +76,11 @@ import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
-import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
+import org.dcm4che3.imageio.stream.SegmentedImageInputStream;
 import org.dcm4che3.io.BulkDataDescriptor;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
+import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -102,6 +106,7 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
+import com.sun.media.imageioimpl.common.SignedDataImageParam;
 import com.sun.media.jai.util.ImageUtil;
 
 public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarImage> {
@@ -201,6 +206,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     private final HashMap<TagW, Object> tags;
     private volatile MediaElement[] image = null;
     private volatile String mimeType;
+    private final ArrayList<Integer> fragmentsPositions = new ArrayList<Integer>();
 
     private volatile ImageInputStream iis;
     private DicomInputStream dis;
@@ -359,7 +365,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     private ImageReader initRawImageReader() {
         long[] frameOffsets = new long[numberOfFrame];
-        frameOffsets[0] = pixeldata.offset;
+        frameOffsets[0] = pixeldata.offset();
         for (int i = 1; i < frameOffsets.length; i++) {
             frameOffsets[i] = frameOffsets[i - 1] + frameLength;
         }
@@ -1090,8 +1096,68 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         // Extract compressed file
         // FileUtil.writeFile(new SegmentedInputImageStream(iis, pixeldataFragments, frameIndex), new FileOutputStream(
         // new File(AppProperties.FILE_CACHE_DIR, new File(uri).getName() + frameIndex + ".jpg")));
-        SegmentedInputImageStream siis = new SegmentedInputImageStream(iis, pixeldataFragments, frameIndex);
+        org.dcm4che3.imageio.stream.SegmentedImageInputStream siis = buildSegmentedImageInputStream(frameIndex);
         return patchJpegLS != null ? new PatchJPEGLSImageInputStream(siis, patchJpegLS) : siis;
+    }
+
+    private SegmentedImageInputStream buildSegmentedImageInputStream(int frameIndex) throws IOException {
+        int nbFragments = pixeldataFragments.size();
+        long[] offsets = null;
+        int[] length = null;
+        if (numberOfFrame >= nbFragments - 1) {
+            // nbFrames > nbFragments should never happen
+            offsets = new long[1];
+            length = new int[offsets.length];
+            int index = frameIndex < nbFragments - 1 ? frameIndex + 1 : nbFragments - 1;
+            BulkData bulkData = (BulkData) pixeldataFragments.get(index);
+            offsets[0] = bulkData.offset();
+            length[0] = bulkData.length();
+        } else {
+            if (numberOfFrame == 1) {
+                offsets = new long[nbFragments - 1];
+                length = new int[offsets.length];
+                for (int i = 0; i < length.length; i++) {
+                    BulkData bulkData = (BulkData) pixeldataFragments.get(i + frameIndex + 1);
+                    offsets[i] = bulkData.offset();
+                    length[i] = bulkData.length();
+                }
+            } else {
+                // Multi-frames where each frames can have multiple fragments.
+                if (fragmentsPositions.isEmpty()) {
+                    if (decompressor == null) {
+                        throw new IOException("no decompressor!");
+                    }
+
+                    for (int i = 1; i < nbFragments; i++) {
+                        BulkData bulkData = (BulkData) pixeldataFragments.get(i);
+                        ImageReaderSpi provider = decompressor.getOriginatingProvider();
+                        if (provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedImageInputStream(iis,
+                            bulkData.offset(), bulkData.length(), false))) {
+                            fragmentsPositions.add(i);
+                        }
+                    }
+                }
+
+                if (fragmentsPositions.size() == numberOfFrame) {
+                    int start = fragmentsPositions.get(frameIndex);
+                    int end =
+                        (frameIndex + 1) >= fragmentsPositions.size() ? nbFragments : fragmentsPositions
+                            .get(frameIndex + 1);
+
+                    offsets = new long[end - start];
+                    length = new int[offsets.length];
+                    for (int i = 0; i < offsets.length; i++) {
+                        BulkData bulkData = (BulkData) pixeldataFragments.get(start + i);
+                        offsets[i] = bulkData.offset();
+                        length[i] = bulkData.length();
+                    }
+                } else {
+                    throw new IOException("Cannot match all the fragments to all the frames!");
+                }
+            }
+        }
+
+        return new org.dcm4che3.imageio.stream.SegmentedImageInputStream(iis, offsets, length);
     }
 
     @Override
@@ -1120,7 +1186,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 }
                 return wr;
             }
-            iis.seek(pixeldata.offset + frameIndex * frameLength);
+            iis.seek(pixeldata.offset() + frameIndex * frameLength);
             WritableRaster wr = Raster.createWritableRaster(createSampleModel(dataType, banded), null);
             DataBuffer buf = wr.getDataBuffer();
             if (buf instanceof DataBufferByte) {
@@ -1147,6 +1213,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         }
         decompressParam.setDestinationType(imageType);
         decompressParam.setDestination(dest);
+        if (decompressParam instanceof SignedDataImageParam) {
+            ((SignedDataImageParam) decompressParam).setSignedData(dataType == DataBuffer.TYPE_SHORT);
+        }
         return decompressParam;
     }
 
@@ -1466,11 +1535,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             }
             iis.seek(0L);
             dis = new DicomInputStream(new ImageInputStreamAdapter(iis));
-            dis.setSkipPrivateTagLength(1000);
             dis.setIncludeBulkData(IncludeBulkData.URI);
-            dis.setBulkDataDescriptor(BulkDataDescriptor.DEFAULT);
-            dis.setURI(uri.toString());
-            // dis.setURI("java:iis"); // avoid copy of pixeldata to temporary file
+            dis.setBulkDataDescriptor(DicomCodec.BULKDATA_DESCRIPTOR);
+            dis.setURI(uri.toString()); // avoid a copy of pixeldata into temporary file
             Attributes fmi = dis.readFileMetaInformation();
             Attributes ds = dis.readDataset(-1, -1);
             if (fmi == null) {

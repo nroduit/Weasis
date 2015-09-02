@@ -37,8 +37,8 @@ import javax.media.jai.TileCache;
  */
 public class LayoutUtil {
 
-    public static RenderingHints BORDER_COPY = new RenderingHints(JAI.KEY_BORDER_EXTENDER,
-        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+    public static RenderingHints BORDER_COPY =
+        new RenderingHints(JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
     public LayoutUtil() {
     }
@@ -105,8 +105,8 @@ public class LayoutUtil {
         if (layout == null) {
             layout = new ImageLayout();
         }
-        layout.setColorModel(new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 },
-            false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE));
+        layout.setColorModel(new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 }, false,
+            false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE));
         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
         oldhints.add(hints);
         oldhints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
@@ -174,7 +174,7 @@ public class LayoutUtil {
     }
 
     public static ColorModel createBinaryIndexColorModel() {
-        // 0xffffff -> white, 0x000000 -> black
+        // 0 -> 0x00 (black), 1 -> 0xff (white)
         byte[] comp = new byte[] { (byte) 0x00, (byte) 0xFF };
         return new IndexColorModel(1, 2, comp, comp, comp);
     }

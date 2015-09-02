@@ -44,8 +44,14 @@ public class ImageElement extends MediaElement<PlanarImage> {
     private static final Logger logger = LoggerFactory.getLogger(ImageElement.class);
     /*
      * Imageio issue with native library in multi-thread environment (to avoid JVM crash let only one simultaneous
-     * thread) (https://jai-imageio-core.dev.java.net/issues/show_bug.cgi?id=126)
+     * thread) (https://java.net/jira/browse/JAI_IMAGEIO_CORE-126)
+     * 
+     * Try multi-thread reading with new native decoders
+     * 
+     * public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime()
+     * .availableProcessors() / 2));
      */
+    // TODO evaluate the difference, keep one thread with sun decoder. (seems to hangs on shutdown)
     public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(1);
 
     private static final SoftHashMap<ImageElement, PlanarImage> mCache = new SoftHashMap<ImageElement, PlanarImage>() {
