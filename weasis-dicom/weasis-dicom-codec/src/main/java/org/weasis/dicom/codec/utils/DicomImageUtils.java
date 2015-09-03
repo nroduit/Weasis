@@ -111,24 +111,24 @@ public class DicomImageUtils {
 
     public static LookupTableJAI createRescaleRampLut(LutParameters params) {
         return createRescaleRampLut(params.getIntercept(), params.getSlope(), params.getBitsStored(),
-            params.isSigned(), params.isOutputSigned());
+            params.isSigned(), params.isOutputSigned(), params.getBitsOutput());
     }
 
     public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int bitsStored, boolean isSigned,
-        boolean outputSigned) {
+        boolean outputSigned, int bitsOutput) {
 
         return createRescaleRampLut(intercept, slope, Integer.MIN_VALUE, Integer.MAX_VALUE, bitsStored, isSigned,
-            false, outputSigned);
+            false, outputSigned, bitsOutput);
     }
 
     public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int minValue, int maxValue,
-        int bitsStored, boolean isSigned, boolean inverse, boolean outputSigned) {
+        int bitsStored, boolean isSigned, boolean inverse, boolean outputSigned, int bitsOutput) {
 
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
 
-        int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
-        int outRangeSize = (1 << bitsAllocated) - 1;
-        int maxOutValue = outputSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
+        int bitsOutLut = bitsOutput <= 8 ? 8 : 16;
+        int outRangeSize = (1 << bitsOutLut) - 1;
+        int maxOutValue = outputSigned ? (1 << (bitsOutLut - 1)) - 1 : outRangeSize;
         int minOutValue = outputSigned ? -(maxOutValue + 1) : 0;
 
         int minInValue = isSigned ? -(1 << (bitsStored - 1)) : 0;
@@ -144,7 +144,7 @@ public class DicomImageUtils {
         maxInValue = Math.min(maxInValue, maxValue);
 
         int numEntries = maxInValue - minInValue + 1;
-        Object outLut = (bitsAllocated == 8) ? new byte[numEntries] : new short[numEntries];
+        Object outLut = (bitsOutLut == 8) ? new byte[numEntries] : new short[numEntries];
 
         for (int i = 0; i < numEntries; i++) {
             int value = Math.round((i + minInValue) * slope + intercept);
