@@ -83,14 +83,14 @@ public class ImageElement extends MediaElement<PlanarImage> {
         super(mediaIO, key);
     }
 
-    protected void findMinMaxValues(RenderedImage img) throws OutOfMemoryError {
+    protected void findMinMaxValues(RenderedImage img, boolean exclude8bitImage) throws OutOfMemoryError {
         // This function can be called several times from the inner class Load.
         // Do not compute min and max it has already be done
 
         if (img != null && !isImageAvailable()) {
 
             int datatype = img.getSampleModel().getDataType();
-            if (datatype == DataBuffer.TYPE_BYTE) {
+            if (datatype == DataBuffer.TYPE_BYTE && exclude8bitImage) {
                 this.minPixelValue = 0f;
                 this.maxPixelValue = 255f;
             } else {
@@ -325,7 +325,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
         try {
             cacheImage = startImageLoading();
             if (findMinMax) {
-                findMinMaxValues(cacheImage);
+                findMinMaxValues(cacheImage, true);
             }
         } catch (OutOfMemoryError e1) {
             /*
@@ -341,7 +341,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
             }
             cacheImage = startImageLoading();
             if (findMinMax) {
-                findMinMaxValues(cacheImage);
+                findMinMaxValues(cacheImage, true);
             }
         }
         if (manager != null && cacheImage != null) {

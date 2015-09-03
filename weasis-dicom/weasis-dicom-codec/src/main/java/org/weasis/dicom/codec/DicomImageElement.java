@@ -277,7 +277,7 @@ public class DicomImageElement extends ImageElement {
 
     }
 
-    public LutParameters getLutParameters(boolean pixelPadding, boolean modSeqLUT, boolean inversePaddingMLUT) {
+    public LutParameters getLutParameters(boolean pixelPadding, LookupTableJAI mLUTSeq, boolean inversePaddingMLUT) {
         Integer paddingValue = getPaddingValue();
 
         boolean isSigned = isPixelRepresentationSigned();
@@ -292,17 +292,22 @@ public class DicomImageElement extends ImageElement {
 
         Integer paddingLimit = getPaddingLimit();
         boolean outputSigned = false;
-        if (bitsStored > 8 && !modSeqLUT) {
-            // Get raw min value
-            float minVal = super.getMinValue(pixelPadding);
-            // if (paddingValue != null) {
-            // int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
-            // minVal = Math.min(paddingValueMin, minVal);
-            // }
-            outputSigned = (minVal * slope + intercept) < 0 ? true : isSigned;
+        int bitsOutputLut;
+        if (mLUTSeq == null) {
+            float minValue = super.getMinValue(pixelPadding) * slope + intercept;
+            float maxValue = super.getMaxValue(pixelPadding) * slope + intercept;
+            bitsOutputLut = Integer.SIZE - Integer.numberOfLeadingZeros(Math.round(maxValue - minValue));
+            outputSigned = minValue < 0 ? true : isSigned;
+            if (outputSigned && bitsOutputLut <= 8){
+                // Allows to handle negative values with 8-bit image
+                bitsOutputLut = 9;
+            }
+        }
+        else {
+            bitsOutputLut = mLUTSeq.getDataType() == DataBuffer.TYPE_BYTE ? 8 : 16;
         }
         return new LutParameters(intercept, slope, pixelPadding, paddingValue, paddingLimit, bitsStored, isSigned,
-            outputSigned, inversePaddingMLUT);
+            outputSigned, bitsOutputLut, inversePaddingMLUT);
 
     }
 
@@ -331,7 +336,7 @@ public class DicomImageElement extends ImageElement {
      */
     protected LookupTableJAI getModalityLookup(boolean pixelPadding, boolean inverseLUTAction) {
         Integer paddingValue = getPaddingValue();
-        LookupTableJAI mLUTSeq = (LookupTableJAI) getTagValue(TagW.ModalityLUTData);
+        final LookupTableJAI mLUTSeq = (LookupTableJAI) getTagValue(TagW.ModalityLUTData);
         if (mLUTSeq != null) {
             if (!pixelPadding || paddingValue == null) {
                 if (super.getMinValue(false) >= mLUTSeq.getOffset()
@@ -347,12 +352,12 @@ public class DicomImageElement extends ImageElement {
                 LOGGER.warn("Cannot apply Modality LUT sequence and Pixel Padding"); //$NON-NLS-1$
             }
         }
-        boolean modSeqLUT = mLUTSeq != null;
+
         boolean inverseLut = isPhotometricInterpretationInverse();
         if (pixelPadding) {
             inverseLut ^= inverseLUTAction;
         }
-        LutParameters lutparams = getLutParameters(pixelPadding, modSeqLUT, inverseLut);
+        LutParameters lutparams = getLutParameters(pixelPadding, mLUTSeq, inverseLut);
         // Not required to have a modality lookup table
         if (lutparams == null) {
             return null;
@@ -364,8 +369,8 @@ public class DicomImageElement extends ImageElement {
         }
 
         if (modalityLookup == null) {
-            if (modSeqLUT) {
-                if (mLUTSeq != null && mLUTSeq.getNumBands() == 1) {
+            if (mLUTSeq != null) {
+                if (mLUTSeq.getNumBands() == 1) {
                     if (mLUTSeq.getDataType() == DataBuffer.TYPE_BYTE) {
                         byte[] data = mLUTSeq.getByteData(0);
                         if (data != null) {
@@ -381,9 +386,9 @@ public class DicomImageElement extends ImageElement {
                     }
                 }
                 if (modalityLookup == null) {
-                    modalityLookup = mLUTSeq == null ? DicomImageUtils.createRescaleRampLut(lutparams) : mLUTSeq;
+                    modalityLookup = mLUTSeq;
                 }
-            } else {
+            } else {            
                 modalityLookup = DicomImageUtils.createRescaleRampLut(lutparams);
             }
         }
@@ -521,7 +526,7 @@ public class DicomImageElement extends ImageElement {
     }
 
     @Override
-    protected void findMinMaxValues(RenderedImage img) {
+    protected void findMinMaxValues(RenderedImage img, boolean exclude8bitImage) {
         /*
          * This function can be called several times from the inner class Load. min and max will be computed only once.
          */
@@ -532,22 +537,12 @@ public class DicomImageElement extends ImageElement {
             // Integer max = (Integer) getTagValue(TagW.LargestImagePixelValue);
             int bitsStored = getBitsStored();
             int bitsAllocated = getBitsAllocated();
-            // if (bitsStored < bitsAllocated) {
-            //
-            // min = max = null;
-            // }
-            /*
-             * Do not trust those values because it can contain values bigger than the bit stored max (ex. overlays
-             * stored from the bit 12 to 16, or reading unsigned 12 bits stored jpeg-ls image gives values superior to
-             * 4096). Otherwise, the modality lookup will crash because the value for the index is bigger than the array
-             * length.
-             * 
-             * When min and max are wrong with pure Java of JAI, the image cannot be displayed
-             */
+
             minPixelValue = null;
             maxPixelValue = null;
 
-            if (isPhotometricInterpretationMonochrome()) {
+            boolean monochrome = isPhotometricInterpretationMonochrome();
+            if (monochrome) {
                 Integer paddingValue = getPaddingValue();
                 if (paddingValue != null) {
                     Integer paddingLimit = getPaddingLimit();
@@ -558,7 +553,7 @@ public class DicomImageElement extends ImageElement {
             }
 
             if (!isImageAvailable()) {
-                super.findMinMaxValues(img);
+                super.findMinMaxValues(img, !monochrome);
             }
 
             if (bitsStored < bitsAllocated && isImageAvailable()) {
