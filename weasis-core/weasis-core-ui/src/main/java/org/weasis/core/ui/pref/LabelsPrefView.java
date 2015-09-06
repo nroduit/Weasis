@@ -33,9 +33,9 @@ import org.weasis.core.api.gui.util.PageProps;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.Graphic;
@@ -79,8 +79,8 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         });
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(null,
-            Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING, TitledBorder.TOP, null, //$NON-NLS-1$
+        panel1.setBorder(new TitledBorder(null, Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING, //$NON-NLS-1$
+            TitledBorder.TOP, null,
             null));
         add(panel1, BorderLayout.CENTER);
         panel1.setLayout(new BorderLayout(0, 0));
@@ -143,8 +143,8 @@ public class LabelsPrefView extends AbstractItemDialogPage {
                 ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
                 if (p instanceof ImageViewerPlugin) {
                     for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
-                        if (v instanceof DefaultView2d) {
-                            DefaultView2d view = (DefaultView2d) v;
+                        if (v instanceof ViewCanvas) {
+                            ViewCanvas view = (ViewCanvas) v;
                             List<Graphic> list = view.getLayerModel().getAllGraphics();
                             for (Graphic graphic : list) {
                                 graphic.updateLabel(true, view);
