@@ -95,6 +95,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.PanPoint;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -1516,7 +1517,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 try {
                     int valx = Integer.parseInt(args.get(0));
                     int valy = Integer.parseInt(args.get(1));
-                    panAction.setPoint(new Point(valx, valy));
+                    panAction.setPoint(new PanPoint(PanPoint.STATE.Move, valx, valy));
 
                 } catch (Exception e) {
                     e.printStackTrace();
