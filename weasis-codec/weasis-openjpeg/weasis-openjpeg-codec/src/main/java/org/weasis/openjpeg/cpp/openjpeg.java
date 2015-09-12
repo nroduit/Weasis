@@ -12,6 +12,7 @@ package org.weasis.openjpeg.cpp;
 
 import java.nio.ByteBuffer;
 
+import org.bytedeco.javacpp.BoolPointer;
 import org.bytedeco.javacpp.FunctionPointer;
 import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.Loader;
@@ -78,7 +79,7 @@ public class openjpeg {
 
     /**
      * Defines a single image component
-     * */
+     */
     public static class opj_image_comp extends Pointer {
         static {
             Loader.load();
@@ -182,7 +183,7 @@ public class openjpeg {
 
     /**
      * Defines image data and characteristics
-     * */
+     */
     public static class opj_image extends Pointer {
         static {
             Loader.load();
@@ -256,6 +257,44 @@ public class openjpeg {
         }
 
         private native void allocate();
+
+        /**
+         * Set the number of highest resolution levels to be discarded. The image resolution is effectively divided by 2
+         * to the power of the number of discarded levels. The reduce factor is limited by the smallest total number of
+         * decomposition levels among tiles. if != 0, then original dimension divided by 2^(reduce); if == 0 or not
+         * used, image is decoded to the full resolution
+         */
+        @Cast("unsigned int")
+        public native int cp_reduce();
+
+        public native opj_dparameters cp_reduce(@Cast("unsigned int") int cp_reduce);
+
+        /**
+         * Set the maximum number of quality layers to decode. If there are less quality layers than the specified
+         * number, all the quality layers are decoded. if != 0, then only the first "layer" layers are decoded; if == 0
+         * or not used, all the quality layers are decoded
+         */
+        @Cast("unsigned int")
+        public native int cp_layer();
+
+        public native opj_dparameters cp_layer(@Cast("unsigned int") int cp_layer);
+
+        /** input file format 0: J2K, 1: JP2, 2: JPT */
+        public native int decod_format();
+
+        public native opj_dparameters decod_format(int decod_format);
+
+        /** Tile index */
+        @Cast("unsigned int")
+        public native int tile_index();
+
+        public native opj_dparameters tile_index(@Cast("unsigned int") int tile_index);
+
+        /** Number of tile to decode */
+        @Cast("unsigned int")
+        public native int nb_tile_to_decode();
+
+        public native opj_dparameters nb_tile_to_decode(@Cast("unsigned int") int nb_tile_to_decode);
     }
 
     public static class info_handler extends FunctionPointer {
@@ -346,7 +385,7 @@ public class openjpeg {
      * @param clrspc
      *            image color space
      * @return returns a new image structure if successful, returns NULL otherwise
-     * */
+     */
     // public static native @ByPtr opj_image opj_image_create(@Cast("unsigned int") int numcmpts, opj_image_cmptparm_t
     // *cmptparms, OPJ_COLOR_SPACE clrspc);
 
@@ -390,7 +429,7 @@ public class openjpeg {
      *            Decoder to select
      * 
      * @return Returns a handle to a decompressor if successful, returns NULL otherwise
-     * */
+     */
     public static native @Cast("void**") Pointer opj_create_decompress(@Cast("OPJ_CODEC_FORMAT") int format);
 
     /**
@@ -482,7 +521,7 @@ public class openjpeg {
      * @param p_image
      *            the decoded image
      * @return true if success, otherwise false
-     * */
+     */
     public static native @Cast("OPJ_BOOL") boolean opj_decode(@Cast("void**") Pointer p_decompressor,
         @Cast("void**") Pointer p_stream, @ByPtr opj_image p_image);
 
@@ -515,6 +554,65 @@ public class openjpeg {
      */
     public static native @Cast("OPJ_BOOL") boolean opj_set_decoded_resolution_factor(@Cast("void**") Pointer p_codec,
         @Cast("unsigned int") int res_factor);
+
+    /**
+     * Reads a tile header. This function is compulsory and allows one to know the size of the tile thta will be
+     * decoded. The user may need to refer to the image got by opj_read_header to understand the size being taken by the
+     * tile.
+     *
+     * @param p_codec
+     *            the jpeg2000 codec.
+     * @param p_tile_index
+     *            pointer to a value that will hold the index of the tile being decoded, in case of success.
+     * @param p_data_size
+     *            pointer to a value that will hold the maximum size of the decoded data, in case of success. In case of
+     *            truncated codestreams, the actual number of bytes decoded may be lower. The computation of the size is
+     *            the same as depicted in opj_write_tile.
+     * @param p_tile_x0
+     *            pointer to a value that will hold the x0 pos of the tile (in the image).
+     * @param p_tile_y0
+     *            pointer to a value that will hold the y0 pos of the tile (in the image).
+     * @param p_tile_x1
+     *            pointer to a value that will hold the x1 pos of the tile (in the image).
+     * @param p_tile_y1
+     *            pointer to a value that will hold the y1 pos of the tile (in the image).
+     * @param p_nb_comps
+     *            pointer to a value that will hold the number of components in the tile.
+     * @param p_should_go_on
+     *            pointer to a boolean that will hold the fact that the decoding should go on. In case the codestream is
+     *            over at the time of the call, the value will be set to false. The user should then stop the decoding.
+     * @param p_stream
+     *            the stream to decode.
+     * @return true if the tile header could be decoded. In case the decoding should end, the returned value is still
+     *         true. returning false may be the result of a shortage of memory or an internal error.
+     */
+    public static native @Cast("OPJ_BOOL") boolean opj_read_tile_header(@Cast("void**") Pointer p_codec,
+        @Cast("void**") Pointer p_stream, @Cast("unsigned int*") IntPointer p_tile_index,
+        @Cast("unsigned int*") IntPointer p_data_size, IntPointer p_tile_x0, IntPointer p_tile_y0, IntPointer p_tile_x1,
+        IntPointer p_tile_y1, @Cast("unsigned int*") IntPointer p_nb_comps,
+        @Cast("OPJ_BOOL*") BoolPointer p_should_go_on);
+
+    /**
+     * Reads a tile data. This function is compulsory and allows one to decode tile data. opj_read_tile_header should be
+     * called before. The user may need to refer to the image got by opj_read_header to understand the size being taken
+     * by the tile.
+     *
+     * @param p_codec
+     *            the jpeg2000 codec.
+     * @param p_tile_index
+     *            the index of the tile being decoded, this should be the value set by opj_read_tile_header.
+     * @param p_data
+     *            pointer to a memory block that will hold the decoded data.
+     * @param p_data_size
+     *            size of p_data. p_data_size should be bigger or equal to the value set by opj_read_tile_header.
+     * @param p_stream
+     *            the stream to decode.
+     *
+     * @return true if the data could be decoded.
+     */
+    public static native @Cast("OPJ_BOOL") boolean opj_decode_tile_data(@Cast("void**") Pointer p_codec,
+        @Cast("unsigned int") int p_tile_index, @Cast("unsigned char*") ByteBuffer p_data,
+        @Cast("unsigned int") int p_data_size, @Cast("void**") Pointer p_stream);
 
     /*
      * ==========================================================

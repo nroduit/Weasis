@@ -13,16 +13,13 @@ package org.weasis.jpeg.cpp;
 import java.nio.ByteBuffer;
 
 import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.SizeTPointer;
-import org.bytedeco.javacpp.annotation.ByRef;
 import org.bytedeco.javacpp.annotation.ByVal;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.weasis.jpeg.internal.DecoderIJG;
-import org.weasis.jpeg.internal.EncoderIJG;
 
 /**
  * Wrap native API of IJG and CHARLS
@@ -298,113 +295,113 @@ public class libijg {
     /**
      * codec parameter for IJG codecs
      */
-    public static class DJCodecParameter extends Pointer {
-        static {
-            Loader.load();
-        }
-
-        /**
-         * constructor.
-         * 
-         * @param pCompressionCSConversion
-         *            color conversion mode for compression
-         * @param pOptimizeHuffman
-         *            perform huffman table optimization for 8 bits/pixel compression?
-         * @param pSmoothingFactor
-         *            smoothing factor for image compression, 0..100
-         * @param pForcedBitDepth
-         *            forced bit depth for image compression, 0 (auto) or 8/12/16
-         * @param pFragmentSize
-         *            maximum fragment size (in kbytes) for compression, 0 for unlimited.
-         * @param pSampleFactors
-         *            subsampling mode for color image compression
-         */
-        public DJCodecParameter(@Cast("E_CompressionColorSpaceConversion") int pCompressionCSConversion,
-            boolean pOptimizeHuffman, int pSmoothingFactor, int pForcedBitDepth,
-            @Cast("unsigned int") int pFragmentSize, @Cast("E_SubSampling") int pSampleFactors) {
-            allocate(pCompressionCSConversion, pOptimizeHuffman, pSmoothingFactor, pForcedBitDepth, pFragmentSize,
-                pSampleFactors);
-        }
-
-        public DJCodecParameter(@Cast("E_CompressionColorSpaceConversion") int pCompressionCSConversion) {
-            allocate(pCompressionCSConversion);
-        }
-
-        public DJCodecParameter(@ByRef DJCodecParameter arg) {
-            allocate(arg);
-        }
-
-        private native void allocate(@Cast("E_CompressionColorSpaceConversion") int pCompressionCSConversion,
-            boolean pOptimizeHuffman, int pSmoothingFactor, int pForcedBitDepth,
-            @Cast("unsigned int") int pFragmentSize, @Cast("E_SubSampling") int pSampleFactors);
-
-        private native void allocate(@Cast("E_CompressionColorSpaceConversion") int pCompressionCSConversion);
-
-        private native void allocate(@ByRef DJCodecParameter arg);
-
-        public native int getSmoothingFactor();
-
-    }
-
-    public static class DJCompressIJG8Bit extends Pointer implements EncoderIJG {
-        static {
-            Loader.load();
-        }
-
-        public DJCompressIJG8Bit(@ByRef DJCodecParameter cp, @Cast("EJ_Mode") int mode,
-            @Cast("unsigned char") byte quality) {
-            allocate(cp, mode, quality);
-        }
-
-        public DJCompressIJG8Bit(@ByRef DJCodecParameter cp, @Cast("EJ_Mode") int mode, int prediction, int ptrans) {
-            allocate(cp, mode, prediction, ptrans);
-        }
-
-        private native void allocate(@ByRef DJCodecParameter cp, @Cast("EJ_Mode") int mode,
-            @Cast("unsigned char") byte quality);
-
-        private native void allocate(@ByRef DJCodecParameter cp, @Cast("EJ_Mode") int mode, int prediction, int ptrans);
-
-        /**
-         * single frame compression routine for 8-bit raw pixel data. May only be called if bytesPerSample() == 1.
-         * 
-         * @param columns
-         *            columns of frame
-         * @param rows
-         *            rows of frame
-         * @param interpr
-         *            photometric interpretation of input frame
-         * @param samplesPerPixel
-         *            samples per pixel of input frame
-         * @param image_buffer
-         *            pointer to frame buffer
-         * @param to
-         *            compressed frame returned in this parameter upon success
-         * @param length
-         *            length of compressed frame (in bytes) returned in this parameter upon success; length guaranteed
-         *            to be always even.
-         * @return EC_Normal if successful, an error code otherwise.
-         */
-        @Override
-        public native @ByVal RETURN_MSG encode(@Cast("unsigned short") int columns, @Cast("unsigned short") int rows,
-            @Cast("EP_Interpretation") int interpr, @Cast("unsigned short") int samplesPerPixel,
-            @Cast("unsigned char*") ByteBuffer image_buffer, @Cast("unsigned char*") ByteBuffer to,
-            @Cast("unsigned int&") IntPointer length);
-
-        /**
-         * returns the number of bytes per sample that will be expected when encoding.
-         */
-        @Override
-        @Cast("unsigned short")
-        public native int bytesPerSample();
-
-        /**
-         * returns the number of bits per sample that will be expected when encoding.
-         */
-        @Override
-        @Cast("unsigned short")
-        public native int bitsPerSample();
-    }
+    // public static class DJCodecParameter extends Pointer {
+    // static {
+    // Loader.load();
+    // }
+    //
+    // /**
+    // * constructor.
+    // *
+    // * @param pCompressionCSConversion
+    // * color conversion mode for compression
+    // * @param pOptimizeHuffman
+    // * perform huffman table optimization for 8 bits/pixel compression?
+    // * @param pSmoothingFactor
+    // * smoothing factor for image compression, 0..100
+    // * @param pForcedBitDepth
+    // * forced bit depth for image compression, 0 (auto) or 8/12/16
+    // * @param pFragmentSize
+    // * maximum fragment size (in kbytes) for compression, 0 for unlimited.
+    // * @param pSampleFactors
+    // * subsampling mode for color image compression
+    // */
+    // public DJCodecParameter(@Cast("E_CompressionColorSpaceConversion") int pCompressionCSConversion,
+    // boolean pOptimizeHuffman, int pSmoothingFactor, int pForcedBitDepth,
+    // @Cast("unsigned int") int pFragmentSize, @Cast("E_SubSampling") int pSampleFactors) {
+    // allocate(pCompressionCSConversion, pOptimizeHuffman, pSmoothingFactor, pForcedBitDepth, pFragmentSize,
+    // pSampleFactors);
+    // }
+    //
+    // public DJCodecParameter(@Cast("E_CompressionColorSpaceConversion") int pCompressionCSConversion) {
+    // allocate(pCompressionCSConversion);
+    // }
+    //
+    // public DJCodecParameter(@ByRef DJCodecParameter arg) {
+    // allocate(arg);
+    // }
+    //
+    // private native void allocate(@Cast("E_CompressionColorSpaceConversion") int pCompressionCSConversion,
+    // boolean pOptimizeHuffman, int pSmoothingFactor, int pForcedBitDepth,
+    // @Cast("unsigned int") int pFragmentSize, @Cast("E_SubSampling") int pSampleFactors);
+    //
+    // private native void allocate(@Cast("E_CompressionColorSpaceConversion") int pCompressionCSConversion);
+    //
+    // private native void allocate(@ByRef DJCodecParameter arg);
+    //
+    // public native int getSmoothingFactor();
+    //
+    // }
+    //
+    // public static class DJCompressIJG8Bit extends Pointer implements EncoderIJG {
+    // static {
+    // Loader.load();
+    // }
+    //
+    // public DJCompressIJG8Bit(@ByRef DJCodecParameter cp, @Cast("EJ_Mode") int mode,
+    // @Cast("unsigned char") byte quality) {
+    // allocate(cp, mode, quality);
+    // }
+    //
+    // public DJCompressIJG8Bit(@ByRef DJCodecParameter cp, @Cast("EJ_Mode") int mode, int prediction, int ptrans) {
+    // allocate(cp, mode, prediction, ptrans);
+    // }
+    //
+    // private native void allocate(@ByRef DJCodecParameter cp, @Cast("EJ_Mode") int mode,
+    // @Cast("unsigned char") byte quality);
+    //
+    // private native void allocate(@ByRef DJCodecParameter cp, @Cast("EJ_Mode") int mode, int prediction, int ptrans);
+    //
+    // /**
+    // * single frame compression routine for 8-bit raw pixel data. May only be called if bytesPerSample() == 1.
+    // *
+    // * @param columns
+    // * columns of frame
+    // * @param rows
+    // * rows of frame
+    // * @param interpr
+    // * photometric interpretation of input frame
+    // * @param samplesPerPixel
+    // * samples per pixel of input frame
+    // * @param image_buffer
+    // * pointer to frame buffer
+    // * @param to
+    // * compressed frame returned in this parameter upon success
+    // * @param length
+    // * length of compressed frame (in bytes) returned in this parameter upon success; length guaranteed
+    // * to be always even.
+    // * @return EC_Normal if successful, an error code otherwise.
+    // */
+    // @Override
+    // public native @ByVal RETURN_MSG encode(@Cast("unsigned short") int columns, @Cast("unsigned short") int rows,
+    // @Cast("EP_Interpretation") int interpr, @Cast("unsigned short") int samplesPerPixel,
+    // @Cast("unsigned char*") ByteBuffer image_buffer, @Cast("unsigned char*") ByteBuffer to,
+    // @Cast("unsigned int&") IntPointer length);
+    //
+    // /**
+    // * returns the number of bytes per sample that will be expected when encoding.
+    // */
+    // @Override
+    // @Cast("unsigned short")
+    // public native int bytesPerSample();
+    //
+    // /**
+    // * returns the number of bits per sample that will be expected when encoding.
+    // */
+    // @Override
+    // @Cast("unsigned short")
+    // public native int bitsPerSample();
+    // }
 
     /*******************************************************************************************************************************************
      * 

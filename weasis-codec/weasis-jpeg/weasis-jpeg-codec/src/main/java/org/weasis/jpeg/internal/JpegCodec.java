@@ -32,8 +32,6 @@ import org.weasis.image.jni.NativeImage;
 import org.weasis.jpeg.JpegParameters;
 import org.weasis.jpeg.NativeJPEGImage;
 import org.weasis.jpeg.cpp.libijg;
-import org.weasis.jpeg.cpp.libijg.DJCodecParameter;
-import org.weasis.jpeg.cpp.libijg.DJCompressIJG8Bit;
 import org.weasis.jpeg.cpp.libijg.DJDecompressIJG12Bit;
 import org.weasis.jpeg.cpp.libijg.DJDecompressIJG16Bit;
 import org.weasis.jpeg.cpp.libijg.DJDecompressIJG8Bit;
@@ -81,9 +79,8 @@ public class JpegCodec implements NativeCodec {
             if (bps < 1 || bps > 16) {
                 return "JPEG codec: invalid bit per sample: " + bps;
             }
-            DecoderIJG decomp =
-                bps > 12 ? new DJDecompressIJG16Bit() : bps > 8 ? new DJDecompressIJG12Bit()
-                    : new DJDecompressIJG8Bit();
+            DecoderIJG decomp = bps > 12 ? new DJDecompressIJG16Bit()
+                : bps > 8 ? new DJDecompressIJG12Bit() : new DJDecompressIJG8Bit();
             try {
                 int segmentFragment = 0;
                 MappedByteBuffer buffer = seg.getDirectByteBuffer(segmentFragment);
@@ -145,8 +142,9 @@ public class JpegCodec implements NativeCodec {
                 // DecoderIJG decomp =
                 // bps > 12 ? new DJDecompressIJG16Bit() : bps > 8 ? new DJDecompressIJG12Bit()
                 // : new DJDecompressIJG8Bit();
-                DJCodecParameter djParams = new DJCodecParameter(libijg.ECC_lossyYCbCr);
-                EncoderIJG comp = new DJCompressIJG8Bit(djParams, libijg.EJM_baseline, (byte) 90);
+
+                // DJCodecParameter djParams = new DJCodecParameter(libijg.ECC_lossyYCbCr);
+                // EncoderIJG comp = new DJCompressIJG8Bit(djParams, libijg.EJM_baseline, (byte) 90);
                 long start = System.currentTimeMillis();
                 // TODO get directly array
                 Buffer b = nImage.getInputBuffer();
@@ -171,9 +169,8 @@ public class JpegCodec implements NativeCodec {
                 System.out.println("Convert array time: " + (stop - start) + " ms"); //$NON-NLS-1$
 
                 // Build outputStream here and transform to an array
-                ByteBuffer outBuf =
-                    ByteBuffer.allocateDirect(params.getWidth() * params.getHeight() * params.getSamplesPerPixel()
-                        * params.getBitsPerSample() / 16);
+                ByteBuffer outBuf = ByteBuffer.allocateDirect(params.getWidth() * params.getHeight()
+                    * params.getSamplesPerPixel() * params.getBitsPerSample() / 16);
                 outBuf.order(params.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
 
                 int columns = params.getWidth();
@@ -181,22 +178,24 @@ public class JpegCodec implements NativeCodec {
                 int interpr = samplesPerPixel == 1 ? libijg.EPI_Monochrome2 : libijg.EPI_RGB;
                 IntPointer bytesWritten = new IntPointer(1);
 
-                start = System.currentTimeMillis();
-                // byte[] to = null;
-                RETURN_MSG val = comp.encode(columns, rows, interpr, samplesPerPixel, buffer, outBuf, bytesWritten);
-                if (val == null || val.code() != libijg.OK) {
-                    msg = val == null ? "error" : val.msg().getString();
-                }
-                stop = System.currentTimeMillis();
-                System.out
-                    .println("Native encoder time: " + (stop - start) + " ms. BytesWritten add: " + bytesWritten.get()); //$NON-NLS-1$
-                if (msg == null) {
-                    // ByteBuffer outBuf = ByteBuffer.wrap(to);
-                    outBuf.rewind();
-                    // TODO write directly in native lib by calling: ouputStream.write(outBuf.array(), 0, 4096);
-                    NativeImage.writeByteBuffer(ouputStream, outBuf, 154618);
-                    System.out.println("Write encoder time: " + (System.currentTimeMillis() - stop) + " ms"); //$NON-NLS-1$
-                }
+                // start = System.currentTimeMillis();
+                // // byte[] to = null;
+                // RETURN_MSG val = comp.encode(columns, rows, interpr, samplesPerPixel, buffer, outBuf, bytesWritten);
+                // if (val == null || val.code() != libijg.OK) {
+                // msg = val == null ? "error" : val.msg().getString();
+                // }
+                // stop = System.currentTimeMillis();
+                // System.out
+                // .println("Native encoder time: " + (stop - start) + " ms. BytesWritten add: " + bytesWritten.get());
+                // //$NON-NLS-1$
+                // if (msg == null) {
+                // // ByteBuffer outBuf = ByteBuffer.wrap(to);
+                // outBuf.rewind();
+                // // TODO write directly in native lib by calling: ouputStream.write(outBuf.array(), 0, 4096);
+                // NativeImage.writeByteBuffer(ouputStream, outBuf, 154618);
+                // System.out.println("Write encoder time: " + (System.currentTimeMillis() - stop) + " ms");
+                // //$NON-NLS-1$
+                // }
             } finally {
                 // Do not close inChannel (comes from image input stream)
             }
@@ -221,8 +220,8 @@ public class JpegCodec implements NativeCodec {
             params.setTileHeight(params.getHeight());
             params.setBitsPerSample(p.data_precision());
             params.setSamplesPerPixel(p.num_components());
-            params.setBytesPerLine(params.getWidth() * params.getSamplesPerPixel()
-                * ((params.getBitsPerSample() + 7) / 8));
+            params.setBytesPerLine(
+                params.getWidth() * params.getSamplesPerPixel() * ((params.getBitsPerSample() + 7) / 8));
             // params.setAllowedLossyError(p.allowedlossyerror());
         }
     }
@@ -240,8 +239,8 @@ public class JpegCodec implements NativeCodec {
             params.setTileHeight(params.getHeight());
             params.setBitsPerSample(sof.getSamplePrecision());
             params.setSamplesPerPixel(sof.getComponents());
-            params.setBytesPerLine(params.getWidth() * params.getSamplesPerPixel()
-                * ((params.getBitsPerSample() + 7) / 8));
+            params.setBytesPerLine(
+                params.getWidth() * params.getSamplesPerPixel() * ((params.getBitsPerSample() + 7) / 8));
         }
         return img;
     }

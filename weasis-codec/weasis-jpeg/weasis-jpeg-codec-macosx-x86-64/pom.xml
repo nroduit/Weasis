@@ -11,7 +11,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-jpeg-codec-macosx-x86-64</artifactId>
 	<name>JPEG native Mac amd64 codec</name>
-	<version>1.0.1-6b</version>
+	<version>1.0.2-6b</version>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
@@ -23,7 +23,7 @@
 				<configuration>
 					<instructions>
 						<Bundle-NativeCode>lib/libjnilibijg.jnilib; processor=x86-64; osname=MacOSX</Bundle-NativeCode>
-						<Fragment-Host>weasis-jpeg-codec;bundle-version="2.0"</Fragment-Host>
+						<Fragment-Host>weasis-jpeg-codec;bundle-version="2.5"</Fragment-Host>
 						<Embed-StripVersion>true</Embed-StripVersion>
 						<!-- Do not inline native libs -->
 						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>

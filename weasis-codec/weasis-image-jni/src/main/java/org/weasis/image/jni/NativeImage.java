@@ -110,31 +110,6 @@ public abstract class NativeImage {
         return (ByteBuffer) outputBuffer;
     }
 
-    public int getType() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public byte[] getBitData() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public byte[] getByteData() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public short[] getUShortData() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public short[] getShortData() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     public static FileChannel getFileOuputStream(ImageOutputStream ouputStream) {
         if (ouputStream instanceof FileImageOutputStream) {
             RandomAccessFile raf = FileStreamSegment.getRandomAccessFile((FileImageOutputStream) ouputStream);

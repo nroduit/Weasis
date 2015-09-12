@@ -1,6 +1,6 @@
 ![Weasis](weasis-distributions/resources/images/about.png)
 
-The master branch contains Weasis 2. The old branch is 1.2.x.
+The master branch contains Weasis 2.0.x, the next major release is 2.5.x and the old branch is 1.2.x.
 
 [General information](http://www.dcm4che.org/confluence/display/WEA/Home)
 
@@ -8,7 +8,16 @@ The master branch contains Weasis 2. The old branch is 1.2.x.
 
 [Issue Tracker](http://www.dcm4che.org/jira/browse/WEA)
 
-## Weasis 2.0 ##
+## Weasis 2.5 ##
+
+### New Features: ###
+* Embedded new codecs compiled for Windows 32/64-bit, Linux x86 32/64-bit and Mac OS X 64-bit. 
+	* jpeg-basline, jpeg-extended and jpeg-lossless (IJG 6b)
+	* jpeg-ls (CharLS 1.0) 
+	* jpeg2000 codecs (OpegJPEG 2.1)
+* Allows to order the codecs by priority with a unique configuration for all the systems
+* Supports multi-frame and multiple fragments at the same time
+* Changes to make more abstract the the views for the plugins. 
 
 ### General Features: ###
 * Flexible integration to HIS or PHR (see [weasis-pacs-connector](https://github.com/nroduit/weasis-pacs-connector))

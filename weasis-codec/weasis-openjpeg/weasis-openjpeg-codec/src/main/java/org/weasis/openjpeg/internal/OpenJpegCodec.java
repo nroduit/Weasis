@@ -172,6 +172,10 @@ public class OpenJpegCodec implements NativeCodec {
                 /* Read the main header of the codestream and if necessary the JP2 boxes */
                 openjpeg.opj_dparameters parameters = new openjpeg.opj_dparameters();
                 openjpeg.opj_set_default_decoder_parameters(parameters);
+                parameters.decod_format(j2kparams.getType());
+                parameters.cp_layer(0);
+                parameters.cp_reduce(0);
+
                 if (!openjpeg.opj_setup_decoder(codec, parameters)) {
                     throw new IOException("Failed to setup the decoder");
                 }
@@ -187,38 +191,77 @@ public class OpenJpegCodec implements NativeCodec {
                     throw new IllegalArgumentException("Invalid bit per sample: " + bps);
                 }
 
-                // TODO add parameters to decode either from a tile index or from an area
-                int tile_index = -1;
                 Rectangle area = region;
                 // Rectangle area = new Rectangle();
                 // area.width = j2kparams.getWidth();
                 // area.height = j2kparams.getHeight();
 
-                if (tile_index >= 0) {
-                    /* It is just here to illustrate how to use the resolution after set parameters */
-                    /*
-                     * if (!openjpeg.opj_set_decoded_resolution_factor(l_codec, 5)) {
-                     * openjpeg.opj_stream_destroy_v3(l_stream); throw new
-                     * IOException("Failed to set the resolution factor tile!"); }
-                     */
-
-                    if (!openjpeg.opj_get_decoded_tile(codec, l_stream, image, tile_index)) {
-                        throw new IOException("Failed to decode tile " + tile_index + "!");
-                    }
-                    LOGGER.debug("tile {} is decoded", tile_index);
-                } else {
-                    /* Optional if you want decode the entire image */
-                    if (area != null && !openjpeg.opj_set_decode_area(codec, image, area.x, area.y, area.x + area.width,
-                        area.y + area.height)) {
-                        throw new IOException("Failed to set the decoded area!");
-                    }
-
-                    /* Get the decoded image */
-                    if (!(openjpeg.opj_decode(codec, l_stream, image)
-                        && openjpeg.opj_end_decompress(codec, l_stream))) {
-                        throw new IOException("Failed to set the decoded image!");
-                    }
+                /* Do not decode the entire image if are is not null */
+                if (area != null && !openjpeg.opj_set_decode_area(codec, image, area.x, area.y, area.x + area.width,
+                    area.y + area.height)) {
+                    throw new IOException("Failed to set the decoded area!");
                 }
+
+                // TODO need to be tested
+
+                // if (parameters.nb_tile_to_decode() > 0) {
+                // ByteBuffer outBuf = null;
+                // BoolPointer l_go_on = new BoolPointer(1);
+                // l_go_on.put(true);
+                // IntPointer l_data_size = new IntPointer(1);
+                // IntPointer l_tile_index = new IntPointer(1);
+                // IntPointer l_nb_comps = new IntPointer(1);
+                // l_nb_comps.put(0);
+                // IntPointer l_tile_x0 = new IntPointer(1);
+                // IntPointer l_tile_y0 = new IntPointer(1);
+                // IntPointer l_tile_x1 = new IntPointer(1);
+                // IntPointer l_tile_y1 = new IntPointer(1);
+                //
+                // while (l_go_on.get()) {
+                // if (!openjpeg.opj_read_tile_header(codec, l_stream, l_tile_index, l_data_size, l_tile_x0,
+                // l_tile_y0, l_tile_x1, l_tile_y1, l_nb_comps, l_go_on)) {
+                // // throw new IOException("Failed to read tile header: " + l_tile_index.get() + "!");
+                // }
+                //
+                // if (l_go_on.get()) {
+                // if (outBuf == null || l_data_size.get() > outBuf.capacity()) {
+                // outBuf = ByteBuffer.allocateDirect(l_data_size.get());
+                // }
+                //
+                // if (!openjpeg.opj_decode_tile_data(codec, l_tile_index.get(), outBuf, l_data_size.get(),
+                // l_stream)) {
+                // throw new IOException("Failed to decode tile " + l_tile_index.get() + "!");
+                // }
+                // LOGGER.debug("tile {} is decoded", l_tile_index.get());
+                // }
+                // }
+                // } else {
+                /* Get the decoded image */
+                if (!(openjpeg.opj_decode(codec, l_stream, image) && openjpeg.opj_end_decompress(codec, l_stream))) {
+                    throw new IOException("Failed to set the decoded image!");
+                }
+                // }
+
+                // if (tile_index >= 0) {
+                // /* It is just here to illustrate how to use the resolution after set parameters */
+                // /*
+                // * if (!openjpeg.opj_set_decoded_resolution_factor(l_codec, 5)) {
+                // * openjpeg.opj_stream_destroy_v3(l_stream); throw new
+                // * IOException("Failed to set the resolution factor tile!"); }
+                // */
+                //
+                // if (!openjpeg.opj_get_decoded_tile(codec, l_stream, image, tile_index)) {
+                // throw new IOException("Failed to decode tile " + tile_index + "!");
+                // }
+                // LOGGER.debug("tile {} is decoded", tile_index);
+                // } else {
+                //
+                // /* Get the decoded image */
+                // if (!(openjpeg.opj_decode(codec, l_stream, image)
+                // && openjpeg.opj_end_decompress(codec, l_stream))) {
+                // throw new IOException("Failed to set the decoded image!");
+                // }
+                // }
 
                 /* Close the byte stream */
                 openjpeg.opj_stream_destroy(l_stream);
