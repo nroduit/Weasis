@@ -20,6 +20,7 @@
 		<module>weasis-parent</module>
 		<module>weasis-core</module>
 		<module>weasis-imageio</module>
+		<module>weasis-codec</module>
 		<module>weasis-base</module>
 		<module>weasis-dicom</module>
 		<module>animati-texture</module>

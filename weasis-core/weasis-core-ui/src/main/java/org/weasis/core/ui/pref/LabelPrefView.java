@@ -37,9 +37,9 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.graphic.Graphic;
 
@@ -66,8 +66,8 @@ public class LabelPrefView extends AbstractItemDialogPage {
         setComponentPosition(5);
         setBorder(new EmptyBorder(15, 10, 10, 10));
         try {
-            JMVUtils.setList(jComboName,
-                Messages.getString("LabelPrefView.default"), GraphicsEnvironment.getLocalGraphicsEnvironment() //$NON-NLS-1$
+            JMVUtils.setList(jComboName, Messages.getString("LabelPrefView.default"), //$NON-NLS-1$
+                GraphicsEnvironment.getLocalGraphicsEnvironment()
                     .getAvailableFontFamilyNames());
             jbInit();
             initialize();
@@ -166,8 +166,8 @@ public class LabelPrefView extends AbstractItemDialogPage {
                 ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
                 if (p instanceof ImageViewerPlugin) {
                     for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
-                        if (v instanceof DefaultView2d) {
-                            DefaultView2d view = (DefaultView2d) v;
+                        if (v instanceof ViewCanvas) {
+                            ViewCanvas view = (ViewCanvas) v;
                             List<Graphic> list = view.getLayerModel().getAllGraphics();
                             for (Graphic graphic : list) {
                                 graphic.updateLabel(true, view);

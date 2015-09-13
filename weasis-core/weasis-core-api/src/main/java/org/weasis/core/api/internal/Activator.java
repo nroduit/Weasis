@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.internal;
 
+import java.awt.RenderingHints;
 import java.io.File;
 import java.io.IOException;
 import java.util.Dictionary;
@@ -17,6 +18,8 @@ import java.util.Hashtable;
 
 import javax.media.jai.JAI;
 import javax.media.jai.OperationRegistry;
+import javax.media.jai.RecyclingTileFactory;
+import javax.media.jai.TileScheduler;
 import javax.media.jai.util.ImagingListener;
 
 import org.apache.felix.prefs.BackingStore;
@@ -88,6 +91,17 @@ public class Activator implements BundleActivator, ServiceListener {
         // TODO manage memory setting ?
         jai.getTileCache().setMemoryCapacity(128 * 1024L * 1024L);
 
+        RecyclingTileFactory recyclingTileFactory = new RecyclingTileFactory();
+        RenderingHints rh = jai.getRenderingHints();
+        rh.put(JAI.KEY_TILE_FACTORY, recyclingTileFactory);
+        rh.put(JAI.KEY_TILE_RECYCLER, recyclingTileFactory);
+        rh.put(JAI.KEY_CACHED_TILE_RECYCLING_ENABLED, Boolean.TRUE);
+        jai.setRenderingHints(rh);
+        TileScheduler scheduler = jai.getTileScheduler();
+        int nbThread = Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
+        scheduler.setParallelism(nbThread);
+        scheduler.setPrefetchParallelism(nbThread - 1);
+
         // Allows to connect through a proxy initialized by Java Webstart
         ProxyDetector.setProxyFromJavaWebStart();
 
@@ -130,8 +144,9 @@ public class Activator implements BundleActivator, ServiceListener {
         String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" }; //$NON-NLS-1$
         // Activate audit log by adding an entry "audit.log=true" in Weasis.
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(loggerKey, false)) {
-            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", AppProperties.WEASIS_PATH //$NON-NLS-1$
-                + File.separator + "log" + File.separator + "audit-" + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", //$NON-NLS-1$
+                AppProperties.WEASIS_PATH + File.separator + "log" + File.separator + "audit-" //$NON-NLS-1$ //$NON-NLS-2$
+                    + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$
                 "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null); //$NON-NLS-1$
             AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {
@@ -142,9 +157,8 @@ public class Activator implements BundleActivator, ServiceListener {
                 if (confAdmin != null) {
                     Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
                     if (logConfiguration == null) {
-                        logConfiguration =
-                            confAdmin.createFactoryConfiguration(
-                                "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                        logConfiguration = confAdmin
+                            .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                         Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
                         loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); //$NON-NLS-1$ //$NON-NLS-2$
                         // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");

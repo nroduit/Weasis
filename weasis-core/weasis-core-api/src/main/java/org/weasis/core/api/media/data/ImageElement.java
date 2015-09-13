@@ -44,8 +44,14 @@ public class ImageElement extends MediaElement<PlanarImage> {
     private static final Logger logger = LoggerFactory.getLogger(ImageElement.class);
     /*
      * Imageio issue with native library in multi-thread environment (to avoid JVM crash let only one simultaneous
-     * thread) (https://jai-imageio-core.dev.java.net/issues/show_bug.cgi?id=126)
+     * thread) (https://java.net/jira/browse/JAI_IMAGEIO_CORE-126)
+     * 
+     * Try multi-thread reading with new native decoders
+     * 
+     * public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime()
+     * .availableProcessors() / 2));
      */
+    // TODO evaluate the difference, keep one thread with sun decoder. (seems to hangs on shutdown)
     public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(1);
 
     private static final SoftHashMap<ImageElement, PlanarImage> mCache = new SoftHashMap<ImageElement, PlanarImage>() {
@@ -83,14 +89,14 @@ public class ImageElement extends MediaElement<PlanarImage> {
         super(mediaIO, key);
     }
 
-    protected void findMinMaxValues(RenderedImage img) throws OutOfMemoryError {
+    protected void findMinMaxValues(RenderedImage img, boolean exclude8bitImage) throws OutOfMemoryError {
         // This function can be called several times from the inner class Load.
         // Do not compute min and max it has already be done
 
         if (img != null && !isImageAvailable()) {
 
             int datatype = img.getSampleModel().getDataType();
-            if (datatype == DataBuffer.TYPE_BYTE) {
+            if (datatype == DataBuffer.TYPE_BYTE && exclude8bitImage) {
                 this.minPixelValue = 0f;
                 this.maxPixelValue = 255f;
             } else {
@@ -325,7 +331,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
         try {
             cacheImage = startImageLoading();
             if (findMinMax) {
-                findMinMaxValues(cacheImage);
+                findMinMaxValues(cacheImage, true);
             }
         } catch (OutOfMemoryError e1) {
             /*
@@ -341,7 +347,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
             }
             cacheImage = startImageLoading();
             if (findMinMax) {
-                findMinMaxValues(cacheImage);
+                findMinMaxValues(cacheImage, true);
             }
         }
         if (manager != null && cacheImage != null) {

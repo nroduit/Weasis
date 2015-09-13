@@ -33,8 +33,8 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 
 @Component(immediate = false)
 @Service
@@ -71,14 +71,14 @@ public class ViewerFactory implements SeriesViewerFactory {
             if (obj instanceof GridBagLayoutModel) {
                 model = (GridBagLayoutModel) obj;
             } else {
-                obj = properties.get(DefaultView2d.class.getName());
+                obj = properties.get(ViewCanvas.class.getName());
                 if (obj instanceof Integer) {
                     ActionState layout = EventManager.getInstance().getAction(ActionW.LAYOUT);
                     if (layout instanceof ComboItemListener) {
                         Object[] list = ((ComboItemListener) layout).getAllItem();
                         for (Object m : list) {
                             if (m instanceof GridBagLayoutModel) {
-                                if (getViewTypeNumber((GridBagLayoutModel) m, DefaultView2d.class) >= (Integer) obj) {
+                                if (getViewTypeNumber((GridBagLayoutModel) m, ViewCanvas.class) >= (Integer) obj) {
                                     model = (GridBagLayoutModel) m;
                                     break;
                                 }

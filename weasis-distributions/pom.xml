@@ -15,8 +15,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
-			in config.properties) -->
+		<!-- dollar property to avoid replacing some variables when filtering resources 
+			files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
 
@@ -43,12 +43,14 @@
 		<jai.version>1.1.4-b05</jai.version>
 		<jai.native.version>1.1.4-b03</jai.native.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
+		<weasis.jpeg.native.version>1.0.2-6b</weasis.jpeg.native.version>
+		<weasis.openjpeg.native.version>2.1.3</weasis.openjpeg.native.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 
 		<windowsName>weasis-native</windowsName>
 	</properties>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -169,7 +171,8 @@
 									<artifactId>docking-frames</artifactId>
 									<version>${dockingframes.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-									<!-- Workaround to get a snapshot name without timestamp (download from nexus) -->
+									<!-- Workaround to get a snapshot name without timestamp (download 
+										from nexus) -->
 									<destFileName>docking-frames-${dockingframes.version}.jar</destFileName>
 								</artifactItem>
 								<artifactItem>
@@ -249,6 +252,88 @@
 								</artifactItem>
 
 								<!-- ===================================== -->
+								<!-- Weasis Codec bundles -->
+								<!-- ===================================== -->
+								<artifactItem>
+									<groupId>org.weasis</groupId>
+									<artifactId>weasis-image-jni</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.jpeg</groupId>
+									<artifactId>weasis-jpeg-codec</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.jpeg</groupId>
+									<artifactId>weasis-jpeg-codec-linux-x86</artifactId>
+									<version>${weasis.jpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.jpeg</groupId>
+									<artifactId>weasis-jpeg-codec-linux-x86-64</artifactId>
+									<version>${weasis.jpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.jpeg</groupId>
+									<artifactId>weasis-jpeg-codec-macosx-x86-64</artifactId>
+									<version>${weasis.jpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.jpeg</groupId>
+									<artifactId>weasis-jpeg-codec-windows-x86</artifactId>
+									<version>${weasis.jpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.jpeg</groupId>
+									<artifactId>weasis-jpeg-codec-windows-x86-64</artifactId>
+									<version>${weasis.jpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.openjpeg</groupId>
+									<artifactId>weasis-openjpeg-codec</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.openjpeg</groupId>
+									<artifactId>weasis-openjpeg-codec-linux-x86</artifactId>
+									<version>${weasis.openjpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.openjpeg</groupId>
+									<artifactId>weasis-openjpeg-codec-linux-x86-64</artifactId>
+									<version>${weasis.openjpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.openjpeg</groupId>
+									<artifactId>weasis-openjpeg-codec-macosx-x86-64</artifactId>
+									<version>${weasis.openjpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.openjpeg</groupId>
+									<artifactId>weasis-openjpeg-codec-windows-x86</artifactId>
+									<version>${weasis.openjpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.openjpeg</groupId>
+									<artifactId>weasis-openjpeg-codec-windows-x86-64</artifactId>
+									<version>${weasis.openjpeg.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+
+								<!-- ===================================== -->
 								<!-- Weasis Base bundles -->
 								<!-- ===================================== -->
 								<artifactItem>
@@ -260,6 +345,12 @@
 								<artifactItem>
 									<groupId>org.weasis.base</groupId>
 									<artifactId>weasis-base-viewer2d</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.base</groupId>
+									<artifactId>weasis-base-explorer</artifactId>
 									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
@@ -355,11 +446,12 @@
 						<configuration>
 							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
+								<taskdef name="bindex"
+									classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
 									classpath="${project.build.directory}/lib/bindex.jar" />
-								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
-									name="Weasis Bundle Repository">
+								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml"
+									description="Weasis Bundle Repository" licenseurl="http://www.eclipse.org/legal/epl-v10.html"
+									quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</target>
@@ -449,8 +541,8 @@
 									<goal>packFiles</goal>
 								</goals>
 								<configuration>
-									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars 
-										are normalized -->
+									<!-- packing requires removing all the old signatures, so if jarsigner.alias 
+										is not null jars are normalized -->
 									<signed>${jarsigner.alias}</signed>
 									<normalizeOnly>true</normalizeOnly>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
@@ -493,8 +585,9 @@
 		<profile>
 			<id>jar.signer</id>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
-					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" 
+					-Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
+					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>
@@ -559,7 +652,8 @@
 									<!-- <customProcName>true</customProcName> -->
 									<icon>etc/weasis.ico</icon>
 									<cmdLine>$dicom:get --portable</cmdLine>
-									<!-- Setting it to . will change the current dir to the same directory as the executable -->
+									<!-- Setting it to . will change the current dir to the same directory 
+										as the executable -->
 									<chdir>.</chdir>
 									<classPath>
 										<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
@@ -568,7 +662,8 @@
 										<preCp>weasis\*.jar</preCp>
 									</classPath>
 									<singleInstance>
-										<!-- To disable singleInstance in portable version simply set windowsName property empty -->
+										<!-- To disable singleInstance in portable version simply set windowsName 
+											property empty -->
 										<!-- $ mvn clean package -Dportable=true -DwindowsName= -->
 										<mutexName>${windowsName}</mutexName>
 									</singleInstance>
@@ -578,9 +673,9 @@
 										<initialHeapSize>64</initialHeapSize>
 										<maxHeapSize>512</maxHeapSize>
 										<!-- Optional, defaults to 64/32; Allows to select between 64-bit 
-											and 32-bit runtimes: 1) "64" Use only 64-bit runtimes. 2) "64/32" Use 64-bit runtimes 
-											if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes if available, 
-											otherwise use 64-bit. 4) "32" Use only 32-bit runtimes  -->
+											and 32-bit runtimes: 1) "64" Use only 64-bit runtimes. 2) "64/32" Use 64-bit 
+											runtimes if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes 
+											if available, otherwise use 64-bit. 4) "32" Use only 32-bit runtimes -->
 										<runtimeBits>32/64</runtimeBits>
 										<!-- Optional, defaults to false which treats the bundled JRE as 
 											the primary runtime. When set to true, the bundled JRE will only be used 

@@ -95,6 +95,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.PanPoint;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -119,8 +120,8 @@ import org.weasis.dicom.viewer2d.mpr.MprView;
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
 
-    public static final String[] functions = {
-        "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
+    public static final String[] functions =
+        { "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
@@ -196,9 +197,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(lutAction = newLutAction());
         iniAction(filterAction = newFilterAction());
         iniAction(sortStackAction = newSortStackAction());
-        iniAction(layoutAction =
-            newLayoutAction(View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST
-                .size()])));
+        iniAction(layoutAction = newLayoutAction(
+            View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST.size()])));
         iniAction(synchAction =
             newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
@@ -248,8 +248,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             @Override
             public void itemStateChanged(Object object) {
                 if (object instanceof KernelData) {
-                    firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                        object));
+                    firePropertyChange(ActionW.SYNCH.cmd(), null,
+                        new SynchEvent(getSelectedViewPane(), action.cmd(), object));
                 }
 
             }
@@ -280,10 +280,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     if (series != null) {
                         // Model contains display value, value-1 is the index value of a sequence
                         int index = model.getValue() - 1;
-                        image =
-                            series.getMedia(index,
-                                (Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
-                                view2d.getCurrentSortComparator());
+                        image = series.getMedia(index,
+                            (Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                            view2d.getCurrentSortComparator());
                         mediaEvent = new SynchCineEvent(view2d, image, index);
                         // Ensure to load image before calling the default preset (requires pixel min and max)
                         if (image != null && !image.isImageAvailable()) {
@@ -295,7 +294,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 GridBagLayoutModel layout = (GridBagLayoutModel) layoutAction.getSelectedItem();
                 ActionState synch = getAction(ActionW.SYNCH);
 
-                if (image != null && View2dFactory.getViewTypeNumber(layout, DefaultView2d.class) > 1
+                if (image != null && View2dFactory.getViewTypeNumber(layout, ViewCanvas.class) > 1
                     && synch instanceof ComboItemListener) {
 
                     SynchView synchview = (SynchView) ((ComboItemListener) synch).getSelectedItem();
@@ -327,9 +326,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 if (view2d != null && image != view2d.getImage() && image != null) {
                     PresetWindowLevel oldPreset = (PresetWindowLevel) presetAction.getSelectedItem();
                     PresetWindowLevel newPreset = null;
-                    boolean pixelPadding =
-                        JMVUtils.getNULLtoTrue(view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
-                            ActionW.IMAGE_PIX_PADDING.cmd()));
+                    boolean pixelPadding = JMVUtils.getNULLtoTrue(
+                        view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
 
                     List<PresetWindowLevel> newPresetList = image.getPresetList(pixelPadding);
 
@@ -390,8 +388,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
                 firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
                 if (image != null) {
-                    fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
-                        EVENT.SELECT));
+                    fireSeriesViewerListeners(
+                        new SeriesViewerEvent(selectedView2dContainer, series, image, EVENT.SELECT));
                 }
 
                 updateKeyObjectComponentsListener(view2d);
@@ -586,8 +584,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.DEFAULT_PRESET, true) {
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
         };
     }
@@ -603,8 +601,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 if (hasKeyObjectReferenceChanged == false) {
                     // If KO Toogle State hasn't changed this action should be reset to its previous state, that is the
                     // current view's actionValue
-                    this.setSelectedWithoutTriggerAction((Boolean) getSelectedViewPane().getActionValue(
-                        ActionW.KO_TOOGLE_STATE.cmd()));
+                    this.setSelectedWithoutTriggerAction(
+                        (Boolean) getSelectedViewPane().getActionValue(ActionW.KO_TOOGLE_STATE.cmd()));
                 }
             }
         };
@@ -685,8 +683,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
             @Override
             public void itemStateChanged(Object object) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    object));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), object));
             }
         };
     }
@@ -696,8 +694,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
             @Override
             public void itemStateChanged(Object object) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    object));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), object));
             }
         };
     }
@@ -763,9 +761,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
             if (view != null) {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
-                PrintDialog dialog =
-                    new PrintDialog(SwingUtilities.getWindowAncestor(view),
-                        Messages.getString("View2dContainer.print_layout"), this); //$NON-NLS-1$
+                PrintDialog dialog = new PrintDialog(SwingUtilities.getWindowAncestor(view),
+                    Messages.getString("View2dContainer.print_layout"), this); //$NON-NLS-1$
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         } else {
@@ -847,8 +844,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             ViewCanvas<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
                 pane.setFocused(true);
-                fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null,
-                    EVENT.SELECT_VIEW));
+                fireSeriesViewerListeners(
+                    new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null, EVENT.SELECT_VIEW));
             }
         }
     }
@@ -878,8 +875,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public void reset(ResetTools action) {
         AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
         if (ResetTools.All.equals(action)) {
-            firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(),
-                true));
+            firePropertyChange(ActionW.SYNCH.cmd(), null,
+                new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));
         } else if (ResetTools.Zoom.equals(action)) {
             // Pass the value 0.0 (convention: default value according the zoom type) directly to the property change,
             // otherwise the value is adjusted by the BoundedRangeModel
@@ -930,16 +927,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         updateWindowLevelComponentsListener(view2d.getImage(), view2d);
 
         lutAction.setSelectedItemWithoutTriggerAction(dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT));
-        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(PseudoColorOp.OP_NAME,
-            PseudoColorOp.P_LUT_INVERSE));
+        inverseLutAction.setSelectedWithoutTriggerAction(
+            (Boolean) dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE));
         filterAction
             .setSelectedItemWithoutTriggerAction(dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA));
-        rotateAction.setValueWithoutTriggerAction((Integer) dispOp.getParamValue(RotationOp.OP_NAME,
-            RotationOp.P_ROTATE));
+        rotateAction
+            .setValueWithoutTriggerAction((Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE));
         flipAction.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
 
-        zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) view2d
-            .getActionValue(ActionW.ZOOM.cmd()))));
+        zoomAction.setValueWithoutTriggerAction(
+            viewScaleToSliderValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd()))));
         spUnitAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd()));
 
         showLensAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.LENS.cmd()));
@@ -983,8 +980,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 koFilterAction.enableAction(false);
                 koSelectionAction.enableAction(false);
             } else {
-                koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE
-                    .cmd()));
+                koToggleAction
+                    .setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE.cmd()));
                 koFilterAction
                     .setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
 
@@ -992,8 +989,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 boolean enable = kos.length > 1;
                 if (enable) {
                     koSelectionAction.setDataListWithoutTriggerAction(kos);
-                    koSelectionAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION
-                        .cmd()));
+                    koSelectionAction
+                        .setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));
                 }
                 koFilterAction.enableAction(enable);
                 koSelectionAction.enableAction(enable);
@@ -1193,9 +1190,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     } else if (Mode.Tile.equals(synch.getMode())) {
                         Object selectedKO = viewPane.getActionValue(ActionW.KO_SELECTION.cmd());
                         Boolean enableFilter = (Boolean) viewPane.getActionValue(ActionW.KO_FILTER.cmd());
-                        int frameIndex =
-                            JMVUtils.getNULLtoFalse(enableFilter) ? 0 : viewPane.getFrameIndex()
-                                - viewPane.getTileOffset();
+                        int frameIndex = JMVUtils.getNULLtoFalse(enableFilter) ? 0
+                            : viewPane.getFrameIndex() - viewPane.getTileOffset();
                         for (int i = 0; i < panes.size(); i++) {
                             ViewCanvas<DicomImageElement> pane = panes.get(i);
                             oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
@@ -1280,7 +1276,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             ButtonGroup group = new ButtonGroup();
             menu = new JMenu(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$ 
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$
             menu.setEnabled(getSelectedSeries() != null);
 
             if (menu.isEnabled()) {
@@ -1399,8 +1395,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             menu = sortStackAction.createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack")); //$NON-NLS-1$
 
             menu.add(new JSeparator());
-            menu.add(inverseStackAction.createUnregiteredJCheckBoxMenuItem(Messages
-                .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
+            menu.add(
+                inverseStackAction.createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
         }
         return menu;
     }
@@ -1432,14 +1428,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     // ***** OSGI commands: dcmview2d:cmd ***** //
 
     public void zoom(String[] argv) throws IOException {
-        final String[] usage =
-            {
-                "Change the zoom value of the selected image (0.0 is the best fit value in the window", //$NON-NLS-1$
-                "Usage: dcmview2d:zoom [set | increase | decrease] [VALUE]", //$NON-NLS-1$
-                "  -s --set [decimal value]  set a new value from 0.0 to 12.0 (zoom magnitude, 0.0 => default, -200.0 => best fit, -100.0 => real size)", //$NON-NLS-1$
-                "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
-                "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
-                "  -? --help       show help" }; //$NON-NLS-1$ 
+        final String[] usage = { "Change the zoom value of the selected image (0.0 is the best fit value in the window", //$NON-NLS-1$
+            "Usage: dcmview2d:zoom [set | increase | decrease] [VALUE]", //$NON-NLS-1$
+            "  -s --set [decimal value]  set a new value from 0.0 to 12.0 (zoom magnitude, 0.0 => default, -200.0 => best fit, -100.0 => real size)", //$NON-NLS-1$
+            "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
+            "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -1462,8 +1456,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     } else if (opt.isSet("set")) { //$NON-NLS-1$
                         double val = Double.parseDouble(args.get(0));
                         if (val <= 0.0) {
-                            firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(),
-                                ActionW.ZOOM.cmd(), val));
+                            firePropertyChange(ActionW.SYNCH.cmd(), null,
+                                new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), val));
                         } else {
                             zoomAction.setValue(viewScaleToSliderValue(val));
                         }
@@ -1476,11 +1470,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public void wl(String[] argv) throws IOException {
-        final String[] usage =
-            {
-                "Change the window/level values of the selected image", //$NON-NLS-1$
-                "Usage: dcmview2d:wl -- [window integer value] [level integer value] (it is mandatory to have '--' for negative values)", //$NON-NLS-1$
-                "  -? --help       show help" }; //$NON-NLS-1$ 
+        final String[] usage = { "Change the window/level values of the selected image", //$NON-NLS-1$
+            "Usage: dcmview2d:wl -- [window integer value] [level integer value] (it is mandatory to have '--' for negative values)", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -1507,11 +1499,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public void move(String[] argv) throws IOException {
-        final String[] usage =
-            {
-                "Change the pan value of the selected image", //$NON-NLS-1$
-                "Usage: dcmview2d:move -- [x integer value] [y integer value] (it is mandatory to have '--' for negative values)", //$NON-NLS-1$
-                "  -? --help       show help" }; //$NON-NLS-1$ 
+        final String[] usage = { "Change the pan value of the selected image", //$NON-NLS-1$
+            "Usage: dcmview2d:move -- [x integer value] [y integer value] (it is mandatory to have '--' for negative values)", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -1527,7 +1517,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 try {
                     int valx = Integer.parseInt(args.get(0));
                     int valy = Integer.parseInt(args.get(1));
-                    panAction.setPoint(new Point(valx, valy));
+                    panAction.setPoint(new PanPoint(PanPoint.STATE.Move, valx, valy));
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1542,7 +1532,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             "  -s --set [integer value]  set a new value from 0 to series size less one", //$NON-NLS-1$
             "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
             "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
-            "  -? --help       show help" }; //$NON-NLS-1$ 
+            "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -1578,7 +1568,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             "Usage: dcmview2d:layout [number | id] [VALUE]", //$NON-NLS-1$
             "  -n --number [integer value]  select the best matching number of views", //$NON-NLS-1$
             "  -i --id  select the layout from its identifier", //$NON-NLS-1$
-            "  -? --help       show help" }; //$NON-NLS-1$ 
+            "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -1615,7 +1605,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public void mouseLeftAction(String[] argv) throws IOException {
         final String[] usage = { "Change the mouse left action", //$NON-NLS-1$
             "Usage: dcmview2d:mouseLeftAction [action String value]", //$NON-NLS-1$
-            "  -? --help       show help" }; //$NON-NLS-1$ 
+            "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -1672,7 +1662,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         final String[] usage = { "Set a synchronization mode " + buffer.toString(), //$NON-NLS-1$
             "Usage: dcmview2d:synch [VALUE]", //$NON-NLS-1$
-            "  -? --help       show help" }; //$NON-NLS-1$ 
+            "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -1708,7 +1698,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public void reset(String[] argv) throws IOException {
         final String[] usage = { "Reset a tool or all the tools", //$NON-NLS-1$
             "Usage: dcmview2d:reset [action String value | all]", //$NON-NLS-1$
-            "  -? --help       show help" }; //$NON-NLS-1$ 
+            "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
