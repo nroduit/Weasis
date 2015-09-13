@@ -51,3 +51,14 @@ The master branch contains Weasis 2.0.x, the next major release is 2.5.x and the
 * Export DICOM with several options (DICOMDIR, ZIP, Anonymized, ISO image file with Weasis, TIFF, JPEG, PNG, HTML...)
 * Magnifier glass
 * Native and DICOM printing
+
+## Build weasis ##
+
+Prerequisites: JDK 6 and Maven 3
+
+See the instructions [here](http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source)
+
+The snapshot version may require to build first other snapshot dependencies:
+
+* [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools)
+* [dcm4che3 - dcm4che-native-codec branch](https://github.com/nroduit/dcm4che/tree/dcm4che-native-codec)
