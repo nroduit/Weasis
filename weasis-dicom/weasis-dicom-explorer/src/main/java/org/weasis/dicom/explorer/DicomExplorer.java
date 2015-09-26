@@ -17,6 +17,9 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -479,8 +482,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     class PatientContainerPane extends JPanel {
 
-        private final GridBagConstraints constraint = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1,
-            0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+        private final GridBagConstraints constraint = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0,
+            GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
         private final Component filler = Box.createRigidArea(new Dimension(5, 5));
 
         public PatientContainerPane() {
@@ -584,8 +587,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     class PatientPane extends JPanel {
 
         private final MediaSeriesGroup patient;
-        private final GridBagConstraints constraint = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1,
-            0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+        private final GridBagConstraints constraint = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0,
+            GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
 
         public PatientPane(MediaSeriesGroup patient) {
             if (patient == null) {
@@ -921,7 +924,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                 Collections.sort(list, DicomSpecialElement.ORDER_BY_DATE);
 
                                 JPopupMenu popupMenu = new JPopupMenu();
-                                popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
+                                popupMenu
+                                    .add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
                                 popupMenu.addSeparator();
 
                                 ButtonGroup group = new ButtonGroup();
@@ -993,8 +997,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
-            palenSlider1.setBorder(new TitledBorder(
-                Messages.getString("DicomExplorer.thmb_size") + " " + slider.getValue())); //$NON-NLS-1$ //$NON-NLS-2$
+            palenSlider1
+                .setBorder(new TitledBorder(Messages.getString("DicomExplorer.thmb_size") + " " + slider.getValue())); //$NON-NLS-1$ //$NON-NLS-2$
 
             slider.setPaintTicks(true);
             slider.setSnapToTicks(true);
@@ -1005,8 +1009,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 public void stateChanged(ChangeEvent e) {
                     JSlider source = (JSlider) e.getSource();
                     if (!source.getValueIsAdjusting()) {
-                        ((TitledBorder) palenSlider1.getBorder()).setTitle(Messages
-                            .getString("DicomExplorer.thmb_size") + StringUtil.COLON_AND_SPACE + source.getValue()); //$NON-NLS-1$ 
+                        ((TitledBorder) palenSlider1.getBorder()).setTitle(Messages.getString("DicomExplorer.thmb_size") //$NON-NLS-1$
+                            + StringUtil.COLON_AND_SPACE + source.getValue());
                         palenSlider1.repaint();
                         updateThumbnailSize();
                     }
@@ -1595,6 +1599,29 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                 }
                             });
                             menuFactory.add(item4);
+
+                            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                            final GraphicsDevice[] gd = ge.getScreenDevices();
+                            if (gd.length > 0) {
+                                JMenu subMenu = new JMenu("Open in screen");
+                                for (int i = 0; i < gd.length; i++) {
+                                    GraphicsConfiguration config = gd[i].getDefaultConfiguration();
+                                    final Rectangle b = config.getBounds();
+                                    item4 = new JMenuItem(config.getDevice().toString());
+                                    item4.addActionListener(new ActionListener() {
+
+                                        @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                            selList.setOpenningSeries(true);
+                                            ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList,
+                                                dicomModel, false, true, b);
+                                            selList.setOpenningSeries(false);
+                                        }
+                                    });
+                                    subMenu.add(item4);
+                                }
+                                menuFactory.add(subMenu);
+                            }
                         }
 
                         if (viewerFactory.canAddSeries()) {
@@ -1623,9 +1650,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                     JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
                                     frame.setSize(500, 630);
                                     DicomFieldsView view = new DicomFieldsView();
-                                    view.changingViewContentEvent(new SeriesViewerEvent(viewerFactory
-                                        .createSeriesViewer(null), series, series.getMedia(MEDIA_POSITION.FIRST, null,
-                                        null), EVENT.SELECT));
+                                    view.changingViewContentEvent(
+                                        new SeriesViewerEvent(viewerFactory.createSeriesViewer(null), series,
+                                            series.getMedia(MEDIA_POSITION.FIRST, null, null), EVENT.SELECT));
                                     JPanel panel = new JPanel();
                                     panel.setLayout(new BorderLayout());
                                     panel.add(view);
@@ -1778,9 +1805,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                MediaSeriesGroup patientGroup =
-                                    dicomModel.getParent(dicomModel.getParent(series, DicomModel.study),
-                                        DicomModel.patient);
+                                MediaSeriesGroup patientGroup = dicomModel
+                                    .getParent(dicomModel.getParent(series, DicomModel.study), DicomModel.patient);
                                 dicomModel.removePatient(patientGroup);
                                 selList.clear();
                             }
@@ -1912,11 +1938,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     File file = DicomDirImport.getDcmDirFromMedia();
                     if (file == null) {
                         int response =
-                            JOptionPane
-                                .showConfirmDialog(
-                                    SwingUtilities.getWindowAncestor(DicomExplorer.this),
-                                    "Cannot find DICOMDIR on media device, do you want to import manually?", (String) this.getValue(Action.NAME),//$NON-NLS-1$ 
-                                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                            JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(DicomExplorer.this),
+                                "Cannot find DICOMDIR on media device, do you want to import manually?", //$NON-NLS-1$
+                                (String) this.getValue(Action.NAME), JOptionPane.YES_NO_OPTION,
+                                JOptionPane.WARNING_MESSAGE);
 
                         if (response == 0) {
                             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
