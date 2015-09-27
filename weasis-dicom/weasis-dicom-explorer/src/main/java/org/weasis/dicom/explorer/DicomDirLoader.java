@@ -50,6 +50,7 @@ public class DicomDirLoader {
     private final ArrayList<LoadSeries> seriesList;
     private final WadoParameters wadoParameters;
     private final boolean writeInCache;
+    private final File dcmDirFile;
 
     public DicomDirLoader(File dcmDirFile, DataExplorerModel explorerModel, boolean writeInCache) {
         if (dcmDirFile == null || !dcmDirFile.canRead() || !(explorerModel instanceof DicomModel)) {
@@ -57,19 +58,16 @@ public class DicomDirLoader {
         }
         this.dicomModel = (DicomModel) explorerModel;
         this.writeInCache = writeInCache;
+        this.dcmDirFile = dcmDirFile;
         wadoParameters = new WadoParameters("", true, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$
         seriesList = new ArrayList<LoadSeries>();
-        try {
-            reader = new DicomDirReader(dcmDirFile);
-            // reader.setShowInactiveRecords(false);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
     }
 
     public ArrayList<LoadSeries> readDicomDir() {
         Attributes dcmPatient = null;
         try {
+            reader = new DicomDirReader(dcmDirFile);
             dcmPatient = reader.findFirstRootDirectoryRecordInUse(true);
         } catch (IOException e1) {
             LOGGER.error("Cannot find Patient in DICOMDIR !"); //$NON-NLS-1$
@@ -190,16 +188,20 @@ public class DicomDirLoader {
                         if (containsInstance && dicomInstances.contains(dcmInstance)) {
                             LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                         } else {
-                            String filename = toFileName(instance);
-                            if (filename != null) {
-                                dcmInstance.setInstanceNumber(
-                                    DicomMediaUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, -1));
-                                dcmInstance.setDirectDownloadFile(filename);
-                                dicomInstances.add(dcmInstance);
-                                if (iconInstance == null) {
-                                    // Icon Image Sequence (0088,0200). This Icon Image is representative of the
-                                    // Image. Only a single Item is permitted in this Sequence.
-                                    iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
+                            File file = toFileName(instance);
+                            if (file != null) {
+                                if (file.exists()) {
+                                    dcmInstance.setInstanceNumber(
+                                        DicomMediaUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, -1));
+                                    dcmInstance.setDirectDownloadFile(file.toURI().toString());
+                                    dicomInstances.add(dcmInstance);
+                                    if (iconInstance == null) {
+                                        // Icon Image Sequence (0088,0200). This Icon Image is representative of the
+                                        // Image. Only a single Item is permitted in this Sequence.
+                                        iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
+                                    }
+                                } else {
+                                    LOGGER.error("Missing DICOMDIR entry: {}", file.getPath()); //$NON-NLS-1$
                                 }
                             }
                         }
@@ -292,7 +294,7 @@ public class DicomDirLoader {
         return null;
     }
 
-    private String toFileName(Attributes dcmObject) {
+    private File toFileName(Attributes dcmObject) {
         String[] fileID = dcmObject.getStrings(Tag.ReferencedFileID);
         if (fileID == null || fileID.length == 0) {
             return null;
@@ -310,7 +312,7 @@ public class DicomDirLoader {
             }
         }
 
-        return file.toURI().toString();
+        return file;
     }
 
     public static DicomDirWriter open(File file) throws IOException {

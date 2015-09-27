@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
+import java.awt.Dialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -27,6 +28,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
@@ -37,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -62,8 +65,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     public void initGUI() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         setLayout(gridBagLayout);
-        setBorder(new TitledBorder(null,
-            Messages.getString("DicomDirImport.dicomdir"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        setBorder(new TitledBorder(null, Messages.getString("DicomDirImport.dicomdir"), TitledBorder.LEADING, //$NON-NLS-1$
+            TitledBorder.TOP, null, null));
 
         lblImportAFolder = new JLabel(Messages.getString("DicomDirImport.path") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
@@ -99,9 +102,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         gbc_button.gridy = 0;
         add(btnSearch, gbc_button);
 
-        btncdrom =
-            new JButton(
-                Messages.getString("DicomDirImport.detect"), new ImageIcon(DicomDirImport.class.getResource("/icon/16x16/cd.png"))); //$NON-NLS-1$ //$NON-NLS-2$
+        btncdrom = new JButton(Messages.getString("DicomDirImport.detect"), //$NON-NLS-1$
+            new ImageIcon(DicomDirImport.class.getResource("/icon/16x16/cd.png"))); //$NON-NLS-1$
         btncdrom.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -206,7 +208,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
     private String getImportPath() {
         String path = textField.getText().trim();
-        if (path != null && !path.trim().equals("")) { //$NON-NLS-1$ 
+        if (path != null && !path.trim().equals("")) { //$NON-NLS-1$
             return path;
         }
         return null;
@@ -231,35 +233,60 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                 }
             }
         }
-        loadDicomDir(file, dicomModel, chckbxWriteInCache.isSelected());
+        List<LoadSeries> loadSeries = loadDicomDir(file, dicomModel, chckbxWriteInCache.isSelected());
+
+        if (loadSeries != null && loadSeries.size() > 0) {
+            DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, dicomModel));
+        } else {
+            LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
+
+            int response = JOptionPane.showConfirmDialog(this,
+                "No file has been found from DICOMDIR, do you want to import manually?", this.getTitle(),
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+            if (response == JOptionPane.YES_OPTION) {
+                Dialog dialog = WinUtil.getParentDialog(this);
+                if (dialog instanceof DicomImport) {
+                    DicomImport dcmImport = (DicomImport) dialog;
+                    dcmImport.setCancelVeto(true); // Invalidate if closing the dialog
+                    dcmImport.showPage(Messages.getString("DicomImport.imp_dicom")); //$NON-NLS-1$
+                    if (file != null) {
+                        AbstractItemDialogPage page = dcmImport.getCurrentPage();
+                        if (page instanceof LocalImport) {
+                            ((LocalImport) page).setImportPath(file.getParent());
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    public static void loadDicomDir(File file, DicomModel dicomModel, boolean writeIncache) {
+    public static List<LoadSeries> loadDicomDir(File file, DicomModel dicomModel, boolean writeIncache) {
+        ArrayList<LoadSeries> loadSeries = null;
         if (file != null) {
-            ArrayList<LoadSeries> loadSeries = null;
             if (file.canRead()) {
                 DicomDirLoader dirImport = new DicomDirLoader(file, dicomModel, writeIncache);
                 loadSeries = dirImport.readDicomDir();
             }
-            if (loadSeries != null && loadSeries.size() > 0) {
-                DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, dicomModel));
-            } else {
-                LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
-            }
         }
+        return loadSeries;
     }
 
     public static File getDcmDirFromMedia() {
-        String os = AppProperties.OPERATING_SYSTEM;
-        File[] drives = null;
-        if (os.startsWith("win")) { //$NON-NLS-1$
-            drives = File.listRoots();
-        } else if (os.startsWith("mac")) { //$NON-NLS-1$
-            drives = new File("/Volumes").listFiles(); //$NON-NLS-1$
-        } else {
-            drives = new File("/media").listFiles(); //$NON-NLS-1$
+        final List<File> dvs = new ArrayList<File>();
+        try {
+            if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+                dvs.addAll(Arrays.asList(File.listRoots()));
+            } else if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+                dvs.addAll(Arrays.asList(new File("/Volumes").listFiles())); //$NON-NLS-1$
+            } else {
+                dvs.addAll(Arrays.asList(new File("/media").listFiles())); //$NON-NLS-1$
+                dvs.addAll(Arrays.asList(new File("/mnt").listFiles())); //$NON-NLS-1$
+            }
+        } catch (Throwable e) {
+            LOGGER.error("Error when reading device directories: {}", e.getMessage()); //$NON-NLS-1$
         }
-        List<File> dvs = Arrays.asList(drives);
+
         Collections.reverse(dvs);
         String[] dicomdir = { "DICOMDIR", "dicomdir", "DICOMDIR.", "dicomdir." }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
@@ -274,6 +301,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                 }
             }
         }
+
         return null;
     }
 }

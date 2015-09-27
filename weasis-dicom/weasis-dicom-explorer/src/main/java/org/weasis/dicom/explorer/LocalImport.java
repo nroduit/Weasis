@@ -54,9 +54,8 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     public void initGUI() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         setLayout(gridBagLayout);
-        setBorder(new TitledBorder(
-            null,
-            Messages.getString("LocalImport.imp_files") + StringUtil.COLON, TitledBorder.LEADING, TitledBorder.TOP, null, null));//$NON-NLS-1$
+        setBorder(new TitledBorder(null, Messages.getString("LocalImport.imp_files") + StringUtil.COLON, //$NON-NLS-1$
+            TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
         lblImportAFolder = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
@@ -173,6 +172,10 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
             return path;
         }
         return null;
+    }
+
+    public void setImportPath(String path) {
+        textField.setText(path);
     }
 
     @Override
