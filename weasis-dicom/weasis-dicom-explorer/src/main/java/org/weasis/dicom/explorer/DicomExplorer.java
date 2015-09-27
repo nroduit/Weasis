@@ -81,6 +81,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -1943,7 +1944,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                 (String) this.getValue(Action.NAME), JOptionPane.YES_NO_OPTION,
                                 JOptionPane.WARNING_MESSAGE);
 
-                        if (response == 0) {
+                        if (response == JOptionPane.YES_OPTION) {
                             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
                             DicomImport dialog =
                                 new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
@@ -1951,7 +1952,30 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             ColorLayerUI.showCenterScreen(dialog, layer);
                         }
                     } else {
-                        DicomDirImport.loadDicomDir(file, model, true);
+                        List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
+                        if (loadSeries != null && loadSeries.size() > 0) {
+                            DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, model));
+                        } else {
+                            LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
+
+                            int response =
+                                JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(DicomExplorer.this),
+                                    "No file has been found from DICOMDIR, do you want to import manually?",
+                                    (String) this.getValue(Action.NAME), JOptionPane.YES_NO_OPTION,
+                                    JOptionPane.WARNING_MESSAGE);
+
+                            if (response == JOptionPane.YES_OPTION) {
+                                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
+                                DicomImport dialog =
+                                    new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
+                                dialog.showPage(Messages.getString("DicomDirImport.imp_dicom")); //$NON-NLS-1$
+                                AbstractItemDialogPage page = dialog.getCurrentPage();
+                                if (page instanceof LocalImport) {
+                                    ((LocalImport) page).setImportPath(file.getParent());
+                                }
+                                ColorLayerUI.showCenterScreen(dialog, layer);
+                            }
+                        }
                     }
 
                 }

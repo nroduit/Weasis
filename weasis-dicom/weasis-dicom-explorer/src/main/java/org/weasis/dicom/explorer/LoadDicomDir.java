@@ -10,7 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -19,22 +19,22 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class LoadDicomDir extends ExplorerTask {
 
-    private final ArrayList<LoadSeries> seriesList;
+    private final List<LoadSeries> seriesList;
     private final DicomModel dicomModel;
 
-    public LoadDicomDir(ArrayList<LoadSeries> seriesList, DataExplorerModel explorerModel) {
+    public LoadDicomDir(List<LoadSeries> loadSeries, DataExplorerModel explorerModel) {
         super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
-        if (seriesList == null || !(explorerModel instanceof DicomModel)) {
+        if (loadSeries == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
-        this.seriesList = seriesList;
+        this.seriesList = loadSeries;
         this.dicomModel = (DicomModel) explorerModel;
     }
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
-            this));
+        dicomModel
+            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null, this));
 
         for (LoadSeries s : seriesList) {
             DownloadManager.addLoadSeries(s, dicomModel, true);
@@ -46,8 +46,8 @@ public class LoadDicomDir extends ExplorerTask {
 
     @Override
     protected void done() {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
-            this));
+        dicomModel
+            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null, this));
     }
 
 }

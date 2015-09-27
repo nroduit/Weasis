@@ -31,11 +31,12 @@ import org.weasis.core.api.gui.util.AbstractWizardDialog;
 
 public class DicomImport extends AbstractWizardDialog {
 
+    private boolean cancelVeto = false;
     private final DicomModel dicomModel;
 
     public DicomImport(Window parent, final DicomModel dicomModel) {
-        super(parent,
-            Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
+        super(parent, Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, //$NON-NLS-1$
+            new Dimension(640, 480));
         this.dicomModel = dicomModel;
 
         final JButton importandClose = new JButton(Messages.getString("DicomImport.impAndClose0")); //$NON-NLS-1$
@@ -118,9 +119,17 @@ public class DicomImport extends AbstractWizardDialog {
         }
     }
 
+    public void setCancelVeto(boolean cancelVeto) {
+        this.cancelVeto = cancelVeto;
+    }
+
     @Override
     public void cancel() {
-        dispose();
+        if (cancelVeto) {
+            cancelVeto = false;
+        } else {
+            dispose();
+        }
     }
 
     @Override
