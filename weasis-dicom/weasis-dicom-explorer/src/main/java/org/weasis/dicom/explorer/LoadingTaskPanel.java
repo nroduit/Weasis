@@ -107,7 +107,7 @@ public class LoadingTaskPanel extends JPanel {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    // TODO set inderterminate false
+                    // TODO set indeterminate false
                     message.setText(Messages.getString("LoadingTaskPanel.abording")); //$NON-NLS-1$
                     if (task != null) {
                         task.cancel(true);
@@ -116,9 +116,14 @@ public class LoadingTaskPanel extends JPanel {
             });
             cancelButton.setToolTipText(Messages.getString("LoadingTaskPanel.stop_process")); //$NON-NLS-1$
             this.add(cancelButton);
-            CircularProgressBar globalProgress = new CircularProgressBar(0, 100);
-            globalProgress.setIndeterminate(true);
-            this.add(globalProgress);
+            if (task != null) {
+                CircularProgressBar globalProgress = task.getBar();
+                if (globalProgress == null) {
+                    globalProgress = new CircularProgressBar(0, 100);
+                    globalProgress.setIndeterminate(true);
+                }
+                this.add(globalProgress);
+            }
         }
         if (task != null) {
             message.setText(task.getMessage());

@@ -469,7 +469,7 @@ public class WeasisWin {
     }
 
     private void setExternalPosition(final DefaultSingleCDockable dockable) {
-        // TODO should be set dynamically. Maximize button of external window does not support mulit-screens.
+        // TODO should be set dynamically. Maximize button of external window does not support multi-screens.
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gd = ge.getScreenDevices();

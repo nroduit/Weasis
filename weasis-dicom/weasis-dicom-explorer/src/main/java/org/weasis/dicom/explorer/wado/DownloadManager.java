@@ -86,14 +86,14 @@ public class DownloadManager {
     public static final ArrayList<LoadSeries> TASKS = new ArrayList<LoadSeries>();
 
     // Executor without concurrency (only one task is executed at the same time)
-    private static final BlockingQueue<Runnable> UNIQUE_QUEUE = new PriorityBlockingQueue<Runnable>(10,
-        new PriorityTaskComparator());
-    public static final ThreadPoolExecutor UNIQUE_EXECUTOR = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-        UNIQUE_QUEUE);
+    private static final BlockingQueue<Runnable> UNIQUE_QUEUE =
+        new PriorityBlockingQueue<Runnable>(10, new PriorityTaskComparator());
+    public static final ThreadPoolExecutor UNIQUE_EXECUTOR =
+        new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, UNIQUE_QUEUE);
 
     // Executor with simultaneous tasks
-    private static final BlockingQueue<Runnable> PRIORITY_QUEUE = new PriorityBlockingQueue<Runnable>(10,
-        new PriorityTaskComparator());
+    private static final BlockingQueue<Runnable> PRIORITY_QUEUE =
+        new PriorityBlockingQueue<Runnable>(10, new PriorityTaskComparator());
     public static final ThreadPoolExecutor CONCURRENT_EXECUTOR = new ThreadPoolExecutor(
         BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
         BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS, PRIORITY_QUEUE);
@@ -146,7 +146,8 @@ public class DownloadManager {
         }
     }
 
-    public static synchronized void addLoadSeries(final LoadSeries series, DicomModel dicomModel, boolean startLoading) {
+    public static synchronized void addLoadSeries(final LoadSeries series, DicomModel dicomModel,
+        boolean startLoading) {
         if (series != null) {
             if (startLoading) {
                 offerSeriesInQueue(series);
@@ -160,8 +161,8 @@ public class DownloadManager {
                 });
             }
             if (dicomModel != null) {
-                dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel,
-                    null, series));
+                dicomModel.firePropertyChange(
+                    new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null, series));
             }
             if (!DownloadManager.TASKS.contains(series)) {
                 DownloadManager.TASKS.add(series);
@@ -173,13 +174,13 @@ public class DownloadManager {
         if (series != null) {
             DownloadManager.TASKS.remove(series);
             if (dicomModel != null) {
-                dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel,
-                    null, series));
+                dicomModel.firePropertyChange(
+                    new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null, series));
             }
             if (DownloadManager.TASKS.size() == 0) {
                 // When all loadseries are ended, reset to default the number of simultaneous download (series)
-                DownloadManager.CONCURRENT_EXECUTOR.setCorePoolSize(BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                    DownloadManager.CONCURRENT_SERIES, 3));
+                DownloadManager.CONCURRENT_EXECUTOR.setCorePoolSize(
+                    BundleTools.SYSTEM_PREFERENCES.getIntProperty(DownloadManager.CONCURRENT_SERIES, 3));
             }
         }
     }
@@ -248,8 +249,8 @@ public class DownloadManager {
             URLConnection urlConnection = url.openConnection();
 
             if (BundleTools.SESSION_TAGS_MANIFEST.size() > 0) {
-                for (Iterator<Entry<String, String>> iter = BundleTools.SESSION_TAGS_MANIFEST.entrySet().iterator(); iter
-                    .hasNext();) {
+                for (Iterator<Entry<String, String>> iter =
+                    BundleTools.SESSION_TAGS_MANIFEST.entrySet().iterator(); iter.hasNext();) {
                     Entry<String, String> element = iter.next();
                     urlConnection.setRequestProperty(element.getKey(), element.getValue());
                 }
@@ -322,7 +323,7 @@ public class DownloadManager {
             Source xmlFile = new StAXSource(xmler);
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
-                Schema schema = schemaFactory.newSchema(DownloadManager.class.getResource("/config/wado_query.xsd"));//$NON-NLS-1$ 
+                Schema schema = schemaFactory.newSchema(DownloadManager.class.getResource("/config/wado_query.xsd"));//$NON-NLS-1$
                 Validator validator = schema.newValidator();
                 validator.validate(xmlFile);
                 LOGGER.info("[Validate with XSD schema] wado_query is valid"); //$NON-NLS-1$
@@ -373,9 +374,10 @@ public class DownloadManager {
                                             if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
                                                 String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
                                                 final int messageType =
-                                                    "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE : "INFO" //$NON-NLS-1$ //$NON-NLS-2$
-                                                        .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
-                                                            : JOptionPane.WARNING_MESSAGE;
+                                                    "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE //$NON-NLS-1$
+                                                        : "INFO" //$NON-NLS-1$
+                                                            .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
+                                                                : JOptionPane.WARNING_MESSAGE;
 
                                                 GuiExecutor.instance().execute(new Runnable() {
 
@@ -390,9 +392,9 @@ public class DownloadManager {
                                                         }
                                                         ColorLayerUI layer =
                                                             ColorLayerUI.createTransparentLayerUI(explorer);
-                                                        JOptionPane.showOptionDialog(
-                                                            ColorLayerUI.getContentPane(layer), message, title,
-                                                            JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                                                        JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer),
+                                                            message, title, JOptionPane.DEFAULT_OPTION, messageType,
+                                                            null, null, null);
                                                         if (layer != null) {
                                                             layer.hideUI();
                                                         }
@@ -439,7 +441,7 @@ public class DownloadManager {
             }
 
         } catch (Throwable t) {
-            final String message = "Error on loading wadoXML from : " + uri.toString(); //$NON-NLS-1$
+            final String message = "Error on loading the XML Manifest from" + "\n" + uri.toString();
             LOGGER.error(message);
 
             if (LOGGER.isDebugEnabled()) {
@@ -448,7 +450,6 @@ public class DownloadManager {
                 LOGGER.error(t.toString());
             }
 
-            final String title = "LOADING ERROR"; //$NON-NLS-1$
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
             GuiExecutor.instance().execute(new Runnable() {
@@ -462,7 +463,7 @@ public class DownloadManager {
                         explorer = (PluginTool) dicomExplorer;
                     }
                     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
-                    JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, title,
+                    JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, null,
                         JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
                     if (layer != null) {
                         layer.hideUI();
@@ -487,9 +488,8 @@ public class DownloadManager {
         String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null);
         String date = getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null);
         Date birthdate = TagW.getDicomDate(date);
-        String name =
-            DicomMediaUtils.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(),
-                DicomMediaIO.NO_VALUE));
+        String name = DicomMediaUtils
+            .buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(), DicomMediaIO.NO_VALUE));
 
         String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name, null);
 
@@ -530,8 +530,8 @@ public class DownloadManager {
         return patient;
     }
 
-    private static MediaSeriesGroup readStudy(DicomModel model, ArrayList<LoadSeries> seriesList,
-        XMLStreamReader xmler, MediaSeriesGroup patient, WadoParameters wadoParameters) throws XMLStreamException {
+    private static MediaSeriesGroup readStudy(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler,
+        MediaSeriesGroup patient, WadoParameters wadoParameters) throws XMLStreamException {
         String studyUID = getTagAttribute(xmler, TagW.StudyInstanceUID.getTagName(), ""); //$NON-NLS-1$
         MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
         if (study == null) {
@@ -539,9 +539,9 @@ public class DownloadManager {
             study.setTagNoNull(TagW.StudyTime,
                 TagW.getDicomTime(getTagAttribute(xmler, TagW.StudyTime.getTagName(), null)));
             // Merge date and time, used in display
-            study.setTagNoNull(TagW.StudyDate, TagW.dateTime(
-                TagW.getDicomDate(getTagAttribute(xmler, TagW.StudyDate.getTagName(), null)),
-                (Date) study.getTagValue(TagW.StudyTime)));
+            study.setTagNoNull(TagW.StudyDate,
+                TagW.dateTime(TagW.getDicomDate(getTagAttribute(xmler, TagW.StudyDate.getTagName(), null)),
+                    (Date) study.getTagValue(TagW.StudyTime)));
 
             study.setTagNoNull(TagW.StudyDescription, getTagAttribute(xmler, TagW.StudyDescription.getTagName(), null));
             study.setTagNoNull(TagW.AccessionNumber, getTagAttribute(xmler, TagW.AccessionNumber.getTagName(), null));
@@ -591,9 +591,8 @@ public class DownloadManager {
                 FileUtil.getIntegerTagAttribute(xmler, TagW.SeriesNumber.getTagName(), null));
             dicomSeries.setTagNoNull(TagW.SeriesDescription,
                 getTagAttribute(xmler, TagW.SeriesDescription.getTagName(), null));
-            dicomSeries
-                .setTagNoNull(TagW.ReferringPhysicianName, DicomMediaUtils.buildPersonName(getTagAttribute(xmler,
-                    TagW.ReferringPhysicianName.getTagName(), null)));
+            dicomSeries.setTagNoNull(TagW.ReferringPhysicianName, DicomMediaUtils
+                .buildPersonName(getTagAttribute(xmler, TagW.ReferringPhysicianName.getTagName(), null)));
             dicomSeries.setTagNoNull(TagW.WadoTransferSyntaxUID,
                 getTagAttribute(xmler, TagW.WadoTransferSyntaxUID.getTagName(), null));
             dicomSeries.setTagNoNull(TagW.WadoCompressionRate,
@@ -637,10 +636,10 @@ public class DownloadManager {
                             if (containsInstance && dicomInstances.contains(dcmInstance)) {
                                 LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                             } else {
-                                dcmInstance.setInstanceNumber(FileUtil.getIntegerTagAttribute(xmler,
-                                    TagW.InstanceNumber.getTagName(), -1));
-                                dcmInstance.setDirectDownloadFile(getTagAttribute(xmler,
-                                    TagW.DirectDownloadFile.getTagName(), null));
+                                dcmInstance.setInstanceNumber(
+                                    FileUtil.getIntegerTagAttribute(xmler, TagW.InstanceNumber.getTagName(), -1));
+                                dcmInstance.setDirectDownloadFile(
+                                    getTagAttribute(xmler, TagW.DirectDownloadFile.getTagName(), null));
                                 dicomInstances.add(dcmInstance);
                             }
                         }
@@ -664,9 +663,8 @@ public class DownloadManager {
                 model.addHierarchyNode(study, dicomSeries);
             }
 
-            final LoadSeries loadSeries =
-                new LoadSeries(dicomSeries, model, BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                    LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
+            final LoadSeries loadSeries = new LoadSeries(dicomSeries, model,
+                BundleTools.SYSTEM_PREFERENCES.getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
             loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));
             seriesList.add(loadSeries);
         }

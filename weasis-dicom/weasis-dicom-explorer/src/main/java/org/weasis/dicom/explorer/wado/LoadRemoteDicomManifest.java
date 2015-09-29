@@ -18,7 +18,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.explorer.DicomModel;
@@ -58,8 +57,6 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
-            this));
         for (int i = 0; i < xmlFiles.length; i++) {
             if (xmlFiles[i] != null) {
                 URI uri = null;
@@ -79,9 +76,8 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
                     ArrayList<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
 
                     if (wadoTasks != null) {
-                        boolean downloadImmediately =
-                            BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
-                                SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
+                        boolean downloadImmediately = BundleTools.SYSTEM_PREFERENCES
+                            .getBooleanProperty(SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
                         for (final LoadSeries loadSeries : wadoTasks) {
                             DownloadManager.addLoadSeries(loadSeries, dicomModel, downloadImmediately);
                         }
@@ -100,11 +96,4 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
         DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();
         return true;
     }
-
-    @Override
-    protected void done() {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
-            this));
-    }
-
 }

@@ -15,7 +15,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -66,8 +65,6 @@ public class LoadRemoteDicomURL extends ExplorerTask {
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
-            this));
         String seriesUID = null;
         for (int i = 0; i < urls.length; i++) {
             if (urls[i] != null) {
@@ -109,9 +106,8 @@ public class LoadRemoteDicomURL extends ExplorerTask {
             if (dicomInstances.size() > 0) {
                 String modality = (String) dicomSeries.getTagValue(TagW.Modality);
                 boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
-                final LoadSeries loadSeries =
-                    new LoadSeries(dicomSeries, dicomModel, BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                        LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
+                final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel,
+                    BundleTools.SYSTEM_PREFERENCES.getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
                 if (!ps) {
                     loadSeries.startDownloadImageReference(wadoParameters);
                 }
@@ -122,11 +118,4 @@ public class LoadRemoteDicomURL extends ExplorerTask {
         }
         return true;
     }
-
-    @Override
-    protected void done() {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
-            this));
-    }
-
 }

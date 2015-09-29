@@ -35,6 +35,7 @@ import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
+import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
@@ -50,6 +51,7 @@ public class DicomDirLoader {
     private final ArrayList<LoadSeries> seriesList;
     private final WadoParameters wadoParameters;
     private final boolean writeInCache;
+    private final File dcmDirFile;
 
     public DicomDirLoader(File dcmDirFile, DataExplorerModel explorerModel, boolean writeInCache) {
         if (dcmDirFile == null || !dcmDirFile.canRead() || !(explorerModel instanceof DicomModel)) {
@@ -57,19 +59,16 @@ public class DicomDirLoader {
         }
         this.dicomModel = (DicomModel) explorerModel;
         this.writeInCache = writeInCache;
+        this.dcmDirFile = dcmDirFile;
         wadoParameters = new WadoParameters("", true, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$
         seriesList = new ArrayList<LoadSeries>();
-        try {
-            reader = new DicomDirReader(dcmDirFile);
-            // reader.setShowInactiveRecords(false);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
     }
 
     public ArrayList<LoadSeries> readDicomDir() {
         Attributes dcmPatient = null;
         try {
+            reader = new DicomDirReader(dcmDirFile);
             dcmPatient = reader.findFirstRootDirectoryRecordInUse(true);
         } catch (IOException e1) {
             LOGGER.error("Cannot find Patient in DICOMDIR !"); //$NON-NLS-1$
@@ -81,9 +80,8 @@ public class DicomDirLoader {
             if (RecordType.PATIENT.name().equals(dcmPatient.getString(Tag.DirectoryRecordType))) {
                 try {
                     String name = DicomMediaUtils.buildPatientName(dcmPatient.getString(Tag.PatientName));
-                    String patientPseudoUID =
-                        DicomMediaUtils.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID),
-                            dcmPatient.getString(Tag.IssuerOfPatientID), name, null);
+                    String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID),
+                        dcmPatient.getString(Tag.IssuerOfPatientID), name, null);
 
                     patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
                     if (patient == null) {
@@ -179,34 +177,32 @@ public class DicomDirLoader {
                 // correspond to one of the images of the Series.
                 Attributes iconInstance = series.getNestedDataset(Tag.IconImageSequence);
 
-                // TODO implement Key Object
-
                 Attributes instance = findFirstChildRecord(series);
                 while (instance != null) {
-                    if (RecordType.IMAGE.name().equals(instance.getString(Tag.DirectoryRecordType))
-                        || RecordType.ENCAP_DOC.name().equals(instance.getString(Tag.DirectoryRecordType))) {
-                        // update instance level tag values
+                    // Try to read all the file types of the Series.
 
-                        String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUIDInFile);
-                        // updateTag(dataset, Tag.InstanceNumber, instance.getString(Tag.InstanceNumber));
+                    String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUIDInFile);
 
-                        if (sopInstanceUID != null) {
-                            DicomInstance dcmInstance =
-                                new DicomInstance(sopInstanceUID, instance.getString(Tag.TransferSyntaxUID));
-                            if (containsInstance && dicomInstances.contains(dcmInstance)) {
-                                LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
-                            } else {
-                                String filename = toFileName(instance);
-                                if (filename != null) {
-                                    dcmInstance.setInstanceNumber(DicomMediaUtils.getIntegerFromDicomElement(instance,
-                                        Tag.InstanceNumber, -1));
-                                    dcmInstance.setDirectDownloadFile(filename);
+                    if (sopInstanceUID != null) {
+                        DicomInstance dcmInstance =
+                            new DicomInstance(sopInstanceUID, instance.getString(Tag.TransferSyntaxUID));
+                        if (containsInstance && dicomInstances.contains(dcmInstance)) {
+                            LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
+                        } else {
+                            File file = toFileName(instance);
+                            if (file != null) {
+                                if (file.exists()) {
+                                    dcmInstance.setInstanceNumber(
+                                        DicomMediaUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, -1));
+                                    dcmInstance.setDirectDownloadFile(file.toURI().toString());
                                     dicomInstances.add(dcmInstance);
                                     if (iconInstance == null) {
                                         // Icon Image Sequence (0088,0200). This Icon Image is representative of the
                                         // Image. Only a single Item is permitted in this Sequence.
                                         iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
                                     }
+                                } else {
+                                    LOGGER.error("Missing DICOMDIR entry: {}", file.getPath()); //$NON-NLS-1$
                                 }
                             }
                         }
@@ -233,6 +229,18 @@ public class DicomDirLoader {
         }
     }
 
+    /**
+     * Reads DICOMDIR icon. Only monochrome and palette color images shall be used. Samples per Pixel (0028,0002) shall
+     * have a Value of 1, Photometric Interpretation (0028,0004) shall have a Value of either MONOCHROME 1, MONOCHROME 2
+     * or PALETTE COLOR, Planar Configuration (0028,0006) shall not be present.
+     * 
+     * @see <a href="http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_F.7.html">F.7 Icon Image Key
+     *      Definition</a>
+     * 
+     * @param iconInstance
+     *            Attributes
+     * @return the thumbnail path
+     */
     private String readDicomDirIcon(Attributes iconInstance) {
         if (iconInstance != null) {
             byte[] pixelData = null;
@@ -249,25 +257,18 @@ public class DicomDirLoader {
                     e.printStackTrace();
                 }
                 if (thumbnailPath != null) {
-                    /*
-                     * DICOM 11_03pu.pdf - F7 Only monochrome and palette color images shall be used. Samples per Pixel
-                     * (0028,0002) shall have a Value of 1, Photometric Interpretation (0028,0004) shall have a Value of
-                     * either MONOCHROME 1, MONOCHROME 2 or PALETTE COLOR, Planar Configuration (0028,0006) shall not be
-                     * present
-                     */
                     int width = iconInstance.getInt(Tag.Columns, 0);
                     int height = iconInstance.getInt(Tag.Rows, 0);
                     if (width != 0 && height != 0) {
                         WritableRaster raster =
                             Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, new Point(0, 0));
                         raster.setDataElements(0, 0, width, height, pixelData);
-                        PhotometricInterpretation pmi =
-                            PhotometricInterpretation.fromString(iconInstance.getString(Tag.PhotometricInterpretation,
-                                "MONOCHROME2")); //$NON-NLS-1$
-                        BufferedImage thumbnail =
-                            new BufferedImage(pmi.createColorModel(8, DataBuffer.TYPE_BYTE, iconInstance), raster,
-                                false, null);
-                        if (ImageFiler.writeJPG(thumbnailPath, thumbnail, 0.75f)) {
+                        PhotometricInterpretation pmi = PhotometricInterpretation
+                            .fromString(iconInstance.getString(Tag.PhotometricInterpretation, "MONOCHROME2")); //$NON-NLS-1$
+                        BufferedImage thumbnail = new BufferedImage(
+                            pmi.createColorModel(8, DataBuffer.TYPE_BYTE, iconInstance), raster, false, null);
+                        if (ImageFiler.writeJPG(thumbnailPath,
+                            DicomImageUtils.getRGBImageFromPaletteColorModel(thumbnail, iconInstance), 0.75f)) {
                             return thumbnailPath.getPath();
                         }
                     }
@@ -295,7 +296,7 @@ public class DicomDirLoader {
         return null;
     }
 
-    private String toFileName(Attributes dcmObject) {
+    private File toFileName(Attributes dcmObject) {
         String[] fileID = dcmObject.getStrings(Tag.ReferencedFileID);
         if (fileID == null || fileID.length == 0) {
             return null;
@@ -313,7 +314,7 @@ public class DicomDirLoader {
             }
         }
 
-        return file.toURI().toString();
+        return file;
     }
 
     public static DicomDirWriter open(File file) throws IOException {

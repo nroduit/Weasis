@@ -122,12 +122,12 @@ public class FileStreamSegment {
         if (mlImage == null) {
             return;
         }
-
-        if (iis instanceof org.dcm4che3.imageio.stream.SegmentedImageInputStream) {
+        // Not a good practice but necessary to remove the dependency with dcm4che lib
+        if ("org.dcm4che3.imageio.stream.SegmentedImageInputStream".equals(iis.getClass().getName())) {
             try {
-                Field f_stream = org.dcm4che3.imageio.stream.SegmentedImageInputStream.class.getDeclaredField("stream");
-                Field f_curSegment =
-                    org.dcm4che3.imageio.stream.SegmentedImageInputStream.class.getDeclaredField("curSegment");
+                Class<? extends ImageInputStream> clazz = iis.getClass();
+                Field f_stream = clazz.getDeclaredField("stream");
+                Field f_curSegment = clazz.getDeclaredField("curSegment");
                 if (f_curSegment != null && f_stream != null) {
                     f_curSegment.setAccessible(true);
                     f_stream.setAccessible(true);
@@ -139,12 +139,8 @@ public class FileStreamSegment {
                         f_raf.setAccessible(true);
                         Integer curSegment = (Integer) f_curSegment.get(iis);
                         if (curSegment != null && curSegment >= 0) {
-                            Field f_segmentPositionsList =
-                                org.dcm4che3.imageio.stream.SegmentedImageInputStream.class
-                                    .getDeclaredField("segmentPositionsList");
-                            Field f_segmentLengths =
-                                org.dcm4che3.imageio.stream.SegmentedImageInputStream.class
-                                    .getDeclaredField("segmentLengths");
+                            Field f_segmentPositionsList = clazz.getDeclaredField("segmentPositionsList");
+                            Field f_segmentLengths = clazz.getDeclaredField("segmentLengths");
                             if (f_segmentPositionsList != null && f_segmentLengths != null) {
                                 f_segmentPositionsList.setAccessible(true);
                                 f_segmentLengths.setAccessible(true);
@@ -155,10 +151,10 @@ public class FileStreamSegment {
                                  * PS 3.5.8.2 Though a fragment may not contain encoded data from more than one frame,
                                  * the encoded data from one frame may span multiple fragments. See note in Section 8.2.
                                  */
-                                mlImage.setStreamSegment(new FileStreamSegment(raf, FileStreamSegment
-                                    .getFileIDfromFileDescriptor(raf.getFD()), Arrays.copyOfRange(segmentPositionsList,
-                                    curSegment, segmentPositionsList.length), Arrays.copyOfRange(segmentLengths,
-                                    curSegment, segmentLengths.length)));
+                                mlImage.setStreamSegment(new FileStreamSegment(raf,
+                                    FileStreamSegment.getFileIDfromFileDescriptor(raf.getFD()),
+                                    Arrays.copyOfRange(segmentPositionsList, curSegment, segmentPositionsList.length),
+                                    Arrays.copyOfRange(segmentLengths, curSegment, segmentLengths.length)));
                             }
                         }
                     }
@@ -173,8 +169,9 @@ public class FileStreamSegment {
         } else if (iis instanceof FileImageInputStream) {
             RandomAccessFile raf = getRandomAccessFile((FileImageInputStream) iis);
             if (raf != null) {
-                mlImage.setStreamSegment(new FileStreamSegment(raf, FileStreamSegment.getFileIDfromFileDescriptor(raf
-                    .getFD()), new long[] { 0 }, new int[] { (int) raf.length() }));
+                mlImage.setStreamSegment(
+                    new FileStreamSegment(raf, FileStreamSegment.getFileIDfromFileDescriptor(raf.getFD()),
+                        new long[] { 0 }, new int[] { (int) raf.length() }));
             }
         } else if (iis instanceof SegmentedImageInputStream) {
             throw new IllegalArgumentException("No adaptor implemented yet for SegmentedImageInputStream");

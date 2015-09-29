@@ -60,16 +60,16 @@ public class LoadDicomObjects extends ExplorerTask {
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
-            this));
+        dicomModel
+            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null, this));
         addSelectionAndnotify();
         return true;
     }
 
     @Override
     protected void done() {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
-            this));
+        dicomModel
+            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null, this));
         LOGGER.info("End of loading DICOM locally"); //$NON-NLS-1$
     }
 
@@ -158,8 +158,8 @@ public class LoadDicomObjects extends ExplorerTask {
                 if (DicomModel.isSpecialModality(dicomSeries)) {
                     dicomModel.addSpecialModality(dicomSeries);
                 } else {
-                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel,
-                        null, dicomSeries));
+                    dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel, null, dicomSeries));
                 }
 
                 // After the thumbnail is sent to interface, it will be return to be rebuilt later
@@ -168,8 +168,8 @@ public class LoadDicomObjects extends ExplorerTask {
                 Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
                 Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                 if (splitNb != null || dicomObject != null) {
-                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel,
-                        null, dicomSeries));
+                    dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null, dicomSeries));
                 }
 
                 if (openPlugin) {
@@ -181,7 +181,8 @@ public class LoadDicomObjects extends ExplorerTask {
                 }
             } else {
                 // Test if SOPInstanceUID already exists
-                if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID, dicomReader.getTagValue(TagW.SOPInstanceUID))) {
+                if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID,
+                    dicomReader.getTagValue(TagW.SOPInstanceUID))) {
                     return null;
                 }
                 MediaElement[] medias = dicomReader.getMediaElement();
@@ -206,8 +207,8 @@ public class LoadDicomObjects extends ExplorerTask {
                     Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
                     Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                     if (splitNb != null || dicomObject != null) {
-                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update,
-                            dicomModel, null, dicomSeries));
+                        dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null, dicomSeries));
                     }
                 }
             }
