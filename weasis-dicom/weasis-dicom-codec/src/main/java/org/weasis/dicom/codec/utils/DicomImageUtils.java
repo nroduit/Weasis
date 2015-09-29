@@ -1,16 +1,38 @@
 package org.weasis.dicom.codec.utils;
 
 import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
+import java.awt.image.renderable.ParameterBlock;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.imageio.ImageIO;
+import javax.media.jai.JAI;
 import javax.media.jai.LookupTableJAI;
+import javax.media.jai.PlanarImage;
+import javax.media.jai.operator.AndConstDescriptor;
+import javax.media.jai.operator.NullDescriptor;
 
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.image.Overlays;
+import org.dcm4che3.image.PaletteColorModel;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.LutShape;
+import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
+import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.util.LayoutUtil;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FileUtil;
+
+import com.sun.media.jai.util.ImageUtil;
 
 /**
  * 
@@ -19,6 +41,31 @@ import org.weasis.core.api.media.data.TagW;
  * @version $Rev$ $Date$
  */
 public class DicomImageUtils {
+
+    public static PlanarImage getRGBImageFromPaletteColorModel(RenderedImage source, Attributes ds) {
+        if (source == null)
+            return null;
+
+        // Convert images with PaletteColorModel to RGB model
+        if (source.getColorModel() instanceof PaletteColorModel) {
+            if (ds != null) {
+                int[] rDesc = DicomImageUtils.lutDescriptor(ds, Tag.RedPaletteColorLookupTableDescriptor);
+                int[] gDesc = DicomImageUtils.lutDescriptor(ds, Tag.GreenPaletteColorLookupTableDescriptor);
+                int[] bDesc = DicomImageUtils.lutDescriptor(ds, Tag.BluePaletteColorLookupTableDescriptor);
+                byte[] r = DicomImageUtils.lutData(ds, rDesc, Tag.RedPaletteColorLookupTableData,
+                    Tag.SegmentedRedPaletteColorLookupTableData);
+                byte[] g = DicomImageUtils.lutData(ds, gDesc, Tag.GreenPaletteColorLookupTableData,
+                    Tag.SegmentedGreenPaletteColorLookupTableData);
+                byte[] b = DicomImageUtils.lutData(ds, bDesc, Tag.BluePaletteColorLookupTableData,
+                    Tag.SegmentedBluePaletteColorLookupTableData);
+                LookupTableJAI lut = new LookupTableJAI(new byte[][] { r, g, b });
+
+                // Replace the original image with the RGB image.
+                return JAI.create("lookup", source, lut); //$NON-NLS-1$
+            }
+        }
+        return PlanarImage.wrapRenderedImage(source);
+    }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -83,7 +130,8 @@ public class DicomImageUtils {
                     setWindowLevelSigmoidLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
                     break;
                 case SIGMOID_NORM:
-                    setWindowLevelSigmoidLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse, true);
+                    setWindowLevelSigmoidLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse,
+                        true);
                     break;
                 case LOG:
                     setWindowLevelLogarithmicLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
@@ -110,15 +158,15 @@ public class DicomImageUtils {
      */
 
     public static LookupTableJAI createRescaleRampLut(LutParameters params) {
-        return createRescaleRampLut(params.getIntercept(), params.getSlope(), params.getBitsStored(),
-            params.isSigned(), params.isOutputSigned(), params.getBitsOutput());
+        return createRescaleRampLut(params.getIntercept(), params.getSlope(), params.getBitsStored(), params.isSigned(),
+            params.isOutputSigned(), params.getBitsOutput());
     }
 
     public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int bitsStored, boolean isSigned,
         boolean outputSigned, int bitsOutput) {
 
-        return createRescaleRampLut(intercept, slope, Integer.MIN_VALUE, Integer.MAX_VALUE, bitsStored, isSigned,
-            false, outputSigned, bitsOutput);
+        return createRescaleRampLut(intercept, slope, Integer.MIN_VALUE, Integer.MAX_VALUE, bitsStored, isSigned, false,
+            outputSigned, bitsOutput);
     }
 
     public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int minValue, int maxValue,
@@ -260,7 +308,8 @@ public class DicomImageUtils {
                 value = (int) maxOutValue;
             } else {
                 value =
-                    (int) ((((i + minInValue) - (level - 0.5f)) / (window - 1f) + 0.5f) * (maxOutValue - minOutValue) + minOutValue);
+                    (int) ((((i + minInValue) - (level - 0.5f)) / (window - 1f) + 0.5f) * (maxOutValue - minOutValue)
+                        + minOutValue);
             }
 
             value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
@@ -469,9 +518,8 @@ public class DicomImageUtils {
         }
 
         // Use this mask to get positive value assuming inLutData value is always unsigned
-        final int lutDataValueMask =
-            (inLutDataArray instanceof byte[] ? 0x000000FF : (inLutDataArray instanceof short[] ? 0x0000FFFF
-                : 0xFFFFFFFF));
+        final int lutDataValueMask = (inLutDataArray instanceof byte[] ? 0x000000FF
+            : (inLutDataArray instanceof short[] ? 0x0000FFFF : 0xFFFFFFFF));
 
         float lowLevel = center - width / 2f;
         float highLevel = center + width / 2f;
@@ -519,10 +567,9 @@ public class DicomImageUtils {
             int valueUp = lutDataValueMask & Array.getInt(inLutDataArray, inValueRoundUp);
 
             // Linear Interpolation of the output value with respect to the rescaled ratio
-            value =
-                (inValueRoundUp == inValueRoundDown) ? valueDown : //
-                    Math.round(valueDown + (inValueRescaled - inValueRoundDown) * (valueUp - valueDown)
-                        / (inValueRoundUp - inValueRoundDown));
+            value = (inValueRoundUp == inValueRoundDown) ? valueDown : //
+                Math.round(valueDown + (inValueRescaled - inValueRoundDown) * (valueUp - valueDown)
+                    / (inValueRoundUp - inValueRoundDown));
 
             value = Math.round(value * outRescaleRatio);
             // }

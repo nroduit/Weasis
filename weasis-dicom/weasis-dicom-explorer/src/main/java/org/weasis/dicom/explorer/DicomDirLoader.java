@@ -35,6 +35,7 @@ import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
+import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
@@ -266,7 +267,8 @@ public class DicomDirLoader {
                             .fromString(iconInstance.getString(Tag.PhotometricInterpretation, "MONOCHROME2")); //$NON-NLS-1$
                         BufferedImage thumbnail = new BufferedImage(
                             pmi.createColorModel(8, DataBuffer.TYPE_BYTE, iconInstance), raster, false, null);
-                        if (ImageFiler.writeJPG(thumbnailPath, thumbnail, 0.75f)) {
+                        if (ImageFiler.writeJPG(thumbnailPath,
+                            DicomImageUtils.getRGBImageFromPaletteColorModel(thumbnail, iconInstance), 0.75f)) {
                             return thumbnailPath.getPath();
                         }
                     }
