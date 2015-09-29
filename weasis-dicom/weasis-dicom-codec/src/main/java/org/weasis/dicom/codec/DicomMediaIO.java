@@ -839,29 +839,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 // Set to 0 all bits outside bitStored
                 img = AndConstDescriptor.create(img, new int[] { overlayBitMask }, null);
             }
-
-            // Convert images with PaletteColorModel to RGB model
-            if (img.getColorModel() instanceof PaletteColorModel) {
-                Attributes ds = getDicomObject();
-                if (ds != null) {
-                    int[] rDesc = DicomImageUtils.lutDescriptor(ds, Tag.RedPaletteColorLookupTableDescriptor);
-                    int[] gDesc = DicomImageUtils.lutDescriptor(ds, Tag.GreenPaletteColorLookupTableDescriptor);
-                    int[] bDesc = DicomImageUtils.lutDescriptor(ds, Tag.BluePaletteColorLookupTableDescriptor);
-                    byte[] r =
-                        DicomImageUtils.lutData(ds, rDesc, Tag.RedPaletteColorLookupTableData,
-                            Tag.SegmentedRedPaletteColorLookupTableData);
-                    byte[] g =
-                        DicomImageUtils.lutData(ds, gDesc, Tag.GreenPaletteColorLookupTableData,
-                            Tag.SegmentedGreenPaletteColorLookupTableData);
-                    byte[] b =
-                        DicomImageUtils.lutData(ds, bDesc, Tag.BluePaletteColorLookupTableData,
-                            Tag.SegmentedBluePaletteColorLookupTableData);
-                    LookupTableJAI lut = new LookupTableJAI(new byte[][] { r, g, b });
-
-                    // Replace the original image with the RGB image.
-                    img = JAI.create("lookup", img, lut); //$NON-NLS-1$
-                }
-            }
+            img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
         }
         return img;
     }
