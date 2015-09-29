@@ -8,15 +8,17 @@ public abstract class ExplorerTask extends SwingWorker<Boolean, String> {
     private final String message;
     private final boolean interruptible;
     private final CircularProgressBar bar;
+    private final boolean subTask;
 
     public ExplorerTask(String message, boolean interruptible) {
-        this(message, interruptible, null);
+        this(message, interruptible, null, false);
     }
 
-    public ExplorerTask(String message, boolean interruptible, CircularProgressBar bar) {
+    public ExplorerTask(String message, boolean interruptible, CircularProgressBar bar, boolean subTask) {
         this.message = message;
         this.interruptible = interruptible;
         this.bar = bar;
+        this.subTask = subTask;
     }
 
     public boolean isInterruptible() {
@@ -31,4 +33,7 @@ public abstract class ExplorerTask extends SwingWorker<Boolean, String> {
         return bar;
     }
 
+    public boolean isSubTask() {
+        return subTask;
+    }
 }

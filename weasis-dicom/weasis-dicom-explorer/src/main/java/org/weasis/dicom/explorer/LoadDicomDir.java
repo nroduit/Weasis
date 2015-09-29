@@ -12,7 +12,6 @@ package org.weasis.dicom.explorer;
 
 import java.util.List;
 
-import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -33,21 +32,12 @@ public class LoadDicomDir extends ExplorerTask {
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        dicomModel
-            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null, this));
-
         for (LoadSeries s : seriesList) {
             DownloadManager.addLoadSeries(s, dicomModel, true);
         }
 
         DownloadManager.UNIQUE_EXECUTOR.prestartAllCoreThreads();
         return true;
-    }
-
-    @Override
-    protected void done() {
-        dicomModel
-            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null, this));
     }
 
 }

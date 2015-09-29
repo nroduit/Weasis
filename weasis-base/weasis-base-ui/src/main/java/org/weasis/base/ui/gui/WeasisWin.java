@@ -215,7 +215,7 @@ public class WeasisWin {
         rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
         if (frame != null) {
-            frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); //$NON-NLS-1$ 
+            frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); //$NON-NLS-1$
             ImageIcon icon = ResourceUtil.getIconLogo64();
             if (icon != null) {
                 frame.setIconImage(icon.getImage());
@@ -469,7 +469,7 @@ public class WeasisWin {
     }
 
     private void setExternalPosition(final DefaultSingleCDockable dockable) {
-        // TODO should be set dynamically. Maximize button of external window does not support mulit-screens.
+        // TODO should be set dynamically. Maximize button of external window does not support multi-screens.
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gd = ge.getScreenDevices();
@@ -887,39 +887,39 @@ public class WeasisWin {
 
         DynamicMenu toolBarMenu = new DynamicMenu(Messages.getString("WeasisWin.toolbar")) {//$NON-NLS-1$
 
-                @Override
-                public void popupMenuWillBecomeVisible() {
-                    buildToolBarSubMenu(this);
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildToolBarSubMenu(this);
 
-                }
-            };
+            }
+        };
         toolBarMenu.addPopupMenuListener();
         menuView.add(toolBarMenu);
 
         DynamicMenu toolMenu = new DynamicMenu(Messages.getString("WeasisWin.tools")) { //$NON-NLS-1$
 
-                @Override
-                public void popupMenuWillBecomeVisible() {
-                    buildToolSubMenu(this);
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildToolSubMenu(this);
 
-                }
-            };
+            }
+        };
         toolMenu.addPopupMenuListener();
         menuView.add(toolMenu);
 
         DynamicMenu explorerMenu = new DynamicMenu("Explorer") { //$NON-NLS-1$
 
-                @Override
-                public void popupMenuWillBecomeVisible() {
-                    buildEplorerSubMenu(this);
-                }
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildEplorerSubMenu(this);
+            }
 
-            };
+        };
         explorerMenu.addPopupMenuListener();
         menuView.add(explorerMenu);
 
         // TODO add save workspace layout
-        //        final AbstractAction saveAction = new AbstractAction("Save workspace layout") { //$NON-NLS-1$
+        // final AbstractAction saveAction = new AbstractAction("Save workspace layout") { //$NON-NLS-1$
         //
         // @Override
         // public void actionPerformed(ActionEvent e) {
@@ -936,7 +936,7 @@ public class WeasisWin {
         // };
         // menuView.add(saveAction);
         //
-        //        final AbstractAction loadAction = new AbstractAction("Restore last workspace layout") { //$NON-NLS-1$
+        // final AbstractAction loadAction = new AbstractAction("Restore last workspace layout") { //$NON-NLS-1$
         //
         // @Override
         // public void actionPerformed(ActionEvent e) {
@@ -959,42 +959,42 @@ public class WeasisWin {
         menuFile.removeAll();
         DynamicMenu openMenu = new DynamicMenu(Messages.getString("WeasisWin.open")) { //$NON-NLS-1$
 
-                @Override
-                public void popupMenuWillBecomeVisible() {
-                    buildOpenSubMenu(this);
-                }
-            };
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildOpenSubMenu(this);
+            }
+        };
         openMenu.addPopupMenuListener();
         menuFile.add(openMenu);
 
         DynamicMenu importMenu = new DynamicMenu(Messages.getString("WeasisWin.import")) {//$NON-NLS-1$
 
-                @Override
-                public void popupMenuWillBecomeVisible() {
-                    buildImportSubMenu(this);
-                }
-            };
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildImportSubMenu(this);
+            }
+        };
         importMenu.addPopupMenuListener();
         menuFile.add(importMenu);
 
         DynamicMenu exportMenu = new DynamicMenu(Messages.getString("WeasisWin.export")) {//$NON-NLS-1$
 
-                @Override
-                public void popupMenuWillBecomeVisible() {
-                    buildExportSubMenu(this);
-                }
-            };
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildExportSubMenu(this);
+            }
+        };
         exportMenu.addPopupMenuListener();
 
         menuFile.add(exportMenu);
         menuFile.add(new JSeparator());
         DynamicMenu printMenu = new DynamicMenu(Messages.getString("WeasisWin.print")) { //$NON-NLS-1$
 
-                @Override
-                public void popupMenuWillBecomeVisible() {
-                    buildPrintSubMenu(this);
-                }
-            };
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildPrintSubMenu(this);
+            }
+        };
         printMenu.addPopupMenuListener();
         menuFile.add(printMenu);
         menuFile.add(new JSeparator());
@@ -1078,8 +1078,8 @@ public class WeasisWin {
                                 openSeriesInViewerPlugin(builder,
                                     ((TreeModel) model).getParent(seq, model.getTreeModelNodeForNewPlugin()));
                             } else {
-                                ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model == null
-                                    ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
+                                ViewerPluginBuilder.openSequenceInDefaultPlugin(seq,
+                                    model == null ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
                             }
                             break;
                         }
