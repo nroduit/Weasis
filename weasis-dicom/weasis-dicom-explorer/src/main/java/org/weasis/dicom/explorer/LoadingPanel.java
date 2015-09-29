@@ -23,7 +23,7 @@ public class LoadingPanel extends JPanel {
         boolean update = false;
         if (task != null && !tasks.contains(task)) {
             tasks.add(task);
-            if (task.isInterruptible()) {
+            if (task.isSubTask()) {
                 if (getComponentZOrder(globalDownloadTask) == -1) {
                     this.add(globalDownloadTask);
                     update = true;
@@ -42,7 +42,7 @@ public class LoadingPanel extends JPanel {
         boolean update = false;
         if (task != null) {
             tasks.remove(task);
-            if (task.isInterruptible()) {
+            if (task.isSubTask()) {
                 if (getDownloadTaskNumber() == 0) {
                     this.remove(globalDownloadTask);
                     update = true;
@@ -63,7 +63,7 @@ public class LoadingPanel extends JPanel {
     public int getDownloadTaskNumber() {
         int i = 0;
         for (ExplorerTask explorerTask : tasks) {
-            if (explorerTask.isInterruptible()) {
+            if (explorerTask.isSubTask()) {
                 i++;
             }
         }

@@ -103,7 +103,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     private final boolean writeInCache;
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), writeInCache); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -132,7 +132,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
         boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }

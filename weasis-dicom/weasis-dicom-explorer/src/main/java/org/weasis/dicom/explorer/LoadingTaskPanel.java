@@ -116,12 +116,14 @@ public class LoadingTaskPanel extends JPanel {
             });
             cancelButton.setToolTipText(Messages.getString("LoadingTaskPanel.stop_process")); //$NON-NLS-1$
             this.add(cancelButton);
-            CircularProgressBar globalProgress = task.getBar();
-            if (globalProgress == null) {
-                globalProgress = new CircularProgressBar(0, 100);
-                globalProgress.setIndeterminate(true);
+            if (task != null) {
+                CircularProgressBar globalProgress = task.getBar();
+                if (globalProgress == null) {
+                    globalProgress = new CircularProgressBar(0, 100);
+                    globalProgress.setIndeterminate(true);
+                }
+                this.add(globalProgress);
             }
-            this.add(globalProgress);
         }
         if (task != null) {
             message.setText(task.getMessage());
