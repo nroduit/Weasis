@@ -86,13 +86,13 @@ public final class JIThumbnailCache {
                     RenderedImage img = null;
                     String mime = diskObject.getMimeType();
                     if (mime == null) {
-                        mime = "";
+                        mime = ""; //$NON-NLS-1$
                     }
                     String cfile = diskObject.getFile().getAbsolutePath();
                     String tiled_File = thumbnailList.getThumbnailListModel().getFileInCache(cfile);
                     if (tiled_File != null) {
                         try {
-                            ImageDecoder dec = ImageCodec.createImageDecoder("tiff",
+                            ImageDecoder dec = ImageCodec.createImageDecoder("tiff", //$NON-NLS-1$
                                 new FileSeekableStream(tiled_File == null ? diskObject.getFile()
                                     : new File(JIListModel.EXPLORER_CACHE_DIR, tiled_File)),
                                 null);
@@ -123,7 +123,7 @@ public final class JIThumbnailCache {
                          */
 
                         if ((img.getWidth() > ImageFiler.TILESIZE || img.getHeight() > ImageFiler.TILESIZE)
-                            && !mime.contains("dicom")) {
+                            && !mime.contains("dicom")) { //$NON-NLS-1$
                             File imgCacheFile = null;
                             try {
                                 imgCacheFile = File.createTempFile("tiled_", ".tif", JIListModel.EXPLORER_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$

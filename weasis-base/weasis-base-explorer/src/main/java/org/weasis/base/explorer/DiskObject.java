@@ -21,14 +21,14 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
      */
     private static final long serialVersionUID = 5247091367179832780L;
 
-    private static final String osName = System.getProperty("os.name").toLowerCase();
+    private static final String osName = System.getProperty("os.name").toLowerCase(); //$NON-NLS-1$
 
     private static final Format formatter = LocalUtil.getDateInstance();
 
-    public static final String MIMETYPE_JPEG = "image/jpeg";
-    public static final String MIMETYPE_GIF = "image/gif";
-    public static final String MIMETYPE_PNG = "image/png";
-    public static final String MIMETYPE_TIFF = "image/tiff";
+    public static final String MIMETYPE_JPEG = "image/jpeg"; //$NON-NLS-1$
+    public static final String MIMETYPE_GIF = "image/gif"; //$NON-NLS-1$
+    public static final String MIMETYPE_PNG = "image/png"; //$NON-NLS-1$
+    public static final String MIMETYPE_TIFF = "image/tiff"; //$NON-NLS-1$
 
     private String name;
     private String type;
@@ -67,33 +67,33 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
         this.path = (absolutePath != null ? JIUtility.portablePath(absolutePath) : null);
 
         try {
-            if (!file.getName().equals("hiberfil.sys") && file.exists()) {
+            if (!file.getName().equals("hiberfil.sys") && file.exists()) { //$NON-NLS-1$
                 // type = FileSystemView.getFileSystemView().getSystemTypeDescription(file);
                 displayName = FileSystemView.getFileSystemView().getSystemDisplayName(file);
             }
         } catch (final Exception e) {
             // e.printStackTrace();
-            type = "";
-            displayName = "";
+            type = ""; //$NON-NLS-1$
+            displayName = ""; //$NON-NLS-1$
         }
 
         name = file.getName().length() > 0 ? file.getName() : file.toURI().getPath();
-        if (osName.startsWith("win") && (name.indexOf('/') == 0)) {
+        if (osName.startsWith("win") && (name.indexOf('/') == 0)) { //$NON-NLS-1$
             name = name.substring(1);
         }
     }
 
     public String getMimeType() {
-        if (getSuffix().equals("jpg") || getSuffix().equals("jpeg")) {
+        if (getSuffix().equals("jpg") || getSuffix().equals("jpeg")) { //$NON-NLS-1$ //$NON-NLS-2$
             return MIMETYPE_JPEG;
         }
-        if (getSuffix().equals("gif")) {
+        if (getSuffix().equals("gif")) { //$NON-NLS-1$
             return MIMETYPE_GIF;
         }
-        if (getSuffix().equals("png")) {
+        if (getSuffix().equals("png")) { //$NON-NLS-1$
             return MIMETYPE_PNG;
         }
-        if (getSuffix().equals("tiff") || getSuffix().equals("tif")) {
+        if (getSuffix().equals("tiff") || getSuffix().equals("tif")) { //$NON-NLS-1$ //$NON-NLS-2$
             return MIMETYPE_TIFF;
         }
         return null;
@@ -106,9 +106,9 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
 
     public String getDim() {
         if ((this.width > 0) && (this.height > 0)) {
-            return this.width + " x " + this.height;
+            return this.width + " x " + this.height; //$NON-NLS-1$
         }
-        return "";
+        return ""; //$NON-NLS-1$
     }
 
     public Dimension getDimension() {
@@ -147,7 +147,7 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
     }
 
     public String[] getDateCategories() {
-        return formatter.format(new java.util.Date(this.lastModified)).split("/");
+        return formatter.format(new java.util.Date(this.lastModified)).split("/"); //$NON-NLS-1$
     }
 
     /**
@@ -168,7 +168,7 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
             }
 
             if (!getFile().canRead()) {
-                throw new IOException("Cannot read " + getFile().getAbsolutePath());
+                throw new IOException("Cannot read " + getFile().getAbsolutePath()); //$NON-NLS-1$
             }
         }
         return (this.validated = true);
