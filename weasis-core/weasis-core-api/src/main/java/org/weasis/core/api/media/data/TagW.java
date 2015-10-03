@@ -400,6 +400,9 @@ public class TagW implements Transferable, Serializable {
             // For ex: DICOM (0010,1010) = 031Y
             str = value.toString();
             char[] tab = str.toCharArray();
+            if (tab.length < 2) {
+                return "";
+            }
             for (int i = 0; i < 2; i++) {
                 if (tab[i] == '0') {
                     str = str.substring(1);
