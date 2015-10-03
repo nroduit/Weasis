@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -45,9 +45,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
     /*
      * Imageio issue with native library in multi-thread environment (to avoid JVM crash let only one simultaneous
      * thread) (https://java.net/jira/browse/JAI_IMAGEIO_CORE-126)
-     * 
+     *
      * Try multi-thread reading with new native decoders
-     * 
+     *
      * public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime()
      * .availableProcessors() / 2));
      */
@@ -267,9 +267,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     /**
      * Loads the original image. Must load and return the original image.
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @throws IOException
      */
 
@@ -319,7 +319,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     /**
      * Returns the full size, original image. Returns null if the image is not loaded.
-     * 
+     *
      * @return
      */
     public PlanarImage getImage(OpManager manager) {

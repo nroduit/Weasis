@@ -66,7 +66,7 @@ public class View3DFactory implements SeriesViewerFactory {
     @Override
     public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
 
-        if (Activator.useHardwareAcceleration) { 
+        if (Activator.useHardwareAcceleration) {
             GridBagLayoutModel model = View3DContainer.VIEWS_2x1_mpr;
             String uid = null;
             if (properties != null) {
@@ -114,7 +114,7 @@ public class View3DFactory implements SeriesViewerFactory {
         showHANotAvailableMsg(null);
         return null;
     }
-    
+
     public static int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
         int val = 0;
         if (layout != null && defaultClass != null) {

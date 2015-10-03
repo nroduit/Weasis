@@ -39,7 +39,6 @@ import br.com.animati.texture.mpr3dview.api.AbstractInfoLayer;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
 import br.com.animati.texture.mpr3dview.api.DisplayUtils;
 import br.com.animati.texture.mpr3dview.internal.Messages;
-import br.com.animati.texturedicom.ImageSeries;
 
 /**
  *
@@ -177,8 +176,9 @@ public class InfoLayer3d extends AbstractInfoLayer {
 
         /* WINDOW_LEVEL */
         if (getDisplayPreferences(WINDOW_LEVEL) && hideMin) {
-            GraphicLabel.paintFontOutline(g2d, Messages.getString("InfoLayer3d.WL") + " " + owner.windowingWindow
-                + " / " + owner.windowingLevel, border, drawY);
+            GraphicLabel.paintFontOutline(g2d,
+                Messages.getString("InfoLayer3d.WL") + " " + owner.windowingWindow + " / " + owner.windowingLevel,
+                border, drawY);
             drawY -= fontHeight;
         }
 
@@ -186,9 +186,9 @@ public class InfoLayer3d extends AbstractInfoLayer {
         if (getDisplayPreferences(ZOOM) && hideMin) {
             double dispZoom = getOwnerZoomFactor();
             if (dispZoom > 0) {
-                GraphicLabel.paintFontOutline(g2d,
-                    Messages.getString("InfoLayer3d.zoom") + " " + DecFormater.twoDecimal(dispZoom * 100) + " "
-                        + Messages.getString("InfoLayer3d.percent_symb"), border, drawY);
+                GraphicLabel.paintFontOutline(g2d, Messages.getString("InfoLayer3d.zoom") + " "
+                    + DecFormater.twoDecimal(dispZoom * 100) + " " + Messages.getString("InfoLayer3d.percent_symb"),
+                    border, drawY);
                 drawY -= fontHeight;
             }
         }
@@ -196,10 +196,9 @@ public class InfoLayer3d extends AbstractInfoLayer {
         if (getDisplayPreferences(ROTATION) && hideMin) {
             Integer rotation = (Integer) owner.getActionValue(ActionW.ROTATION.cmd());
             if (rotation != null) {
-                GraphicLabel.paintFontOutline(
-                    g2d,
-                    Messages.getString("InfoLayer.angle") + " " + DecFormater.oneDecimal(rotation) + " "
-                        + Messages.getString("InfoLayer.angle_symb"), border, drawY);
+                GraphicLabel.paintFontOutline(g2d, Messages.getString("InfoLayer.angle") + " "
+                    + DecFormater.oneDecimal(rotation) + " " + Messages.getString("InfoLayer.angle_symb"), border,
+                    drawY);
                 drawY -= fontHeight;
             }
         }
@@ -212,8 +211,8 @@ public class InfoLayer3d extends AbstractInfoLayer {
             Integer index = getOwnerContentFrameIndex();
             Integer size = getOwnerSeriesSize();
             if (index != null && size != null) {
-                GraphicLabel.paintFontOutline(g2d, Messages.getString("InfoLayer.frame") + instString + (index + 1)
-                    + " / " + size, border, drawY);
+                GraphicLabel.paintFontOutline(g2d,
+                    Messages.getString("InfoLayer.frame") + instString + (index + 1) + " / " + size, border, drawY);
                 drawY -= fontHeight;
             }
         }
@@ -277,8 +276,8 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                 if (value != null) {
                                     String str = tag.getFormattedText(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        GraphicLabel.paintFontOutline(g2d, str, bound.width
-                                            - g2d.getFontMetrics().stringWidth(str) - border, drawY);
+                                        GraphicLabel.paintFontOutline(g2d, str,
+                                            bound.width - g2d.getFontMetrics().stringWidth(str) - border, drawY);
                                         drawY += fontHeight;
                                         break;
                                     }
@@ -313,8 +312,8 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                 if (value != null) {
                                     String str = tag.getFormattedText(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        GraphicLabel.paintFontOutline(g2d, str, bound.width
-                                            - g2d.getFontMetrics().stringWidth(str) - border, drawY);
+                                        GraphicLabel.paintFontOutline(g2d, str,
+                                            bound.width - g2d.getFontMetrics().stringWidth(str) - border, drawY);
                                         drawY -= fontHeight;
                                         break;
                                     }
@@ -459,9 +458,8 @@ public class InfoLayer3d extends AbstractInfoLayer {
     private String getOwnerContentOrientationLabel() {
         double[] v = owner.getImagePatientOrientation();
         if (v != null && v.length == 6) {
-            String imgOrientation =
-                ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3], v[4],
-                    v[5]);
+            String imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1],
+                v[2], v[3], v[4], v[5]);
             return imgOrientation;
         }
         return null;

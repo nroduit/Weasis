@@ -38,7 +38,7 @@ public class KOSpecialElement extends DicomSpecialElement {
     protected void initLabel() {
         /*
          * DICOM PS 3.3 - 2011 - C.17.3 SR Document Content Module
-         * 
+         *
          * Concept Name Code Sequence: mandatory when type is CONTAINER or the root content item.
          */
         StringBuilder buf = new StringBuilder(getLabelPrefix());
@@ -71,8 +71,8 @@ public class KOSpecialElement extends DicomSpecialElement {
         }
         Map<String, SeriesAndInstanceReference> seriesAndInstanceReferenceBySeriesUID =
             seriesAndInstanceReferenceMapByStudyUID.get(studyUID);
-        return seriesAndInstanceReferenceBySeriesUID != null ? seriesAndInstanceReferenceMapByStudyUID.get(studyUID)
-            .keySet() : null;
+        return seriesAndInstanceReferenceBySeriesUID != null
+            ? seriesAndInstanceReferenceMapByStudyUID.get(studyUID).keySet() : null;
     }
 
     public Set<String> getReferencedSeriesInstanceUIDSet() {
@@ -96,7 +96,8 @@ public class KOSpecialElement extends DicomSpecialElement {
         }
 
         Set<String> referencedSOPInstanceUIDSet = new LinkedHashSet<String>();
-        for (Map<String, SOPInstanceReferenceAndMAC> sopInstanceReference : sopInstanceReferenceMapBySeriesUID.values()) {
+        for (Map<String, SOPInstanceReferenceAndMAC> sopInstanceReference : sopInstanceReferenceMapBySeriesUID
+            .values()) {
             referencedSOPInstanceUIDSet.addAll(sopInstanceReference.keySet());
         }
         return referencedSOPInstanceUIDSet;
@@ -135,7 +136,7 @@ public class KOSpecialElement extends DicomSpecialElement {
     /**
      * Extract all the hierarchical SOP Instance References from the CurrentRequestedProcedureEvidences of the root
      * DicomObject into the dedicated Maps. These collections are used to improve access performance for data queries.
-     * 
+     *
      * @note This method should be called only once since any call to add/remove methods should keep in sync with the
      *       CurrentRequestedProcedureEvidences of the root DicomObject
      */
@@ -146,8 +147,8 @@ public class KOSpecialElement extends DicomSpecialElement {
 
         if (dcmItems != null) {
             Collection<HierachicalSOPInstanceReference> referencedStudySequence =
-                HierachicalSOPInstanceReference.toHierachicalSOPInstanceReferenceMacros(dcmItems
-                    .getSequence(Tag.CurrentRequestedProcedureEvidenceSequence));
+                HierachicalSOPInstanceReference.toHierachicalSOPInstanceReferenceMacros(
+                    dcmItems.getSequence(Tag.CurrentRequestedProcedureEvidenceSequence));
 
             if (referencedStudySequence != null) {
 
@@ -241,7 +242,7 @@ public class KOSpecialElement extends DicomSpecialElement {
     /**
      * If the sopInstanceUID is not referenced, add a new Key Object reference<br>
      * If the sopInstanceUID is already referenced, remove this Key Object reference
-     * 
+     *
      * @param studyInstanceUID
      * @param seriesInstanceUID
      * @param sopInstanceUID
@@ -254,9 +255,8 @@ public class KOSpecialElement extends DicomSpecialElement {
         Map<String, SOPInstanceReferenceAndMAC> sopInstanceReferenceBySOPInstanceUID =
             sopInstanceReferenceMapBySeriesUID.get(seriesInstanceUID);
 
-        boolean isSelected =
-            sopInstanceReferenceBySOPInstanceUID != null
-                && sopInstanceReferenceBySOPInstanceUID.containsKey(sopInstanceUID);
+        boolean isSelected = sopInstanceReferenceBySOPInstanceUID != null
+            && sopInstanceReferenceBySOPInstanceUID.containsKey(sopInstanceUID);
 
         setKeyObjectReference(!isSelected, studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
     }
@@ -307,8 +307,8 @@ public class KOSpecialElement extends DicomSpecialElement {
 
         if (sopInstanceReferenceBySOPInstanceUID == null) {
             // the seriesUID is not referenced, create a new SOPInstanceReferenceMap
-            sopInstanceReferenceMapBySeriesUID.put(seriesInstanceUID, sopInstanceReferenceBySOPInstanceUID =
-                new LinkedHashMap<String, SOPInstanceReferenceAndMAC>());
+            sopInstanceReferenceMapBySeriesUID.put(seriesInstanceUID,
+                sopInstanceReferenceBySOPInstanceUID = new LinkedHashMap<String, SOPInstanceReferenceAndMAC>());
         } else if (sopInstanceReferenceBySOPInstanceUID.containsKey(sopInstanceUID)) {
             // the sopInstanceUID is already referenced, skip the job
             return false;
@@ -327,8 +327,8 @@ public class KOSpecialElement extends DicomSpecialElement {
 
         if (seriesAndInstanceReferenceBySeriesUID == null) {
             // the studyUID is not referenced, create a new one SeriesAndInstanceReferenceMap
-            seriesAndInstanceReferenceMapByStudyUID.put(studyInstanceUID, seriesAndInstanceReferenceBySeriesUID =
-                new LinkedHashMap<String, SeriesAndInstanceReference>());
+            seriesAndInstanceReferenceMapByStudyUID.put(studyInstanceUID,
+                seriesAndInstanceReferenceBySeriesUID = new LinkedHashMap<String, SeriesAndInstanceReference>());
         }
 
         // Get the SeriesAndInstanceReference for this seriesUID
@@ -446,8 +446,8 @@ public class KOSpecialElement extends DicomSpecialElement {
 
             if (sopInstanceReferenceBySOPInstanceUID == null) {
                 // the seriesUID is not referenced, create a new SOPInstanceReferenceMap
-                sopInstanceReferenceMapBySeriesUID.put(seriesInstanceUID, sopInstanceReferenceBySOPInstanceUID =
-                    new LinkedHashMap<String, SOPInstanceReferenceAndMAC>());
+                sopInstanceReferenceMapBySeriesUID.put(seriesInstanceUID,
+                    sopInstanceReferenceBySOPInstanceUID = new LinkedHashMap<String, SOPInstanceReferenceAndMAC>());
             } else if (sopInstanceReferenceBySOPInstanceUID.containsKey(sopInstanceUID)) {
                 // the sopInstanceUID is already referenced, keep continue
                 continue;
@@ -473,8 +473,8 @@ public class KOSpecialElement extends DicomSpecialElement {
 
         if (seriesAndInstanceReferenceBySeriesUID == null) {
             // the studyUID is not referenced, create a new one SeriesAndInstanceReferenceMap
-            seriesAndInstanceReferenceMapByStudyUID.put(studyInstanceUID, seriesAndInstanceReferenceBySeriesUID =
-                new LinkedHashMap<String, SeriesAndInstanceReference>());
+            seriesAndInstanceReferenceMapByStudyUID.put(studyInstanceUID,
+                seriesAndInstanceReferenceBySeriesUID = new LinkedHashMap<String, SeriesAndInstanceReference>());
         }
 
         // Get the SeriesAndInstanceReference for this seriesUID
@@ -689,8 +689,8 @@ public class KOSpecialElement extends DicomSpecialElement {
 
                 Set<String> referencedSOPInstanceUIDSet = getReferencedSOPInstanceUIDSet(seriesUID);
 
-                return referencedSOPInstanceUIDSet == null ? false : referencedSOPInstanceUIDSet
-                    .contains(sopInstanceUID);
+                return referencedSOPInstanceUIDSet == null ? false
+                    : referencedSOPInstanceUIDSet.contains(sopInstanceUID);
             }
         };
         return filter;

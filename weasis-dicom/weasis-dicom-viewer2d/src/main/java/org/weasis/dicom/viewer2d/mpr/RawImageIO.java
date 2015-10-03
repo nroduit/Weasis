@@ -114,7 +114,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
             group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
             group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
 
-            //            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
+            // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
             // MediaElement[] elements = getMediaElement();
             // if (elements != null) {
             // for (MediaElement m : elements) {
@@ -128,14 +128,12 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     @Override
     public PlanarImage getMediaFragment(MediaElement<PlanarImage> media) throws Exception {
         if (media != null && media.getFile() != null) {
-            ImageParameters h =
-                new ImageParameters((Integer) media.getTagValue(TagW.Rows), (Integer) media.getTagValue(TagW.Columns),
-                    (Integer) media.getTagValue(TagW.BitsAllocated), (Integer) media.getTagValue(TagW.SamplesPerPixel),
-                    false);
+            ImageParameters h = new ImageParameters((Integer) media.getTagValue(TagW.Rows),
+                (Integer) media.getTagValue(TagW.Columns), (Integer) media.getTagValue(TagW.BitsAllocated),
+                (Integer) media.getTagValue(TagW.SamplesPerPixel), false);
             // RawImageReader doesn't need to be disposed
-            ImageReader reader =
-                initRawImageReader(imageStream = ImageIO.createImageInputStream(media.getFile()), h, 1, 0, false,
-                    (Integer) media.getTagValue(TagW.PixelRepresentation));
+            ImageReader reader = initRawImageReader(imageStream = ImageIO.createImageInputStream(media.getFile()), h, 1,
+                0, false, (Integer) media.getTagValue(TagW.PixelRepresentation));
 
             RenderedImage buffer = reader.readAsRenderedImage(0, null);
             PlanarImage img = null;
@@ -145,8 +143,8 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
                     pb.addSource(buffer);
                     // Tile size are set in this operation
                     img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
-                } else if (buffer.getTileWidth() != ImageFiler.TILESIZE
-                    || buffer.getTileHeight() != ImageFiler.TILESIZE) {
+                } else
+                    if (buffer.getTileWidth() != ImageFiler.TILESIZE || buffer.getTileHeight() != ImageFiler.TILESIZE) {
                     img = ImageFiler.tileImage(buffer);
                 } else {
                     img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
@@ -270,9 +268,8 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
             Dimension[] imageDimensions = new Dimension[frames];
             Arrays.fill(imageDimensions, new Dimension(h.getWidth(), h.getHeight()));
 
-            RawImageInputStream riis =
-                new RawImageInputStream(imageStream, createImageTypeSpecifier(h, false, pixelRepresentation),
-                    frameOffsets, imageDimensions);
+            RawImageInputStream riis = new RawImageInputStream(imageStream,
+                createImageTypeSpecifier(h, false, pixelRepresentation), frameOffsets, imageDimensions);
             riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
             ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next(); //$NON-NLS-1$
             reader.setInput(riis);
@@ -281,7 +278,8 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
         return null;
     }
 
-    public static ImageTypeSpecifier createImageTypeSpecifier(ImageParameters h, boolean banded, int pixelRepresentation) {
+    public static ImageTypeSpecifier createImageTypeSpecifier(ImageParameters h, boolean banded,
+        int pixelRepresentation) {
         int width = h.getWidth();
         int height = h.getHeight();
         int bps = h.getBitsPerSample();

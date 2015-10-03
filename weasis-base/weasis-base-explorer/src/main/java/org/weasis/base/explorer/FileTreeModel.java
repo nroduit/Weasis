@@ -30,15 +30,18 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
         propertyChange = new PropertyChangeSupport(this);
     }
 
+    @Override
     public void addPropertyChangeListener(PropertyChangeListener propertychangelistener) {
         propertyChange.addPropertyChangeListener(propertychangelistener);
     }
 
+    @Override
     public void removePropertyChangeListener(PropertyChangeListener propertychangelistener) {
         propertyChange.removePropertyChangeListener(propertychangelistener);
 
     }
 
+    @Override
     public void firePropertyChange(final ObservableEvent event) {
         if (event == null) {
             throw new NullPointerException();
@@ -48,6 +51,7 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
         } else {
             SwingUtilities.invokeLater(new Runnable() {
 
+                @Override
                 public void run() {
                     propertyChange.firePropertyChange(event);
                 }

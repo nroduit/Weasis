@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -30,8 +30,8 @@ import org.weasis.core.api.util.FileUtil;
  *    pb.add(lookup);<br>
  *    PlanarImage dst = JAI.create("lookup", pb, null);</code></blockquote>
  * <p>
- * 
- * 
+ *
+ *
  * @author Nicolas Roduit
  * @version 1.2.0
  * @since 1.0.0
@@ -46,6 +46,7 @@ public class ByteLutCollection {
      * the Flag LUT
      */
     public static final byte[][] flag = new byte[3][256];
+
     static {
         int[] r = { 255, 255, 0, 0 };
         int[] g = { 0, 255, 0, 0 };
@@ -61,16 +62,14 @@ public class ByteLutCollection {
      * the Multi color LUT
      */
     public static final byte[][] multiColor = new byte[3][256];
+
     static {
-        int[] r =
-            { 255, 0, 255, 0, 255, 128, 64, 255, 0, 128, 236, 189, 250, 154, 221, 255, 128, 255, 0, 128, 228, 131, 189,
-                0, 36, 66, 40, 132, 156, 135, 98, 194, 217, 251, 255, 0 };
-        int[] g =
-            { 3, 255, 245, 0, 0, 0, 128, 128, 0, 0, 83, 228, 202, 172, 160, 128, 128, 200, 187, 88, 93, 209, 89, 255,
-                137, 114, 202, 106, 235, 85, 216, 226, 182, 247, 195, 173 };
-        int[] b =
-            { 0, 0, 55, 255, 255, 0, 64, 0, 128, 128, 153, 170, 87, 216, 246, 128, 64, 188, 236, 189, 39, 96, 212, 255,
-                176, 215, 204, 221, 255, 70, 182, 84, 172, 176, 142, 95 };
+        int[] r = { 255, 0, 255, 0, 255, 128, 64, 255, 0, 128, 236, 189, 250, 154, 221, 255, 128, 255, 0, 128, 228, 131,
+            189, 0, 36, 66, 40, 132, 156, 135, 98, 194, 217, 251, 255, 0 };
+        int[] g = { 3, 255, 245, 0, 0, 0, 128, 128, 0, 0, 83, 228, 202, 172, 160, 128, 128, 200, 187, 88, 93, 209, 89,
+            255, 137, 114, 202, 106, 235, 85, 216, 226, 182, 247, 195, 173 };
+        int[] b = { 0, 0, 55, 255, 255, 0, 64, 0, 128, 128, 153, 170, 87, 216, 246, 128, 64, 188, 236, 189, 39, 96, 212,
+            255, 176, 215, 204, 221, 255, 70, 182, 84, 172, 176, 142, 95 };
         for (int i = 0; i < 256; i++) {
             int p = i % 36;
             multiColor[0][i] = (byte) r[p];
@@ -83,6 +82,7 @@ public class ByteLutCollection {
      * the IHS LUT
      */
     public static final byte[][] ihs = new byte[3][256];
+
     static {
         Color c;
         for (int i = 0; i < 256; i++) {
@@ -92,10 +92,12 @@ public class ByteLutCollection {
             ihs[2][i] = (byte) c.getBlue();
         }
     }
+
     /**
      * the Gray levels LUT
      */
     public static final byte[][] grays = new byte[3][256];
+
     static {
         for (int i = 0; i < 256; i++) {
             grays[0][i] = (byte) i;
@@ -108,6 +110,7 @@ public class ByteLutCollection {
      * the Red LUT
      */
     public static final byte[][] red = new byte[3][256];
+
     static {
         for (int i = 0; i < 256; i++) {
             red[0][i] = (byte) i;
@@ -120,6 +123,7 @@ public class ByteLutCollection {
      * the Green LUT
      */
     public static final byte[][] green = new byte[3][256];
+
     static {
         for (int i = 0; i < 256; i++) {
             green[0][i] = 0;
@@ -132,6 +136,7 @@ public class ByteLutCollection {
      * the Blue LUT
      */
     public static final byte[][] blue = new byte[3][256];
+
     static {
         for (int i = 0; i < 256; i++) {
             blue[0][i] = 0;
@@ -142,7 +147,7 @@ public class ByteLutCollection {
 
     /**
      * Returns a new instance of a gray levels LUT.
-     * 
+     *
      * @return the gray levels LUT
      */
     public static byte[][] grays() {
@@ -183,8 +188,8 @@ public class ByteLutCollection {
                     try {
                         scan = new Scanner(files[i], "UTF-8"); //$NON-NLS-1$
                         byte[][] lut = readLutFile(new Scanner(files[i], "UTF-8")); //$NON-NLS-1$
-                        luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut, ByteLutCollection
-                            .invert(lut)));
+                        luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut,
+                            ByteLutCollection.invert(lut)));
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -60,8 +60,8 @@ public class Activator implements BundleActivator, ServiceListener {
         bundleContext.registerService(EventManager.class.getName(), EventManager.getInstance(), dict);
 
         try {
-            for (ServiceReference<InsertableFactory> serviceReference : bundleContext.getServiceReferences(
-                InsertableFactory.class, null)) {
+            for (ServiceReference<InsertableFactory> serviceReference : bundleContext
+                .getServiceReferences(InsertableFactory.class, null)) {
                 // The View2dContainer name should be referenced as a property in the provided service
                 if (Boolean.valueOf((String) serviceReference.getProperty(View2dContainer.class.getName()))) {
                     registerComponent(bundleContext, bundleContext.getService(serviceReference));

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -96,7 +96,7 @@ final class NativeJPEGImageWriter extends NativeImageWriter {
 
 /**
  * This differs from the core JPEG ImageWriteParam in that:
- * 
+ *
  * <ul>
  * <li>compression types are: "JPEG" (standard), "JPEG-LOSSLESS" (lossless JPEG from 10918-1/ITU-T81)</li>
  * <li>compression modes are: MODE_DEFAULT and MODE_EXPLICIT and the other modes (MODE_DISABLED and

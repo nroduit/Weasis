@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -73,7 +73,7 @@ public class GraphicLabel implements Cloneable {
     /**
      * Should be used to check if mouse coordinates are inside/outside label bounding rectangle. Also useful to check
      * intersection with clipping rectangle.
-     * 
+     *
      * @param transform
      * @return Labels bounding rectangle in real world with size rescaled. It takes care of the current transformation
      *         scaling factor so labels painting have invariant size according to the given transformation.
@@ -153,9 +153,8 @@ public class GraphicLabel implements Cloneable {
                 ((Graphics2D) view2d.getJComponent().getGraphics()).getFontRenderContext();
             updateBoundsSize(defaultFont, fontRenderContext);
 
-            labelBounds =
-                new Rectangle.Double(xPos + GROWING_BOUND, yPos + GROWING_BOUND, labelWidth + GROWING_BOUND,
-                    (labelHeight * labels.length) + GROWING_BOUND);
+            labelBounds = new Rectangle.Double(xPos + GROWING_BOUND, yPos + GROWING_BOUND, labelWidth + GROWING_BOUND,
+                (labelHeight * labels.length) + GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, GROWING_BOUND);
         }
     }

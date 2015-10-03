@@ -24,18 +24,17 @@ import org.weasis.core.ui.graphic.model.GraphicList;
 
 /**
  * Deals with the ViewModel and the LayerModel data.
- * 
+ *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  * @version 2013, 29 Nov.
  */
 public class GraphicsModel {
-    
+
     protected AbstractLayerModel layerModel;
     private ViewModel viewModel;
     protected final AffineTransform affineTransform = new AffineTransform();
     protected final AffineTransform inverseTransform = new AffineTransform();
-    
-    
+
     public GraphicsModel(final AbstractLayerModel lModel, final ViewModel vModel) {
         layerModel = lModel;
         viewModel = vModel;
@@ -44,7 +43,7 @@ public class GraphicsModel {
     public AbstractLayerModel getLayerModel() {
         return layerModel;
     }
-    
+
     public ViewModel getViewModel() {
         return viewModel;
     }
@@ -52,7 +51,7 @@ public class GraphicsModel {
     public AffineTransform getAffineTransform() {
         return affineTransform;
     }
-    
+
     public AffineTransform getInverseTransform() {
         return inverseTransform;
     }
@@ -69,13 +68,12 @@ public class GraphicsModel {
 
     public Point2D getImageCoordinatesFromMouse(int x, int y) {
         double viewScale = getViewModel().getViewScale();
-        Point2D p2 =
-            new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale,
-                y + getViewModel().getModelOffsetY() * viewScale);
+        Point2D p2 = new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale,
+            y + getViewModel().getModelOffsetY() * viewScale);
         inverseTransform.transform(p2, p2);
         return p2;
     }
-    
+
     public Point getMouseCoordinatesFromImage(double x, double y) {
         Point2D p2 = new Point2D.Double(x, y);
         affineTransform.transform(p2, p2);
@@ -83,35 +81,35 @@ public class GraphicsModel {
         return new Point((int) Math.floor(p2.getX() - getViewModel().getModelOffsetX() * viewScale + 0.5),
             (int) Math.floor(p2.getY() - getViewModel().getModelOffsetY() * viewScale + 0.5));
     }
-    
+
     public double viewToModelX(double viewX) {
         return viewModel.getModelOffsetX() + viewToModelLength(viewX);
     }
-    
+
     public double viewToModelY(double viewY) {
         return viewModel.getModelOffsetY() + viewToModelLength(viewY);
     }
-    
+
     public double modelToViewLength(double modelLength) {
         return modelLength * viewModel.getViewScale();
     }
-    
+
     public double modelToViewX(double modelX) {
         return modelToViewLength(modelX - viewModel.getModelOffsetX());
     }
-    
+
     public double modelToViewY(double modelY) {
         return modelToViewLength(modelY - viewModel.getModelOffsetY());
     }
-    
+
     public double viewToModelLength(double viewLength) {
         return viewLength / viewModel.getViewScale();
     }
-    
+
     public void updateAffineTransform(Integer rotationAngle, Boolean flip) {
         double viewScale = getViewModel().getViewScale();
         affineTransform.setToScale(viewScale, viewScale);
-  
+
         if (rotationAngle != null && rotationAngle > 0) {
             if (flip != null && flip) {
                 rotationAngle = 360 - rotationAngle;
@@ -140,28 +138,25 @@ public class GraphicsModel {
         double centerY = modelOffsetYOld + 0.5 * (viewport.getHeight() - 1) / viewScaleOld;
         zoom(viewport, centerX, centerY, viewScale);
     }
-    
+
     public void zoom(Dimension viewport, double centerX, double centerY, double viewScale) {
         final double modelOffsetX = centerX - 0.5 * (viewport.getWidth() - 1) / viewScale;
         final double modelOffsetY = centerY - 0.5 * (viewport.getHeight() - 1) / viewScale;
         viewModel.setModelOffset(modelOffsetX, modelOffsetY, viewScale);
     }
-    
+
     public double getBestFitViewScale(Dimension viewport) {
         final double viewportWidth = viewport.getWidth() - 1;
         final double viewportHeight = viewport.getHeight() - 1;
         final Rectangle2D modelArea = viewModel.getModelArea();
-        double min = Math.min(viewportWidth / modelArea.getWidth(),
-                            viewportHeight / modelArea.getHeight());
-       return cropViewScale(min);
+        double min = Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight());
+        return cropViewScale(min);
     }
 
     private double cropViewScale(double viewScale) {
-        return DefaultViewModel.cropViewScale(viewScale,
-                viewModel.getViewScaleMin(), viewModel.getViewScaleMax());
+        return DefaultViewModel.cropViewScale(viewScale, viewModel.getViewScaleMin(), viewModel.getViewScaleMax());
     }
 
-    
     public static String getRotationDesc(Quat4d rotation) {
         StringBuilder desc = new StringBuilder();
         desc.append(DecFormater.twoDecimal(rotation.w));
@@ -180,10 +175,12 @@ public class GraphicsModel {
 
     /**
      * Updates all labels on viewer.
-     * @param source The viewer object.
+     * 
+     * @param source
+     *            The viewer object.
      */
     public void updateAllLabels(final Component source) {
-        //TODO
+        // TODO
     }
 
     public void setViewModel(ViewModel viewModel) {
@@ -193,5 +190,5 @@ public class GraphicsModel {
     public void setLayerModel(AbstractLayerModel layerModel) {
         this.layerModel = layerModel;
     }
-    
+
 }

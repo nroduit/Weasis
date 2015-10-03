@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -45,7 +45,7 @@ public class ShutterOp extends AbstractOp {
 
     /**
      * Set whether the shutter is applied (Required parameter).
-     * 
+     *
      * Boolean value.
      */
     public static final String P_SHOW = "show"; //$NON-NLS-1$
@@ -71,9 +71,8 @@ public class ShutterOp extends AbstractOp {
             HashMap<String, Object> p = event.getParams();
             if (p != null) {
                 Object prReader = p.get(ActionW.PR_STATE.cmd());
-                PRSpecialElement pr =
-                    (prReader instanceof PresentationStateReader) ? ((PresentationStateReader) prReader).getDicom()
-                        : null;
+                PRSpecialElement pr = (prReader instanceof PresentationStateReader)
+                    ? ((PresentationStateReader) prReader).getDicom() : null;
                 setParam(P_SHAPE, pr == null ? null : pr.getTagValue(TagW.ShutterFinalShape));
                 setParam(P_PS_VALUE, pr == null ? null : pr.getTagValue(TagW.ShutterPSValue));
                 setParam(P_RGB_COLOR, pr == null ? null : pr.getTagValue(TagW.ShutterRGBColor));
@@ -105,10 +104,8 @@ public class ShutterOp extends AbstractOp {
             if (isBlack(color)) {
                 result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(), null);
             } else {
-                result =
-                    MergeImgOp.combineTwoImages(source,
-                        ImageFiler.getEmptyImage(color, source.getWidth(), source.getHeight()),
-                        getAsImage(area, source));
+                result = MergeImgOp.combineTwoImages(source,
+                    ImageFiler.getEmptyImage(color, source.getWidth(), source.getHeight()), getAsImage(area, source));
             }
         }
 
@@ -143,9 +140,8 @@ public class ShutterOp extends AbstractOp {
     private PlanarImage getAsImage(Area shape, RenderedImage source) {
         SampleModel sm =
             new MultiPixelPackedSampleModel(DataBuffer.TYPE_BYTE, source.getWidth(), source.getHeight(), 1);
-        TiledImage ti =
-            new TiledImage(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight(),
-                source.getTileGridXOffset(), source.getTileGridYOffset(), sm, PlanarImage.createColorModel(sm));
+        TiledImage ti = new TiledImage(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight(),
+            source.getTileGridXOffset(), source.getTileGridYOffset(), sm, PlanarImage.createColorModel(sm));
         Graphics2D g2d = ti.createGraphics();
         // Write the Shape into the TiledImageGraphics.
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

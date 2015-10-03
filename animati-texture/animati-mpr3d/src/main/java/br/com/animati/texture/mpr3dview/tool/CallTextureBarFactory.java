@@ -5,6 +5,7 @@
 package br.com.animati.texture.mpr3dview.tool;
 
 import java.util.Hashtable;
+
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.gui.Insertable;
@@ -38,5 +39,5 @@ public class CallTextureBarFactory implements InsertableFactory {
     public Insertable.Type getType() {
         return Insertable.Type.TOOLBAR;
     }
-    
+
 }

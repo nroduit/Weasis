@@ -86,16 +86,14 @@ import br.com.animati.texture.mpr3dview.internal.Messages;
 import br.com.animati.texture.mpr3dview.tool.DisplayTool;
 import br.com.animati.texture.mpr3dview.tool.ImageTool;
 import br.com.animati.texture.mpr3dview.tool.TextureToolbar;
-import br.com.animati.texturedicom.ControlAxes;
-import br.com.animati.texturedicom.ImageSeries;
 
 /**
- * 
- * 
+ *
+ *
  * @author Gabriela Carla Bauermann (gabriela@animati.com.br)
  * @version 2013, 16 Jul.
  */
-public class View3DContainer extends ImageViewerPlugin<DicomImageElement>implements PropertyChangeListener {
+public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(View3DContainer.class);
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
@@ -111,7 +109,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
         actions.put(ActionW.WINDOW.cmd(), true);
         actions.put(ActionW.LEVEL.cmd(), true);
         actions.put(ActionW.PRESET.cmd(), true);
-   //     actions.put(ActionW.LUT_SHAPE.cmd(), true);
+        // actions.put(ActionW.LUT_SHAPE.cmd(), true);
         actions.put(ActionW.LUT.cmd(), true);
         actions.put(ActionW.INVERT_LUT.cmd(), true);
         actions.put(ActionW.FILTER.cmd(), true);
@@ -349,7 +347,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
     /**
      * Sets the global controlAxes object according to texture and profile. Sets to null if profile does not requires
      * one.
-     * 
+     *
      * @param texture
      * @param id
      */
@@ -454,7 +452,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
                 // menu.add(getComparatorMenu());
                 menuRoot.add(new JSeparator());
                 JMVUtils.addItemToMenu(menuRoot, manager.getPresetMenu(null));
-         //       JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
+                // JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
                 JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
                 JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu(null));
                 JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu(null));
@@ -509,15 +507,13 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
             if (event.getSource() instanceof TextureDicomSeries && event.getNewValue() instanceof FormattedException) {
                 TextureDicomSeries texture = (TextureDicomSeries) event.getSource();
                 for (ViewCanvas ge : getImagePanels()) {
-                    if (ge instanceof ViewTexture
-                            && texture.equals(((ViewTexture) ge)
-                            .getParentImageSeries())) {
+                    if (ge instanceof ViewTexture && texture.equals(((ViewTexture) ge).getParentImageSeries())) {
 
                         close();
                         ExceptionUtil.showUserMessage((FormattedException) event.getNewValue(),
-                               WinUtil.getParentWindow(this));
+                            WinUtil.getParentWindow(this));
                         return;
-                        
+
                     }
                 }
             }
@@ -542,9 +538,9 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
 
     /**
      * Overridden because this Container can be closed before the first call to setSelected.
-     * 
+     *
      * If that happens, all toolbars get visible and viewer not. Need a way out.
-     * 
+     *
      * @param selected
      */
     @Override
@@ -603,8 +599,8 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
-                TOOLBARS.add(new ViewerToolBar<DicomImageElement>(eventManager, eventManager.getMouseActions().getActiveButtons(),
-                    BundleTools.SYSTEM_PREFERENCES, 10));
+                TOOLBARS.add(new ViewerToolBar<DicomImageElement>(eventManager,
+                    eventManager.getMouseActions().getActiveButtons(), BundleTools.SYSTEM_PREFERENCES, 10));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(MeasureToolBar.class), key, true)) {
@@ -686,7 +682,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>impleme
                 InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, componentName, Type.TOOLBAR);
                 InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, componentName, Type.TOOL);
             }
-        }       
+        }
     }
 
     @Override

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -27,6 +27,7 @@ import org.weasis.core.api.util.FileUtil;
 public class BundleTools {
     public static final Map<String, String> SESSION_TAGS_MANIFEST = new HashMap<String, String>(3);
     public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<String, String>(3);
+
     static {
         for (Iterator<Entry<Object, Object>> iter = System.getProperties().entrySet().iterator(); iter.hasNext();) {
             Entry<Object, Object> element = iter.next();
@@ -38,9 +39,11 @@ public class BundleTools {
             }
         }
     }
+
     public static final String CONFIRM_CLOSE = "weasis.confirm.closing"; //$NON-NLS-1$
     public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
     private static final File propsFile;
+
     static {
         StringBuilder bufDir = new StringBuilder(AppProperties.WEASIS_PATH);
         bufDir.append(File.separator);
@@ -59,6 +62,7 @@ public class BundleTools {
         }
         propsFile = new File(dir, "weasis.properties"); //$NON-NLS-1$
     }
+
     public static final WProperties SYSTEM_PREFERENCES = new WProperties();
     public static final WProperties LOCAL_PERSISTENCE = new WProperties();
 

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -28,17 +28,18 @@ public class ThresholdToBinDescriptor extends OperationDescriptorImpl implements
      */
     private static final String[][] resources = { { "GlobalName", "ThresholdToBin" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "LocalName", "ThresholdToBin" }, { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    { "LocalName", "ThresholdToBin" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "Description", "A sample operation that thresholds source pixels" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "Description", "A sample operation that thresholds source pixels" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "DocURL", "http://www.mycompany.com/SampleDescriptor.html" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "DocURL", "http://www.mycompany.com/SampleDescriptor.html" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "arg0Desc", "min" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "arg0Desc", "min" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "arg1Desc", "max" } }; //$NON-NLS-1$ //$NON-NLS-2$
+                    { "arg1Desc", "max" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String[] paramNames = { "min", "max" }; //$NON-NLS-1$ //$NON-NLS-2$
     /**
@@ -63,10 +64,12 @@ public class ThresholdToBinDescriptor extends OperationDescriptorImpl implements
      */
     @Override
     public RenderedImage create(ParameterBlock parameterblock, RenderingHints renderHints) {
-        if (!validateParameters(parameterblock))
+        if (!validateParameters(parameterblock)) {
             return null;
-        if (!validateSources(parameterblock))
+        }
+        if (!validateSources(parameterblock)) {
             return null;
+        }
         renderHints = LayoutUtil.createBinaryRenderedImage();
         ImageLayout imagelayout = LayoutUtil.getImageLayoutHint(renderHints);
         return new ThresholdToBinOpImage(parameterblock.getRenderedSource(0), renderHints, imagelayout,
@@ -79,16 +82,18 @@ public class ThresholdToBinDescriptor extends OperationDescriptorImpl implements
     public boolean validateParameters(ParameterBlock paramBlock) {
         for (int i = 0; i < 2; i++) {
             Object arg = paramBlock.getObjectParameter(i);
-            if (arg == null)
+            if (arg == null) {
                 return false;
-            if (!(arg instanceof Double))
+            }
+            if (!(arg instanceof Double)) {
                 return false;
+            }
         }
         return true;
     }
 
     public boolean validateSources(ParameterBlock parameterblock) {
-        return (parameterblock.getRenderedSource(0) != null && parameterblock.getRenderedSource(0).getSampleModel()
-            .getNumBands() == 1);
+        return (parameterblock.getRenderedSource(0) != null
+            && parameterblock.getRenderedSource(0).getSampleModel().getNumBands() == 1);
     }
 }

@@ -128,7 +128,7 @@ public class AdvancedShape implements Shape {
     }
 
     /**
-     * 
+     *
      * @return a shape which is by convention the first shape in the list which is dedicated to the user tool drawing
      */
     public Shape getGeneralShape() {
@@ -352,9 +352,8 @@ public class AdvancedShape implements Shape {
             if (!fixedLineWidth && stroke instanceof BasicStroke) {
                 BasicStroke s = (BasicStroke) stroke;
                 if (s.getLineWidth() != width) {
-                    stroke =
-                        new BasicStroke(width, s.getEndCap(), s.getLineJoin(), s.getMiterLimit(), s.getDashArray(),
-                            s.getDashPhase());
+                    stroke = new BasicStroke(width, s.getEndCap(), s.getLineJoin(), s.getMiterLimit(), s.getDashArray(),
+                        s.getDashPhase());
                 }
             }
         }
@@ -425,7 +424,7 @@ public class AdvancedShape implements Shape {
 
     /**
      * Invariant to all the transformations except to flip (horizontal mirror)
-     * 
+     *
      * @version $Rev$ $Date$
      */
     public class InvariantShape extends BasicShape {

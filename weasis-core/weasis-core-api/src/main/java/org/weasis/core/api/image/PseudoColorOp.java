@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -34,14 +34,14 @@ public class PseudoColorOp extends AbstractOp {
 
     /**
      * Set the lookup table (Required parameter).
-     * 
+     *
      * org.weasis.core.api.image.op.ByteLut value.
      */
     public static final String P_LUT = ActionW.LUT.cmd();
 
     /**
      * Whether the LUT must be inverted (Optional parameter).
-     * 
+     *
      * Boolean value. Default value is false.
      */
 

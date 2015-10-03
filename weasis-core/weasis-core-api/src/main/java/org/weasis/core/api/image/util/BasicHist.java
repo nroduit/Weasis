@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -18,7 +18,10 @@ import org.weasis.core.api.Messages;
 public class BasicHist {
 
     public static final String[] STATISTICS_LIST =
-        { Messages.getString("BasicHist.pix"), Messages.getString("BasicHist.min"), Messages.getString("BasicHist.max"), Messages.getString("BasicHist.mean"), Messages.getString("BasicHist.median"), Messages.getString("BasicHist.thresh"), Messages.getString("BasicHist.std"), Messages.getString("BasicHist.skew"), Messages.getString("BasicHist.kurtosis"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+        { Messages.getString("BasicHist.pix"), Messages.getString("BasicHist.min"), Messages.getString("BasicHist.max"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            Messages.getString("BasicHist.mean"), Messages.getString("BasicHist.median"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("BasicHist.thresh"), Messages.getString("BasicHist.std"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("BasicHist.skew"), Messages.getString("BasicHist.kurtosis"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("BasicHist.entropy") }; //$NON-NLS-1$
     private int[] bins;
     private int numBins;
@@ -71,7 +74,7 @@ public class BasicHist {
 
     /**
      * add
-     * 
+     *
      * @param obj
      *            Object[]
      */
@@ -168,9 +171,8 @@ public class BasicHist {
             stat[6] = Math.sqrt(variance);
             if (bins.length > 3 && variance > 10E-20) {
                 stat[7] = (stat[0] * stat[7]) / ((stat[0] - 1) * (stat[0] - 2) * stat[6] * variance);
-                stat[8] =
-                    (stat[0] * (stat[0] + 1) * stat[8] - 3 * m2 * m2 * (stat[0] - 1))
-                        / ((stat[0] - 1) * (stat[0] - 2) * (stat[0] - 3) * variance * variance);
+                stat[8] = (stat[0] * (stat[0] + 1) * stat[8] - 3 * m2 * m2 * (stat[0] - 1))
+                    / ((stat[0] - 1) * (stat[0] - 2) * (stat[0] - 3) * variance * variance);
             } else {
                 stat[7] = 0.0;
                 stat[8] = 0.0;

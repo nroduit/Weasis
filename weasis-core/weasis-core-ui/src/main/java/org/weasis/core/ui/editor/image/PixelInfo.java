@@ -45,7 +45,7 @@ public class PixelInfo {
     public String getPixelValueText() {
         if (values != null) {
             if (values.length == 1) {
-                StringBuilder text = new StringBuilder(); 
+                StringBuilder text = new StringBuilder();
                 text.append(DecFormater.oneDecimal(values[0]));
                 if (pixelValueUnit != null) {
                     text.append(" ");//$NON-NLS-1$
@@ -64,11 +64,12 @@ public class PixelInfo {
                 //
                 // message.append(" (I = " + c[0] + ", H = " + c[1] + ", S = " + c[2] + ")");
 
-                StringBuilder text = new StringBuilder(); 
+                StringBuilder text = new StringBuilder();
                 for (int i = 0; i < values.length; i++) {
                     text.append(" ");//$NON-NLS-1$
-                    text.append((channelNames == null || i >= channelNames.length) ? Messages.getString("PixelInfo.unknown") : channelNames[i].substring(0, //$NON-NLS-1$
-                        1));
+                    text.append((channelNames == null || i >= channelNames.length)
+                        ? Messages.getString("PixelInfo.unknown") : channelNames[i].substring(0, //$NON-NLS-1$
+                            1));
                     text.append("=");//$NON-NLS-1$
                     text.append(DecFormater.oneDecimal(values[i]));
                 }

@@ -142,12 +142,12 @@ public class PRManager {
                     // TODO should be an option
                     layer.setLocked(true);
                     layers.add(layer);
-                    Color rgb =
-                        PresentationStateReader.getRGBColor(glm.getInt(
-                            Tag.GraphicLayerRecommendedDisplayGrayscaleValue, 255), DicomMediaUtils
-                            .getFloatArrayFromDicomElement(glm, Tag.GraphicLayerRecommendedDisplayCIELabValue, null),
-                            DicomMediaUtils.getIntAyrrayFromDicomElement(glm,
-                                Tag.GraphicLayerRecommendedDisplayRGBValue, null));
+                    Color rgb = PresentationStateReader.getRGBColor(
+                        glm.getInt(Tag.GraphicLayerRecommendedDisplayGrayscaleValue, 255),
+                        DicomMediaUtils.getFloatArrayFromDicomElement(glm,
+                            Tag.GraphicLayerRecommendedDisplayCIELabValue, null),
+                        DicomMediaUtils.getIntAyrrayFromDicomElement(glm, Tag.GraphicLayerRecommendedDisplayRGBValue,
+                            null));
 
                     Sequence gos = gram.getSequence(Tag.GraphicObjectSequence);
 
@@ -176,9 +176,8 @@ public class PRManager {
                             float[] bottomRight = txo.getFloats(Tag.BoundingBoxBottomRightHandCorner);
                             Rectangle2D rect = null;
                             if (topLeft != null && bottomRight != null) {
-                                rect =
-                                    new Rectangle2D.Double(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0],
-                                        bottomRight[1] - topLeft[1]);
+                                rect = new Rectangle2D.Double(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0],
+                                    bottomRight[1] - topLeft[1]);
                                 if (isDisp) {
                                     rect.setFrame(rect.getX() * width, rect.getY() * height, rect.getWidth() * width,
                                         rect.getHeight() * height);
@@ -187,8 +186,8 @@ public class PRManager {
                                         float[] dstPt2 = new float[2];
                                         inverse.transform(topLeft, 0, dstPt1, 0, 1);
                                         inverse.transform(bottomRight, 0, dstPt2, 0, 1);
-                                        rect.setFrameFromDiagonal(dstPt1[0] * width, dstPt1[1] * height, dstPt2[0]
-                                            * width, dstPt2[1] * height);
+                                        rect.setFrameFromDiagonal(dstPt1[0] * width, dstPt1[1] * height,
+                                            dstPt2[0] * width, dstPt2[1] * height);
                                     }
                                 }
                             }
@@ -209,9 +208,9 @@ public class PRManager {
                                     rect == null ? ptAnchor : new Point2D.Double(rect.getCenterX(), rect.getCenterY());
                                 AnnotationGraphic line;
                                 try {
-                                    line =
-                                        new AnnotationGraphic(GraphicUtil.getBooleanValue(txo,
-                                            Tag.AnchorPointVisibility) ? ptAnchor : null, ptBox, 1.0f, rgb, true);
+                                    line = new AnnotationGraphic(
+                                        GraphicUtil.getBooleanValue(txo, Tag.AnchorPointVisibility) ? ptAnchor : null,
+                                        ptBox, 1.0f, rgb, true);
                                     line.setLabel(lines, view);
                                     layer.addGraphic(line);
                                 } catch (InvalidShapeException e) {
@@ -220,9 +219,8 @@ public class PRManager {
                             } else if (rect != null) {
                                 AnnotationGraphic g;
                                 try {
-                                    g =
-                                        new AnnotationGraphic(null, new Point2D.Double(rect.getCenterX(),
-                                            rect.getCenterY()), 1.0f, rgb, true);
+                                    g = new AnnotationGraphic(null,
+                                        new Point2D.Double(rect.getCenterX(), rect.getCenterY()), 1.0f, rgb, true);
                                     g.setLabel(lines, view);
                                     layer.addGraphic(g);
                                 } catch (InvalidShapeException e) {
@@ -261,9 +259,8 @@ public class PRManager {
         DicomImageElement img) {
         if (view != null && series != null && img != null) {
             Object key = img.getKey();
-            List<PRSpecialElement> prList =
-                DicomModel.getPrSpecialElements(series, (String) img.getTagValue(TagW.SOPInstanceUID),
-                    key instanceof Integer ? (Integer) key + 1 : null);
+            List<PRSpecialElement> prList = DicomModel.getPrSpecialElements(series,
+                (String) img.getTagValue(TagW.SOPInstanceUID), key instanceof Integer ? (Integer) key + 1 : null);
             if (prList != null && prList.size() > 0) {
                 if (prList.size() > 0) {
 
@@ -292,9 +289,8 @@ public class PRManager {
                             if (pr == null) {
                                 pr = ActionState.NONE;
                             }
-                            pr =
-                                (pr instanceof PresentationStateReader) ? ((PresentationStateReader) pr).getDicom()
-                                    : pr;
+                            pr = (pr instanceof PresentationStateReader) ? ((PresentationStateReader) pr).getDicom()
+                                : pr;
                             JPopupMenu popupMenu = new JPopupMenu();
                             TitleMenuItem itemTitle =
                                 new TitleMenuItem(ActionW.PR_STATE.getTitle(), popupMenu.getInsets());

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -46,8 +46,8 @@ public class Activator implements BundleActivator, ServiceListener {
             @Override
             public void run() {
                 try {
-                    for (ServiceReference<SeriesViewerFactory> service : bundleContext.getServiceReferences(
-                        SeriesViewerFactory.class, null)) {
+                    for (ServiceReference<SeriesViewerFactory> service : bundleContext
+                        .getServiceReferences(SeriesViewerFactory.class, null)) {
                         SeriesViewerFactory factory = bundleContext.getService(service);
                         if (factory != null && !UIManager.SERIES_VIEWER_FACTORIES.contains(factory)) {
                             UIManager.SERIES_VIEWER_FACTORIES.add(factory);

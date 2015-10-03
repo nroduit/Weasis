@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -54,8 +54,8 @@ public class ScrollPopupMenu extends JPopupMenu {
         if (maxsize < realsize) {
             sizescroll = scroll.getVerticalScrollBar().getPreferredSize().width;
         }
-        scroll.setPreferredSize(new Dimension(scroll.getPreferredSize().width + sizescroll,
-            scroll.getPreferredSize().height));
+        scroll.setPreferredSize(
+            new Dimension(scroll.getPreferredSize().width + sizescroll, scroll.getPreferredSize().height));
         super.show(invoker, x, y);
     }
 

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -19,8 +19,8 @@ public class MouseEventDouble extends MouseEvent {
     final Point2D.Double point2d;
 
     public MouseEventDouble(MouseEvent e, int x, int y) {
-        this((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), x, y, e.getXOnScreen(), e
-            .getYOnScreen(), e.getClickCount(), e.isPopupTrigger(), e.getButton());
+        this((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), x, y, e.getXOnScreen(),
+            e.getYOnScreen(), e.getClickCount(), e.isPopupTrigger(), e.getButton());
     }
 
     public MouseEventDouble(MouseEvent e) {

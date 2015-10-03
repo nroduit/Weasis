@@ -32,6 +32,7 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
     public static final TreeModelNode series = new TreeModelNode(2, 0, TagW.SubseriesInstanceUID);
 
     public static final ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(5);
+
     static {
         modelStrucure.add(root);
         modelStrucure.add(group);
@@ -170,8 +171,8 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
 
     public void removeTopGroup(MediaSeriesGroup topGroup) {
         if (topGroup != null) {
-            firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, AbstractFileModel.this, null,
-                topGroup));
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.Remove, AbstractFileModel.this, null, topGroup));
             Collection<MediaSeriesGroup> seriesList = getChildren(topGroup);
             for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                 MediaSeriesGroup s = it.next();
@@ -185,8 +186,8 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
     public void removeSeries(MediaSeriesGroup seriesGroup) {
         if (seriesGroup != null) {
             // remove first series in UI (Viewer using this series)
-            firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, AbstractFileModel.this, null,
-                seriesGroup));
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.Remove, AbstractFileModel.this, null, seriesGroup));
             // remove in the data model
             MediaSeriesGroup topGroup = getParent(seriesGroup, AbstractFileModel.group);
             removeHierarchyNode(topGroup, seriesGroup);
@@ -221,8 +222,8 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
 
             @Override
             public void run() {
-                firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, AbstractFileModel.this,
-                    null, AbstractFileModel.this));
+                firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, AbstractFileModel.this, null,
+                    AbstractFileModel.this));
                 if (opt.isSet("all")) { //$NON-NLS-1$
                     for (MediaSeriesGroup g : model.getSuccessors(rootNode)) {
                         removeTopGroup(g);

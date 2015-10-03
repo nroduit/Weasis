@@ -5,8 +5,8 @@
 
 package br.com.animati.texture.mpr3dview.api;
 
-
 import javax.vecmath.Point3d;
+
 import org.weasis.core.ui.editor.image.PixelInfo;
 
 /**
@@ -20,12 +20,13 @@ public class PixelInfo3d extends PixelInfo {
     public void setPosition3d(Point3d point) {
         position3d = point;
     }
-    
+
     public Point3d getPosition3d() {
         return position3d;
     }
-    
-    public String getPixelPositionText() { 
+
+    @Override
+    public String getPixelPositionText() {
         if (position3d == null) {
             return super.getPixelPositionText();
         } else {
@@ -39,11 +40,12 @@ public class PixelInfo3d extends PixelInfo {
             return text.toString();
         }
     }
-    
+
+    @Override
     public String getPixelValueText() {
-        //Not supported yet.
+        // Not supported yet.
         return null;
 
     }
-    
+
 }

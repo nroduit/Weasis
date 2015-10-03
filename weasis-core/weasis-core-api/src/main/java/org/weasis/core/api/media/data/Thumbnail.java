@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -53,14 +53,16 @@ import org.weasis.core.api.util.FontTools;
 public class Thumbnail extends JLabel {
     private static final Logger LOGGER = LoggerFactory.getLogger(Thumbnail.class);
 
-    public static final File THUMBNAIL_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
-        AppProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
+    public static final File THUMBNAIL_CACHE_DIR =
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
     public static final ExecutorService THUMB_LOADER = Executors.newFixedThreadPool(1);
-    public static final RenderingHints DownScaleQualityHints = new RenderingHints(RenderingHints.KEY_RENDERING,
-        RenderingHints.VALUE_RENDER_QUALITY);
+    public static final RenderingHints DownScaleQualityHints =
+        new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
     static {
         DownScaleQualityHints.add(new RenderingHints(JAI.KEY_TILE_CACHE, null));
     }
+
     public static final int MIN_SIZE = 48;
     public static final int DEFAULT_SIZE = 112;
     public static final int MAX_SIZE = 256;
@@ -106,8 +108,9 @@ public class Thumbnail extends JLabel {
         }
         final double scale =
             Math.min(Thumbnail.MAX_SIZE / (double) source.getHeight(), Thumbnail.MAX_SIZE / (double) source.getWidth());
-        return scale < 1.0 ? SubsampleAverageDescriptor.create(source, scale, scale, Thumbnail.DownScaleQualityHints)
-            .getRendering() : source;
+        return scale < 1.0
+            ? SubsampleAverageDescriptor.create(source, scale, scale, Thumbnail.DownScaleQualityHints).getRendering()
+            : source;
     }
 
     protected synchronized void buildThumbnail(MediaElement<?> media, boolean keepMediaCache) {
@@ -146,7 +149,8 @@ public class Thumbnail extends JLabel {
         setIcon(media, icon, type, keepMediaCache);
     }
 
-    private void setIcon(final MediaElement<?> media, final Icon mime, final String type, final boolean keepMediaCache) {
+    private void setIcon(final MediaElement<?> media, final Icon mime, final String type,
+        final boolean keepMediaCache) {
         this.setSize(thumbnailSize, thumbnailSize);
 
         ImageIcon icon = new ImageIcon() {
@@ -222,9 +226,8 @@ public class Thumbnail extends JLabel {
                                         RenderedImage img = image.getRenderedImage(imgPl);
                                         final RenderedImage thumb = createThumbnail(img);
                                         try {
-                                            file =
-                                                thumbnailPath =
-                                                    File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                                            file = thumbnailPath =
+                                                File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                         } catch (IOException e) {
                                             AuditLog.logError(LOGGER, e, "Cannot create file for thumbnail!"); //$NON-NLS-1$
                                         }
@@ -281,12 +284,10 @@ public class Thumbnail extends JLabel {
                                         int width = img.getWidth();
                                         int height = img.getHeight();
                                         if (width > thumbnailSize || height > thumbnailSize) {
-                                            final double scale =
-                                                Math.min(thumbnailSize / (double) height, thumbnailSize
-                                                    / (double) width);
-                                            PlanarImage t =
-                                                scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale, scale,
-                                                    DownScaleQualityHints) : PlanarImage.wrapRenderedImage(img);
+                                            final double scale = Math.min(thumbnailSize / (double) height,
+                                                thumbnailSize / (double) width);
+                                            PlanarImage t = scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale,
+                                                scale, DownScaleQualityHints) : PlanarImage.wrapRenderedImage(img);
                                             thumb = t.getAsBufferedImage();
                                             t.dispose();
                                         } else {

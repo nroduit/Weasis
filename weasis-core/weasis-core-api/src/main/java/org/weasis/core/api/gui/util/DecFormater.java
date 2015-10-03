@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -21,7 +21,7 @@ import org.weasis.core.api.util.LocalUtil;
 
 /**
  * The Class DecFormater.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class DecFormater {
@@ -30,7 +30,9 @@ public class DecFormater {
     private static NumberFormat df2 = LocalUtil.getNumberInstance(); // 2 decimals
     private static NumberFormat df4 = LocalUtil.getNumberInstance(); // 4 decimals
     private static NumberFormat percent2 = LocalUtil.getPercentInstance();
-    private static DecimalFormat dfSci = new DecimalFormat("0.####E0"); // Scientific format with 4 decimals //$NON-NLS-1$
+    private static DecimalFormat dfSci = new DecimalFormat("0.####E0"); // Scientific format with 4 //$NON-NLS-1$
+                                                                        // decimals
+
     static {
         df1.setMaximumFractionDigits(1);
         df2.setMaximumFractionDigits(2);

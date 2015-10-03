@@ -22,11 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.dicom.viewer2d.EventManager;
-
-import br.com.animati.texturedicom.ImageSeries;
-import br.com.animati.texturedicom.cl.CLManager;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.dicom.viewer2d.EventManager;
 
 /**
  *
@@ -51,14 +48,14 @@ public class Activator implements BundleActivator {
 
     /** Will be true if hardware acceleration is to be tried. */
     public static Boolean useHardwareAcceleration = true;
-    
+
     public static boolean useOpenCL = true;
     private JDialog infoHALoading = null;
     public static boolean isAlive = false;
-    
+
     public static boolean sortOpt = false;
-    
-    //Debug functions
+
+    // Debug functions
     public static boolean showModelArea = false;
     public static boolean showMeasurementsOnFrame = false;
 
@@ -90,8 +87,8 @@ public class Activator implements BundleActivator {
             }
             checkFor3dSupport();
         }
-        
-        sortOpt = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(SORT_OPT, false);        
+
+        sortOpt = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(SORT_OPT, false);
     }
 
     @Override

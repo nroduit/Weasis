@@ -23,7 +23,7 @@ public class SRSpecialElement extends DicomSpecialElement {
     protected void initLabel() {
         /*
          * DICOM PS 3.3 - 2011 - C.17.3 SR Document Content Module
-         * 
+         *
          * Concept Name Code Sequence: mandatory when type is CONTAINER or the root content item.
          */
         StringBuilder buf = new StringBuilder(getLabelPrefix());

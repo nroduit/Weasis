@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -19,32 +19,44 @@ import org.weasis.core.api.Messages;
 public class KernelData implements Serializable {
     private static final long serialVersionUID = 5877650534432337573L;
 
-    public static final KernelData NONE = new KernelData(Messages.getString("KernelData.0"), false, 1, 1, new float[] { 1.0F }); //$NON-NLS-1$
-    public static final KernelData MEAN = new KernelData(Messages.getString("KernelData.1"), false, 3, 3, 1, 1, new float[] { 1.0F, 1.0F, //$NON-NLS-1$
-        1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, }, 9);
-    public static final KernelData BLUR = new KernelData(Messages.getString("KernelData.2"), false, 3, 3, 1, 1, new float[] { 0.0F, 1.0F, //$NON-NLS-1$
-        0.0F, 1.0F, 4.0F, 1.0F, 0.0F, 1.0F, 0.0F }, 8);
-    public static final KernelData BLURMORE = new KernelData(Messages.getString("KernelData.3"), false, 3, 3, 1, 1, new float[] { 1.0F, //$NON-NLS-1$
-        2.0F, 1.0F, 2.0F, 2.0F, 2.0F, 1.0F, 2.0F, 1.0F }, 14);
-    public static final KernelData SHARPEN = new KernelData(Messages.getString("KernelData.4"), false, 3, 3, 1, 1, new float[] { 0.0F, //$NON-NLS-1$
-        -1.0F, 0.0F, -1.0F, 8.0F, -1.0F, 0.0F, -1.0F, 0.0F }, 4);
-    public static final KernelData SHARPENMORE = new KernelData(Messages.getString("KernelData.5"), false, 3, 3, 1, 1, new float[] { //$NON-NLS-1$
-        -1.0F, -1.0F, -1.0F, -1.0F, 12.0F, -1.0F, -1.0F, -1.0F, -1.0F }, 4);
-    public static final KernelData DEFOCUS = new KernelData(Messages.getString("KernelData.6"), false, 3, 3, new float[] { 1.0F, 1.0F, //$NON-NLS-1$
-        1.0F, 1.0F, -7.0F, 1.0F, 1.0F, 1.0F, 1.0F });
-    public static final KernelData EDGE1 = new KernelData(Messages.getString("KernelData.7"), false, 3, 3, new float[] { 0.0F, //$NON-NLS-1$
-        -1.0F, 0.0F, -1.0F, 4.0F, -1.0F, 0.0F, -1.0F, 0.0F });
-    public static final KernelData EDGE2 = new KernelData(Messages.getString("KernelData.8"), false, 3, 3, new float[] { -1.0F, //$NON-NLS-1$
-        -1.0F, -1.0F, -1.0F, 8.0F, -1.0F, -1.0F, -1.0F, -1.0F });
-    public static final KernelData STRONGEDGE = new KernelData(Messages.getString("KernelData.9"), false, 5, 5, new float[] { -2.0F, //$NON-NLS-1$
-        -2.0F, -2.0F, -2.0F, -2.0F, -2.0F, -3.0F, -3.0F, -3.0F, -2.0F, -2.0F, -3.0F, 53.0F, -3.0F, -2.0F, -2.0F, -3.0F,
-        -3.0F, -3.0F, -2.0F, -2.0F, -2.0F, -2.0F, -2.0F, -2.0F });
-    public static final KernelData OUTLINE = new KernelData(Messages.getString("KernelData.10"), false, 5, 5, new float[] { 1.0F, 1.0F, //$NON-NLS-1$
-        1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, -16.0F, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F,
-        1.0F, 1.0F, 1.0F, 1.0F, 1.0F });
+    public static final KernelData NONE =
+        new KernelData(Messages.getString("KernelData.0"), false, 1, 1, new float[] { 1.0F }); //$NON-NLS-1$
+    public static final KernelData MEAN =
+        new KernelData(Messages.getString("KernelData.1"), false, 3, 3, 1, 1, new float[] { 1.0F, 1.0F, //$NON-NLS-1$
+            1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, }, 9);
+    public static final KernelData BLUR =
+        new KernelData(Messages.getString("KernelData.2"), false, 3, 3, 1, 1, new float[] { 0.0F, 1.0F, //$NON-NLS-1$
+            0.0F, 1.0F, 4.0F, 1.0F, 0.0F, 1.0F, 0.0F }, 8);
+    public static final KernelData BLURMORE =
+        new KernelData(Messages.getString("KernelData.3"), false, 3, 3, 1, 1, new float[] { 1.0F, //$NON-NLS-1$
+            2.0F, 1.0F, 2.0F, 2.0F, 2.0F, 1.0F, 2.0F, 1.0F }, 14);
+    public static final KernelData SHARPEN =
+        new KernelData(Messages.getString("KernelData.4"), false, 3, 3, 1, 1, new float[] { 0.0F, //$NON-NLS-1$
+            -1.0F, 0.0F, -1.0F, 8.0F, -1.0F, 0.0F, -1.0F, 0.0F }, 4);
+    public static final KernelData SHARPENMORE =
+        new KernelData(Messages.getString("KernelData.5"), false, 3, 3, 1, 1, new float[] { //$NON-NLS-1$
+            -1.0F, -1.0F, -1.0F, -1.0F, 12.0F, -1.0F, -1.0F, -1.0F, -1.0F }, 4);
+    public static final KernelData DEFOCUS =
+        new KernelData(Messages.getString("KernelData.6"), false, 3, 3, new float[] { 1.0F, 1.0F, //$NON-NLS-1$
+            1.0F, 1.0F, -7.0F, 1.0F, 1.0F, 1.0F, 1.0F });
+    public static final KernelData EDGE1 =
+        new KernelData(Messages.getString("KernelData.7"), false, 3, 3, new float[] { 0.0F, //$NON-NLS-1$
+            -1.0F, 0.0F, -1.0F, 4.0F, -1.0F, 0.0F, -1.0F, 0.0F });
+    public static final KernelData EDGE2 =
+        new KernelData(Messages.getString("KernelData.8"), false, 3, 3, new float[] { -1.0F, //$NON-NLS-1$
+            -1.0F, -1.0F, -1.0F, 8.0F, -1.0F, -1.0F, -1.0F, -1.0F });
+    public static final KernelData STRONGEDGE = new KernelData(Messages.getString("KernelData.9"), false, 5, 5, //$NON-NLS-1$
+        new float[] { -2.0F,
+            -2.0F, -2.0F, -2.0F, -2.0F, -2.0F, -3.0F, -3.0F, -3.0F, -2.0F, -2.0F, -3.0F, 53.0F, -3.0F, -2.0F, -2.0F,
+            -3.0F, -3.0F, -3.0F, -2.0F, -2.0F, -2.0F, -2.0F, -2.0F, -2.0F });
+    public static final KernelData OUTLINE = new KernelData(Messages.getString("KernelData.10"), false, 5, 5, //$NON-NLS-1$
+        new float[] { 1.0F, 1.0F,
+            1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, -16.0F, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F,
+            1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F });
 
-    public static final KernelData EMBOSS = new KernelData(Messages.getString("KernelData.11"), false, 3, 3, new float[] { -5.0F, 0.0F, //$NON-NLS-1$
-        0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 5.0F });
+    public static final KernelData EMBOSS =
+        new KernelData(Messages.getString("KernelData.11"), false, 3, 3, new float[] { -5.0F, 0.0F, //$NON-NLS-1$
+            0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 5.0F });
     public static final KernelData GAUSSIAN3 = gaussianKernel(Messages.getString("KernelData.12"), 3, 3); //$NON-NLS-1$
     public static final KernelData GAUSSIAN5 = gaussianKernel(Messages.getString("KernelData.13"), 5, 5); //$NON-NLS-1$
     public static final KernelData GAUSSIAN7 = gaussianKernel(Messages.getString("KernelData.14"), 7, 7); //$NON-NLS-1$
@@ -53,9 +65,9 @@ public class KernelData implements Serializable {
     public static final KernelData GAUSSIAN25 = gaussianKernel2(Messages.getString("KernelData.17"), 5); //$NON-NLS-1$
     public static final KernelData GAUSSIAN27 = gaussianKernel2(Messages.getString("KernelData.18"), 7); //$NON-NLS-1$
 
-    public static KernelData[] ALL_FILTERS = new KernelData[] { NONE, MEAN, BLUR, BLURMORE, SHARPEN, SHARPENMORE,
-        DEFOCUS, EDGE1, EDGE2, STRONGEDGE, OUTLINE, EMBOSS, GAUSSIAN3, GAUSSIAN5, GAUSSIAN7, GAUSSIAN9, GAUSSIAN23,
-        GAUSSIAN25, GAUSSIAN27 };
+    public static KernelData[] ALL_FILTERS =
+        new KernelData[] { NONE, MEAN, BLUR, BLURMORE, SHARPEN, SHARPENMORE, DEFOCUS, EDGE1, EDGE2, STRONGEDGE, OUTLINE,
+            EMBOSS, GAUSSIAN3, GAUSSIAN5, GAUSSIAN7, GAUSSIAN9, GAUSSIAN23, GAUSSIAN25, GAUSSIAN27 };
     /** The type of the kernel. */
     private boolean morphologicalFilter;
 

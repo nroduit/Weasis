@@ -4,12 +4,12 @@
  */
 package br.com.animati.texture.mpr3dview.tool;
 
-import br.com.animati.texture.mpr3dview.View3DFactory;
-import br.com.animati.texture.mpr3dview.internal.Messages;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -18,18 +18,21 @@ import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 
+import br.com.animati.texture.mpr3dview.View3DFactory;
+import br.com.animati.texture.mpr3dview.internal.Messages;
+
 /**
  *
  * @author Gabriela Carla Bauerman (gabriela@animati.com.br)
  * @version 2015, 14 May.
  */
 public class CallTextureToolbar extends WtoolBar {
-    
+
     public static final String NAME = Messages.getString("TextureToolbar.name");
-    
-    public CallTextureToolbar( int position) {
+
+    public CallTextureToolbar(int position) {
         super(NAME, position);
-        
+
         JButton open = new JButton(new ImageIcon(CallTextureToolbar.class.getResource("/icon/32x32/3Dplugin.png")));
         open.setToolTipText(Messages.getString("CallTextureToolbar.open"));
         open.addActionListener(new ActionListener() {
@@ -46,8 +49,8 @@ public class CallTextureToolbar extends WtoolBar {
                 }
             }
         });
-        
+
         add(open);
     }
-    
+
 }

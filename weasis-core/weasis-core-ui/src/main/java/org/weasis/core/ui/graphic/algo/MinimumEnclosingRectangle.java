@@ -90,7 +90,7 @@ public class MinimumEnclosingRectangle {
 
     /**
      * Gets the minimum rectangle enclosing the points
-     * 
+     *
      * @return the minimum rectangle
      */
     public List<Point2D.Double> getMinimumRectangle() {

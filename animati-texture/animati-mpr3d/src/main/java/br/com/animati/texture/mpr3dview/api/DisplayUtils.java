@@ -20,15 +20,16 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 
 /**
- * 
+ *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  * @version 2012 Jun, 05
  */
 public class DisplayUtils {
 
     /** To prevent instantiation. */
-    private DisplayUtils() { }
-    
+    private DisplayUtils() {
+    }
+
     public static final char getImageOrientationOposite(char c) {
         switch (c) {
             case 'L':
@@ -46,20 +47,17 @@ public class DisplayUtils {
         }
         return ' ';
     }
-    
+
     public static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
         axis.normalize();
-        vDst.x =
-            axis.x * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.x
-                * Math.cos(angle) + (-axis.z * vSrc.y + axis.y * vSrc.z) * Math.sin(angle);
-        vDst.y =
-            axis.y * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.y
-                * Math.cos(angle) + (axis.z * vSrc.x + axis.x * vSrc.z) * Math.sin(angle);
-        vDst.z =
-            axis.z * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.z
-                * Math.cos(angle) + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);
+        vDst.x = axis.x * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
+            + vSrc.x * Math.cos(angle) + (-axis.z * vSrc.y + axis.y * vSrc.z) * Math.sin(angle);
+        vDst.y = axis.y * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
+            + vSrc.y * Math.cos(angle) + (axis.z * vSrc.x + axis.x * vSrc.z) * Math.sin(angle);
+        vDst.z = axis.z * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
+            + vSrc.z * Math.cos(angle) + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);
     }
-    
+
     public static String ajustLengthDisplay(double scaleLength, Unit[] unit) {
         double ajustScaleLength = scaleLength;
 
@@ -89,13 +87,13 @@ public class DisplayUtils {
         // Trick to keep the value as a return parameter
         unit[0] = ajustUnit;
         if (ajustScaleLength < 1.0) {
-            return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
-                .fourDecimal(ajustScaleLength);
+            return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength)
+                : DecFormater.fourDecimal(ajustScaleLength);
         }
-        return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
-            .twoDecimal(ajustScaleLength);
+        return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength)
+            : DecFormater.twoDecimal(ajustScaleLength);
     }
-    
+
     public static double ajustShowScale(double ratio, int maxLength) {
         int digits = (int) ((Math.log(maxLength * ratio) / Math.log(10)) + 1);
         double scaleLength = Math.pow(10, digits);
@@ -112,8 +110,8 @@ public class DisplayUtils {
         }
         return scaleSize;
     }
-    
-     public static double findGeometricSuite(double length) {
+
+    public static double findGeometricSuite(double length) {
         int shift = (int) ((Math.log(length) / Math.log(10)) + 0.1);
         int firstDigit = (int) (length / Math.pow(10, shift) + 0.5);
         if (firstDigit == 5) {
@@ -122,18 +120,16 @@ public class DisplayUtils {
         return 2.0;
 
     }
-     
-     public static Rectangle2D getOutLine(Line2D l) {
+
+    public static Rectangle2D getOutLine(Line2D l) {
         Rectangle2D r = l.getBounds2D();
-        r.setFrame(r.getX() - 1.0, r.getY() - 1.0, r.getWidth() + 2.0,
-                r.getHeight() + 2.0);
+        r.setFrame(r.getX() - 1.0, r.getY() - 1.0, r.getWidth() + 2.0, r.getHeight() + 2.0);
         return r;
     }
 
-     public static String[] getOrientationFromImgOrPat(double[] imgOrPatient,
-             int rotationAngle, boolean flip) {
+    public static String[] getOrientationFromImgOrPat(double[] imgOrPatient, int rotationAngle, boolean flip) {
 
-         // Set the opposite vector direction (otherwise label should be placed in mid-right and mid-bottom
+        // Set the opposite vector direction (otherwise label should be placed in mid-right and mid-bottom
         Vector3d vr = new Vector3d(-imgOrPatient[0], -imgOrPatient[1], -imgOrPatient[2]);
         Vector3d vc = new Vector3d(-imgOrPatient[3], -imgOrPatient[4], -imgOrPatient[5]);
 
@@ -177,10 +173,10 @@ public class DisplayUtils {
 
         return result;
     }
-     
+
     public static String[] getOrientationFromPatOr(String[] po, boolean flip) {
         String[] result = new String[4];
-        
+
         if (flip) {
             result[0] = po[0];
             StringBuffer buf = new StringBuffer();
@@ -202,16 +198,18 @@ public class DisplayUtils {
         }
         result[1] = buf.toString();
         result[3] = po[1];
-        
+
         return result;
     }
 
-     /**
-      * Finds the parent plugin (ViewContainer) of a view.
-      * @param viewer Given viewer.
-      * @return The parent plugin or null (if there is no parent plugin).
-      */
-     public static ViewerPlugin getPluginParent(Component viewer) {
+    /**
+     * Finds the parent plugin (ViewContainer) of a view.
+     * 
+     * @param viewer
+     *            Given viewer.
+     * @return The parent plugin or null (if there is no parent plugin).
+     */
+    public static ViewerPlugin getPluginParent(Component viewer) {
         Component obj = viewer;
         while (obj.getParent() != null) {
             obj = obj.getParent();
@@ -219,10 +217,10 @@ public class DisplayUtils {
                 return (ViewerPlugin) obj;
             }
         }
-        
+
         return null;
     }
-     
+
     public static String getLossyTransferSyntaxUID(String tsuid) {
         if (tsuid != null) {
             if ("1.2.840.10008.1.2.4.50".equals(tsuid)) {
@@ -240,10 +238,9 @@ public class DisplayUtils {
         }
         return null;
     }
-    
-    public static Object getTagValue(TagW tag, MediaSeriesGroup patient,
-            MediaSeriesGroup study, Series series,
-            ImageElement image) {
+
+    public static Object getTagValue(TagW tag, MediaSeriesGroup patient, MediaSeriesGroup study, Series series,
+        ImageElement image) {
         if (image != null && image.containTagKey(tag)) {
             return image.getTagValue(tag);
         }
@@ -257,16 +254,15 @@ public class DisplayUtils {
             return patient.getTagValue(tag);
         }
         return null;
-    }  
-    
+    }
+
     public static int convertStringToNumber(String number) {
         try {
             int num = Integer.parseInt(number);
             return num;
-        }
-        catch (NumberFormatException ex) {            
+        } catch (NumberFormatException ex) {
         }
         return 0;
     }
-    
+
 }

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -72,8 +72,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
             comboBoxFormat.refresh();
         }
     };
-    private final JLabel labelLocale2 = new JLabel(
-        Messages.getString("GeneralSetting.language.data") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel labelLocale2 =
+        new JLabel(Messages.getString("GeneralSetting.language.data") + StringUtil.COLON); //$NON-NLS-1$
     private final JLocaleFormat comboBoxFormat = new JLocaleFormat() {
         @Override
         protected void handleChange() {
@@ -82,8 +82,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
     };
 
     private final JTextPane txtpnNote = new JTextPane();
-    private final JCheckBox chckbxConfirmClosing = new JCheckBox(
-        Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
+    private final JCheckBox chckbxConfirmClosing =
+        new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
 
     private final JButton button = new JButton(Messages.getString("GeneralSetting.show")); //$NON-NLS-1$
     private final JCheckBox chckbxFileLog = new JCheckBox(Messages.getString("GeneralSetting.rol_log")); //$NON-NLS-1$
@@ -189,7 +189,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
         HTMLEditorKit kit = new HTMLEditorKit();
         StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((txtpnNote.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$ //$NON-NLS-2$
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
+            + Integer.toHexString((txtpnNote.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
             + Integer.toHexString((txtpnNote.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
             + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
         txtpnNote.setEditorKit(kit);
@@ -269,8 +270,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     }
 
     private String getText() {
-        return String.format(
-            Messages.getString("GeneralSetting.txtNote"),//$NON-NLS-1$
+        return String.format(Messages.getString("GeneralSetting.txtNote"), //$NON-NLS-1$
             new Object[] { LocalUtil.getDateInstance(DateFormat.SHORT).format(new Date()),
                 LocalUtil.getDateInstance(DateFormat.MEDIUM).format(new Date()),
                 LocalUtil.getNumberInstance().format(2543456.3465) });
@@ -369,12 +369,11 @@ public class GeneralSetting extends AbstractItemDialogPage {
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
         }
-        String pattern =
-            BundleTools.SYSTEM_PREFERENCES.getProperty(AuditLog.LOG_PATTERN,
-                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}"); //$NON-NLS-1$
+        String pattern = BundleTools.SYSTEM_PREFERENCES.getProperty(AuditLog.LOG_PATTERN,
+            "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}"); //$NON-NLS-1$
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-        AuditLog.createOrUpdateLogger(context,
-            "default.log", new String[] { "org" }, level.toString(), logFile, pattern, fileNb, //$NON-NLS-1$ //$NON-NLS-2$
+        AuditLog.createOrUpdateLogger(context, "default.log", new String[] { "org" }, level.toString(), logFile, //$NON-NLS-1$ //$NON-NLS-2$
+            pattern, fileNb,
             fileSize);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
@@ -422,9 +421,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
         // Reset cache of locale format
         LocalUtil.setLocaleFormat(null);
         // Reset format to the config.properties value or null (default system value)
-        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);//$NON-NLS-1$ 
+        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);//$NON-NLS-1$
 
-        BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.look", null); //$NON-NLS-1$ 
+        BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.look", null); //$NON-NLS-1$
 
     }
 

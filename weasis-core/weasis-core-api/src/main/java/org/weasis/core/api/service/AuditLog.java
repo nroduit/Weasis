@@ -49,9 +49,8 @@ public class AuditLog {
                         Dictionary<String, Object> loggingProperties;
                         Configuration logConfiguration = getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
                         if (logConfiguration == null) {
-                            logConfiguration =
-                                confAdmin.createFactoryConfiguration(
-                                    "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                            logConfiguration = confAdmin.createFactoryConfiguration(
+                                "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                             loggingProperties = new Hashtable<String, Object>();
                             loggingProperties.put(LOG_LOGGERS, loggerVal);
                             // add this property to give us something unique to re-find this configuration

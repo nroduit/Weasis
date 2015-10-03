@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -38,6 +38,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
 
     private static final Random RANDOM = new Random();
     public static DataFlavor sequenceDataFlavor;
+
     static {
         try {
             sequenceDataFlavor =
@@ -47,6 +48,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
             e.printStackTrace();
         }
     }
+
     private final DataFlavor[] flavors = { sequenceDataFlavor };
     private PropertyChangeSupport propertyChange = null;
     protected final List<E> medias;
@@ -211,7 +213,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.weasis.media.data.MediaSeries#getMedia(int)
      */
     @Override
@@ -240,7 +242,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.weasis.media.data.MediaSeries#dispose()
      */
     @Override

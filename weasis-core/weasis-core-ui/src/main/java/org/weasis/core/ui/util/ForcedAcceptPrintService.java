@@ -44,7 +44,7 @@ public class ForcedAcceptPrintService implements PrintService {
      * Tweak the PrintJob to think this class is it's PrintService, long enough to override the PrinterIsAcceptingJobs
      * attribute. If it doesn't work out or the printer really is offline then it's no worse than if this hack was not
      * used.
-     * 
+     *
      * @param printJob
      *            the print job to affect
      */
@@ -56,7 +56,7 @@ public class ForcedAcceptPrintService implements PrintService {
      * Private constructor as this only works as a one-shot per print attempt. Use the static method above to hack a
      * PrintJob, then tell it to print. The hack is gone by the time printing occurs and this instance will be garbage
      * collected due to having no other references once the PrintJob is back to its original state.
-     * 
+     *
      * @param printJob
      *            the print job to affect
      */
@@ -94,9 +94,9 @@ public class ForcedAcceptPrintService implements PrintService {
     }
 
     /**
-     * 
+     *
      * getAttribute is the one PrintService method we want to intercept to override the
-     * 
+     *
      * PrinterIsAcceptingJobs attribute.
      */
 

@@ -4,10 +4,10 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Marcelo Porto - initial API and implementation, Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
- *     
+ *
  ******************************************************************************/
 
 package org.weasis.dicom.explorer.print;
@@ -39,7 +39,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
 /**
- * 
+ *
  * @author Marcelo Porto (marcelo@animati.com.br)
  */
 public class PrinterDialog extends JDialog {
@@ -217,7 +217,8 @@ public class PrinterDialog extends JDialog {
         String hostname = hostnameTf.getText();
         Number port = JMVUtils.getFormattedValue(portTf);
 
-        if (!StringUtil.hasText(desc) || !StringUtil.hasText(aeTitle) || !StringUtil.hasText(hostname) || port == null) {
+        if (!StringUtil.hasText(desc) || !StringUtil.hasText(aeTitle) || !StringUtil.hasText(hostname)
+            || port == null) {
             JOptionPane.showMessageDialog(this, Messages.getString("PrinterDialog.fill_message"), //$NON-NLS-1$
                 Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             return;

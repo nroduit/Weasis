@@ -27,9 +27,6 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 
-import br.com.animati.texturedicom.ColorMask;
-import br.com.animati.texturedicom.cl.CLConvolution;
-
 /**
  *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
@@ -95,16 +92,15 @@ public final class StaticHelpers {
                                                 String shape = xmler.getAttributeValue(null, "shape");
                                                 String keyCode = xmler.getAttributeValue(null, "key");
                                                 LutShape lutShape = LutShape.getLutShape(shape);
-                                                PresetWindowLevel preset =
-                                                    new PresetWindowLevel(name, window, level, lutShape == null
-                                                        ? LutShape.LINEAR : lutShape);
+                                                PresetWindowLevel preset = new PresetWindowLevel(name, window, level,
+                                                    lutShape == null ? LutShape.LINEAR : lutShape);
                                                 if (keyCode != null) {
                                                     preset.setKeyCode(Integer.parseInt(keyCode));
                                                 }
                                                 List<PresetWindowLevel> presetList = presetListByModality.get(modality);
                                                 if (presetList == null) {
-                                                    presetListByModality.put(modality, presetList =
-                                                        new ArrayList<PresetWindowLevel>());
+                                                    presetListByModality.put(modality,
+                                                        presetList = new ArrayList<PresetWindowLevel>());
                                                 }
                                                 presetList.add(preset);
                                             } catch (Exception e) {
@@ -155,10 +151,12 @@ public final class StaticHelpers {
             CLConvolution.ConvolutionPreset.Blur3));
         list.add(new TextureKernel(Messages.getString("Kernel.Blur5"), CLConvolution.ConvolutionPreset.Blur5));
         list.add(new TextureKernel(Messages.getString("Kernel.Blur7"), CLConvolution.ConvolutionPreset.Blur7));
-        list.add(new TextureKernel(Messages.getString("Kernel.Laplacian3"), CLConvolution.ConvolutionPreset.Laplacian3));
-        list.add(new TextureKernel(Messages.getString("Kernel.Laplacian5"), CLConvolution.ConvolutionPreset.Laplacian5));
-        list.add(new TextureKernel(Messages.getString("Kernel.EdgeDetect3"),
-            CLConvolution.ConvolutionPreset.EdgeDetect3));
+        list.add(
+            new TextureKernel(Messages.getString("Kernel.Laplacian3"), CLConvolution.ConvolutionPreset.Laplacian3));
+        list.add(
+            new TextureKernel(Messages.getString("Kernel.Laplacian5"), CLConvolution.ConvolutionPreset.Laplacian5));
+        list.add(
+            new TextureKernel(Messages.getString("Kernel.EdgeDetect3"), CLConvolution.ConvolutionPreset.EdgeDetect3));
         list.add(new TextureKernel(org.weasis.core.api.Messages.getString("KernelData.11"),
             CLConvolution.ConvolutionPreset.Emboss3));
         return list;
@@ -209,6 +207,7 @@ public final class StaticHelpers {
 
         Collections.sort(cmList, new Comparator<ColorMask>() {
             @Override
+            @Override
             public int compare(ColorMask o1, ColorMask o2) {
                 if (o1 == null || o2 == null || o1.toString() == null || o2.toString() == null) {
                     return 0;
@@ -257,6 +256,7 @@ public final class StaticHelpers {
             LUT_VOLUMETRIC.setImage(StaticHelpers.class.getResource("/textures/DefaultVolumetricColorMask.png"));
 
             Collections.sort(cmList, new Comparator<ColorMask>() {
+                @Override
                 @Override
                 public int compare(ColorMask o1, ColorMask o2) {
                     if (o1 == null || o2 == null || o1.toString() == null || o2.toString() == null) {

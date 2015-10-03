@@ -4,12 +4,6 @@
  */
 package br.com.animati.texture.mpr3dview.api;
 
-import br.com.animati.texture.mpr3dview.ViewTexture;
-import br.com.animati.texture.mpr3dview.internal.Activator;
-import br.com.animati.texturedicom.TextureData;
-import br.com.animati.texturedicom.rendering.RenderHelper;
-import br.com.animati.texturedicom.rendering.RenderResult;
-import br.com.animati.texturedicom.rendering.RenderResultListener;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -24,9 +18,11 @@ import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 import java.util.List;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.vecmath.Vector2d;
+
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -34,34 +30,39 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.graphic.Graphic;
 
+import com.jogamp.opengl.util.texture.TextureData;
+
+import br.com.animati.texture.mpr3dview.ViewTexture;
+import br.com.animati.texture.mpr3dview.internal.Activator;
+
 /**
  *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  * @version 2015, 06 May.
  */
 public class TextureMeasurableLayer implements MeasurableLayer {
-    
+
     private ViewTexture owner;
-    
+
     private RenderedImage renderedAsSource;
     private volatile boolean dirty = true;
-    
-    //Just for debug
+
+    // Just for debug
     private BufferedImage bufferedImage;
     private volatile boolean bufferedDirty;
-    
-    
+
     public TextureMeasurableLayer(ViewTexture parent) {
         owner = parent;
     }
-    
+
     @Override
     public boolean hasContent() {
         return owner.hasContent();
     }
-    
+
     /**
-     * @param dirty the dirty to set
+     * @param dirty
+     *            the dirty to set
      */
     public void setDirty(boolean dirty) {
         this.dirty = dirty;
@@ -70,7 +71,7 @@ public class TextureMeasurableLayer implements MeasurableLayer {
 
     @Override
     public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit) {
-        //TODO: support other displayUnits
+        // TODO: support other displayUnits
         if (hasContent()) {
             String abr = owner.getSeriesObject().getPixelSpacingUnit().getAbbreviation();
             double[] pixelSpacing = owner.getSeriesObject().getAcquisitionPixelSpacing();
@@ -82,17 +83,17 @@ public class TextureMeasurableLayer implements MeasurableLayer {
         }
         return null;
     }
-    
+
     @Override
     public AffineTransform getShapeTransform() {
         // Only scale !
-        if (hasContent()) { 
+        if (hasContent()) {
             double scale = owner.getActualDisplayZoom();
             return AffineTransform.getScaleInstance(scale, scale);
         }
         return null;
     }
-    
+
     @Override
     public Object getSourceTagValue(TagW tagW) {
         if (hasContent()) {
@@ -104,7 +105,7 @@ public class TextureMeasurableLayer implements MeasurableLayer {
         }
         return null;
     }
-    
+
     @Override
     public String getPixelValueUnit() {
         if (hasContent()) {
@@ -113,13 +114,12 @@ public class TextureMeasurableLayer implements MeasurableLayer {
         return null;
     }
 
-
     @Override
     public RenderedImage getSourceRenderedImage() {
         if (dirty) {
             startRendering(true);
         }
-        
+
         if (Activator.showMeasurementsOnFrame) {
             if (bufferedDirty) {
                 startRendering(false);
@@ -130,29 +130,29 @@ public class TextureMeasurableLayer implements MeasurableLayer {
                 }
             }
         }
-        
+
         return renderedAsSource;
     }
-    
+
     /**
      * Used for DEBUG.
+     * 
      * @param image
      * @param transform
-     * @param mShape 
+     * @param mShape
      */
-    public void showOnFrame(final BufferedImage image,
-            AffineTransform transform, List<Graphic> mShape) {
-        
-        Graphics2D graphics = (Graphics2D) image.createGraphics();
+    public void showOnFrame(final BufferedImage image, AffineTransform transform, List<Graphic> mShape) {
+
+        Graphics2D graphics = image.createGraphics();
         graphics.setStroke(new BasicStroke(2));
         graphics.setPaint(Color.yellow);
         for (Graphic shape : mShape) {
             graphics.draw(transform.createTransformedShape(shape.getShape()));
         }
-        
+
         graphics.setPaint(Color.cyan);
         graphics.draw(transform.createTransformedShape(owner.getViewModel().getModelArea()));
-        
+
         JPanel display = new JPanel() {
             @Override
             public void paintComponent(Graphics g) {
@@ -165,9 +165,9 @@ public class TextureMeasurableLayer implements MeasurableLayer {
         frame.add(display);
         frame.setVisible(true);
         frame.pack();
-        
+
     }
-    
+
     public static BufferedImage deepCopy(BufferedImage bi) {
         ColorModel cm = bi.getColorModel();
         boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
@@ -177,19 +177,18 @@ public class TextureMeasurableLayer implements MeasurableLayer {
 
     private void startRendering(final boolean renderAsRaw) {
         final TextureData.Format format = owner.getParentImageSeries().getTextureData().getFormat();
-        
-        //Img needs to correspond to the scaled modelArea.
+
+        // Img needs to correspond to the scaled modelArea.
         Rectangle2D modelArea = owner.getViewModel().getModelArea();
         double scale = owner.getActualDisplayZoom();
-        Rectangle2D scaledMA = new Rectangle2D.Double(0, 0,
-                modelArea.getWidth() * scale, modelArea.getHeight() * scale);
+        Rectangle2D scaledMA =
+            new Rectangle2D.Double(0, 0, modelArea.getWidth() * scale, modelArea.getHeight() * scale);
         Rectangle bounds = scaledMA.getBounds();
-        
-        //Has to be final
+
+        // Has to be final
         final Rectangle imgBounds = bounds;
-        
-        RenderHelper helper = new RenderHelper(owner,
-                new RenderResultListener() {
+
+        RenderHelper helper = new RenderHelper(owner, new RenderResultListener() {
             @Override
             public void onRenderResultReceived(RenderResult renderResult) {
                 try {
@@ -201,35 +200,34 @@ public class TextureMeasurableLayer implements MeasurableLayer {
                             renderedAsSource = RenderSupport.makeBufferedImage(asByteBuffer, imgBounds);
                         }
                         dirty = false;
-                        
+
                     } else {
                         BufferedImage asBuff = renderResult.asBufferedImage();
                         bufferedImage = asBuff;
-                        
+
                         bufferedDirty = false;
                     }
-                    
+
                     if (renderAsRaw) {
                         updateGraphics();
                     }
-                    
+
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
 
             }
         }, renderAsRaw);
-        
+
         helper.getParametersCanvas().setSize(bounds.width, bounds.height);
-        
+
         helper.getParametersCanvas().setImageOffset(new Vector2d(0, 0));
         helper.getParametersCanvas().setRotationOffset(0);
         helper.getParametersCanvas().flippedHorizontally = false;
         helper.getParametersCanvas().flippedVertically = false;
         helper.renderFrame();
     }
-    
-    
+
     private void updateGraphics() {
         GuiExecutor.instance().execute(new Runnable() {
             @Override

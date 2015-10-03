@@ -32,17 +32,17 @@ public class GraphicUtil {
         double height, boolean canBeEdited, AffineTransform inverse, boolean dcmSR) throws InvalidShapeException {
         /*
          * For DICOM SR
-         * 
+         *
          * Graphic Type: POINT, POLYLINE (always closed), MULTIPOINT, CIRCLE and ELLIPSE
-         * 
+         *
          * Coordinates are always pixel coordinates
          */
 
         /*
          * For DICOM PR
-         * 
+         *
          * Graphic Type: POINT, POLYLINE, INTERPOLATED, CIRCLE and ELLIPSE
-         * 
+         *
          * MATRIX not implemented
          */
         boolean isDisp = dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits)); //$NON-NLS-1$
@@ -74,9 +74,8 @@ public class GraphicUtil {
                         }
                         // Closed when the first point is the same as the last point
                         if (handlePointList.get(0).equals(handlePointList.get(size - 1))) {
-                            shape =
-                                new PolygonGraphic(handlePointList, color, 1.0f, labelVisible, getBooleanValue(go,
-                                    Tag.GraphicFilled));
+                            shape = new PolygonGraphic(handlePointList, color, 1.0f, labelVisible,
+                                getBooleanValue(go, Tag.GraphicFilled));
                         } else {
                             shape = new PolylineGraphic(handlePointList, color, 1.0f, labelVisible);
                         }
@@ -95,9 +94,8 @@ public class GraphicUtil {
                             // Always close polyline for DICOM SR
                             path.closePath();
                         }
-                        shape =
-                            new NonEditableGraphic(path, 1.0f, color, labelVisible, getBooleanValue(go,
-                                Tag.GraphicFilled));
+                        shape = new NonEditableGraphic(path, 1.0f, color, labelVisible,
+                            getBooleanValue(go, Tag.GraphicFilled));
                     }
                 }
             }
@@ -127,13 +125,11 @@ public class GraphicUtil {
                 }
                 // Only ellipse without rotation can be edited
                 if (canBeEdited && rotation == 0) {
-                    shape =
-                        new EllipseGraphic(((Ellipse2D) ellipse).getFrame(), 1.0f, color, labelVisible,
-                            getBooleanValue(go, Tag.GraphicFilled));
+                    shape = new EllipseGraphic(((Ellipse2D) ellipse).getFrame(), 1.0f, color, labelVisible,
+                        getBooleanValue(go, Tag.GraphicFilled));
                 } else {
-                    shape =
-                        new NonEditableGraphic(ellipse, 1.0f, color, labelVisible, getBooleanValue(go,
-                            Tag.GraphicFilled));
+                    shape = new NonEditableGraphic(ellipse, 1.0f, color, labelVisible,
+                        getBooleanValue(go, Tag.GraphicFilled));
                 }
             }
         } else if (CIRCLE.equalsIgnoreCase(type)) {
@@ -144,13 +140,11 @@ public class GraphicUtil {
                 double dist = euclideanDistance(points, 0, 2, isDisp, width, height);
                 ellipse.setFrameFromCenter(x, y, x + dist, y + dist);
                 if (canBeEdited) {
-                    shape =
-                        new EllipseGraphic(ellipse.getFrame(), 1.0f, color, labelVisible, getBooleanValue(go,
-                            Tag.GraphicFilled));
+                    shape = new EllipseGraphic(ellipse.getFrame(), 1.0f, color, labelVisible,
+                        getBooleanValue(go, Tag.GraphicFilled));
                 } else {
-                    shape =
-                        new NonEditableGraphic(ellipse, 1.0f, color, labelVisible, getBooleanValue(go,
-                            Tag.GraphicFilled));
+                    shape = new NonEditableGraphic(ellipse, 1.0f, color, labelVisible,
+                        getBooleanValue(go, Tag.GraphicFilled));
                 }
             }
         } else if (POINT.equalsIgnoreCase(type)) {
@@ -210,9 +204,8 @@ public class GraphicUtil {
                             lx = x;
                             ly = y;
                         }
-                        shape =
-                            new NonEditableGraphic(path, 1.0f, color, labelVisible, getBooleanValue(go,
-                                Tag.GraphicFilled));
+                        shape = new NonEditableGraphic(path, 1.0f, color, labelVisible,
+                            getBooleanValue(go, Tag.GraphicFilled));
                     }
                 }
             }
@@ -228,7 +221,8 @@ public class GraphicUtil {
         return grFill.equalsIgnoreCase("Y"); //$NON-NLS-1$
     }
 
-    private static double euclideanDistance(float[] points, int p1, int p2, boolean isDisp, double width, double height) {
+    private static double euclideanDistance(float[] points, int p1, int p2, boolean isDisp, double width,
+        double height) {
         float dx = points[p1] - points[p2];
         float dy = points[p1 + 1] - points[p2 + 1];
         if (isDisp) {

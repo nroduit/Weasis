@@ -147,9 +147,8 @@ public class PresentationStateReader {
                     String presentationMode = item.getString(Tag.PresentationSizeMode);
                     int[] tlhc =
                         DicomMediaUtils.getIntAyrrayFromDicomElement(item, Tag.DisplayedAreaTopLeftHandCorner, null);
-                    int[] brhc =
-                        DicomMediaUtils
-                            .getIntAyrrayFromDicomElement(item, Tag.DisplayedAreaBottomRightHandCorner, null);
+                    int[] brhc = DicomMediaUtils.getIntAyrrayFromDicomElement(item,
+                        Tag.DisplayedAreaBottomRightHandCorner, null);
 
                     if (tlhc != null && tlhc.length == 2 && brhc != null && brhc.length == 2) {
                         // Lots of systems encode topLeft as 1,1, even when they mean 0,0

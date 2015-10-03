@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -48,7 +48,7 @@ public class OverlayOp extends AbstractOp {
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();
-        if (OpEvent.ImageChange.equals(type)  || OpEvent.ResetDisplay.equals(type)) {
+        if (OpEvent.ImageChange.equals(type) || OpEvent.ResetDisplay.equals(type)) {
             ImageElement img = event.getImage();
             boolean noMedia = img == null;
             setParam(P_IMAGE_ELEMENT, noMedia ? null : img);
@@ -93,9 +93,8 @@ public class OverlayOp extends AbstractOp {
                             Integer height = (Integer) reader.getTagValue(TagW.Rows);
                             Integer width = (Integer) reader.getTagValue(TagW.Columns);
                             if (height != null && width != null) {
-                                imgOverlay =
-                                    PlanarImage.wrapRenderedImage(OverlayUtils.getOverlays(image, reader, frame, width,
-                                        height, params));
+                                imgOverlay = PlanarImage.wrapRenderedImage(
+                                    OverlayUtils.getOverlays(image, reader, frame, width, height, params));
                             }
                         }
                     } catch (IOException e) {

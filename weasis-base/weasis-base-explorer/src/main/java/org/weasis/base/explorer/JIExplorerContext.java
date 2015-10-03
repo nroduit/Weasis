@@ -245,8 +245,9 @@ public class JIExplorerContext {
 
     public final synchronized MediaElement getLastSelectedDiskObj() {
         if ((this.lastSelectedDiskObjectIndex > -1) && (this.selectedDiskObjects != null)
-            && (this.selectedDiskObjects.length > this.lastSelectedDiskObjectIndex))
+            && (this.selectedDiskObjects.length > this.lastSelectedDiskObjectIndex)) {
             return this.selectedDiskObjects[this.lastSelectedDiskObjectIndex];
+        }
         return null;
     }
 

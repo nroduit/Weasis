@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -101,7 +101,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         });
         HTMLEditorKit kit = new HTMLEditorKit();
         StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((htmlPanel.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$ //$NON-NLS-2$
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
+            + Integer.toHexString((htmlPanel.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
             + Integer.toHexString((htmlPanel.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
             + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
         htmlPanel.setEditorKit(kit);
@@ -233,14 +234,14 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                                 seriesList.add(s);
                                 ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, model, props);
                                 ViewerPluginBuilder.openSequenceInPlugin(builder);
-                                model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, uid,
-                                    null, keyReferences));
+                                model.firePropertyChange(
+                                    new ObservableEvent(ObservableEvent.BasicAction.Select, uid, null, keyReferences));
                             }
                         }
                     } else {
                         // TODO try to download if IHE IID has been configured
-                        JOptionPane.showMessageDialog(this,
-                            Messages.getString("SRView.msg"), Messages.getString("SRView.open"), //$NON-NLS-1$ //$NON-NLS-2$
+                        JOptionPane.showMessageDialog(this, Messages.getString("SRView.msg"), //$NON-NLS-1$
+                            Messages.getString("SRView.open"), //$NON-NLS-1$
                             JOptionPane.WARNING_MESSAGE);
                     }
 

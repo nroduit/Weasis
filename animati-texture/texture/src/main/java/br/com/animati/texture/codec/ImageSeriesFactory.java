@@ -42,23 +42,21 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.LutParameters;
 
-import br.com.animati.texturedicom.ImageSeries;
-import br.com.animati.texturedicom.ImageSeriesSliceAddedListener;
-import br.com.animati.texturedicom.TextureData;
+import com.jogamp.opengl.util.texture.TextureData;
 
 /**
  * Builds the texturedicom ImageSeries.
- * 
+ *
  * Orientation Tags: - ImageOrientationPatient (0020,0037): double[] lenth=6 - ImageOrientationPlane: label, generated
  * using ImageOrientationPatient: The method is ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient,
  * and "allow some deviation" on Axial, Sagital, Coronal; Oblique can mean anything! So, even if ImageOrientationPlane
  * is a splitting rule, there is no warranty to have consistent ImageOrientationPatient.
- * 
+ *
  * Location Tags: - SliceLocation (0020, 1041) : float (dz) - ImagePositionPatient (0020,0032) : double[] lenth=3 (dx,
  * dy, dz) - SlicePosition (weasis-generated, @see DicomMediaUtils.computeSlicePositionVector) Uses ImagePositionPatient
  * (0020,0032) & ImageOrientationPatient (0020,0037). It's the value used to calculate distance between frames for the
  * 3-D model.
- * 
+ *
  *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  * @version 2013, 24 jul
@@ -128,9 +126,9 @@ public class ImageSeriesFactory {
 
     /**
      * Creates or recovers a texture from cache.
-     * 
+     *
      * If it comes from cache, its factory may be resumed, if needed.
-     * 
+     *
      * @param series
      * @param sorter
      * @param force
@@ -160,9 +158,8 @@ public class ImageSeriesFactory {
                 changed = true;
             }
 
-            String log1 =
-                "Building texture from series: " + series.getTagValue(TagW.SeriesDescription) + " / "
-                    + series.getTagValue(TagW.SeriesInstanceUID) + " / sorded by " + comparator;
+            String log1 = "Building texture from series: " + series.getTagValue(TagW.SeriesDescription) + " / "
+                + series.getTagValue(TagW.SeriesInstanceUID) + " / sorded by " + comparator;
             LOGGER.info(log1);
 
             final int dims[] = getDimentions(series);
@@ -206,12 +203,12 @@ public class ImageSeriesFactory {
 
     /**
      * Call the safer loader for the given series.
-     * 
+     *
      * LoaderThread: only one that will work if sorter!=instanceNumber. Its also safer if series has ben splitted.
-     * 
+     *
      * WadoSafeLoader: gives the correct result if series is still downloading, and random placed images are still
      * missing. Dont works if sorter!=instanceNumber and may go wrong if series has been slitted.
-     * 
+     *
      * @param imSeries
      *            texture
      * @param series
@@ -314,13 +311,13 @@ public class ImageSeriesFactory {
             imSeries.setTag(TagW.WindowWidth, listOfWindowValues);
             imSeries.setTag(TagW.WindowCenter, listOfLevelValues);
         }
-        
+
         // Values of RescaleSlope & RescaleIntercept (#2852)
         // Intercept ans slope are used to correct the wondow/level values;
         // Some series (more common in PET) can have variable values on them,
         // and this would make impossible to use the same window/level values
         // for the hole series.
-        
+
         Float interceptVal = (Float) elmt.getTagValue(TagW.RescaleIntercept);
         Float actualIntercept = (Float) imSeries.getTagValue(TagW.RescaleIntercept);
         if (interceptVal != null) {
@@ -330,7 +327,7 @@ public class ImageSeriesFactory {
                 sendError(ErrorCode.err500, imSeries);
             }
         }
-        
+
         Float slopeVal = (Float) elmt.getTagValue(TagW.RescaleSlope);
         Float actualSlope = (Float) imSeries.getTagValue(TagW.RescaleSlope);
         if (slopeVal != null) {
@@ -341,13 +338,12 @@ public class ImageSeriesFactory {
             }
         }
     }
-    
+
     private static void sendError(ErrorCode error, TextureDicomSeries imSeries) {
-        FormattedException ex = new FormattedException(error.getCode(),
-                error.getLogMessage(), error.getUserMessage());
+        FormattedException ex = new FormattedException(error.getCode(), error.getLogMessage(), error.getUserMessage());
         imSeries.interruptFactory();
-        
-        fireProperyChange(imSeries, TEXTURE_ERROR, ex); 
+
+        fireProperyChange(imSeries, TEXTURE_ERROR, ex);
         LOGGER.warn("Code: " + ex.getErrorCode() + " - " + ex.getLogMessage());
     }
 
@@ -407,7 +403,7 @@ public class ImageSeriesFactory {
 
     /**
      * Find image data format.
-     * 
+     *
      * @param origin
      *            Series to get data-format from.
      * @return Data format flag.
@@ -449,7 +445,8 @@ public class ImageSeriesFactory {
      *            ImageSeries to receive the bytes data.
      * @return the buffer class found.
      */
-    public static String putBytesInImageSeries(final int place, final BufferedImage image, final TextureDicomSeries imgSeries) {
+    public static String putBytesInImageSeries(final int place, final BufferedImage image,
+        final TextureDicomSeries imgSeries) {
 
         String bufferClass = ".";
         if (imgSeries != null && image != null) {
@@ -461,9 +458,8 @@ public class ImageSeriesFactory {
 
             } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
                 bufferClass = dataBuffer.getClass().getSimpleName();
-                short[] data =
-                    dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                        : ((DataBufferUShort) dataBuffer).getData();
+                short[] data = dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
+                    : ((DataBufferUShort) dataBuffer).getData();
                 bytesOut = new byte[data.length * 2];
                 for (int i = 0; i < data.length; i++) {
                     bytesOut[i * 2] = (byte) (data[i] & 0xFF);
@@ -472,26 +468,26 @@ public class ImageSeriesFactory {
             }
             if (bytesOut != null) {
                 if (imgSeries.getTextureData() != null) {
-                    String str = "place " + place + ": bytesOut: " + bytesOut.length
-                            + " /expected: " + imgSeries.getTextureData().getTotalSize();
+                    String str = "place " + place + ": bytesOut: " + bytesOut.length + " /expected: "
+                        + imgSeries.getTextureData().getTotalSize();
                     LOGGER.debug(str);
                     if (bytesOut.length != imgSeries.getTextureData().getTotalSize()) {
                         sendError(ErrorCode.err501, imgSeries);
                     } else {
                         imgSeries.AddSliceData(place, bytesOut, addSliceListener);
-                        return bufferClass; 
+                        return bufferClass;
                     }
                 }
             }
         } else {
-            ((TextureDicomSeries) imgSeries).textureLogInfo.writeText("Image not included! place = " + place);
+            imgSeries.textureLogInfo.writeText("Image not included! place = " + place);
         }
         return "No-data";
     }
 
     /**
      * Normalize vector to obtain a valid parameter for dimendionMultiplier: divide all by the smaller.
-     * 
+     *
      * @param xSp
      *            x-spacing.
      * @param ySp
@@ -563,19 +559,19 @@ public class ImageSeriesFactory {
 
     /**
      * DICOM PS 3.3 $C.11.1 Modality LUT Module
-     * 
+     *
      * The LUT Data contains the LUT entry values.
-     * 
+     *
      * The output range of the Modality LUT Module depends on whether or not Rescale Slope (0028,1053) and Rescale
      * Intercept (0028,1052) or the Modality LUT Sequence (0028,3000) are used. In the case where Rescale Slope and
      * Rescale Intercept are used, the output ranges from (minimum pixel value*Rescale Slope+Rescale Intercept) to
      * (maximum pixel value*Rescale - Slope+Rescale Intercept), where the minimum and maximum pixel values are
      * determined by Bits Stored and Pixel Representation. Note: This range may be signed even if Pixel Representation
      * is unsigned.
-     * 
+     *
      * In the case where the Modality LUT Sequence is used, the output range is from 0 to 2n-1 where n is the third
      * value of LUT Descriptor. This range is always unsigned.
-     * 
+     *
      * @param pixelPadding
      * @return The modality lookup table.
      */
@@ -614,9 +610,8 @@ public class ImageSeriesFactory {
                 } else {
                     short[] data = mLUTSeq.getShortData(0);
                     if (data != null) {
-                        modalityLookup =
-                            new LookupTableJAI(data, mLUTSeq.getOffset(0),
-                                mLUTSeq.getData() instanceof DataBufferUShort);
+                        modalityLookup = new LookupTableJAI(data, mLUTSeq.getOffset(0),
+                            mLUTSeq.getData() instanceof DataBufferUShort);
                     }
                 }
             }
@@ -635,7 +630,7 @@ public class ImageSeriesFactory {
 
     /**
      * Loads one image to a texture.
-     * 
+     *
      * @param element
      * @param imSeries
      * @param place
@@ -681,9 +676,8 @@ public class ImageSeriesFactory {
         }
 
         // Log info:
-        String colorTransformInfo =
-            "Modality LUT: " + hasModalityLUT + " / ColorModel: " + true + "PixelSize = " + pixelSize
-                + " / DataBufferType: " + dataBufferType;
+        String colorTransformInfo = "Modality LUT: " + hasModalityLUT + " / ColorModel: " + true + "PixelSize = "
+            + pixelSize + " / DataBufferType: " + dataBufferType;
         return colorTransformInfo;
     }
 
@@ -715,12 +709,10 @@ public class ImageSeriesFactory {
     // See ImageOrientation.hasSameOrientation
     private static boolean isSameOrientation(double[] v1, double[] v2) {
         if (v1 != null && v1.length == 6 && v2 != null && v2.length == 6) {
-            String label1 =
-                ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v1[0], v1[1], v1[2], v1[3],
-                    v1[4], v1[5]);
-            String label2 =
-                ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1], v2[2], v2[3],
-                    v2[4], v2[5]);
+            String label1 = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v1[0], v1[1], v1[2],
+                v1[3], v1[4], v1[5]);
+            String label2 = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1], v2[2],
+                v2[3], v2[4], v2[5]);
 
             if (label1 != null && !label1.equals(ImageOrientation.LABELS[4])) {
                 return label1.equals(label2);
@@ -806,7 +798,7 @@ public class ImageSeriesFactory {
 
     /**
      * Loads one image and updates some related parameters.
-     * 
+     *
      * @param seriesToLoad
      * @param element
      * @param place
@@ -1065,8 +1057,8 @@ public class ImageSeriesFactory {
                     DicomImageElement element = (DicomImageElement) next;
                     Integer inst = (Integer) element.getTagValue(TagW.InstanceNumber);
                     if (inst == null) {
-                        throw new IllegalArgumentException("Cant load images in multiple threads without"
-                            + " InstanceNumber information.");
+                        throw new IllegalArgumentException(
+                            "Cant load images in multiple threads without" + " InstanceNumber information.");
                     }
                     if (!placesInVideo[inst - 1]) {
                         updateTextureElement(seriesToLoad, element, inst - 1);

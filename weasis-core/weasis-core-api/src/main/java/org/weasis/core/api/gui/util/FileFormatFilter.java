@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -30,7 +30,7 @@ import com.sun.media.jai.codec.ImageCodec;
 
 /**
  * The Class FileFormatFilter.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class FileFormatFilter extends FileFilter {
@@ -41,6 +41,7 @@ public class FileFormatFilter extends FileFilter {
     private String fDefaultExtension;
     private boolean fUseExtensionsInDescription;
     protected static Map<String, String> sExtToCodec;
+
     static {
         // extension alternatives : more than one is separated by comma
         sExtToCodec = new HashMap<String, String>();

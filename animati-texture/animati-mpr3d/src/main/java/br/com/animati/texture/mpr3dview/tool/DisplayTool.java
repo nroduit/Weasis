@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -315,8 +315,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 selView != null && selView.getInfoLayer().getDisplayPreferences(AnnotationsLayer.MIN_DISPLAY);
 
             if (checked && !minDisp) {
-                ImageViewerPlugin<DicomImageElement> container =
-                                GUIManager.getInstance().getSelectedView2dContainer();
+                ImageViewerPlugin<DicomImageElement> container = GUIManager.getInstance().getSelectedView2dContainer();
                 ArrayList<ViewCanvas<DicomImageElement>> views = null;
                 if (container != null) {
                     if (applyAllViews.isSelected()) {

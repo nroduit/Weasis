@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -55,7 +55,8 @@ public class OpenImageAction extends AbstractUIAction {
         // TODO add format from plugins
         FileFormatFilter.setImageDecodeFilters(fileChooser);
         File[] selectedFiles = null;
-        if (fileChooser.showOpenDialog(EventManager.getInstance().getSelectedView2dContainer()) != JFileChooser.APPROVE_OPTION
+        if (fileChooser
+            .showOpenDialog(EventManager.getInstance().getSelectedView2dContainer()) != JFileChooser.APPROVE_OPTION
             || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
             return;
         } else {

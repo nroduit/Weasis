@@ -1,42 +1,42 @@
 /*
  * $RCSfile: RawRenderedImage.java,v $
  *
- * 
+ *
  * Copyright (c) 2005 Sun Microsystems, Inc. All  Rights Reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met: 
- * 
- * - Redistribution of source code must retain the above copyright 
+ * are met:
+ *
+ * - Redistribution of source code must retain the above copyright
  *   notice, this  list of conditions and the following disclaimer.
- * 
+ *
  * - Redistribution in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in 
+ *   notice, this list of conditions and the following disclaimer in
  *   the documentation and/or other materials provided with the
  *   distribution.
- * 
- * Neither the name of Sun Microsystems, Inc. or the names of 
- * contributors may be used to endorse or promote products derived 
+ *
+ * Neither the name of Sun Microsystems, Inc. or the names of
+ * contributors may be used to endorse or promote products derived
  * from this software without specific prior written permission.
- * 
- * This software is provided "AS IS," without a warranty of any 
- * kind. ALL EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND 
- * WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY, 
+ *
+ * This software is provided "AS IS," without a warranty of any
+ * kind. ALL EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND
+ * WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT, ARE HEREBY
- * EXCLUDED. SUN MIDROSYSTEMS, INC. ("SUN") AND ITS LICENSORS SHALL 
- * NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF 
+ * EXCLUDED. SUN MIDROSYSTEMS, INC. ("SUN") AND ITS LICENSORS SHALL
+ * NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF
  * USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS
- * DERIVATIVES. IN NO EVENT WILL SUN OR ITS LICENSORS BE LIABLE FOR 
+ * DERIVATIVES. IN NO EVENT WILL SUN OR ITS LICENSORS BE LIABLE FOR
  * ANY LOST REVENUE, PROFIT OR DATA, OR FOR DIRECT, INDIRECT, SPECIAL,
  * CONSEQUENTIAL, INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED AND
  * REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF THE USE OF OR
  * INABILITY TO USE THIS SOFTWARE, EVEN IF SUN HAS BEEN ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGES. 
- * 
- * You acknowledge that this software is not designed or intended for 
- * use in the design, construction, operation or maintenance of any 
- * nuclear facility. 
+ * POSSIBILITY OF SUCH DAMAGES.
+ *
+ * You acknowledge that this software is not designed or intended for
+ * use in the design, construction, operation or maintenance of any
+ * nuclear facility.
  *
  * $Revision: 1.2 $
  * $Date: 2006-04-21 23:19:13 $
@@ -406,10 +406,10 @@ public class RawRenderedImage extends SimpleRenderedImage {
 
     private Raster readSubsampledRaster(WritableRaster raster) throws IOException {
         if (raster == null) {
-            raster =
-                Raster.createWritableRaster(sampleModel.createCompatibleSampleModel(destinationRegion.x
-                    + destinationRegion.width, destinationRegion.y + destinationRegion.height), new Point(
-                    destinationRegion.x, destinationRegion.y));
+            raster = Raster.createWritableRaster(
+                sampleModel.createCompatibleSampleModel(destinationRegion.x + destinationRegion.width,
+                    destinationRegion.y + destinationRegion.height),
+                new Point(destinationRegion.x, destinationRegion.y));
         }
 
         int numBands = sourceBands.length;
@@ -501,10 +501,8 @@ public class RawRenderedImage extends SimpleRenderedImage {
             destBandOffsets = csm.getBandOffsets();
             destPixelStride = csm.getPixelStride();
             destScanlineStride = csm.getScanlineStride();
-            destSX =
-                csm.getOffset(raster.getMinX() - raster.getSampleModelTranslateX(),
-                    raster.getMinY() - raster.getSampleModelTranslateY())
-                    - destBandOffsets[0];
+            destSX = csm.getOffset(raster.getMinX() - raster.getSampleModelTranslateX(),
+                raster.getMinY() - raster.getSampleModelTranslateY()) - destBandOffsets[0];
 
             switch (dataType) {
                 case DataBuffer.TYPE_BYTE:
@@ -659,8 +657,8 @@ public class RawRenderedImage extends SimpleRenderedImage {
                             int mask = 128;
 
                             for (int n = 0, n1 = startX & 7; n < lineLength; n++, n1 += scaleX) {
-                                pixbuf[pos] =
-                                    (byte) ((pixbuf[pos] & ~(1 << bit)) | (((pixbuf[n1 >> 3] >> (7 - (n1 & 7))) & 1) << bit));
+                                pixbuf[pos] = (byte) ((pixbuf[pos] & ~(1 << bit))
+                                    | (((pixbuf[n1 >> 3] >> (7 - (n1 & 7))) & 1) << bit));
                                 bit--;
                                 if (bit == -1) {
                                     bit = 7;
@@ -746,9 +744,8 @@ public class RawRenderedImage extends SimpleRenderedImage {
                             outerStep1 = destPixelStride;
                         }
 
-                        int destPos =
-                            destSX + (y1 - raster.getSampleModelTranslateY()) * destScanlineStride
-                                + (x1 - raster.getSampleModelTranslateX()) * destPixelStride;
+                        int destPos = destSX + (y1 - raster.getSampleModelTranslateY()) * destScanlineStride
+                            + (x1 - raster.getSampleModelTranslateX()) * destPixelStride;
 
                         for (int l = outerFirst, m = outerSecond; l < outerBound; l += outerStep, m++) {
                             if (reader.getAbortRequest()) {
@@ -886,9 +883,8 @@ public class RawRenderedImage extends SimpleRenderedImage {
                                 outerStep1 = destPixelStride;
                             }
 
-                            int destPos =
-                                destSX + (y1 - raster.getSampleModelTranslateY()) * destScanlineStride
-                                    + (x1 - raster.getSampleModelTranslateX()) * destPixelStride + destBandOffset;
+                            int destPos = destSX + (y1 - raster.getSampleModelTranslateY()) * destScanlineStride
+                                + (x1 - raster.getSampleModelTranslateX()) * destPixelStride + destBandOffset;
 
                             int bank = bankIndices[destinationBands[b]];
 
@@ -995,8 +991,8 @@ public class RawRenderedImage extends SimpleRenderedImage {
                                     }
                                 }
 
-                                reader.processImageProgressWrapper((percentage + (l + 1.0F) / outerBound / numBands
-                                    / totalTiles) * 100.0F);
+                                reader.processImageProgressWrapper(
+                                    (percentage + (l + 1.0F) / outerBound / numBands / totalTiles) * 100.0F);
                             }
                         }
                     } else if (sampleModel instanceof ComponentSampleModel) {
@@ -1049,10 +1045,9 @@ public class RawRenderedImage extends SimpleRenderedImage {
                         for (int b = 0; b < numBands; b++) {
                             int destBandOffset = destBandOffsets[destinationBands[b]];
 
-                            int destPos =
-                                ((ComponentSampleModel) raster.getSampleModel()).getOffset(
-                                    x1 - raster.getSampleModelTranslateX(), y1 - raster.getSampleModelTranslateY(),
-                                    destinationBands[b]);
+                            int destPos = ((ComponentSampleModel) raster.getSampleModel()).getOffset(
+                                x1 - raster.getSampleModelTranslateX(), y1 - raster.getSampleModelTranslateY(),
+                                destinationBands[b]);
 
                             int bank = bankIndices[destinationBands[b]];
 
@@ -1091,33 +1086,33 @@ public class RawRenderedImage extends SimpleRenderedImage {
 
                                 switch (dataType) {
                                     case DataBuffer.TYPE_BYTE:
-                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 += skipX, m2 +=
-                                            destPixelStride) {
+                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 +=
+                                            skipX, m2 += destPixelStride) {
                                             destPixbuf[m2] = pixbuf[m1];
                                         }
                                         break;
                                     case DataBuffer.TYPE_SHORT:
                                     case DataBuffer.TYPE_USHORT:
-                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 += skipX, m2 +=
-                                            destPixelStride) {
+                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 +=
+                                            skipX, m2 += destPixelStride) {
                                             destSPixbuf[m2] = spixbuf[m1];
                                         }
                                         break;
                                     case DataBuffer.TYPE_INT:
-                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 += skipX, m2 +=
-                                            destPixelStride) {
+                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 +=
+                                            skipX, m2 += destPixelStride) {
                                             destIPixbuf[m2] = ipixbuf[m1];
                                         }
                                         break;
                                     case DataBuffer.TYPE_FLOAT:
-                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 += skipX, m2 +=
-                                            destPixelStride) {
+                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 +=
+                                            skipX, m2 += destPixelStride) {
                                             destFPixbuf[m2] = fpixbuf[m1];
                                         }
                                         break;
                                     case DataBuffer.TYPE_DOUBLE:
-                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 += skipX, m2 +=
-                                            destPixelStride) {
+                                        for (int n = 0, m1 = srcPos, m2 = destPos; n < lineLength; n++, m1 +=
+                                            skipX, m2 += destPixelStride) {
                                             destDPixbuf[m2] = dpixbuf[m1];
                                         }
                                         break;
@@ -1131,8 +1126,8 @@ public class RawRenderedImage extends SimpleRenderedImage {
                                     reader.processImageUpdateWrapper(destImage, x1, m, cTileHeight, 1, 1, 1, destBands);
                                 }
 
-                                reader.processImageProgressWrapper(percentage + (l + 1.0F) / cTileHeight / numBands
-                                    / totalTiles);
+                                reader.processImageProgressWrapper(
+                                    percentage + (l + 1.0F) / cTileHeight / numBands / totalTiles);
                             }
                         }
                     } else {

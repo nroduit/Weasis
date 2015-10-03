@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -26,7 +26,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class DragLayer.
- * 
+ *
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
 public class DragLayer extends AbstractLayer {
@@ -71,7 +71,7 @@ public class DragLayer extends AbstractLayer {
 
     /**
      * getGraphicsInArea
-     * 
+     *
      * @param selectGraphic
      *            Rectangle
      * @return List

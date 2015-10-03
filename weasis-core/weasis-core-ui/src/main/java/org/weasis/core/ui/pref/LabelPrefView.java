@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -67,8 +67,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         setBorder(new EmptyBorder(15, 10, 10, 10));
         try {
             JMVUtils.setList(jComboName, Messages.getString("LabelPrefView.default"), //$NON-NLS-1$
-                GraphicsEnvironment.getLocalGraphicsEnvironment()
-                    .getAvailableFontFamilyNames());
+                GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
             jbInit();
             initialize();
         } catch (Exception ex) {

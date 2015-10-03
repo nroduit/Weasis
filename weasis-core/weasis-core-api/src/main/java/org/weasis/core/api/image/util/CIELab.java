@@ -86,7 +86,7 @@ public class CIELab extends ColorSpace {
 
     /**
      * This method converts integer DICOM encoded L*a*b* values to CIE L*a*b* regular float encoded values.
-     * 
+     *
      * @param lab
      * @return float array of 3 components L* on 0..1 and a*,b* on -128...127
      */

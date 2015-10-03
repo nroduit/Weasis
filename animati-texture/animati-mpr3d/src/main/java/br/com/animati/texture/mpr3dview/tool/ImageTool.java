@@ -115,8 +115,8 @@ public class ImageTool extends PluginTool {
         ActionState levelAction = GUIManager.getInstance().getAction(ActionW.LEVEL);
         if (levelAction instanceof SliderChangeListener) {
             final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(4, true);
-            levelSlider
-                .setMajorTickSpacing((ImageViewerEventManager.LEVEL_LARGEST - ImageViewerEventManager.LEVEL_SMALLEST) / 4);
+            levelSlider.setMajorTickSpacing(
+                (ImageViewerEventManager.LEVEL_LARGEST - ImageViewerEventManager.LEVEL_SMALLEST) / 4);
             JMVUtils.setPreferredWidth(levelSlider, 100);
             winLevelPanel.add(levelSlider.getParent());
         }
@@ -134,16 +134,16 @@ public class ImageTool extends PluginTool {
             winLevelPanel.add(panel_3);
         }
 
-//        ActionState lutShapeAction = GUIManager.getInstance().getAction(ActionW.LUT_SHAPE);
-//        if (lutShapeAction instanceof ComboItemListener) {
-//            final JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
-//            final JLabel label = new JLabel(ActionW.LUT_SHAPE.getTitle() + StringUtil.COLON);
-//            pane.add(label);
-//            final JComboBox combo = ((ComboItemListener) lutShapeAction).createCombo(140);
-//            combo.setMaximumRowCount(10);
-//            pane.add(combo);
-//            winLevelPanel.add(pane);
-//        }
+        // ActionState lutShapeAction = GUIManager.getInstance().getAction(ActionW.LUT_SHAPE);
+        // if (lutShapeAction instanceof ComboItemListener) {
+        // final JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
+        // final JLabel label = new JLabel(ActionW.LUT_SHAPE.getTitle() + StringUtil.COLON);
+        // pane.add(label);
+        // final JComboBox combo = ((ComboItemListener) lutShapeAction).createCombo(140);
+        // combo.setMaximumRowCount(10);
+        // pane.add(combo);
+        // winLevelPanel.add(pane);
+        // }
 
         ActionState lutAction = GUIManager.getInstance().getAction(ActionW.LUT);
         if (lutAction instanceof ComboItemListener) {
@@ -155,8 +155,8 @@ public class ImageTool extends PluginTool {
             panel_4.add(lutcomboBox);
             ActionState invlutAction = GUIManager.getInstance().getAction(ActionW.INVERT_LUT);
             if (invlutAction instanceof ToggleButtonListener) {
-                panel_4.add(((ToggleButtonListener) invlutAction).createCheckBox(Messages
-                    .getString("ImageTool.inverse"))); //$NON-NLS-1$
+                panel_4
+                    .add(((ToggleButtonListener) invlutAction).createCheckBox(Messages.getString("ImageTool.inverse"))); //$NON-NLS-1$
             }
             winLevelPanel.add(panel_4);
         }

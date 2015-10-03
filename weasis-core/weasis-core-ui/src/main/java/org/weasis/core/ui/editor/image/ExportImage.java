@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -68,19 +68,18 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
         setPreferredSize(new Dimension(1024, 1024));
         ViewModel model = view2d.getViewModel();
-        Rectangle2D canvas =
-            new Rectangle2D.Double(view2d.modelToViewLength(model.getModelOffsetX()), view2d.modelToViewLength(model
-                .getModelOffsetY()), view2d.getJComponent().getWidth(), view2d.getJComponent().getHeight());
+        Rectangle2D canvas = new Rectangle2D.Double(view2d.modelToViewLength(model.getModelOffsetX()),
+            view2d.modelToViewLength(model.getModelOffsetY()), view2d.getJComponent().getWidth(),
+            view2d.getJComponent().getHeight());
         Rectangle2D mArea = view2d.getViewModel().getModelArea();
-        Rectangle2D viewFullImg =
-            new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()), view2d.modelToViewLength(mArea
-                .getHeight()));
+        Rectangle2D viewFullImg = new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()),
+            view2d.modelToViewLength(mArea.getHeight()));
         Rectangle2D.intersect(canvas, viewFullImg, viewFullImg);
         actionsInView.put("origin.image.bound", viewFullImg); //$NON-NLS-1$
         actionsInView.put("origin.zoom", view2d.getActionValue(ActionW.ZOOM.cmd())); //$NON-NLS-1$
-        Point2D p =
-            new Point2D.Double(view2d.viewToModelX(viewFullImg.getX() - canvas.getX() + (viewFullImg.getWidth() - 1)
-                * 0.5), view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
+        Point2D p = new Point2D.Double(
+            view2d.viewToModelX(viewFullImg.getX() - canvas.getX() + (viewFullImg.getWidth() - 1) * 0.5),
+            view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
         actionsInView.put("origin.center", p); //$NON-NLS-1$
         // Do not use setSeries() because the view will be reset
         this.series = view2d.getSeries();

@@ -45,8 +45,8 @@ public class HierachicalSOPInstanceReference extends Module {
     }
 
     public Collection<SeriesAndInstanceReference> getReferencedSeries() {
-        return SeriesAndInstanceReference.toSeriesAndInstanceReferenceMacros(dcmItems
-            .getSequence(Tag.ReferencedSeriesSequence));
+        return SeriesAndInstanceReference
+            .toSeriesAndInstanceReferenceMacros(dcmItems.getSequence(Tag.ReferencedSeriesSequence));
     }
 
     public void setReferencedSeries(Collection<SeriesAndInstanceReference> referencedSeries) {

@@ -78,12 +78,10 @@ import br.com.animati.texture.codec.StaticHelpers;
 import br.com.animati.texture.codec.TextureDicomSeries;
 import br.com.animati.texture.mpr3dview.ViewTexture.ViewType;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
-import br.com.animati.texturedicom.ColorMask;
-import br.com.animati.texturedicom.TextureImageCanvas;
 
 /**
- * 
- * 
+ *
+ *
  * @author Gabriela Carla Bauerman (gabriela@animati.com.br)
  * @version 2013, 11 Sep.
  */
@@ -467,7 +465,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         }
         return null;
     }
-    
+
     @Override
     public void keyTyped(KeyEvent e) {
     }
@@ -712,7 +710,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                 viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
                 if (SynchView.NONE.equals(synchView) || (viewPane instanceof ViewTexture
-                        && ((ViewTexture) viewPane).getViewType() == ViewType.VOLUME3D)) {
+                    && ((ViewTexture) viewPane).getViewType() == ViewType.VOLUME3D)) {
                     for (int i = 0; i < panes.size(); i++) {
                         ViewCanvas<DicomImageElement> pane = panes.get(i);
                         AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
@@ -741,7 +739,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                                 if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                     oldSynch = synch.clone();
                                 }
-                                if (pane instanceof ViewTexture && ((ViewTexture) pane).getViewType() != ViewType.VOLUME3D) {
+                                if (pane instanceof ViewTexture
+                                    && ((ViewTexture) pane).getViewType() != ViewType.VOLUME3D) {
                                     addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
                                 }
 

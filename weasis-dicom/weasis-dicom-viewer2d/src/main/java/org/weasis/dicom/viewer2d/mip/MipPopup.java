@@ -95,8 +95,8 @@ public class MipPopup {
             panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
 
             final JPanel framePanel = new JPanel();
-            framePanel.setBorder(new TitledBorder(null,
-                Messages.getString("MipPopup.projection"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+            framePanel.setBorder(new TitledBorder(null, Messages.getString("MipPopup.projection"), TitledBorder.LEADING, //$NON-NLS-1$
+                TitledBorder.TOP, null, null));
             final ButtonGroup ratioGroup = new ButtonGroup();
 
             JRadioButton rdbtnMinProjection = new JRadioButton(Messages.getString("MipPopup.min")); //$NON-NLS-1$
@@ -175,8 +175,8 @@ public class MipPopup {
                 panel_1.add(sliderThickness.getParent());
                 Integer extend = (Integer) view.getActionValue(MipView.MIP_THICKNESS.cmd());
                 sliderThickness.setValue(extend == null ? 2 : extend);
-                updateSliderProoperties(sliderThickness, MipView.MIP_THICKNESS.getTitle() + StringUtil.COLON_AND_SPACE
-                    + sliderThickness.getValue());
+                updateSliderProoperties(sliderThickness,
+                    MipView.MIP_THICKNESS.getTitle() + StringUtil.COLON_AND_SPACE + sliderThickness.getValue());
 
                 scrollListerner = new ChangeListener() {
 

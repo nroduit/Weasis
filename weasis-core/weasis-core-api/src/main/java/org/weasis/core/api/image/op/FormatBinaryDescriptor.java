@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -33,7 +33,7 @@ import com.sun.media.jai.util.ImageUtil;
 
 /**
  * The Class FormatBinaryDescriptor.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class FormatBinaryDescriptor extends OperationDescriptorImpl implements RenderedImageFactory {
@@ -44,15 +44,15 @@ public class FormatBinaryDescriptor extends OperationDescriptorImpl implements R
      */
     private static final String[][] resources = { { "GlobalName", "FormatBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "LocalName", "FormatBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "LocalName", "FormatBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "Description", "format bilevel to be displayed correctly" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "Description", "format bilevel to be displayed correctly" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
+                    { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String supportedModes[] = { "rendered" }; //$NON-NLS-1$
 
@@ -71,9 +71,8 @@ public class FormatBinaryDescriptor extends OperationDescriptorImpl implements R
             return null;
         }
         RenderedImage imgSource = paramBlock.getRenderedSource(0);
-        ColorModel cm =
-            new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 }, false, false,
-                Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+        ColorModel cm = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 }, false,
+            false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
         byte[] table_data = new byte[] { (byte) 0x00, (byte) 0xff };
         if (imgSource.getColorModel() instanceof IndexColorModel) {
             IndexColorModel icm = (IndexColorModel) imgSource.getColorModel();

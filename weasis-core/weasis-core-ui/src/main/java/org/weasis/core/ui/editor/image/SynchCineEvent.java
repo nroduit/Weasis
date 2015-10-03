@@ -25,7 +25,7 @@ public class SynchCineEvent extends SynchEvent {
     /**
      * Returns the media index of the series. Note: there is no guarantee that the index will be corrected as it is
      * possible to insert or remove medias in concurrent threads.
-     * 
+     *
      * @return the media index of the series
      */
     public int getSeriesIndex() {

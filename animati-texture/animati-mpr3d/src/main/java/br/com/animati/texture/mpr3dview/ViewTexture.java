@@ -16,6 +16,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -130,12 +131,6 @@ import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
 import br.com.animati.texture.mpr3dview.api.TextureMeasurableLayer;
 import br.com.animati.texture.mpr3dview.internal.Activator;
 import br.com.animati.texture.mpr3dview.internal.Messages;
-import br.com.animati.texturedicom.ColorMask;
-import br.com.animati.texturedicom.ControlAxes;
-import br.com.animati.texturedicom.ImageSeries;
-import br.com.animati.texturedicom.TextureImageCanvas;
-import br.com.animati.texturedicom.cl.CLConvolution;
-import java.awt.Stroke;
 
 /**
  *
@@ -148,10 +143,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewTexture.class);
 
     public enum ViewType {
-                          AXIAL, CORONAL, SAGITTAL, VOLUME3D
+        AXIAL, CORONAL, SAGITTAL, VOLUME3D
     };
 
     static final Shape[] pointer;
+
     static {
         pointer = new Shape[5];
         pointer[0] = new Ellipse2D.Double(-27.0, -27.0, 54.0, 54.0);
@@ -299,11 +295,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             draw = (Boolean) actionValue;
         }
         if (hasContent() && draw) {
-            Rectangle2D clip = new Rectangle2D.Double(graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetX()),
-                    graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetY()), getWidth(),
-                    getHeight());
+            Rectangle2D clip = new Rectangle2D.Double(
+                graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetX()),
+                graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetY()), getWidth(), getHeight());
             getLayerModel().draw(g2d, transform, inverseTransform, clip);
-        
+
             if (Activator.showModelArea) {
                 Stroke oldStr = g2d.getStroke();
                 Color oldColor = g2d.getColor();
@@ -353,9 +349,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
         if (ImageSeriesFactory.TEXTURE_LOAD_COMPLETE.equals(propertyName)
             || ImageSeriesFactory.TEXTURE_DO_DISPLAY.equals(propertyName)) {
-            
+
             updateModelArea();
-            
+
             // Invert if necessary
             // In case of PhotometricInterpretationInverse, it has to be corrected here.
             if (isContentPhotometricInterpretationInverse()) {
@@ -383,7 +379,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                     if (container != null) {
                         ArrayList<ViewCanvas<DicomImageElement>> imagePanels = container.getImagePanels();
                         for (ViewCanvas<DicomImageElement> panel : imagePanels) {
-                            if (panel != GUIManager.getInstance().getSelectedViewPane() && panel instanceof ViewTexture) {
+                            if (panel != GUIManager.getInstance().getSelectedViewPane()
+                                && panel instanceof ViewTexture) {
                                 if (presetList.get(0) instanceof PresetWindowLevel) {
                                     ((ViewTexture) panel).setPresetWindowLevel(presetList.get(0));
                                 }
@@ -430,7 +427,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 continue;
             }
             if (command.equals(ActionW.SCROLL_SERIES.cmd())) {
-                if (getViewType() != viewType.VOLUME3D) { //If its not a volumetric view
+                if (getViewType() != ViewType.VOLUME3D) { // If its not a volumetric view
                     setSlice((Integer) val);
                 }
             } else if (command.equals(ActionW.WINDOW.cmd())) {
@@ -448,7 +445,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
                 // TODO lut shape
             } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer) {
-                if (getViewType() != viewType.VOLUME3D) { //If its not a volumetric view
+                if (getViewType() != ViewType.VOLUME3D) { // If its not a volumetric view
                     setRotation((Integer) val);
                 }
             } else if (command.equals(ActionW.RESET.cmd())) {
@@ -530,13 +527,13 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             }
         }
     }
-    
+
     private void setRotation(Integer val) {
         int rotate = val;
         if (ViewType.SAGITTAL.equals(getViewType())) {
             rotate = val - 90;
         }
-        
+
         setRotationOffset(Math.toRadians(rotate));
         actionsInView.put(ActionW.ROTATION.cmd(), val);
         updateAffineTransform();
@@ -594,9 +591,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     /**
      * Set an Action in this view.
-     * 
+     *
      * If repaint is true, it also calls "repaint()". This call gets the same result as a call to "display()".
-     * 
+     *
      * @param action
      *            Action name.
      * @param value
@@ -643,7 +640,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         Integer rotationAngle = (int) Math.toDegrees(getRotationOffset());
         if (rotationAngle < 0) {
             rotationAngle = (rotationAngle + 360) % 360;
-        } 
+        }
         graphsLayer.updateAffineTransform(rotationAngle, flip);
 
         measurableLayer.setDirty(true);
@@ -716,12 +713,12 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             closingSeries(old.getSeries());
         }
     }
-    
+
     private void updateModelArea() {
         Rectangle un = getUntransformedImageRect();
         if (un != null) {
             Rectangle modelArea = new Rectangle(0, 0, un.width, un.height);
-            
+
             Rectangle2D area = graphsLayer.getViewModel().getModelArea();
             if (modelArea != null && !modelArea.equals(area)) {
                 ((DefaultViewModel) graphsLayer.getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
@@ -971,11 +968,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
 
         // ControlAxes
-        if ((cmd == null || "resetToAquisition".equals(cmd)) && controlAxes != null){
+        if ((cmd == null || "resetToAquisition".equals(cmd)) && controlAxes != null) {
             controlAxes.reset();
             // must repaint all views
             getParent().repaint();
-            
+
             TextureImageCanvas[] canvases = controlAxes.getCanvases();
             for (TextureImageCanvas canv : canvases) {
                 if (canv instanceof ViewTexture) {
@@ -1024,7 +1021,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     /**
      * Content pixel size. Will return 0 if its unknown ot not trustable.
-     * 
+     *
      * @return Content's pixel size.
      */
     public double getShowingPixelSize() {
@@ -1223,12 +1220,12 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
-         // Ctrl + Space passa para a proxima action.
+            // Ctrl + Space passa para a proxima action.
             eventManager.nextLeftMouseAction();
         } else if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
-         // Liga/desliga informacoes do paciente.
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
-                null, null, EVENT.TOOGLE_INFO));
+            // Liga/desliga informacoes do paciente.
+            eventManager.fireSeriesViewerListeners(
+                new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.TOOGLE_INFO));
         } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_H) {
             // Flip horizontal
             Object actionValue = getActionValue(ActionW.FLIP.cmd());

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -125,7 +125,8 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
             for (DicomSpecialElement dicom : studyElements) {
                 if (dicom != null && "PR".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
                     if (isSopuidInReferencedSeriesSequence(
-                        (Attributes[]) dicom.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID, frameNumber)) {
+                        (Attributes[]) dicom.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID,
+                        frameNumber)) {
                         filteredList.add(dicom);
                     }
                 }
@@ -144,9 +145,8 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                         for (Attributes sop : seq2) {
                             if (sopUID.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
                                 if (frameNumber != null && frameNumber > 1) {
-                                    int[] seqFrame =
-                                        DicomMediaUtils.getIntAyrrayFromDicomElement(sop, Tag.ReferencedFrameNumber,
-                                            null);
+                                    int[] seqFrame = DicomMediaUtils.getIntAyrrayFromDicomElement(sop,
+                                        Tag.ReferencedFrameNumber, null);
                                     if (seqFrame == null || seqFrame.length == 0) {
                                         return true;
                                     } else {
@@ -169,7 +169,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
     }
 
     /**
-     * 
+     *
      * @param seriesUID
      * @param specialElements
      * @return the KOSpecialElement collection for the given parameters, if the referenced seriesUID is null all the
@@ -222,7 +222,8 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                 PRSpecialElement prElement = (PRSpecialElement) element;
 
                 if (isSopuidInReferencedSeriesSequence(
-                    (Attributes[]) prElement.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID, frameNumber)) {
+                    (Attributes[]) prElement.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID,
+                    frameNumber)) {
 
                     if (prList == null) {
                         prList = new ArrayList<PRSpecialElement>();

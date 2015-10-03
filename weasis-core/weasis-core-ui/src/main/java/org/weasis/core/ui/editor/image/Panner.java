@@ -17,8 +17,8 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Thumbnail;
 
 /**
- * 
- * 
+ *
+ *
  * @author Nicolas Roduit
  */
 public final class Panner<E extends ImageElement> extends Thumbnail {
@@ -131,9 +131,8 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
         final double vs = view.getViewModel().getViewScale();
         int width = view.getWidth() - 1;
         int height = view.getHeight() - 1;
-        final Rectangle2D va =
-            new Rectangle2D.Double(view.getViewModel().getModelOffsetX(), view.getViewModel().getModelOffsetY(), width
-                / vs, height / vs);
+        final Rectangle2D va = new Rectangle2D.Double(view.getViewModel().getModelOffsetX(),
+            view.getViewModel().getModelOffsetY(), width / vs, height / vs);
         slider.x = panArea.x + (int) Math.round(panArea.width * (va.getX() - ma.getX()) / ma.getWidth());
         slider.y = panArea.y + (int) Math.round(panArea.height * (va.getY() - ma.getY()) / ma.getHeight());
         slider.width = (int) Math.round(panArea.width * va.getWidth() / ma.getWidth());

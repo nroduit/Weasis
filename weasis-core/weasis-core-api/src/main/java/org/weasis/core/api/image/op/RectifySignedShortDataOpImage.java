@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -31,7 +31,7 @@ final class RectifySignedShortDataOpImage extends ColormapOpImage {
 
     /**
      * Constructor.
-     * 
+     *
      * @param source
      *            The source image.
      * @param layout
@@ -76,7 +76,7 @@ final class RectifySignedShortDataOpImage extends ColormapOpImage {
 
     /**
      * Operation to correct signed images (9-15 bits) read by imageio codecs.
-     * 
+     *
      * @param sources
      *            Cobbled sources, guaranteed to provide all the source data necessary for computing the rectangle.
      * @param dest

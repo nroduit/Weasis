@@ -28,8 +28,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 
-import br.com.animati.texturedicom.ImageSeries;
-import br.com.animati.texturedicom.TextureData;
+import com.jogamp.opengl.util.texture.TextureData;
 
 /**
  * Implements methods to get the ImageSeries of texturedicom more usable by weasis components.
@@ -41,6 +40,7 @@ import br.com.animati.texturedicom.TextureData;
 public class TextureDicomSeries<E extends ImageElement> extends ImageSeries implements MediaSeriesGroup {
 
     private static final NumberFormat DF3 = NumberFormat.getNumberInstance(Locale.US);
+
     static {
         DF3.setMaximumFractionDigits(3); // 3 decimals
     }
@@ -76,7 +76,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
 
     /**
      * Builds an empty TextureImageSeries. Its best to use ImageSeriesFactory.
-     * 
+     *
      * @param sliceWidth
      * @param sliceHeight
      * @param sliceCount
@@ -206,9 +206,9 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
 
     /**
      * Stores an occurrence of the given slice-spacing om a Map<String, Integer>.
-     * 
+     *
      * Uses a String conversion of 3-decimals to limit the tolerance to 0.001, like the MPR of weasis.dicom.view2d.
-     * 
+     *
      * @param space
      */
     protected void addZSpacingOccurence(double space) {
@@ -250,7 +250,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     /**
      * Consults the slice-spacing map to get the most common one. If there are two or more spacing with the same higher
      * occurrence value, the first one found is returned.
-     * 
+     *
      * @return The most common slice spacing. Can be negative!
      */
     public double getMostCommonSpacing() {
@@ -273,7 +273,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
 
     /**
      * Returns a presset List.
-     * 
+     *
      * @param pixelPadding
      * @param force
      *            Set true to recalculate presetList.
@@ -332,9 +332,8 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         // TODO VoiLut !!
 
         // AutoLevel
-        PresetWindowLevel autoLevel =
-            new PresetWindowLevel(PresetWindowLevel.fullDynamicExplanation, getFullDynamicWidth(pixelPadding),
-                getFullDynamicCenter(pixelPadding), defaultLutShape);
+        PresetWindowLevel autoLevel = new PresetWindowLevel(PresetWindowLevel.fullDynamicExplanation,
+            getFullDynamicWidth(pixelPadding), getFullDynamicCenter(pixelPadding), defaultLutShape);
         presetList.add(autoLevel);
 
         // Arbitrary Presets by Modality
@@ -358,46 +357,46 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     }
 
     /**
-     * Correct the level value by rescale factors and the transformation made
-     * to the values to fit the video-card range.
-     * 
+     * Correct the level value by rescale factors and the transformation made to the values to fit the video-card range.
+     *
      * Still not tested for SignedShort with RescaleSlope not 1.
-     * 
-     * @param level Level value as shown to the user.
+     *
+     * @param level
+     *            Level value as shown to the user.
      * @return the corrected level to be applied to this series.
      */
     public int getCorrectedValueForLevel(int level) {
         Float interceptVal = (Float) getTagValue(TagW.RescaleIntercept);
         double intercept = 0.0d;
-        if (TextureData.Format.UnsignedShort.equals(getTextureData().getFormat())
-                && interceptVal != null){
+        if (TextureData.Format.UnsignedShort.equals(getTextureData().getFormat()) && interceptVal != null) {
             intercept = interceptVal;
-        } 
+        }
         Float slopeVal = (Float) getTagValue(TagW.RescaleSlope);
         final double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
-        
+
         double lev = (level / slope) + (windowingMinInValue - (intercept / slope));
         return (int) Math.round(lev);
     }
-    
+
     /**
      * Correct the level value by rescale-slope to fit the video-card range.
-     * 
+     *
      * Still not tested for SignedShort with RescaleSlope not 1.
-     * 
-     * @param window Window value as shown to the user.
+     *
+     * @param window
+     *            Window value as shown to the user.
      * @return the corrected window to be applied to this series.
      */
     public int getCorrectedValueForWindow(int window) {
         Float slopeVal = (Float) getTagValue(TagW.RescaleSlope);
         final double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
-        
+
         return (int) Math.round(window / slope);
     }
-    
+
     /**
      * Valid if has 6 double s. Set to a double[] of one element to make not-valid.
-     * 
+     *
      * @param imOri
      */
     public void setOrientationPatient(double[] imOri) {
@@ -406,13 +405,13 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
 
     /**
      * Valid if has 6 double s. Set to a double[] of one element to make not-valid.
-     * 
+     *
      * @return
      */
     public double[] getOriginalSeriesOrientationPatient() {
         return originalSeriesOrientationPatient;
     }
-    
+
     public Comparator<E> getSeriesSorter() {
         return seriesComparator;
     }
@@ -434,7 +433,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
 
     /**
      * Gets a tagValue from the original DicomImageElement on this location.
-     * 
+     *
      * @param tag
      *            Tag object
      * @param currentSlice
@@ -513,7 +512,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
 
     /**
      * Get the GeometryOfSlice of on slice from the original series.
-     * 
+     *
      * @param currentSlice
      *            Slice to get the geometry from.
      * @return Geometry of given slice.
@@ -578,8 +577,8 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         public void run() {
             try {
                 Thread.sleep(5000);
-                ImageSeriesFactory
-                    .fireProperyChange(TextureDicomSeries.this, "RefreshTexture", TextureDicomSeries.this);
+                ImageSeriesFactory.fireProperyChange(TextureDicomSeries.this, "RefreshTexture",
+                    TextureDicomSeries.this);
                 internalThread = null;
             } catch (InterruptedException e) {
             }

@@ -4,19 +4,16 @@
  */
 package br.com.animati.texture.mpr3dview.tool;
 
-import br.com.animati.texture.mpr3dview.GUIManager;
-import br.com.animati.texture.mpr3dview.View3DContainer;
-import br.com.animati.texture.mpr3dview.ViewTexture;
-import br.com.animati.texture.mpr3dview.internal.Messages;
-import br.com.animati.texture.mpr3dview.pref.HaPrefsPage;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -27,43 +24,52 @@ import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.WtoolBar;
 
+import br.com.animati.texture.mpr3dview.GUIManager;
+import br.com.animati.texture.mpr3dview.View3DContainer;
+import br.com.animati.texture.mpr3dview.ViewTexture;
+import br.com.animati.texture.mpr3dview.internal.Messages;
+import br.com.animati.texture.mpr3dview.pref.HaPrefsPage;
+
 /**
  *
  * @author Gabriela Carla Bauerman (gabriela@animati.com.br)
  * @version 2015, 14 May.
  */
 public class TextureToolbar extends WtoolBar {
-    
+
     public static final String NAME = Messages.getString("TextureToolbar.name");
-    
+
     private ImageViewerEventManager eventManager;
     private JToggleButton show3D;
     private ListDataListener layListener = new ListDataListener() {
-                @Override
-                public void intervalAdded(ListDataEvent e) { }
-                @Override
-                public void intervalRemoved(ListDataEvent e) { }
+        @Override
+        public void intervalAdded(ListDataEvent e) {
+        }
 
-                @Override
-                public void contentsChanged(ListDataEvent e) {
-                    ActionState action = GUIManager.getInstance().getAction(ActionW.LAYOUT);
-                    if (action instanceof ComboItemListener) {
-                        ComboItemListener layout = (ComboItemListener) action;
-                        if (layout.getModel() != null && layout.getSelectedItem() != null) {
-                            Object selectedItem = layout.getSelectedItem();
-                            layout.getModel().removeListDataListener(layListener);
-                            show3D.setSelected(selectedItem.equals(View3DContainer.VIEWS_2x2_mpr));
+        @Override
+        public void intervalRemoved(ListDataEvent e) {
+        }
 
-                            layout.getModel().addListDataListener(layListener);
-                        }
-                    }
+        @Override
+        public void contentsChanged(ListDataEvent e) {
+            ActionState action = GUIManager.getInstance().getAction(ActionW.LAYOUT);
+            if (action instanceof ComboItemListener) {
+                ComboItemListener layout = (ComboItemListener) action;
+                if (layout.getModel() != null && layout.getSelectedItem() != null) {
+                    Object selectedItem = layout.getSelectedItem();
+                    layout.getModel().removeListDataListener(layListener);
+                    show3D.setSelected(selectedItem.equals(View3DContainer.VIEWS_2x2_mpr));
+
+                    layout.getModel().addListDataListener(layListener);
                 }
-            };
+            }
+        }
+    };
 
     public TextureToolbar(ImageViewerEventManager eventManager, int position) {
         super(NAME, position);
         this.eventManager = eventManager;
-        
+
         initGui();
     }
 
@@ -81,21 +87,21 @@ public class TextureToolbar extends WtoolBar {
                 }
             }
         });
-        
+
         add(refreshBt);
-        
+
         show3D = new JToggleButton(new ImageIcon(TextureToolbar.class.getResource("/icon/32x32/volume.png")));
         show3D.setToolTipText(Messages.getString("TextureToolbar.show3D"));
-        
+
         ActionState action = GUIManager.getInstance().getAction(ActionW.LAYOUT);
         if (action instanceof ComboItemListener) {
             ComboItemListener layout = (ComboItemListener) action;
             Object selectedItem = layout.getSelectedItem();
             show3D.setSelected(selectedItem.equals(View3DContainer.VIEWS_2x2_mpr));
-            
+
             layout.getModel().addListDataListener(layListener);
         }
-        
+
         show3D.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -112,9 +118,9 @@ public class TextureToolbar extends WtoolBar {
                 }
             }
         });
-        
+
         add(show3D);
-        
+
         JButton config = new JButton(new ImageIcon(TextureToolbar.class.getResource("/icon/32x32/config.png")));
         config.setToolTipText(Messages.getString("TextureToolbar.config"));
         config.addActionListener(new ActionListener() {
@@ -129,7 +135,5 @@ public class TextureToolbar extends WtoolBar {
         });
         add(config);
     }
-    
-    
-    
+
 }

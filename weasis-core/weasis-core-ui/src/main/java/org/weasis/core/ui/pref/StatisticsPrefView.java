@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -32,8 +32,8 @@ import org.weasis.core.ui.graphic.ImageStatistics;
 import org.weasis.core.ui.graphic.Measurement;
 
 public class StatisticsPrefView extends AbstractItemDialogPage {
-    private final Map<JCheckBox, Measurement> map = new HashMap<JCheckBox, Measurement>(
-        ImageStatistics.ALL_MEASUREMENTS.length);
+    private final Map<JCheckBox, Measurement> map =
+        new HashMap<JCheckBox, Measurement>(ImageStatistics.ALL_MEASUREMENTS.length);
 
     public StatisticsPrefView() {
         super(Messages.getString("MeasureTool.pix_stats")); //$NON-NLS-1$

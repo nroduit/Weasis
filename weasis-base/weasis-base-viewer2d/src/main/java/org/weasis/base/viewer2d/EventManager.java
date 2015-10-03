@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -83,7 +83,7 @@ import org.weasis.core.ui.util.PrintDialog;
  * The event processing center for this application. This class responses for loading data sets, processing the events
  * from the utility menu that includes changing the operation scope, the layout, window/level, rotation angle, zoom
  * factor, starting/stoping the cining-loop and etc.
- * 
+ *
  */
 
 public class EventManager extends ImageViewerEventManager<ImageElement> implements ActionListener {
@@ -145,9 +145,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
         iniAction(lutAction = newLutAction());
         iniAction(filterAction = newFilterAction());
-        iniAction(layoutAction =
-            newLayoutAction(View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST
-                .size()])));
+        iniAction(layoutAction = newLayoutAction(
+            View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST.size()])));
         iniAction(synchAction =
             newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
@@ -182,8 +181,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             @Override
             public void itemStateChanged(Object object) {
                 if (object instanceof KernelData) {
-                    firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                        object));
+                    firePropertyChange(ActionW.SYNCH.cmd(), null,
+                        new SynchEvent(getSelectedViewPane(), action.cmd(), object));
                 }
             }
         };
@@ -201,8 +200,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             public void itemStateChanged(Object object) {
                 if (object instanceof ByteLut) {
                     // customPreset = false;
-                    firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                        object));
+                    firePropertyChange(ActionW.SYNCH.cmd(), null,
+                        new SynchEvent(getSelectedViewPane(), action.cmd(), object));
                 }
             }
         };
@@ -266,9 +265,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             ImageViewerPlugin<ImageElement> view = getSelectedView2dContainer();
             if (view != null) {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
-                PrintDialog dialog =
-                    new PrintDialog(SwingUtilities.getWindowAncestor(view),
-                        Messages.getString("View2dContainer.print_layout"), this); //$NON-NLS-1$
+                PrintDialog dialog = new PrintDialog(SwingUtilities.getWindowAncestor(view),
+                    Messages.getString("View2dContainer.print_layout"), this); //$NON-NLS-1$
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         } else {
@@ -337,8 +335,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             selectedView2dContainer.setDrawActions(graphic);
             ViewCanvas<ImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
-                fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null,
-                    EVENT.SELECT_VIEW));
+                fireSeriesViewerListeners(
+                    new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null, EVENT.SELECT_VIEW));
                 pane.setFocused(true);
             }
         }
@@ -367,8 +365,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     public void reset(ResetTools action) {
         AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
         if (ResetTools.All.equals(action)) {
-            firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(),
-                true));
+            firePropertyChange(ActionW.SYNCH.cmd(), null,
+                new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));
         } else if (ResetTools.Zoom.equals(action)) {
             // Pass the value 0.0 (convention: default value according the zoom type) directly to the property change,
             // otherwise the value is adjusted by the BoundedRangeModel
@@ -382,9 +380,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 if (defaultView2d != null) {
                     ImageElement img = defaultView2d.getImage();
                     if (img != null) {
-                        boolean pixelPadding =
-                            JMVUtils.getNULLtoTrue(defaultView2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
-                                ActionW.IMAGE_PIX_PADDING.cmd()));
+                        boolean pixelPadding = JMVUtils.getNULLtoTrue(defaultView2d.getDisplayOpManager()
+                            .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
                         windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
                         levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
                     }
@@ -440,17 +437,17 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         }
 
         lutAction.setSelectedItemWithoutTriggerAction(dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT));
-        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(PseudoColorOp.OP_NAME,
-            PseudoColorOp.P_LUT_INVERSE));
+        inverseLutAction.setSelectedWithoutTriggerAction(
+            (Boolean) dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE));
         filterAction
             .setSelectedItemWithoutTriggerAction(dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA));
-        rotateAction.setValueWithoutTriggerAction((Integer) dispOp.getParamValue(RotationOp.OP_NAME,
-            RotationOp.P_ROTATE));
+        rotateAction
+            .setValueWithoutTriggerAction((Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE));
         flipAction.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
 
         spUnitAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd()));
-        zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) view2d
-            .getActionValue(ActionW.ZOOM.cmd()))));
+        zoomAction.setValueWithoutTriggerAction(
+            viewScaleToSliderValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd()))));
         showLensAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.LENS.cmd()));
         inverseStackAction.setSelected((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
@@ -526,7 +523,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             ButtonGroup group = new ButtonGroup();
             menu = new JMenu(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$ 
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$
             menu.setEnabled(getSelectedSeries() != null);
 
             if (menu.isEnabled()) {
@@ -618,11 +615,12 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     // public JMenu getSortStackMenu(String prop) {
     // JMenu menu = null;
     // if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
-    //            menu = sortStackAction.createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+    // menu = sortStackAction.createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack"));
+    // //$NON-NLS-1$
     //
     // menu.add(new JSeparator());
     // menu.add(inverseStackAction.createUnregiteredJCheckBoxMenuItem(Messages
-    //                .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
+    // .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
     // }
     // return menu;
     // }

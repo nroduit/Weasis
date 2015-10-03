@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -34,7 +34,6 @@ import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.Messages;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.explorer.wado.DicomManager;
 
@@ -99,9 +98,8 @@ public class WadoPrefView extends AbstractItemDialogPage {
         gbc_lblstrut.gridy = 0;
         panel.add(Box.createHorizontalStrut(2), gbc_lblstrut);
 
-        JTextArea txtpnNoteWhenThe =
-            new JTextArea(
-                "Note: When the WADO server cannot apply the Transfer Syntax, it should return an uncompressed image (1.2.840.10008.1.2.1) or it triggers an error."); //$NON-NLS-1$
+        JTextArea txtpnNoteWhenThe = new JTextArea(
+            "Note: When the WADO server cannot apply the Transfer Syntax, it should return an uncompressed image (1.2.840.10008.1.2.1) or it triggers an error."); //$NON-NLS-1$
 
         GridBagConstraints gbc_txtpnNoteWhenThe = new GridBagConstraints();
         gbc_txtpnNoteWhenThe.weighty = 1.0;

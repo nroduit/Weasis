@@ -43,8 +43,8 @@ public class KODocumentModule extends Module {
     }
 
     public Collection<HierachicalSOPInstanceReference> getCurrentRequestedProcedureEvidences() {
-        return HierachicalSOPInstanceReference.toHierachicalSOPInstanceReferenceMacros(dcmItems
-            .getSequence(Tag.CurrentRequestedProcedureEvidenceSequence));
+        return HierachicalSOPInstanceReference.toHierachicalSOPInstanceReferenceMacros(
+            dcmItems.getSequence(Tag.CurrentRequestedProcedureEvidenceSequence));
     }
 
     public void setCurrentRequestedProcedureEvidences(Collection<HierachicalSOPInstanceReference> refs) {
@@ -52,8 +52,8 @@ public class KODocumentModule extends Module {
     }
 
     public Collection<HierachicalSOPInstanceReference> getIdenticalDocuments() {
-        return HierachicalSOPInstanceReference.toHierachicalSOPInstanceReferenceMacros(dcmItems
-            .getSequence(Tag.IdenticalDocumentsSequence));
+        return HierachicalSOPInstanceReference
+            .toHierachicalSOPInstanceReferenceMacros(dcmItems.getSequence(Tag.IdenticalDocumentsSequence));
     }
 
     public void setIdenticalDocuments(Collection<HierachicalSOPInstanceReference> refs) {

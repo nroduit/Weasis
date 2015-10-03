@@ -45,9 +45,9 @@ public class PointGraphic extends BasicGraphic {
     protected PointGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
-        @Attribute(name = "pt_size") int pointSize) throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible, @Attribute(name = "pt_size") int pointSize)
+            throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
         if (handlePointTotalNumber != 1) {
             throw new InvalidShapeException("Not a valid PointGraphic!"); //$NON-NLS-1$
@@ -59,9 +59,8 @@ public class PointGraphic extends BasicGraphic {
     protected void buildShape() {
         if (this.handlePointList.size() == 1) {
             Point2D.Double point = this.handlePointList.get(0);
-            Ellipse2D ellipse =
-                new Ellipse2D.Double(point.getX() - pointSize / 2.0f, point.getY() - pointSize / 2.0f, pointSize,
-                    pointSize);
+            Ellipse2D ellipse = new Ellipse2D.Double(point.getX() - pointSize / 2.0f, point.getY() - pointSize / 2.0f,
+                pointSize, pointSize);
             setShape(ellipse, null);
             updateLabel(null, null);
         }

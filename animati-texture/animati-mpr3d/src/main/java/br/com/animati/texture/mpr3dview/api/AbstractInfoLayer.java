@@ -4,7 +4,6 @@
  */
 package br.com.animati.texture.mpr3dview.api;
 
-import br.com.animati.texture.mpr3dview.internal.Messages;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -22,6 +21,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.FontTools;
@@ -30,12 +30,13 @@ import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 
+import br.com.animati.texture.mpr3dview.internal.Messages;
+
 /**
  * Template for an InfoLayer.
- * 
- * Implements the common drawing methods and leave for implementation the
- * task of get the necessary data.
- * 
+ *
+ * Implements the common drawing methods and leave for implementation the task of get the necessary data.
+ *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  * @version 2013, 21 sep
  */
@@ -58,24 +59,55 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
     public static final String MODALITY = Messages.getString("AbstractInfoLayer.modality");
 
     /** Display preference implementation. */
-    protected final Map<String, Boolean> displayPreferences =
-            new HashMap<String, Boolean>();
+    protected final Map<String, Boolean> displayPreferences = new HashMap<String, Boolean>();
 
     protected Color highlightColor = new Color(255, 153, 153);
     protected boolean visible = true;
     protected AbstractLayer.Identifier identifier = AbstractLayer.ANNOTATION;
 
-    @Override public int getBorder() { return border; }
-    @Override public void setBorder(int textBorder) { border = textBorder; }
-    @Override public void setVisible(boolean flag) { visible = flag; }
-    @Override public boolean isVisible() { return visible; }
-    @Override public void setLevel(int i) { /* We dont use level */ }
-    @Override public int getLevel() { return 0; }
-    @Override public Identifier getIdentifier() { return identifier; }
-    @Override public boolean isShowBottomScale() {
-        return displayPreferences.get(SCALE_BOTTOM); }
-    @Override public void setShowBottomScale(boolean showBottomScale) {
-        displayPreferences.put(SCALE_BOTTOM, showBottomScale); }
+    @Override
+    public int getBorder() {
+        return border;
+    }
+
+    @Override
+    public void setBorder(int textBorder) {
+        border = textBorder;
+    }
+
+    @Override
+    public void setVisible(boolean flag) {
+        visible = flag;
+    }
+
+    @Override
+    public boolean isVisible() {
+        return visible;
+    }
+
+    @Override
+    public void setLevel(int i) {
+        /* We dont use level */ }
+
+    @Override
+    public int getLevel() {
+        return 0;
+    }
+
+    @Override
+    public Identifier getIdentifier() {
+        return identifier;
+    }
+
+    @Override
+    public boolean isShowBottomScale() {
+        return displayPreferences.get(SCALE_BOTTOM);
+    }
+
+    @Override
+    public void setShowBottomScale(boolean showBottomScale) {
+        displayPreferences.put(SCALE_BOTTOM, showBottomScale);
+    }
 
     @Override
     public boolean getDisplayPreferences(String item) {
@@ -106,19 +138,20 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
         return highlightColor;
     }
 
-
     @Override
-    public void paint(Graphics2D g2d) {        
+    public void paint(Graphics2D g2d) {
         if (!visible) {
             return;
         }
-        if (ownerHasContent()) {                   
+        if (ownerHasContent()) {
             if (isOwnerContentReadable()) {
                 if (getDisplayPreferences(SCALE)) {
                     drawScale(g2d);
-                } if (getDisplayPreferences(IMAGE_ORIENTATION)) {
+                }
+                if (getDisplayPreferences(IMAGE_ORIENTATION)) {
                     drawOrientation(g2d);
-                } if (getDisplayPreferences(LUT)) {
+                }
+                if (getDisplayPreferences(LUT)) {
                     drawLUT(g2d);
                 }
             } else {
@@ -128,12 +161,12 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
             paintTextCorners(g2d);
         }
     }
-    
+
     protected abstract void paintNotReadable(Graphics2D g2d);
 
     protected void drawScale(Graphics2D g2d) {
-        
-        //Delegated data:
+
+        // Delegated data:
         Rectangle bounds = getOwnerBounds();
         double zoomFactor = getOwnerZoomFactor();
         double pixelSize = getOwnerPixelSize();
@@ -142,10 +175,10 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
         double rescaleX = getOwnerContentRescaleX();
         double rescaleY = getOwnerContentRescaleY();
         final String pixSizeDesc = getPixelSizeCalibrationDescription();
-        
-        ScaleHelper scDecorator = new ScaleHelper(g2d, bounds, zoomFactor,
-                pixelSize, unit, sourceDim, rescaleX, rescaleY, pixSizeDesc);
-        
+
+        ScaleHelper scDecorator =
+            new ScaleHelper(g2d, bounds, zoomFactor, pixelSize, unit, sourceDim, rescaleX, rescaleY, pixSizeDesc);
+
         if (getDisplayPreferences(SCALE_BOTTOM)) {
             scDecorator.drawBottomScale();
         }
@@ -169,17 +202,15 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
         String[] leftTopRiBot = getContent4OrientationFlags();
         if (noNullStrings(leftTopRiBot)) {
             for (String string : leftTopRiBot) {
-                if(string.length() < 1) {
+                if (string.length() < 1) {
                     string = " ";
                 }
             }
 
             Font oldFont = g2d.getFont();
-            Font bigFont = oldFont.deriveFont(
-                    Font.BOLD, oldFont.getSize() + 1.0f);
+            Font bigFont = oldFont.deriveFont(Font.BOLD, oldFont.getSize() + 1.0f);
             g2d.setFont(bigFont);
-            Hashtable<TextAttribute, Object> map =
-                    new Hashtable<TextAttribute, Object>(1);
+            Hashtable<TextAttribute, Object> map = new Hashtable<TextAttribute, Object>(1);
             map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
             String fistLetter = leftTopRiBot[1].substring(0, 1);
             int shiftx = g2d.getFontMetrics().stringWidth(fistLetter);
@@ -192,53 +223,41 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
             if (getDisplayPreferences(ORIENTATION_TOP)) {
                 g2d.setFont(bigFont);
                 float placeY = (float) (thickLength + border);
-                paintFontOutline(g2d, fistLetter, midx,
-                        placeY, getHighlightColor(), Color.BLACK);
+                paintFontOutline(g2d, fistLetter, midx, placeY, getHighlightColor(), Color.BLACK);
                 if (leftTopRiBot[1].length() > 1) {
                     g2d.setFont(subscriptFont);
-                    paintFontOutline(g2d, leftTopRiBot[1].substring(
-                            1, leftTopRiBot[1].length()), midx + shiftx,
-                            placeY, getHighlightColor(), Color.BLACK);
+                    paintFontOutline(g2d, leftTopRiBot[1].substring(1, leftTopRiBot[1].length()), midx + shiftx, placeY,
+                        getHighlightColor(), Color.BLACK);
                 }
             }
             if (getDisplayPreferences(ORIENTATION_LEFT)) {
                 g2d.setFont(bigFont);
-                paintFontOutline(g2d, leftTopRiBot[0].substring(0, 1),
-                        (float) (thickLength + border), midy,
-                        getHighlightColor(), Color.BLACK);
+                paintFontOutline(g2d, leftTopRiBot[0].substring(0, 1), (float) (thickLength + border), midy,
+                    getHighlightColor(), Color.BLACK);
                 if (leftTopRiBot[0].length() > 1) {
                     g2d.setFont(subscriptFont);
-                    paintFontOutline(g2d, leftTopRiBot[0].substring(
-                            1, leftTopRiBot[0].length()),
-                            (float) (thickLength + border + shiftx),
-                            midy, getHighlightColor(), Color.BLACK);
+                    paintFontOutline(g2d, leftTopRiBot[0].substring(1, leftTopRiBot[0].length()),
+                        (float) (thickLength + border + shiftx), midy, getHighlightColor(), Color.BLACK);
                 }
             }
             if (getDisplayPreferences(ORIENTATION_BOTTOM)) {
                 g2d.setFont(bigFont);
-                paintFontOutline(g2d,
-                        leftTopRiBot[3].substring(0, 1), midx,
-                        (float) (bounds.height - (thickLength + border)),
-                        getHighlightColor(), Color.BLACK);
+                paintFontOutline(g2d, leftTopRiBot[3].substring(0, 1), midx,
+                    (float) (bounds.height - (thickLength + border)), getHighlightColor(), Color.BLACK);
                 if (leftTopRiBot[3].length() > 1) {
                     g2d.setFont(subscriptFont);
-                    paintFontOutline(g2d, leftTopRiBot[3].substring(
-                            1, leftTopRiBot[3].length()), midx + shiftx,
-                            (float) (bounds.height - (thickLength + border)),
-                            getHighlightColor(), Color.BLACK);
+                    paintFontOutline(g2d, leftTopRiBot[3].substring(1, leftTopRiBot[3].length()), midx + shiftx,
+                        (float) (bounds.height - (thickLength + border)), getHighlightColor(), Color.BLACK);
                 }
             }
             if (getDisplayPreferences(ORIENTATION_RIGHT)) {
                 g2d.setFont(bigFont);
-                float placeX = (float) (bounds.width
-                        - (thickLength + border + (2 * shiftx)));
-                paintFontOutline(g2d, leftTopRiBot[2].substring(0, 1),
-                        placeX, midy, getHighlightColor(), Color.BLACK);
+                float placeX = (float) (bounds.width - (thickLength + border + (2 * shiftx)));
+                paintFontOutline(g2d, leftTopRiBot[2].substring(0, 1), placeX, midy, getHighlightColor(), Color.BLACK);
                 if (leftTopRiBot[2].length() > 1) {
                     g2d.setFont(subscriptFont);
-                    paintFontOutline(g2d, leftTopRiBot[2].substring(
-                            1, leftTopRiBot[2].length()), placeX + shiftx,
-                            midy, getHighlightColor(), Color.BLACK);
+                    paintFontOutline(g2d, leftTopRiBot[2].substring(1, leftTopRiBot[2].length()), placeX + shiftx, midy,
+                        getHighlightColor(), Color.BLACK);
                 }
             }
             g2d.setFont(oldFont);
@@ -246,11 +265,10 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
     }
 
     private void drawLUT(Graphics2D g2d) {
-        //Not implemented yet
+        // Not implemented yet
     }
 
-    public void paintFontOutline(Graphics2D g2, String str,
-            float x, float y, Color front, Color back) {
+    public void paintFontOutline(Graphics2D g2, String str, float x, float y, Color front, Color back) {
         g2.setPaint(back);
         g2.drawString(str, x - getOutlineDif(), y - getOutlineDif());
         g2.drawString(str, x - getOutlineDif(), y);
@@ -267,16 +285,17 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
     protected float getOutlineDif() {
         return 1f;
     }
-    
+
     /**
      * Here so it can be Overriden.
-     * @param line Line to outline
+     * 
+     * @param line
+     *            Line to outline
      * @return Outline rectangle.
      */
     protected Shape getOutLine(Line2D line) {
         Rectangle2D r = line.getBounds2D();
-        r.setFrame(r.getX() - 1.0, r.getY() - 1.0, r.getWidth() + 2.0,
-                r.getHeight() + 2.0);
+        r.setFrame(r.getX() - 1.0, r.getY() - 1.0, r.getWidth() + 2.0, r.getHeight() + 2.0);
         return r;
     }
 
@@ -291,7 +310,7 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
         }
         return true;
     }
-    
+
     public static double ajustShowScale(double ratio, int maxLength) {
         int digits = (int) ((Math.log(maxLength * ratio) / Math.log(10)) + 1);
         double scaleLength = Math.pow(10, digits);
@@ -308,7 +327,7 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
         }
         return scaleSize;
     }
-    
+
     public static double findGeometricSuite(double length) {
         int shift = (int) ((Math.log(length) / Math.log(10)) + 0.1);
         int firstDigit = (int) (length / Math.pow(10, shift) + 0.5);
@@ -318,7 +337,7 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
         return 2.0;
 
     }
-    
+
     public static String ajustLengthDisplay(double scaleLength, Unit[] unit) {
         double ajustScaleLength = scaleLength;
 
@@ -348,44 +367,55 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
         // Trick to keep the value as a return parameter
         unit[0] = ajustUnit;
         if (ajustScaleLength < 1.0) {
-            return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
-                .fourDecimal(ajustScaleLength);
+            return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength)
+                : DecFormater.fourDecimal(ajustScaleLength);
         }
-        return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
-            .twoDecimal(ajustScaleLength);
+        return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength)
+            : DecFormater.twoDecimal(ajustScaleLength);
     }
 
     protected abstract boolean ownerHasContent();
+
     protected abstract boolean isOwnerContentReadable();
+
     protected abstract Rectangle getOwnerBounds();
-     /**
+
+    /**
      * Draw the text on the corners.
-     * @param g2d 
+     * 
+     * @param g2d
      */
     public abstract void paintTextCorners(Graphics2D g2d);
+
     /** @return left Top Ri Bot */
-    public abstract  String[] getContent4OrientationFlags();
+    public abstract String[] getContent4OrientationFlags();
+
     /** @return Pixel Spacing unit tu use on Scale. */
     public abstract Unit getOwnerPixelSpacingUnit();
+
     /** @return Owner object's zoom factor. */
     public abstract double getOwnerZoomFactor();
-    /** 
-     * Owner's content pixel size.
-     * Return 0 if its unknown ot not trustable.
-     * 
-     * @return Owner's content pixel size. 
+
+    /**
+     * Owner's content pixel size. Return 0 if its unknown ot not trustable.
+     *
+     * @return Owner's content pixel size.
      */
     public abstract double getOwnerPixelSize();
+
     /** @return Owner's content dimensionsl */
     public abstract Dimension getOwnerContentDimensions();
+
     /** @return Owner's content rescaleX (see ImageElement:getRescaleX). */
     public abstract double getOwnerContentRescaleX();
+
     public abstract double getOwnerContentRescaleY();
-    /** @return Owner's content PixelSizeCalibrationDescription. (see
-     DicomImageElement constructor). */
+
+    /**
+     * @return Owner's content PixelSizeCalibrationDescription. (see DicomImageElement constructor).
+     */
     public abstract String getPixelSizeCalibrationDescription();
 
-    
     protected class ScaleHelper {
         Graphics2D g2d;
         Rectangle canvasBounds;
@@ -394,27 +424,23 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
         double scaleSizex;
         double scaleSizey;
 
-        protected ScaleHelper(Graphics2D g2d, Rectangle bounds,
-                double zoomFactor, double pixelSize, Unit unit,
-                Dimension sourceDim, double rescaleX, double rescaleY,
-                String pixSizeDesc) {
-            
+        protected ScaleHelper(Graphics2D g2d, Rectangle bounds, double zoomFactor, double pixelSize, Unit unit,
+            Dimension sourceDim, double rescaleX, double rescaleY, String pixSizeDesc) {
+
             this.g2d = g2d;
             this.unit = unit;
             scale = pixelSize / zoomFactor;
             canvasBounds = bounds;
-            scaleSizex = ajustShowScale(scale,
-                (int) Math.min(zoomFactor * sourceDim.getWidth()
-                * rescaleX, bounds.width / 2.0));
+            scaleSizex =
+                ajustShowScale(scale, (int) Math.min(zoomFactor * sourceDim.getWidth() * rescaleX, bounds.width / 2.0));
             scaleSizey = ajustShowScale(scale,
-                (int) Math.min(zoomFactor * sourceDim.getHeight()
-                * rescaleY, bounds.height / 2.0));
-            
+                (int) Math.min(zoomFactor * sourceDim.getHeight() * rescaleY, bounds.height / 2.0));
+
         }
-        
+
         protected void drawBottomScale() {
             if (scaleSizex > 30.0d) {
-                Unit[] unitToPaint = { unit }; //may be modifyed
+                Unit[] unitToPaint = { unit }; // may be modifyed
                 String str = ajustLengthDisplay(scaleSizex * scale, unitToPaint);
                 str += " " + unitToPaint[0].getAbbreviation();
 
@@ -424,123 +450,116 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
                 drawScale(str, scaleSizex, posx, posy, -1, 0);
             }
         }
-        
+
         private void drawTopScale() {
             if (scaleSizex > 30.0d) {
-                Unit[] unitToPaint = { unit }; //may be modifyed
+                Unit[] unitToPaint = { unit }; // may be modifyed
                 String str = ajustLengthDisplay(scaleSizex * scale, unitToPaint);
                 str += " " + unitToPaint[0].getAbbreviation();
-                
+
                 double posx = canvasBounds.width / 2.0 - scaleSizex / 2.0;
                 double posy = border;
 
                 drawScale(str, scaleSizex, posx, posy, 1, 0);
             }
         }
-        
+
         private void drawLeftScale() {
             if (scaleSizey > 30.0d) {
-                Unit[] unitToPaint = { unit }; //may be modifyed
+                Unit[] unitToPaint = { unit }; // may be modifyed
                 String str = ajustLengthDisplay(scaleSizey * scale, unitToPaint);
                 str += " " + unitToPaint[0].getAbbreviation();
-                
-                double posx = border; //do not account for outline
+
+                double posx = border; // do not account for outline
                 double posy = canvasBounds.height / 2.0 - scaleSizey / 2.0;
-                
+
                 drawScale(str, scaleSizey, posx, posy, 1, 1);
-                
+
             }
         }
-        
+
         private void drawRightScale() {
             if (scaleSizey > 30.0d) {
-                Unit[] unitToPaint = { unit }; //may be modifyed
+                Unit[] unitToPaint = { unit }; // may be modifyed
                 String str = ajustLengthDisplay(scaleSizey * scale, unitToPaint);
                 str += " " + unitToPaint[0].getAbbreviation();
-                
+
                 double posx = canvasBounds.width - border;
                 double posy = canvasBounds.height / 2.0 - scaleSizey / 2.0;
-                
+
                 drawScale(str, scaleSizey, posx, posy, -1, 1);
             }
         }
 
-        private void drawScale(String str, double scaleSize, double posx,
-                double posy, int thickMultiplyer, int orientation) {
-            //orientation: 0=horiz / 1=vertical
-            
-            //old g2d
+        private void drawScale(String str, double scaleSize, double posx, double posy, int thickMultiplyer,
+            int orientation) {
+            // orientation: 0=horiz / 1=vertical
+
+            // old g2d
             Stroke oldStroke = g2d.getStroke();
             Paint oldPaint = g2d.getPaint();
 
             final float fontHeight = FontTools.getAccurateFontHeight(g2d);
             g2d.setStroke(new BasicStroke(fontHeight / 10));
-            g2d.setPaint(Color.black); //TODO getOutlineColor
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            double thickLength = g2d.getFont().getSize() * 1.5f;        
+            g2d.setPaint(Color.black); // TODO getOutlineColor
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            double thickLength = g2d.getFont().getSize() * 1.5f;
             thickLength = thickLength < 5.0 ? 5.0 : thickLength;
-            
+
             int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5;
             double midThick = thickLength * 2.0 / 3.0;
             double smallThick = thickLength / 3.0;
             double divSquare = scaleSize / divisor;
-            
+
             double targetX = posx + scaleSize;
             double targetY = posy;
             if (orientation == 1) {
                 targetX = posx;
                 targetY = posy + scaleSize;
             }
-            
-            //Main line Outline
+
+            // Main line Outline
             Line2D line = new Line2D.Double(posx, posy, targetX, targetY);
             g2d.draw(getOutLine(line));
 
-            //First thick Outline
+            // First thick Outline
             if (orientation == 0) {
                 line.setLine(posx, posy + (thickLength * thickMultiplyer), posx, posy);
             } else {
                 line.setLine(posx, posy, posx + (thickLength * thickMultiplyer), posy);
             }
             g2d.draw(getOutLine(line));
-            
-            //Last thick Outline
+
+            // Last thick Outline
             if (orientation == 0) {
-                line.setLine(targetX, targetY + (thickLength * thickMultiplyer),
-                        targetX, targetY);
+                line.setLine(targetX, targetY + (thickLength * thickMultiplyer), targetX, targetY);
             } else {
-                line.setLine(targetX, targetY,
-                        targetX + (thickLength * thickMultiplyer), targetY);
+                line.setLine(targetX, targetY, targetX + (thickLength * thickMultiplyer), targetY);
             }
             g2d.draw(getOutLine(line));
-            
-            //Midthicks Outlines
+
+            // Midthicks Outlines
             for (int i = 1; i < divisor; i++) {
                 if (orientation == 0) {
-                    line.setLine(posx + divSquare * i, posy, posx + divSquare * i,
-                            posy + (midThick * thickMultiplyer));
+                    line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy + (midThick * thickMultiplyer));
                 } else {
-                    line.setLine(posx, posy + divSquare * i,
-                            posx + (midThick * thickMultiplyer), posy + divSquare * i);
+                    line.setLine(posx, posy + divSquare * i, posx + (midThick * thickMultiplyer), posy + divSquare * i);
                 }
                 g2d.draw(getOutLine(line));
             }
 
-            //smallThick Outlines
+            // smallThick Outlines
             if (divSquare > (90 / 12 * fontHeight)) {
                 double secondSquare = divSquare / 10.0;
                 for (int i = 0; i < divisor; i++) {
                     for (int k = 1; k < 10; k++) {
                         if (orientation == 0) {
                             double secBar = posx + divSquare * i + secondSquare * k;
-                            line.setLine(secBar, posy, secBar,
-                                    posy + (smallThick * thickMultiplyer));
+                            line.setLine(secBar, posy, secBar, posy + (smallThick * thickMultiplyer));
                         } else {
                             double secBar = posy + divSquare * i + secondSquare * k;
-                            line.setLine(posx, secBar,
-                                    posx + (smallThick * thickMultiplyer), secBar);
+                            line.setLine(posx, secBar, posx + (smallThick * thickMultiplyer), secBar);
                         }
                         g2d.draw(getOutLine(line));
                     }
@@ -550,30 +569,26 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
             g2d.setPaint(Color.white);
             line.setLine(posx, posy, targetX, targetY);
             g2d.draw(line);
-            
+
             if (orientation == 0) {
                 line.setLine(posx, posy + (thickLength * thickMultiplyer), posx, posy);
             } else {
                 line.setLine(posx, posy, posx + (thickLength * thickMultiplyer), posy);
             }
             g2d.draw(line);
-            
+
             if (orientation == 0) {
-                line.setLine(targetX, targetY + (thickLength * thickMultiplyer),
-                        targetX, targetY);
+                line.setLine(targetX, targetY + (thickLength * thickMultiplyer), targetX, targetY);
             } else {
-                line.setLine(targetX, targetY,
-                        targetX + (thickLength * thickMultiplyer), targetY);
+                line.setLine(targetX, targetY, targetX + (thickLength * thickMultiplyer), targetY);
             }
             g2d.draw(line);
 
             for (int i = 1; i < divisor; i++) {
                 if (orientation == 0) {
-                    line.setLine(posx + divSquare * i, posy, posx + divSquare * i,
-                            posy + (midThick * thickMultiplyer));
+                    line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy + (midThick * thickMultiplyer));
                 } else {
-                    line.setLine(posx, posy + divSquare * i,
-                            posx + (midThick * thickMultiplyer), posy + divSquare * i);
+                    line.setLine(posx, posy + divSquare * i, posx + (midThick * thickMultiplyer), posy + divSquare * i);
                 }
                 g2d.draw(line);
             }
@@ -583,52 +598,45 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
                     for (int k = 1; k < 10; k++) {
                         if (orientation == 0) {
                             double secBar = posx + divSquare * i + secondSquare * k;
-                            line.setLine(secBar, posy, secBar,
-                                    posy + (smallThick * thickMultiplyer));
+                            line.setLine(secBar, posy, secBar, posy + (smallThick * thickMultiplyer));
                         } else {
                             double secBar = posy + divSquare * i + secondSquare * k;
-                            line.setLine(posx, secBar,
-                                    posx + (smallThick * thickMultiplyer), secBar);
+                            line.setLine(posx, secBar, posx + (smallThick * thickMultiplyer), secBar);
                         }
                         g2d.draw(line);
                     }
                 }
             }
 
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-            
-            paintStrings(str, posx, posy, fontHeight, thickMultiplyer,
-                    orientation);
-            
-            
-            //recover old settings
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+
+            paintStrings(str, posx, posy, fontHeight, thickMultiplyer, orientation);
+
+            // recover old settings
             g2d.setPaint(oldPaint);
             g2d.setStroke(oldStroke);
-            
+
         }
 
-        private void paintStrings(String str, double posx, double posy,
-                float fontHeight, int thickMultiplyer, int orientation) {
-            
+        private void paintStrings(String str, double posx, double posy, float fontHeight, int thickMultiplyer,
+            int orientation) {
+
             float drawY = (float) (posy + (fontHeight * thickMultiplyer));
             float drawX = (float) (posx + scaleSizex + (fontHeight / 2));
             if (orientation == 0) {
                 final String pixSizeDesc = getPixelSizeCalibrationDescription();
                 if (StringUtil.hasText(pixSizeDesc)) {
-                    paintFontOutline(g2d, pixSizeDesc, drawX, drawY,
-                            Color.white, Color.black);
+                    paintFontOutline(g2d, pixSizeDesc, drawX, drawY, Color.white, Color.black);
                 }
-            drawY = drawY + fontHeight;
+                drawY = drawY + fontHeight;
             } else {
                 drawX = (float) posx;
                 if (thickMultiplyer == -1) {
-                    drawX = drawX - (float) g2d.getFontMetrics()
-                            .getStringBounds(str, g2d).getWidth();
+                    drawX = drawX - (float) g2d.getFontMetrics().getStringBounds(str, g2d).getWidth();
                 }
                 drawY = (float) posy - (fontHeight / 2);
             }
-            
+
             paintFontOutline(g2d, str, drawX, drawY, Color.white, Color.black);
         }
     }

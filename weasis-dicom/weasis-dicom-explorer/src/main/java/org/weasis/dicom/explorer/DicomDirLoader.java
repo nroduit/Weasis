@@ -233,10 +233,10 @@ public class DicomDirLoader {
      * Reads DICOMDIR icon. Only monochrome and palette color images shall be used. Samples per Pixel (0028,0002) shall
      * have a Value of 1, Photometric Interpretation (0028,0004) shall have a Value of either MONOCHROME 1, MONOCHROME 2
      * or PALETTE COLOR, Planar Configuration (0028,0006) shall not be present.
-     * 
+     *
      * @see <a href="http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_F.7.html">F.7 Icon Image Key
      *      Definition</a>
-     * 
+     *
      * @param iconInstance
      *            Attributes
      * @return the thumbnail path
