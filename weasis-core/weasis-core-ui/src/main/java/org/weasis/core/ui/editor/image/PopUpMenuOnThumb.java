@@ -10,7 +10,7 @@ import org.weasis.core.ui.Messages;
 
 /**
  * The Class PopUpMenuOnThumb.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class PopUpMenuOnThumb extends JPopupMenu {

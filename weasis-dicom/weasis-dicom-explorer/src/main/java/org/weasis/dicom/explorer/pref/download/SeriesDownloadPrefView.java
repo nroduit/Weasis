@@ -22,8 +22,8 @@ import org.weasis.dicom.explorer.Messages;
 public class SeriesDownloadPrefView extends AbstractItemDialogPage {
     public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately"; //$NON-NLS-1$
 
-    private JCheckBox downloadImmediatelyCheckbox = new JCheckBox(
-        Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox")); //$NON-NLS-1$
+    private JCheckBox downloadImmediatelyCheckbox =
+        new JCheckBox(Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox")); //$NON-NLS-1$
 
     public SeriesDownloadPrefView() {
         super(Messages.getString("SeriesDownloadPrefView.title")); //$NON-NLS-1$
@@ -31,10 +31,8 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         JPanel panel = new JPanel();
-        panel
-            .setBorder(new TitledBorder(
-                null,
-                org.weasis.core.ui.Messages.getString("SeriesDownloadPrefView.download"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        panel.setBorder(new TitledBorder(null, org.weasis.core.ui.Messages.getString("SeriesDownloadPrefView.download"), //$NON-NLS-1$
+            TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(panel);
         GridBagLayout gbl_panel = new GridBagLayout();
         panel.setLayout(gbl_panel);
@@ -56,8 +54,8 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
         gbc_downloadImmediatelyCheckbox.gridy = 0;
         panel.add(downloadImmediatelyCheckbox, gbc_downloadImmediatelyCheckbox);
 
-        downloadImmediatelyCheckbox.setSelected(BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY,
-            true));
+        downloadImmediatelyCheckbox
+            .setSelected(BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
 
         JPanel panel_2 = new JPanel();
         FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
@@ -80,8 +78,8 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
     public void resetoDefaultValues() {
         BundleTools.SYSTEM_PREFERENCES.resetProperty(DOWNLOAD_IMMEDIATELY, Boolean.TRUE.toString());
 
-        downloadImmediatelyCheckbox.setSelected(BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY,
-            true));
+        downloadImmediatelyCheckbox
+            .setSelected(BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
     }
 
     @Override

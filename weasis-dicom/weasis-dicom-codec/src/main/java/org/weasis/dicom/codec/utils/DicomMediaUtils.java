@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -76,7 +76,7 @@ public class DicomMediaUtils {
          * Set value for dicom root UID which should be registered at the
          * http://www.iana.org/assignments/enterprise-numbers <br>
          * Default value is 2.25, this enables users to generate OIDs without any registration procedure
-         * 
+         *
          * @see http://www.dclunie.com/medical-image-faq/html/part2.html#UUID <br>
          *      http://www.oid-info.com/get/2.25 <br>
          *      http://www.itu.int/ITU-T/asn1/uuid.html<br>
@@ -117,9 +117,9 @@ public class DicomMediaUtils {
      * but not both.<br>
      * This requirement for only a single transformation makes it possible to unambiguously define the input of
      * succeeding stages of the grayscale pipeline such as the VOI LUT
-     * 
+     *
      * @return True if the specified object contains some type of Modality LUT attributes at the current level. <br>
-     * 
+     *
      * @see - Dicom Standard 2011 - PS 3.3 § C.11.1 Modality LUT Module
      */
 
@@ -135,16 +135,16 @@ public class DicomMediaUtils {
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
-     * 
+     *
      * If any VOI LUT Table is included by an Image, a Window Width and Window Center or the VOI LUT Table, but not
      * both, may be applied to the Image for display. Inclusion of both indicates that multiple alternative views may be
      * presented. <br>
      * If multiple items are present in VOI LUT Sequence, only one may be applied to the Image for display. Multiple
      * items indicate that multiple alternative views may be presented.
-     * 
+     *
      * @return True if the specified object contains some type of VOI LUT attributes at the current level (ie:Window
      *         Level or VOI LUT Sequence).
-     * 
+     *
      * @see - Dicom Standard 2011 - PS 3.3 § C.11.2 VOI LUT Module
      */
 
@@ -164,14 +164,14 @@ public class DicomMediaUtils {
     }
 
     /**
-     * 
+     *
      * @param dicomLutObject
      *            defines LUT data dicom structure
-     * 
+     *
      * @param isValueRepresentationSigned
      *            of the descriptor (US or SS) is specified by Pixel Representation (0028,0103).
      * @return LookupTableJAI object if Data Element and Descriptors are consistent
-     * 
+     *
      * @see - Dicom Standard 2011 - PS 3.3 § C.11 LOOK UP TABLES AND PRESENTATION STATES
      */
 
@@ -499,8 +499,8 @@ public class DicomMediaUtils {
                     String pixRel = (String) dicomTagMap.get(TagW.PixelIntensityRelationship);
                     if (pixRel != null && ("LOG".equalsIgnoreCase(pixRel) || "DISP".equalsIgnoreCase(pixRel))) { //$NON-NLS-1$ //$NON-NLS-2$
                         canApplyMLUT = false;
-                        LOGGER
-                            .debug("Modality LUT Sequence shall NOT be applied according to PixelIntensityRelationship"); //$NON-NLS-1$
+                        LOGGER.debug(
+                            "Modality LUT Sequence shall NOT be applied according to PixelIntensityRelationship"); //$NON-NLS-1$
                     }
                 }
 
@@ -544,7 +544,7 @@ public class DicomMediaUtils {
                 } else {
                     String modlality = (String) dicomTagMap.get(TagW.Modality);
                     if (("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    || "PT".equals(modlality)) == false) { //$NON-NLS-1$
+                        || "PT".equals(modlality)) == false) { //$NON-NLS-1$
                         LOGGER
                             .debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
                     }
@@ -627,7 +627,7 @@ public class DicomMediaUtils {
 
             /**
              * @see - Dicom Standard 2011 - PS 3.3 § C.11.6 Softcopy Presentation LUT Module
-             * 
+             *
              *      Presentation LUT Module is always implicitly specified to apply over the full range of output of the
              *      preceding transformation, and it never selects a subset or superset of the that range (unlike the
              *      VOI LUT).
@@ -685,7 +685,8 @@ public class DicomMediaUtils {
     public static String buildPatientSex(String val) {
         // Sex attribute can have the following values: M(male), F(female), or O(other)
         String name = val == null ? "O" : val; //$NON-NLS-1$
-        return name.startsWith("F") ? Messages.getString("DicomMediaIO.female") : name.startsWith("M") ? Messages.getString("DicomMediaIO.Male") : Messages.getString("DicomMediaIO.other"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+        return name.startsWith("F") ? Messages.getString("DicomMediaIO.female") //$NON-NLS-1$ //$NON-NLS-2$
+            : name.startsWith("M") ? Messages.getString("DicomMediaIO.Male") : Messages.getString("DicomMediaIO.other"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     public static String buildPersonName(String name) {
@@ -707,13 +708,13 @@ public class DicomMediaUtils {
             }
             /*
              * In DICOM “family name^given name^middle name^prefix^suffix”
-             * 
+             *
              * In HL7 “family name^given name^middle name^suffix^prefix^ degree”
              */
             String[] vals = names[k].split("\\^"); //$NON-NLS-1$
 
             for (int i = 0; i < vals.length; i++) {
-                if (StringUtil.hasText(vals[i])) { //$NON-NLS-1$
+                if (StringUtil.hasText(vals[i])) {
                     if (i >= 3) {
                         buf.append(", "); //$NON-NLS-1$
                     } else {
@@ -731,7 +732,7 @@ public class DicomMediaUtils {
         Date birthdate) {
         /*
          * IHE RAD TF-­‐2: 4.16.4.2.2.5.3
-         * 
+         *
          * The Image Display shall not display FrameSets for multiple patients simultaneously. Only images with exactly
          * the same value for Patient’s ID (0010,0020) and Patient’s Name (0010,0010) shall be displayed at the same
          * time (other Patient-level attributes may be different, empty or absent). Though it is possible that the same
@@ -807,10 +808,8 @@ public class DicomMediaUtils {
             group.setTagNoNull(TagW.StudyID, header.getString(Tag.StudyID));
             group.setTagNoNull(TagW.StudyTime, getDateFromDicomElement(header, Tag.StudyTime, null));
             // Merge date and time, used in display
-            group.setTagNoNull(
-                TagW.StudyDate,
-                TagW.dateTime(getDateFromDicomElement(header, Tag.StudyDate, null),
-                    (Date) group.getTagValue(TagW.StudyTime)));
+            group.setTagNoNull(TagW.StudyDate, TagW.dateTime(getDateFromDicomElement(header, Tag.StudyDate, null),
+                (Date) group.getTagValue(TagW.StudyTime)));
             group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
             group.setTagNoNull(TagW.StudyComments, header.getString(Tag.StudyComments));
 
@@ -830,10 +829,8 @@ public class DicomMediaUtils {
             group.setTag(TagW.Modality, header.getString(Tag.Modality, DicomMediaIO.NO_VALUE));
             // -------- End of Mandatory Tags --------
 
-            group.setTagNoNull(
-                TagW.SeriesDate,
-                TagW.dateTime(getDateFromDicomElement(header, Tag.SeriesDate, null),
-                    getDateFromDicomElement(header, Tag.SeriesTime, null)));
+            group.setTagNoNull(TagW.SeriesDate, TagW.dateTime(getDateFromDicomElement(header, Tag.SeriesDate, null),
+                getDateFromDicomElement(header, Tag.SeriesTime, null)));
 
             group.setTagNoNull(TagW.SeriesDescription, header.getString(Tag.SeriesDescription));
             group.setTagNoNull(TagW.RetrieveAETitle,
@@ -848,10 +845,8 @@ public class DicomMediaUtils {
             group.setTagNoNull(TagW.SeriesNumber, getIntegerFromDicomElement(header, Tag.SeriesNumber, null));
             group.setTagNoNull(TagW.PreferredPlaybackSequencing,
                 getIntegerFromDicomElement(header, Tag.PreferredPlaybackSequencing, null));
-            group.setTagNoNull(
-                TagW.CineRate,
-                getIntegerFromDicomElement(header, Tag.CineRate,
-                    getIntegerFromDicomElement(header, Tag.RecommendedDisplayFrameRate, null)));
+            group.setTagNoNull(TagW.CineRate, getIntegerFromDicomElement(header, Tag.CineRate,
+                getIntegerFromDicomElement(header, Tag.RecommendedDisplayFrameRate, null)));
             group.setTagNoNull(TagW.KVP, getFloatFromDicomElement(header, Tag.KVP, null));
             group.setTagNoNull(TagW.Laterality, header.getString(Tag.Laterality));
             group.setTagNoNull(TagW.BodyPartExamined, header.getString(Tag.BodyPartExamined));
@@ -990,7 +985,7 @@ public class DicomMediaUtils {
              * Specifies the attributes of the Pixel Value Transformation Functional Group. This is equivalent with the
              * Modality LUT transformation in non Multi-frame IODs. It constrains the Modality LUT transformation step
              * in the grayscale rendering pipeline to be an identity transformation.
-             * 
+             *
              * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.9-b Pixel Value Transformation
              */
             Attributes mLutItems = dcm.getNestedDataset(Tag.PixelValueTransformationSequence);
@@ -999,7 +994,7 @@ public class DicomMediaUtils {
             /**
              * Specifies the attributes of the Frame VOI LUT Functional Group. It contains one or more sets of linear or
              * sigmoid window values and/or one or more sets of lookup tables
-             * 
+             *
              * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.10b Frame VOI LUT With LUT Macro
              */
             applyVoiLutModule(dcm.getNestedDataset(Tag.FrameVOILUTSequence), mLutItems, tagList,
@@ -1012,7 +1007,7 @@ public class DicomMediaUtils {
 
             /**
              * Display Shutter Macro Table C.7-17A in PS 3.3
-             * 
+             *
              * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.16 Frame Display Shutter Macro
              */
             Attributes macroFrameDisplayShutter = dcm.getNestedDataset(Tag.FrameDisplayShutterSequence);
@@ -1026,9 +1021,8 @@ public class DicomMediaUtils {
                     float[] rgb =
                         CIELab.convertToFloatLab(DicomMediaUtils.getIntAyrrayFromDicomElement(macroFrameDisplayShutter,
                             Tag.ShutterPresentationColorCIELabValue, null));
-                    Color color =
-                        rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb,
-                            (int[]) null);
+                    Color color = rgb == null ? null
+                        : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb, (int[]) null);
                     setTagNoNull(tagList, TagW.ShutterRGBColor, color);
                 }
             }
@@ -1076,7 +1070,8 @@ public class DicomMediaUtils {
         return false;
     }
 
-    public static void applyModalityLutModule(Attributes mLutItems, HashMap<TagW, Object> tagList, Integer seqParentTag) {
+    public static void applyModalityLutModule(Attributes mLutItems, HashMap<TagW, Object> tagList,
+        Integer seqParentTag) {
         if (mLutItems != null && tagList != null) {
             // Overrides Modality LUT Transformation attributes only if sequence is consistent
             if (containsRequiredModalityLUTAttributes(mLutItems)) {
@@ -1085,7 +1080,7 @@ public class DicomMediaUtils {
                     || "PT".equals(modlality)) { //$NON-NLS-1$
                     /*
                      * IHE BIR: 4.16.4.2.2.5.4
-                     * 
+                     *
                      * The grayscale rendering pipeline shall be appropriate to the SOP Class and modality. If Rescale
                      * Slope and Rescale Intercept are present in the image for MR and PET and XA/XRF images, they shall
                      * be ignored from the perspective of applying window values, and for those SOP Classes, window
@@ -1101,8 +1096,8 @@ public class DicomMediaUtils {
                 }
 
             } else if (seqParentTag != null) {
-                LOGGER.info(
-                    "Cannot apply Modality LUT from {} with inconsistent attributes", TagUtils.toString(seqParentTag));//$NON-NLS-1$
+                LOGGER.info("Cannot apply Modality LUT from {} with inconsistent attributes", //$NON-NLS-1$
+                    TagUtils.toString(seqParentTag));
             }
 
             // Should exist only in root DICOM (when seqParentTag == null)
@@ -1123,10 +1118,10 @@ public class DicomMediaUtils {
                 if (mLutItems != null) {
                     /*
                      * IHE BIR: 4.16.4.2.2.5.4
-                     * 
+                     *
                      * If Rescale Slope and Rescale Intercept has been removed in applyModalityLutModule() then the
                      * Window Center and Window Width must be adapted
-                     * 
+                     *
                      * see https://groups.google.com/forum/#!topic/comp.protocols.dicom/iTCxWcsqjnM
                      */
                     Float rs = getFloatFromDicomElement(mLutItems, Tag.RescaleSlope, null);
@@ -1134,7 +1129,7 @@ public class DicomMediaUtils {
                     String modlality = (String) tagList.get(TagW.Modality);
                     if (ww != null && wc != null && rs != null && ri != null
                         && ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        || "PT".equals(modlality))) { //$NON-NLS-1$
+                            || "PT".equals(modlality))) { //$NON-NLS-1$
                         int windowLevelDefaultCount = (ww.length == wc.length) ? ww.length : 0;
                         for (int i = 0; i < windowLevelDefaultCount; i++) {
                             if (ww[i] == null || wc[i] == null) {
@@ -1153,7 +1148,8 @@ public class DicomMediaUtils {
             }
             // else if (seqParentTag != null) {
             // LOGGER.info(
-            //                    "Cannot apply VOI LUT from {} with inconsistent attributes", TagUtils.toString(seqParentTag));//$NON-NLS-1$
+            // "Cannot apply VOI LUT from {} with inconsistent attributes",
+            // TagUtils.toString(seqParentTag));//$NON-NLS-1$
             // }
 
             setTagNoNull(tagList, TagW.VOILUTSequence, voiItems.getSequence(Tag.VOILUTSequence));
@@ -1234,9 +1230,8 @@ public class DicomMediaUtils {
                             Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
                             Date injectDateTime =
                                 getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
-                            Date acquisitionDateTime =
-                                TagW.dateTime((Date) tagList.get(TagW.AcquisitionDate),
-                                    (Date) tagList.get(TagW.AcquisitionTime));
+                            Date acquisitionDateTime = TagW.dateTime((Date) tagList.get(TagW.AcquisitionDate),
+                                (Date) tagList.get(TagW.AcquisitionTime));
                             Date scanDate = getDateFromDicomElement(dicomObject, Tag.SeriesDate, null);
                             if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null //$NON-NLS-1$
                                 && halfLife != null && acquisitionDateTime != null
@@ -1298,7 +1293,7 @@ public class DicomMediaUtils {
     /**
      * Creates a dicomKeyObjectSelection Attributes from another SOP Instance keeping it's patient and study
      * informations. For instance it can be can an IMAGE or a previously build dicomKOS Document.
-     * 
+     *
      * @param dicomSourceAttribute
      *            : Must be valid
      * @param keyObjectDescription
@@ -1306,7 +1301,7 @@ public class DicomMediaUtils {
      * @param seriesInstanceUID
      *            is supposed to be valid and won't be verified, it's the user responsibility to manage this value. If
      *            null a randomly new one will be generated instead
-     * 
+     *
      * @return new dicomKeyObjectSelection Document Attributes
      * @throws IOException
      */
@@ -1315,7 +1310,7 @@ public class DicomMediaUtils {
 
         /**
          * @see DICOM standard PS 3.3 - § C.17.6.1 Key Object Document Series Module
-         * 
+         *
          * @note Series of Key Object Selection Documents are separate from Series of Images or other Composite SOP
          *       Instances. Key Object Documents do not reside in a Series of Images or other Composite SOP Instances.
          */
@@ -1327,7 +1322,7 @@ public class DicomMediaUtils {
         /**
          * @note Loads properties that reference all "Key Object Codes" defined in the following resource :
          *       KeyObjectSelectionCodes.xml
-         * 
+         *
          * @see These Codes are up to date regarding Dicom Conformance : <br>
          *      PS 3.16 - § Context ID 7010 Key Object Selection Document Title <br>
          *      PS 3.16 - § Context ID 7011 Rejected for Quality Reasons - <br>
@@ -1342,8 +1337,8 @@ public class DicomMediaUtils {
         for (KeyObjectSelectionCode code : codeByValue.values()) {
             Set<KeyObjectSelectionCode> resourceSet = resourcesByContextID.get(code.contextGroupID);
             if (resourceSet == null) {
-                resourcesByContextID.put(code.contextGroupID, resourceSet =
-                    new TreeSet<DicomMediaUtils.KeyObjectSelectionCode>());
+                resourcesByContextID.put(code.contextGroupID,
+                    resourceSet = new TreeSet<DicomMediaUtils.KeyObjectSelectionCode>());
             }
             resourceSet.add(code);
         }
@@ -1351,7 +1346,7 @@ public class DicomMediaUtils {
         /**
          * Document Title of created KOS - must be one of the values specified by "Context ID 7010" in
          * KeyObjectSelectionCodes.xml<br>
-         * 
+         *
          * @note Default is code [DCM-113000] with following attributes : <br>
          *       Tag.CodingSchemeDesignator = "DCM" <br>
          *       Tag.CodeValue = 113000 <br>
@@ -1366,7 +1361,7 @@ public class DicomMediaUtils {
          *       - Concept Name = (113001, DCM, "Rejected for Quality Reasons") <br>
          *       - Concept Name = (113010, DCM," Quality Issue") <br>
          *       - Concept Name = (113013, DCM, "Best In Set")
-         * 
+         *
          * @see PS 3.16 - Structured Reporting Templates § TID 2010 Key Object Selection
          */
 
@@ -1429,8 +1424,8 @@ public class DicomMediaUtils {
             Attributes keyObjectDescriptionSequence = new Attributes(4);
             keyObjectDescriptionSequence.setString(Tag.RelationshipType, VR.CS, "CONTAINS"); //$NON-NLS-1$
             keyObjectDescriptionSequence.setString(Tag.ValueType, VR.CS, "TEXT"); //$NON-NLS-1$
-            keyObjectDescriptionSequence.newSequence(Tag.ConceptNameCodeSequence, 1).add(
-                codeByValue.get("113012").toCodeItem()); //$NON-NLS-1$
+            keyObjectDescriptionSequence.newSequence(Tag.ConceptNameCodeSequence, 1)
+                .add(codeByValue.get("113012").toCodeItem()); //$NON-NLS-1$
             keyObjectDescriptionSequence.setString(Tag.TextValue, VR.UT, keyObjectDescription);
 
             contentSeq.add(keyObjectDescriptionSequence);
@@ -1440,7 +1435,7 @@ public class DicomMediaUtils {
         // TODO - Handle Identical Documents Sequence (see below)
         /**
          * @see DICOM standard PS 3.3 - § C.17.6 Key Object Selection Modules && § C.17.6.2.1 Identical Documents
-         * 
+         *
          * @note The Unique identifier for the Study (studyInstanceUID) is supposed to be the same as to one of the
          *       referenced image but it's not necessary. Standard says that if the Current Requested Procedure Evidence
          *       Sequence (0040,A375) references SOP Instances both in the current study and in one or more other
@@ -1497,10 +1492,10 @@ public class DicomMediaUtils {
                                                                 xmler.getAttributeValue(null, "contexId"); //$NON-NLS-1$
 
                                                             codeByValue.put(codeValue,
-                                                                new DicomMediaUtils.KeyObjectSelectionCode(
-                                                                    resourceName, contextGroupID,
-                                                                    codingSchemeDesignator, codeValue, codeMeaning,
-                                                                    conceptNameCodeModifier, contexGroupIdModifier));
+                                                                new DicomMediaUtils.KeyObjectSelectionCode(resourceName,
+                                                                    contextGroupID, codingSchemeDesignator, codeValue,
+                                                                    codeMeaning, conceptNameCodeModifier,
+                                                                    contexGroupIdModifier));
                                                         }
                                                         break;
                                                     default:

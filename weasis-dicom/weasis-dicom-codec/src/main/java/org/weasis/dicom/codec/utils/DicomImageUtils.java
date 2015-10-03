@@ -1,13 +1,7 @@
 package org.weasis.dicom.codec.utils;
 
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,35 +10,25 @@ import javax.imageio.ImageIO;
 import javax.media.jai.JAI;
 import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.AndConstDescriptor;
-import javax.media.jai.operator.NullDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PaletteColorModel;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.LutShape;
-import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
-import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.LayoutUtil;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FileUtil;
-
-import com.sun.media.jai.util.ImageUtil;
 
 /**
- * 
+ *
  * @author Benoit Jacquemoud
- * 
+ *
  * @version $Rev$ $Date$
  */
 public class DicomImageUtils {
 
     public static PlanarImage getRGBImageFromPaletteColorModel(RenderedImage source, Attributes ds) {
-        if (source == null)
+        if (source == null) {
             return null;
+        }
 
         // Convert images with PaletteColorModel to RGB model
         if (source.getColorModel() instanceof PaletteColorModel) {
@@ -78,7 +62,7 @@ public class DicomImageUtils {
      * - when bitsStored=8 bits signed => minOutValue=-128 and maxOutValue=127 <br>
      * - when bitsStored=16 bits unsigned => minOutValue= 0 and maxOutValue= 65535 <br>
      * - when bitsStored=16 bits signed => minOutValue= -32768 and maxOutValue= 32767 <br>
-     * 
+     *
      * @param lutShape
      * @param window
      * @param level
@@ -87,7 +71,7 @@ public class DicomImageUtils {
      * @param bitsStored
      * @param isSigned
      * @param inverse
-     * 
+     *
      * @return a LookupTableJAI for data between minValue and maxValue according to all given parameters <br>
      */
 
@@ -213,33 +197,33 @@ public class DicomImageUtils {
 
     /**
      * Apply the pixel padding to the modality LUT
-     * 
+     *
      * @see DICOM standard PS 3.3
-     * 
+     *
      *      §C.7.5.1.1.2 Pixel Padding Value and Pixel Padding Range Limit If Photometric Interpretation
-     * 
+     *
      *      * If a Pixel Padding Value (0028,0120) only is present in the image then image contrast manipulations shall
      *      be not be applied to those pixels with the value specified in Pixel Padding Value (0028,0120). If both Pixel
      *      Padding Value (0028,0120) and Pixel Padding Range Limit (0028,0121) are present in the image then image
      *      contrast manipulations shall not be applied to those pixels with values in the range between the values of
      *      Pixel Padding Value (0028,0120) and Pixel Padding Range Limit (0028,0121), inclusive."
-     * 
-     * 
+     *
+     *
      *      (0028,0004) is MONOCHROME2, Pixel Padding Value (0028,0120) shall be less than (closer to or equal to the
      *      minimum possible pixel value) or equal to Pixel Padding Range Limit (0028,0121). If Photometric
      *      Interpretation (0028,0004) is MONOCHROME1, Pixel Padding Value (0028,0120) shall be greater than (closer to
      *      or equal to the maximum possible pixel value) or equal to Pixel Padding Range Limit (0028,0121).
-     * 
+     *
      *      When the relationship between pixel value and X-Ray Intensity is unknown, it is recommended that the
      *      following values be used to pad with black when the image is unsigned:
-     * 
+     *
      *      0 if Photometric Interpretation (0028,0004) is MONOCHROME2. 2BitsStored - 1 if Photometric Interpretation
      *      (0028,0004) is MONOCHROME1.
-     * 
+     *
      *      and when the image is signed: -2BitsStored-1 if Photometric Interpretation (0028,0004) is MONOCHROME2.
      *      2BitsStored-1 - 1 if Photometric Interpretation (0028,0004) is MONOCHROME1.
-     * 
-     * 
+     *
+     *
      */
     public static void applyPixelPaddingToModalityLUT(LookupTableJAI modalityLookup, LutParameters lutparams) {
         if (modalityLookup != null && lutparams.isApplyPadding() && lutparams.getPaddingMinValue() != null

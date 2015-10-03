@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -202,7 +202,7 @@ public class WeasisLauncher {
      * These properties should be specified in the <tt>config.properties</tt> so that they can be processed by the
      * launcher during the framework startup process.
      * </p>
-     * 
+     *
      * @param argv
      *            Accepts arguments to set the auto-deploy directory and/or the bundle cache directory.
      * @throws Exception
@@ -350,8 +350,8 @@ public class WeasisLauncher {
             // Use the system bundle context to process the auto-deploy
             // and auto-install/auto-start properties.
             loader.setFelix(serverProp, m_activator.getBundleContext());
-            loader.writeLabel(String.format(
-                Messages.getString("WeasisLauncher.starting"), System.getProperty("weasis.name"))); //$NON-NLS-1$ //$NON-NLS-2$
+            loader.writeLabel(
+                String.format(Messages.getString("WeasisLauncher.starting"), System.getProperty("weasis.name"))); //$NON-NLS-1$ //$NON-NLS-2$
             m_tracker =
                 new ServiceTracker(m_activator.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", //$NON-NLS-1$
                     null);
@@ -453,13 +453,13 @@ public class WeasisLauncher {
                             { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
 
                         String appName = System.getProperty("weasis.name"); //$NON-NLS-1$
-                        int response =
-                            JOptionPane.showOptionDialog(
-                                mainFrame.getRootPaneContainer() == null ? null : mainFrame.getRootPaneContainer()
-                                    .getContentPane(),
-                                String.format(Messages.getString("WeasisLauncher.msg"), appName), //$NON-NLS-1$
-                                String.format(Messages.getString("WeasisLauncher.first"), appName), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
-                                null, options, null);
+                        int response = JOptionPane.showOptionDialog(
+                            mainFrame.getRootPaneContainer() == null ? null
+                                : mainFrame.getRootPaneContainer().getContentPane(),
+                            String.format(Messages.getString("WeasisLauncher.msg"), appName), //$NON-NLS-1$
+                            String.format(Messages.getString("WeasisLauncher.first"), appName), //$NON-NLS-1$
+                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
+                            null, options, null);
 
                         if (response == 0) {
                             // Write "false" in weasis.properties. It can be useful when preferences are store remotely.
@@ -469,9 +469,8 @@ public class WeasisLauncher {
                                 FileUtil.storeProperties(new File(prefDir, APP_PROPERTY_FILE), l_prop, null);
                             }
                         } else {
-                            File sourceID_props =
-                                new File(
-                                    System.getProperty(P_WEASIS_PATH, ""), System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            File sourceID_props = new File(System.getProperty(P_WEASIS_PATH, ""), //$NON-NLS-1$
+                                System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
                             // delete the properties file to ask again
                             sourceID_props.delete();
                             System.err.println("Refusing the disclaimer"); //$NON-NLS-1$
@@ -507,9 +506,8 @@ public class WeasisLauncher {
                 }
                 final String releaseNotesUrl = s_prop.getProperty("weasis.releasenotes"); //$NON-NLS-1$
                 final StringBuilder message = new StringBuilder("<P>"); //$NON-NLS-1$
-                message
-                    .append(String.format(
-                        Messages.getString("WeasisLauncher.change.version"), System.getProperty("weasis.name"), versionOld, versionNew)); //$NON-NLS-1$ //$NON-NLS-2$
+                message.append(String.format(Messages.getString("WeasisLauncher.change.version"), //$NON-NLS-1$
+                    System.getProperty("weasis.name"), versionOld, versionNew)); //$NON-NLS-1$
 
                 EventQueue.invokeLater(new Runnable() {
                     @Override
@@ -550,21 +548,26 @@ public class WeasisLauncher {
                         });
 
                         StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
-                        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$ //$NON-NLS-2$
+                        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
+                            + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000)
+                                .substring(1)
+                            + ";color:#" //$NON-NLS-1$
                             + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000)
-                                .substring(1) + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
+                                .substring(1)
+                            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
                         message.append("<BR>"); //$NON-NLS-1$
                         String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
-                        message.append(String.format("<a href=\"%s", //$NON-NLS-1$ 
+                        message.append(String.format("<a href=\"%s", //$NON-NLS-1$
                             releaseNotesUrl));
                         message.append("\" style=\"color:#FF9900\">"); //$NON-NLS-1$
                         message.append(rn);
                         message.append("</a>");//$NON-NLS-1$
                         message.append("</P>"); //$NON-NLS-1$
                         jTextPane1.setText(message.toString());
-                        JOptionPane.showMessageDialog(mainFrame.getRootPaneContainer() == null ? null : mainFrame
-                            .getRootPaneContainer().getContentPane(), jTextPane1, Messages
-                            .getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
+                        JOptionPane.showMessageDialog(
+                            mainFrame.getRootPaneContainer() == null ? null
+                                : mainFrame.getRootPaneContainer().getContentPane(),
+                            jTextPane1, Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
                     }
                 });
             }
@@ -681,7 +684,7 @@ public class WeasisLauncher {
 
     /**
      * This following part has been copied from the Main class of the Felix project
-     * 
+     *
      **/
 
     /**
@@ -694,7 +697,7 @@ public class WeasisLauncher {
      * which to load configuration properties can be set by initializing the "<tt>felix.config.properties</tt>" system
      * property to an arbitrary URL.
      * </p>
-     * 
+     *
      * @return A <tt>Properties</tt> instance or <tt>null</tt> if there was an error.
      **/
     public static Properties loadConfigProperties() {
@@ -903,8 +906,8 @@ public class WeasisLauncher {
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
             System.out.println("Starting portable version"); //$NON-NLS-1$
-            System
-                .setProperty("weasis.portable.dicom.directory", s_prop.getProperty("weasis.portable.dicom.directory")); //$NON-NLS-1$ //$NON-NLS-2$
+            System.setProperty("weasis.portable.dicom.directory", //$NON-NLS-1$
+                s_prop.getProperty("weasis.portable.dicom.directory")); //$NON-NLS-1$
         }
 
         File profile_props = new File(prefDir, APP_PROPERTY_FILE);
@@ -916,7 +919,7 @@ public class WeasisLauncher {
         // 4) default value
 
         final String lang = getGeneralProperty("locale.lang.code", "en", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("locale.format.code", "system", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$ 
+        getGeneralProperty("locale.format.code", "system", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
@@ -931,8 +934,8 @@ public class WeasisLauncher {
 
         getGeneralProperty("org.apache.sling.commons.log.file.number", "5", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty(
-            "org.apache.sling.commons.log.pattern", "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}", s_prop, l_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.pattern", //$NON-NLS-1$
+            "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}", s_prop, l_prop, false, true); //$NON-NLS-1$
 
         URI translation_modules = null;
         if (portable != null) {
@@ -1018,7 +1021,7 @@ public class WeasisLauncher {
 
         /*
          * Build a Frame or catch it from JApplet
-         * 
+         *
          * This will ensure the popup message or other dialogs to have frame parent. When the parent is null the dialog
          * can be hidden under the main frame
          */
@@ -1085,9 +1088,8 @@ public class WeasisLauncher {
 
         boolean update = false;
         // Loads the resource files
-        String resPath =
-            s_prop
-                .getProperty("weasis.resources.url", System.getProperty("weasis.codebase.url", "") + "/resources.zip"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        String resPath = s_prop.getProperty("weasis.resources.url", //$NON-NLS-1$
+            System.getProperty("weasis.codebase.url", "") + "/resources.zip"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         File cacheDir = null;
         try {
             if (resPath.endsWith(".zip")) { //$NON-NLS-1$

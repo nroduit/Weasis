@@ -14,6 +14,7 @@ public final class JIUtility {
     private static final String osName = System.getProperty("os.name").toLowerCase();
     public static final String USER_ROOT = System.getProperty("user.home");
     public static final String ROOT_FOLDER;
+
     static {
         if (osName.startsWith("win")) {
             ROOT_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "My Computer";
@@ -101,9 +102,9 @@ public final class JIUtility {
     public static String length2KB(final long length) {
         final long kbCount = (length + 1024) / 1024;
         final String strlength = String.valueOf(kbCount);
-        return String.valueOf((kbCount > 999 ? strlength.substring(0, strlength.length() - 3) + ","
-            + strlength.substring(strlength.length() - 3) : strlength)
-            + " KB ");
+        return String.valueOf((kbCount > 999
+            ? strlength.substring(0, strlength.length() - 3) + "," + strlength.substring(strlength.length() - 3)
+            : strlength) + " KB ");
     }
 
     public static File[] getRoots() {

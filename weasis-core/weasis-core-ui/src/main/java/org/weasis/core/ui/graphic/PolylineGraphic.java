@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -33,8 +33,8 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class PolygonGraphic.
- * 
- * 
+ *
+ *
  * @author Nicolas Roduit
  */
 @Root(name = "polyline")
@@ -42,16 +42,16 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(PolylineGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
 
-    public static final Measurement FIRST_POINT_X = new Measurement(
-        Messages.getString("measure.firstx"), 1, true, true, false); //$NON-NLS-1$
-    public static final Measurement FIRST_POINT_Y = new Measurement(
-        Messages.getString("measure.firsty"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement LAST_POINT_X = new Measurement(
-        Messages.getString("measure.lastx"), 3, true, true, false); //$NON-NLS-1$
-    public static final Measurement LAST_POINT_Y = new Measurement(
-        Messages.getString("measure.lasty"), 4, true, true, false); //$NON-NLS-1$
-    public static final Measurement LINE_LENGTH = new Measurement(
-        Messages.getString("measure.length"), 5, true, true, true); //$NON-NLS-1$
+    public static final Measurement FIRST_POINT_X =
+        new Measurement(Messages.getString("measure.firstx"), 1, true, true, false); //$NON-NLS-1$
+    public static final Measurement FIRST_POINT_Y =
+        new Measurement(Messages.getString("measure.firsty"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement LAST_POINT_X =
+        new Measurement(Messages.getString("measure.lastx"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement LAST_POINT_Y =
+        new Measurement(Messages.getString("measure.lasty"), 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement LINE_LENGTH =
+        new Measurement(Messages.getString("measure.length"), 5, true, true, true); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -67,9 +67,8 @@ public class PolylineGraphic extends AbstractDragGraphic {
     protected PolylineGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible)
-        throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible) throws InvalidShapeException {
         super(handlePointList, BasicGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
         if (handlePointList == null || handlePointList.size() < 2) {
             throw new InvalidShapeException("Polyline must have at least 2 points!"); //$NON-NLS-1$
@@ -179,29 +178,29 @@ public class PolylineGraphic extends AbstractDragGraphic {
                     if (handlePointListcopy.size() > 0) {
                         ptA = handlePointListcopy.get(0);
                     }
-                    measVal.add(new MeasureItem(FIRST_POINT_X, adapter.getXCalibratedValue(ptA.getX()), adapter
-                        .getUnit()));
+                    measVal.add(
+                        new MeasureItem(FIRST_POINT_X, adapter.getXCalibratedValue(ptA.getX()), adapter.getUnit()));
                 }
                 if (FIRST_POINT_Y.isComputed()) {
                     if (handlePointListcopy.size() > 0) {
                         ptA = handlePointListcopy.get(0);
                     }
-                    measVal.add(new MeasureItem(FIRST_POINT_Y, adapter.getXCalibratedValue(ptA.getY()), adapter
-                        .getUnit()));
+                    measVal.add(
+                        new MeasureItem(FIRST_POINT_Y, adapter.getXCalibratedValue(ptA.getY()), adapter.getUnit()));
                 }
                 if (LAST_POINT_X.isComputed()) {
                     if (handlePointListcopy.size() > 1) {
                         ptB = handlePointListcopy.get(handlePointList.size() - 1);
                     }
-                    measVal.add(new MeasureItem(LAST_POINT_X, adapter.getXCalibratedValue(ptB.getX()), adapter
-                        .getUnit()));
+                    measVal
+                        .add(new MeasureItem(LAST_POINT_X, adapter.getXCalibratedValue(ptB.getX()), adapter.getUnit()));
                 }
                 if (LAST_POINT_Y.isComputed()) {
                     if (handlePointListcopy.size() > 1) {
                         ptB = handlePointListcopy.get(handlePointList.size() - 1);
                     }
-                    measVal.add(new MeasureItem(LAST_POINT_Y, adapter.getXCalibratedValue(ptB.getY()), adapter
-                        .getUnit()));
+                    measVal
+                        .add(new MeasureItem(LAST_POINT_Y, adapter.getXCalibratedValue(ptB.getY()), adapter.getUnit()));
                 }
                 if (LINE_LENGTH.isComputed()) {
                     Double val = (handlePointListcopy.size() > 1) ? getPerimeter(handlePointListcopy) * ratio : null;

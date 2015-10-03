@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -120,7 +120,7 @@ public class DropDownButton extends Box {
 
     /**
      * Set the behavior of the main button.
-     * 
+     *
      * @param enable
      *            if true, a click on the main button will trigger an actionPerformed() on the first item in the popup
      *            menu.

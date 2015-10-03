@@ -3,9 +3,9 @@
  * file distributed with this work for additional information regarding copyright ownership. The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
  * License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
@@ -89,7 +89,7 @@ public class AutoProcessor {
     /**
      * Used to instigate auto-deploy directory process and auto-install/auto-start configuration property processing
      * during.
-     * 
+     *
      * @param configMap
      *            Map of configuration properties.
      * @param context
@@ -125,9 +125,8 @@ public class AutoProcessor {
         if (actionList.size() > 0) {
             // Retrieve the Start Level service, since it will be needed
             // to set the start level of the installed bundles.
-            StartLevel sl =
-                (StartLevel) context.getService(context
-                    .getServiceReference(org.osgi.service.startlevel.StartLevel.class.getName()));
+            StartLevel sl = (StartLevel) context
+                .getService(context.getServiceReference(org.osgi.service.startlevel.StartLevel.class.getName()));
 
             // Get start level for auto-deploy bundles.
             int startLevel = sl.getInitialBundleStartLevel();
@@ -240,9 +239,8 @@ public class AutoProcessor {
     private static void processAutoProperties(Map configMap, BundleContext context, WeasisLoader weasisLoader) {
         // Retrieve the Start Level service, since it will be needed
         // to set the start level of the installed bundles.
-        StartLevel sl =
-            (StartLevel) context.getService(context.getServiceReference(org.osgi.service.startlevel.StartLevel.class
-                .getName()));
+        StartLevel sl = (StartLevel) context
+            .getService(context.getServiceReference(org.osgi.service.startlevel.StartLevel.class.getName()));
 
         // Retrieve all auto-install and auto-start properties and install
         // their associated bundles. The auto-install property specifies a
@@ -383,9 +381,9 @@ public class AutoProcessor {
     private static String getBundleNameFromLocation(String location) {
         if (location != null) {
             int index = location.lastIndexOf("/"); //$NON-NLS-1$
-            String name = index >= 0 ? location.substring(index + 1) : location; 
+            String name = index >= 0 ? location.substring(index + 1) : location;
             index = name.lastIndexOf(".jar"); //$NON-NLS-1$
-            return index >= 0 ? name.substring(0, index) : name; 
+            return index >= 0 ? name.substring(0, index) : name;
         }
         return null;
     }
@@ -409,7 +407,7 @@ public class AutoProcessor {
                 String filename = p.toString();
                 String value = WeasisLauncher.modulesi18n.getProperty(filename);
                 if (value != null) {
-                    String baseURL = System.getProperty("weasis.i18n"); //$NON-NLS-1$ 
+                    String baseURL = System.getProperty("weasis.i18n"); //$NON-NLS-1$
                     if (baseURL != null) {
                         String translation_modules = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename); //$NON-NLS-1$ //$NON-NLS-2$
                         String bundleName = getBundleNameFromLocation(filename);
@@ -444,7 +442,7 @@ public class AutoProcessor {
     }
 
     private static void printError(Exception ex, String prefix) {
-        System.err.println(prefix + " (" + ex //$NON-NLS-1$ 
+        System.err.println(prefix + " (" + ex //$NON-NLS-1$
             + ((ex.getCause() != null) ? " - " + ex.getCause() : "") + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 

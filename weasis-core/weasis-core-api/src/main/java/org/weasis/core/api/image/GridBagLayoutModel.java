@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -31,7 +31,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * GridBagLayoutModel is the model for the plugin container.
- * 
+ *
  */
 public class GridBagLayoutModel implements GUIEntry, Cloneable {
 
@@ -131,7 +131,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
     private final class SAXAdapter extends DefaultHandler {
         /**
          * Specifies the component position and size
-         * 
+         *
          */
 
         /**
@@ -186,7 +186,8 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
 
         @Override
-        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+        public void startElement(String uri, String localName, String qName, Attributes attributes)
+            throws SAXException {
             if ("element".equals(qName)) { //$NON-NLS-1$
                 type = attributes.getValue("type"); //$NON-NLS-1$
                 x = Integer.parseInt(attributes.getValue("x")); //$NON-NLS-1$
@@ -207,8 +208,9 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         public void endElement(String uri, String localName, String qName) throws SAXException {
             if ("element".equals(qName)) { //$NON-NLS-1$
                 increment++;
-                constraints.put(new LayoutConstraints(type, increment, x, y, width, height, weightx, weighty, position,
-                    expand), null);
+                constraints.put(
+                    new LayoutConstraints(type, increment, x, y, width, height, weightx, weighty, position, expand),
+                    null);
                 name.setLength(0);
                 tag = -1;
             }

@@ -18,17 +18,17 @@ import javax.vecmath.Vector3d;
  * An abstract class that provides the basis for posting the position of specified slices and volumes on (usually
  * orthogonal) localizer images.
  * </p>
- * 
+ *
  * <p>
  * This base class provides the interface, common storage and various utility methods, and specific methods of
  * performing the localization operation are performed by concrete sub-classes, instantiated through a factory class.
  * </p>
- * 
+ *
  * <p>
  * Typically this would b used as follows, to get outlines in the form of a vector of shapes whose coordinates are those
  * of the localizer image:
  * </p>
- * 
+ *
  * <pre>
  * GeometryOfSlice localizerGeometry = new GeometryOfSliceFromAttributeList(localizerAttributeList);
  * GeometryOfSlice postImageGeometry = new GeometryOfSliceFromAttributeList(postImageAttributeList);
@@ -36,11 +36,11 @@ import javax.vecmath.Vector3d;
  * localizerPoster.setLocalizerGeometry(localizerGeometry);
  * Vector shapes = localizerPoster.getOutlineOnLocalizerForThisGeometry(postImageGeometry);
  * </pre>
- * 
+ *
  * @see com.pixelmed.geometry.LocalizerPosterFactory
  * @see org.weasis.dicom.codec.display.cross.pixelmed.geometry.GeometryOfSlice
  * @see com.pixelmed.dicom.GeometryOfSliceFromAttributeList
- * 
+ *
  * @author dclunie
  */
 public abstract class LocalizerPoster {
@@ -76,7 +76,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Check that the row and column vectors are unit vectors and are orthogonal.
      * </p>
-     * 
+     *
      * @param row
      *            the row direction cosines
      * @param column
@@ -100,7 +100,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Check that the row and column and slice direction vectors are unit vectors and are orthogonal.
      * </p>
-     * 
+     *
      * @param row
      *            the row direction cosines
      * @param column
@@ -136,7 +136,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Get the corners of a slice in the 3D coordinate space of that slice.
      * </p>
-     * 
+     *
      * @param g
      *            the geometry of a slice
      * @return an array of four points that are the tlhc,trhc, brhc, blhc of the slice
@@ -150,7 +150,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Get the corners of a slice in the 3D coordinate space of that slice.
      * </p>
-     * 
+     *
      * @param row
      *            the direction of the row as X, Y and Z components (direction cosines, unit vector) LPH+
      * @param column
@@ -182,8 +182,10 @@ public abstract class LocalizerPoster {
         Vector3d distanceAlongColumn = new Vector3d(column);
         distanceAlongColumn.scale((dimensionsArray[0]/* rows */) * spacingArray[0]/* between rows */);
 
-        // System.err.println("LocalizerPoster.getCornersOfSourceRectangleInSourceSpace():Distance along a row = "+distanceAlongRow);
-        // System.err.println("LocalizerPoster.getCornersOfSourceRectangleInSourceSpace():Distance along a column = "+distanceAlongColumn);
+        // System.err.println("LocalizerPoster.getCornersOfSourceRectangleInSourceSpace():Distance along a row =
+        // "+distanceAlongRow);
+        // System.err.println("LocalizerPoster.getCornersOfSourceRectangleInSourceSpace():Distance along a column =
+        // "+distanceAlongColumn);
 
         // Build a square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
@@ -210,7 +212,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Get the corners of a volume in the 3D coordinate space of that volume.
      * </p>
-     * 
+     *
      * @param row
      *            the direction of the row as X, Y and Z components (direction cosines, unit vector) LPH+
      * @param column
@@ -248,9 +250,12 @@ public abstract class LocalizerPoster {
         distanceAlongNormal.scale((dimensionsArray[2] / 2) * sliceThickness); // divide by two ... half on either side
         // of center
 
-        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Distance along a row = "+distanceAlongRow);
-        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Distance along a column = "+distanceAlongColumn);
-        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Distance along normal = "+distanceAlongNormal);
+        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Distance along a row =
+        // "+distanceAlongRow);
+        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Distance along a column =
+        // "+distanceAlongColumn);
+        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Distance along normal =
+        // "+distanceAlongNormal);
 
         // Build the "top" square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
@@ -265,10 +270,10 @@ public abstract class LocalizerPoster {
         brhcT.add(distanceAlongRow);
         brhcT.add(distanceAlongColumn);
 
-        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Top    TLHC = "+tlhcT);
-        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Top    TRHC = "+trhcT);
-        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Top    BLHC = "+blhcT);
-        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Top    BRHC = "+brhcT);
+        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Top TLHC = "+tlhcT);
+        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Top TRHC = "+trhcT);
+        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Top BLHC = "+blhcT);
+        // System.err.println("LocalizerPoster.getCornersOfSourceCubeInSourceSpace(): Top BRHC = "+brhcT);
 
         // Build the "bottom" square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
@@ -309,8 +314,8 @@ public abstract class LocalizerPoster {
         x = array1[0] > array2[0] ? array1[0] : array2[0];
         y = array1[1] > array2[1] ? array1[1] : array2[1];
         newPoints[0] = new Point3d(x, y, 0);
-        // System.err.println("getIntersectionOfRectanglesInXYPlane(): TLHC  rectangle 1 = "+rect1[0]);
-        // System.err.println("getIntersectionOfRectanglesInXYPlane(): TLHC  rectangle 2 = "+rect2[0]);
+        // System.err.println("getIntersectionOfRectanglesInXYPlane(): TLHC rectangle 1 = "+rect1[0]);
+        // System.err.println("getIntersectionOfRectanglesInXYPlane(): TLHC rectangle 2 = "+rect2[0]);
         // System.err.println("getIntersectionOfRectanglesInXYPlane(): TLHC intersection = "+newPoints[0]);
 
         // trhc is lesser of x and greater of y ...
@@ -319,8 +324,8 @@ public abstract class LocalizerPoster {
         x = array1[0] < array2[0] ? array1[0] : array2[0];
         y = array1[1] > array2[1] ? array1[1] : array2[1];
         newPoints[1] = new Point3d(x, y, 0);
-        // System.err.println("getIntersectionOfRectanglesInXYPlane(): TRHC  rectangle 1 = "+rect1[1]);
-        // System.err.println("getIntersectionOfRectanglesInXYPlane(): TRHC  rectangle 2 = "+rect2[1]);
+        // System.err.println("getIntersectionOfRectanglesInXYPlane(): TRHC rectangle 1 = "+rect1[1]);
+        // System.err.println("getIntersectionOfRectanglesInXYPlane(): TRHC rectangle 2 = "+rect2[1]);
         // System.err.println("getIntersectionOfRectanglesInXYPlane(): TRHC intersection = "+newPoints[1]);
 
         // brhc is lesser of x and lesser of y ...
@@ -329,8 +334,8 @@ public abstract class LocalizerPoster {
         x = array1[0] < array2[0] ? array1[0] : array2[0];
         y = array1[1] < array2[1] ? array1[1] : array2[1];
         newPoints[2] = new Point3d(x, y, 0);
-        // System.err.println("getIntersectionOfRectanglesInXYPlane(): BRHC  rectangle 1 = "+rect1[2]);
-        // System.err.println("getIntersectionOfRectanglesInXYPlane(): BRHC  rectangle 2 = "+rect2[2]);
+        // System.err.println("getIntersectionOfRectanglesInXYPlane(): BRHC rectangle 1 = "+rect1[2]);
+        // System.err.println("getIntersectionOfRectanglesInXYPlane(): BRHC rectangle 2 = "+rect2[2]);
         // System.err.println("getIntersectionOfRectanglesInXYPlane(): BRHC intersection = "+newPoints[2]);
 
         // blhc is greater of x and lesser of y ...
@@ -339,8 +344,8 @@ public abstract class LocalizerPoster {
         x = array1[0] > array2[0] ? array1[0] : array2[0];
         y = array1[1] < array2[1] ? array1[1] : array2[1];
         newPoints[3] = new Point3d(x, y, 0);
-        // System.err.println("getIntersectionOfRectanglesInXYPlane(): BLHC  rectangle 1 = "+rect1[3]);
-        // System.err.println("getIntersectionOfRectanglesInXYPlane(): BLHC  rectangle 2 = "+rect2[3]);
+        // System.err.println("getIntersectionOfRectanglesInXYPlane(): BLHC rectangle 1 = "+rect1[3]);
+        // System.err.println("getIntersectionOfRectanglesInXYPlane(): BLHC rectangle 2 = "+rect2[3]);
         // System.err.println("getIntersectionOfRectanglesInXYPlane(): BLHC intersection = "+newPoints[3]);
 
         return newPoints;
@@ -379,10 +384,11 @@ public abstract class LocalizerPoster {
             (int) ((containedTLHC[0] - wholeTLHC[0]) / wholeHeight * boundsOfWholeRectangle.width);
         boundsOfContainedRectangle.y =
             (int) ((containedTLHC[1] - wholeTLHC[1]) / wholeWidth * boundsOfWholeRectangle.height);
-        // assert boundsOfContainedRectangle.x >= 0
-        // assert boundsOfContainedRectangle.y >= 0
+            // assert boundsOfContainedRectangle.x >= 0
+            // assert boundsOfContainedRectangle.y >= 0
 
-        // System.err.println("getBoundsOfContainedRectangle(): boundsOfContainedRectangle = "+boundsOfContainedRectangle);
+        // System.err.println("getBoundsOfContainedRectangle(): boundsOfContainedRectangle =
+        // "+boundsOfContainedRectangle);
         return boundsOfContainedRectangle;
     }
 
@@ -391,7 +397,7 @@ public abstract class LocalizerPoster {
      * Transform a set of points into the "viewport" defined by an origin and row and column vectors in the same 3D
      * space, by shifting the points to the origin (TLHC) and rotating.
      * </p>
-     * 
+     *
      * @param points
      *            an array of 3D points to be transformed
      * @param tlhc
@@ -415,11 +421,14 @@ public abstract class LocalizerPoster {
         Point3d[] newPoints = new Point3d[points.length];
         for (int i = 0; i < points.length; ++i) {
             Point3d newPoint = new Point3d(points[i]); // do not overwrite the supplied points
-            // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: ["+i+"] At start, point = "+newPoint);
+            // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: ["+i+"] At start, point =
+            // "+newPoint);
             newPoint.sub(tlhc); // move everything to origin of the target
-            // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: ["+i+"] After moving origin, point = "+newPoint);
+            // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: ["+i+"] After moving origin, point =
+            // "+newPoint);
             rotation.transform(newPoint);
-            // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: ["+i+"] After rotation, point (mm) = "+newPoint);
+            // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: ["+i+"] After rotation, point (mm) =
+            // "+newPoint);
             newPoints[i] = newPoint;
         }
         return newPoints;
@@ -430,7 +439,7 @@ public abstract class LocalizerPoster {
      * Transform a point into the "viewport" defined by an origin and row and column vectors in the same 3D space, by
      * shifting the points to the origin (TLHC) and rotating.
      * </p>
-     * 
+     *
      * @param point
      *            a 3D point to be transformed
      * @param tlhc
@@ -454,9 +463,11 @@ public abstract class LocalizerPoster {
 
         Point3d newPoint = new Point3d(point); // do not overwrite the supplied point
         newPoint.sub(tlhc); // move everything to origin of the target
-        // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: After moving origin, point = "+newPoint);
+        // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: After moving origin, point =
+        // "+newPoint);
         rotation.transform(newPoint);
-        // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: After rotation, point (mm) = "+newPoint);
+        // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: After rotation, point (mm) =
+        // "+newPoint);
         return newPoint;
     }
 
@@ -464,7 +475,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Transform a point into the "viewport" defined by the localizer that we are an instance of.
      * </p>
-     * 
+     *
      * @param point
      *            a 3D point to be transformed
      * @return a new, transformed point
@@ -473,9 +484,11 @@ public abstract class LocalizerPoster {
         // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: At start, point = "+point);
         Point3d newPoint = new Point3d(point); // do not overwrite the supplied point
         newPoint.sub(localizerTLHC); // move everything to origin of the target localizer
-        // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: After moving origin, point = "+newPoint);
+        // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: After moving origin, point =
+        // "+newPoint);
         rotateIntoLocalizerSpace.transform(newPoint);
-        // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: After rotation, point (mm) = "+newPoint);
+        // System.err.println("transformPointFromSourceSpaceIntoLocalizerSpace: After rotation, point (mm) =
+        // "+newPoint);
         return newPoint;
     }
 
@@ -487,23 +500,26 @@ public abstract class LocalizerPoster {
      * Project a point in localizer 3D space onto the plane of the localizer by ignoring the Z component, and return the
      * X and Y coordinates as image-TLHC relative column and row offsets.
      * </p>
-     * 
+     *
      * <p>
      * Will return sub-pixel values ranging from 0.5 to 0.5 less than the maximum dimensions of the image, which allows
      * points at the very edges of the rendered image to be drawn (e.g. a column of 0.5 will draw at the extreme left
      * and a column of 255.5 will draw at the extreme right of a 256 pixel wide image (whereas 256.0 will not, though
      * 0.0 will).
      * </p>
-     * 
+     *
      * @param point
      *            the point in 3D localizer space, the Z coordinate of which is ignored
      * @return an array of 2 values in which the column, then the row location on the image is returned
      */
     protected Point2D.Double transformPointInLocalizerPlaneIntoImageSpace(Point3d point) {
         point.get(tmpArray3);
-        // System.err.println("LocalizerPoster.transformPointInLocalizerPlaneIntoImageSpace: size    (row, column, in pixels)   = ("+localizerDimensionsArray[0]+","+localizerDimensionsArray[1]+")");
-        // System.err.println("LocalizerPoster.transformPointInLocalizerPlaneIntoImageSpace: spacing (along row, column, in mm) = ("+localizerVoxelSpacingArray[0]+","+localizerVoxelSpacingArray[1]+")");
-        // System.err.println("LocalizerPoster.transformPointInLocalizerPlaneIntoImageSpace: point   (row, column, in mm)       = ("+tmpArray3[1]+","+tmpArray3[0]+")");
+        // System.err.println("LocalizerPoster.transformPointInLocalizerPlaneIntoImageSpace: size (row, column, in
+        // pixels) = ("+localizerDimensionsArray[0]+","+localizerDimensionsArray[1]+")");
+        // System.err.println("LocalizerPoster.transformPointInLocalizerPlaneIntoImageSpace: spacing (along row, column,
+        // in mm) = ("+localizerVoxelSpacingArray[0]+","+localizerVoxelSpacingArray[1]+")");
+        // System.err.println("LocalizerPoster.transformPointInLocalizerPlaneIntoImageSpace: point (row, column, in mm)
+        // = ("+tmpArray3[1]+","+tmpArray3[0]+")");
         double scaleSubPixelHeightOfColumn = (localizerDimensionsArray[0] - 1) / localizerDimensionsArray[0]; // number
         // of rows
         double scaleSubPixelWidthOfRow = (localizerDimensionsArray[1] - 1) / localizerDimensionsArray[1]; // number of
@@ -527,7 +543,8 @@ public abstract class LocalizerPoster {
         // as width number of
         // cols * spacing between
         // cols
-        // System.err.println("LocalizerPoster.transformPointInLocalizerPlaneIntoImageSpace: point   (row, column, in pixels)   = ("+location.getY()+","+location.getX()+")");
+        // System.err.println("LocalizerPoster.transformPointInLocalizerPlaneIntoImageSpace: point (row, column, in
+        // pixels) = ("+location.getY()+","+location.getX()+")");
         return location;
     }
 
@@ -608,7 +625,8 @@ public abstract class LocalizerPoster {
         endCorner.get(endArray);
         double endZ = endArray[2];
         classification = (startZ <= 0 && endZ >= 0) || (startZ >= 0 && endZ <= 0);
-        // System.err.println("LocalizerPoster.classifyCornersIntoEdgeCrossingZPlane: ("+startZ+","+endZ+") "+classification);
+        // System.err.println("LocalizerPoster.classifyCornersIntoEdgeCrossingZPlane: ("+startZ+","+endZ+")
+        // "+classification);
         return classification;
     }
 
@@ -655,7 +673,8 @@ public abstract class LocalizerPoster {
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[2], corners[6]));
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[3], corners[7]));
         } else {
-            // System.err.println("LocalizerPoster.getIntersectionsOfCubeWithZPlane(): no opposite edges intersect the Z plane");
+            // System.err.println("LocalizerPoster.getIntersectionsOfCubeWithZPlane(): no opposite edges intersect the Z
+            // plane");
         }
 
         return intersections;
@@ -680,7 +699,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Established the geometry of the localizer image to be posted.
      * </p>
-     * 
+     *
      * @param row
      *            the unit vector (direction cosine) of the row direction in the DICOM coordinate system
      * @param column
@@ -706,7 +725,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Established the geometry of the localizer image to be posted.
      * </p>
-     * 
+     *
      * @param geometry
      */
     public void setLocalizerGeometry(GeometryOfSlice geometry) {
@@ -722,7 +741,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Get the shapes on the localizer of the specified slice.
      * </p>
-     * 
+     *
      * @param row
      *            the unit vector (direction cosine) of the row direction in the DICOM coordinate system
      * @param column
@@ -746,7 +765,7 @@ public abstract class LocalizerPoster {
      * <p>
      * Get the shape on the localizer of a zero-thickness slice specified by the geometry of a 2D rectangle.
      * </p>
-     * 
+     *
      * @param geometry
      * @return vector of shapes {@link java.awt.Shape java.awt.Shape} to be drawn in the localizer row and column
      *         coordinates
@@ -778,7 +797,7 @@ public abstract class LocalizerPoster {
 
         validateDirectionCosines(row, column, normal);
 
-        // System.err.println("Row    = "+row);
+        // System.err.println("Row = "+row);
         // System.err.println("Column = "+column);
         // System.err.println("Normal = "+normal);
         Vector3d[] vectors = new Vector3d[3];

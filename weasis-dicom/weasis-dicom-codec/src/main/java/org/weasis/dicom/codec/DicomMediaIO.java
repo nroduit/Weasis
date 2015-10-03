@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -53,7 +53,6 @@ import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageInputStreamImpl;
 import javax.media.jai.JAI;
-import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.AndConstDescriptor;
 import javax.media.jai.operator.NullDescriptor;
@@ -61,13 +60,11 @@ import javax.media.jai.operator.NullDescriptor;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
-import org.dcm4che3.data.ItemPointer;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.image.Overlays;
-import org.dcm4che3.image.PaletteColorModel;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderItem;
@@ -77,10 +74,8 @@ import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.imageio.stream.SegmentedImageInputStream;
-import org.dcm4che3.io.BulkDataDescriptor;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
-import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -137,38 +132,38 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
          */
         DCM_ELEMENT_FACTORIES.put("PR", new DicomSpecialElementFactory() { //$NON-NLS-1$
 
-                @Override
-                public String getSeriesMimeType() {
-                    return SERIES_PR_MIMETYPE;
-                }
+            @Override
+            public String getSeriesMimeType() {
+                return SERIES_PR_MIMETYPE;
+            }
 
-                @Override
-                public String[] getModalities() {
-                    return new String[] { "PR" }; //$NON-NLS-1$
-                }
+            @Override
+            public String[] getModalities() {
+                return new String[] { "PR" }; //$NON-NLS-1$
+            }
 
-                @Override
-                public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
-                    return new PRSpecialElement(mediaIO);
-                }
-            });
+            @Override
+            public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+                return new PRSpecialElement(mediaIO);
+            }
+        });
         DCM_ELEMENT_FACTORIES.put("KO", new DicomSpecialElementFactory() { //$NON-NLS-1$
 
-                @Override
-                public String getSeriesMimeType() {
-                    return SERIES_KO_MIMETYPE;
-                }
+            @Override
+            public String getSeriesMimeType() {
+                return SERIES_KO_MIMETYPE;
+            }
 
-                @Override
-                public String[] getModalities() {
-                    return new String[] { "KO" }; //$NON-NLS-1$
-                }
+            @Override
+            public String[] getModalities() {
+                return new String[] { "KO" }; //$NON-NLS-1$
+            }
 
-                @Override
-                public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
-                    return new KOSpecialElement(mediaIO);
-                }
-            });
+            @Override
+            public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+                return new KOSpecialElement(mediaIO);
+            }
+        });
     }
 
     private static final SoftHashMap<DicomMediaIO, DicomMetaData> HEADER_CACHE =
@@ -279,7 +274,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 Attributes header = md.getAttributes();
                 // Exclude DICOMDIR
                 String mediaStorageSOPClassUID = fmi == null ? null : fmi.getString(Tag.MediaStorageSOPClassUID);
-                if ("1.2.840.10008.1.3.10".equals(mediaStorageSOPClassUID)) { //$NON-NLS-1$ 
+                if ("1.2.840.10008.1.3.10".equals(mediaStorageSOPClassUID)) { //$NON-NLS-1$
                     mimeType = UNREADABLE;
                     close();
                     return false;
@@ -323,7 +318,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     /**
      * Sets the input for the image reader.
-     * 
+     *
      * @param imageIndex
      *            The Dicom frame index, or overlay number
      * @return
@@ -345,7 +340,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     // reader.setInput(siis, false);
     // }
     // // TODO 1.2.840.10008.1.2.4.95 (DICOM JPIP Referenced Deflate Transfer Syntax)
-    //        if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
+    // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
     // MediaElement[] elements = getMediaElement();
     // // TODO handle frame
     // if (elements != null && elements.length > 0) {
@@ -472,7 +467,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
             group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
 
-            //            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
+            // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
             // MediaElement[] elements = getMediaElement();
             // if (elements != null) {
             // for (MediaElement m : elements) {
@@ -524,8 +519,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         if (pr || ko) {
             // Set other required fields
             setTagNoNull(TagW.SeriesDescription, header.getString(Tag.SeriesDescription));
-            setTagNoNull(
-                TagW.SeriesDate,
+            setTagNoNull(TagW.SeriesDate,
                 TagW.dateTime(DicomMediaUtils.getDateFromDicomElement(header, Tag.SeriesDate, null),
                     DicomMediaUtils.getDateFromDicomElement(header, Tag.SeriesTime, null)));
             setTagNoNull(TagW.SeriesNumber, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.SeriesNumber, null));
@@ -539,9 +533,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             setTagNoNull(TagW.ShutterFinalShape, shape);
             Integer psVal = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.ShutterPresentationValue, null);
             setTagNoNull(TagW.ShutterPSValue, psVal);
-            float[] rgb =
-                CIELab.convertToFloatLab(DicomMediaUtils.getIntAyrrayFromDicomElement(header,
-                    Tag.ShutterPresentationColorCIELabValue, null));
+            float[] rgb = CIELab.convertToFloatLab(
+                DicomMediaUtils.getIntAyrrayFromDicomElement(header, Tag.ShutterPresentationColorCIELabValue, null));
             Color color =
                 rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb, (int[]) null);
             setTagNoNull(TagW.ShutterRGBColor, color);
@@ -577,7 +570,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             // : header.getString(Tag.ContrastBolusAgent));
             setTagNoNull(TagW.ContrastBolusAgent, header.getString(Tag.ContrastBolusAgent));
             setTagNoNull(TagW.SOPClassUID, header.getString(Tag.SOPClassUID));
-            setTagNoNull(TagW.ScanningSequence, DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanningSequence));
+            setTagNoNull(TagW.ScanningSequence,
+                DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanningSequence));
             setTagNoNull(TagW.SequenceVariant, DicomMediaUtils.getStringFromDicomElement(header, Tag.SequenceVariant));
             setTagNoNull(TagW.ScanOptions, DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanOptions));
             setTagNoNull(TagW.RepetitionTime,
@@ -624,10 +618,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImagePositionPatient, null));
             setTagNoNull(TagW.ImageOrientationPatient,
                 DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImageOrientationPatient, null));
-            setTagNoNull(
-                TagW.ImageOrientationPlane,
-                ImageOrientation
-                    .makeImageOrientationLabelFromImageOrientationPatient((double[]) getTagValue(TagW.ImageOrientationPatient)));
+            setTagNoNull(TagW.ImageOrientationPlane,
+                ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
+                    (double[]) getTagValue(TagW.ImageOrientationPatient)));
 
             bitsStored = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsStored, 8);
             bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsAllocated, bitsStored);
@@ -668,12 +661,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
             int samplesPerPixel = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.SamplesPerPixel, 1);
             setTagNoNull(TagW.SamplesPerPixel, samplesPerPixel);
-            banded =
-                samplesPerPixel > 1
-                    && DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PlanarConfiguration, 0) != 0;
-            dataType =
-                bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT
-                    : DataBuffer.TYPE_USHORT;
+            banded = samplesPerPixel > 1
+                && DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PlanarConfiguration, 0) != 0;
+            dataType = bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE
+                : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
             if (bitsAllocated > 16 && samplesPerPixel == 1) {
                 dataType = DataBuffer.TYPE_INT;
             }
@@ -699,10 +690,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 DicomMediaUtils.getStringArrayFromDicomElement(header, Tag.LossyImageCompressionMethod));
 
             /*
-             * 
+             *
              * For overlays encoded in Overlay Data Element (60xx,3000), Overlay Bits Allocated (60xx,0100) is always 1
              * and Overlay Bit Position (60xx,0102) is always 0.
-             * 
+             *
              * @see - Dicom Standard 2011 - PS 3.5 § 8.1.2 Overlay data encoding of related data elements
              */
             if (header.getInt(Tag.OverlayBitsAllocated, 0) > 1 && bitsStored < bitsAllocated
@@ -759,7 +750,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 // read as tiled rendered image
                 LOGGER.debug("read dicom image frame: {} sopUID: {}", frame, tags.get(TagW.SOPInstanceUID)); //$NON-NLS-1$
                 RenderedImage buffer = null;
-                //                if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
+                // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
                 // if (jpipReader == null) {
                 // // TODO change JPIP reader
                 // // ImageReaderFactory f = ImageReaderFactory.getInstance();
@@ -1040,7 +1031,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         // return reader.getImageTypes(0);
 
         // TODO 1.2.840.10008.1.2.4.95 (DICOM JPIP Referenced Deflate Transfer Syntax)
-        //        if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
+        // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
         // MediaElement[] elements = getMediaElement();
         // // TODO handle frame
         // if (elements != null && elements.length > 0) {
@@ -1118,9 +1109,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
                 if (fragmentsPositions.size() == numberOfFrame) {
                     int start = fragmentsPositions.get(frameIndex);
-                    int end =
-                        (frameIndex + 1) >= fragmentsPositions.size() ? nbFragments : fragmentsPositions
-                            .get(frameIndex + 1);
+                    int end = (frameIndex + 1) >= fragmentsPositions.size() ? nbFragments
+                        : fragmentsPositions.get(frameIndex + 1);
 
                     offsets = new long[end - start];
                     length = new int[offsets.length];
@@ -1156,9 +1146,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Start decompressing frame #" + (frameIndex + 1)); //$NON-NLS-1$
                 }
-                Raster wr =
-                    pmi.decompress() == pmi && decompressor.canReadRaster() ? decompressor.readRaster(0,
-                        decompressParam(param)) : decompressor.read(0, decompressParam(param)).getRaster();
+                Raster wr = pmi.decompress() == pmi && decompressor.canReadRaster()
+                    ? decompressor.readRaster(0, decompressParam(param))
+                    : decompressor.read(0, decompressParam(param)).getRaster();
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Finished decompressing frame #" + (frameIndex + 1)); //$NON-NLS-1$
                 }
@@ -1267,11 +1257,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                     // TODO improve this
                     WritableRaster raster = (WritableRaster) readRaster(frameIndex, param);
                     ColorModel cm = createColorModel(bitsStored, dataType);
-                    ColorModel cmodel =
-                        new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[] { 8, 8, 8 },
-                            false, // has alpha
-                            false, // alpha premultipled
-                            Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+                    ColorModel cmodel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                        new int[] { 8, 8, 8 }, false, // has alpha
+                        false, // alpha premultipled
+                        Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
                     int width = raster.getWidth();
                     int height = raster.getHeight();
                     SampleModel sampleModel = cmodel.createCompatibleSampleModel(width, height);
@@ -1407,7 +1396,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         /*
          * readingHeader: prevent error when reading images from a large multiframe and the header is removed from the
          * cache at the same time.
-         * 
+         *
          * readingImage: prevent closing stream when reading an image or for the RenderedImage which delays the image
          * reading).
          */
@@ -1474,7 +1463,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     /**
      * Reads the DICOM header meta-data, up to, but not including pixel data.
-     * 
+     *
      * @throws Exception
      */
     private synchronized DicomMetaData readMetaData(boolean readImageAfter) throws IOException {

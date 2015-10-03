@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -151,11 +151,9 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         boolean ajusting = valueIsAdjusting ? true : !model.getValueIsAdjusting();
         if (triggerAction && ajusting) {
             stateChanged(model);
-            AuditLog.LOGGER
-                .info(
-                    "action:{} val:{} min:{} max:{}", //$NON-NLS-1$
-                    new Object[] { basicState.getActionW().cmd(), model.getValue(), model.getMinimum(),
-                        model.getMaximum() });
+            AuditLog.LOGGER.info("action:{} val:{} min:{} max:{}", //$NON-NLS-1$
+                new Object[] { basicState.getActionW().cmd(), model.getValue(), model.getMinimum(),
+                    model.getMaximum() });
         }
 
         for (Object c : basicState.getComponents()) {

@@ -21,14 +21,14 @@ public interface Canvas {
 
     /**
      * Gets the view model.
-     * 
+     *
      * @return the view model, never null
      */
     ViewModel getViewModel();
 
     /**
      * Sets the view model.
-     * 
+     *
      * @param viewModel
      *            the view model, never null
      */

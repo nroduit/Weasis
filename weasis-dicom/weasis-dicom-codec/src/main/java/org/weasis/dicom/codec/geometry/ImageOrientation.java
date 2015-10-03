@@ -10,7 +10,7 @@ import org.weasis.dicom.codec.DicomImageElement;
  * A class of static methods to provide descriptions of images, including image orientation relative to the patient from
  * the mathematical position and orientation attributes, and including other descriptive attributes such as from dicom
  * directory records and images using multi-frame functional groups.
- * 
+ *
  * C.7.6.1.1.1 Patient Orientation. The Patient Orientation (0020,0020) relative to the image plane shall be specified
  * by two values that designate the anatomical direction of the positive row axis (left to right) and the positive
  * column axis (top to bottom). The first entry is the direction of the rows, given by the direction of the last pixel
@@ -20,7 +20,7 @@ import org.weasis.dicom.codec.DicomImageElement;
  * of the orientation attribute shall contain at least one of these characters. If refinements in the orientation
  * descriptions are to be specified, then they shall be designated by one or two additional letters in each value.
  * Within each value, the letters shall be ordered with the principal orientation designated in the first character.
- * 
+ *
  * C.7.6.2.1.1 Image Position And Image Orientation. The Image Position (0020,0032) specifies the x, y, and z
  * coordinates of the upper left hand corner of the image; it is the center of the first voxel transmitted. Image
  * Orientation (0020,0037) specifies the direction cosines of the first row and the first column with respect to the
@@ -31,7 +31,7 @@ import org.weasis.dicom.codec.DicomImageElement;
  * a right handed system, i.e. the vector cross product of a unit vector along the positive x-axis and a unit vector
  * along the positive y-axis is equal to a unit vector along the positive z-axis.
  * </p>
- * 
+ *
  * @author dclunie
  */
 public abstract class ImageOrientation {
@@ -47,12 +47,12 @@ public abstract class ImageOrientation {
      * <p>
      * Get a label describing the major axis from a unit vector (direction cosine) as found in ImageOrientationPatient.
      * </p>
-     * 
+     *
      * <p>
      * Some degree of deviation from one of the standard orthogonal axes is allowed before deciding no major axis
      * applies and returning null.
      * </p>
-     * 
+     *
      * @param x
      * @param y
      * @param z
@@ -89,12 +89,12 @@ public abstract class ImageOrientation {
      * Get a label describing the axial, coronal or sagittal plane from row and column unit vectors (direction cosines)
      * as found in ImageOrientationPatient.
      * </p>
-     * 
+     *
      * <p>
      * Some degree of deviation from one of the standard orthogonal planes is allowed before deciding the plane is
      * OBLIQUE.
      * </p>
-     * 
+     *
      * @param rowX
      * @param rowY
      * @param rowZ
@@ -133,24 +133,24 @@ public abstract class ImageOrientation {
         if (v == null || v.length < 6) {
             return null;
         }
-        return ImageOrientation
-            .makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3], v[4], v[5]);
+        return ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3], v[4],
+            v[5]);
     }
 
     /**
      * <p>
      * Get a PatientOrientation style string from a unit vector (direction cosine) as found in ImageOrientationPatient.
      * </p>
-     * 
+     *
      * <p>
      * Returns letters representing R (right) or L (left), A (anterior) or P (posterior), F (feet) or H (head).
      * </p>
-     * 
+     *
      * <p>
      * If the orientation is not precisely orthogonal to one of the major axes, more than one letter is returned, from
      * major to minor axes, with up to three letters in the case of a "double oblique".
      * </p>
-     * 
+     *
      * @param x
      * @param y
      * @param z
@@ -189,20 +189,20 @@ public abstract class ImageOrientation {
      * Get a PatientOrientation style string from row and column unit vectors (direction cosines) as found in
      * ImageOrientationPatient.
      * </p>
-     * 
+     *
      * <p>
      * Returns letters representing R (right) or L (left), A (anterior) or P (posterior), F (feet) or H (head).
      * </p>
-     * 
+     *
      * <p>
      * If the orientation is not precisely orthogonal to one of the major axes, more than one letter is returned, from
      * major to minor axes, with up to three letters in the case of a "double oblique".
      * </p>
-     * 
+     *
      * <p>
      * The row and column letters returned are separated by the usual DICOM string delimiter, a backslash.
      * </p>
-     * 
+     *
      * @param rowX
      * @param rowY
      * @param rowZ
@@ -245,12 +245,10 @@ public abstract class ImageOrientation {
             double[] v1 = (double[]) image1.getTagValue(TagW.ImageOrientationPatient);
             double[] v2 = (double[]) image2.getTagValue(TagW.ImageOrientationPatient);
             if (v1 != null && v1.length == 6 && v2 != null && v2.length == 6) {
-                String label1 =
-                    ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v1[0], v1[1], v1[2], v1[3],
-                        v1[4], v1[5]);
-                String label2 =
-                    ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1], v2[2], v2[3],
-                        v2[4], v2[5]);
+                String label1 = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v1[0], v1[1],
+                    v1[2], v1[3], v1[4], v1[5]);
+                String label2 = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1],
+                    v2[2], v2[3], v2[4], v2[5]);
 
                 if (label1 != null && !label1.equals(LABELS[4])) {
                     return label1.equals(label2);

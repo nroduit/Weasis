@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -70,14 +70,16 @@ import org.weasis.core.ui.util.WtoolBar;
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
+
     static {
         SYNCH_LIST.add(SynchView.NONE);
         SYNCH_LIST.add(SynchView.DEFAULT_STACK);
         SYNCH_LIST.add(SynchView.DEFAULT_TILE);
     }
 
-    public static final List<GridBagLayoutModel> LAYOUT_LIST = Collections
-        .synchronizedList(new ArrayList<GridBagLayoutModel>());
+    public static final List<GridBagLayoutModel> LAYOUT_LIST =
+        Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
+
     static {
         LAYOUT_LIST.add(VIEWS_1x1);
         LAYOUT_LIST.add(VIEWS_1x2);
@@ -237,9 +239,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                                 if (seqAction instanceof SliderCineListener) {
                                     SliderCineListener sliceAction = (SliderCineListener) seqAction;
                                     if (param instanceof ImageElement) {
-                                        Filter<ImageElement> filter =
-                                            (Filter<ImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES
-                                                .cmd());
+                                        Filter<ImageElement> filter = (Filter<ImageElement>) view2DPane
+                                            .getActionValue(ActionW.FILTERED_SERIES.cmd());
                                         int imgIndex =
                                             series.getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
                                         if (imgIndex < 0) {

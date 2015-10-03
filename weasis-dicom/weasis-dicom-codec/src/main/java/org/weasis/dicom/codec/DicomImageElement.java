@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -158,7 +158,7 @@ public class DicomImageElement extends ImageElement {
     /**
      * Data representation of the pixel samples. Each sample shall have the same pixel representation. Enumerated
      * Values: 0000H = unsigned integer. 0001H = 2's complement
-     * 
+     *
      * @return true if Tag exist and if explicitly defined a signed
      * @see DICOM standard PS 3.3 - §C.7.6.3 - Image Pixel Module
      */
@@ -177,9 +177,9 @@ public class DicomImageElement extends ImageElement {
     /**
      * In the case where Rescale Slope and Rescale Intercept are used for modality pixel transformation, the output
      * ranges may be signed even if Pixel Representation is unsigned.
-     * 
+     *
      * @param pixelPadding
-     * 
+     *
      * @return
      */
     public boolean isModalityLutOutSigned(boolean pixelPadding) {
@@ -235,7 +235,7 @@ public class DicomImageElement extends ImageElement {
 
     /**
      * The value of Photometric Interpretation specifies the intended interpretation of the image pixel data.
-     * 
+     *
      * @return following values (MONOCHROME1 , MONOCHROME2 , PALETTE COLOR ....) Other values are permitted but the
      *         meaning is not defined by this Standard.
      */
@@ -247,12 +247,12 @@ public class DicomImageElement extends ImageElement {
         String photometricInterpretation = getPhotometricInterpretation();
 
         return (photometricInterpretation != null && //
-        ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) || "MONOCHROME2" //$NON-NLS-1$ //$NON-NLS-2$
-        .equalsIgnoreCase(photometricInterpretation)));
+            ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) || "MONOCHROME2" //$NON-NLS-1$ //$NON-NLS-2$
+                .equalsIgnoreCase(photometricInterpretation)));
     }
 
     /**
-     * 
+     *
      * Pixel Padding Value is used to pad grayscale images (those with a Photometric Interpretation of MONOCHROME1 or
      * MONOCHROME2)<br>
      * Pixel Padding Value specifies either a single value of this padding value, or when combined with Pixel Padding
@@ -261,7 +261,7 @@ public class DicomImageElement extends ImageElement {
      * <b>Note :</b> It is explicitly described in order to prevent display applications from taking it into account
      * when determining the dynamic range of an image, since the Pixel Padding Value will be outside the range between
      * the minimum and maximum values of the pixels in the native image
-     * 
+     *
      * @see DICOM standard PS 3.3 - §C.7.5.1.1.2 - Pixel Padding Value and Pixel Padding Range Limit
      */
 
@@ -298,12 +298,11 @@ public class DicomImageElement extends ImageElement {
             float maxValue = super.getMaxValue(pixelPadding) * slope + intercept;
             bitsOutputLut = Integer.SIZE - Integer.numberOfLeadingZeros(Math.round(maxValue - minValue));
             outputSigned = minValue < 0 ? true : isSigned;
-            if (outputSigned && bitsOutputLut <= 8){
+            if (outputSigned && bitsOutputLut <= 8) {
                 // Allows to handle negative values with 8-bit image
                 bitsOutputLut = 9;
             }
-        }
-        else {
+        } else {
             bitsOutputLut = mLUTSeq.getDataType() == DataBuffer.TYPE_BYTE ? 8 : 16;
         }
         return new LutParameters(intercept, slope, pixelPadding, paddingValue, paddingLimit, bitsStored, isSigned,
@@ -317,19 +316,19 @@ public class DicomImageElement extends ImageElement {
 
     /**
      * DICOM PS 3.3 $C.11.1 Modality LUT Module
-     * 
+     *
      * The LUT Data contains the LUT entry values.
-     * 
+     *
      * The output range of the Modality LUT Module depends on whether or not Rescale Slope (0028,1053) and Rescale
      * Intercept (0028,1052) or the Modality LUT Sequence (0028,3000) are used. In the case where Rescale Slope and
      * Rescale Intercept are used, the output ranges from (minimum pixel value*Rescale Slope+Rescale Intercept) to
      * (maximum pixel value*Rescale - Slope+Rescale Intercept), where the minimum and maximum pixel values are
      * determined by Bits Stored and Pixel Representation. Note: This range may be signed even if Pixel Representation
      * is unsigned.
-     * 
+     *
      * In the case where the Modality LUT Sequence is used, the output range is from 0 to 2n-1 where n is the third
      * value of LUT Descriptor. This range is always unsigned.
-     * 
+     *
      * @param pixelPadding
      * @param inverseLUT
      * @return the modality lookup table
@@ -345,8 +344,8 @@ public class DicomImageElement extends ImageElement {
                 } else {
                     // Remove MLut as it cannot be used.
                     tags.remove(TagW.ModalityLUTData);
-                    LOGGER
-                        .warn("Pixel values doesn't match to Modality LUT sequence table. So the Modality LUT is not applied."); //$NON-NLS-1$
+                    LOGGER.warn(
+                        "Pixel values doesn't match to Modality LUT sequence table. So the Modality LUT is not applied."); //$NON-NLS-1$
                 }
             } else {
                 LOGGER.warn("Cannot apply Modality LUT sequence and Pixel Padding"); //$NON-NLS-1$
@@ -379,16 +378,15 @@ public class DicomImageElement extends ImageElement {
                     } else {
                         short[] data = mLUTSeq.getShortData(0);
                         if (data != null) {
-                            modalityLookup =
-                                new LookupTableJAI(data, mLUTSeq.getOffset(0),
-                                    mLUTSeq.getData() instanceof DataBufferUShort);
+                            modalityLookup = new LookupTableJAI(data, mLUTSeq.getOffset(0),
+                                mLUTSeq.getData() instanceof DataBufferUShort);
                         }
                     }
                 }
                 if (modalityLookup == null) {
                     modalityLookup = mLUTSeq;
                 }
-            } else {            
+            } else {
                 modalityLookup = DicomImageUtils.createRescaleRampLut(lutparams);
             }
         }
@@ -401,14 +399,14 @@ public class DicomImageElement extends ImageElement {
     }
 
     /**
-     * 
+     *
      * @param modalityLookup
      * @param window
      * @param level
      * @param shape
      * @param fillLutOutside
      * @param pixelPadding
-     * 
+     *
      * @return 8 bits unsigned Lookup Table
      */
     public LookupTableJAI getVOILookup(LookupTableJAI modalityLookup, Float window, Float level, Float minLevel,
@@ -422,9 +420,9 @@ public class DicomImageElement extends ImageElement {
             /*
              * When pixel padding is activated, VOI LUT must extend to the min bit stored value when MONOCHROME2 and to
              * the max bit stored value when MONOCHROME1.
-             * 
+             *
              * C.7.5.1.1.2 Pixel Padding Value and Pixel Padding Range Limit If Photometric Interpretation
-             * 
+             *
              * (0028,0004) is MONOCHROME2, Pixel Padding Value (0028,0120) shall be less than (closer to or equal to the
              * minimum possible pixel value) or equal to Pixel Padding Range Limit (0028,0121). If Photometric
              * Interpretation (0028,0004) is MONOCHROME1, Pixel Padding Value (0028,0120) shall be greater than (closer
@@ -492,7 +490,7 @@ public class DicomImageElement extends ImageElement {
     }
 
     /**
-     * 
+     *
      * @param imageSource
      * @param pixelPadding
      * @return Histogram of the image source after modality lookup rescaled
@@ -562,11 +560,11 @@ public class DicomImageElement extends ImageElement {
                 int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : (1 << bitsStored) - 1;
                 if (minPixelValue < minInValue || maxPixelValue > maxInValue) {
                     /*
-                     * 
-                     * 
+                     *
+                     *
                      * When the image contains values outside the bits stored values, the bits stored is replaced by the
                      * bits allocated for having a LUT which handles all the values.
-                     * 
+                     *
                      * Overlays in pixel data should be masked before finding min and max.
                      */
                     setTag(TagW.BitsStored, bitsAllocated);
@@ -575,7 +573,7 @@ public class DicomImageElement extends ImageElement {
             /*
              * Lazily compute image pixel transformation here since inner class Load is called from a separate and
              * dedicated worker Thread. Also, it will be computed only once
-             * 
+             *
              * Considering that the default pixel padding option is true and Inverse LUT action is false
              */
             getModalityLookup(true);
@@ -584,7 +582,7 @@ public class DicomImageElement extends ImageElement {
 
     /**
      * Computes Min/Max values from Image excluding range of values provided
-     * 
+     *
      * @param img
      * @param paddingValueMin
      * @param paddingValueMax
@@ -596,9 +594,8 @@ public class DicomImageElement extends ImageElement {
                 this.minPixelValue = 0.0f;
                 this.maxPixelValue = 255.0f;
             } else {
-                RenderedOp dst =
-                    ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, new Double(paddingValueMin), new Double(
-                        paddingValueMax), null);
+                RenderedOp dst = ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, new Double(paddingValueMin),
+                    new Double(paddingValueMax), null);
                 // To ensure this image won't be stored in tile cache
                 ((OpImage) dst.getRendering()).setTileCache(null);
 
@@ -669,9 +666,9 @@ public class DicomImageElement extends ImageElement {
      *            considered
      * @return
      */
-    protected RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
-        Float levelMin, Float levelMax, LutShape lutShape, Boolean pixelPadding, Boolean inverseLUT,
-        boolean fillLutOutside, boolean applyWLcolor) {
+    protected RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level, Float levelMin,
+        Float levelMax, LutShape lutShape, Boolean pixelPadding, Boolean inverseLUT, boolean fillLutOutside,
+        boolean applyWLcolor) {
 
         if (imageSource == null) {
             return null;
@@ -708,7 +705,7 @@ public class DicomImageElement extends ImageElement {
 
             /*
              * C.11.2.1.2 Window center and window width
-             * 
+             *
              * Theses Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
              * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
              */
@@ -719,9 +716,8 @@ public class DicomImageElement extends ImageElement {
                  */
                 return imageModalityTransformed;
             }
-            LookupTableJAI voiLookup =
-                getVOILookup(modalityLookup, windowValue, levelValue, minLevel, maxLevel, lut, fillLutOutside,
-                    pixPadding);
+            LookupTableJAI voiLookup = getVOILookup(modalityLookup, windowValue, levelValue, minLevel, maxLevel, lut,
+                fillLutOutside, pixPadding);
             // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
             return LookupDescriptor.create(imageModalityTransformed, voiLookup, LayoutUtil.createGrayRenderedImage());
 
@@ -775,8 +771,8 @@ public class DicomImageElement extends ImageElement {
             wlOnColorImage = (Boolean) params.get(WindowOp.P_APPLY_WL_COLOR);
         }
 
-        return this.getRenderedImage(imageSource, window, level, levelMin, levelMax, lutShape, pixelPadding,
-            inverseLUT, JMVUtils.getNULLtoFalse(fillLutOutside), JMVUtils.getNULLtoFalse(wlOnColorImage));
+        return this.getRenderedImage(imageSource, window, level, levelMin, levelMax, lutShape, pixelPadding, inverseLUT,
+            JMVUtils.getNULLtoFalse(fillLutOutside), JMVUtils.getNULLtoFalse(wlOnColorImage));
     }
 
     public GeometryOfSlice getDispSliceGeometry() {
@@ -795,9 +791,9 @@ public class DicomImageElement extends ImageElement {
                 if (rows != null && columns != null && rows > 0 && columns > 0) {
                     // SliceTickness is only use in IntersectVolume
                     // Multiply rows and columns by getZoomScale() to have square pixel image size
-                    return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] }, new double[] { imgOr[3],
-                        imgOr[4], imgOr[5] }, pos, spacing, sliceTickness, new double[] { rows * getRescaleY(),
-                        columns * getRescaleX(), 1 });
+                    return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] },
+                        new double[] { imgOr[3], imgOr[4], imgOr[5] }, pos, spacing, sliceTickness,
+                        new double[] { rows * getRescaleY(), columns * getRescaleX(), 1 });
                 }
             }
         }
@@ -818,8 +814,9 @@ public class DicomImageElement extends ImageElement {
                 Integer rows = (Integer) getTagValue(TagW.Rows);
                 Integer columns = (Integer) getTagValue(TagW.Columns);
                 if (rows != null && columns != null && rows > 0 && columns > 0) {
-                    return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] }, new double[] { imgOr[3],
-                        imgOr[4], imgOr[5] }, pos, spacing, sliceTickness, new double[] { rows, columns, 1 });
+                    return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] },
+                        new double[] { imgOr[3], imgOr[4], imgOr[5] }, pos, spacing, sliceTickness,
+                        new double[] { rows, columns, 1 });
                 }
             }
         }

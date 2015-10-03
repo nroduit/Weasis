@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -31,12 +31,12 @@ public class UIManager {
 
     public static final AtomicInteger dockableUIGenerator = new AtomicInteger(1);
 
-    public static final List<ViewerPlugin<?>> VIEWER_PLUGINS = Collections
-        .synchronizedList(new ArrayList<ViewerPlugin<?>>());
-    public static final List<DataExplorerView> EXPLORER_PLUGINS = Collections
-        .synchronizedList(new ArrayList<DataExplorerView>());
-    public static final List<SeriesViewerFactory> SERIES_VIEWER_FACTORIES = Collections
-        .synchronizedList(new ArrayList<SeriesViewerFactory>());
+    public static final List<ViewerPlugin<?>> VIEWER_PLUGINS =
+        Collections.synchronizedList(new ArrayList<ViewerPlugin<?>>());
+    public static final List<DataExplorerView> EXPLORER_PLUGINS =
+        Collections.synchronizedList(new ArrayList<DataExplorerView>());
+    public static final List<SeriesViewerFactory> SERIES_VIEWER_FACTORIES =
+        Collections.synchronizedList(new ArrayList<SeriesViewerFactory>());
 
     public static final CVetoFocusListener DOCKING_VETO_FOCUS = new CVetoFocusListener() {
 

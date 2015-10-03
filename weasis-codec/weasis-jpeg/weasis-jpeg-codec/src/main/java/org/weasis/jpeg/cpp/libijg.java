@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -24,7 +24,7 @@ import org.weasis.jpeg.internal.DecoderIJG;
 /**
  * Wrap native API of IJG and CHARLS
  *
- * 
+ *
  */
 @Platform(include = { "libcparam.h", "libeijg8.h", "jpeglib8.h", "libijg8.h", "libijg12.h", "libijg16.h",
     "interface.h" })
@@ -404,9 +404,9 @@ public class libijg {
     // }
 
     /*******************************************************************************************************************************************
-     * 
+     *
      * CHARLS LIB
-     * 
+     *
      *******************************************************************************************************************************************/
 
     /** enum interleavemode */

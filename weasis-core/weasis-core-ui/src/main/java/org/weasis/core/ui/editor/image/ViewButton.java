@@ -62,7 +62,7 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.weasis.core.ui.editor.image.ShowPopup#showPopup(java.awt.Component, int, int)
      */
     @Override

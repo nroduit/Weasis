@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -34,8 +34,8 @@ import org.weasis.core.ui.Messages;
 public class PreferenceDialog extends AbstractWizardDialog {
 
     public PreferenceDialog(Window parentWin) {
-        super(parentWin,
-            Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, new Dimension(700, 520)); //$NON-NLS-1$
+        super(parentWin, Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, //$NON-NLS-1$
+            new Dimension(700, 520));
         initializePages();
         pack();
 
@@ -61,8 +61,8 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         try {
-            for (ServiceReference<PreferencesPageFactory> service : context.getServiceReferences(
-                PreferencesPageFactory.class, null)) {
+            for (ServiceReference<PreferencesPageFactory> service : context
+                .getServiceReferences(PreferencesPageFactory.class, null)) {
                 PreferencesPageFactory factory = context.getService(service);
                 if (factory != null) {
                     AbstractItemDialogPage page = factory.createInstance(properties);

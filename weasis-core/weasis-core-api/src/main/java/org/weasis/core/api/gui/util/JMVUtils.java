@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -69,12 +69,12 @@ import org.weasis.core.api.util.StringUtil;
 
 /**
  * The Class JMVUtils.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class JMVUtils {
 
-    public static final Color TREE_BACKROUND = (Color) javax.swing.UIManager.get("Tree.background"); //$NON-NLS-1$ 
+    public static final Color TREE_BACKROUND = (Color) javax.swing.UIManager.get("Tree.background"); //$NON-NLS-1$
     public static final Color TREE_SELECTION_BACKROUND = (Color) javax.swing.UIManager.get("Tree.selectionBackground"); //$NON-NLS-1$
 
     public static boolean getNULLtoFalse(Object val) {
@@ -141,9 +141,8 @@ public class JMVUtils {
 
     public static void showCenterScreen(Window window) {
         try {
-            Rectangle bound =
-                GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
-                    .getBounds();
+            Rectangle bound = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+                .getDefaultConfiguration().getBounds();
             window.setLocation(bound.x + (bound.width - window.getWidth()) / 2,
                 bound.y + (bound.height - window.getHeight()) / 2);
         } catch (Exception e) {
@@ -237,16 +236,16 @@ public class JMVUtils {
         textField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
         textField.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        textField.commitEdit(); // so use it.
-                        textField.postActionEvent(); // stop editing //for DefaultCellEditor
-                    } catch (java.text.ParseException exc) {
-                    }
-                    textField.setValue(textField.getValue());
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    textField.commitEdit(); // so use it.
+                    textField.postActionEvent(); // stop editing //for DefaultCellEditor
+                } catch (java.text.ParseException exc) {
                 }
-            });
+                textField.setValue(textField.getValue());
+            }
+        });
     }
 
     public static void setNumberModel(JSpinner spin, int val, int min, int max, int delta) {
@@ -255,15 +254,15 @@ public class JMVUtils {
         ftf.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
         ftf.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        ftf.commitEdit(); // so use it.
-                    } catch (java.text.ParseException exc) {
-                    }
-                    ftf.setValue(ftf.getValue());
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    ftf.commitEdit(); // so use it.
+                } catch (java.text.ParseException exc) {
                 }
-            });
+                ftf.setValue(ftf.getValue());
+            }
+        });
     }
 
     public static void formatCheckAction(JSpinner spin) {
@@ -271,15 +270,15 @@ public class JMVUtils {
         ftf.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
         ftf.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        ftf.commitEdit(); // so use it.
-                    } catch (java.text.ParseException exc) {
-                    }
-                    ftf.setValue(ftf.getValue());
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    ftf.commitEdit(); // so use it.
+                } catch (java.text.ParseException exc) {
                 }
-            });
+                ftf.setValue(ftf.getValue());
+            }
+        });
     }
 
     public static Number getFormattedValue(JFormattedTextField textField) {
@@ -454,11 +453,10 @@ public class JMVUtils {
                     }
                 }
             } else {
-                JOptionPane
-                    .showMessageDialog(
-                        parent,
-                        Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url, Messages.getString("JMVUtils.error"), //$NON-NLS-1$ //$NON-NLS-2$
-                        JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(parent,
+                    Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url, //$NON-NLS-1$
+                    Messages.getString("JMVUtils.error"), //$NON-NLS-1$
+                    JOptionPane.ERROR_MESSAGE);
             }
         }
     }

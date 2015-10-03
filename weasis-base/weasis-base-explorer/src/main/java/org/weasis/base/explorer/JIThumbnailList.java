@@ -57,14 +57,16 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.TitleMenuItem;
 
-public final class JIThumbnailList extends JList implements JIObservable, DragGestureListener, DragSourceListener,
-    DragSourceMotionListener {
+public final class JIThumbnailList extends JList
+    implements JIObservable, DragGestureListener, DragSourceListener, DragSourceMotionListener {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
+
     static {
         intGroupFormat.setGroupingUsed(true);
     }
+
     private final int editingIndex = -1;
     private final FileTreeModel model;
     private final ToggleSelectionModel selectionModel;
@@ -247,8 +249,8 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
         }
     }
 
-    public void openSelection(MediaElement<?>[] medias, boolean compareEntryToBuildNewViewer,
-        boolean bestDefaultLayout, boolean inSelView) {
+    public void openSelection(MediaElement<?>[] medias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout,
+        boolean inSelView) {
         if (medias != null) {
             boolean oneFile = medias.length == 1;
             String sUID = null;
@@ -275,9 +277,8 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
                         tname = TagW.PatientName;
                         tvalue = (String) reader.getTagValue(TagW.PatientName);
                     } else {
-                        sUID =
-                            oneFile ? mediaElement.getFile().getAbsolutePath() : sUID == null ? UUID.randomUUID()
-                                .toString() : sUID;
+                        sUID = oneFile ? mediaElement.getFile().getAbsolutePath()
+                            : sUID == null ? UUID.randomUUID().toString() : sUID;
                         gUID = sUID;
                         tname = TagW.FileName;
                         tvalue = oneFile ? mediaElement.getFile().getName() : sUID;
@@ -352,9 +353,8 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
                         MediaReader mreader = ViewerPluginBuilder.getMedia(file, false);
                         if (mreader != null) {
                             if (modeLayout) {
-                                MediaSeries<? extends MediaElement<?>> series =
-                                    ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader, groupUID, null, null,
-                                        null);
+                                MediaSeries<? extends MediaElement<?>> series = ViewerPluginBuilder
+                                    .buildMediaSeriesWithDefaultModel(mreader, groupUID, null, null, null);
                                 if (series != null) {
                                     list.add(series);
                                 }
@@ -374,8 +374,8 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
                                                 media.setTag(TagW.SeriesInstanceUID,
                                                     series.getTagValue(series.getTagID()));
                                                 URI uri = media.getMediaURI();
-                                                media.setTag(TagW.SOPInstanceUID, uri == null ? UUID.randomUUID()
-                                                    .toString() : uri.toString());
+                                                media.setTag(TagW.SOPInstanceUID,
+                                                    uri == null ? UUID.randomUUID().toString() : uri.toString());
                                                 series.addMedia(media);
                                             }
                                         }
@@ -398,8 +398,8 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
             for (Iterator<Entry<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>>> iterator =
                 plugins.entrySet().iterator(); iterator.hasNext();) {
                 Entry<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>> item = iterator.next();
-                ViewerPluginBuilder builder =
-                    new ViewerPluginBuilder(item.getKey(), item.getValue(), ViewerPluginBuilder.DefaultDataModel, props);
+                ViewerPluginBuilder builder = new ViewerPluginBuilder(item.getKey(), item.getValue(),
+                    ViewerPluginBuilder.DefaultDataModel, props);
                 ViewerPluginBuilder.openSequenceInPlugin(builder);
             }
         }
@@ -425,9 +425,8 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
             final int visibleColums = (int) (((float) (lastIndex - firstIndex) / (float) visibleRows) + .5);
             final int visibleItems = visibleRows * visibleColums;
 
-            final int val =
-                (lastIndex + visibleItems >= getModel().getSize()) ? getModel().getSize() - 1 : lastIndex
-                    + visibleItems;
+            final int val = (lastIndex + visibleItems >= getModel().getSize()) ? getModel().getSize() - 1
+                : lastIndex + visibleItems;
             // log.debug("Next index is " + val + " " + lastIndex + " " + visibleItems + " " + visibleRows);
             clearSelection();
             setSelectedIndex(val);
@@ -690,7 +689,7 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
      * Each observer has its <code>update</code> method called with two arguments: this observable object and
      * <code>null</code>. In other words, this method is equivalent to: <blockquote><tt>
      * notifyObservers(null)</tt> </blockquote>
-     * 
+     *
      * @see java.util.Observable#clearChanged()
      * @see java.util.Observable#hasChanged()
      * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
@@ -705,7 +704,7 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
      * <p>
      * Each observer has its <code>update</code> method called with two arguments: this observable object and the
      * <code>arg</code> argument.
-     * 
+     *
      * @param arg
      *            any object.
      * @see java.util.Observable#clearChanged()
@@ -743,7 +742,7 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
      * Indicates that this object has no longer changed, or that it has already notified all of its observers of its
      * most recent change, so that the <tt>hasChanged</tt> method will now return <tt>false</tt>. This method is called
      * automatically by the <code>notifyObservers</code> methods.
-     * 
+     *
      * @see java.util.Observable#notifyObservers()
      * @see java.util.Observable#notifyObservers(java.lang.Object)
      */
@@ -753,7 +752,7 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
 
     /**
      * Tests if this object has changed.
-     * 
+     *
      * @return <code>true</code> if and only if the <code>setChanged</code> method has been called more recently than
      *         the <code>clearChanged</code> method on this object; <code>false</code> otherwise.
      * @see java.util.Observable#clearChanged()

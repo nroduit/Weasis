@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -27,26 +27,26 @@ public class ZoomOp extends AbstractOp {
     public static final String OP_NAME = Messages.getString("ZoomOperation.title"); //$NON-NLS-1$
 
     public static final String[] INTERPOLATIONS =
-        {
-            Messages.getString("ZoomOperation.nearest"), Messages.getString("ZoomOperation.bilinear"), Messages.getString("ZoomOperation.bicubic"), Messages.getString("ZoomOperation.bicubic2") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        { Messages.getString("ZoomOperation.nearest"), Messages.getString("ZoomOperation.bilinear"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("ZoomOperation.bicubic"), Messages.getString("ZoomOperation.bicubic2") }; //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * Set a zoom factor in x-axis (Required parameter).
-     * 
+     *
      * Double value.
      */
     public static final String P_RATIO_X = "ratio.x"; //$NON-NLS-1$
 
     /**
      * Set a zoom factor in y-axis (Required parameter).
-     * 
+     *
      * Double value.
      */
     public static final String P_RATIO_Y = "ratio.y"; //$NON-NLS-1$
 
     /**
      * Set the interpolation type (Optional parameter).
-     * 
+     *
      * Integer value. Default value is bilinear interpolation. See javax.media.jai.Interpolation.
      */
     public static final String P_INTERPOLATION = "interpolation"; //$NON-NLS-1$

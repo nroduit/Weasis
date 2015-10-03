@@ -22,9 +22,9 @@ public class PRSpecialElement extends DicomSpecialElement {
         Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
         /*
          * DICOM PS 3.3 - 2011 - CONTENT IDENTIFICATION MACRO. Used in Presentation State Identification C.11.10
-         * 
+         *
          * ContentLabel (mandatory): a label that is used to identify this SOP Instance.
-         * 
+         *
          * ContentDescription: a description of the content of the SOP Instance.
          */
 

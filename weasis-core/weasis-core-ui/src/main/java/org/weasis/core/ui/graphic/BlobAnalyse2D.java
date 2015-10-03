@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -25,7 +25,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 
 /**
  * The Class BlobAnalyse2D.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class BlobAnalyse2D {
@@ -108,9 +108,8 @@ public class BlobAnalyse2D {
             for (int i = 0; i < dwidth; i++) {
                 if (visited[j][i] == false) {
                     int area = getArea();
-                    Contour contour =
-                        new Contour(shape.getBounds().x + i, shape.getBounds().y + j, chain8(i, j), area,
-                            getStatValue(blob));
+                    Contour contour = new Contour(shape.getBounds().x + i, shape.getBounds().y + j, chain8(i, j), area,
+                        getStatValue(blob));
                     return contour;
                 }
             }
@@ -127,9 +126,8 @@ public class BlobAnalyse2D {
                 if (!visited[m][n]) {
                     if (!growingBHoleSize(n, m, area)) {
                         byte[] holeChain = chainHole8(n, m - 1);
-                        Contour contour =
-                            new Contour(shape.getBounds().x + +n, shape.getBounds().y + +m - 1, holeChain, area[0],
-                                null);
+                        Contour contour = new Contour(shape.getBounds().x + +n, shape.getBounds().y + +m - 1, holeChain,
+                            area[0], null);
                         holes.add(contour);
                     }
                 }

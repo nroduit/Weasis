@@ -44,9 +44,8 @@ public class InsertableUtil {
                         // If not specify, value is true
                         boolean val = true;
                         if (valString == null) {
-                            val =
-                                getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName, nodeName,
-                                    key, val);
+                            val = getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                                nodeName, key, val);
                         } else if (valString.equalsIgnoreCase("false")) { //$NON-NLS-1$
                             val = false;
                         }
@@ -57,9 +56,8 @@ public class InsertableUtil {
                         // If not specify, value is true
                         int index = c.getComponentPosition();
                         if (valString == null) {
-                            index =
-                                getIntProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName, nodeName,
-                                    key, index);
+                            index = getIntProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName, nodeName,
+                                key, index);
                         } else {
                             try {
                                 index = Integer.parseInt(valString);

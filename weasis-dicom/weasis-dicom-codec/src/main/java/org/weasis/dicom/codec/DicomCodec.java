@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -39,26 +39,24 @@ public class DicomCodec implements Codec {
 
     public static final String NAME = "dcm4che"; //$NON-NLS-1$
     public static final String[] FILE_EXTENSIONS = { "dcm", "dicm" }; //$NON-NLS-1$ //$NON-NLS-2$
-    
+
     public static final BulkDataDescriptor BULKDATA_DESCRIPTOR = new BulkDataDescriptor() {
 
         @Override
-        public boolean isBulkData(String privateCreator, int tag, VR vr, int length,
-                                      ItemPointer... itemPointer) {
+        public boolean isBulkData(String privateCreator, int tag, VR vr, int length, ItemPointer... itemPointer) {
             switch (TagUtils.normalizeRepeatingGroup(tag)) {
-            case Tag.PixelDataProviderURL:
-            case Tag.AudioSampleData:
-            case Tag.CurveData:
-            case Tag.SpectroscopyData:
-            case Tag.OverlayData:
-            case Tag.EncapsulatedDocument:
-            case Tag.PixelData:
-                return itemPointer.length == 0;
-            case Tag.WaveformData:
-                return itemPointer.length == 1
-                    && itemPointer[0].sequenceTag == Tag.WaveformSequence;                 
+                case Tag.PixelDataProviderURL:
+                case Tag.AudioSampleData:
+                case Tag.CurveData:
+                case Tag.SpectroscopyData:
+                case Tag.OverlayData:
+                case Tag.EncapsulatedDocument:
+                case Tag.PixelData:
+                    return itemPointer.length == 0;
+                case Tag.WaveformData:
+                    return itemPointer.length == 1 && itemPointer[0].sequenceTag == Tag.WaveformSequence;
             }
-            if(TagUtils.isPrivateTag(tag)){
+            if (TagUtils.isPrivateTag(tag)) {
                 return length > 5000; // Do no read in memory private value more than 5 KB
             }
             return false;
@@ -109,7 +107,7 @@ public class DicomCodec implements Codec {
 
     @Override
     public String[] getWriterMIMETypes() {
-        return new String[] { DicomMediaIO.MIMETYPE};
+        return new String[] { DicomMediaIO.MIMETYPE };
     }
 
 }

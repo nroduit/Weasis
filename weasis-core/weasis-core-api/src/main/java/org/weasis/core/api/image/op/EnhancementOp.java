@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -32,8 +32,8 @@ import org.weasis.core.api.gui.util.JMVUtils;
 
 public class EnhancementOp extends JPanel {
 
-    public static final String[] histoLabels = {
-        "None", "Manual Enhancement", "Automatic Levels", "Equalized Levels", "Background subtraction" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+    public static final String[] histoLabels =
+        { "None", "Manual Enhancement", "Automatic Levels", "Equalized Levels", "Background subtraction" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
     private Contrast contrast;
     private JPanel jPanel1 = new JPanel();

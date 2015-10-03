@@ -18,14 +18,14 @@ public class CropOp extends AbstractOp {
 
     /**
      * Set the area to crop (Required parameter).
-     * 
+     *
      * java.awt.Rectangle value.
      */
     public static final String P_AREA = "area"; //$NON-NLS-1$
 
     /**
      * Whether or not the image origin is shift after cropping.
-     * 
+     *
      * Boolean value. Default value is false (keep the original image referential).
      */
     public static final String P_SHIFT_TO_ORIGIN = "shift.origin"; //$NON-NLS-1$
@@ -43,9 +43,8 @@ public class CropOp extends AbstractOp {
         if (area == null) {
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
         } else {
-            area =
-                area.intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source
-                    .getHeight()));
+            area = area
+                .intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight()));
             if (area.width > 1 && area.height > 1) {
                 ParameterBlock pb = new ParameterBlock();
                 pb.addSource(source);

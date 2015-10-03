@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -27,28 +27,27 @@ public class ImageStatisticsDescriptor extends OperationDescriptorImpl implement
     /**
      * The resource strings that provide the general documentation and specify the parameter list for this operation.
      */
-    private static final String[][] resources =
-        {
-            { "GlobalName", "ImageStatistics" }, //$NON-NLS-1$ //$NON-NLS-2$
+    private static final String[][] resources = { { "GlobalName", "ImageStatistics" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "LocalName", "ImageStatistics" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "LocalName", "ImageStatistics" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "Description", //$NON-NLS-1$
-                "Finds the min, max and mean of pixel values in each band of an image with the option to exclude a range of values." }, //$NON-NLS-1$
+                    { "Description", //$NON-NLS-1$
+                        "Finds the min, max and mean of pixel values in each band of an image with the option to exclude a range of values." }, //$NON-NLS-1$
 
-            { "DocURL", "" }, { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg0Desc", "The region of the image to scan" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "arg0Desc", "The region of the image to scan" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg1Desc", "The horizontal sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "arg1Desc", "The horizontal sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg3Desc", "The lowest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "arg3Desc", "The lowest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg4Desc", "The highest value to exclude" } }; //$NON-NLS-1$ //$NON-NLS-2$
+                    { "arg4Desc", "The highest value to exclude" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The modes that this operator supports. maybe one or more of "rendered", "renderable", "collection", and

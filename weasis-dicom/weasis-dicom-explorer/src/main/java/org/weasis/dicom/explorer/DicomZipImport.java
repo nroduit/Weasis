@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -49,8 +49,8 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
     }
 
     public void initGUI() {
-        setBorder(new TitledBorder(null,
-            Messages.getString("DicomZipImport.title"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        setBorder(new TitledBorder(null, Messages.getString("DicomZipImport.title"), TitledBorder.LEADING, //$NON-NLS-1$
+            TitledBorder.TOP, null, null));
         setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
         btnOpen = new JButton(Messages.getString("DicomZipImport.select_file")); //$NON-NLS-1$
         btnOpen.addActionListener(new ActionListener() {

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -46,7 +46,7 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
 
     /**
      * This method is invoked to check if the backing store is accessible right now.
-     * 
+     *
      * @throws BackingStoreException
      */
     protected abstract void checkAccess() throws BackingStoreException;
@@ -133,7 +133,7 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
 
     /**
      * Write the preferences recursively to the output stream.
-     * 
+     *
      * @param prefs
      * @param os
      * @throws IOException

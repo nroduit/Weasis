@@ -92,10 +92,10 @@ public final class JIThumbnailCache {
                     String tiled_File = thumbnailList.getThumbnailListModel().getFileInCache(cfile);
                     if (tiled_File != null) {
                         try {
-                            ImageDecoder dec =
-                                ImageCodec.createImageDecoder("tiff", new FileSeekableStream(tiled_File == null
-                                    ? diskObject.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, tiled_File)),
-                                    null);
+                            ImageDecoder dec = ImageCodec.createImageDecoder("tiff",
+                                new FileSeekableStream(tiled_File == null ? diskObject.getFile()
+                                    : new File(JIListModel.EXPLORER_CACHE_DIR, tiled_File)),
+                                null);
                             int count = dec.getNumPages();
                             if (count == 2) {
                                 RenderedImage src2 = dec.decodeAsRenderedImage(1);
@@ -142,14 +142,13 @@ public final class JIThumbnailCache {
                         }
                     }
 
-                    final double scale =
-                        Math.min(ThumbnailRenderer.ICON_DIM.height / (double) img.getHeight(),
-                            ThumbnailRenderer.ICON_DIM.width / (double) img.getWidth());
+                    final double scale = Math.min(ThumbnailRenderer.ICON_DIM.height / (double) img.getHeight(),
+                        ThumbnailRenderer.ICON_DIM.width / (double) img.getWidth());
 
-                    final BufferedImage tIcon =
-                        scale <= 1.0 ? scale > 0.005 ? SubsampleAverageDescriptor.create(img, scale, scale,
-                            Thumbnail.DownScaleQualityHints).getAsBufferedImage() : null : PlanarImage
-                            .wrapRenderedImage(img).getAsBufferedImage();
+                    final BufferedImage tIcon = scale <= 1.0
+                        ? scale > 0.005 ? SubsampleAverageDescriptor
+                            .create(img, scale, scale, Thumbnail.DownScaleQualityHints).getAsBufferedImage() : null
+                        : PlanarImage.wrapRenderedImage(img).getAsBufferedImage();
 
                     // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
                     diskObject.removeImageFromCache();

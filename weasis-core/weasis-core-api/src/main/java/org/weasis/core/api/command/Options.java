@@ -174,7 +174,7 @@ public class Options implements Option {
 
         if (arg instanceof String) { // default value
             list = new ArrayList<Object>();
-            if (StringUtil.hasText((String) arg)) { //$NON-NLS-1$
+            if (StringUtil.hasText((String) arg)) {
                 list.add(arg);
             }
         } else {

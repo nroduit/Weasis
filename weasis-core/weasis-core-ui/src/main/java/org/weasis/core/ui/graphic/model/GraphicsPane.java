@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -26,7 +26,7 @@ import org.weasis.core.api.gui.model.ViewModelChangeListener;
 
 /**
  * The Class GraphicsPane.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class GraphicsPane extends JComponent implements Canvas {
@@ -81,7 +81,7 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     /**
      * Gets the view model.
-     * 
+     *
      * @return the view model, never null
      */
     @Override
@@ -91,7 +91,7 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     /**
      * Sets the view model.
-     * 
+     *
      * @param viewModel
      *            the view model, never null
      */
@@ -242,10 +242,10 @@ public class GraphicsPane extends JComponent implements Canvas {
      * <code>Graphics</code> and manipulate it. Further, if you do not invoker super's implementation you must honor the
      * opaque property, that is if this component is opaque, you must completely fill in the background in a non-opaque
      * color. If you do not honor the opaque property you will likely see visual artifacts.
-     * 
+     *
      * @param g
      *            the <code>Graphics</code> object to protect
-     * 
+     *
      * @see #paint
      * @see javax.swing.plaf.ComponentUI
      */
@@ -268,7 +268,7 @@ public class GraphicsPane extends JComponent implements Canvas {
     // Inner Classes
     /**
      * The Class LayerModelHandler.
-     * 
+     *
      * @author Nicolas Roduit
      */
     private class LayerModelHandler extends LayerModelChangeAdapter {
@@ -281,7 +281,7 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     /**
      * The Class ViewModelHandler.
-     * 
+     *
      * @author Nicolas Roduit
      */
     private class ViewModelHandler implements ViewModelChangeListener {
@@ -294,7 +294,7 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     /**
      * The Class DrawingsKeyListeners.
-     * 
+     *
      * @author Nicolas Roduit
      */
     private class DrawingsKeyListeners implements KeyListener {

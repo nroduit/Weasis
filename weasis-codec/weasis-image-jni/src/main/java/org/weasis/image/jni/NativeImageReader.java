@@ -155,7 +155,7 @@ public abstract class NativeImageReader extends ImageReader {
 
     /**
      * Stores the location of the image at the specified index in the imageStartPosition List.
-     * 
+     *
      * @param imageIndex
      * @return the image index
      * @throws IIOException
@@ -216,7 +216,7 @@ public abstract class NativeImageReader extends ImageReader {
 
     /**
      * Verify that imageIndex is in bounds and find the image position.
-     * 
+     *
      * @param imageIndex
      * @throws IIOException
      */
@@ -238,9 +238,9 @@ public abstract class NativeImageReader extends ImageReader {
 
     /**
      * Skip the current image. If possible subclasses should override this method with a more efficient implementation.
-     * 
+     *
      * @param index
-     * 
+     *
      * @return Whether the image was successfully skipped.
      */
     protected boolean skipImage(int index) throws IOException {
@@ -270,7 +270,7 @@ public abstract class NativeImageReader extends ImageReader {
 
     /**
      * Decodes an image from the supplied <code>InputStream</code>.
-     * 
+     *
      * @param stream
      *            an input stream
      * @param param

@@ -160,8 +160,8 @@ public class AuView extends JPanel implements SeriesViewerListener {
     }
 
     // Create a SoundPlayer component for the specified file.
-    private void showPlayer(final DicomSpecialElement media) throws IOException, UnsupportedAudioFileException,
-        LineUnavailableException {
+    private void showPlayer(final DicomSpecialElement media)
+        throws IOException, UnsupportedAudioFileException, LineUnavailableException {
 
         AudioInputStream audioStream = getAudioInputStream(media);
         try {
@@ -417,9 +417,9 @@ public class AuView extends JPanel implements SeriesViewerListener {
                             AudioFormat audioFormat;
 
                             if ("MB".equals(spInterpretation) || "AB".equals(spInterpretation)) { //$NON-NLS-1$ //$NON-NLS-2$
-                                int frameSize =
-                                    (numChannels == AudioSystem.NOT_SPECIFIED || bitsPerSample == AudioSystem.NOT_SPECIFIED)
-                                        ? AudioSystem.NOT_SPECIFIED : ((bitsPerSample + 7) / 8) * numChannels;
+                                int frameSize = (numChannels == AudioSystem.NOT_SPECIFIED
+                                    || bitsPerSample == AudioSystem.NOT_SPECIFIED) ? AudioSystem.NOT_SPECIFIED
+                                        : ((bitsPerSample + 7) / 8) * numChannels;
                                 audioFormat =
                                     new AudioFormat("AB".equals(spInterpretation) ? Encoding.ALAW : Encoding.ULAW, //$NON-NLS-1$
                                         (float) sampleRate, bitsPerSample, numChannels, frameSize, (float) sampleRate,
@@ -427,9 +427,8 @@ public class AuView extends JPanel implements SeriesViewerListener {
                             } else {
                                 boolean signed =
                                     "UB".equals(spInterpretation) || "US".equals(spInterpretation) ? false : true; //$NON-NLS-1$ //$NON-NLS-2$
-                                audioFormat =
-                                    new AudioFormat((float) sampleRate, bitsPerSample, numChannels, signed,
-                                        attritutes.bigEndian());
+                                audioFormat = new AudioFormat((float) sampleRate, bitsPerSample, numChannels, signed,
+                                    attritutes.bigEndian());
                             }
 
                             AudioInputStream audioInputStream =

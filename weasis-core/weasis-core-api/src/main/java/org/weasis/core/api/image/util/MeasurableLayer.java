@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Gabriela Bauermann (gabriela@animati.com.br) - initial API and implementation
  ******************************************************************************/
@@ -17,7 +17,7 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.TagW;
 
 /**
- * 
+ *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  */
 public interface MeasurableLayer {
@@ -36,7 +36,7 @@ public interface MeasurableLayer {
 
     /**
      * Returns the source image for display. All preprocessing operations has been applied to this image.
-     * 
+     *
      * @return the source image for display
      */
     RenderedImage getSourceRenderedImage();

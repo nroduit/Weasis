@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -25,7 +25,7 @@ import javax.media.jai.UnpackedImageData;
 
 /**
  * The Class ThresholdToBinOpImage.
- * 
+ *
  * @author Nicolas Roduit
  */
 /**
@@ -40,14 +40,13 @@ public class ThresholdToBinOpImage extends PointOpImage {
     /**
      * Lookup table for ORing bytes of output.
      */
-    private static byte[] byteTable =
-        new byte[] { (byte) 0x80, (byte) 0x40, (byte) 0x20, (byte) 0x10, (byte) 0x08, (byte) 0x04, (byte) 0x02,
-            (byte) 0x01, };
+    private static byte[] byteTable = new byte[] { (byte) 0x80, (byte) 0x40, (byte) 0x20, (byte) 0x10, (byte) 0x08,
+        (byte) 0x04, (byte) 0x02, (byte) 0x01, };
 
     /**
      * Constructs an SampleOpImage. The image dimensions are copied from the source image. The tile grid layout,
      * SampleModel, and ColorModel may optionally be specified by an ImageLayout object.
-     * 
+     *
      * @param source
      *            a RenderedImage.
      * @param layout

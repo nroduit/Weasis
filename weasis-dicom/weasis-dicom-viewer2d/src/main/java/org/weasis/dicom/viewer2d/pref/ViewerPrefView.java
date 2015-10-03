@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -81,8 +81,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         JPanel panel_1 = new JPanel();
         ((FlowLayout) panel_1.getLayout()).setAlignment(FlowLayout.LEADING);
-        panel_1.setBorder(new TitledBorder(null,
-            Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        panel_1.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, //$NON-NLS-1$
+            TitledBorder.TOP, null, null));
         add(panel_1);
 
         JLabel lblInterpolation = new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON); //$NON-NLS-1$
@@ -95,8 +95,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         JPanel winlevelPanel = new JPanel();
         ((FlowLayout) winlevelPanel.getLayout()).setAlignment(FlowLayout.LEADING);
-        winlevelPanel.setBorder(new TitledBorder(null,
-            Messages.getString("ViewerPrefView.other"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        winlevelPanel.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.other"), TitledBorder.LEADING, //$NON-NLS-1$
+            TitledBorder.TOP, null, null));
         add(winlevelPanel);
 
         checkBoxWLcolor =

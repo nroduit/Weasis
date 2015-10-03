@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -66,8 +66,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
                             FileInputStream in = null;
                             FileOutputStream out = null;
                             try {
-                                File videoFile =
-                                    File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                                File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                 in = new FileInputStream(dcmVideo.getFile());
                                 out = new FileOutputStream(videoFile);
                                 StreamUtils.skipFully(in, bulkData.offset());
@@ -104,10 +103,10 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagW.SeriesNumber); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagW.StudyDescription); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
-        toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$ 
+        toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(TagW.formatDateTime((Date) getTagValue(TagW.SeriesDate)));
-        toolTips.append("<br>"); //$NON-NLS-1$ 
+        toolTips.append("<br>"); //$NON-NLS-1$
         toolTips.append(Messages.getString("DicomVideo.video_l")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append("</html>"); //$NON-NLS-1$

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -89,9 +89,9 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private static final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
     private static final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID, TagW.AccessionNumber,
         TagW.StudyDescription, TagW.StudyComments };
-    private static final TagW[] SERIES = { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber, TagW.Modality,
-        TagW.ReferringPhysicianName, TagW.InstitutionName, TagW.InstitutionalDepartmentName, TagW.SeriesDescription,
-        TagW.BodyPartExamined };
+    private static final TagW[] SERIES =
+        { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber, TagW.Modality, TagW.ReferringPhysicianName,
+            TagW.InstitutionName, TagW.InstitutionalDepartmentName, TagW.SeriesDescription, TagW.BodyPartExamined };
     private static final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.FrameType, TagW.TransferSyntaxUID,
         TagW.InstanceNumber, TagW.ImageComments, TagW.ImageLaterality, TagW.PhotometricInterpretation,
         TagW.SamplesPerPixel, TagW.PixelRepresentation, TagW.Columns, TagW.Rows, TagW.ImageWidth, TagW.ImageHeight,
@@ -108,10 +108,10 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private MediaSeries<?> currentSeries;
     private boolean anonymize = false;
 
-    private final static Highlighter.HighlightPainter searchHighlightPainter = new SearchHighlightPainter(new Color(
-        255, 125, 0));
-    private final static Highlighter.HighlightPainter searchResultHighlightPainter = new SearchHighlightPainter(
-        Color.YELLOW);
+    private final static Highlighter.HighlightPainter searchHighlightPainter =
+        new SearchHighlightPainter(new Color(255, 125, 0));
+    private final static Highlighter.HighlightPainter searchResultHighlightPainter =
+        new SearchHighlightPainter(Color.YELLOW);
 
     public DicomFieldsView() {
         JPanel panel = new JPanel();
@@ -358,11 +358,11 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
                     MediaReader loader = media.getMediaReader();
                     if (loader instanceof DcmMediaReader) {
-                        writeItems(
-                            Messages.getString("DicomFieldsView.pat"), PATIENT, model.getParent(series, DicomModel.patient), doc); //$NON-NLS-1$
+                        writeItems(Messages.getString("DicomFieldsView.pat"), PATIENT, //$NON-NLS-1$
+                            model.getParent(series, DicomModel.patient), doc);
                         writeItems(Messages.getString("DicomFieldsView.station"), STATION, series, doc); //$NON-NLS-1$
-                        writeItems(
-                            Messages.getString("DicomFieldsView.study"), STUDY, model.getParent(series, DicomModel.study), doc); //$NON-NLS-1$
+                        writeItems(Messages.getString("DicomFieldsView.study"), STUDY, //$NON-NLS-1$
+                            model.getParent(series, DicomModel.study), doc);
                         writeItems(Messages.getString("DicomFieldsView.series"), SERIES, series, doc); //$NON-NLS-1$
                         writeItems(Messages.getString("DicomFieldsView.object"), IMAGE, null, doc); //$NON-NLS-1$
                         writeItems(Messages.getString("DicomFieldsView.plane"), IMAGE_PLANE, null, doc); //$NON-NLS-1$
@@ -389,7 +389,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                         exist = true;
                         doc.insertString(doc.getLength(), t.toString(), italic);
                         doc.insertString(doc.getLength(),
-                            StringUtil.COLON_AND_SPACE + TagW.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$ 
+                            StringUtil.COLON_AND_SPACE + TagW.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$
                     }
                 } catch (BadLocationException e) {
                     e.printStackTrace();
@@ -415,8 +415,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
                     frame.setSize(500, 630);
                     DicomFieldsView view = new DicomFieldsView();
-                    view.changingViewContentEvent(new SeriesViewerEvent(container, selView.getSeries(), img,
-                        EVENT.SELECT));
+                    view.changingViewContentEvent(
+                        new SeriesViewerEvent(container, selView.getSeries(), img, EVENT.SELECT));
                     JPanel panel = new JPanel();
                     panel.setLayout(new BorderLayout());
                     panel.add(view);

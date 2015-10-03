@@ -1,11 +1,11 @@
 /**
  * Copyright 2005 The Apache Software Foundation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
@@ -115,7 +115,7 @@ public class MagicMimeEntry {
         // Now strip the empty entries
         Vector v = new Vector();
         for (int i = 0; i < tokens.length; i++) {
-            if (StringUtil.hasText(tokens[i])) { //$NON-NLS-1$
+            if (StringUtil.hasText(tokens[i])) {
                 v.add(tokens[i]);
             }
         }
@@ -499,7 +499,7 @@ public class MagicMimeEntry {
      * That is, a sequence like \040 (represengint ' ' - space character) will be read as a backslash followed by a
      * zero, four and zero -- 4 different bytes and not a single byte representing space. This method parses the string
      * and converts the sequence of bytes representing escape sequence to a single byte
-     * 
+     *
      * NOTE: not all regular escape sequences are added yet. add them, if you don't find one here
      */
     private static String stringWithEscapeSubstitutions(String s) {

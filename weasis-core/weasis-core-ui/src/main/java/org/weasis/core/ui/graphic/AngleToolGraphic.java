@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -45,10 +45,10 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
 
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(
-        Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement REFLEX_ANGLE = new Measurement(
-        Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement COMPLEMENTARY_ANGLE =
+        new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement REFLEX_ANGLE =
+        new Measurement(Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
     Point2D ptA, ptO, ptB; // Let AOB be the triangle that represents the measured angle, O being the intersection point
@@ -68,9 +68,9 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     protected AngleToolGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
-        @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible, @Attribute(name = "fill") boolean filled)
+            throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointTotalNumber != 3) {
             throw new InvalidShapeException("Not a valid AngleToolGraphic!"); //$NON-NLS-1$
@@ -156,8 +156,8 @@ public class AngleToolGraphic extends AbstractDragGraphic {
                 }
 
                 if (COMPLEMENTARY_ANGLE.isComputed()) {
-                    measVal.add(new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, Messages
-                        .getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(
+                        new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 if (REFLEX_ANGLE.isComputed()) {
                     measVal

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -49,8 +49,8 @@ public abstract class PropertiesDialog extends JDialog {
     protected final JLabel jLabelLineColor = new JLabel();
     protected final JButton jButtonColor = new JButton();
     protected final JCheckBox jCheckBoxFilled = new JCheckBox();
-    protected final JLabel lbloverridesmultipleValues = new JLabel(
-        Messages.getString("PropertiesDialog.header_override")); //$NON-NLS-1$
+    protected final JLabel lbloverridesmultipleValues =
+        new JLabel(Messages.getString("PropertiesDialog.header_override")); //$NON-NLS-1$
     protected final JCheckBox checkBox_color = new JCheckBox();
     protected final JCheckBox checkBox_width = new JCheckBox();
     protected final JCheckBox checkBox_fill = new JCheckBox();

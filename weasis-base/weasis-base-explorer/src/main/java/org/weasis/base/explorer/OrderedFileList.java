@@ -9,8 +9,8 @@ import org.weasis.core.api.media.data.MediaElement;
 public class OrderedFileList extends Vector<MediaElement> {
 
     /**
-	 *
-	 */
+     *
+     */
     private static final long serialVersionUID = -6210090952004948225L;
     private static final int SORT_BY_PATH = 4;
     private static final int SORT_BY_DATE = 3;
@@ -128,13 +128,12 @@ public class OrderedFileList extends Vector<MediaElement> {
             if (b == null) {
                 return (descendingOrder) ? 1 : -1;
             }
-            final int result =
-                (!descendingOrder) ? (int) (a.getLastModified() - b.getLastModified()) : (int) (b.getLastModified() - a
-                    .getLastModified());
+            final int result = (!descendingOrder) ? (int) (a.getLastModified() - b.getLastModified())
+                : (int) (b.getLastModified() - a.getLastModified());
 
-            return (result != 0) ? result : ((!descendingOrder) ? a.getFile().getAbsolutePath()
-                .compareTo(b.getFile().getAbsolutePath()) : b.getFile().getAbsolutePath()
-                .compareTo(a.getFile().getAbsolutePath()));
+            return (result != 0) ? result
+                : ((!descendingOrder) ? a.getFile().getAbsolutePath().compareTo(b.getFile().getAbsolutePath())
+                    : b.getFile().getAbsolutePath().compareTo(a.getFile().getAbsolutePath()));
         }
     }
 
@@ -151,9 +150,9 @@ public class OrderedFileList extends Vector<MediaElement> {
             final int result =
                 (!descendingOrder) ? (int) (a.getLength() - b.getLength()) : (int) (b.getLength() - a.getLength());
 
-            return (result != 0) ? result : ((!descendingOrder) ? a.getFile().getAbsolutePath()
-                .compareTo(b.getFile().getAbsolutePath()) : b.getFile().getAbsolutePath()
-                .compareTo(a.getFile().getAbsolutePath()));
+            return (result != 0) ? result
+                : ((!descendingOrder) ? a.getFile().getAbsolutePath().compareTo(b.getFile().getAbsolutePath())
+                    : b.getFile().getAbsolutePath().compareTo(a.getFile().getAbsolutePath()));
         }
     }
 
@@ -167,8 +166,9 @@ public class OrderedFileList extends Vector<MediaElement> {
             if (b == null) {
                 return (descendingOrder) ? 1 : -1;
             }
-            return (!descendingOrder) ? (a.getMimeType() + a.getName()).compareToIgnoreCase((b.getMimeType() + b
-                .getName())) : (b.getMimeType() + b.getName()).compareToIgnoreCase((a.getMimeType() + a.getName()));
+            return (!descendingOrder)
+                ? (a.getMimeType() + a.getName()).compareToIgnoreCase((b.getMimeType() + b.getName()))
+                : (b.getMimeType() + b.getName()).compareToIgnoreCase((a.getMimeType() + a.getName()));
         }
     }
 
@@ -182,8 +182,8 @@ public class OrderedFileList extends Vector<MediaElement> {
             if (b == null) {
                 return (descendingOrder) ? 1 : -1;
             }
-            return (!descendingOrder) ? a.getName().compareToIgnoreCase(b.getName()) : b.getName().compareToIgnoreCase(
-                a.getName());
+            return (!descendingOrder) ? a.getName().compareToIgnoreCase(b.getName())
+                : b.getName().compareToIgnoreCase(a.getName());
         }
     }
 
@@ -197,8 +197,8 @@ public class OrderedFileList extends Vector<MediaElement> {
             if (b == null) {
                 return (descendingOrder) ? 1 : -1;
             }
-            return (!descendingOrder) ? a.getFile().getAbsolutePath().compareTo(b.getFile().getAbsolutePath()) : b
-                .getFile().getAbsolutePath().compareTo(a.getFile().getAbsolutePath());
+            return (!descendingOrder) ? a.getFile().getAbsolutePath().compareTo(b.getFile().getAbsolutePath())
+                : b.getFile().getAbsolutePath().compareTo(a.getFile().getAbsolutePath());
         }
     }
 }

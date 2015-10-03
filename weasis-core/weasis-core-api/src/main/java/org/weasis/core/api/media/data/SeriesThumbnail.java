@@ -43,11 +43,11 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
 
-public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGestureListener, DragSourceListener,
-    DragSourceMotionListener, FocusListener {
+public class SeriesThumbnail extends Thumbnail
+    implements MouseListener, DragGestureListener, DragSourceListener, DragSourceMotionListener, FocusListener {
     private static final int BUTTON_SIZE_HALF = 7;
-    private static final Polygon startButton = new Polygon(new int[] { 0, 2 * BUTTON_SIZE_HALF, 0 }, new int[] { 0,
-        BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF }, 3);
+    private static final Polygon startButton = new Polygon(new int[] { 0, 2 * BUTTON_SIZE_HALF, 0 },
+        new int[] { 0, BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF }, 3);
     private static final Rectangle stopButton = new Rectangle(0, 0, 2 * BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF);
 
     private static final Composite SOLID_COMPOSITE = AlphaComposite.SrcOver;
@@ -55,12 +55,12 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
 
     private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;
     // Get the closest cursor size regarding to the platform
-    private final Border onMouseOverBorderFocused = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(
-        Color.orange, 2));
-    private final Border onMouseOverBorder = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(new Color(
-        255, 224, 178), 2));
-    private final Border outMouseOverBorder = new CompoundBorder(new EmptyBorder(2, 2, 0, 2),
-        BorderFactory.createEtchedBorder());
+    private final Border onMouseOverBorderFocused =
+        new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(Color.orange, 2));
+    private final Border onMouseOverBorder =
+        new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(new Color(255, 224, 178), 2));
+    private final Border outMouseOverBorder =
+        new CompoundBorder(new EmptyBorder(2, 2, 0, 2), BorderFactory.createEtchedBorder());
     private JProgressBar progressBar;
     private final MediaSeries<?> series;
     private Point dragPressed = null;
@@ -298,7 +298,9 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
         g2d.setFont(FontTools.getFont10());
         int hbleft = y + height - 2;
         if (splitNb != null) {
-            g2d.drawString("#" + splitNb + " [" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ $NON-NLS-2$ $NON-NLS-3$
+            g2d.drawString("#" + splitNb + " [" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                                                                           //$NON-NLS-1$ $NON-NLS-2$
+                                                                                           //$NON-NLS-1$ $NON-NLS-3$
         } else {
             g2d.drawString("[" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ $NON-NLS-2$
         }

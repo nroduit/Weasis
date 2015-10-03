@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -120,7 +120,7 @@ public class Statistics {
     /**
      * Compute standard deviation in one pass (less accurate for small or large values) Ref.
      * http://www.strchr.com/standard_deviation_in_one_pass
-     * 
+     *
      * @param data
      * @return
      */
@@ -206,10 +206,10 @@ public class Statistics {
 
     /**
      * This method calculates the median of a data set.
-     * 
+     *
      * @param data
      *            The input data set
-     * 
+     *
      * @return the median of <tt>data</tt>.
      */
     public static double median(double[] data) {
@@ -263,10 +263,10 @@ public class Statistics {
     /**
      * This method calculates the skewness of a data set. Skewness is the third central moment divided by the third
      * power of the standard deviation.
-     * 
+     *
      * @param data
      *            The input data set
-     * 
+     *
      * @return the skewness of <tt>data</tt>.
      */
     public static double skewness(double[] data) {
@@ -283,10 +283,10 @@ public class Statistics {
     /**
      * This method calculates the kurtosis of a data set. Kurtosis is the fourth central moment divided by the fourth
      * power of the standard deviation.
-     * 
+     *
      * @param data
      *            The input data set
-     * 
+     *
      * @return the kurtosis of <tt>data</tt>.
      */
     public static double kurtosis(double[] data) {
@@ -322,9 +322,8 @@ public class Statistics {
 
     public double eccentricity() {
         double sum;
-        sum =
-            (u20 + u02 + Math.sqrt(((u20 - u02) * (u20 - u02)) + (4d * u11 * u11)))
-                / (u20 + u02 - Math.sqrt(((u20 - u02) * (u20 - u02)) + (4d * u11 * u11)));
+        sum = (u20 + u02 + Math.sqrt(((u20 - u02) * (u20 - u02)) + (4d * u11 * u11)))
+            / (u20 + u02 - Math.sqrt(((u20 - u02) * (u20 - u02)) + (4d * u11 * u11)));
         return sum;
     }
 
@@ -367,7 +366,7 @@ public class Statistics {
     /**
      * Apply least squares to raw data to determine the coefficients an n-order equation: y = an*X^n+... + a1*X^1 +
      * a0*X^0.
-     * 
+     *
      * @param y
      *            the x coordinates of data points
      * @param x
@@ -425,7 +424,7 @@ public class Statistics {
     /**
      * IIRC, standard gaussian technique for solving simultaneous eq. of the form: |A| = |B| * |C| where we know the
      * values of |A| and |B|, and we are solving for the coefficients in |C|
-     * 
+     *
      * @param ax
      * @param bx
      * @return

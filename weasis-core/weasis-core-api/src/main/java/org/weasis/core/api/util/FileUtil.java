@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -63,7 +63,7 @@ public final class FileUtil {
     /**
      * Transform a string into a writable string for all the operating system. All the special and control characters
      * are excluded.
-     * 
+     *
      * @param fileName
      *            a filename or directory name
      * @return a writable filename
@@ -74,7 +74,7 @@ public final class FileUtil {
             for (int i = 0; i < fileName.length(); i++) {
                 char c = fileName.charAt(i);
                 if (!(Arrays.binarySearch(ILLEGAL_CHARS, c) >= 0 || (c < '\u0020') // ctrls
-                || (c > '\u007e' && c < '\u00a0'))) { // ctrls
+                    || (c > '\u007e' && c < '\u00a0'))) { // ctrls
                     cleanName.append(c);
                 }
             }
@@ -391,7 +391,7 @@ public final class FileUtil {
         } else {
             buf.append((int) size);
             buf.append(' ');
-            buf.append(Messages.getString("FileUtil.bytes"));//$NON-NLS-1$ 
+            buf.append(Messages.getString("FileUtil.bytes"));//$NON-NLS-1$
         }
         return buf.toString();
     }

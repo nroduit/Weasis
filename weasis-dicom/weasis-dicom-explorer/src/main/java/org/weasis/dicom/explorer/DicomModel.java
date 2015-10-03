@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -96,12 +96,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public static final TreeModelNode series = new TreeModelNode(3, 0, TagW.SubseriesInstanceUID);
 
     public static final ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(5);
+
     static {
         modelStrucure.add(root);
         modelStrucure.add(patient);
         modelStrucure.add(study);
         modelStrucure.add(series);
     }
+
     public static final Executor loadingExecutor = Executors.newSingleThreadExecutor();
     private static final Collator collator = Collator.getInstance(Locale.getDefault());
 
@@ -222,21 +224,17 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         MediaElement<?> media2 = ((MediaSeries<? extends MediaElement<?>>) st2).getMedia(0, null, null);
                         if (media1 != null && media2 != null) {
 
-                            date1 =
-                                TagW.dateTime((Date) media1.getTagValue(TagW.AcquisitionDate),
-                                    (Date) media1.getTagValue(TagW.AcquisitionTime));
-                            date2 =
-                                TagW.dateTime((Date) media2.getTagValue(TagW.AcquisitionDate),
-                                    (Date) media2.getTagValue(TagW.AcquisitionTime));
+                            date1 = TagW.dateTime((Date) media1.getTagValue(TagW.AcquisitionDate),
+                                (Date) media1.getTagValue(TagW.AcquisitionTime));
+                            date2 = TagW.dateTime((Date) media2.getTagValue(TagW.AcquisitionDate),
+                                (Date) media2.getTagValue(TagW.AcquisitionTime));
                             if (date1 == null) {
-                                date1 =
-                                    TagW.dateTime((Date) media1.getTagValue(TagW.ContentDate),
-                                        (Date) media1.getTagValue(TagW.ContentTime));
+                                date1 = TagW.dateTime((Date) media1.getTagValue(TagW.ContentDate),
+                                    (Date) media1.getTagValue(TagW.ContentTime));
                             }
                             if (date2 == null) {
-                                date2 =
-                                    TagW.dateTime((Date) media2.getTagValue(TagW.ContentDate),
-                                        (Date) media2.getTagValue(TagW.ContentTime));
+                                date2 = TagW.dateTime((Date) media2.getTagValue(TagW.ContentDate),
+                                    (Date) media2.getTagValue(TagW.ContentTime));
                             }
                             if (date1 != null && date2 != null) {
                                 // Chronological order.
@@ -318,8 +316,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     private final Tree<MediaSeriesGroup> model;
     private PropertyChangeSupport propertyChange = null;
-    private final TagW[] multiframeSplittingRules = new TagW[] { TagW.ImageType, TagW.SOPInstanceUID, TagW.FrameType,
-        TagW.FrameAcquisitionNumber, TagW.StackID };
+    private final TagW[] multiframeSplittingRules =
+        new TagW[] { TagW.ImageType, TagW.SOPInstanceUID, TagW.FrameType, TagW.FrameAcquisitionNumber, TagW.StackID };
     private final HashMap<Modality, TagW[]> splittingRules = new HashMap<Modality, TagW[]>();
 
     public DicomModel() {
@@ -334,9 +332,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             TagW.ImageOrientationPlane, TagW.GantryDetectorTilt, TagW.ConvolutionKernel });
         splittingRules.put(Modality.PT, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
             TagW.GantryDetectorTilt, TagW.ConvolutionKernel });
-        splittingRules.put(Modality.MR, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
-            TagW.ImageOrientationPlane, TagW.ScanningSequence, TagW.SequenceVariant, TagW.ScanOptions,
-            TagW.RepetitionTime, TagW.EchoTime, TagW.InversionTime, TagW.FlipAngle });
+        splittingRules.put(Modality.MR,
+            new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID, TagW.ImageOrientationPlane,
+                TagW.ScanningSequence, TagW.SequenceVariant, TagW.ScanOptions, TagW.RepetitionTime, TagW.EchoTime,
+                TagW.InversionTime, TagW.FlipAngle });
 
     }
 
@@ -345,8 +344,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         ArrayList<Codec> codecPlugins = new ArrayList<Codec>(1);
         synchronized (BundleTools.CODEC_PLUGINS) {
             for (Codec codec : BundleTools.CODEC_PLUGINS) {
-                if (codec != null
-                    && "Sun java imageio".equals(codec.getCodecName()) == false && codec.isMimeTypeSupported("application/dicom") && !codecPlugins.contains(codec)) { //$NON-NLS-1$ //$NON-NLS-2$
+                if (codec != null && "Sun java imageio".equals(codec.getCodecName()) == false //$NON-NLS-1$
+                    && codec.isMimeTypeSupported("application/dicom") && !codecPlugins.contains(codec)) { //$NON-NLS-1$
                     codecPlugins.add(codec);
                 }
             }
@@ -523,8 +522,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 List sortedMedias = base.getSortedMedias(null);
                 Collections.sort(sortedMedias, SortSeriesStack.instanceNumber);
                 // update observer
-                this.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Replace, DicomModel.this, base,
-                    base));
+                this.firePropertyChange(
+                    new ObservableEvent(ObservableEvent.BasicAction.Replace, DicomModel.this, base, base));
             }
         }
     }
@@ -570,8 +569,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             specialElementList.remove(dicomSpecialElement);
 
             if (patientSpecialElementList.remove(dicomSpecialElement)) {
-                firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, this, null,
-                    dicomSpecialElement));
+                firePropertyChange(
+                    new ObservableEvent(ObservableEvent.BasicAction.Update, this, null, dicomSpecialElement));
             }
 
             if (specialElementList.size() == 0) {
@@ -588,8 +587,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             }
             // remove first series in UI (Dicom Explorer, Viewer using this series)
-            firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null,
-                dicomSeries));
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null, dicomSeries));
             // remove in the data model
             MediaSeriesGroup studyGroup = getParent(dicomSeries, DicomModel.study);
             removeHierarchyNode(studyGroup, dicomSeries);
@@ -609,8 +608,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
                 }
             }
-            firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null,
-                studyGroup));
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null, studyGroup));
             Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
             for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                 MediaSeriesGroup group = it.next();
@@ -637,8 +636,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
                 }
             }
-            firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null,
-                patientGroup));
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null, patientGroup));
             Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
             for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
                 MediaSeriesGroup studyGroup = it.next();
@@ -659,7 +658,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
      * DicomSpecialElement are added at patientGroupLevel since StudyInstanceUID and SeriesInstanceUID are not relevant
      * with the CurrentRequestedProcedureEvidenceSequence which can reference any SOPInstance of any Study and Series of
      * the Patient
-     * 
+     *
      * @param series
      */
     public void addSpecialModality(Series series) {
@@ -680,8 +679,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
 
         if (patientSpecialElementList == null) {
-            patientGroup.setTag(TagW.DicomSpecialElementList, patientSpecialElementList =
-                new CopyOnWriteArrayList<DicomSpecialElement>());
+            patientGroup.setTag(TagW.DicomSpecialElementList,
+                patientSpecialElementList = new CopyOnWriteArrayList<DicomSpecialElement>());
         }
         for (DicomSpecialElement seriesSpecialElement : seriesSpecialElementList) {
             if (patientSpecialElementList.contains(seriesSpecialElement) == false) {
@@ -693,7 +692,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public static boolean isSpecialModality(Series series) {
         String modality = (series == null) ? null : (String) series.getTagValue(TagW.Modality);
-        return (modality != null && ("PR".equals(modality) || "KO".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$ 
+        return (modality != null && ("PR".equals(modality) || "KO".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public static Collection<KOSpecialElement> getKoSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {
@@ -707,8 +706,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return null;
     }
 
-    public static List<PRSpecialElement> getPrSpecialElements(MediaSeries<DicomImageElement> dicomSeries,
-        String sopUID, Integer frameNumber) {
+    public static List<PRSpecialElement> getPrSpecialElements(MediaSeries<DicomImageElement> dicomSeries, String sopUID,
+        Integer frameNumber) {
         // Get all DicomSpecialElement at patient level
         List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
@@ -806,8 +805,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     props.put(ViewerPluginBuilder.UID, uid);
                     ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, this, props);
                     ViewerPluginBuilder.openSequenceInPlugin(builder);
-                    this.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, uid, null,
-                        koSpecialElement));
+                    this.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.Select, uid, null, koSpecialElement));
                 }
             }
         }
@@ -937,8 +936,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         (List<DicomSpecialElement>) initialSeries.getTagValue(TagW.DicomSpecialElementList);
 
                     if (specialElementList == null) {
-                        initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList =
-                            new CopyOnWriteArrayList<DicomSpecialElement>());
+                        initialSeries.setTag(TagW.DicomSpecialElementList,
+                            specialElementList = new CopyOnWriteArrayList<DicomSpecialElement>());
                     } else if ("SR".equals(dicomReader.getTagValue(TagW.Modality))) { //$NON-NLS-1$
                         // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
@@ -1103,8 +1102,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             @Override
             public void run() {
 
-                firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null,
-                    DicomModel.this));
+                firePropertyChange(
+                    new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null, DicomModel.this));
                 // start importing local dicom series list
                 if (opt.isSet("local")) { //$NON-NLS-1$
                     File[] files = new File[args.size()];
@@ -1113,13 +1112,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
                     loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
                 } else if (opt.isSet("remote")) { //$NON-NLS-1$
-                    loadingExecutor.execute(new LoadRemoteDicomURL(args.toArray(new String[args.size()]),
-                        DicomModel.this));
+                    loadingExecutor
+                        .execute(new LoadRemoteDicomURL(args.toArray(new String[args.size()]), DicomModel.this));
                 }
                 // build WADO series list to download
                 else if (opt.isSet("wado")) { //$NON-NLS-1$
-                    loadingExecutor.execute(new LoadRemoteDicomManifest(args.toArray(new String[args.size()]),
-                        DicomModel.this));
+                    loadingExecutor
+                        .execute(new LoadRemoteDicomManifest(args.toArray(new String[args.size()]), DicomModel.this));
                 } else if (opt.isSet("iwado")) { //$NON-NLS-1$
                     String[] xmlRef = args.toArray(new String[args.size()]);
                     File[] xmlFiles = new File[args.size()];
@@ -1168,9 +1167,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         File dcmDirFile = new File(baseDir, "DICOMDIR"); //$NON-NLS-1$
                         if (dcmDirFile.canRead()) {
                             // Copy images in cache if property weasis.portable.dicom.cache = true (default is true)
-                            DicomDirLoader dirImport =
-                                new DicomDirLoader(dcmDirFile, DicomModel.this, DicomManager.getInstance()
-                                    .isPortableDirCache());
+                            DicomDirLoader dirImport = new DicomDirLoader(dcmDirFile, DicomModel.this,
+                                DicomManager.getInstance().isPortableDirCache());
                             loadSeries = dirImport.readDicomDir();
                         }
                         if (loadSeries != null && loadSeries.size() > 0) {
@@ -1203,8 +1201,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
             @Override
             public void run() {
-                firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null,
-                    DicomModel.this));
+                firePropertyChange(
+                    new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null, DicomModel.this));
                 // start build local dicom series list
                 if (opt.isSet("patient")) { //$NON-NLS-1$
                     for (String patientUID : args) {

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -17,10 +17,10 @@ import java.net.SocketAddress;
 import java.util.List;
 
 /**
- * 
+ *
  * Detecting and selecting a proxy
- * 
- * 
+ *
+ *
  */
 
 public class ProxyDetector {
@@ -55,7 +55,7 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * ProxyDetectorHolder is loaded on the first execution of ProxyDetector.getInstance() or the first access to
      * ProxyDetectorHolder.INSTANCE, not before.
      */
@@ -65,7 +65,7 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * @return the instance
      */
 
@@ -74,12 +74,12 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * Find the proxy, use the property <code>java.net.useSystemProxies</code> to force the usage of the system proxy.
      * The value of this setting is restored afterwards.
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * @return a list of found proxies
      */
 
@@ -103,11 +103,11 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * Is there a direct connection available? If I return <tt>true</tt> it is not necessary to detect a proxy address.
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * @return <tt>true</tt> if the is a direct connection to the internet
      */
 
@@ -123,7 +123,7 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * @return did we detect a proxy?
      */
 
@@ -132,12 +132,12 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * I will determine the right proxy, there might be several proxies available, but some might not support the HTTP
      * protocol.
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * @return a proxy which can be used to access the given url, <tt>null</tt> if there is no proxy which supports
      *         HTTP.
      */
@@ -159,7 +159,7 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * @return a String representing the hostname of the proxy, <tt>null</tt> if there is no proxy
      */
 
@@ -175,7 +175,7 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * @return the port of the proxy, <tt>-1</tt> if there is no proxy
      */
 

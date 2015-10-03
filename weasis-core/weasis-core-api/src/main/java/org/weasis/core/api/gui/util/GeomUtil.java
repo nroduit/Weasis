@@ -40,7 +40,7 @@ public final class GeomUtil {
      * Compute angle into image system basis where positive angle are defined in a ClockWise orientation<br>
      * Note : angle should be computed with "Math.atan2(ptB.getY() - ptA.getY(), ptB.getX() - ptA.getX())" in an
      * ortho-normal basis system where positive angle is defined in a CounterClockWise orientation.
-     * 
+     *
      * @return angle of AB line segment in radiant<br>
      *         0 is returned if any argument is invalid
      */
@@ -197,7 +197,7 @@ public final class GeomUtil {
 
     /**
      * Let ptA,ptB,ptC,ptD be 2-space position vectors. .......
-     * 
+     *
      * @return null if segment lines are parallel
      */
     public static Point2D.Double getIntersectPoint(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
@@ -207,20 +207,17 @@ public final class GeomUtil {
 
         Point2D.Double ptP = null;
 
-        double denominator =
-            (ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY()) - (ptB.getY() - ptA.getY())
-                * (ptD.getX() - ptC.getX());
+        double denominator = (ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY())
+            - (ptB.getY() - ptA.getY()) * (ptD.getX() - ptC.getX());
 
         if (denominator != 0) {
-            double numerator =
-                (ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX()) - (ptA.getX() - ptC.getX())
-                    * (ptD.getY() - ptC.getY());
+            double numerator = (ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX())
+                - (ptA.getX() - ptC.getX()) * (ptD.getY() - ptC.getY());
 
             double r = numerator / denominator;
 
-            ptP =
-                new Point2D.Double(ptA.getX() + r * (ptB.getX() - ptA.getX()), ptA.getY() + r
-                    * (ptB.getY() - ptA.getY()));
+            ptP = new Point2D.Double(ptA.getX() + r * (ptB.getX() - ptA.getX()),
+                ptA.getY() + r * (ptB.getY() - ptA.getY()));
         }
 
         return ptP;
@@ -245,14 +242,14 @@ public final class GeomUtil {
         Line2D lineRect = new Line2D.Double(rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMinY());
         if (line.intersectsLine(lineRect)) {
             p = GeomUtil.getIntersectPoint(line, lineRect);
-        } else if (line.intersectsLine(lineRect =
-            new Line2D.Double(rect.getMinX(), rect.getMaxY(), rect.getMaxX(), rect.getMaxY()))) {
+        } else if (line.intersectsLine(
+            lineRect = new Line2D.Double(rect.getMinX(), rect.getMaxY(), rect.getMaxX(), rect.getMaxY()))) {
             p = GeomUtil.getIntersectPoint(line, lineRect);
-        } else if (line.intersectsLine(lineRect =
-            new Line2D.Double(rect.getMinX(), rect.getMinY(), rect.getMinX(), rect.getMaxY()))) {
+        } else if (line.intersectsLine(
+            lineRect = new Line2D.Double(rect.getMinX(), rect.getMinY(), rect.getMinX(), rect.getMaxY()))) {
             p = GeomUtil.getIntersectPoint(line, lineRect);
-        } else if (line.intersectsLine(lineRect =
-            new Line2D.Double(rect.getMaxX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()))) {
+        } else if (line.intersectsLine(
+            lineRect = new Line2D.Double(rect.getMaxX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()))) {
             p = GeomUtil.getIntersectPoint(line, lineRect);
         }
         return p;
@@ -266,8 +263,8 @@ public final class GeomUtil {
             throw new IllegalArgumentException("All the points must not be null"); //$NON-NLS-1$
         }
 
-        if (((ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY()) - (ptB.getY() - ptA.getY())
-            * (ptD.getX() - ptC.getX())) == 0) {
+        if (((ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY())
+            - (ptB.getY() - ptA.getY()) * (ptD.getX() - ptC.getX())) == 0) {
             return true;
         }
 
@@ -279,8 +276,8 @@ public final class GeomUtil {
      */
     public static boolean lineColinear(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
         if (lineParallel(ptA, ptB, ptC, ptD)) {
-            if (((ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX()) - (ptA.getX() - ptC.getX())
-                * (ptD.getY() - ptC.getY())) == 0) {
+            if (((ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX())
+                - (ptA.getX() - ptC.getX()) * (ptD.getY() - ptC.getY())) == 0) {
                 return true;
             }
         }
@@ -313,7 +310,7 @@ public final class GeomUtil {
 
     /**
      * Find a point at a given perpendicular distance from a line
-     * 
+     *
      * @param ptA
      *            Start of line segment
      * @param ptB
@@ -343,7 +340,7 @@ public final class GeomUtil {
     }
 
     /**
-     * 
+     *
      * @param ptA
      *            Start of line segment
      * @param ptB
@@ -370,7 +367,7 @@ public final class GeomUtil {
     }
 
     /**
-     * 
+     *
      * @param ptList
      * @return
      */
@@ -428,7 +425,7 @@ public final class GeomUtil {
      * Extract scaling from AffineTransform<br>
      * Let assume that the AffineTransform is a composite of scales, translates, and rotates. <br>
      * No independent shear has to be applied and scaling must be uniform along the two axes.
-     * 
+     *
      * @param transform
      *            current AffineTransform
      */
@@ -450,7 +447,7 @@ public final class GeomUtil {
      * Extract rotation Angle from a given AffineTransform Matrix.<br>
      * This function handle cases of mirror image flip about some axis. This changes right handed coordinate system into
      * a left handed system. Hence, returned angle has an opposite value.
-     * 
+     *
      * @param transform
      * @return angle in the range of [ -PI ; PI ]
      */
@@ -484,9 +481,9 @@ public final class GeomUtil {
     // }
 
     /**
-     * 
+     *
      * Do a scaling transformation around the anchor point
-     * 
+     *
      * @param shape
      * @param scalingFactor
      * @param anchorPoint

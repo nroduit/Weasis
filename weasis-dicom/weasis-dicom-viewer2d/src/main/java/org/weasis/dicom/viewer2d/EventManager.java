@@ -4,14 +4,13 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Component;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -114,7 +113,7 @@ import org.weasis.dicom.viewer2d.mpr.MprView;
  * The event processing center for this application. This class responses for loading data sets, processing the events
  * from the utility menu that includes changing the operation scope, the layout, window/level, rotation angle, zoom
  * factor, starting/stoping the cining-loop and etc.
- * 
+ *
  */
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {

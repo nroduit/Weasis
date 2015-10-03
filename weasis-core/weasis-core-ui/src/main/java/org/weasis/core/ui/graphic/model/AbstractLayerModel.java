@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -109,11 +109,9 @@ public class AbstractLayerModel implements LayerModel {
         AbstractLayer layer = getLayer(layerID);
         if (layer != null) {
             if (!layer.isVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAW.cmd())) {
-                JOptionPane
-                    .showMessageDialog(
-                        canvas.getJComponent(),
-                        Messages.getString("AbstractLayerModel.msg_not_vis"), Messages.getString("AbstractLayerModel.draw"), //$NON-NLS-1$ //$NON-NLS-2$
-                        JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(canvas.getJComponent(),
+                    Messages.getString("AbstractLayerModel.msg_not_vis"), Messages.getString("AbstractLayerModel.draw"), //$NON-NLS-1$ //$NON-NLS-2$
+                    JOptionPane.ERROR_MESSAGE);
             } else {
                 newGraphic = ((AbstractDragGraphic) newGraphic).clone();
                 layer.addGraphic(newGraphic);
@@ -144,9 +142,8 @@ public class AbstractLayerModel implements LayerModel {
         Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
         ImageIcon icon = new ImageIcon(AbstractLayerModel.class.getResource("/icon/cursor/" + filename)); //$NON-NLS-1$
         Dimension bestCursorSize = defaultToolkit.getBestCursorSize(icon.getIconWidth(), icon.getIconHeight());
-        Point hotSpot =
-            new Point((hotSpotX * bestCursorSize.width) / icon.getIconWidth(), (hotSpotY * bestCursorSize.height)
-                / icon.getIconHeight());
+        Point hotSpot = new Point((hotSpotX * bestCursorSize.width) / icon.getIconWidth(),
+            (hotSpotY * bestCursorSize.height) / icon.getIconHeight());
         return defaultToolkit.createCustomCursor(icon.getImage(), hotSpot, cursorName);
     }
 
@@ -344,12 +341,10 @@ public class AbstractLayerModel implements LayerModel {
         if (list != null && list.size() > 0) {
             int response = 0;
             if (warningMessage) {
-                response =
-                    JOptionPane
-                        .showConfirmDialog(
-                            canvas.getJComponent(),
-                            String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()), Messages.getString("AbstractLayerModel.del_graphs"), //$NON-NLS-1$ //$NON-NLS-2$
-                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                response = JOptionPane.showConfirmDialog(canvas.getJComponent(),
+                    String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()), //$NON-NLS-1$
+                    Messages.getString("AbstractLayerModel.del_graphs"), //$NON-NLS-1$
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             }
             if (response == 0) {
                 java.util.List<Graphic> selectionList = new ArrayList<Graphic>(list);
@@ -363,9 +358,8 @@ public class AbstractLayerModel implements LayerModel {
 
     public static PlanarImage getGraphicAsImage(Shape shape) {
         Rectangle bound = shape.getBounds();
-        TiledImage image =
-            new TiledImage(0, 0, bound.width + 1, bound.height + 1, 0, 0, LayoutUtil.createBinarySampelModel(),
-                LayoutUtil.createBinaryIndexColorModel());
+        TiledImage image = new TiledImage(0, 0, bound.width + 1, bound.height + 1, 0, 0,
+            LayoutUtil.createBinarySampelModel(), LayoutUtil.createBinaryIndexColorModel());
         Graphics2D g2d = image.createGraphics();
         g2d.translate(-bound.x, -bound.y);
         g2d.setPaint(Color.white);
@@ -385,7 +379,8 @@ public class AbstractLayerModel implements LayerModel {
     // }
 
     @Override
-    public void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D viewClip) {
+    public void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform,
+        Rectangle2D viewClip) {
         Rectangle2D bound = null;
 
         // Get the visible view in real coordinates, note only Sun g2d return consistent clip area with offset
@@ -497,9 +492,8 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public static PlanarImage getGraphicsAsImage(Rectangle bound, List<Graphic> graphics2dlist) {
-        TiledImage image =
-            new TiledImage(0, 0, bound.width + 1, bound.height + 1, 0, 0, LayoutUtil.createBinarySampelModel(),
-                LayoutUtil.createBinaryIndexColorModel());
+        TiledImage image = new TiledImage(0, 0, bound.width + 1, bound.height + 1, 0, 0,
+            LayoutUtil.createBinarySampelModel(), LayoutUtil.createBinaryIndexColorModel());
         Graphics2D g2d = image.createGraphics();
         g2d.translate(-bound.x, -bound.y);
         g2d.setPaint(Color.white);

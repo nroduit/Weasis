@@ -1,8 +1,5 @@
 package org.weasis.dicom.explorer;
 
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultTreeCheckingModel;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
-
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
@@ -23,6 +20,9 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
+
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultTreeCheckingModel;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
 public class CheckTreeModel {
 

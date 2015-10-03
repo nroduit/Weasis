@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -30,7 +30,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class AbstractDragGraphic.
- * 
+ *
  * @author Nicolas Roduit,Benoit Jacquemoud
  */
 
@@ -42,7 +42,8 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
         this(handlePointTotalNumber, Color.YELLOW, 1f, true);
     }
 
-    public AbstractDragGraphic(int handlePointTotalNumber, Paint paintColor, float lineThickness, boolean labelVisible) {
+    public AbstractDragGraphic(int handlePointTotalNumber, Paint paintColor, float lineThickness,
+        boolean labelVisible) {
         this(handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
     }
 
@@ -103,7 +104,7 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
 
     /**
      * Adjust the mouse cursor at the center of the handle point
-     * 
+     *
      * @param handlePtIndex
      * @param event
      */
@@ -311,7 +312,8 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
         return new DragLabelSequence();
     }
 
-    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
+    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY,
+        MouseEventDouble mouseEvent) {
         if (handlePointIndex == -1) {
             for (Point2D point : handlePointList) {
                 if (point != null) {

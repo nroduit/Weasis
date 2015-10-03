@@ -4,10 +4,10 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Marcelo Porto - initial API and implementation, Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
- *     
+ *
  ******************************************************************************/
 
 package org.weasis.dicom.explorer.print;
@@ -54,7 +54,7 @@ import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.dicom.explorer.Messages;
 
 /**
- * 
+ *
  * @author Marcelo Porto (marcelo@animati.com.br)
  */
 public class DicomPrintDialog<I extends ImageElement> extends JDialog {

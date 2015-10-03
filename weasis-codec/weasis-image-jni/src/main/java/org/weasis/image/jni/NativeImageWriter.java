@@ -101,7 +101,7 @@ public abstract class NativeImageWriter extends ImageWriter {
     /**
      * Subsamples and sub-bands the input <code>Raster</code> over a sub-region and stores the result in a
      * <code>WritableRaster</code>.
-     * 
+     *
      * @param src
      *            The source <code>Raster</code>
      * @param sourceBands
@@ -475,7 +475,7 @@ public abstract class NativeImageWriter extends ImageWriter {
 
     /**
      * Convert an IndexColorModel-based image to 3-band component RGB.
-     * 
+     *
      * @param image
      *            The source image.
      */
