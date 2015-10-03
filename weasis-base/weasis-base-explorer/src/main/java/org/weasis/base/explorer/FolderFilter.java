@@ -7,7 +7,7 @@ public class FolderFilter implements FilenameFilter {
 
     @Override
     public boolean accept(final File dir, final String fname) {
-        if (fname.startsWith(".")) {
+        if (fname.startsWith(".")) { //$NON-NLS-1$
             return false;
         }
         if (new File(dir, fname).isDirectory()) {

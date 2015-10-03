@@ -10,14 +10,14 @@ import org.weasis.core.api.media.data.MediaElement;
 
 public final class JIUtility {
 
-    public static final String[] DATE_FORMAT = { "yyyyMMddHHmmssSSS", "yyyy-MMM-dd-HHmmssSSS" };
-    private static final String osName = System.getProperty("os.name").toLowerCase();
-    public static final String USER_ROOT = System.getProperty("user.home");
+    public static final String[] DATE_FORMAT = { "yyyyMMddHHmmssSSS", "yyyy-MMM-dd-HHmmssSSS" }; //$NON-NLS-1$ //$NON-NLS-2$
+    private static final String osName = System.getProperty("os.name").toLowerCase(); //$NON-NLS-1$
+    public static final String USER_ROOT = System.getProperty("user.home"); //$NON-NLS-1$
     public static final String ROOT_FOLDER;
 
     static {
-        if (osName.startsWith("win")) {
-            ROOT_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "My Computer";
+        if (osName.startsWith("win")) { //$NON-NLS-1$
+            ROOT_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "My Computer"; //$NON-NLS-1$ //$NON-NLS-2$
         } else {
             ROOT_FOLDER = File.separator;
         }
@@ -27,7 +27,7 @@ public final class JIUtility {
         // Using "My Computer" as root.
         TreeNode rootNode = null;
 
-        if (osName.startsWith("windows")) {
+        if (osName.startsWith("win")) { //$NON-NLS-1$
             // Create a temp "My Computer" folder.
             final File MY_COMPUTER_FOLDER_FILE = new File(ROOT_FOLDER);
 
@@ -58,11 +58,11 @@ public final class JIUtility {
         // chunks always end where aOldPattern begins
         int startIdx = 0;
         int idxOld = 0;
-        while ((idxOld = path.indexOf("\\", startIdx)) >= 0) {
+        while ((idxOld = path.indexOf("\\", startIdx)) >= 0) { //$NON-NLS-1$
             // grab a part of aInput which does not include aOldPattern
             result.append(path.substring(startIdx, idxOld));
             // add aNewPattern to take place of aOldPattern
-            result.append("/");
+            result.append("/"); //$NON-NLS-1$
 
             // reset the startIdx to just after the current match, to see
             // if there are any further matches
@@ -76,17 +76,17 @@ public final class JIUtility {
 
     public static String systemPath(final String path) {
 
-        if (File.separator.equals("\\")) {
+        if (File.separator.equals("\\")) { //$NON-NLS-1$
             final StringBuilder result = new StringBuilder();
             // startIdx and idxOld delimit various chunks of aInput; these
             // chunks always end where aOldPattern begins
             int startIdx = 0;
             int idxOld = 0;
-            while ((idxOld = path.indexOf("/", startIdx)) >= 0) {
+            while ((idxOld = path.indexOf("/", startIdx)) >= 0) { //$NON-NLS-1$
                 // grab a part of aInput which does not include aOldPattern
                 result.append(path.substring(startIdx, idxOld));
                 // add aNewPattern to take place of aOldPattern
-                result.append("\\");
+                result.append("\\"); //$NON-NLS-1$
 
                 // reset the startIdx to just after the current match, to see
                 // if there are any further matches
@@ -103,8 +103,8 @@ public final class JIUtility {
         final long kbCount = (length + 1024) / 1024;
         final String strlength = String.valueOf(kbCount);
         return String.valueOf((kbCount > 999
-            ? strlength.substring(0, strlength.length() - 3) + "," + strlength.substring(strlength.length() - 3)
-            : strlength) + " KB ");
+            ? strlength.substring(0, strlength.length() - 3) + "," + strlength.substring(strlength.length() - 3) //$NON-NLS-1$
+            : strlength) + " KB "); //$NON-NLS-1$
     }
 
     public static File[] getRoots() {
@@ -115,7 +115,7 @@ public final class JIUtility {
         File[] roots;
         final Vector<File> rootsVector = new Vector<File>();
 
-        if (osName.toLowerCase().startsWith("win")) {
+        if (osName.toLowerCase().startsWith("win")) { //$NON-NLS-1$
             // Run through all possible mount points and check
             // for their existance.
             for (char c = 'C'; c <= 'Z'; c++) {
@@ -127,8 +127,8 @@ public final class JIUtility {
                     rootsVector.addElement(deviceFile);
                 }
             }
-        } else if (osName.toLowerCase().startsWith("mac")) {
-            for (final File root : (new File("/Volumes")).listFiles()) {
+        } else if (osName.toLowerCase().startsWith("mac")) { //$NON-NLS-1$
+            for (final File root : (new File("/Volumes")).listFiles()) { //$NON-NLS-1$
                 rootsVector.addElement(root);
             }
         } else {
@@ -146,7 +146,7 @@ public final class JIUtility {
         if (dObj.getFile().exists()) {
             return FileSystemView.getFileSystemView().getSystemIcon(dObj.getFile());
         } else {
-            return FileSystemView.getFileSystemView().getSystemIcon(new File(System.getProperty("user.home")));
+            return FileSystemView.getFileSystemView().getSystemIcon(new File(System.getProperty("user.home"))); //$NON-NLS-1$
         }
     }
 
@@ -154,7 +154,7 @@ public final class JIUtility {
         if (f.exists()) {
             return FileSystemView.getFileSystemView().getSystemIcon(f);
         } else {
-            return FileSystemView.getFileSystemView().getSystemIcon(new File(System.getProperty("user.home")));
+            return FileSystemView.getFileSystemView().getSystemIcon(new File(System.getProperty("user.home"))); //$NON-NLS-1$
         }
     }
 
@@ -171,7 +171,7 @@ public final class JIUtility {
         final StringBuilder strBuf = new StringBuilder();
 
         while ((padding > str.length()) && (strBuf.length() < (padding - str.length()))) {
-            strBuf.append("0");
+            strBuf.append("0"); //$NON-NLS-1$
         }
 
         strBuf.append(str);
