@@ -38,7 +38,7 @@ public class DefaultExplorerFactory implements DataExplorerViewFactory {
         if (model == null) {
             model = JIUtility.createTreeModel();
             // Dictionary<String, Object> dict = new Hashtable<String, Object>();
-            //            dict.put(CommandProcessor.COMMAND_SCOPE, "image"); //$NON-NLS-1$
+            // dict.put(CommandProcessor.COMMAND_SCOPE, "image"); //$NON-NLS-1$
             // dict.put(CommandProcessor.COMMAND_FUNCTION, FileTreeModel.functions);
             // context.getBundleContext().registerService(FileTreeModel.class.getName(), model, dict);
         }

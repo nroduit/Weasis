@@ -107,6 +107,7 @@ public enum TransferSyntaxType {
     }
 
     private static final HashMap<String, TransferSyntaxType> map = new HashMap<String, TransferSyntaxType>();
+
     static {
         map.put(UID.ImplicitVRLittleEndian, NATIVE);
         map.put(UID.ExplicitVRLittleEndian, NATIVE);

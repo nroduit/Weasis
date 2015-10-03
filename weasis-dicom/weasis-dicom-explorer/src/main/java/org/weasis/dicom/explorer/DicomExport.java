@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -42,8 +42,8 @@ public class DicomExport extends AbstractWizardDialog {
     private final CheckTreeModel treeModel;
 
     public DicomExport(Window parent, final DicomModel dicomModel) {
-        super(parent,
-            Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
+        super(parent, Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, //$NON-NLS-1$
+            new Dimension(640, 480));
         this.dicomModel = dicomModel;
         this.treeModel = new CheckTreeModel(dicomModel);
 

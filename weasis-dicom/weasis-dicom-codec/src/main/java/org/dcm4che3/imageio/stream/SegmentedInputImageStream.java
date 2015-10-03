@@ -58,12 +58,12 @@ public class SegmentedInputImageStream extends ImageInputStreamImpl {
     private int curSegment;
     private long curSegmentEnd;
 
-    public SegmentedInputImageStream(ImageInputStream stream,
-            Fragments pixeldataFragments, int frameIndex) throws IOException {
-        long[] offsets = new long[pixeldataFragments.size()-(frameIndex+1)];
+    public SegmentedInputImageStream(ImageInputStream stream, Fragments pixeldataFragments, int frameIndex)
+        throws IOException {
+        long[] offsets = new long[pixeldataFragments.size() - (frameIndex + 1)];
         int[] length = new int[offsets.length];
         for (int i = 0; i < length.length; i++) {
-            BulkData bulkData = (BulkData) pixeldataFragments.get(i+frameIndex+1);
+            BulkData bulkData = (BulkData) pixeldataFragments.get(i + frameIndex + 1);
             offsets[i] = bulkData.offset;
             length[i] = bulkData.length;
         }
@@ -73,9 +73,8 @@ public class SegmentedInputImageStream extends ImageInputStreamImpl {
         seek(0);
     }
 
-    public SegmentedInputImageStream(ImageInputStream stream,
-            long[] segmentPositionsList, int[] segmentLengths)
-                    throws IOException {
+    public SegmentedInputImageStream(ImageInputStream stream, long[] segmentPositionsList, int[] segmentLengths)
+        throws IOException {
         this.stream = stream;
         this.segmentPositionsList = segmentPositionsList.clone();
         this.segmentLengths = segmentLengths.clone();
@@ -84,8 +83,9 @@ public class SegmentedInputImageStream extends ImageInputStreamImpl {
 
     private int offsetOf(int segment) {
         int pos = 0;
-        for (int i = 0; i < segment; ++i)
+        for (int i = 0; i < segment; ++i) {
             pos += segmentLengths[i];
+        }
         return pos;
     }
 
@@ -107,8 +107,9 @@ public class SegmentedInputImageStream extends ImageInputStreamImpl {
 
     @Override
     public int read() throws IOException {
-        if (!prepareRead())
+        if (!prepareRead()) {
             return -1;
+        }
 
         bitOffset = 0;
         int val = stream.read();
@@ -119,27 +120,30 @@ public class SegmentedInputImageStream extends ImageInputStreamImpl {
     }
 
     private boolean prepareRead() throws IOException {
-        if (curSegment < 0)
+        if (curSegment < 0) {
             return false;
+        }
 
-        if (streamPos < curSegmentEnd)
+        if (streamPos < curSegmentEnd) {
             return true;
+        }
 
-        if (curSegment >= segmentPositionsList.length)
+        if (curSegment >= segmentPositionsList.length) {
             return false;
-        
-        seek(offsetOf(curSegment+1));
+        }
+
+        seek(offsetOf(curSegment + 1));
         return true;
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        if (!prepareRead())
+        if (!prepareRead()) {
             return -1;
+        }
 
         bitOffset = 0;
-        int nbytes = stream.read(b, off,
-                Math.min(len, (int) (curSegmentEnd-streamPos)));
+        int nbytes = stream.read(b, off, Math.min(len, (int) (curSegmentEnd - streamPos)));
         if (nbytes != -1) {
             streamPos += nbytes;
         }

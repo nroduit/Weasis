@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -22,30 +22,30 @@ import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 
 /**
  * The Interface LayerModel.
- * 
+ *
  * @author Nicolas Roduit
  */
 public interface LayerModel {
 
     /**
      * Gets the total number of layers in this layer model.
-     * 
+     *
      * @return the number of layers
      */
     int getLayerCount();
 
     /**
      * Gets the layer from its identifier.
-     * 
+     *
      * @param layerID
-     * 
+     *
      * @return the layer or null if not found
      */
     AbstractLayer getLayer(Identifier layerID);
 
     /**
      * Adds a new layer to this model.
-     * 
+     *
      * @param layer
      *            the new layer, must not be null
      */
@@ -53,7 +53,7 @@ public interface LayerModel {
 
     /**
      * Removes an existing layer from this model.
-     * 
+     *
      * @param layer
      *            the existing layer, must not be null
      */
@@ -61,7 +61,7 @@ public interface LayerModel {
 
     /**
      * Draws all visible layers of this model.
-     * 
+     *
      * @param g2d
      *            the 2D graphics context
      * @param transform
@@ -77,14 +77,14 @@ public interface LayerModel {
 
     /**
      * Tests if fireing layer model change events is suspended.
-     * 
+     *
      * @return true, if so
      */
     boolean isLayerModelChangeFireingSuspended();
 
     /**
      * Suspends the fireing of layer model change events.
-     * 
+     *
      * @param layerModelChangeFireingSuspended
      *            true, if suspended
      */

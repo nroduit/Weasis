@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -41,8 +41,8 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
     public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
 
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(
-        Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement COMPLEMENTARY_ANGLE =
+        new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Let O be center of perpendicular projections in Cobb's angle
@@ -56,9 +56,8 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
     protected CobbAngleToolGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible)
-        throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible);
         if (handlePointTotalNumber != 5) {
             throw new InvalidShapeException("Not a valid CobbAngleToolGraphic!"); //$NON-NLS-1$
@@ -76,7 +75,8 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
     }
 
     @Override
-    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
+    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY,
+        MouseEventDouble mouseEvent) {
         handlePointIndex = super.moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
 
         if (handlePointIndex != -1 && handlePointList.size() >= 4) {

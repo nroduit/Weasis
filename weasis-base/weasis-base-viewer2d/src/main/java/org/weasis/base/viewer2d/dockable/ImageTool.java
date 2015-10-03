@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -101,8 +101,8 @@ public class ImageTool extends PluginTool {
         panel_2.setAlignmentY(Component.TOP_ALIGNMENT);
         panel_2.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel_2.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-        panel_2.setBorder(BorderFactory.createCompoundBorder(spaceY,
-            new TitledBorder(null, Messages.getString("ImageTool.reset"), //$NON-NLS-1$
+        panel_2.setBorder(
+            BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.reset"), //$NON-NLS-1$
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         final JComboBox resetComboBox = new JComboBox(ResetTools.values());
         panel_2.add(resetComboBox);
@@ -130,8 +130,8 @@ public class ImageTool extends PluginTool {
         framePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         framePanel.setAlignmentY(Component.TOP_ALIGNMENT);
         framePanel.setLayout(new BoxLayout(framePanel, BoxLayout.Y_AXIS));
-        framePanel.setBorder(BorderFactory.createCompoundBorder(spaceY,
-            new TitledBorder(null, Messages.getString("ImageTool.frame"), //$NON-NLS-1$
+        framePanel.setBorder(
+            BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.frame"), //$NON-NLS-1$
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
@@ -177,8 +177,8 @@ public class ImageTool extends PluginTool {
         winLevelPanel.setAlignmentY(Component.TOP_ALIGNMENT);
         winLevelPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         winLevelPanel.setLayout(new BoxLayout(winLevelPanel, BoxLayout.Y_AXIS));
-        winLevelPanel.setBorder(BorderFactory.createCompoundBorder(spaceY,
-            new TitledBorder(null, Messages.getString("ImageTool.wl"), //$NON-NLS-1$
+        winLevelPanel.setBorder(
+            BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.wl"), //$NON-NLS-1$
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         ActionState winAction = EventManager.getInstance().getAction(ActionW.WINDOW);
         if (winAction instanceof SliderChangeListener) {
@@ -190,8 +190,8 @@ public class ImageTool extends PluginTool {
         ActionState levelAction = EventManager.getInstance().getAction(ActionW.LEVEL);
         if (levelAction instanceof SliderChangeListener) {
             final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(4, true);
-            levelSlider
-                .setMajorTickSpacing((ImageViewerEventManager.LEVEL_LARGEST - ImageViewerEventManager.LEVEL_SMALLEST) / 4);
+            levelSlider.setMajorTickSpacing(
+                (ImageViewerEventManager.LEVEL_LARGEST - ImageViewerEventManager.LEVEL_SMALLEST) / 4);
             JMVUtils.setPreferredWidth(levelSlider, 100);
             winLevelPanel.add(levelSlider.getParent());
         }
@@ -217,8 +217,8 @@ public class ImageTool extends PluginTool {
             panel_4.add(lutcomboBox);
             ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERT_LUT);
             if (invlutAction instanceof ToggleButtonListener) {
-                panel_4.add(((ToggleButtonListener) invlutAction).createCheckBox(Messages
-                    .getString("ImageTool.inverse"))); //$NON-NLS-1$
+                panel_4
+                    .add(((ToggleButtonListener) invlutAction).createCheckBox(Messages.getString("ImageTool.inverse"))); //$NON-NLS-1$
             }
             winLevelPanel.add(panel_4);
         }
@@ -240,8 +240,8 @@ public class ImageTool extends PluginTool {
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY,
-            new TitledBorder(null, Messages.getString("ImageTool.transform"), //$NON-NLS-1$
+        transform.setBorder(
+            BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.transform"), //$NON-NLS-1$
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         ActionState zoomAction = EventManager.getInstance().getAction(ActionW.ZOOM);
         if (zoomAction instanceof SliderChangeListener) {

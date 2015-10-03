@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -313,9 +313,8 @@ public class View2d extends DefaultView2d<ImageElement> {
                              * Convert mouse event point to real image coordinate point (without geometric
                              * transformation)
                              */
-                            final MouseEventDouble mouseEvt =
-                                new MouseEventDouble(View2d.this, MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16, 0, 0,
-                                    0, 0, 1, true, 1);
+                            final MouseEventDouble mouseEvt = new MouseEventDouble(View2d.this,
+                                MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16, 0, 0, 0, 0, 1, true, 1);
                             mouseEvt.setSource(View2d.this);
                             mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
                             final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
@@ -336,10 +335,9 @@ public class View2d extends DefaultView2d<ImageElement> {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
                                         absgraph.forceToAddPoints(ptIndex);
-                                        MouseEventDouble evt2 =
-                                            new MouseEventDouble(View2d.this, MouseEvent.MOUSE_PRESSED, evt.getWhen(),
-                                                16, evt.getX(), evt.getY(), evt.getXOnScreen(), evt.getYOnScreen(), 1,
-                                                true, 1);
+                                        MouseEventDouble evt2 = new MouseEventDouble(View2d.this,
+                                            MouseEvent.MOUSE_PRESSED, evt.getWhen(), 16, evt.getX(), evt.getY(),
+                                            evt.getXOnScreen(), evt.getYOnScreen(), 1, true, 1);
                                         mouseClickHandler.mousePressed(evt2);
                                     }
                                 });
@@ -446,9 +444,8 @@ public class View2d extends DefaultView2d<ImageElement> {
                             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                             String title = Messages.getString("View2d.man_calib"); //$NON-NLS-1$
                             CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this);
-                            int res =
-                                JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
-                                    title, JOptionPane.OK_CANCEL_OPTION);
+                            int res = JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer),
+                                calibrationDialog, title, JOptionPane.OK_CANCEL_OPTION);
                             if (layer != null) {
                                 layer.hideUI();
                             }
@@ -541,9 +538,8 @@ public class View2d extends DefaultView2d<ImageElement> {
                             Rectangle2D area = View2d.this.getViewModel().getModelArea();
                             for (Graphic g : graphs) {
                                 if (!g.getBounds(null).intersects(area)) {
-                                    int option =
-                                        JOptionPane.showConfirmDialog(View2d.this,
-                                            "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
+                                    int option = JOptionPane.showConfirmDialog(View2d.this,
+                                        "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
                                     if (option == JOptionPane.YES_OPTION) {
                                         break;
                                     } else {
@@ -736,8 +732,8 @@ public class View2d extends DefaultView2d<ImageElement> {
                         return false;
                     }
                 } else {
-                    ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model == null
-                        ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
+                    ViewerPluginBuilder.openSequenceInDefaultPlugin(seq,
+                        model == null ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
                     return true;
                 }
             } catch (Exception e) {

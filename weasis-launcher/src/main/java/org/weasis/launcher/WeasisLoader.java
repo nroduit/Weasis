@@ -45,8 +45,8 @@ public class WeasisLoader {
 
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
-    public static final String FRM_TITLE = String.format(
-        Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final String FRM_TITLE =
+        String.format(Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$ //$NON-NLS-2$
     public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end"); //$NON-NLS-1$
 
     private javax.swing.JButton cancelButton;
@@ -268,9 +268,8 @@ public class WeasisLoader {
     private void displayOnScreen() {
         if (container instanceof Window) {
             try {
-                Rectangle bounds =
-                    GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
-                        .getDefaultConfiguration().getBounds();
+                Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+                    .getDefaultConfiguration().getBounds();
                 int x = bounds.x + (bounds.width - container.getWidth()) / 2;
                 int y = bounds.y + (bounds.height - container.getHeight()) / 2;
 

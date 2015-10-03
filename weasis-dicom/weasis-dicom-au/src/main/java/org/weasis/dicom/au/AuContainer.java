@@ -44,16 +44,18 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     private static final Logger LOGGER = LoggerFactory.getLogger(AuContainer.class);
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
+
     static {
         SYNCH_LIST.add(SynchView.NONE);
     }
 
-    public static final List<GridBagLayoutModel> LAYOUT_LIST = Collections
-        .synchronizedList(new ArrayList<GridBagLayoutModel>());
+    public static final List<GridBagLayoutModel> LAYOUT_LIST =
+        Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
 
     public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1", //$NON-NLS-1$
-        "1x1", 1, 1, AuView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ 
+        "1x1", 1, 1, AuView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$
             .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
+
     static {
         LAYOUT_LIST.add(VIEWS_1x1);
     }

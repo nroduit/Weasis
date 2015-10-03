@@ -13,6 +13,7 @@ public final class ImageioUtil {
 
     // Hack to get the default imageio registry, workaround to ensure to be thread safe.
     private final static IIORegistry registry;
+
     static {
         IIORegistry temp = null;
         try {

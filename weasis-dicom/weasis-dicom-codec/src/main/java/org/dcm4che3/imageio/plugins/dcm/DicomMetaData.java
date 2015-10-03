@@ -77,8 +77,7 @@ public class DicomMetaData extends IIOMetadata {
     }
 
     @Override
-    public void mergeTree(String formatName, Node root)
-            throws IIOInvalidTreeException {
+    public void mergeTree(String formatName, Node root) throws IIOInvalidTreeException {
         throw new UnsupportedOperationException();
     }
 

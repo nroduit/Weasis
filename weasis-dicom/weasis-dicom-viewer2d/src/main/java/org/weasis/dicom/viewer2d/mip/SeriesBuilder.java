@@ -52,8 +52,8 @@ import org.weasis.dicom.viewer2d.mip.MipView.Type;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 
 public class SeriesBuilder {
-    public static final File MPR_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
-        AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
+    public static final File MPR_CACHE_DIR =
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
 
     private SeriesBuilder() {
     }
@@ -86,18 +86,19 @@ public class SeriesBuilder {
 
             DicomImageElement img = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, sortFilter);
             final Attributes attributes = ((DcmMediaReader) img.getMediaReader()).getDicomObject();
-            final int[] COPIED_ATTRS =
-                { Tag.SpecificCharacterSet, Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate, Tag.PatientBirthTime,
-                    Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence, Tag.PatientWeight,
-                    Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
+            final int[] COPIED_ATTRS = { Tag.SpecificCharacterSet, Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate,
+                Tag.PatientBirthTime, Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence,
+                Tag.PatientWeight, Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
 
-                    Tag.StudyID, Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments,
-                    Tag.AccessionNumber, Tag.ModalitiesInStudy,
+                            Tag.StudyID,
+                Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments, Tag.AccessionNumber,
+                Tag.ModalitiesInStudy,
 
-                    Tag.Modality, Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName,
-                    Tag.InstitutionName, Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer,
-                    Tag.ManufacturerModelName, Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined,
-                    Tag.FrameOfReferenceUID, Tag.ModalityLUTSequence, Tag.VOILUTSequence };
+                            Tag.Modality,
+                Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName, Tag.InstitutionName,
+                Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer, Tag.ManufacturerModelName,
+                Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined, Tag.FrameOfReferenceUID,
+                Tag.ModalityLUTSequence, Tag.VOILUTSequence };
 
             Arrays.sort(COPIED_ATTRS);
             final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
@@ -180,25 +181,22 @@ public class SeriesBuilder {
                     rawIO.setTag(TagW.SeriesInstanceUID, seriesUID);
 
                     // Mandatory tags
-                    TagW[] mtagList =
-                        { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientPseudoUID,
-                            TagW.StudyInstanceUID, TagW.StudyID, TagW.SOPClassUID, TagW.StudyDate, TagW.StudyTime,
-                            TagW.AccessionNumber };
+                    TagW[] mtagList = { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientPseudoUID,
+                        TagW.StudyInstanceUID, TagW.StudyID, TagW.SOPClassUID, TagW.StudyDate, TagW.StudyTime,
+                        TagW.AccessionNumber };
                     rawIO.copyTags(mtagList, imgRef, true);
 
-                    TagW[] tagList =
-                        { TagW.PhotometricInterpretation, TagW.PixelRepresentation, TagW.Units, TagW.SamplesPerPixel,
-                            TagW.MonoChrome, TagW.Modality };
+                    TagW[] tagList = { TagW.PhotometricInterpretation, TagW.PixelRepresentation, TagW.Units,
+                        TagW.SamplesPerPixel, TagW.MonoChrome, TagW.Modality };
                     rawIO.copyTags(tagList, imgRef, true);
 
-                    TagW[] tagList2 =
-                        { TagW.ImageOrientationPatient, TagW.ImagePositionPatient, TagW.SmallestImagePixelValue,
-                            TagW.LargestImagePixelValue, TagW.ModalityLUTData, TagW.ModalityLUTType,
-                            TagW.ModalityLUTExplanation, TagW.RescaleSlope, TagW.RescaleIntercept, TagW.RescaleType,
-                            TagW.VOILUTsData, TagW.VOILUTsExplanation, TagW.PixelPaddingValue,
-                            TagW.PixelPaddingRangeLimit, TagW.WindowWidth, TagW.WindowCenter,
-                            TagW.WindowCenterWidthExplanation, TagW.VOILutFunction, TagW.PixelSpacing,
-                            TagW.ImagerPixelSpacing, TagW.PixelSpacingCalibrationDescription, TagW.PixelAspectRatio };
+                    TagW[] tagList2 = { TagW.ImageOrientationPatient, TagW.ImagePositionPatient,
+                        TagW.SmallestImagePixelValue, TagW.LargestImagePixelValue, TagW.ModalityLUTData,
+                        TagW.ModalityLUTType, TagW.ModalityLUTExplanation, TagW.RescaleSlope, TagW.RescaleIntercept,
+                        TagW.RescaleType, TagW.VOILUTsData, TagW.VOILUTsExplanation, TagW.PixelPaddingValue,
+                        TagW.PixelPaddingRangeLimit, TagW.WindowWidth, TagW.WindowCenter,
+                        TagW.WindowCenterWidthExplanation, TagW.VOILutFunction, TagW.PixelSpacing,
+                        TagW.ImagerPixelSpacing, TagW.PixelSpacingCalibrationDescription, TagW.PixelAspectRatio };
                     rawIO.copyTags(tagList2, imgRef, false);
 
                     // Image specific tags
@@ -290,9 +288,8 @@ public class SeriesBuilder {
             if (dataBuffer instanceof DataBufferByte) {
                 bytesOut = ((DataBufferByte) dataBuffer).getData();
             } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-                short[] data =
-                    dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                        : ((DataBufferUShort) dataBuffer).getData();
+                short[] data = dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
+                    : ((DataBufferUShort) dataBuffer).getData();
                 bytesOut = new byte[data.length * 2];
                 for (int i = 0; i < data.length; i++) {
                     bytesOut[i * 2] = (byte) (data[i] & 0xFF);

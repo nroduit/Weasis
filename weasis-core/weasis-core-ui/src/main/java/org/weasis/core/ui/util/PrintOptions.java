@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit, Marcelo Porto  - initial API and implementation
  ******************************************************************************/
@@ -13,7 +13,7 @@ package org.weasis.core.ui.util;
 import org.weasis.core.ui.Messages;
 
 /**
- * 
+ *
  * @author Marcelo Porto (marcelo@animati.com.br)
  * @version 18/11/2011
  */

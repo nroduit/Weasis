@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -101,12 +101,12 @@ public class DicomSeries extends Series<DicomImageElement> {
         toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(TagW.formatDateTime((Date) getTagValue(TagW.SeriesDate)));
-        toolTips.append("<br>"); //$NON-NLS-1$ 
+        toolTips.append("<br>"); //$NON-NLS-1$
         if (getFileSize() > 0.0) {
             toolTips.append(Messages.getString("DicomSeries.size")); //$NON-NLS-1$
             toolTips.append(StringUtil.COLON_AND_SPACE);
             toolTips.append(FileUtil.formatSize(getFileSize()));
-            toolTips.append("<br>"); //$NON-NLS-1$ 
+            toolTips.append("<br>"); //$NON-NLS-1$
         }
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();

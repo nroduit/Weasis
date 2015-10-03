@@ -70,10 +70,10 @@ public class ConvexHull {
 
     /**
      * compute the convex hull with the Graham Scan algorithm
-     * 
+     *
      * @param pts
      *            a list of points
-     * 
+     *
      * @return a Stack containing the ordered points of the convex hull ring
      */
     private Stack<Point2D.Double> grahamScan(List<Point2D.Double> pts) {
@@ -107,14 +107,14 @@ public class ConvexHull {
 
     /**
      * Returns the index of the direction of the point c relative to a vector a-b.
-     * 
+     *
      * @param a
      *            the origin point of the vector
      * @param b
      *            the final point of the vector
      * @param c
      *            the point to compute the direction to
-     * 
+     *
      * @return 1 if c is counter-clockwise, (left) from a-b
      * @return -1 if c is clockwise, (right) from a-b
      * @return 0 if c is collinear with a-b

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -145,7 +145,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
                                 while (xmler.hasNext()) {
                                     eventType = xmler.next();
                                     switch (eventType) {
-                                    // It is a child of the preferences node
+                                        // It is a child of the preferences node
                                         case XMLStreamConstants.START_ELEMENT:
                                             this.read(root, xmler, xmler.getName().getLocalPart());
                                             break;
@@ -178,7 +178,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
 
     /**
      * Get the file for the preferences tree.
-     * 
+     *
      * @param desc
      * @return the preference file
      */

@@ -49,7 +49,7 @@ import org.dcm4che3.data.Implementation;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * 
+ *
  */
 public class RLEImageReaderSpi extends ImageReaderSpi {
 

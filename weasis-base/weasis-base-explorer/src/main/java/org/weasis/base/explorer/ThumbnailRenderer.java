@@ -53,9 +53,8 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer {
             final MediaElement diskObject = (MediaElement) value;
             Icon icon = null;
             if (value instanceof ImageElement) {
-                icon =
-                    JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) diskObject, (JIThumbnailList) list,
-                        index);
+                icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) diskObject, (JIThumbnailList) list,
+                    index);
             }
             this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(diskObject) : icon);
             this.descriptionLabel.setText(diskObject.getName());

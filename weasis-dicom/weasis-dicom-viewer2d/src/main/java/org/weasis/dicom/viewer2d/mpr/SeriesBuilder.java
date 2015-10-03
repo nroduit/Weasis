@@ -74,8 +74,8 @@ import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class SeriesBuilder {
-    public static final File MPR_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
-        AppProperties.FILE_CACHE_DIR.getName(), "mpr"); //$NON-NLS-1$
+    public static final File MPR_CACHE_DIR =
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mpr"); //$NON-NLS-1$
 
     private SeriesBuilder() {
     }
@@ -92,10 +92,9 @@ public class SeriesBuilder {
                 Filter filter = (Filter) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
 
                 // Get image stack sort from Reference Coordinates System
-                DicomImageElement img =
-                    SliceOrientation.CORONAL.equals(type1) ? series.getMedia(MediaSeries.MEDIA_POSITION.FIRST, filter,
-                        SortSeriesStack.slicePosition) : series.getMedia(MediaSeries.MEDIA_POSITION.LAST, filter,
-                        SortSeriesStack.slicePosition);
+                DicomImageElement img = SliceOrientation.CORONAL.equals(type1)
+                    ? series.getMedia(MediaSeries.MEDIA_POSITION.FIRST, filter, SortSeriesStack.slicePosition)
+                    : series.getMedia(MediaSeries.MEDIA_POSITION.LAST, filter, SortSeriesStack.slicePosition);
                 if (img != null && img.getMediaReader() instanceof DcmMediaReader) {
                     GeometryOfSlice geometry = img.getDispSliceGeometry();
                     if (geometry != null) {
@@ -105,7 +104,8 @@ public class SeriesBuilder {
                         final boolean[] abort = new boolean[] { false, false };
 
                         if (img.getRescaleX() != img.getRescaleY()) {
-                            // confirmMessage(view, Messages.getString("SeriesBuilder.non_square"), abort); //$NON-NLS-1$
+                            // confirmMessage(view, Messages.getString("SeriesBuilder.non_square"), abort);
+                            // //$NON-NLS-1$
                             width = img.getRescaleWidth(width);
                             height = img.getRescaleHeight(height);
                         }
@@ -133,40 +133,40 @@ public class SeriesBuilder {
                             if (SliceOrientation.SAGITTAL.equals(type1)) {
                                 // The reference image is the first of the saggital stack (Left)
                                 rotate(vc, vr, Math.toRadians(270), resr);
-                                recParams[0] =
-                                    new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { resr.x, //$NON-NLS-1$
-                                        resr.y, resr.z, row[0], row[1], row[2] }, true, true,
-                                        new Object[] { 0.0, false }, frUID);
-                                recParams[1] =
-                                    new ViewParameter(".3", SliceOrientation.CORONAL, false, //$NON-NLS-1$
-                                        TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
-                                            col[1], col[2] }, true, true, new Object[] { true, 0.0 }, frUID);
+                                recParams[0] = new ViewParameter(".2", SliceOrientation.AXIAL, false, null, //$NON-NLS-1$
+                                    new double[] { resr.x,
+                                        resr.y, resr.z, row[0], row[1], row[2] },
+                                    true, true, new Object[] { 0.0, false }, frUID);
+                                recParams[1] = new ViewParameter(".3", SliceOrientation.CORONAL, false, //$NON-NLS-1$
+                                    TransposeDescriptor.ROTATE_270,
+                                    new double[] { resr.x, resr.y, resr.z, col[0], col[1], col[2] }, true, true,
+                                    new Object[] { true, 0.0 }, frUID);
                             } else if (SliceOrientation.CORONAL.equals(type1)) {
                                 // The reference image is the first of the coronal stack (Anterior)
                                 rotate(vc, vr, Math.toRadians(90), resc);
-                                recParams[0] =
-                                    new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { row[0], //$NON-NLS-1$
-                                        row[1], row[2], resc.x, resc.y, resc.z }, false, true, new Object[] { 0.0,
-                                        false }, frUID);
+                                recParams[0] = new ViewParameter(".2", SliceOrientation.AXIAL, false, null, //$NON-NLS-1$
+                                    new double[] { row[0],
+                                        row[1], row[2], resc.x, resc.y, resc.z },
+                                    false, true, new Object[] { 0.0, false }, frUID);
 
                                 rotate(vc, vr, Math.toRadians(90), resr);
-                                recParams[1] =
-                                    new ViewParameter(".3", SliceOrientation.SAGITTAL, true, //$NON-NLS-1$
-                                        TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
-                                            col[1], col[2] }, true, false, new Object[] { true, 0.0 }, frUID);
+                                recParams[1] = new ViewParameter(".3", SliceOrientation.SAGITTAL, true, //$NON-NLS-1$
+                                    TransposeDescriptor.ROTATE_270,
+                                    new double[] { resr.x, resr.y, resr.z, col[0], col[1], col[2] }, true, false,
+                                    new Object[] { true, 0.0 }, frUID);
                             } else {
                                 // The reference image is the last of the axial stack (Head)
                                 rotate(vc, vr, Math.toRadians(270), resc);
-                                recParams[0] =
-                                    new ViewParameter(".2", SliceOrientation.CORONAL, true, null, new double[] { //$NON-NLS-1$
-                                        row[0], row[1], row[2], resc.x, resc.y, resc.z }, false, false, new Object[] {
-                                            0.0, false }, frUID);
+                                recParams[0] = new ViewParameter(".2", SliceOrientation.CORONAL, true, null, //$NON-NLS-1$
+                                    new double[] {
+                                        row[0], row[1], row[2], resc.x, resc.y, resc.z },
+                                    false, false, new Object[] { 0.0, false }, frUID);
 
                                 rotate(vr, vc, Math.toRadians(90), resr);
-                                recParams[1] =
-                                    new ViewParameter(".3", SliceOrientation.SAGITTAL, true, //$NON-NLS-1$
-                                        TransposeDescriptor.ROTATE_270, new double[] { col[0], col[1], col[2], resr.x,
-                                            resr.y, resr.z }, false, false, new Object[] { true, 0.0 }, frUID);
+                                recParams[1] = new ViewParameter(".3", SliceOrientation.SAGITTAL, true, //$NON-NLS-1$
+                                    TransposeDescriptor.ROTATE_270,
+                                    new double[] { col[0], col[1], col[2], resr.x, resr.y, resr.z }, false, false,
+                                    new Object[] { true, 0.0 }, frUID);
 
                             }
 
@@ -237,9 +237,8 @@ public class SeriesBuilder {
                             });
 
                             // Get the image in the middle of the series for having better default W/L values
-                            img =
-                                series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter,
-                                    SortSeriesStack.slicePosition);
+                            img = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter,
+                                SortSeriesStack.slicePosition);
                             final Attributes attributes = ((DcmMediaReader) img.getMediaReader()).getDicomObject();
 
                             for (int i = 0; i < 2; i++) {
@@ -247,8 +246,8 @@ public class SeriesBuilder {
                                     final MprView mprView = recView[i];
                                     final ViewParameter viewParams = recParams[i];
 
-                                    Iterable<DicomImageElement> medias =
-                                        series.copyOfMedias(filter, viewParams.reverseSeriesOrder
+                                    Iterable<DicomImageElement> medias = series.copyOfMedias(filter,
+                                        viewParams.reverseSeriesOrder
                                             ? SortSeriesStack.slicePosition.getReversOrderComparator()
                                             : SortSeriesStack.slicePosition);
                                     double origPixSize = img.getPixelSize();
@@ -258,9 +257,8 @@ public class SeriesBuilder {
                                      * Write the new image by tacking the lines (from first to last) of all the images
                                      * of the original series stack
                                      */
-                                    double sPixSize =
-                                        writeBlock(secSeries, series, medias, viewParams, mprView, thread, abort,
-                                            seriesID);
+                                    double sPixSize = writeBlock(secSeries, series, medias, viewParams, mprView, thread,
+                                        abort, seriesID);
 
                                     if (thread.isInterrupted()) {
                                         return;
@@ -269,10 +267,9 @@ public class SeriesBuilder {
                                      * Reconstruct dicom files, adapt position, orientation, pixel spacing, instance
                                      * number and UIDs.
                                      */
-                                    final DicomSeries dicomSeries =
-                                        buildDicomSeriesFromRaw(secSeries,
-                                            new Dimension(i == 0 ? width : height, size), img, viewParams, seriesID,
-                                            origPixSize, sPixSize, geometry, mprView, attributes);
+                                    final DicomSeries dicomSeries = buildDicomSeriesFromRaw(secSeries,
+                                        new Dimension(i == 0 ? width : height, size), img, viewParams, seriesID,
+                                        origPixSize, sPixSize, geometry, mprView, attributes);
 
                                     if (dicomSeries != null && dicomSeries.size(null) > 0) {
                                         ((DcmMediaReader) dicomSeries.getMedia(0, null, null).getMediaReader())
@@ -313,9 +310,9 @@ public class SeriesBuilder {
         }
     }
 
-    private static DicomSeries buildDicomSeriesFromRaw(final RawImage[] newSeries, Dimension dim,
-        DicomImageElement img, ViewParameter params, String seriesID, double origPixSize, double sPixSize,
-        GeometryOfSlice geometry, final MprView view, final Attributes attributes) throws Exception {
+    private static DicomSeries buildDicomSeriesFromRaw(final RawImage[] newSeries, Dimension dim, DicomImageElement img,
+        ViewParameter params, String seriesID, double origPixSize, double sPixSize, GeometryOfSlice geometry,
+        final MprView view, final Attributes attributes) throws Exception {
 
         String recSeriesID = seriesID + params.suffix;
         int bitsAllocated = img.getBitsAllocated();
@@ -345,14 +342,12 @@ public class SeriesBuilder {
             pixSpacing = new double[] { origPixSize, sPixSize };
 
             int samplesPerPixel = (Integer) img.getTagValue(TagW.SamplesPerPixel);
-            boolean banded =
-                samplesPerPixel > 1
-                    && DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.PlanarConfiguration, 0) != 0;
+            boolean banded = samplesPerPixel > 1
+                && DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.PlanarConfiguration, 0) != 0;
             int pixelRepresentation =
                 DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.PixelRepresentation, 0);
-            dataType =
-                bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT
-                    : DataBuffer.TYPE_USHORT;
+            dataType = bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE
+                : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
             if (bitsAllocated > 16 && samplesPerPixel == 1) {
                 dataType = DataBuffer.TYPE_INT;
             }
@@ -367,18 +362,19 @@ public class SeriesBuilder {
             dim.height = tmp;
         }
 
-        final int[] COPIED_ATTRS =
-            { Tag.SpecificCharacterSet, Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate, Tag.PatientBirthTime,
-                Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence, Tag.PatientWeight,
-                Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
+        final int[] COPIED_ATTRS = { Tag.SpecificCharacterSet, Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate,
+            Tag.PatientBirthTime, Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence,
+            Tag.PatientWeight, Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
 
-                Tag.StudyID, Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments,
-                Tag.AccessionNumber, Tag.ModalitiesInStudy,
+                        Tag.StudyID,
+            Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments, Tag.AccessionNumber,
+            Tag.ModalitiesInStudy,
 
-                Tag.Modality, Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName,
-                Tag.InstitutionName, Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer,
-                Tag.ManufacturerModelName, Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined,
-                Tag.ModalityLUTSequence, Tag.VOILUTSequence };
+                        Tag.Modality,
+            Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName, Tag.InstitutionName,
+            Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer, Tag.ManufacturerModelName,
+            Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined, Tag.ModalityLUTSequence,
+            Tag.VOILUTSequence };
 
         Arrays.sort(COPIED_ATTRS);
         final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
@@ -411,9 +407,8 @@ public class SeriesBuilder {
                             }
                         }
                     }
-                    dataBuffer =
-                        dataType == DataBuffer.TYPE_SHORT ? new DataBufferShort(data, data.length)
-                            : new DataBufferUShort(data, data.length);
+                    dataBuffer = dataType == DataBuffer.TYPE_SHORT ? new DataBufferShort(data, data.length)
+                        : new DataBufferUShort(data, data.length);
                 } else if (dataType == DataBuffer.TYPE_INT) {
                     IntBuffer sBuffer = byteBuffer.asIntBuffer();
                     int[] data;
@@ -439,9 +434,8 @@ public class SeriesBuilder {
                     byteBuffer = ByteBuffer.wrap(((DataBufferByte) dataBuffer).getData());
                     writToFile(inFile, byteBuffer);
                 } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-                    short[] data =
-                        dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                            : ((DataBufferUShort) dataBuffer).getData();
+                    short[] data = dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
+                        : ((DataBufferUShort) dataBuffer).getData();
 
                     byteBuffer = ByteBuffer.allocate(data.length * 2);
                     byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -487,21 +481,18 @@ public class SeriesBuilder {
 
             // Mandatory tags
             TagW[] mtagList =
-                { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientPseudoUID,
-                    TagW.StudyInstanceUID, TagW.StudyID, TagW.SOPClassUID, TagW.StudyDate, TagW.StudyTime,
-                    TagW.AccessionNumber };
+                { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientPseudoUID, TagW.StudyInstanceUID,
+                    TagW.StudyID, TagW.SOPClassUID, TagW.StudyDate, TagW.StudyTime, TagW.AccessionNumber };
             rawIO.copyTags(mtagList, img, true);
 
-            TagW[] tagList =
-                { TagW.PhotometricInterpretation, TagW.PixelRepresentation, TagW.Units, TagW.SamplesPerPixel,
-                    TagW.MonoChrome, TagW.Modality };
+            TagW[] tagList = { TagW.PhotometricInterpretation, TagW.PixelRepresentation, TagW.Units,
+                TagW.SamplesPerPixel, TagW.MonoChrome, TagW.Modality };
             rawIO.copyTags(tagList, img, true);
 
-            TagW[] tagList2 =
-                { TagW.ModalityLUTData, TagW.ModalityLUTType, TagW.ModalityLUTExplanation, TagW.RescaleSlope,
-                    TagW.RescaleIntercept, TagW.RescaleType, TagW.VOILUTsData, TagW.VOILUTsExplanation,
-                    TagW.PixelPaddingValue, TagW.PixelPaddingRangeLimit, TagW.WindowWidth, TagW.WindowCenter,
-                    TagW.WindowCenterWidthExplanation, TagW.VOILutFunction, TagW.PixelSpacingCalibrationDescription, };
+            TagW[] tagList2 = { TagW.ModalityLUTData, TagW.ModalityLUTType, TagW.ModalityLUTExplanation,
+                TagW.RescaleSlope, TagW.RescaleIntercept, TagW.RescaleType, TagW.VOILUTsData, TagW.VOILUTsExplanation,
+                TagW.PixelPaddingValue, TagW.PixelPaddingRangeLimit, TagW.WindowWidth, TagW.WindowCenter,
+                TagW.WindowCenterWidthExplanation, TagW.VOILutFunction, TagW.PixelSpacingCalibrationDescription, };
             rawIO.copyTags(tagList2, img, false);
 
             // Clone array, because values are adapted according to the min and max pixel values.
@@ -519,12 +510,10 @@ public class SeriesBuilder {
             rawIO.setTag(TagW.InstanceNumber, params.reverseIndexOrder ? last - index : index + 1);
             rawIO.setTag(TagW.ImageType, imageType);
 
-            double x =
-                (params.imgPosition[0] instanceof Double) ? (Double) params.imgPosition[0]
-                    : (Boolean) params.imgPosition[0] ? last - index - 1 : index;
-            double y =
-                (params.imgPosition[1] instanceof Double) ? (Double) params.imgPosition[1]
-                    : (Boolean) params.imgPosition[1] ? last - index - 1 : index;
+            double x = (params.imgPosition[0] instanceof Double) ? (Double) params.imgPosition[0]
+                : (Boolean) params.imgPosition[0] ? last - index - 1 : index;
+            double y = (params.imgPosition[1] instanceof Double) ? (Double) params.imgPosition[1]
+                : (Boolean) params.imgPosition[1] ? last - index - 1 : index;
             Point3d p = geometry.getPosition(new Point2D.Double(x, y));
             rawIO.setTag(TagW.ImagePositionPatient, new double[] { p.x, p.y, p.z });
 
@@ -640,9 +629,8 @@ public class SeriesBuilder {
                     newSeries[j].getOutputStream().write(bytesOut, j * width, width);
                 }
             } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-                short[] data =
-                    dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                        : ((DataBufferUShort) dataBuffer).getData();
+                short[] data = dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
+                    : ((DataBufferUShort) dataBuffer).getData();
                 bytesOut = new byte[data.length * 2];
                 for (int i = 0; i < data.length; i++) {
                     bytesOut[i * 2] = (byte) (data[i] & 0xFF);
@@ -709,15 +697,12 @@ public class SeriesBuilder {
 
     private static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
         axis.normalize();
-        vDst.x =
-            axis.x * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.x
-                * Math.cos(angle) + (-axis.z * vSrc.y + axis.y * vSrc.z) * Math.sin(angle);
-        vDst.y =
-            axis.y * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.y
-                * Math.cos(angle) + (axis.z * vSrc.x - axis.x * vSrc.z) * Math.sin(angle);
-        vDst.z =
-            axis.z * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.z
-                * Math.cos(angle) + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);
+        vDst.x = axis.x * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
+            + vSrc.x * Math.cos(angle) + (-axis.z * vSrc.y + axis.y * vSrc.z) * Math.sin(angle);
+        vDst.y = axis.y * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
+            + vSrc.y * Math.cos(angle) + (axis.z * vSrc.x - axis.x * vSrc.z) * Math.sin(angle);
+        vDst.z = axis.z * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
+            + vSrc.z * Math.cos(angle) + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);
     }
 
     private static void removeAllPrivateTags(Attributes item) throws Exception {

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -29,7 +29,7 @@ import org.weasis.core.api.Messages;
 
 /**
  * The Class AbstractBufferHandler.
- * 
+ *
  * @author Nicolas Roduit
  */
 public abstract class AbstractBufferHandler {
@@ -105,11 +105,10 @@ public abstract class AbstractBufferHandler {
         setPath(s);
         if (!handleOpenDocument(s)) {
             File f = new File(s);
-            JOptionPane
-                .showMessageDialog(
-                    getParentComponent(),
-                    String.format(Messages.getString("AbstractBufferHandler.unable_open"), f.getName()) + "\n" + addOpenMessage, //$NON-NLS-1$ //$NON-NLS-2$
-                    Messages.getString("AbstractBufferHandler.open"), 0); //$NON-NLS-1$
+            JOptionPane.showMessageDialog(getParentComponent(),
+                String.format(Messages.getString("AbstractBufferHandler.unable_open"), f.getName()) + "\n" //$NON-NLS-1$ //$NON-NLS-2$
+                    + addOpenMessage,
+                Messages.getString("AbstractBufferHandler.open"), 0); //$NON-NLS-1$
             setPath(null);
             addOpenMessage = ""; //$NON-NLS-1$
             return false;
@@ -124,10 +123,9 @@ public abstract class AbstractBufferHandler {
             return saveAsDocument();
         } else {
             if (!handleSaveDocument(getPath())) {
-                JOptionPane
-                    .showMessageDialog(
-                        getParentComponent(),
-                        Messages.getString("AbstractBufferHandler.unable_save"), Messages.getString("AbstractBufferHandler.save"), 0); //$NON-NLS-1$ //$NON-NLS-2$
+                JOptionPane.showMessageDialog(getParentComponent(),
+                    Messages.getString("AbstractBufferHandler.unable_save"), //$NON-NLS-1$
+                    Messages.getString("AbstractBufferHandler.save"), 0); //$NON-NLS-1$
                 File file = new File(getPath());
                 file.delete();
                 return false;
@@ -158,10 +156,10 @@ public abstract class AbstractBufferHandler {
         }
         file = new File(filename);
         if (file.exists()) {
-            int i =
-                JOptionPane.showConfirmDialog(getParentComponent(),
-                    String.format(Messages.getString("AbstractBufferHandler.exist"), file.getName()), Messages //$NON-NLS-1$
-                        .getString("AbstractBufferHandler.save_as"), 0); //$NON-NLS-1$
+            int i = JOptionPane.showConfirmDialog(getParentComponent(),
+                String.format(Messages.getString("AbstractBufferHandler.exist"), file.getName()), Messages //$NON-NLS-1$
+                    .getString("AbstractBufferHandler.save_as"), //$NON-NLS-1$
+                0);
             if (i != 0) {
                 return false;
             }
@@ -169,10 +167,8 @@ public abstract class AbstractBufferHandler {
         setPath(file.getPath());
         fileFilter = jfilechooser.getFileFilter();
         if (!handleSaveDocument(getPath())) {
-            JOptionPane
-                .showMessageDialog(
-                    getParentComponent(),
-                    Messages.getString("AbstractBufferHandler.unable_save"), Messages.getString("AbstractBufferHandler.save"), 0); //$NON-NLS-1$ //$NON-NLS-2$
+            JOptionPane.showMessageDialog(getParentComponent(), Messages.getString("AbstractBufferHandler.unable_save"), //$NON-NLS-1$
+                Messages.getString("AbstractBufferHandler.save"), 0); //$NON-NLS-1$
             file.delete();
             return false;
         } else {
@@ -183,11 +179,9 @@ public abstract class AbstractBufferHandler {
 
     protected boolean canCloseDocument() {
         if (isDirty) {
-            int i =
-                JOptionPane
-                    .showConfirmDialog(
-                        getParentComponent(),
-                        Messages.getString("AbstractBufferHandler.unsave_msg"), Messages.getString("AbstractBufferHandler.unsave_t"), 1); //$NON-NLS-1$ //$NON-NLS-2$
+            int i = JOptionPane.showConfirmDialog(getParentComponent(),
+                Messages.getString("AbstractBufferHandler.unsave_msg"), //$NON-NLS-1$
+                Messages.getString("AbstractBufferHandler.unsave_t"), 1); //$NON-NLS-1$
             if (i == 0) {
                 return saveDocument();
             }

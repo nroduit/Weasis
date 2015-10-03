@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -19,7 +19,7 @@ import org.weasis.core.api.util.FileUtil;
 
 /**
  * The Class AppProperties.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class AppProperties {
@@ -64,9 +64,8 @@ public class AppProperties {
          * Set the user name and the id (weasis source instance on web) to avoid mixing files by several users (Linux)
          * or by running multiple instances of Weasis from different sources.
          */
-        APP_TEMP_DIR =
-            new File(tdir,
-                "weasis-" + System.getProperty("user.name", "tmp") + "." + System.getProperty("weasis.source.id", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+        APP_TEMP_DIR = new File(tdir,
+            "weasis-" + System.getProperty("user.name", "tmp") + "." + System.getProperty("weasis.source.id", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
         System.setProperty("weasis.tmp.dir", APP_TEMP_DIR.getAbsolutePath()); //$NON-NLS-1$
         try {
             // Clean temp folder, necessary when the application has crashed.
@@ -74,9 +73,11 @@ public class AppProperties {
         } catch (Exception e1) {
         }
     }
+
     public static final File FILE_CACHE_DIR = buildAccessibleTempDirectory("cache"); //$NON-NLS-1$
 
-    public static final String OPERATING_SYSTEM = System.getProperty("os.name", "unknown").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$;
+    public static final String OPERATING_SYSTEM = System.getProperty("os.name", "unknown").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
+                                                                                                          //$NON-NLS-1$ ;
 
     public static final GhostGlassPane glassPane = new GhostGlassPane();
 
@@ -88,7 +89,7 @@ public class AppProperties {
         if (context == null) {
             return null;
         }
-        return new File(AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$;
+        return new File(AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$ ;
     }
 
     public static File buildAccessibleTempDirectory(String... subFolderName) {

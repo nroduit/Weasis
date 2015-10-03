@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -25,7 +25,7 @@ final class NotBinaryOpImage extends PointOpImage {
 
     /**
      * Constructs an <code>NotOpImage</code>.
-     * 
+     *
      * @param source
      *            The source image.
      * @param layout
@@ -37,7 +37,7 @@ final class NotBinaryOpImage extends PointOpImage {
 
     /**
      * Nots the pixel values of the source image within a specified rectangle.
-     * 
+     *
      * @param sources
      *            Cobbled sources, guaranteed to provide all the source data necessary for computing the rectangle.
      * @param dest

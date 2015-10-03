@@ -49,15 +49,14 @@ public class CompressionVerificationException extends IOException {
     private static final long serialVersionUID = 658013036646826476L;
 
     private final int maxError;
-    
+
     public CompressionVerificationException(int maxError) {
-        super("Decompressed pixel data differs up to " + maxError
-                + " from original pixel data");
+        super("Decompressed pixel data differs up to " + maxError + " from original pixel data");
         this.maxError = maxError;
     }
 
     public int getMaxError() {
         return maxError;
     }
-    
+
 }

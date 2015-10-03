@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -54,9 +54,8 @@ public class Activator implements BundleActivator, ServiceListener {
         if (confAdmin != null) {
             Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, LOGGER_KEY, LOGGER_VAL);
             if (logConfiguration == null) {
-                logConfiguration =
-                    confAdmin
-                        .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                logConfiguration = confAdmin
+                    .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                 Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
                 loggingProperties.put("org.apache.sling.commons.log.level", "INFO"); //$NON-NLS-1$ //$NON-NLS-2$
                 // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
@@ -68,8 +67,8 @@ public class Activator implements BundleActivator, ServiceListener {
         }
 
         try {
-            for (ServiceReference<DicomSpecialElementFactory> service : bundleContext.getServiceReferences(
-                DicomSpecialElementFactory.class, null)) {
+            for (ServiceReference<DicomSpecialElementFactory> service : bundleContext
+                .getServiceReferences(DicomSpecialElementFactory.class, null)) {
                 DicomSpecialElementFactory factory = bundleContext.getService(service);
                 if (factory != null) {
                     for (String modality : factory.getModalities()) {

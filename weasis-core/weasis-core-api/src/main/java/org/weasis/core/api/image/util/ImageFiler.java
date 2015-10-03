@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -63,7 +63,7 @@ import com.sun.media.jai.util.ImageUtil;
 
 /**
  * The Class ImageFiler.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class ImageFiler extends AbstractBufferHandler {
@@ -154,9 +154,9 @@ public class ImageFiler extends AbstractBufferHandler {
     // layout.setTileWidth(TILESIZE);
     // layout.setTileHeight(TILESIZE);
     // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
-    //                ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
-    //                pb.setParameter("Input", in); //$NON-NLS-1$
-    //                src = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
+    // ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
+    // pb.setParameter("Input", in); //$NON-NLS-1$
+    // src = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
     // } catch (Exception ex) {
     // src = null;
     // }
@@ -389,8 +389,8 @@ public class ImageFiler extends AbstractBufferHandler {
                     icm.getReds(table_data);
                     if (table_data[0] != (byte) 0x00) {
                         ImageLayout layout = new ImageLayout();
-                        layout.setSampleModel(LayoutUtil.createBinarySampelModel(source.getTileWidth(),
-                            source.getTileHeight()));
+                        layout.setSampleModel(
+                            LayoutUtil.createBinarySampelModel(source.getTileWidth(), source.getTileHeight()));
                         layout.setColorModel(LayoutUtil.createBinaryIndexColorModel());
                         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
                         hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));

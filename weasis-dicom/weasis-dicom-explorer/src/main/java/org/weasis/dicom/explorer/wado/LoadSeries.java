@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -196,9 +196,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             DownloadManager.removeLoadSeries(this, dicomModel);
 
             AuditLog.LOGGER.info("{}:series uid:{} modality:{} nbImages:{} size:{} {}", //$NON-NLS-1$
-                new Object[] { getLoadType(), dicomSeries.toString(),
-                    dicomSeries.getTagValue(TagW.Modality), getImageNumber(), (long) dicomSeries.getFileSize(),
-                    getDownloadTime() });
+                new Object[] { getLoadType(), dicomSeries.toString(), dicomSeries.getTagValue(TagW.Modality),
+                    getImageNumber(), (long) dicomSeries.getFileSize(), getDownloadTime() });
             dicomSeries.removeTag(DOWNLOAD_START_TIME);
 
             final SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);

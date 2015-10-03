@@ -112,9 +112,9 @@ public abstract class BasicGraphic implements Graphic {
         }
         this.variablePointsNumber = handlePointTotalNumber == UNDEFINED;
         this.handlePointTotalNumber = handlePointTotalNumber;
-        this.handlePointList =
-            handlePointList == null ? new ArrayList<Point2D.Double>(handlePointTotalNumber == UNDEFINED ? 10
-                : handlePointTotalNumber) : handlePointList;
+        this.handlePointList = handlePointList == null
+            ? new ArrayList<Point2D.Double>(handlePointTotalNumber == UNDEFINED ? 10 : handlePointTotalNumber)
+            : handlePointList;
         this.colorPaint = paintColor;
         this.lineThickness = lineThickness;
         this.labelVisible = labelVisible;
@@ -142,8 +142,8 @@ public abstract class BasicGraphic implements Graphic {
     }
 
     public Stroke getDashStroke(float lineThickness) {
-        return new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] { 5.0f,
-            5.0f }, 0f);
+        return new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f,
+            new float[] { 5.0f, 5.0f }, 0f);
     }
 
     public int getClassID() {
@@ -272,7 +272,7 @@ public abstract class BasicGraphic implements Graphic {
      * @return Bounding rectangle of all the drawing shape. Handle points paintings not included.<br>
      *         Coordinates are given in RealCoordinates. <br>
      *         Null is return if shape is Null
-     * 
+     *
      * @since v1.1.0 - new in Graphic interface
      */
     @Override
@@ -300,12 +300,12 @@ public abstract class BasicGraphic implements Graphic {
     }
 
     /**
-     * 
+     *
      * @return Bounding rectangle which size has to be modified according to the given transform with handle drawings
      *         and lineThikness taken in consideration<br>
      *         This assumes that handle drawing size do not change with different scaling of views. Hence, real
      *         coordinates of bounding rectangle are modified consequently<br>
-     * 
+     *
      * @since v1.1.0 - new in Graphic interface
      */
     public Rectangle getRepaintBounds(Shape shape, AffineTransform transform) {
@@ -731,7 +731,7 @@ public abstract class BasicGraphic implements Graphic {
 
     /**
      * Can be overridden to estimate what is a valid shape that can be fully computed and drawn
-     * 
+     *
      * @return True when not handle points equals each another. <br>
      */
     public boolean isShapeValid() {

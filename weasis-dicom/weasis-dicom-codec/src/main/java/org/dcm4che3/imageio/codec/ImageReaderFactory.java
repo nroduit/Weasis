@@ -43,22 +43,19 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
-import javax.imageio.spi.ImageReaderSpi;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -67,17 +64,12 @@ import javax.xml.stream.XMLStreamReader;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
 import org.dcm4che3.util.ResourceLocator;
 import org.dcm4che3.util.SafeClose;
-import org.dcm4che3.util.StringUtils;
-import org.weasis.core.api.image.LutShape;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.ImageioUtil;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * 
+ *
  */
 public class ImageReaderFactory implements Serializable {
 
@@ -103,8 +95,9 @@ public class ImageReaderFactory implements Serializable {
         private int currentRank;
 
         public ImageReaderParam(String formatName, String className, String patchJPEGLS, String name, int defaultRank) {
-            if (formatName == null || name == null)
+            if (formatName == null || name == null) {
                 throw new IllegalArgumentException();
+            }
             this.formatName = formatName;
             this.className = nullify(className);
             this.patchJPEGLS = patchJPEGLS != null && !patchJPEGLS.isEmpty() ? PatchJPEGLS.valueOf(patchJPEGLS) : null;
@@ -168,8 +161,8 @@ public class ImageReaderFactory implements Serializable {
     }
 
     private static ImageReaderFactory defaultFactory;
-    private final Map<String, TreeSet<ImageReaderParam>> map = Collections
-        .synchronizedMap(new HashMap<String, TreeSet<ImageReaderParam>>());
+    private final Map<String, TreeSet<ImageReaderParam>> map =
+        Collections.synchronizedMap(new HashMap<String, TreeSet<ImageReaderParam>>());
 
     public static ImageReaderFactory getDefault() {
         if (defaultFactory == null) {
@@ -225,7 +218,7 @@ public class ImageReaderFactory implements Serializable {
                                         key = xmler.getName().getLocalPart();
                                         if ("element".equals(key)) {
                                             String tsuid = xmler.getAttributeValue(null, "tsuid");
-                                            
+
                                             boolean state = true;
                                             while (xmler.hasNext() && state) {
                                                 eventType = xmler.next();
@@ -233,13 +226,12 @@ public class ImageReaderFactory implements Serializable {
                                                     case XMLStreamConstants.START_ELEMENT:
                                                         key = xmler.getName().getLocalPart();
                                                         if ("reader".equals(key)) {
-                                                            ImageReaderParam param =
-                                                                new ImageReaderParam(xmler.getAttributeValue(null,
-                                                                    "format"), xmler.getAttributeValue(null, "class"),
-                                                                    xmler.getAttributeValue(null, "patchJPEGLS"),
-                                                                    xmler.getAttributeValue(null, "name"),
-                                                                    FileUtil.getIntegerTagAttribute(xmler, "priority",
-                                                                        100));
+                                                            ImageReaderParam param = new ImageReaderParam(
+                                                                xmler.getAttributeValue(null, "format"),
+                                                                xmler.getAttributeValue(null, "class"),
+                                                                xmler.getAttributeValue(null, "patchJPEGLS"),
+                                                                xmler.getAttributeValue(null, "name"), FileUtil
+                                                                    .getIntegerTagAttribute(xmler, "priority", 100));
                                                             put(tsuid, param);
                                                         }
                                                         break;

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -27,7 +27,7 @@ import com.sun.media.jai.util.ImageUtil;
 
 /**
  * This operation should
- * 
+ *
  * @version $Rev$ $Date$
  */
 public class MergeImgOp extends AbstractOp {
@@ -38,14 +38,14 @@ public class MergeImgOp extends AbstractOp {
     /**
      * The second image for merging operation (Required parameter). Note: calling clearIOCache will remove the parameter
      * value.
-     * 
+     *
      * java.awt.image.RenderedImage value.
      */
     public static final String INPUT_IMG2 = "op.input.img.2"; //$NON-NLS-1$
 
     /**
      * Opacity of the top image (Optional parameter).
-     * 
+     *
      * Integer value. Default value is 255 (highest value => no transparency).
      */
     public static final String P_OPACITY = "opacity"; //$NON-NLS-1$
@@ -83,9 +83,8 @@ public class MergeImgOp extends AbstractOp {
             sourceUp = convertBinaryToColor(sourceUp);
         }
         if (sourceDown.getWidth() < sourceUp.getWidth() || sourceDown.getHeight() < sourceUp.getHeight()) {
-            sourceUp =
-                CropDescriptor.create(sourceUp, 0.0f, 0.0f, (float) sourceDown.getWidth(),
-                    (float) sourceDown.getHeight(), null);
+            sourceUp = CropDescriptor.create(sourceUp, 0.0f, 0.0f, (float) sourceDown.getWidth(),
+                (float) sourceDown.getHeight(), null);
         }
 
         pb.addSource(formatIfBinary(sourceDown));
@@ -106,9 +105,8 @@ public class MergeImgOp extends AbstractOp {
             sourceUp = convertBinaryToColor(sourceUp);
         }
         if (sourceDown.getWidth() < sourceUp.getWidth() || sourceDown.getHeight() < sourceUp.getHeight()) {
-            sourceUp =
-                CropDescriptor.create(sourceUp, 0.0f, 0.0f, (float) sourceDown.getWidth(),
-                    (float) sourceDown.getHeight(), null);
+            sourceUp = CropDescriptor.create(sourceUp, 0.0f, 0.0f, (float) sourceDown.getWidth(),
+                (float) sourceDown.getHeight(), null);
         }
 
         pb.addSource(formatIfBinary(sourceDown));

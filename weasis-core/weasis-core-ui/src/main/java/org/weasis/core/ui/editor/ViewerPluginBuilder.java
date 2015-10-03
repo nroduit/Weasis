@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -150,8 +150,8 @@ public class ViewerPluginBuilder {
             if (plugin == null) {
                 plugin = DefaultMimeAppFactory.getInstance();
             }
-            openSequenceInPlugin(plugin, series, model == null ? DefaultDataModel : model,
-                compareEntryToBuildNewViewer, removeOldSeries);
+            openSequenceInPlugin(plugin, series, model == null ? DefaultDataModel : model, compareEntryToBuildNewViewer,
+                removeOldSeries);
         }
 
     }
@@ -240,9 +240,8 @@ public class ViewerPluginBuilder {
                 DefaultDataModel.addHierarchyNode(group1, series);
             } else {
                 // Test if SOPInstanceUID already exists
-                if (series instanceof Series
-                    && ((Series<?>) series).hasMediaContains(TagW.SOPInstanceUID,
-                        reader.getTagValue(TagW.SOPInstanceUID))) {
+                if (series instanceof Series && ((Series<?>) series).hasMediaContains(TagW.SOPInstanceUID,
+                    reader.getTagValue(TagW.SOPInstanceUID))) {
                     return series;
                 }
                 if (medias != null) {

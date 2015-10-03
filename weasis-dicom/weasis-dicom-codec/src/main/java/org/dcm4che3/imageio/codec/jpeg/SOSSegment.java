@@ -53,7 +53,7 @@ public class SOSSegment {
     public SOSSegment(byte[] data, int offset) {
         this.data = data;
         this.offset = offset;
-        this.numComponents = data[offset+3] & 255;
+        this.numComponents = data[offset + 3] & 255;
         getAl();
     }
 
@@ -66,7 +66,7 @@ public class SOSSegment {
     }
 
     public int getHeaderLength() {
-        return ByteUtils.bytesToUShortBE(data, offset+1);
+        return ByteUtils.bytesToUShortBE(data, offset + 1);
     }
 
     public int getNumComponents() {
@@ -74,31 +74,31 @@ public class SOSSegment {
     }
 
     public int getComponentID(int index) {
-        return data[offset+4+index*2] & 255;
+        return data[offset + 4 + index * 2] & 255;
     }
 
     public int getTa(int index) {
-        return (data[offset+5+index*2]>>4) & 15;
+        return (data[offset + 5 + index * 2] >> 4) & 15;
     }
 
     public int getTd(int index) {
-        return (data[offset+5+index*2]) & 15;
+        return (data[offset + 5 + index * 2]) & 15;
     }
 
     public int getSs() {
-        return data[offset+4+numComponents*2] & 255;
+        return data[offset + 4 + numComponents * 2] & 255;
     }
 
     public int getSe() {
-        return data[offset+5+numComponents*2] & 255;
+        return data[offset + 5 + numComponents * 2] & 255;
     }
 
     public int getAh() {
-        return (data[offset+6+numComponents*2]>>4) & 15;
+        return (data[offset + 6 + numComponents * 2] >> 4) & 15;
     }
 
     public int getAl() {
-        return (data[offset+6+numComponents*2]) & 15;
+        return (data[offset + 6 + numComponents * 2]) & 15;
     }
 
     public int getNear() {
@@ -112,18 +112,13 @@ public class SOSSegment {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("SOS=[Ls=").append(getHeaderLength())
-          .append(", Ns=").append(numComponents);
+        sb.append("SOS=[Ls=").append(getHeaderLength()).append(", Ns=").append(numComponents);
         for (int i = 0; i < numComponents; i++) {
-            sb.append(", C").append(i+1).append('=').append(getComponentID(i))
-              .append(", Td").append(i+1).append('=').append(getTd(i))
-              .append(", Ta").append(i+1).append('=').append(getTa(i));
+            sb.append(", C").append(i + 1).append('=').append(getComponentID(i)).append(", Td").append(i + 1)
+                .append('=').append(getTd(i)).append(", Ta").append(i + 1).append('=').append(getTa(i));
         }
-        sb.append(", Ss=").append(getSs())
-          .append(", Se=").append(getSe())
-          .append(", Ah=").append(getAh())
-          .append(", Al=").append(getAl())
-          .append(']');
+        sb.append(", Ss=").append(getSs()).append(", Se=").append(getSe()).append(", Ah=").append(getAh())
+            .append(", Al=").append(getAl()).append(']');
         return sb.toString();
     }
 }

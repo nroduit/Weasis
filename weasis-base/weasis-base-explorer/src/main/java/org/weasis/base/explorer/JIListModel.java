@@ -1,6 +1,6 @@
 /*
  * JIListModel.java
- * 
+ *
  * Created on March 27, 2005, 1:48 AM
  */
 
@@ -24,8 +24,8 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 public class JIListModel extends AbstractListModel implements JIFileModel {
 
-    public static final File EXPLORER_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
-        AppProperties.FILE_CACHE_DIR.getName(), "explorer"); //$NON-NLS-1$
+    public static final File EXPLORER_CACHE_DIR =
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "explorer"); //$NON-NLS-1$
 
     private final OrderedFileList sortedList;
 

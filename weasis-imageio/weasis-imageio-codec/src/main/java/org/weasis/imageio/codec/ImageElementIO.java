@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -144,30 +144,30 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
         if (sUID == null) {
             sUID = uri == null ? "unknown" : uri.toString(); //$NON-NLS-1$
         }
-        MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, TagW.FileName) { //$NON-NLS-1$
+        MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, TagW.FileName) {
 
-                @Override
-                public String getMimeType() {
-                    synchronized (this) {
-                        for (ImageElement img : medias) {
-                            return img.getMimeType();
-                        }
-                    }
-                    return null;
-                }
-
-                @Override
-                public void addMedia(MediaElement media) {
-                    if (media instanceof ImageElement) {
-                        this.add((ImageElement) media);
-                        DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
-                        if (model != null) {
-                            model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                                new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
-                        }
+            @Override
+            public String getMimeType() {
+                synchronized (this) {
+                    for (ImageElement img : medias) {
+                        return img.getMimeType();
                     }
                 }
-            };
+                return null;
+            }
+
+            @Override
+            public void addMedia(MediaElement media) {
+                if (media instanceof ImageElement) {
+                    this.add((ImageElement) media);
+                    DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                    if (model != null) {
+                        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
+                            new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
+                    }
+                }
+            }
+        };
 
         ImageElement img = getSingleImage();
         if (img != null) {

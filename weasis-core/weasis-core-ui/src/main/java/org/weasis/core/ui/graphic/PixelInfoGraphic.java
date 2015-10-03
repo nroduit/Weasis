@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -46,10 +46,10 @@ public class PixelInfoGraphic extends AnnotationGraphic {
 
     public static final Icon ICON = new ImageIcon(PixelInfoGraphic.class.getResource("/icon/22x22/draw-pixelinfo.png")); //$NON-NLS-1$
 
-    public static final Measurement ANCHOR_POINT_X = new Measurement(
-        Messages.getString("PixelInfoGraphic.x"), 1, true, true, false); //$NON-NLS-1$
-    public static final Measurement ANCHOR_POINT_Y = new Measurement(
-        Messages.getString("PixelInfoGraphic.y"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement ANCHOR_POINT_X =
+        new Measurement(Messages.getString("PixelInfoGraphic.x"), 1, true, true, false); //$NON-NLS-1$
+    public static final Measurement ANCHOR_POINT_Y =
+        new Measurement(Messages.getString("PixelInfoGraphic.y"), 2, true, true, false); //$NON-NLS-1$
 
     private PixelInfo pixelInfo;
 
@@ -65,10 +65,9 @@ public class PixelInfoGraphic extends AnnotationGraphic {
     protected PixelInfoGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
-        @Attribute(name = "fill") boolean filled, @ElementArray(name = "text") String[] labelStringArray)
-        throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible, @Attribute(name = "fill") boolean filled,
+        @ElementArray(name = "text") String[] labelStringArray) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled,
             labelStringArray);
     }
@@ -118,16 +117,15 @@ public class PixelInfoGraphic extends AnnotationGraphic {
                 line = new Line2D.Double(ptBox, ptAnchor);
             }
             labelBounds = new Rectangle.Double();
-            labelBounds.setFrameFromCenter(ptBox.getX(), ptBox.getY(), ptBox.getX() + labelWidth / 2
-                + GraphicLabel.GROWING_BOUND, ptBox.getY() + labelHeight * labelStringArray.length / 2
-                + GraphicLabel.GROWING_BOUND);
+            labelBounds.setFrameFromCenter(ptBox.getX(), ptBox.getY(),
+                ptBox.getX() + labelWidth / 2 + GraphicLabel.GROWING_BOUND,
+                ptBox.getY() + labelHeight * labelStringArray.length / 2 + GraphicLabel.GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, GraphicLabel.GROWING_BOUND);
             if (line != null) {
                 newShape.addLinkSegmentToInvariantShape(line, ptBox, labelBounds, getDashStroke(lineThickness), true);
 
-                ScaleInvariantShape arrow =
-                    newShape.addScaleInvShape(GeomUtil.getArrowShape(ptAnchor, ptBox, 15, 8), ptAnchor,
-                        getStroke(lineThickness), true);
+                ScaleInvariantShape arrow = newShape.addScaleInvShape(GeomUtil.getArrowShape(ptAnchor, ptBox, 15, 8),
+                    ptAnchor, getStroke(lineThickness), true);
                 arrow.setFilled(true);
             }
             newShape.addAllInvShape(labelBounds, ptBox, getStroke(lineThickness), true);
@@ -186,12 +184,12 @@ public class PixelInfoGraphic extends AnnotationGraphic {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
 
                 if (ANCHOR_POINT_X.isComputed()) {
-                    measVal.add(new MeasureItem(ANCHOR_POINT_X, adapter.getXCalibratedValue(ptAnchor.getX()), adapter
-                        .getUnit()));
+                    measVal.add(new MeasureItem(ANCHOR_POINT_X, adapter.getXCalibratedValue(ptAnchor.getX()),
+                        adapter.getUnit()));
                 }
                 if (ANCHOR_POINT_Y.isComputed()) {
-                    measVal.add(new MeasureItem(ANCHOR_POINT_Y, adapter.getYCalibratedValue(ptAnchor.getY()), adapter
-                        .getUnit()));
+                    measVal.add(new MeasureItem(ANCHOR_POINT_Y, adapter.getYCalibratedValue(ptAnchor.getY()),
+                        adapter.getUnit()));
                 }
                 String unit = Unit.PIXEL.getAbbreviation();
                 if (!unit.equals(adapter.getUnit())) {
@@ -208,10 +206,9 @@ public class PixelInfoGraphic extends AnnotationGraphic {
                     String[] channelNames = pixelInfo.getChannelNames();
                     if (values != null) {
                         for (int i = 0; i < values.length; i++) {
-                            Measurement m =
-                                new Measurement((channelNames == null || i >= channelNames.length)
-                                    ? Messages.getString("PixelInfoGraphic.unknown") //$NON-NLS-1$
-                                    : channelNames[i], i + 2, true, true, false);
+                            Measurement m = new Measurement((channelNames == null || i >= channelNames.length)
+                                ? Messages.getString("PixelInfoGraphic.unknown") //$NON-NLS-1$
+                                : channelNames[i], i + 2, true, true, false);
                             measVal.add(new MeasureItem(m, values[i], pixelInfo.getPixelValueUnit()));
                         }
                     }

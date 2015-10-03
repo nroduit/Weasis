@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -82,9 +82,8 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
                 if (dockable.getFocusComponent() instanceof SeriesViewer) {
                     ((SeriesViewer) dockable.getFocusComponent()).close();
                 }
-                Dockable prevDockable =
-                    UIManager.DOCKING_CONTROL.getController().getFocusHistory()
-                        .getNewestOn(dockable.getWorkingArea().getStation());
+                Dockable prevDockable = UIManager.DOCKING_CONTROL.getController().getFocusHistory()
+                    .getNewestOn(dockable.getWorkingArea().getStation());
                 if (prevDockable == null) {
                     int size = UIManager.VIEWER_PLUGINS.size();
                     if (size > 0) {
@@ -144,8 +143,8 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
     }
 
     public void setSelectedAndGetFocus() {
-        UIManager.DOCKING_CONTROL.getController().setFocusedDockable(
-            new DefaultFocusRequest(dockable.intern(), this, false, true, false));
+        UIManager.DOCKING_CONTROL.getController()
+            .setFocusedDockable(new DefaultFocusRequest(dockable.intern(), this, false, true, false));
     }
 
     @Override
@@ -181,8 +180,8 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
                     dockable.add(getComponent());
                     dockable.setFocusComponent(ViewerPlugin.this);
                     UIManager.MAIN_AREA.add(getDockable());
-                    dockable
-                        .setDefaultLocation(ExtendedMode.NORMALIZED, CLocation.working(UIManager.MAIN_AREA).stack());
+                    dockable.setDefaultLocation(ExtendedMode.NORMALIZED,
+                        CLocation.working(UIManager.MAIN_AREA).stack());
                     dockable.setVisible(true);
                 }
             }
@@ -218,8 +217,8 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
             init(new MenuOnlySimpleAction(this));
             this.dockable = dockable;
             this.closeAll = closeAll;
-            setText(closeAll
-                ? Messages.getString("ViewerPlugin.close_all") : Messages.getString("ViewerPlugin.close_other")); //$NON-NLS-1$ //$NON-NLS-2$
+            setText(closeAll ? Messages.getString("ViewerPlugin.close_all") //$NON-NLS-1$
+                : Messages.getString("ViewerPlugin.close_other")); //$NON-NLS-1$
         }
 
         @Override

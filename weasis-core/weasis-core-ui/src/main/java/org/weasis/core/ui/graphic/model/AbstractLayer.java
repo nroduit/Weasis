@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -31,7 +31,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class AbstractLayer.
- * 
+ *
  * @author Nicolas Roduit
  */
 public abstract class AbstractLayer implements Comparable, Serializable, Layer {
@@ -39,12 +39,12 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     private static final long serialVersionUID = -6113490831569841167L;
 
     public static final Identifier IMAGE = new Identifier(20, Messages.getString("AbstractLayer.image")); //$NON-NLS-1$
-    public static final Identifier CROSSLINES = new Identifier(100, Messages.getString("Tools.cross"));//$NON-NLS-1$ 
-    public static final Identifier ANNOTATION = new Identifier(200, Messages.getString("Tools.Anno"));//$NON-NLS-1$ 
+    public static final Identifier CROSSLINES = new Identifier(100, Messages.getString("Tools.cross"));//$NON-NLS-1$
+    public static final Identifier ANNOTATION = new Identifier(200, Messages.getString("Tools.Anno"));//$NON-NLS-1$
     // public static final Identifier DRAW = new Identifier(400, "Graphic Annotation");
-    public static final Identifier MEASURE = new Identifier(500, Messages.getString("Tools.meas"));//$NON-NLS-1$ 
-    //  public static final Identifier OBJECTEXTRACT = new Identifier(600, Messages.getString("Tools.seg"));//$NON-NLS-1$ 
-    public static final Identifier TEMPDRAGLAYER = new Identifier(1000, Messages.getString("Tools.deco"));//$NON-NLS-1$ 
+    public static final Identifier MEASURE = new Identifier(500, Messages.getString("Tools.meas"));//$NON-NLS-1$
+    // public static final Identifier OBJECTEXTRACT = new Identifier(600, Messages.getString("Tools.seg"));//$NON-NLS-1$
+    public static final Identifier TEMPDRAGLAYER = new Identifier(1000, Messages.getString("Tools.deco"));//$NON-NLS-1$
 
     protected final PropertyChangeListener pcl;
     protected final transient LayerModel layerModel;
@@ -58,7 +58,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     /**
      * The Class PropertyChangeHandler.
-     * 
+     *
      * @author Nicolas Roduit
      */
     class PropertyChangeHandler implements PropertyChangeListener, Serializable {
@@ -284,9 +284,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                         repaint(rect);
                     }
                 } else {
-                    Rectangle rect =
-                        rectangleUnion(graphic.getTransformedBounds(oldShape, transform),
-                            graphic.getTransformedBounds(shape, transform));
+                    Rectangle rect = rectangleUnion(graphic.getTransformedBounds(oldShape, transform),
+                        graphic.getTransformedBounds(shape, transform));
                     if (rect != null) {
                         repaint(rect);
                     }

@@ -1,5 +1,13 @@
 package org.weasis.base.ui.gui;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -14,14 +22,8 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.*;
-
 /**
- * User: boraldo
- * Date: 05.02.14
- * Time: 17:37
+ * User: boraldo Date: 05.02.14 Time: 17:37
  */
 public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
 
@@ -159,7 +161,5 @@ public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
             }
         }
     }
-
-
 
 }

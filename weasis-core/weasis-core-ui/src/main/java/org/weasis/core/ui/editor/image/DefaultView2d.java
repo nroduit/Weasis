@@ -131,8 +131,8 @@ import org.weasis.core.ui.util.TitleMenuItem;
 /**
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
-public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
-    FocusListener, Image2DViewer, ImageLayerChangeListener<E>, KeyListener {
+public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
+    implements PropertyChangeListener, FocusListener, Image2DViewer, ImageLayerChangeListener<E>, KeyListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultView2d.class);
 
     public enum ZoomType {
@@ -144,6 +144,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public static final int CENTER_POINTER = 1 << 1;
     public static final int HIGHLIGHTED_POINTER = 1 << 2;
     static final Shape[] pointer;
+
     static {
         pointer = new Shape[5];
         pointer[0] = new Ellipse2D.Double(-27.0, -27.0, 54.0, 54.0);
@@ -152,6 +153,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
+
     protected static final Color focusColor = Color.orange;
     protected static final Color lostFocusColor = new Color(255, 224, 178);
 
@@ -310,9 +312,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (imageElement != null && imageLayer.getReadIterator() != null) {
             PlanarImage image = getPreprocessedImage(imageElement);
             // realPoint to handle special case: non square pixel image
-            Point realPoint =
-                new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5), (int) Math.ceil(p.y
-                    / imageElement.getRescaleY() - 0.5));
+            Point realPoint = new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5),
+                (int) Math.ceil(p.y / imageElement.getRescaleY() - 0.5));
             if (image != null && realPoint.x >= 0 && realPoint.y >= 0 && realPoint.x < image.getWidth()
                 && realPoint.y < image.getHeight()) {
                 try {
@@ -440,9 +441,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             } else {
                 E media = selectedMedia;
                 if (selectedMedia == null) {
-                    media =
-                        newSeries.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                            (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
+                    media = newSeries.getMedia(tileOffset < 0 ? 0 : tileOffset,
+                        (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
                 }
                 imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.SeriesChange, series, media, null));
                 if (lens != null) {
@@ -513,12 +513,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (img != null) {
             RenderedImage source = getPreprocessedImage(img);
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
-            int width =
-                source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(img,
-                    TagW.ImageWidth, TagW.Columns)) : source.getWidth();
-            int height =
-                source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleHeight(getImageSize(img,
-                    TagW.ImageHeight, TagW.Rows)) : source.getHeight();
+            int width = source == null || img.getRescaleX() != img.getRescaleY()
+                ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.Columns)) : source.getWidth();
+            int height = source == null || img.getRescaleX() != img.getRescaleY()
+                ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.Rows)) : source.getHeight();
             return new Rectangle(0, 0, width, height);
         }
         return new Rectangle(0, 0, 512, 512);
@@ -530,8 +528,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
             ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
             if (spUnitAction instanceof ComboItemListener) {
-                ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
-                    .get(ActionW.SPATIAL_UNIT.cmd()));
+                ((ComboItemListener) spUnitAction)
+                    .setSelectedItemWithoutTriggerAction(actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
             }
             // Force the update for null image
             imageLayer.setEnableDispOperations(true);
@@ -546,15 +544,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if ((eventManager.getSelectedViewPane() == this)) {
                     ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
                     if (spUnitAction instanceof ComboItemListener) {
-                        ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
-                            .get(ActionW.SPATIAL_UNIT.cmd()));
+                        ((ComboItemListener) spUnitAction)
+                            .setSelectedItemWithoutTriggerAction(actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
                     }
                 }
                 actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
                 ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
                 if (spUnitAction instanceof ComboItemListener) {
-                    ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
-                        .get(ActionW.SPATIAL_UNIT.cmd()));
+                    ((ComboItemListener) spUnitAction)
+                        .setSelectedItemWithoutTriggerAction(actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
                 }
 
                 final Rectangle modelArea = getImageBounds(img);
@@ -817,7 +815,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         int fontSize =
             // Set font size according to the view size
             (int) Math
-                .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) / getWidth())); //$NON-NLS-1$
+                .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) //$NON-NLS-1$
+                    / getWidth()));
         fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
         return new Font("SansSerif", 0, fontSize); //$NON-NLS-1$
     }
@@ -865,10 +864,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
-            getLayerModel().draw(
-                g2d,
-                transform,
-                inverseTransform,
+            getLayerModel().draw(g2d, transform, inverseTransform,
                 new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
                     modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
         }
@@ -1006,10 +1002,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     if (value.getView() == this) {
                         if (tileOffset != 0) {
                             // Index could have changed when loading series.
-                            imgElement =
-                                series.getMedia(value.getSeriesIndex() + tileOffset,
-                                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                    getCurrentSortComparator());
+                            imgElement = series.getMedia(value.getSeriesIndex() + tileOffset,
+                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                                getCurrentSortComparator());
                         } else if (value.getMedia() instanceof ImageElement) {
                             imgElement = (E) value.getMedia();
                         }
@@ -1027,19 +1022,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                             // if (offset != null) {
                             // location += offset;
                             // }
-                            imgElement =
-                                series.getNearestImage(location, tileOffset,
-                                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                    getCurrentSortComparator());
+                            imgElement = series.getNearestImage(location, tileOffset,
+                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                                getCurrentSortComparator());
 
                             AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
                         }
                     } else {
                         // When no 3D information on the slice position
-                        imgElement =
-                            series.getMedia(value.getSeriesIndex() + tileOffset,
-                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                getCurrentSortComparator());
+                        imgElement = series.getMedia(value.getSeriesIndex() + tileOffset,
+                            (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
 
                         AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
                     }
@@ -1130,8 +1122,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     // resize if to big
                     int maxWidth = getWidth() / 3;
                     int maxHeight = getHeight() / 3;
-                    lens.setSize(lens.getWidth() > maxWidth ? maxWidth : lens.getWidth(), lens.getHeight() > maxHeight
-                        ? maxHeight : lens.getHeight());
+                    lens.setSize(lens.getWidth() > maxWidth ? maxWidth : lens.getWidth(),
+                        lens.getHeight() > maxHeight ? maxHeight : lens.getHeight());
                     this.add(lens);
                     lens.showLens(true);
 
@@ -1242,8 +1234,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_C && e.isControlDown()) {
             final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
-            imageTransferHandler.exportToClipboard(DefaultView2d.this,
-                Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
+            imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit().getSystemClipboard(),
+                TransferHandler.COPY);
         }
     }
 
@@ -1252,8 +1244,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
             eventManager.nextLeftMouseAction();
         } else if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
-                null, null, EVENT.TOOGLE_INFO));
+            eventManager.fireSeriesViewerListeners(
+                new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.TOOGLE_INFO));
         } else {
             ActionW action = eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
             if (action == null) {
@@ -1322,11 +1314,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             Rectangle oldBound = infoLayer.getPixelInfoBound();
             PixelInfo pixelInfo =
                 getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())), imageLayer);
-            oldBound.width =
-                Math.max(
-                    oldBound.width,
-                    this.getGraphics().getFontMetrics(getLayerFont())
-                        .stringWidth(Messages.getString("DefaultView2d.pix") + StringUtil.COLON_AND_SPACE + pixelInfo) + 4); //$NON-NLS-1$
+            oldBound.width = Math.max(oldBound.width, this.getGraphics().getFontMetrics(getLayerFont())
+                .stringWidth(Messages.getString("DefaultView2d.pix") + StringUtil.COLON_AND_SPACE + pixelInfo) + 4); //$NON-NLS-1$
             infoLayer.setPixelInfo(pixelInfo);
             repaint(oldBound);
         }
@@ -1715,13 +1704,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
-                    imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
-                        .getSystemClipboard(), TransferHandler.COPY);
-                }
-            };
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
+                imageTransferHandler.exportToClipboard(DefaultView2d.this,
+                    Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
+            }
+        };
         exportToClipboardAction.putValue(Action.ACCELERATOR_KEY,
             KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
         list.add(exportToClipboardAction);
@@ -1729,13 +1718,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         // TODO exclude big images?
         exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard_real")) { //$NON-NLS-1$
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final ImageTransferHandler imageTransferHandler = new ImageTransferHandler();
-                    imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
-                        .getSystemClipboard(), TransferHandler.COPY);
-                }
-            };
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final ImageTransferHandler imageTransferHandler = new ImageTransferHandler();
+                imageTransferHandler.exportToClipboard(DefaultView2d.this,
+                    Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
+            }
+        };
         list.add(exportToClipboardAction);
 
         return list;

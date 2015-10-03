@@ -17,8 +17,8 @@ import org.weasis.core.api.util.LocalUtil;
 public final class DiskObject implements Comparator<DiskObject>, Serializable {
 
     /**
-	 *
-	 */
+     *
+     */
     private static final long serialVersionUID = 5247091367179832780L;
 
     private static final String osName = System.getProperty("os.name").toLowerCase();

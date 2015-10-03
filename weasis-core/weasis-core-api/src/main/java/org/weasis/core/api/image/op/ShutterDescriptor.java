@@ -27,15 +27,15 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
      */
     private static final String[][] resources = { { "GlobalName", "Shutter" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "LocalName", "Shutter" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "LocalName", "Shutter" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "Description", "Apply an shutter to the image" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "Description", "Apply an shutter to the image" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+                    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-        { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
+                    { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String[] paramNames = { "roi", "color" }; //$NON-NLS-1$ //$NON-NLS-2$
     private static final Class[] paramClasses = { ROIShape.class, Byte[].class };
@@ -62,10 +62,9 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
 
         TiledImage image;
         if (ImageUtil.isBinary(source1.getSampleModel())) {
-            image =
-                new TiledImage(source1.getMinX(), source1.getMinY(), source1.getWidth(), source1.getHeight(),
-                    source1.getTileGridXOffset(), source1.getTileGridYOffset(), LayoutUtil.createBinarySampelModel(),
-                    LayoutUtil.createBinaryIndexColorModel());
+            image = new TiledImage(source1.getMinX(), source1.getMinY(), source1.getWidth(), source1.getHeight(),
+                source1.getTileGridXOffset(), source1.getTileGridYOffset(), LayoutUtil.createBinarySampelModel(),
+                LayoutUtil.createBinaryIndexColorModel());
         } else {
             // rgb cannot be null or have less than one value
             Byte[] rgb = (Byte[]) paramBlock.getObjectParameter(1);

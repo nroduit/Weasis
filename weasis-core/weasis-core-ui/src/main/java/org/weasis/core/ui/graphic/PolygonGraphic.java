@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -44,8 +44,8 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class PolygonGraphic.
- * 
- * 
+ *
+ *
  * @author Nicolas Roduit,Benoit Jacquemoud
  */
 @Root(name = "polygon")
@@ -86,9 +86,9 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     protected PolygonGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
-        @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible, @Attribute(name = "fill") boolean filled)
+            throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointList == null || handlePointList.size() < 3) {
             throw new InvalidShapeException("Polygon must have at least 3 points!"); //$NON-NLS-1$
@@ -318,7 +318,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
     /**
      * Construct a polygon Area which represents a non-self-intersecting shape using a path Winding Rule : WIND_NON_ZERO
-     * 
+     *
      * @return area of the closed polygon, or null if shape is invalid
      */
     protected final Area getPathArea() {
@@ -345,7 +345,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     /**
      * Construct a list of line segments which defines the outside path of a given polygon Area with each vertices
      * ordered in the same direction<br>
-     * 
+     *
      * @return list of line segments around the closed polygon, or null if shape is invalid
      */
 
@@ -446,7 +446,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
      * algorithm for computing the centroid is based on a sum of triangle centroids weighted with their signed area. The
      * triangles can be taken to be those formed by one fixed vertex v0 of the polygon, and the two endpoints of
      * consecutive edges of the polygon: (v1,v2), (v2,v3), etc.<br>
-     * 
+     *
      * @return position of the centroid assuming the polygon is closed, or null if shape is not valid
      */
     public Point2D getCentroid() {

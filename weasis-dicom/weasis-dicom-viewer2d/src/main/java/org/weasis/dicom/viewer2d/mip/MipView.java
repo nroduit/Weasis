@@ -39,10 +39,11 @@ import org.weasis.dicom.viewer2d.View2dFactory;
 public class MipView extends View2d {
     private static final Logger LOGGER = LoggerFactory.getLogger(MipView.class);
 
-    public static final ImageIcon MIP_ICON_SETTING = new ImageIcon(
-        MipView.class.getResource("/icon/22x22/mip-setting.png")); //$NON-NLS-1$
+    public static final ImageIcon MIP_ICON_SETTING =
+        new ImageIcon(MipView.class.getResource("/icon/22x22/mip-setting.png")); //$NON-NLS-1$
     public static final ActionW MIP = new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW MIP_THICKNESS = new ActionW(Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null);  //$NON-NLS-1$//$NON-NLS-2$
+    public static final ActionW MIP_THICKNESS =
+        new ActionW(Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
 
     public enum Type {
         MIN, MEAN, MAX;
@@ -126,8 +127,8 @@ public class MipView extends View2d {
         }
 
         view.process =
-            new MipProcess(
-                Messages.getString("MipView.build"), new TaskMonitor(dialog == null ? view : dialog, Messages.getString("MipView.monitoring_proc"), Messages.getString("MipView.init"), 0, 2 * extend + 1)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            new MipProcess(Messages.getString("MipView.build"), new TaskMonitor(dialog == null ? view : dialog, //$NON-NLS-1$
+                Messages.getString("MipView.monitoring_proc"), Messages.getString("MipView.init"), 0, 2 * extend + 1)) { //$NON-NLS-1$ //$NON-NLS-2$
                 @Override
                 public void run() {
                     final List<DicomImageElement> dicoms = new ArrayList<DicomImageElement>();

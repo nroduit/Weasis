@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -36,18 +36,19 @@ public class MimeInspector {
     public static final Icon textIcon =
         new ImageIcon(MimeInspector.class.getResource("/icon/22x22/text-x-generic.png")); //$NON-NLS-1$
     public static final Icon htmlIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/text-html.png")); //$NON-NLS-1$
-    public static final Icon imageIcon = new ImageIcon(
-        MimeInspector.class.getResource("/icon/22x22/image-x-generic.png")); //$NON-NLS-1$
-    public static final Icon audioIcon = new ImageIcon(
-        MimeInspector.class.getResource("/icon/22x22/audio-x-generic.png")); //$NON-NLS-1$
-    public static final Icon videoIcon = new ImageIcon(
-        MimeInspector.class.getResource("/icon/22x22/video-x-generic.png")); //$NON-NLS-1$
+    public static final Icon imageIcon =
+        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/image-x-generic.png")); //$NON-NLS-1$
+    public static final Icon audioIcon =
+        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/audio-x-generic.png")); //$NON-NLS-1$
+    public static final Icon videoIcon =
+        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/video-x-generic.png")); //$NON-NLS-1$
     public static final Icon dicomIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom.png")); //$NON-NLS-1$
     public static final Icon dicomVideo = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom-video.png")); //$NON-NLS-1$
     public static final Icon pdfIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/pdf.png")); //$NON-NLS-1$
     private static Properties mimeTypes;
 
     private static ArrayList<MagicMimeEntry> mMagicMimeEntries = new ArrayList<MagicMimeEntry>();
+
     // Initialise the class in preperation for mime type detection
     static {
         mimeTypes = new Properties();

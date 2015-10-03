@@ -4,10 +4,10 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Marcelo Porto - initial API and implementation, Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
- *     
+ *
  ******************************************************************************/
 
 package org.weasis.dicom.explorer.print;
@@ -54,7 +54,7 @@ import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.dicom.explorer.Messages;
 
 /**
- * 
+ *
  * @author Marcelo Porto (marcelo@animati.com.br)
  */
 public class DicomPrintDialog extends JDialog {
@@ -82,12 +82,15 @@ public class DicomPrintDialog extends JDialog {
     }
 
     enum FilmSize {
-        IN8X10("8INX10IN", 8, 10), IN8_5X11("8_5INX11IN", 8.5, 11), IN10X12("10INX12IN", 10, 12), IN10X14("10INX14IN", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                                                                                                          10, 14),
-        IN11X14("11INX14IN", 11, 14), IN11X17("11INX17IN", 11, 17), IN14X14("14INX14IN", 14, 14), IN14X17("14INX17IN", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                                                                                                          14, 17),
-        CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), CM24X30("24CMX30CM", convertMM2Inch(240), //$NON-NLS-1$ //$NON-NLS-2$
-                                                                                convertMM2Inch(300)),
+        IN8X10("8INX10IN", 8, 10), IN8_5X11("8_5INX11IN", 8.5, 11), IN10X12("10INX12IN", 10, 12), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        IN10X14("10INX14IN", //$NON-NLS-1$
+                        10, 14),
+        IN11X14("11INX14IN", 11, 14), IN11X17("11INX17IN", 11, 17), IN14X14("14INX14IN", 14, 14), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        IN14X17("14INX17IN", //$NON-NLS-1$
+                        14, 17),
+        CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), //$NON-NLS-1$
+        CM24X30("24CMX30CM", convertMM2Inch(240), //$NON-NLS-1$
+                        convertMM2Inch(300)),
         A4("A4", convertMM2Inch(210), convertMM2Inch(297)), A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //$NON-NLS-1$ //$NON-NLS-2$
 
         private final String name;
@@ -217,8 +220,8 @@ public class DicomPrintDialog extends JDialog {
         content.add(mediumTypeLabel, gbc_mediumTypeLabel);
         mediumTypeComboBox = new JComboBox();
 
-        mediumTypeComboBox.setModel(new DefaultComboBoxModel(new String[] {
-            "BLUE FILM", "CLEAR FILM", "MAMMO CLEAR FILM", "MAMMO BLUE FILM", "PAPER" })); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+        mediumTypeComboBox.setModel(new DefaultComboBoxModel(
+            new String[] { "BLUE FILM", "CLEAR FILM", "MAMMO CLEAR FILM", "MAMMO BLUE FILM", "PAPER" })); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
         GridBagConstraints gbc_mediumTypeComboBox = new GridBagConstraints();
         gbc_mediumTypeComboBox.anchor = GridBagConstraints.WEST;
         gbc_mediumTypeComboBox.insets = new Insets(0, 0, 5, 5);
@@ -641,8 +644,8 @@ public class DicomPrintDialog extends JDialog {
             }
         }
         if (!isPrintable) {
-            JOptionPane.showMessageDialog(this,
-                Messages.getString(Messages.getString("DicomPrintDialog.no_print")), null, //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString(Messages.getString("DicomPrintDialog.no_print")), //$NON-NLS-1$
+                null,
                 JOptionPane.ERROR_MESSAGE);
             doClose();
             return;

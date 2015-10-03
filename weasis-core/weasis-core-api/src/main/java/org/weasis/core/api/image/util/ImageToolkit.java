@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -33,7 +33,7 @@ import org.weasis.core.api.media.data.ImageElement;
 
 /**
  * An image manipulation toolkit.
- * 
+ *
  */
 public class ImageToolkit {
 
@@ -41,7 +41,7 @@ public class ImageToolkit {
 
     /**
      * Load an image.
-     * 
+     *
      * NOTE: Encapsulate a mechanism to close properly the image (see closeLoadImageStream())
      */
     public static RenderedOp loadImage(File file) {
@@ -98,7 +98,7 @@ public class ImageToolkit {
 
     /**
      * Convert index color mapped image content to a full 24-bit 16-million color RGB image.
-     * 
+     *
      * @param image
      *            the source image to convert.
      * @return a full RGB color image as RenderedOp.
@@ -135,7 +135,7 @@ public class ImageToolkit {
 
     /**
      * Scale an image up/down to the desired width and height. The aspect ratio of the image will not be maintained.
-     * 
+     *
      * @param image
      *            the source image to scale
      * @param scaleWidth
@@ -152,7 +152,7 @@ public class ImageToolkit {
     /**
      * Scale an image up/down to the desired width and height, while maintaining the image's aspect ratio (if
      * requested).
-     * 
+     *
      * @param image
      *            the source image to scale
      * @param scaleWidth
@@ -198,7 +198,7 @@ public class ImageToolkit {
     /**
      * Resize an image to the new dimensions - no scaling is performed on the image, but the canvas size is changed. Any
      * empty areas are filled with white.
-     * 
+     *
      * @param image
      *            the source image to resize
      * @param toWidth
@@ -229,7 +229,7 @@ public class ImageToolkit {
 
     /**
      * Crop down an image to smaller dimensions. Used by resizeImage() when an image dimension is smaller.
-     * 
+     *
      * @param image
      *            the source image to crop
      * @param toWidth
@@ -258,7 +258,7 @@ public class ImageToolkit {
     /**
      * Add a colored border edge around an image, with the margin defined as left, right, top and bottom. Used by
      * resizeImage() when an image dimension is larger.
-     * 
+     *
      * @param image
      *            the source image to add borders to
      * @param left
@@ -293,7 +293,7 @@ public class ImageToolkit {
     /**
      * Apply window/level to the image source. Note: this method cannot be used with a DicomImageElement as image
      * parameter.
-     * 
+     *
      * @param image
      * @param source
      * @param window
@@ -372,7 +372,8 @@ public class ImageToolkit {
         return result;
     }
 
-    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, boolean pixelPadding) {
+    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source,
+        boolean pixelPadding) {
         return getDefaultRenderedImage(image, source, image.getDefaultWindow(pixelPadding),
             image.getDefaultLevel(pixelPadding), true);
     }

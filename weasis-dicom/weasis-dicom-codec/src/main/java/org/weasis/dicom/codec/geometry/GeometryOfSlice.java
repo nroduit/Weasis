@@ -12,13 +12,13 @@ import javax.vecmath.Vector3d;
  * <p>
  * A class to describe the spatial geometry of a single cross-sectional image slice.
  * </p>
- * 
+ *
  * <p>
  * The 3D coordinate space used is the DICOM coordinate space, which is LPH+, that is, the x-axis is increasing to the
  * left hand side of the patient, the y-axis is increasing to the posterior side of the patient, and the z-axis is
  * increasing toward the head of the patient.
  * </p>
- * 
+ *
  * @author dclunie
  */
 public class GeometryOfSlice {
@@ -64,7 +64,7 @@ public class GeometryOfSlice {
      * <p>
      * Construct an empty geometry.
      * </p>
-     * 
+     *
      */
     public GeometryOfSlice() {
     }
@@ -73,7 +73,7 @@ public class GeometryOfSlice {
      * <p>
      * Construct the geometry.
      * </p>
-     * 
+     *
      * @param row
      *            the direction of the row as X, Y and Z components (direction cosines, unit vector) LPH+
      * @param column
@@ -111,7 +111,7 @@ public class GeometryOfSlice {
      * <p>
      * Construct the geometry.
      * </p>
-     * 
+     *
      * @param rowArray
      *            the direction of the row as X, Y and Z components (direction cosines, unit vector) LPH+
      * @param columnArray
@@ -145,7 +145,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the row direction.
      * </p>
-     * 
+     *
      * @return the direction of the row as X, Y and Z components (direction cosines, unit vector) LPH+
      */
     public final Vector3d getRow() {
@@ -156,7 +156,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the row direction.
      * </p>
-     * 
+     *
      * @return the direction of the row as X, Y and Z components (direction cosines, unit vector) LPH+
      */
     public final double[] getRowArray() {
@@ -167,7 +167,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the column direction.
      * </p>
-     * 
+     *
      * @return the direction of the column as X, Y and Z components (direction cosines, unit vector) LPH+
      */
     public final Vector3d getColumn() {
@@ -178,7 +178,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the column direction.
      * </p>
-     * 
+     *
      * @return the direction of the column as X, Y and Z components (direction cosines, unit vector) LPH+
      */
     public final double[] getColumnArray() {
@@ -189,7 +189,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the normal direction.
      * </p>
-     * 
+     *
      * @return the direction of the normal to the plane of the slices, as X, Y and Z components (direction cosines, unit
      *         vector) LPH+
      */
@@ -201,7 +201,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the normal direction.
      * </p>
-     * 
+     *
      * @return the direction of the normal to the plane of the slices, as X, Y and Z components (direction cosines, unit
      *         vector) LPH+
      */
@@ -213,7 +213,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the position of the top left hand corner.
      * </p>
-     * 
+     *
      * @return the position of the top left hand corner of the slice as a point (X, Y and Z) LPH+
      */
     public final Point3d getTLHC() {
@@ -245,7 +245,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the position of the top left hand corner.
      * </p>
-     * 
+     *
      * @return the position of the top left hand corner of the slice as a point (X, Y and Z) LPH+
      */
     public final double[] getTLHCArray() {
@@ -256,7 +256,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the spacing between centers of the voxel in three dimension.
      * </p>
-     * 
+     *
      * @return the row and column spacing and, if a volume, the slice interval (spacing between the centers of parallel
      *         slices) in mm
      */
@@ -268,7 +268,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the spacing between centers of the voxel in three dimension.
      * </p>
-     * 
+     *
      * @return the row and column spacing and, if a volume, the slice interval (spacing between the centers of parallel
      *         slices) in mm
      */
@@ -280,7 +280,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the spacing between centers of the voxel in three dimension.
      * </p>
-     * 
+     *
      * @return the slice thickness in mm
      */
     public final double getSliceThickness() {
@@ -291,7 +291,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the dimensions of the voxel.
      * </p>
-     * 
+     *
      * @return the row and column dimensions and 1 for the third dimension
      */
     public final Tuple3d getDimensions() {
@@ -302,11 +302,11 @@ public class GeometryOfSlice {
      * <p>
      * Set the third value of voxel spacing.
      * </p>
-     * 
+     *
      * <p>
      * Package scope - used only by GeometryOfVolume.checkAndSetVolumeSampledRegularlyAlongFrameDimension().
      * </p>
-     * 
+     *
      * @param spacing
      *            the spacing between frames (slices)
      */
@@ -320,7 +320,7 @@ public class GeometryOfSlice {
      * Given the present geometry, look up the location of a point specified in image coordinates (column and row
      * offset) and return the x,y and z coordinates of the point in the DICOM 3D coordinate space.
      * </p>
-     * 
+     *
      * @param column
      *            the offset along the column from the top left hand corner, zero being no offset
      * @param row
@@ -338,7 +338,7 @@ public class GeometryOfSlice {
      * Given the present geometry, look up the location of a point specified in image coordinates (column and row
      * offset) and return the x,y and z coordinates of the point in the DICOM 3D coordinate space.
      * </p>
-     * 
+     *
      * @param location
      *            an array in which to return the x, y and z location in 3D space
      * @param column
@@ -351,15 +351,12 @@ public class GeometryOfSlice {
         // the column is how far we are down the row direction
         row = row - 0.5; // account for sub-pixel resolution per DICOM PS 3.3 Figure C.10.5-1
         column = column - 0.5;
-        location[0] =
-            tlhcArray[0] + row * columnArray[0] * voxelSpacingArray[0]/* between rows */+ column * rowArray[0]
-                * voxelSpacingArray[1]/* between cols */;
-        location[1] =
-            tlhcArray[1] + row * columnArray[1] * voxelSpacingArray[0]/* between rows */+ column * rowArray[1]
-                * voxelSpacingArray[1]/* between cols */;
-        location[2] =
-            tlhcArray[2] + row * columnArray[2] * voxelSpacingArray[0]/* between rows */+ column * rowArray[2]
-                * voxelSpacingArray[1]/* between cols */;
+        location[0] = tlhcArray[0] + row * columnArray[0] * voxelSpacingArray[0]/* between rows */
+            + column * rowArray[0] * voxelSpacingArray[1]/* between cols */;
+        location[1] = tlhcArray[1] + row * columnArray[1] * voxelSpacingArray[0]/* between rows */
+            + column * rowArray[1] * voxelSpacingArray[1]/* between cols */;
+        location[2] = tlhcArray[2] + row * columnArray[2] * voxelSpacingArray[0]/* between rows */
+            + column * rowArray[2] * voxelSpacingArray[1]/* between cols */;
     }
 
     /**
@@ -367,7 +364,7 @@ public class GeometryOfSlice {
      * Given the present geometry, look up the location of a point specified in x,y and z coordinates of the point in
      * the DICOM 3D coordinate space, and return the image coordinates (column and row offset).
      * </p>
-     * 
+     *
      * @param location
      *            the x, y and z location in 3D space
      * @return the column and row offsets from the top left hand corner of the image
@@ -383,22 +380,20 @@ public class GeometryOfSlice {
      * Given the present geometry, look up the location of a point specified in x,y and z coordinates of the point in
      * the DICOM 3D coordinate space, and return the image coordinates (column and row offset).
      * </p>
-     * 
+     *
      * @param offsets
      *            an array in which to return the column and row offsets from the top left hand corner of the image
      * @param location
      *            the x, y and z location in 3D space
      */
     public final void lookupImageCoordinate(double offsets[], double[] location) {
-        double column =
-            ((location[1] - tlhcArray[1]) * (columnArray[0] * voxelSpacingArray[0]) - (location[0] - tlhcArray[0])
-                * (columnArray[1] * voxelSpacingArray[0]))
-                / (rowArray[1] * voxelSpacingArray[1] * columnArray[0] * voxelSpacingArray[0] - rowArray[0]
-                    * voxelSpacingArray[1] * columnArray[1] * voxelSpacingArray[0]);
+        double column = ((location[1] - tlhcArray[1]) * (columnArray[0] * voxelSpacingArray[0])
+            - (location[0] - tlhcArray[0]) * (columnArray[1] * voxelSpacingArray[0]))
+            / (rowArray[1] * voxelSpacingArray[1] * columnArray[0] * voxelSpacingArray[0]
+                - rowArray[0] * voxelSpacingArray[1] * columnArray[1] * voxelSpacingArray[0]);
 
-        double row =
-            (location[1] - tlhcArray[1] - column * rowArray[1] * voxelSpacingArray[1])
-                / (columnArray[1] * voxelSpacingArray[0]);
+        double row = (location[1] - tlhcArray[1] - column * rowArray[1] * voxelSpacingArray[1])
+            / (columnArray[1] * voxelSpacingArray[0]);
         offsets[0] = column + 0.5; // account for sub-pixel resolution per DICOM PS 3.3 Figure C.10.5-1
         offsets[1] = row + 0.5;
     }
@@ -408,7 +403,7 @@ public class GeometryOfSlice {
      * Given the present geometry, determine the distance along the normal to the plane of the slice of an arbitrary
      * point (not necessarily in the plane of the image) from the origin of the coordinate space (0,0,0).
      * </p>
-     * 
+     *
      * @return the distance of the point from the origin along the normal axis
      */
     public final double getDistanceAlongNormalFromOrigin(Point3d point) {
@@ -423,7 +418,7 @@ public class GeometryOfSlice {
      * Given the present geometry, determine the distance along the normal to the plane of the slice of the TLHC of the
      * image from the origin of the coordinate space (0,0,0).
      * </p>
-     * 
+     *
      * @return the distance of the TLHC from the origin along the normal axis
      */
     public final double getDistanceAlongNormalFromOrigin() {
@@ -437,11 +432,11 @@ public class GeometryOfSlice {
      * <p>
      * Is an arbitrary point in the DICOM 3D coordinate space within the plane of the image.
      * </p>
-     * 
+     *
      * <p>
      * Slice thickness is not considered, only floating point rounding precision tolerance is permitted.
      * </p>
-     * 
+     *
      * @return true if within the plane of the image
      */
     public final boolean isPointInSlicePlane(Point3d point) {
@@ -460,7 +455,7 @@ public class GeometryOfSlice {
      * <p>
      * Determine if two slices are parallel.
      * </p>
-     * 
+     *
      * @param slice1
      *            the geometry of one slice
      * @param slice2
@@ -473,11 +468,12 @@ public class GeometryOfSlice {
             double[] normal1 = slice1.getNormalArray();
             double[] normal2 = slice2.getNormalArray();
             if (normal1 != null && normal2 != null) {
-                // System.err.println("GeometryOfSlice.areSlicesParallel() compare normal: ("+normal1[0]+","+normal1[1]+","+normal1[2]+")");
-                // System.err.println("GeometryOfSlice.areSlicesParallel() with normal:    ("+normal2[0]+","+normal2[1]+","+normal2[2]+")");
-                parallel =
-                    Math.abs(normal1[0] - normal2[0]) < 0.001 && Math.abs(normal1[1] - normal2[1]) < 0.001
-                        && Math.abs(normal1[2] - normal2[2]) < 0.001;
+                // System.err.println("GeometryOfSlice.areSlicesParallel() compare normal:
+                // ("+normal1[0]+","+normal1[1]+","+normal1[2]+")");
+                // System.err.println("GeometryOfSlice.areSlicesParallel() with normal:
+                // ("+normal2[0]+","+normal2[1]+","+normal2[2]+")");
+                parallel = Math.abs(normal1[0] - normal2[0]) < 0.001 && Math.abs(normal1[1] - normal2[1]) < 0.001
+                    && Math.abs(normal1[2] - normal2[2]) < 0.001;
                 // System.err.println("GeometryOfSlice.areSlicesParallel() parallel="+parallel);
             }
         }
@@ -488,7 +484,7 @@ public class GeometryOfSlice {
      * <p>
      * Get a human-readable rendering of the geometry.
      * </p>
-     * 
+     *
      * @return the string rendering of the geometry
      */
     @Override
@@ -543,7 +539,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the letter representation of the orientation of a vector.
      * </p>
-     * 
+     *
      * @return a string rendering of the orientation, L or R, A or P, H or F, more than one letter if oblique to the
      *         orthogonal axes, or empty string (not null) if fails
      */
@@ -577,7 +573,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the letter representation of the orientation of the rows of this slice.
      * </p>
-     * 
+     *
      * @return a string rendering of the row orientation, L or R, A or P, H or F, more than one letter if oblique to the
      *         orthogonal axes, or empty string (not null) if fails
      */
@@ -589,7 +585,7 @@ public class GeometryOfSlice {
      * <p>
      * Get the letter representation of the orientation of the columns of this slice.
      * </p>
-     * 
+     *
      * @return a string rendering of the column orientation, L or R, A or P, H or F, more than one letter if oblique to
      *         the orthogonal axes, or empty string (not null) if fails
      */

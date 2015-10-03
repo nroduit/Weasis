@@ -4,13 +4,16 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
 package org.weasis.base.ui;
 
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.Frame;
+import java.awt.Point;
+import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.io.IOException;
 
@@ -48,8 +51,9 @@ public class WeasisApp {
     }
 
     public void ui(String[] argv) throws IOException {
-        final String[] usage = { "Manage user interface", "Usage: weasis:ui [Options]", "  -q --quit		shutdown Weasis", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            "  -v --visible		set window on top", "  -? --help		show help" }; //$NON-NLS-1$ //$NON-NLS-2$
+        final String[] usage =
+            { "Manage user interface", "Usage: weasis:ui [Options]", "  -q --quit		shutdown Weasis", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                "  -v --visible		set window on top", "  -? --help		show help" }; //$NON-NLS-1$ //$NON-NLS-2$
 
         Option opt = Options.compile(usage).parse(argv);
         if (opt.isSet("quit")) { //$NON-NLS-1$

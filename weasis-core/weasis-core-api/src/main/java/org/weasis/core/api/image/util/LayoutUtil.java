@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -32,13 +32,13 @@ import javax.media.jai.TileCache;
 
 /**
  * The Class LayoutUtil.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class LayoutUtil {
 
-    public static RenderingHints BORDER_COPY = new RenderingHints(JAI.KEY_BORDER_EXTENDER,
-        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+    public static RenderingHints BORDER_COPY =
+        new RenderingHints(JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
     public LayoutUtil() {
     }
@@ -105,8 +105,8 @@ public class LayoutUtil {
         if (layout == null) {
             layout = new ImageLayout();
         }
-        layout.setColorModel(new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 },
-            false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE));
+        layout.setColorModel(new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 }, false,
+            false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE));
         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
         oldhints.add(hints);
         oldhints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));

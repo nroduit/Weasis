@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -40,12 +40,12 @@ public class EllipseGraphic extends RectangleGraphic {
     public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
 
     public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
-    public static final Measurement PERIMETER = new Measurement(
-        Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTER_X = new Measurement(
-        Messages.getString("measure.centerx"), 3, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTER_Y = new Measurement(
-        Messages.getString("measure.centery"), 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement PERIMETER =
+        new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_X =
+        new Measurement(Messages.getString("measure.centerx"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_Y =
+        new Measurement(Messages.getString("measure.centery"), 4, true, true, false); //$NON-NLS-1$
     public static final Measurement WIDTH = new Measurement(Messages.getString("measure.width"), 5, true, true, false); //$NON-NLS-1$
     public static final Measurement HEIGHT =
         new Measurement(Messages.getString("measure.height"), 6, true, true, false); //$NON-NLS-1$
@@ -70,9 +70,9 @@ public class EllipseGraphic extends RectangleGraphic {
     protected EllipseGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
-        @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible, @Attribute(name = "fill") boolean filled)
+            throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
     }
 
@@ -111,12 +111,12 @@ public class EllipseGraphic extends RectangleGraphic {
                 double ratio = adapter.getCalibRatio();
 
                 if (CENTER_X.isComputed()) {
-                    measVal.add(new MeasureItem(CENTER_X, adapter.getXCalibratedValue(rect.getCenterX()), adapter
-                        .getUnit()));
+                    measVal.add(
+                        new MeasureItem(CENTER_X, adapter.getXCalibratedValue(rect.getCenterX()), adapter.getUnit()));
                 }
                 if (CENTER_Y.isComputed()) {
-                    measVal.add(new MeasureItem(CENTER_Y, adapter.getYCalibratedValue(rect.getCenterY()), adapter
-                        .getUnit()));
+                    measVal.add(
+                        new MeasureItem(CENTER_Y, adapter.getYCalibratedValue(rect.getCenterY()), adapter.getUnit()));
                 }
 
                 if (WIDTH.isComputed()) {

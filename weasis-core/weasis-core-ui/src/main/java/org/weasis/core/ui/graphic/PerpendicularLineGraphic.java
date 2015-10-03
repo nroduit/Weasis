@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Benoit Jacquemoud, Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -38,15 +38,15 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @Root(name = "perpendicularLine")
 public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
-    public static final Icon ICON = new ImageIcon(
-        PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
+    public static final Icon ICON =
+        new ImageIcon(PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
-    public static final Measurement LINE_LENGTH = new Measurement(
-        Messages.getString("measure.length"), 1, true, true, true); //$NON-NLS-1$
-    public static final Measurement ORIENTATION = new Measurement(
-        Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement AZIMUTH = new Measurement(
-        Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement LINE_LENGTH =
+        new Measurement(Messages.getString("measure.length"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement ORIENTATION =
+        new Measurement(Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement AZIMUTH =
+        new Measurement(Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Let AB & CD two perpendicular line segments with D being the projected point C on AB
@@ -63,9 +63,8 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     protected PerpendicularLineGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible)
-        throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
         if (handlePointTotalNumber != 4) {
             throw new InvalidShapeException("Not a valid PerpendicularLineGraphic!"); //$NON-NLS-1$
@@ -84,7 +83,8 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
+    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY,
+        MouseEventDouble mouseEvent) {
 
         List<Point2D> prevHandlePointList = getHandlePointList();
 
@@ -199,16 +199,16 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(3);
 
                 if (LINE_LENGTH.isComputed()) {
-                    measVal.add(new MeasureItem(LINE_LENGTH, ptC.distance(ptD) * adapter.getCalibRatio(), adapter
-                        .getUnit()));
+                    measVal.add(
+                        new MeasureItem(LINE_LENGTH, ptC.distance(ptD) * adapter.getCalibRatio(), adapter.getUnit()));
                 }
                 if (ORIENTATION.isComputed()) {
-                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptC, ptD), Messages
-                        .getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptC, ptD),
+                        Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 if (AZIMUTH.isComputed()) {
-                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptC, ptD), Messages
-                        .getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(
+                        new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptC, ptD), Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 return measVal;
             }

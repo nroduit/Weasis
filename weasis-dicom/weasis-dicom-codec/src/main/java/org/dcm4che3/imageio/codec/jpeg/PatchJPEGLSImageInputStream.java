@@ -51,23 +51,23 @@ import org.slf4j.LoggerFactory;
  */
 public class PatchJPEGLSImageInputStream extends ImageInputStreamImpl {
 
-    private static final Logger LOG =
-            LoggerFactory.getLogger(PatchJPEGLSImageInputStream.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PatchJPEGLSImageInputStream.class);
 
     private final ImageInputStream iis;
     private long patchPos;
     private byte[] patch;
 
-    public PatchJPEGLSImageInputStream(ImageInputStream iis,
-            PatchJPEGLS patchJPEGLS) throws IOException {
-        if (iis == null)
+    public PatchJPEGLSImageInputStream(ImageInputStream iis, PatchJPEGLS patchJPEGLS) throws IOException {
+        if (iis == null) {
             throw new NullPointerException("iis");
+        }
 
         super.streamPos = iis.getStreamPosition();
         super.flushedPos = iis.getFlushedPosition();
         this.iis = iis;
-        if (patchJPEGLS == null)
+        if (patchJPEGLS == null) {
             return;
+        }
 
         byte[] b = new byte[256];
         iis.mark();
@@ -82,38 +82,42 @@ public class PatchJPEGLSImageInputStream extends ImageInputStreamImpl {
         }
     }
 
-
+    @Override
     public void close() throws IOException {
         super.close();
         iis.close();
     }
 
+    @Override
     public void flushBefore(long pos) throws IOException {
         super.flushBefore(pos);
         iis.flushBefore(adjustStreamPosition(pos));
     }
 
     private long adjustStreamPosition(long pos) {
-        if (patch == null)
+        if (patch == null) {
             return pos;
+        }
         long index = pos - patchPos;
-        return index < 0 ? pos 
-                : index < patch.length ? patchPos 
-                        : pos - patch.length;
+        return index < 0 ? pos : index < patch.length ? patchPos : pos - patch.length;
     }
 
+    @Override
     public boolean isCached() {
         return iis.isCached();
     }
 
+    @Override
     public boolean isCachedFile() {
         return iis.isCachedFile();
     }
 
+    @Override
     public boolean isCachedMemory() {
         return iis.isCachedMemory();
     }
 
+    @Override
     public long length() {
         try {
             long len = iis.length();
@@ -123,35 +127,39 @@ public class PatchJPEGLSImageInputStream extends ImageInputStreamImpl {
         }
     }
 
+    @Override
     public int read() throws IOException {
         int ch;
         long index;
-        if (patch != null
-                && (index = streamPos - patchPos) >= 0 
-                && index < patch.length)
+        if (patch != null && (index = streamPos - patchPos) >= 0 && index < patch.length) {
             ch = patch[(int) index];
-        else
+        } else {
             ch = iis.read();
-        if (ch >= 0)
+        }
+        if (ch >= 0) {
             streamPos++;
+        }
         return ch;
     }
 
+    @Override
     public int read(byte[] b, int off, int len) throws IOException {
         int r = 0;
         if (patch != null && streamPos < patchPos + patch.length) {
             if (streamPos < patchPos) {
                 r = iis.read(b, off, (int) Math.min(patchPos - streamPos, len));
-                if (r < 0)
+                if (r < 0) {
                     return r;
+                }
                 streamPos += r;
-                if (streamPos < patchPos)
+                if (streamPos < patchPos) {
                     return r;
+                }
                 off += r;
                 len -= r;
             }
             int index = (int) (patchPos - streamPos);
-            int r2 = (int) Math.min(patch.length - index, len);
+            int r2 = Math.min(patch.length - index, len);
             System.arraycopy(patch, index, b, off, r2);
             streamPos += r2;
             r += r2;
@@ -160,24 +168,28 @@ public class PatchJPEGLSImageInputStream extends ImageInputStreamImpl {
         }
         if (len > 0) {
             int r3 = iis.read(b, off, len);
-            if (r3 < 0)
+            if (r3 < 0) {
                 return r3;
+            }
             streamPos += r3;
             r += r3;
         }
         return r;
     }
 
+    @Override
     public void mark() {
         super.mark();
         iis.mark();
     }
 
+    @Override
     public void reset() throws IOException {
         super.reset();
         iis.reset();
     }
 
+    @Override
     public void seek(long pos) throws IOException {
         super.seek(pos);
         iis.seek(adjustStreamPosition(pos));

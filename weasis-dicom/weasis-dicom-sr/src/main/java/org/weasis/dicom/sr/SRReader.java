@@ -64,9 +64,9 @@ public class SRReader {
                 MediaSeriesGroup study = treeModel.getParent(series, DicomModel.study);
                 if (study == null) {
                     DicomMediaUtils.setTagNoNull(tags, TagW.StudyID, dcmItems.getString(Tag.StudyID));
-                    DicomMediaUtils.setTagNoNull(tags, TagW.StudyDate, TagW.dateTime(
-                        DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.StudyDate, null),
-                        DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.StudyTime, null)));
+                    DicomMediaUtils.setTagNoNull(tags, TagW.StudyDate,
+                        TagW.dateTime(DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.StudyDate, null),
+                            DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.StudyTime, null)));
                     DicomMediaUtils.setTagNoNull(tags, TagW.AccessionNumber, dcmItems.getString(Tag.AccessionNumber));
                     DicomMediaUtils.setTagNoNull(tags, TagW.ReferringPhysicianName,
                         DicomMediaUtils.buildPersonName(dcmItems.getString(Tag.ReferringPhysicianName)));
@@ -162,9 +162,9 @@ public class SRReader {
             writeItem(TagW.PatientSex, html);
 
             html.append("</td><td width=\"33%\" >"); //$NON-NLS-1$
-            html.append("<font size=\"+1\">"); //$NON-NLS-1$ 
+            html.append("<font size=\"+1\">"); //$NON-NLS-1$
             html.append(Messages.getString("SRReader.study")); //$NON-NLS-1$
-            html.append("</font>"); //$NON-NLS-1$           
+            html.append("</font>"); //$NON-NLS-1$
             html.append("<BR>"); //$NON-NLS-1$
             writeItem(TagW.StudyDate, html);
             html.append("<BR>"); //$NON-NLS-1$
@@ -252,7 +252,8 @@ public class SRReader {
 
                     // int[] frames = ref.getReferencedFrameNumber();
                     // if (frames == null || frames.length == 0) {
-                    // html.append("<img align=\"top\" src=\"http://localhost:8080/wado?requestType=WADO&studyUID=1&seriesUID=1&objectUID=");
+                    // html.append("<img align=\"top\"
+                    // src=\"http://localhost:8080/wado?requestType=WADO&studyUID=1&seriesUID=1&objectUID=");
                     // html.append(ref.getReferencedSOPInstanceUID());
                     // html.append("\">");
                     // html.append("<BR>");
@@ -431,7 +432,7 @@ public class SRReader {
                 val = dicomSR.getTagValue(tag);
             }
             if (val != null) {
-                html.append(tag.getFormattedText(val, tag.getType(), null));
+                html.append(TagW.getFormattedText(val, tag.getType(), null));
             }
         }
     }

@@ -89,48 +89,42 @@ public class JPEGLSCodingParam {
     }
 
     public byte[] getBytes() {
-        return new byte[] {
-                -1, (byte) JPEG.LSE, 0, 13, 1,
-                (byte) (maxVal >> 8), (byte) (maxVal),
-                (byte) (t1 >> 8), (byte) (t1),
-                (byte) (t2 >> 8), (byte) (t2),
-                (byte) (t3 >> 8), (byte) (t3),
-                (byte) (reset >> 8), (byte) (reset) };
+        return new byte[] { -1, (byte) JPEG.LSE, 0, 13, 1, (byte) (maxVal >> 8), (byte) (maxVal), (byte) (t1 >> 8),
+            (byte) (t1), (byte) (t2 >> 8), (byte) (t2), (byte) (t3 >> 8), (byte) (t3), (byte) (reset >> 8),
+            (byte) (reset) };
     }
 
-    private static JPEGLSCodingParam getDefaultJPEGLSEncodingParam(
-            int maxVal, int clampedMaxVal, int near) {
+    private static JPEGLSCodingParam getDefaultJPEGLSEncodingParam(int maxVal, int clampedMaxVal, int near) {
         int factor = (clampedMaxVal + 128) >> 8;
         int t1 = factor + 2 + 3 * near;
-        if (t1 > maxVal || t1 < near+1)
-            t1 = near+1;
+        if (t1 > maxVal || t1 < near + 1) {
+            t1 = near + 1;
+        }
         int t2 = factor * 4 + 3 + 5 * near;
-        if (t2 > maxVal || t2 < t1)
+        if (t2 > maxVal || t2 < t1) {
             t2 = t1;
+        }
         int t3 = factor * 17 + 4 + 7 * near;
-        if (t3 > maxVal || t3 < t2)
+        if (t3 > maxVal || t3 < t2) {
             t3 = t2;
+        }
         return new JPEGLSCodingParam(maxVal, t1, t2, t3, 64);
     }
 
     public static JPEGLSCodingParam getDefaultJPEGLSCodingParam(int p, int near) {
-        int maxVal = (1<<p)-1;
+        int maxVal = (1 << p) - 1;
         return getDefaultJPEGLSEncodingParam(maxVal, Math.min(maxVal, 4095), near);
     }
 
     public static JPEGLSCodingParam getJAIJPEGLSCodingParam(int p) {
-        int maxVal = (1<<p)-1;
+        int maxVal = (1 << p) - 1;
         return getDefaultJPEGLSEncodingParam(maxVal, maxVal, 0);
     }
 
     @Override
     public String toString() {
-        return "JPEGLSCodingParam[MAXVAL=" + maxVal
-                + ", T1=" + t1
-                + ", T2=" + t2
-                + ", T3=" + t3
-                + ", RESET=" + reset
-                + "]";
+        return "JPEGLSCodingParam[MAXVAL=" + maxVal + ", T1=" + t1 + ", T2=" + t2 + ", T3=" + t3 + ", RESET=" + reset
+            + "]";
     }
 
 }

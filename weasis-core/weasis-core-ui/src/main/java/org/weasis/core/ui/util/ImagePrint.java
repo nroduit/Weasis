@@ -4,10 +4,10 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- *     Marcelo Porto 
+ *     Marcelo Porto
  ******************************************************************************/
 
 package org.weasis.core.ui.util;
@@ -99,12 +99,9 @@ public class ImagePrint implements Printable {
                 if (e.getMessage().indexOf("accepting job") != -1) { //$NON-NLS-1$
                     // recommend prompting the user at this point if they want to force it
                     // so they'll know there may be a problem.
-                    int response =
-                        JOptionPane
-                            .showConfirmDialog(
-                                null,
-                                Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
-                                Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                    int response = JOptionPane.showConfirmDialog(null, Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
+                        Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, //$NON-NLS-1$
+                        JOptionPane.WARNING_MESSAGE);
 
                     if (response == 0) {
                         try {

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -130,8 +130,9 @@ public class Activator implements BundleActivator, ServiceListener {
         String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" }; //$NON-NLS-1$
         // Activate audit log by adding an entry "audit.log=true" in Weasis.
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(loggerKey, false)) {
-            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", AppProperties.WEASIS_PATH //$NON-NLS-1$
-                + File.separator + "log" + File.separator + "audit-" + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", //$NON-NLS-1$
+                AppProperties.WEASIS_PATH
+                    + File.separator + "log" + File.separator + "audit-" + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null); //$NON-NLS-1$
             AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {
@@ -142,9 +143,8 @@ public class Activator implements BundleActivator, ServiceListener {
                 if (confAdmin != null) {
                     Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
                     if (logConfiguration == null) {
-                        logConfiguration =
-                            confAdmin.createFactoryConfiguration(
-                                "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                        logConfiguration = confAdmin
+                            .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                         Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
                         loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); //$NON-NLS-1$ //$NON-NLS-2$
                         // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");

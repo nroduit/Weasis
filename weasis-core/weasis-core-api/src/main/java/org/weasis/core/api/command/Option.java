@@ -24,14 +24,14 @@ public interface Option {
     /**
      * stop parsing on the first unknown option. This allows one parser to get its own options and then pass the
      * remaining options to another parser.
-     * 
+     *
      * @param stopOnBadOption
      */
     Option setStopOnBadOption(boolean stopOnBadOption);
 
     /**
      * require options to precede args. Default is false, so options can appear between or after args.
-     * 
+     *
      * @param optionsFirst
      */
     Option setOptionsFirst(boolean optionsFirst);
@@ -39,7 +39,7 @@ public interface Option {
     /**
      * parse arguments. If skipArgv0 is true, then parsing begins at arg1. This allows for commands where argv0 is the
      * command name rather than a real argument.
-     * 
+     *
      * @param argv
      * @param skipArg0
      * @return
@@ -48,31 +48,31 @@ public interface Option {
 
     /**
      * parse arguments.
-     * 
+     *
      * @see {@link #parse(List, boolean)
-
+     * 
      */
     Option parse(List<? extends Object> argv);
 
     /**
      * parse arguments.
-     * 
+     *
      * @see {@link #parse(List, boolean)
-
+     * 
      */
     Option parse(Object[] argv, boolean skipArg0);
 
     /**
      * parse arguments.
-     * 
+     *
      * @see {@link #parse(List, boolean)
-
+     * 
      */
     Option parse(Object[] argv);
 
     /**
      * test whether specified option has been explicitly set.
-     * 
+     *
      * @param name
      * @return
      */
@@ -81,7 +81,7 @@ public interface Option {
     /**
      * get value of named option. If multiple options given, this method returns the last one. Use
      * {@link #getList(String)} to get all values.
-     * 
+     *
      * @param name
      * @return
      * @throws IllegalArgumentException
@@ -91,7 +91,7 @@ public interface Option {
 
     /**
      * get list of all values for named option.
-     * 
+     *
      * @param name
      * @return empty list if option not given and no default specified.
      * @throws IllegalArgumentException
@@ -102,7 +102,7 @@ public interface Option {
     /**
      * get value of named option as an Object. If multiple options given, this method returns the last one. Use
      * {@link #getObjectList(String)} to get all values.
-     * 
+     *
      * @param name
      * @return
      */
@@ -110,7 +110,7 @@ public interface Option {
 
     /**
      * get list of all Object values for named option.
-     * 
+     *
      * @param name
      * @return
      */
@@ -118,7 +118,7 @@ public interface Option {
 
     /**
      * get value of named option as a Number.
-     * 
+     *
      * @param name
      * @return
      * @throws IllegalArgumentException
@@ -128,7 +128,7 @@ public interface Option {
 
     /**
      * get remaining non-options args as Strings.
-     * 
+     *
      * @return
      * @throws IllegalArgumentException
      *             if args are not Strings.
@@ -137,7 +137,7 @@ public interface Option {
 
     /**
      * get remaining non-options args as Objects.
-     * 
+     *
      * @return
      */
     List<Object> argObjects();
@@ -149,7 +149,7 @@ public interface Option {
 
     /**
      * print specified usage error to System.err. You should explicitly throw the returned exception.
-     * 
+     *
      * @param error
      * @return IllegalArgumentException
      */

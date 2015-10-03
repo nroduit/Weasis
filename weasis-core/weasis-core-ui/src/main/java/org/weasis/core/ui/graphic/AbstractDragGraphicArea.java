@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -140,9 +140,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                             // startTime = System.currentTimeMillis();
                             // Required the mean value (not rescaled), slope and intercept to calculate correctly std,
                             // skew and kurtosis
-                            dst =
-                                ImageStatistics2Descriptor.create(image, roi, 1, 1, extrema[2][0], excludedMin,
-                                    excludedMax, slope, intercept, null);
+                            dst = ImageStatistics2Descriptor.create(image, roi, 1, 1, extrema[2][0], excludedMin,
+                                excludedMax, slope, intercept, null);
                             // To ensure this image is not stored in tile cache
                             ((OpImage) dst.getRendering()).setTileCache(null);
                             double[][] extrema2 = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
@@ -185,16 +184,16 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                     if (suv != null) {
                         unit = "SUVbw"; //$NON-NLS-1$
                         if (IMAGE_MIN.isComputed()) {
-                            measVal.add(new MeasureItem(IMAGE_MIN, min == null || min[0] == null ? null : min[0] * suv,
-                                unit));
+                            measVal.add(
+                                new MeasureItem(IMAGE_MIN, min == null || min[0] == null ? null : min[0] * suv, unit));
                         }
                         if (IMAGE_MAX.isComputed()) {
-                            measVal.add(new MeasureItem(IMAGE_MAX, max == null || max[0] == null ? null : max[0] * suv,
-                                unit));
+                            measVal.add(
+                                new MeasureItem(IMAGE_MAX, max == null || max[0] == null ? null : max[0] * suv, unit));
                         }
                         if (IMAGE_MEAN.isComputed()) {
-                            measVal.add(new MeasureItem(IMAGE_MEAN, mean == null || mean[0] == null ? null : mean[0]
-                                * suv, unit));
+                            measVal.add(new MeasureItem(IMAGE_MEAN,
+                                mean == null || mean[0] == null ? null : mean[0] * suv, unit));
                         }
                     }
                 }

@@ -47,31 +47,30 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.image.PhotometricInterpretation;
 
-
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  */
-public class CompressionRules
-        implements Iterable<CompressionRule>, Serializable {
-    
+public class CompressionRules implements Iterable<CompressionRule>, Serializable {
+
     private static final long serialVersionUID = 5027417735779753342L;
 
-    private final ArrayList<CompressionRule> list =
-            new ArrayList<CompressionRule>();
+    private final ArrayList<CompressionRule> list = new ArrayList<CompressionRule>();
 
     public void add(CompressionRule rule) {
-        if (findByCommonName(rule.getCommonName()) != null)
-            throw new IllegalStateException("CompressionRule with cn: '"
-                    + rule.getCommonName() + "' already exists");
+        if (findByCommonName(rule.getCommonName()) != null) {
+            throw new IllegalStateException("CompressionRule with cn: '" + rule.getCommonName() + "' already exists");
+        }
         int index = Collections.binarySearch(list, rule);
-        if (index < 0)
-            index = -(index+1);
+        if (index < 0) {
+            index = -(index + 1);
+        }
         list.add(index, rule);
     }
 
     public void add(CompressionRules rules) {
-         for (CompressionRule rule : rules)
-             add(rule);
+        for (CompressionRule rule : rules) {
+            add(rule);
+        }
     }
 
     public boolean remove(CompressionRule ac) {
@@ -83,34 +82,32 @@ public class CompressionRules
     }
 
     public CompressionRule findByCommonName(String commonName) {
-        for (CompressionRule rule : list)
-            if (commonName.equals(rule.getCommonName()))
+        for (CompressionRule rule : list) {
+            if (commonName.equals(rule.getCommonName())) {
                 return rule;
+            }
+        }
         return null;
     }
 
     public CompressionRule findCompressionRule(String aeTitle, Attributes attrs) {
         try {
             return findCompressionRule(aeTitle,
-                    PhotometricInterpretation.fromString(
-                            attrs.getString(Tag.PhotometricInterpretation)),
-                    attrs.getInt(Tag.BitsStored, 0),
-                    attrs.getInt(Tag.PixelRepresentation, 0),
-                    attrs.getString(Tag.SOPClassUID),
-                    attrs.getString(Tag.BodyPartExamined));
+                PhotometricInterpretation.fromString(attrs.getString(Tag.PhotometricInterpretation)),
+                attrs.getInt(Tag.BitsStored, 0), attrs.getInt(Tag.PixelRepresentation, 0),
+                attrs.getString(Tag.SOPClassUID), attrs.getString(Tag.BodyPartExamined));
         } catch (IllegalArgumentException ignore) {
             return null;
         }
     }
 
-    public CompressionRule findCompressionRule(String aeTitle,
-            PhotometricInterpretation pmi,
-            int bitsStored, int pixelRepresentation, 
-            String sopClass, String bodyPart) {
-        for (CompressionRule ac : list)
-            if (ac.matchesCondition(pmi, bitsStored, pixelRepresentation,
-                    aeTitle, sopClass, bodyPart))
+    public CompressionRule findCompressionRule(String aeTitle, PhotometricInterpretation pmi, int bitsStored,
+        int pixelRepresentation, String sopClass, String bodyPart) {
+        for (CompressionRule ac : list) {
+            if (ac.matchesCondition(pmi, bitsStored, pixelRepresentation, aeTitle, sopClass, bodyPart)) {
                 return ac;
+            }
+        }
         return null;
     }
 

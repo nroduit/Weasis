@@ -153,7 +153,8 @@ public final class KOManager {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static KOSpecialElement loadDicomKeyObject(MediaSeries<DicomImageElement> dicomSeries, Attributes newDicomKO) {
+    public static KOSpecialElement loadDicomKeyObject(MediaSeries<DicomImageElement> dicomSeries,
+        Attributes newDicomKO) {
 
         DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
 
@@ -179,8 +180,7 @@ public final class KOManager {
             String defautDescription = Messages.getString("KOManager.ko_name"); //$NON-NLS-1$
 
             String description =
-                (String) JOptionPane.showInputDialog(parentComponent, message,
-                    Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                (String) JOptionPane.showInputDialog(parentComponent, message, Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
                     JOptionPane.INFORMATION_MESSAGE, null, null, defautDescription);
 
             // description==null means the user canceled the input
@@ -279,8 +279,8 @@ public final class KOManager {
                 DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
                 // Fire an event since any view in any View2dContainer may have its KO selected state changed
                 if (dicomModel != null) {
-                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
-                        validKOSelection));
+                    dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null, validKOSelection));
                 }
 
                 boolean filter = JMVUtils.getNULLtoFalse(view2d.getActionValue(ActionW.KO_FILTER.cmd()));
@@ -358,9 +358,8 @@ public final class KOManager {
                     selectedKO = (KOSpecialElement) actionValue;
 
                     // test if current ko_selection action in view do still exist
-                    Collection<KOSpecialElement> koElements =
-                        (view2D != null && view2D.getSeries() != null) ? DicomModel.getKoSpecialElements(view2D
-                            .getSeries()) : null;
+                    Collection<KOSpecialElement> koElements = (view2D != null && view2D.getSeries() != null)
+                        ? DicomModel.getKoSpecialElements(view2D.getSeries()) : null;
                     if (koElements != null && koElements.contains(selectedKO) == false) {
                         selectedKO = null;
                         newSelectedKO = ActionState.NONE;
@@ -426,9 +425,8 @@ public final class KOManager {
                             // if (offset != null) {
                             // location += offset;
                             // }
-                            newImageIndex =
-                                dicomSeries.getNearestImageIndex(location, view2D.getTileOffset(),
-                                    sopInstanceUIDFilter, view2D.getCurrentSortComparator());
+                            newImageIndex = dicomSeries.getNearestImageIndex(location, view2D.getTileOffset(),
+                                sopInstanceUIDFilter, view2D.getCurrentSortComparator());
                         }
                     } else {
                         // If there is no more image in KO series filtered then disable the KO_FILTER

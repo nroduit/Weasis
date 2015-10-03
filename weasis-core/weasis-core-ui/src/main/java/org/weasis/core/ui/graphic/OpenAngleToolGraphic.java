@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -41,14 +41,14 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @Root(name = "openAngle")
 public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
-    public static final Icon ICON = new ImageIcon(
-        OpenAngleToolGraphic.class.getResource("/icon/22x22/draw-open-angle.png")); //$NON-NLS-1$
+    public static final Icon ICON =
+        new ImageIcon(OpenAngleToolGraphic.class.getResource("/icon/22x22/draw-open-angle.png")); //$NON-NLS-1$
 
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(
-        Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement REFLEX_ANGLE = new Measurement(
-        Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement COMPLEMENTARY_ANGLE =
+        new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement REFLEX_ANGLE =
+        new Measurement(Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptA, ptB, ptC, ptD; // Let AB & CD two line segments
@@ -80,9 +80,8 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     protected OpenAngleToolGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible)
-        throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
         if (handlePointTotalNumber < 4) {
             throw new InvalidShapeException("Not a valid OpenAngleToolGraphic!"); //$NON-NLS-1$
@@ -193,8 +192,8 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
                 }
 
                 if (COMPLEMENTARY_ANGLE.isComputed()) {
-                    measVal.add(new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, Messages
-                        .getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(
+                        new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 if (REFLEX_ANGLE.isComputed()) {
                     measVal
@@ -230,27 +229,23 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
         if (lineABvalid && lineCDvalid) {
 
-            double denominator =
-                (ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY()) - (ptB.getY() - ptA.getY())
-                    * (ptD.getX() - ptC.getX());
+            double denominator = (ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY())
+                - (ptB.getY() - ptA.getY()) * (ptD.getX() - ptC.getX());
 
             linesParallel = (denominator == 0); // If denominator is zero, AB & CD are parallel
 
             if (!linesParallel) {
 
-                double numerator1 =
-                    (ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX()) - (ptA.getX() - ptC.getX())
-                        * (ptD.getY() - ptC.getY());
-                double numerator2 =
-                    (ptA.getY() - ptC.getY()) * (ptB.getX() - ptA.getX()) - (ptA.getX() - ptC.getX())
-                        * (ptB.getY() - ptA.getY());
+                double numerator1 = (ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX())
+                    - (ptA.getX() - ptC.getX()) * (ptD.getY() - ptC.getY());
+                double numerator2 = (ptA.getY() - ptC.getY()) * (ptB.getX() - ptA.getX())
+                    - (ptA.getX() - ptC.getX()) * (ptB.getY() - ptA.getY());
 
                 double r = numerator1 / denominator; // equ1
                 double s = numerator2 / denominator; // equ2
 
-                ptP =
-                    new Point2D.Double(ptA.getX() + r * (ptB.getX() - ptA.getX()), ptA.getY() + r
-                        * (ptB.getY() - ptA.getY()));
+                ptP = new Point2D.Double(ptA.getX() + r * (ptB.getX() - ptA.getX()),
+                    ptA.getY() + r * (ptB.getY() - ptA.getY()));
 
                 // If 0<=r<=1 & 0<=s<=1, segment intersection exists
                 // If r<0 or r>1 or s<0 or s>1, line segments intersect but not segments

@@ -4,11 +4,11 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Marcelo Porto - initial API and implementation, Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
  *     Nicolas Roduit
- *     
+ *
  ******************************************************************************/
 
 package org.weasis.dicom.explorer.print;
@@ -29,7 +29,7 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FileUtil;
 
 /**
- * 
+ *
  * @author Marcelo Porto (marcelo@animati.com.br)
  * @version Mar 12, 2012
  */
@@ -46,9 +46,8 @@ public class DicomPrinter {
         XMLOutputFactory factory = XMLOutputFactory.newInstance();
         final BundleContext context = FrameworkUtil.getBundle(DicomPrinter.class).getBundleContext();
         try {
-            writer =
-                factory.createXMLStreamWriter(new FileOutputStream(new File(BundlePreferences.getDataFolder(context),
-                    "dicomPrinters.xml")), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+            writer = factory.createXMLStreamWriter(
+                new FileOutputStream(new File(BundlePreferences.getDataFolder(context), "dicomPrinters.xml")), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
 
             writer.writeStartDocument("UTF-8", "1.0"); //$NON-NLS-1$ //$NON-NLS-2$
             writer.writeStartElement("printers"); //$NON-NLS-1$
@@ -100,8 +99,8 @@ public class DicomPrinter {
                                                     printer.setAeTitle(xmler.getAttributeValue(null, "aeTitle")); //$NON-NLS-1$
                                                     printer.setHostname(xmler.getAttributeValue(null, "hostname")); //$NON-NLS-1$
                                                     printer.setPort(FileUtil.getIntegerTagAttribute(xmler, "port", 0)); //$NON-NLS-1$
-                                                    printer.setColorPrintSupported(Boolean.parseBoolean(xmler
-                                                        .getAttributeValue(null, "colorPrintSupported"))); //$NON-NLS-1$
+                                                    printer.setColorPrintSupported(Boolean.parseBoolean(
+                                                        xmler.getAttributeValue(null, "colorPrintSupported"))); //$NON-NLS-1$
                                                     printersComboBox.addItem(printer);
                                                 }
                                             }

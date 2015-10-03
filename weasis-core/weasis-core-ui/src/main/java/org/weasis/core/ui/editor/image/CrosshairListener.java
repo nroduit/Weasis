@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -64,8 +64,8 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if (point != null) {
             this.point = point;
             pointChanged(point);
-            AuditLog.LOGGER.info(
-                "action:{} val:{},{}", new Object[] { basicState.getActionW().cmd(), point.getX(), point.getY() }); //$NON-NLS-1$
+            AuditLog.LOGGER.info("action:{} val:{},{}", //$NON-NLS-1$
+                new Object[] { basicState.getActionW().cmd(), point.getX(), point.getY() });
         }
     }
 

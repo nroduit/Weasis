@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -24,10 +24,9 @@ public class TableColumnAdjuster {
 
     private static int preferredWidth(JTable table, int col) {
         TableColumn tableColumn = table.getColumnModel().getColumn(col);
-        int width =
-            (int) table.getTableHeader().getDefaultRenderer()
-                .getTableCellRendererComponent(table, tableColumn.getIdentifier(), false, false, -1, col)
-                .getPreferredSize().getWidth();
+        int width = (int) table.getTableHeader().getDefaultRenderer()
+            .getTableCellRendererComponent(table, tableColumn.getIdentifier(), false, false, -1, col).getPreferredSize()
+            .getWidth();
 
         if (table.getRowCount() != 0) {
             int from = 0, to = 0;
@@ -36,10 +35,9 @@ public class TableColumnAdjuster {
             to = table.rowAtPoint(new Point((int) rect.getMaxX(), (int) rect.getMaxY())) + 1;
 
             for (int row = from; row < to; row++) {
-                int preferedWidth =
-                    (int) table.getCellRenderer(row, col)
-                        .getTableCellRendererComponent(table, table.getValueAt(row, col), false, false, row, col)
-                        .getPreferredSize().getWidth();
+                int preferedWidth = (int) table.getCellRenderer(row, col)
+                    .getTableCellRendererComponent(table, table.getValueAt(row, col), false, false, row, col)
+                    .getPreferredSize().getWidth();
                 width = Math.max(width, preferedWidth);
             }
         }
@@ -48,8 +46,9 @@ public class TableColumnAdjuster {
 
     public static void pack(JTable table) {
 
-        if (!table.isShowing() || table.getColumnCount() == 0)
+        if (!table.isShowing() || table.getColumnCount() == 0) {
             return;
+        }
 
         int width[] = new int[table.getColumnCount()];
         int total = 0;

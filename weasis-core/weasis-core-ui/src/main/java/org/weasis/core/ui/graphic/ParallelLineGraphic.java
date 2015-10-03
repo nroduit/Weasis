@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Benoit Jacquemoud, Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -38,15 +38,15 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @Root(name = "ParallelLine")
 public class ParallelLineGraphic extends AbstractDragGraphic {
 
-    public static final Icon ICON = new ImageIcon(
-        ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
+    public static final Icon ICON =
+        new ImageIcon(ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
 
-    public static final Measurement DISTANCE = new Measurement(
-        Messages.getString("measure.distance"), 1, true, true, true); //$NON-NLS-1$
-    public static final Measurement ORIENTATION = new Measurement(
-        Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement AZIMUTH = new Measurement(
-        Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement DISTANCE =
+        new Measurement(Messages.getString("measure.distance"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement ORIENTATION =
+        new Measurement(Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement AZIMUTH =
+        new Measurement(Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D.Double ptA, ptB, ptC, ptD; // Let AB & CD two parallel line segments
@@ -62,9 +62,9 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     protected ParallelLineGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
-        @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible, @Attribute(name = "fill") boolean filled)
+            throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointTotalNumber != 6) {
             throw new InvalidShapeException("Not a valid ParallelLineGraphic!"); //$NON-NLS-1$
@@ -83,7 +83,8 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
+    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY,
+        MouseEventDouble mouseEvent) {
 
         handlePointIndex = super.moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
 
@@ -193,12 +194,12 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
                     measVal.add(new MeasureItem(DISTANCE, val, adapter.getUnit()));
                 }
                 if (ORIENTATION.isComputed()) {
-                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptA, ptB), Messages
-                        .getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptA, ptB),
+                        Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 if (AZIMUTH.isComputed()) {
-                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptA, ptB), Messages
-                        .getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(
+                        new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptA, ptB), Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 return measVal;
             }

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -27,7 +27,7 @@ import org.weasis.core.api.gui.model.ViewModelChangeListener;
 
 /**
  * The Class GraphicsPane.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class GraphicsPane extends JComponent {
@@ -79,7 +79,7 @@ public class GraphicsPane extends JComponent {
 
     /**
      * Gets the view model.
-     * 
+     *
      * @return the view model, never null
      */
     public ViewModel getViewModel() {
@@ -88,7 +88,7 @@ public class GraphicsPane extends JComponent {
 
     /**
      * Sets the view model.
-     * 
+     *
      * @param viewModel
      *            the view model, never null
      */
@@ -202,9 +202,8 @@ public class GraphicsPane extends JComponent {
 
     public Point2D getImageCoordinatesFromMouse(int x, int y) {
         double viewScale = getViewModel().getViewScale();
-        Point2D p2 =
-            new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale, y + getViewModel().getModelOffsetY()
-                * viewScale);
+        Point2D p2 = new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale,
+            y + getViewModel().getModelOffsetY() * viewScale);
         inverseTransform.transform(p2, p2);
         return p2;
     }
@@ -225,10 +224,10 @@ public class GraphicsPane extends JComponent {
      * <code>Graphics</code> and manipulate it. Further, if you do not invoker super's implementation you must honor the
      * opaque property, that is if this component is opaque, you must completely fill in the background in a non-opaque
      * color. If you do not honor the opaque property you will likely see visual artifacts.
-     * 
+     *
      * @param g
      *            the <code>Graphics</code> object to protect
-     * 
+     *
      * @see #paint
      * @see javax.swing.plaf.ComponentUI
      */
@@ -266,7 +265,7 @@ public class GraphicsPane extends JComponent {
     // Inner Classes
     /**
      * The Class LayerModelHandler.
-     * 
+     *
      * @author Nicolas Roduit
      */
     private class LayerModelHandler extends LayerModelChangeAdapter {
@@ -279,7 +278,7 @@ public class GraphicsPane extends JComponent {
 
     /**
      * The Class ViewModelHandler.
-     * 
+     *
      * @author Nicolas Roduit
      */
     private class ViewModelHandler implements ViewModelChangeListener {
@@ -292,7 +291,7 @@ public class GraphicsPane extends JComponent {
 
     /**
      * The Class DrawingsKeyListeners.
-     * 
+     *
      * @author Nicolas Roduit
      */
     private class DrawingsKeyListeners implements KeyListener {

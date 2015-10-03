@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -67,14 +67,12 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
     private final JScrollPane jScrollPane3 = new JScrollPane();
 
     public WeasisAboutBox() {
-        super(WeasisWin.getInstance().getFrame(), String.format(
-            Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true); //$NON-NLS-1$
+        super(WeasisWin.getInstance().getFrame(),
+            String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true); //$NON-NLS-1$
         try {
-            sysTable =
-                new JTable(
-                    new SimpleTableModel(
-                        new String[] {
-                            Messages.getString("WeasisAboutBox.prop"), Messages.getString("WeasisAboutBox.val") }, createSysInfo())); //$NON-NLS-1$ //$NON-NLS-2$
+            sysTable = new JTable(new SimpleTableModel(
+                new String[] { Messages.getString("WeasisAboutBox.prop"), Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$ //$NON-NLS-2$
+                createSysInfo()));
             sysTable.getColumnModel().setColumnMargin(5);
             JMVUtils.formatTableHeaders(sysTable, SwingConstants.CENTER);
             jbInit();
@@ -104,7 +102,9 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         jTextPane1.setEditable(false);
         HTMLEditorKit kit = new HTMLEditorKit();
         StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$ //$NON-NLS-2$
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
+            + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+            + ";color:#" //$NON-NLS-1$
             + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
             + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
         jTextPane1.setEditorKit(kit);

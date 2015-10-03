@@ -5,6 +5,7 @@ import java.io.FilenameFilter;
 
 public class FolderFilter implements FilenameFilter {
 
+    @Override
     public boolean accept(final File dir, final String fname) {
         if (fname.startsWith(".")) {
             return false;

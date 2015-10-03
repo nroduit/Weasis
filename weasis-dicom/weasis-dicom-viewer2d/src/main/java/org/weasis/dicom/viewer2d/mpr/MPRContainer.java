@@ -108,6 +108,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     public static final GridBagLayoutModel VIEWS_2x1_mpr = new GridBagLayoutModel(
         new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", Messages.getString("MPRContainer.title"), null); //$NON-NLS-1$ //$NON-NLS-2$
+
     static {
         LinkedHashMap<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
         constraints.put(new LayoutConstraints(MprView.class.getName(), 0, 0, 0, 1, 2, 0.5, 1.0,
@@ -119,8 +120,9 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     }
 
-    public static final List<GridBagLayoutModel> LAYOUT_LIST = Collections
-        .synchronizedList(new ArrayList<GridBagLayoutModel>());
+    public static final List<GridBagLayoutModel> LAYOUT_LIST =
+        Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
+
     static {
         LAYOUT_LIST.add(VIEWS_2x1_mpr);
         LAYOUT_LIST.add(VIEWS_2x2_f2);
@@ -477,56 +479,56 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             }
             view.repaint();
             process = new Thread(Messages.getString("MPRContainer.build")) { //$NON-NLS-1$
-                    @Override
-                    public void run() {
-                        try {
-                            SeriesBuilder.createMissingSeries(this, MPRContainer.this, view);
+                @Override
+                public void run() {
+                    try {
+                        SeriesBuilder.createMissingSeries(this, MPRContainer.this, view);
 
-                            // Following actions need to be executed in EDT thread
-                            GuiExecutor.instance().execute(new Runnable() {
+                        // Following actions need to be executed in EDT thread
+                        GuiExecutor.instance().execute(new Runnable() {
 
-                                @Override
-                                public void run() {
-                                    ActionState synch = eventManager.getAction(ActionW.SYNCH);
-                                    if (synch instanceof ComboItemListener) {
-                                        ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
-                                    }
-                                    // Set the middle image (best choice to propagate the default preset of non CT
-                                    // modalities)
-                                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                                    if (seqAction instanceof SliderChangeListener) {
-                                        SliderCineListener sliceAction = (SliderCineListener) seqAction;
-                                        sliceAction.setValue(sliceAction.getMax() / 2);
-                                    }
-                                    ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
-                                    if (cross instanceof CrosshairListener) {
-                                        ((CrosshairListener) cross).setPoint(view.getImageCoordinatesFromMouse(
-                                            view.getWidth() / 2, view.getHeight() / 2));
-                                    }
-                                    // Force to propagate the default preset
-                                    ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-                                    if (presetAction instanceof ComboItemListener) {
-                                        ComboItemListener p = (ComboItemListener) presetAction;
-                                        p.setSelectedItemWithoutTriggerAction(null);
-                                        p.setSelectedItem(p.getFirstItem());
-                                    }
+                            @Override
+                            public void run() {
+                                ActionState synch = eventManager.getAction(ActionW.SYNCH);
+                                if (synch instanceof ComboItemListener) {
+                                    ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
                                 }
-                            });
-
-                        } catch (final Exception e) {
-                            e.printStackTrace();
-                            // Following actions need to be executed in EDT thread
-                            GuiExecutor.instance().execute(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    showErrorMessage(view2ds, view, e.getMessage());
+                                // Set the middle image (best choice to propagate the default preset of non CT
+                                // modalities)
+                                ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                                if (seqAction instanceof SliderChangeListener) {
+                                    SliderCineListener sliceAction = (SliderCineListener) seqAction;
+                                    sliceAction.setValue(sliceAction.getMax() / 2);
                                 }
-                            });
-                        }
+                                ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
+                                if (cross instanceof CrosshairListener) {
+                                    ((CrosshairListener) cross).setPoint(
+                                        view.getImageCoordinatesFromMouse(view.getWidth() / 2, view.getHeight() / 2));
+                                }
+                                // Force to propagate the default preset
+                                ActionState presetAction = eventManager.getAction(ActionW.PRESET);
+                                if (presetAction instanceof ComboItemListener) {
+                                    ComboItemListener p = (ComboItemListener) presetAction;
+                                    p.setSelectedItemWithoutTriggerAction(null);
+                                    p.setSelectedItem(p.getFirstItem());
+                                }
+                            }
+                        });
+
+                    } catch (final Exception e) {
+                        e.printStackTrace();
+                        // Following actions need to be executed in EDT thread
+                        GuiExecutor.instance().execute(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                showErrorMessage(view2ds, view, e.getMessage());
+                            }
+                        });
                     }
+                }
 
-                };
+            };
             process.start();
         } else {
             showErrorMessage(view2ds, null, Messages.getString("MPRContainer.mesg_missing_3d")); //$NON-NLS-1$
@@ -572,9 +574,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             if (img instanceof DicomImageElement) {
                 double[] v = (double[]) ((DicomImageElement) img).getTagValue(TagW.ImageOrientationPatient);
                 if (v != null && v.length == 6) {
-                    String orientation =
-                        ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3],
-                            v[4], v[5]);
+                    String orientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
+                        v[1], v[2], v[3], v[4], v[5]);
                     SliceOrientation sliceOrientation = SliceOrientation.AXIAL;
                     if (ImageOrientation.LABELS[3].equals(orientation)) {
                         sliceOrientation = SliceOrientation.CORONAL;

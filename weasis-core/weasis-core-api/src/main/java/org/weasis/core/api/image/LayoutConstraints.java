@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -21,8 +21,8 @@ public class LayoutConstraints extends GridBagConstraints implements Comparable<
 
     public LayoutConstraints(String type, int layoutID, int gridx, int gridy, int gridwidth, int gridheight,
         double weightx, double weighty, int anchor, int fill) {
-        super(gridx, gridy, gridwidth, gridheight, weightx, weighty, anchor, fill, new Insets(gridy == 0 ? 0 : SPACE,
-            gridx == 0 ? 0 : SPACE, 0, 0), 0, 0);
+        super(gridx, gridy, gridwidth, gridheight, weightx, weighty, anchor, fill,
+            new Insets(gridy == 0 ? 0 : SPACE, gridx == 0 ? 0 : SPACE, 0, 0), 0, 0);
         this.type = type;
         this.layoutID = layoutID;
     }

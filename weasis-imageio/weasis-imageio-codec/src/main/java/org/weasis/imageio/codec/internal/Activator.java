@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -50,13 +50,12 @@ public class Activator implements BundleActivator {
         // Register imageio SPI with the classloader of this bundle
         // and unregister imageio SPI if imageio.jar is also in the jre/lib/ext folder
 
-        Class[] jaiCodecs =
-            { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class, CLibJPEGImageReaderSpi.class,
-                CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class, J2KImageReaderCodecLibSpi.class,
-                WBMPImageReaderSpi.class, BMPImageReaderSpi.class, RawImageReaderSpi.class, TIFFImageReaderSpi.class,
-                CLibJPEGImageWriterSpi.class, CLibPNGImageWriterSpi.class, J2KImageWriterSpi.class,
-                J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class,
-                GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
+        Class[] jaiCodecs = { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class,
+            CLibJPEGImageReaderSpi.class, CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class,
+            J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class, BMPImageReaderSpi.class, RawImageReaderSpi.class,
+            TIFFImageReaderSpi.class, CLibJPEGImageWriterSpi.class, CLibPNGImageWriterSpi.class,
+            J2KImageWriterSpi.class, J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class,
+            GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
             ImageioUtil.registerServiceProvider(c);
@@ -72,13 +71,12 @@ public class Activator implements BundleActivator {
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
 
-        Class[] jaiCodecs =
-            { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class, CLibJPEGImageReaderSpi.class,
-                CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class, J2KImageReaderCodecLibSpi.class,
-                WBMPImageReaderSpi.class, BMPImageReaderSpi.class, RawImageReaderSpi.class, TIFFImageReaderSpi.class,
-                CLibJPEGImageWriterSpi.class, CLibPNGImageWriterSpi.class, J2KImageWriterSpi.class,
-                J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class,
-                GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
+        Class[] jaiCodecs = { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class,
+            CLibJPEGImageReaderSpi.class, CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class,
+            J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class, BMPImageReaderSpi.class, RawImageReaderSpi.class,
+            TIFFImageReaderSpi.class, CLibJPEGImageWriterSpi.class, CLibPNGImageWriterSpi.class,
+            J2KImageWriterSpi.class, J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class,
+            GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
             ImageioUtil.unRegisterServiceProvider(c);

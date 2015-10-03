@@ -64,16 +64,18 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
+
     static {
         SYNCH_LIST.add(SynchView.NONE);
     }
 
-    public static final List<GridBagLayoutModel> LAYOUT_LIST = Collections
-        .synchronizedList(new ArrayList<GridBagLayoutModel>());
+    public static final List<GridBagLayoutModel> LAYOUT_LIST =
+        Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
 
     public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1", //$NON-NLS-1$
-        "1x1", 1, 1, SRView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ 
+        "1x1", 1, 1, SRView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$
             .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
+
     static {
         LAYOUT_LIST.add(VIEWS_1x1);
     }
@@ -328,8 +330,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             JFrame frame = new JFrame(org.weasis.dicom.explorer.Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
             frame.setSize(500, 630);
             DicomFieldsView view = new DicomFieldsView();
-            view.changingViewContentEvent(new SeriesViewerEvent(this, srview.getSeries(), DicomModel
-                .getFirstSpecialElement(srview.getSeries(), DicomSpecialElement.class), EVENT.SELECT));
+            view.changingViewContentEvent(new SeriesViewerEvent(this, srview.getSeries(),
+                DicomModel.getFirstSpecialElement(srview.getSeries(), DicomSpecialElement.class), EVENT.SELECT));
             JPanel panel = new JPanel();
             panel.setLayout(new BorderLayout());
             panel.add(view);
@@ -358,12 +360,10 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                     if (e.getMessage().indexOf("accepting job") != -1) { //$NON-NLS-1$
                         // recommend prompting the user at this point if they want to force it
                         // so they'll know there may be a problem.
-                        int response =
-                            JOptionPane
-                                .showConfirmDialog(
-                                    null,
-                                    org.weasis.core.ui.Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
-                                    org.weasis.core.ui.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                        int response = JOptionPane.showConfirmDialog(null,
+                            org.weasis.core.ui.Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
+                            org.weasis.core.ui.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, //$NON-NLS-1$
+                            JOptionPane.WARNING_MESSAGE);
 
                         if (response == 0) {
                             try {

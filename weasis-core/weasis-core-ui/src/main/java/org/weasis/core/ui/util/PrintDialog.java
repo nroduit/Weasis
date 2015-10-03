@@ -4,11 +4,11 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Marcelo Porto - initial API and implementation Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
  *     Nicolas Roduit
- *     
+ *
  ******************************************************************************/
 
 package org.weasis.core.ui.util;
@@ -36,7 +36,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.PrintOptions.SCALE;
 
 /**
- * 
+ *
  * @author Marcelo Porto (marcelo@animati.com.br)
  */
 public class PrintDialog extends javax.swing.JDialog {
@@ -126,8 +126,8 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().add(positionLabel, gbc_positionLabel);
         positionComboBox = new javax.swing.JComboBox();
 
-        positionComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] {
-            Messages.getString("PrintDialog.center"), Messages.getString("PrintDialog.top") })); //$NON-NLS-1$ //$NON-NLS-2$
+        positionComboBox.setModel(new javax.swing.DefaultComboBoxModel(
+            new String[] { Messages.getString("PrintDialog.center"), Messages.getString("PrintDialog.top") })); //$NON-NLS-1$ //$NON-NLS-2$
         GridBagConstraints gbc_positionComboBox = new GridBagConstraints();
         gbc_positionComboBox.anchor = GridBagConstraints.WEST;
         gbc_positionComboBox.insets = new Insets(0, 0, 10, 5);

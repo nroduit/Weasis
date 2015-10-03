@@ -52,18 +52,17 @@ import org.slf4j.LoggerFactory;
  */
 public class PatchJPEGLSImageOutputStream extends ImageOutputStreamImpl {
 
-    private static final Logger LOG =
-            LoggerFactory.getLogger(PatchJPEGLSImageOutputStream.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PatchJPEGLSImageOutputStream.class);
 
     private final ImageOutputStream ios;
     private final PatchJPEGLS patchJpegLS;
     private byte[] jpegheader;
     private int jpegheaderIndex;
 
-    public PatchJPEGLSImageOutputStream(ImageOutputStream ios,
-            PatchJPEGLS patchJpegLS) throws IOException {
-        if (ios == null)
+    public PatchJPEGLSImageOutputStream(ImageOutputStream ios, PatchJPEGLS patchJpegLS) throws IOException {
+        if (ios == null) {
             throw new NullPointerException("ios");
+        }
         super.streamPos = ios.getStreamPosition();
         super.flushedPos = ios.getFlushedPosition();
         this.ios = ios;
@@ -80,11 +79,10 @@ public class PatchJPEGLSImageOutputStream extends ImageOutputStreamImpl {
             System.arraycopy(b, off, jpegheader, jpegheaderIndex, len0);
             jpegheaderIndex += len0;
             if (jpegheaderIndex >= jpegheader.length) {
-                JPEGLSCodingParam param =
-                        patchJpegLS.createJPEGLSCodingParam(jpegheader);
-                if (param == null)
+                JPEGLSCodingParam param = patchJpegLS.createJPEGLSCodingParam(jpegheader);
+                if (param == null) {
                     ios.write(jpegheader);
-                else {
+                } else {
                     LOG.debug("Patch JPEG-LS with {}", param);
                     int offset = param.getOffset();
                     ios.write(jpegheader, 0, offset);
@@ -100,7 +98,7 @@ public class PatchJPEGLSImageOutputStream extends ImageOutputStreamImpl {
 
     @Override
     public void write(byte[] b) throws IOException {
-	write(b, 0, b.length);
+        write(b, 0, b.length);
     }
 
     @Override
@@ -108,17 +106,18 @@ public class PatchJPEGLSImageOutputStream extends ImageOutputStreamImpl {
         if (jpegheader == null) {
             ios.write(b);
             streamPos++;
-        } else
-            write(new byte[]{(byte) b},0,1);
+        } else {
+            write(new byte[] { (byte) b }, 0, 1);
+        }
     }
 
     @Override
     public int read() throws IOException {
-	return ios.read();
+        return ios.read();
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-	return ios.read (b, off, len);
+        return ios.read(b, off, len);
     }
 }

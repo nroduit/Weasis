@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -68,22 +68,23 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
     public static final RectangleGraphic rectangleGraphic = new RectangleGraphic(1.0f, Color.YELLOW, true);
     public static final EllipseGraphic ellipseGraphic = new EllipseGraphic(1.0f, Color.YELLOW, true);
-    public static final ThreePointsCircleGraphic threePtCircleGraphic = new ThreePointsCircleGraphic(1.0f,
-        Color.YELLOW, true);
+    public static final ThreePointsCircleGraphic threePtCircleGraphic =
+        new ThreePointsCircleGraphic(1.0f, Color.YELLOW, true);
     public static final PolygonGraphic polygonGraphic = new PolygonGraphic(1.0f, Color.YELLOW, true);
     public static final PolylineGraphic polylineGraphic = new PolylineGraphic(1.0f, Color.YELLOW, true);
-    public static final PerpendicularLineGraphic perpendicularToolGraphic = new PerpendicularLineGraphic(1.0f,
-        Color.YELLOW, true);
+    public static final PerpendicularLineGraphic perpendicularToolGraphic =
+        new PerpendicularLineGraphic(1.0f, Color.YELLOW, true);
     public static final ParallelLineGraphic parallelLineGraphic = new ParallelLineGraphic(1.0f, Color.YELLOW, true);
     public static final OpenAngleToolGraphic openAngleToolGraphic = new OpenAngleToolGraphic(1.0f, Color.YELLOW, true);
-    public static final FourPointsAngleToolGraphic fourPointsAngleToolGraphic = new FourPointsAngleToolGraphic(1.0f,
-        Color.YELLOW, true);
+    public static final FourPointsAngleToolGraphic fourPointsAngleToolGraphic =
+        new FourPointsAngleToolGraphic(1.0f, Color.YELLOW, true);
     public static final CobbAngleToolGraphic cobbAngleToolGraphic = new CobbAngleToolGraphic(1.0f, Color.YELLOW, true);
     public static final PixelInfoGraphic pixelInfoGraphic = new PixelInfoGraphic(1.0f, Color.YELLOW, true);
     public static final AnnotationGraphic textGrahic = new AnnotationGraphic(1.0f, Color.YELLOW, true);
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
     public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
+
     static {
         WProperties p = BundleTools.SYSTEM_PREFERENCES;
         if (p.getBooleanProperty("weasis.measure.selection", true)) { //$NON-NLS-1$
@@ -133,6 +134,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         }
 
     }
+
     protected final JButton jButtondelete = new JButton();
     protected final JButton jButtonText = new JButton();
     protected final Component measureButtonGap = Box.createRigidArea(new Dimension(10, 0));

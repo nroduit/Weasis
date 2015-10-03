@@ -25,7 +25,7 @@ public class TagView {
 
     public boolean containsTag(TagW tag) {
         for (TagW tagW : this.tag) {
-            if(tagW.equals(tag)){
+            if (tagW.equals(tag)) {
                 return true;
             }
         }

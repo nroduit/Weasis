@@ -53,8 +53,8 @@ public class SOFSegment {
     public SOFSegment(byte[] data, int offset) {
         this.data = data;
         this.offset = offset;
-        this.numComponents = data[offset+8] & 255;
-        getQTableSelector(numComponents-1);
+        this.numComponents = data[offset + 8] & 255;
+        getQTableSelector(numComponents - 1);
     }
 
     public int offset() {
@@ -66,19 +66,19 @@ public class SOFSegment {
     }
 
     public int getHeaderLength() {
-        return ByteUtils.bytesToUShortBE(data, offset+1);
+        return ByteUtils.bytesToUShortBE(data, offset + 1);
     }
 
     public int getPrecision() {
-        return data[offset+3] & 255;
+        return data[offset + 3] & 255;
     }
 
     public int getY() {
-        return ByteUtils.bytesToUShortBE(data, offset+4);
+        return ByteUtils.bytesToUShortBE(data, offset + 4);
     }
 
     public int getX() {
-        return ByteUtils.bytesToUShortBE(data, offset+6);
+        return ByteUtils.bytesToUShortBE(data, offset + 6);
     }
 
     public int getNumComponents() {
@@ -86,35 +86,31 @@ public class SOFSegment {
     }
 
     public int getComponentID(int index) {
-        return data[offset+9+index*3] & 255;
+        return data[offset + 9 + index * 3] & 255;
     }
 
     public int getXSubsampling(int index) {
-        return (data[offset+10+index*3]>>4) & 15;
+        return (data[offset + 10 + index * 3] >> 4) & 15;
     }
 
     public int getYSubsampling(int index) {
-        return (data[offset+10+index*3]) & 15;
+        return (data[offset + 10 + index * 3]) & 15;
     }
 
     public int getQTableSelector(int index) {
-        return data[offset+11+index*3] & 255;
+        return data[offset + 11 + index * 3] & 255;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("SOF").append(getMarker()-0xC0)
-          .append("[Lf=").append(getHeaderLength())
-          .append(", P=").append(getPrecision())
-          .append(", Y=").append(getY())
-          .append(", X=").append(getX())
-          .append(", Nf=").append(numComponents);
+        sb.append("SOF").append(getMarker() - 0xC0).append("[Lf=").append(getHeaderLength()).append(", P=")
+            .append(getPrecision()).append(", Y=").append(getY()).append(", X=").append(getX()).append(", Nf=")
+            .append(numComponents);
         for (int i = 0; i < numComponents; i++) {
-            sb.append(", C").append(i+1).append('=').append(getComponentID(i))
-              .append(", H").append(i+1).append('=').append(getXSubsampling(i))
-              .append(", V").append(i+1).append('=').append(getYSubsampling(i))
-              .append(", Tq").append(i+1).append('=').append(getQTableSelector(i));
+            sb.append(", C").append(i + 1).append('=').append(getComponentID(i)).append(", H").append(i + 1).append('=')
+                .append(getXSubsampling(i)).append(", V").append(i + 1).append('=').append(getYSubsampling(i))
+                .append(", Tq").append(i + 1).append('=').append(getQTableSelector(i));
         }
         sb.append(']');
         return sb.toString();

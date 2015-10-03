@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -69,7 +69,8 @@ public class Activator implements BundleActivator, ServiceListener {
             @Override
             public void run() {
                 // Register default model
-                ViewerPluginBuilder.DefaultDataModel.addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
+                ViewerPluginBuilder.DefaultDataModel
+                    .addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
 
                 try {
                     for (ServiceReference<DataExplorerViewFactory> serviceReference : bundleContext
@@ -80,7 +81,8 @@ public class Activator implements BundleActivator, ServiceListener {
                             UIManager.EXPLORER_PLUGINS.add(explorer);
 
                             if (explorer.getDataExplorerModel() != null) {
-                                explorer.getDataExplorerModel().addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
+                                explorer.getDataExplorerModel()
+                                    .addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
                             }
 
                             if (explorer instanceof DockableTool) {
@@ -109,7 +111,8 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
         // UnRegister default model
-        ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
+        ViewerPluginBuilder.DefaultDataModel
+            .removePropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
     }
 
     @Override
@@ -127,7 +130,7 @@ public class Activator implements BundleActivator, ServiceListener {
                     final DataExplorerView explorer = ((DataExplorerViewFactory) service).createDataExplorerView(null);
                     if (event.getType() == ServiceEvent.REGISTERED) {
                         if (!UIManager.EXPLORER_PLUGINS.contains(explorer)) {
-                            //                                if ("Media Explorer".equals(explorer.getUIName())) { //$NON-NLS-1$
+                            // if ("Media Explorer".equals(explorer.getUIName())) { //$NON-NLS-1$
                             // // in this case, if there are several Explorers, the Media Explorer is selected by
                             // // default
                             // UIManager.EXPLORER_PLUGINS.add(0, explorer);
@@ -135,7 +138,8 @@ public class Activator implements BundleActivator, ServiceListener {
                             UIManager.EXPLORER_PLUGINS.add(explorer);
                             // }
                             if (explorer.getDataExplorerModel() != null) {
-                                explorer.getDataExplorerModel().addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
+                                explorer.getDataExplorerModel()
+                                    .addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
                             }
                             if (explorer instanceof DockableTool) {
                                 final DockableTool dockable = (DockableTool) explorer;

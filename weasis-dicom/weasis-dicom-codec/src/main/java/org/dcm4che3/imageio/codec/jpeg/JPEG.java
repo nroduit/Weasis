@@ -150,25 +150,25 @@ public class JPEG {
     /** JPEG-LS coding */
     public static final int SOF55 = 0xF7;
     /** JPEG-LS parameters */
-    public static final int LSE =   0xF8;
+    public static final int LSE = 0xF8;
 
     /** Comment marker */
     public static final int COM = 0xFE;
 
     public static boolean isStandalone(int marker) {
-        switch(marker) {
-        case TEM:
-        case RST0:
-        case RST1:
-        case RST2:
-        case RST3:
-        case RST4:
-        case RST5:
-        case RST6:
-        case RST7:
-        case SOI:
-        case EOI:
-            return true;
+        switch (marker) {
+            case TEM:
+            case RST0:
+            case RST1:
+            case RST2:
+            case RST3:
+            case RST4:
+            case RST5:
+            case RST6:
+            case RST7:
+            case SOI:
+            case EOI:
+                return true;
         }
         return false;
     }

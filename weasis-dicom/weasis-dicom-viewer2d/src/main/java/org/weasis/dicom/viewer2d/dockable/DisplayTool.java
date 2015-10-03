@@ -4,18 +4,11 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
 package org.weasis.dicom.viewer2d.dockable;
-
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingListener;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -59,6 +52,12 @@ import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 
 import bibliothek.gui.dock.common.CLocation;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingListener;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
@@ -255,7 +254,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         add(panel_foot, BorderLayout.SOUTH);
     }
 
-    private void sendPropertyChangeEvent(ArrayList<DefaultView2d<DicomImageElement>> views, String cmd, boolean selected) {
+    private void sendPropertyChangeEvent(ArrayList<DefaultView2d<DicomImageElement>> views, String cmd,
+        boolean selected) {
         for (DefaultView2d<DicomImageElement> v : views) {
             v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
         }
@@ -432,7 +432,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 DefaultMutableTreeNode node = new DefaultMutableTreeNode(obj, true);
                 drawings.add(node);
                 dtm.nodesWereInserted(drawings, new int[] { drawings.getIndex(node) });
-                if (event.getSeriesViewer() instanceof ImageViewerPlugin && node.getUserObject() instanceof Identifier) {
+                if (event.getSeriesViewer() instanceof ImageViewerPlugin
+                    && node.getUserObject() instanceof Identifier) {
                     DefaultView2d<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
                     if (pane != null) {
                         AbstractLayer l = pane.getLayerModel().getLayer((Identifier) node.getUserObject());

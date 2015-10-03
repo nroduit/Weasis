@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -80,10 +80,9 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     protected AnnotationGraphic(
         @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
         @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor,
-        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
-        @Attribute(name = "fill") boolean filled, @ElementArray(name = "text") String[] labelStringArray)
-        throws InvalidShapeException {
+        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
+        @Attribute(name = "label_visible") boolean labelVisible, @Attribute(name = "fill") boolean filled,
+        @ElementArray(name = "text") String[] labelStringArray) throws InvalidShapeException {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointTotalNumber != 2) {
             throw new InvalidShapeException("Not a valid AnnotationGraphic!"); //$NON-NLS-1$
@@ -151,16 +150,15 @@ public class AnnotationGraphic extends AbstractDragGraphic {
                 line = new Line2D.Double(ptBox, ptAnchor);
             }
             labelBounds = new Rectangle.Double();
-            labelBounds.setFrameFromCenter(ptBox.getX(), ptBox.getY(), ptBox.getX() + labelWidth / 2
-                + GraphicLabel.GROWING_BOUND, ptBox.getY() + labelHeight * labelStringArray.length / 2
-                + GraphicLabel.GROWING_BOUND);
+            labelBounds.setFrameFromCenter(ptBox.getX(), ptBox.getY(),
+                ptBox.getX() + labelWidth / 2 + GraphicLabel.GROWING_BOUND,
+                ptBox.getY() + labelHeight * labelStringArray.length / 2 + GraphicLabel.GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, GraphicLabel.GROWING_BOUND);
             if (line != null) {
                 newShape.addLinkSegmentToInvariantShape(line, ptBox, labelBounds, getDashStroke(lineThickness), false);
 
-                ScaleInvariantShape arrow =
-                    newShape.addScaleInvShape(GeomUtil.getArrowShape(ptAnchor, ptBox, 15, 8), ptAnchor,
-                        getStroke(lineThickness), false);
+                ScaleInvariantShape arrow = newShape.addScaleInvShape(GeomUtil.getArrowShape(ptAnchor, ptBox, 15, 8),
+                    ptAnchor, getStroke(lineThickness), false);
                 arrow.setFilled(true);
             }
             newShape.addAllInvShape(labelBounds, ptBox, getStroke(lineThickness), false);
@@ -295,9 +293,9 @@ public class AnnotationGraphic extends AbstractDragGraphic {
             labelBounds = new Rectangle.Double();
             labelBounds.setFrameFromCenter(pos.getX(), pos.getY(), (labelWidth + GraphicLabel.GROWING_BOUND) / 2,
                 ((labelHeight * labels.length) + GraphicLabel.GROWING_BOUND) * 2);
-            labelBounds.setFrameFromCenter(pos.getX(), pos.getY(), ptBox.getX() + labelWidth / 2
-                + GraphicLabel.GROWING_BOUND, ptBox.getY() + labelHeight * labelStringArray.length / 2
-                + GraphicLabel.GROWING_BOUND);
+            labelBounds.setFrameFromCenter(pos.getX(), pos.getY(),
+                ptBox.getX() + labelWidth / 2 + GraphicLabel.GROWING_BOUND,
+                ptBox.getY() + labelHeight * labelStringArray.length / 2 + GraphicLabel.GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, GraphicLabel.GROWING_BOUND);
         }
         buildShape(null);

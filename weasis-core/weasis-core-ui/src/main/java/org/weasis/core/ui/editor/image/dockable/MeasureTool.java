@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -87,15 +87,15 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
 
     public static final String BUTTON_NAME = Messages.getString("Tools.meas"); //$NON-NLS-1$
     public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img"); //$NON-NLS-1$
-    public static final int DockableWidth = javax.swing.UIManager.getLookAndFeel() != null ? javax.swing.UIManager
-        .getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205; //$NON-NLS-1$
+    public static final int DockableWidth = javax.swing.UIManager.getLookAndFeel() != null
+        ? javax.swing.UIManager.getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205; //$NON-NLS-1$
 
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;
-    public static final boolean[] MEAS2D_SELECTMEASURES = { true, true, true, true, true, true, true, true, true, true,
-        true, true, false };
-    public static final boolean[] MEAS1D_SELECTMEASURES = { true, true, true, true, true, true, false, false, false,
-        true, true, false };
+    public static final boolean[] MEAS2D_SELECTMEASURES =
+        { true, true, true, true, true, true, true, true, true, true, true, true, false };
+    public static final boolean[] MEAS1D_SELECTMEASURES =
+        { true, true, true, true, true, true, false, false, false, true, true, false };
     public static final ViewSetting viewSetting = new ViewSetting();
 
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
@@ -197,10 +197,9 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JButton button = (JButton) e.getSource();
-                Color newColor =
-                    JColorChooser.showDialog(SwingUtilities.getWindowAncestor(MeasureTool.this),
-                        Messages.getString("MeasureTool.pick_color"), //$NON-NLS-1$
-                        button.getBackground());
+                Color newColor = JColorChooser.showDialog(SwingUtilities.getWindowAncestor(MeasureTool.this),
+                    Messages.getString("MeasureTool.pick_color"), //$NON-NLS-1$
+                    button.getBackground());
                 if (newColor != null) {
                     button.setBackground(newColor);
                     viewSetting.setLineColor(newColor);
@@ -321,12 +320,12 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY,
-            new TitledBorder(null, Messages.getString("MeasureTool.sel"), //$NON-NLS-1$
+        transform.setBorder(
+            BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("MeasureTool.sel"), //$NON-NLS-1$
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        //        final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.chg_prop")); //$NON-NLS-1$
+        // final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.chg_prop")); //$NON-NLS-1$
         // btnGerenralOptions.addActionListener(new ActionListener() {
         // @Override
         // public void actionPerformed(ActionEvent e) {
@@ -430,9 +429,8 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             jtable.setModel(new SimpleTableModel(headers, labels));
             jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
             createTableHeaders(jtable);
-            int height =
-                (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
-                    + jtable.getTableHeader().getHeight() + 5;
+            int height = (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
+                + jtable.getTableHeader().getHeight() + 5;
             tableContainer.setPreferredSize(new Dimension(jtable.getColumnModel().getTotalColumnWidth(), height));
             tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
             tableContainer.add(jtable, BorderLayout.CENTER);

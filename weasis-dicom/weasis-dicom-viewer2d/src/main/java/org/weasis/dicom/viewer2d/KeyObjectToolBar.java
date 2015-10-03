@@ -55,11 +55,11 @@ public class KeyObjectToolBar extends WtoolBar {
     public static final ImageIcon KO_FILTER_ICON = new ImageIcon(View2d.class.getResource("/icon/32x32/synch-KO.png")); //$NON-NLS-1$
     public static final ImageIcon KO_FILTER_ICON_SELECTED;
 
-    public static final ImageIcon KO_ALL_STAR_ICON = new ImageIcon(
-        View2d.class.getResource("/icon/32x32/star_bw_all.png")); //$NON-NLS-1$
+    public static final ImageIcon KO_ALL_STAR_ICON =
+        new ImageIcon(View2d.class.getResource("/icon/32x32/star_bw_all.png")); //$NON-NLS-1$
 
-    public static final ImageIcon KO_EDIT_SELECTION_ICON = new ImageIcon(
-        View2d.class.getResource("/icon/32x32/edit-KO.png")); //$NON-NLS-1$
+    public static final ImageIcon KO_EDIT_SELECTION_ICON =
+        new ImageIcon(View2d.class.getResource("/icon/32x32/edit-KO.png")); //$NON-NLS-1$
 
     static {
         ImageFilter imageFilter = new SelectedImageFilter(new float[] { 1.0f, 0.78f, 0.0f }); // ORANGE
@@ -197,9 +197,8 @@ public class KeyObjectToolBar extends WtoolBar {
 
                 Object[] message = { Messages.getString("KeyObjectToolBar.k0_list"), scrollList }; //$NON-NLS-1$
 
-                final JOptionPane pane =
-                    new JOptionPane(message, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null,
-                        new JButton[] { deleteBtn, createBtn }, createBtn);
+                final JOptionPane pane = new JOptionPane(message, JOptionPane.QUESTION_MESSAGE,
+                    JOptionPane.YES_NO_OPTION, null, new JButton[] { deleteBtn, createBtn }, createBtn);
 
                 deleteBtn.addActionListener(new ActionListener() {
                     @Override
@@ -280,9 +279,8 @@ public class KeyObjectToolBar extends WtoolBar {
 
                         } else if (selectedValue.equals(copyBtn)) {
                             System.out.println("Copy selected KeyObject : " + list.getSelectedValue().toString()); //$NON-NLS-1$
-                            newDicomKO =
-                                KOManager.createNewDicomKeyObject((MediaElement<?>) list.getSelectedValue(),
-                                    selectedView2dContainer);
+                            newDicomKO = KOManager.createNewDicomKeyObject((MediaElement<?>) list.getSelectedValue(),
+                                selectedView2dContainer);
                         }
 
                         if (newDicomKO != null) {

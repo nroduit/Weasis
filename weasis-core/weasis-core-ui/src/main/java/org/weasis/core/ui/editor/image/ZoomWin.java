@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -60,7 +60,7 @@ import org.weasis.core.ui.pref.ZoomSetting;
 // TODO: Auto-generated Javadoc
 /**
  * The Class ZoomWin.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class ZoomWin<E extends ImageElement> extends GraphicsPane implements ImageLayerChangeListener<E> {
@@ -155,8 +155,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         SYNCH_TYPE type = (SYNCH_TYPE) actionsInView.get(ZoomWin.FREEZE_CMD);
         if (SYNCH_TYPE.ParentParameters.equals(type)) {
             freezeOperations.setFirstNode(imageLayer.getSourceRenderedImage());
-            freezeOperations.handleImageOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, view2d.getSeries(),
-                view2d.getImage(), null));
+            freezeOperations.handleImageOpEvent(
+                new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, view2d.getSeries(), view2d.getImage(), null));
             freezeOperations.process();
         }
     }
@@ -228,10 +228,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
-            getLayerModel().draw(
-                g2d,
-                transform,
-                inverseTransform,
+            getLayerModel().draw(g2d, transform, inverseTransform,
                 new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
                     modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
         }
@@ -346,9 +343,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     public void updateZoom() {
-        double zoomFactor =
-            (Boolean) actionsInView.get(SYNCH_CMD) ? view2d.getViewModel().getViewScale() : (Double) actionsInView
-                .get(ActionW.ZOOM.cmd());
+        double zoomFactor = (Boolean) actionsInView.get(SYNCH_CMD) ? view2d.getViewModel().getViewScale()
+            : (Double) actionsInView.get(ActionW.ZOOM.cmd());
         zoom(zoomFactor);
     }
 
@@ -436,8 +432,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                 ImageViewerEventManager manager = view2d.getEventManager();
                 ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
                 if (zoomAction instanceof SliderChangeListener) {
-                    ((SliderChangeListener) zoomAction).setValue(ImageViewerEventManager.viewScaleToSliderValue(view2d
-                        .getViewModel().getViewScale()));
+                    ((SliderChangeListener) zoomAction)
+                        .setValue(ImageViewerEventManager.viewScaleToSliderValue(view2d.getViewModel().getViewScale()));
                 }
             }
         }
@@ -539,8 +535,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     protected void applyCommandFromParentView(String command, Object value) {
         OpManager dispOp = getDisplayOpManager();
         if (command.equals(ActionW.ROTATION.cmd())) {
-            if (dispOp.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, view2d.getDisplayOpManager()
-                .getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE))) {
+            if (dispOp.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE,
+                view2d.getDisplayOpManager().getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE))) {
                 refreshZoomWin();
             }
         } else if (command.equals(ActionW.FLIP.cmd())) {

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -30,7 +30,8 @@ public abstract class SliderCineListener extends SliderChangeListener {
     private final TIME time;
     private final SpinnerNumberModel speedModel;
 
-    public SliderCineListener(ActionW action, int min, int max, int value, int speed, TIME time, double mouseSensivity) {
+    public SliderCineListener(ActionW action, int min, int max, int value, int speed, TIME time,
+        double mouseSensivity) {
         this(action, min, max, value, speed, time);
         setMouseSensivity(mouseSensivity);
     }
@@ -80,8 +81,8 @@ public abstract class SliderCineListener extends SliderChangeListener {
                     buffer.append(Messages.getString("SliderCineListener.fph")); //$NON-NLS-1$
                 }
             }
-            ((TitledBorder) panel.getBorder()).setTitleColor(rate > 0 && rate < (getSpeed() - 1) ? Color.red
-                : UIManager.getColor("TitledBorder.titleColor")); //$NON-NLS-1$
+            ((TitledBorder) panel.getBorder()).setTitleColor(
+                rate > 0 && rate < (getSpeed() - 1) ? Color.red : UIManager.getColor("TitledBorder.titleColor")); //$NON-NLS-1$
             ((TitledBorder) panel.getBorder()).setTitle(buffer.toString());
             panel.repaint();
         } else {

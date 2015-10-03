@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -31,15 +31,14 @@ public class Activator implements BundleActivator {
     public void start(final BundleContext context) throws Exception {
         String cache = context.getProperty("weasis.portable.dicom.cache"); //$NON-NLS-1$
         DicomManager.getInstance().setPortableDirCache(!((cache != null) && cache.equalsIgnoreCase("false")));//$NON-NLS-1$
-        FileUtil.readProperties(
-            new File(BundlePreferences.getDataFolder(context), "import-export.properties"), IMPORT_EXPORT_PERSISTENCE);//$NON-NLS-1$
+        FileUtil.readProperties(new File(BundlePreferences.getDataFolder(context), "import-export.properties"), //$NON-NLS-1$
+            IMPORT_EXPORT_PERSISTENCE);
     }
 
     @Override
     public void stop(BundleContext context) throws Exception {
-        FileUtil
-            .storeProperties(
-                new File(BundlePreferences.getDataFolder(context), "import-export.properties"), IMPORT_EXPORT_PERSISTENCE, null);//$NON-NLS-1$
+        FileUtil.storeProperties(new File(BundlePreferences.getDataFolder(context), "import-export.properties"), //$NON-NLS-1$
+            IMPORT_EXPORT_PERSISTENCE, null);
         // Save preferences
         DicomManager.getInstance().savePreferences();
         DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);

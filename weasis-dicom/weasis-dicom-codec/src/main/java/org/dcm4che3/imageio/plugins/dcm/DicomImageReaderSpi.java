@@ -61,19 +61,17 @@ public class DicomImageReaderSpi extends ImageReaderSpi {
     private static final Class<?>[] inputTypes = { ImageInputStream.class };
 
     public DicomImageReaderSpi() {
-        super(vendorName, version, formatNames, suffixes, MIMETypes, 
-                DicomImageReader.class.getName(), inputTypes,
-                null,  // writerSpiNames
-                false, // supportsStandardStreamMetadataFormat
-                null,  // nativeStreamMetadataFormatName
-                null,  // nativeStreamMetadataFormatClassName
-                null,  // extraStreamMetadataFormatNames
-                null,  // extraStreamMetadataFormatClassNames
-                false, // supportsStandardImageMetadataFormat
-                null,  // nativeImageMetadataFormatName
-                null,  // nativeImageMetadataFormatClassName
-                null,  // extraImageMetadataFormatNames
-                null); // extraImageMetadataFormatClassNames
+        super(vendorName, version, formatNames, suffixes, MIMETypes, DicomImageReader.class.getName(), inputTypes, null, // writerSpiNames
+            false, // supportsStandardStreamMetadataFormat
+            null, // nativeStreamMetadataFormatName
+            null, // nativeStreamMetadataFormatClassName
+            null, // extraStreamMetadataFormatNames
+            null, // extraStreamMetadataFormatClassNames
+            false, // supportsStandardImageMetadataFormat
+            null, // nativeImageMetadataFormatName
+            null, // nativeImageMetadataFormatClassName
+            null, // extraImageMetadataFormatNames
+            null); // extraImageMetadataFormatClassNames
     }
 
     @Override
@@ -86,24 +84,16 @@ public class DicomImageReaderSpi extends ImageReaderSpi {
         ImageInputStream iis = (ImageInputStream) source;
         iis.mark();
         try {
-            int tag = iis.read()
-                   | (iis.read()<<8)
-                   | (iis.read()<<16)
-                   | (iis.read()<<24);
-            return ((tag >= 0x00080000 && tag <= 0x00080016)
-                  || (iis.skipBytes(124) == 124
-                   && iis.read() == 'D'
-                   && iis.read() == 'I'
-                   && iis.read() == 'C'
-                   && iis.read() == 'M'));
+            int tag = iis.read() | (iis.read() << 8) | (iis.read() << 16) | (iis.read() << 24);
+            return ((tag >= 0x00080000 && tag <= 0x00080016) || (iis.skipBytes(124) == 124 && iis.read() == 'D'
+                && iis.read() == 'I' && iis.read() == 'C' && iis.read() == 'M'));
         } finally {
             iis.reset();
         }
     }
 
     @Override
-    public ImageReader createReaderInstance(Object extension)
-            throws IOException {
+    public ImageReader createReaderInstance(Object extension) throws IOException {
         return new DicomImageReader(this);
     }
 

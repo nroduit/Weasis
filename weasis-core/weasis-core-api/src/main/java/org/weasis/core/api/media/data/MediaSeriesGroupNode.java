@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -55,8 +55,8 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         if (val instanceof Date) {
             val = TagW.DATETIME_FORMATTER.format(val);
         }
-        return val == null
-            ? Messages.getString("MediaSeriesGroupNode.no_val") + " " + displayTag.getName() : val.toString(); //$NON-NLS-1$ //$NON-NLS-2$
+        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") + " " + displayTag.getName() //$NON-NLS-1$ //$NON-NLS-2$
+            : val.toString();
     }
 
     @Override
@@ -125,6 +125,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         return null;
     }
 
+    @Override
     public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
         return tags.entrySet().iterator();
     }

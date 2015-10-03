@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -43,7 +43,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 
 /**
  * The Class InfoLayer.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class InfoLayer implements AnnotationsLayer {
@@ -143,40 +143,37 @@ public class InfoLayer implements AnnotationsLayer {
             // g2.draw(pixelInfoBound);
         }
         if (getDisplayPreferences(WINDOW_LEVEL)) {
-            GraphicLabel
-                .paintFontOutline(
-                    g2,
-                    Messages.getString("InfoLayer.wl") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) //$NON-NLS-1$ 
-                        + "/" + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ 
+            GraphicLabel.paintFontOutline(g2,
+                Messages.getString("InfoLayer.wl") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+                    + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd())
+                    + "/" + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), //$NON-NLS-1$
+                border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
-            GraphicLabel
-                .paintFontOutline(
-                    g2,
-                    Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()), border, //$NON-NLS-1$ 
-                    drawY);
+            GraphicLabel.paintFontOutline(g2,
+                Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+                    + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()),
+                border,
+                drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
-            GraphicLabel
-                .paintFontOutline(
-                    g2,
-                    Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ 
+            GraphicLabel.paintFontOutline(g2,
+                Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+                    + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " //$NON-NLS-1$
+                    + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
+                border, drawY);
             drawY -= fontHeight;
         }
 
         if (getDisplayPreferences(FRAME)) {
-            GraphicLabel
-                .paintFontOutline(
-                    g2,
-                    Messages.getString("InfoLayer.frame") //$NON-NLS-1$
-                        + StringUtil.COLON_AND_SPACE
-                        + (view2DPane.getFrameIndex() + 1)
-                        + " / " //$NON-NLS-1$
-                        + view2DPane.getSeries().size(
-                            (Filter<ImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())), border,
-                    drawY);
+            GraphicLabel.paintFontOutline(g2,
+                Messages.getString("InfoLayer.frame") //$NON-NLS-1$
+                    + StringUtil.COLON_AND_SPACE + (view2DPane.getFrameIndex() + 1) + " / " //$NON-NLS-1$
+                    + view2DPane.getSeries()
+                        .size((Filter<ImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())),
+                border, drawY);
             drawY -= fontHeight;
         }
 
@@ -208,9 +205,8 @@ public class InfoLayer implements AnnotationsLayer {
             if (lut.getLutTable() == null) {
                 lut = ByteLut.grayLUT;
             }
-            byte[][] table =
-                JMVUtils.getNULLtoFalse(pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE)) ? lut
-                    .getInvertedLutTable() : lut.getLutTable();
+            byte[][] table = JMVUtils.getNULLtoFalse(pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE))
+                ? lut.getInvertedLutTable() : lut.getLutTable();
             float length = table[0].length;
             float x = bound.width - 30f;
             float y = bound.height / 2f - length / 2f;
@@ -242,15 +238,15 @@ public class InfoLayer implements AnnotationsLayer {
                 line.setLine(x - 5f, posY, x - 1f, posY);
                 g2.draw(line);
                 str = "" + (int) (firstlevel + i * stepWindow); //$NON-NLS-1$
-                GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7, posY
-                    + midfontHeight);
+                GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
+                    posY + midfontHeight);
             }
 
             line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
             g2.draw(line);
             str = "" + (int) (firstlevel + 4 * stepWindow); //$NON-NLS-1$
-            GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12, y + length
-                + midfontHeight);
+            GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
+                y + length + midfontHeight);
             rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
             g2.draw(rect);
 
@@ -272,9 +268,8 @@ public class InfoLayer implements AnnotationsLayer {
         double zoomFactor = view2DPane.getViewModel().getViewScale();
 
         double scale = image.getPixelSize() / zoomFactor;
-        double scaleSizex =
-            ajustShowScale(scale,
-                (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
+        double scaleSizex = ajustShowScale(scale,
+            (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
         if (showBottomScale & scaleSizex > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
@@ -332,16 +327,15 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
             String pixSizeDesc = image.getPixelSizeCalibrationDescription();
             if (StringUtil.hasText(pixSizeDesc)) {
-                GraphicLabel.paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5), (float) posy
-                    - fontHeight);
+                GraphicLabel.paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5),
+                    (float) posy - fontHeight);
             }
             str += " " + unit[0].getAbbreviation(); //$NON-NLS-1$
             GraphicLabel.paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
         }
 
-        double scaleSizeY =
-            ajustShowScale(scale,
-                (int) Math.min(zoomFactor * source.getHeight() * image.getRescaleY(), bound.height / 2.0));
+        double scaleSizeY = ajustShowScale(scale,
+            (int) Math.min(zoomFactor * source.getHeight() * image.getRescaleY(), bound.height / 2.0));
 
         if (scaleSizeY > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
@@ -462,11 +456,11 @@ public class InfoLayer implements AnnotationsLayer {
         // Trick to keep the value as a return parameter
         unit[0] = ajustUnit;
         if (ajustScaleLength < 1.0) {
-            return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
-                .fourDecimal(ajustScaleLength);
+            return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength)
+                : DecFormater.fourDecimal(ajustScaleLength);
         }
-        return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
-            .twoDecimal(ajustScaleLength);
+        return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength)
+            : DecFormater.twoDecimal(ajustScaleLength);
     }
 
     @Override

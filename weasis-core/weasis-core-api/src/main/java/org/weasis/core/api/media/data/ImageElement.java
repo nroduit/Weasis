@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -261,9 +261,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     /**
      * Loads the original image. Must load and return the original image.
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @throws IOException
      */
 
@@ -313,7 +313,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     /**
      * Returns the full size, original image. Returns null if the image is not loaded.
-     * 
+     *
      * @return
      */
     public PlanarImage getImage(OpManager manager) {

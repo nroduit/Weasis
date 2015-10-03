@@ -54,26 +54,30 @@ public class JPEGHeader {
         for (int offset = 0; (offset = nextMarker(data, offset)) != -1;) {
             n++;
             int marker = data[offset++] & 255;
-            if (JPEG.isStandalone(marker))
+            if (JPEG.isStandalone(marker)) {
                 continue;
-            if (offset+1 >= data.length)
+            }
+            if (offset + 1 >= data.length) {
                 break;
-            if (marker == lastMarker)
+            }
+            if (marker == lastMarker) {
                 break;
+            }
             offset += ByteUtils.bytesToUShortBE(data, offset);
         }
         this.data = data;
         this.offsets = new int[n];
         for (int i = 0, offset = 0; i < n; i++) {
-            offsets[i] = (offset = nextMarker(data, offset)) ;
-            if (!JPEG.isStandalone(offset++ & 255))
+            offsets[i] = (offset = nextMarker(data, offset));
+            if (!JPEG.isStandalone(offset++ & 255)) {
                 offset += ByteUtils.bytesToUShortBE(data, offset);
+            }
         }
     }
 
     private static int nextMarker(byte[] data, int from) {
-        for (int i = from+1; i < data.length; i++) {
-            if (data[i-1] == -1 && data[i] != -1 && data[i] != 0) {
+        for (int i = from + 1; i < data.length; i++) {
+            if (data[i - 1] == -1 && data[i] != -1 && data[i] != 0) {
                 return i;
             }
         }
@@ -82,8 +86,9 @@ public class JPEGHeader {
 
     public int offsetOf(int marker) {
         for (int i = 0; i < offsets.length; i++) {
-            if ((data[offsets[i]] & 255) == marker)
+            if ((data[offsets[i]] & 255) == marker) {
                 return offsets[i];
+            }
         }
         return -1;
     }

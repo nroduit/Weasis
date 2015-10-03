@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -230,9 +230,8 @@ public class PresetWindowLevel {
             }
         }
 
-        PresetWindowLevel autoLevel =
-            new PresetWindowLevel(fullDynamicExplanation, image.getFullDynamicWidth(pixelPadding),
-                image.getFullDynamicCenter(pixelPadding), defaultLutShape);
+        PresetWindowLevel autoLevel = new PresetWindowLevel(fullDynamicExplanation,
+            image.getFullDynamicWidth(pixelPadding), image.getFullDynamicCenter(pixelPadding), defaultLutShape);
         // Set O shortcut for auto levels
         autoLevel.setKeyCode(KeyEvent.VK_0);
         presetList.add(autoLevel);
@@ -277,20 +276,19 @@ public class PresetWindowLevel {
                                                 String modality = xmler.getAttributeValue(null, "modality");//$NON-NLS-1$
                                                 float window =
                                                     Float.parseFloat(xmler.getAttributeValue(null, "window"));//$NON-NLS-1$
-                                                float level = Float.parseFloat(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$;
+                                                float level = Float.parseFloat(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$ ;
                                                 String shape = xmler.getAttributeValue(null, "shape");//$NON-NLS-1$
                                                 Integer keyCode = FileUtil.getIntegerTagAttribute(xmler, "key", null);//$NON-NLS-1$
                                                 LutShape lutShape = LutShape.getLutShape(shape);
-                                                PresetWindowLevel preset =
-                                                    new PresetWindowLevel(name, window, level, lutShape == null
-                                                        ? LutShape.LINEAR : lutShape);
+                                                PresetWindowLevel preset = new PresetWindowLevel(name, window, level,
+                                                    lutShape == null ? LutShape.LINEAR : lutShape);
                                                 if (keyCode != null) {
                                                     preset.setKeyCode(keyCode);
                                                 }
                                                 List<PresetWindowLevel> presetList = presets.get(modality);
                                                 if (presetList == null) {
-                                                    presets.put(modality, presetList =
-                                                        new ArrayList<PresetWindowLevel>());
+                                                    presets.put(modality,
+                                                        presetList = new ArrayList<PresetWindowLevel>());
                                                 }
                                                 presetList.add(preset);
                                             } catch (Exception e) {

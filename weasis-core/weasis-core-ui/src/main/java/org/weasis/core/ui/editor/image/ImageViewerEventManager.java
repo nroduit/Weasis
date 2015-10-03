@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -95,10 +95,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                     if (series != null) {
                         // Model contains display value, value-1 is the index value of a sequence
                         int index = model.getValue() - 1;
-                        image =
-                            series.getMedia(index,
-                                (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
-                                view2d.getCurrentSortComparator());
+                        image = series.getMedia(index,
+                            (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                            view2d.getCurrentSortComparator());
                         mediaEvent = new SynchCineEvent(view2d, image, index);
                         // Ensure to load image before calling the default preset (requires pixel min and max)
                         if (image != null && !image.isImageAvailable()) {
@@ -120,8 +119,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
                 firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
                 if (image != null) {
-                    fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
-                        EVENT.SELECT));
+                    fireSeriesViewerListeners(
+                        new SeriesViewerEvent(selectedView2dContainer, series, image, EVENT.SELECT));
                 }
             }
 
@@ -141,8 +140,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 private volatile int wait;
                 private volatile int currentCineRate;
                 private volatile long start;
-                private final int timeDiv = TIME.second.equals(time) ? 1000 : TIME.minute.equals(time) ? 60000
-                    : 3600000;
+                private final int timeDiv =
+                    TIME.second.equals(time) ? 1000 : TIME.minute.equals(time) ? 60000 : 3600000;
 
                 @Override
                 public void run() {
@@ -263,8 +262,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), model.getValue()));
             }
         };
     }
@@ -274,8 +273,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), model.getValue()));
             }
         };
     }
@@ -285,8 +284,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), model.getValue()));
             }
 
             @Override
@@ -318,8 +317,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    point));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
             }
 
         };
@@ -330,8 +329,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    point));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
             }
         };
     }
@@ -341,8 +340,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
 
         };
@@ -353,8 +352,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
         };
     }
@@ -364,16 +363,16 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
 
         };
     }
 
     protected SliderChangeListener newLensZoomAction() {
-        return new SliderChangeListener(ActionW.LENSZOOM, ZOOM_SLIDER_MIN, ZOOM_SLIDER_MAX,
-            viewScaleToSliderValue(2.0), true, 0.1) {
+        return new SliderChangeListener(ActionW.LENSZOOM, ZOOM_SLIDER_MIN, ZOOM_SLIDER_MAX, viewScaleToSliderValue(2.0),
+            true, 0.1) {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
@@ -450,8 +449,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
         };
     }
@@ -477,8 +476,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
                 MeasureTool.viewSetting.setDrawOnlyOnce(selected);
             }
         };
@@ -492,8 +491,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void itemStateChanged(Object object) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    object));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), object));
             }
         };
     }
@@ -610,9 +609,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         if (view != null) {
             ViewerToolBar<E> toolBar = view.getViewerToolBar();
             if (toolBar != null) {
-                String command =
-                    ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
-                        toolBar.getMouseLeft().getActionCommand()).cmd();
+                String command = ViewerToolBar
+                    .getNextCommand(ViewerToolBar.actionsButtons, toolBar.getMouseLeft().getActionCommand()).cmd();
                 changeLeftMouseAction(command);
             }
         }
