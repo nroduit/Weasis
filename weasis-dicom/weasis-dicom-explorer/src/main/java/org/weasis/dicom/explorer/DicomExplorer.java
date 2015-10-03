@@ -1290,17 +1290,16 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             Point ptmin = SwingUtilities.convertPoint(p, new Point(0, 0), patientContainer);
                             Point ptmax = SwingUtilities.convertPoint(p, new Point(0, p.getHeight()), patientContainer);
                             if (!bound.contains(ptmin.x, ptmin.y) || !bound.contains(ptmax.x, ptmax.y)) {
-                                Point pt2 =
-                                    SwingUtilities.convertPoint(p, new Point(0, p.getHeight() / 2), patientContainer);
-                                pt2.x = vp.getViewPosition().x;
-                                pt2.y -= vp.getHeight() / 2;
+                                Point pt = vp.getViewPosition();
+                                pt.y = (ptmax.y - ptmin.y) / 2;
+                                pt.y -= vp.getHeight() / 2;
                                 int maxHeight = (int) (vp.getViewSize().getHeight() - vp.getExtentSize().getHeight());
-                                if (pt2.y < 0) {
-                                    pt2.y = 0;
-                                } else if (pt2.y > maxHeight) {
-                                    pt2.y = maxHeight;
+                                if (pt.y < 0) {
+                                    pt.y = 0;
+                                } else if (pt.y > maxHeight) {
+                                    pt.y = maxHeight;
                                 }
-                                vp.setViewPosition(pt2);
+                                vp.setViewPosition(pt);
                                 // Clear the selection when another view is selected
                                 getSelectionList().clear();
                             }
