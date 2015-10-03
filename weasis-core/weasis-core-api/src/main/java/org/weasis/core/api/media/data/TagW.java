@@ -401,7 +401,7 @@ public class TagW implements Transferable, Serializable {
             str = value.toString();
             char[] tab = str.toCharArray();
             if (tab.length < 2) {
-                return "";
+                return ""; //$NON-NLS-1$
             }
             for (int i = 0; i < 2; i++) {
                 if (tab[i] == '0') {

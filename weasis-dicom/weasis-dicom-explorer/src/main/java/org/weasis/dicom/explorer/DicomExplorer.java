@@ -1609,7 +1609,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
                             final GraphicsDevice[] gd = ge.getScreenDevices();
                             if (gd.length > 0) {
-                                JMenu subMenu = new JMenu("Open in screen");
+                                JMenu subMenu = new JMenu(Messages.getString("DicomExplorer.open_screen")); //$NON-NLS-1$
                                 for (int i = 0; i < gd.length; i++) {
                                     GraphicsConfiguration config = gd[i].getDefaultConfiguration();
                                     final Rectangle b = config.getBounds();
@@ -1965,7 +1965,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                             int response =
                                 JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(DicomExplorer.this),
-                                    "No file has been found from DICOMDIR, do you want to import manually?",
+                                    Messages.getString("DicomExplorer.mes_import_manual"), //$NON-NLS-1$
                                     (String) this.getValue(Action.NAME), JOptionPane.YES_NO_OPTION,
                                     JOptionPane.WARNING_MESSAGE);
 
@@ -1973,7 +1973,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
                                 DicomImport dialog =
                                     new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
-                                dialog.showPage(Messages.getString("DicomDirImport.imp_dicom")); //$NON-NLS-1$
+                                dialog.showPage(Messages.getString("LocalImport.local_dev")); //$NON-NLS-1$
                                 AbstractItemDialogPage page = dialog.getCurrentPage();
                                 if (page instanceof LocalImport) {
                                     ((LocalImport) page).setImportPath(file.getParent());

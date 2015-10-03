@@ -76,6 +76,7 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.Messages;
 import org.xml.sax.SAXException;
 
 public class DownloadManager {
@@ -441,7 +442,7 @@ public class DownloadManager {
             }
 
         } catch (Throwable t) {
-            final String message = "Error on loading the XML Manifest from" + "\n" + uri.toString();
+            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString();  //$NON-NLS-1$//$NON-NLS-2$
             LOGGER.error(message);
 
             if (LOGGER.isDebugEnabled()) {
