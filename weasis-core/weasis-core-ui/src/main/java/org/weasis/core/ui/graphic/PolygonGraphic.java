@@ -69,11 +69,11 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     public static final Measurement CENTROID_Y =
         new Measurement(Messages.getString("measure.centery"), 8, true, true, false); //$NON-NLS-1$
     public static final Measurement WIDTH_OMBB =
-        new Measurement(Messages.getString("measure.width") + " (OMBB)", 9, false, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.width") + " (OMBB)", 9, false, true, false); //$NON-NLS-1$ //$NON-NLS-2$
     public static final Measurement LENGTH_OMBB =
-        new Measurement(Messages.getString("measure.length") + " (OMBB)", 10, false, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.length") + " (OMBB)", 10, false, true, false); //$NON-NLS-1$ //$NON-NLS-2$
     public static final Measurement ORIENTATION_OMBB =
-        new Measurement(Messages.getString("measure.orientation") + " (OMBB)", 10, false, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.orientation") + " (OMBB)", 10, false, true, false); //$NON-NLS-1$ //$NON-NLS-2$
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public PolygonGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
@@ -294,7 +294,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                     }
                     measVal.add(new MeasureItem(LENGTH_OMBB, l, unitStr));
                     measVal.add(new MeasureItem(WIDTH_OMBB, w, unitStr));
-                    measVal.add(new MeasureItem(ORIENTATION_OMBB, o, Messages.getString("measure.deg")));
+                    measVal.add(new MeasureItem(ORIENTATION_OMBB, o, Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
 
                 List<MeasureItem> stats = getImageStatistics(layer, releaseEvent);
