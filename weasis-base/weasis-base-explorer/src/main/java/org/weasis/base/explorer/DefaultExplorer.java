@@ -89,10 +89,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         tree.setAlignmentX((float) 0.5);
         tree.setShowsRootHandles(false);
-        // setTransferHandler(new NodeTransferHandler());
         tree.setDragEnabled(false);
 
-        // gotoLastDirectory();
         JScrollPane treePane = new JScrollPane(tree);
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, treePane, jilist);
         splitPane.setOneTouchExpandable(true);
@@ -102,7 +100,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         treePane.setMinimumSize(minimumSize);
         treePane.setMinimumSize(minimumSize);
 
-        // jRootPanel.setPreferredSize(new Dimension(500, 700));
         jRootPanel.setLayout(new BorderLayout());
         jRootPanel.add(splitPane, BorderLayout.CENTER);
     }
@@ -199,7 +196,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
 
     public final TreeNode findChildNode(final TreeNode parentTreeNode, final File selectedSubDir) {
-        // log.info("findChildNode " + selectedSubDir.getPath());
         if (!parentTreeNode.isExplored()) {
             parentTreeNode.explore();
         }
@@ -221,8 +217,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
 
     public final TreeNode findNodeForDir(final File dir) {
-        // log.info("findNodeForDir " + dir.getPath());
-
         TreeNode parentNode = (TreeNode) tree.getModel().getRoot();
 
         if (!parentNode.isExplored()) {
@@ -277,10 +271,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             }
 
             if (pathNotFound) {
-                // log.info("findNodeForDir NULL");
                 return null;
             } else {
-                // log.info("findNodeForDir " + parentNode);
                 return parentNode;
             }
         }
@@ -371,7 +363,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
         try {
             JPopupMenu popupMenu = new JPopupMenu();
-            TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("DefaultExplorer.sel_path"), popupMenu.getInsets()); //$NON-NLS-1$
+            TitleMenuItem itemTitle =
+                new TitleMenuItem(Messages.getString("DefaultExplorer.sel_path"), popupMenu.getInsets()); //$NON-NLS-1$
             popupMenu.add(itemTitle);
             popupMenu.addSeparator();
 
@@ -382,7 +375,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                 return null;
             }
 
-            JMenuItem menuItem = new JMenuItem(new AbstractAction(tree.isExpanded(path) ? Messages.getString("DefaultExplorer.collapse") : Messages.getString("DefaultExplorer.expand")) { //$NON-NLS-1$ //$NON-NLS-2$
+            JMenuItem menuItem = new JMenuItem(new AbstractAction(tree.isExpanded(path)
+                ? Messages.getString("DefaultExplorer.collapse") : Messages.getString("DefaultExplorer.expand")) { //$NON-NLS-1$ //$NON-NLS-2$
 
                 @Override
                 public void actionPerformed(final ActionEvent e) {
@@ -475,7 +469,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
         final TreeNode node = findNodeForDir(selectedDir);
         if (node == null) {
-            // log.debug("expandPaths NULL ");
             return;
         }
 
@@ -487,7 +480,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
         if (!tree.isExpanded(newPath)) {
             tree.expandPath(newPath);
-            // log.debug("expandPaths expandPath " + newPath);
         }
         tree.setSelectionPath(newPath);
         tree.scrollPathToVisible(newPath);

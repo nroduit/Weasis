@@ -10,7 +10,6 @@ public final class ThumbnailIcon implements Icon {
 
     private final BufferedImage image;
 
-    /** Creates a new instance of ThumbnailIcon */
     public ThumbnailIcon(final BufferedImage image) {
         this.image = image;
     }

@@ -1,8 +1,3 @@
-/*
- * JIListModel.java
- *
- * Created on March 27, 2005, 1:48 AM
- */
 
 package org.weasis.base.explorer;
 
@@ -169,26 +164,16 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
         return;
     }
 
-    /**
-     * @return the reloadContext
-     */
     @Override
     public final synchronized JIExplorerContext getReloadContext() {
         return this.reloadContext;
     }
 
-    /**
-     * @param reloadContext
-     *            the reloadContext to set
-     */
     @Override
     public final synchronized void setReloadContext(final JIExplorerContext reloadContext) {
         this.reloadContext = reloadContext;
     }
 
-    /**
-     * @return the loading
-     */
     public final synchronized boolean isLoading() {
         return this.loading;
     }
@@ -319,10 +304,6 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
         return rv;
     }
 
-    /**
-     * Removes all of the elements from this list. The list will be empty after this call returns (unless it throws an
-     * exception).
-     */
     public void clear() {
         final int index1 = this.sortedList.size() - 1;
         this.sortedList.removeAllElements();
