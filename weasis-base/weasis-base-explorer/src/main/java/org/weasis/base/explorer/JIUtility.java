@@ -51,62 +51,6 @@ public final class JIUtility {
         return new FileTreeModel(rootNode);
     }
 
-    public static String portablePath(final String path) {
-
-        final StringBuilder result = new StringBuilder();
-        // startIdx and idxOld delimit various chunks of aInput; these
-        // chunks always end where aOldPattern begins
-        int startIdx = 0;
-        int idxOld = 0;
-        while ((idxOld = path.indexOf("\\", startIdx)) >= 0) { //$NON-NLS-1$
-            // grab a part of aInput which does not include aOldPattern
-            result.append(path.substring(startIdx, idxOld));
-            // add aNewPattern to take place of aOldPattern
-            result.append("/"); //$NON-NLS-1$
-
-            // reset the startIdx to just after the current match, to see
-            // if there are any further matches
-            startIdx = idxOld + 1;
-        }
-        // the final chunk will go to the end of aInput
-        result.append(path.substring(startIdx));
-
-        return result.toString();
-    }
-
-    public static String systemPath(final String path) {
-
-        if (File.separator.equals("\\")) { //$NON-NLS-1$
-            final StringBuilder result = new StringBuilder();
-            // startIdx and idxOld delimit various chunks of aInput; these
-            // chunks always end where aOldPattern begins
-            int startIdx = 0;
-            int idxOld = 0;
-            while ((idxOld = path.indexOf("/", startIdx)) >= 0) { //$NON-NLS-1$
-                // grab a part of aInput which does not include aOldPattern
-                result.append(path.substring(startIdx, idxOld));
-                // add aNewPattern to take place of aOldPattern
-                result.append("\\"); //$NON-NLS-1$
-
-                // reset the startIdx to just after the current match, to see
-                // if there are any further matches
-                startIdx = idxOld + 1;
-            }
-            // the final chunk will go to the end of aInput
-            result.append(path.substring(startIdx));
-            return result.toString();
-        }
-        return path;
-    }
-
-    public static String length2KB(final long length) {
-        final long kbCount = (length + 1024) / 1024;
-        final String strlength = String.valueOf(kbCount);
-        return String.valueOf((kbCount > 999
-            ? strlength.substring(0, strlength.length() - 3) + "," + strlength.substring(strlength.length() - 3) //$NON-NLS-1$
-            : strlength) + " KB "); //$NON-NLS-1$
-    }
-
     public static File[] getRoots() {
         return constructRoots();
     }

@@ -723,13 +723,19 @@ public class View2d extends DefaultView2d<ImageElement> {
                                     }
                                 }
                             }
+                            if (openPlugin == null) {
+                                if (View2d.this.getSeries() != null) {
+                                    ViewerPluginBuilder.openSequenceInDefaultPlugin(seq,
+                                        model == null ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
+                                    return true;
+                                }
+                            } else {
+                                openPlugin.setSelectedAndGetFocus();
+                                openPlugin.addSeries(seq);
+                                // openPlugin.setSelected(true);
+                                return false;
+                            }
                         }
-                    }
-                    if (openPlugin != null) {
-                        openPlugin.setSelectedAndGetFocus();
-                        openPlugin.addSeries(seq);
-                        // openPlugin.setSelected(true);
-                        return false;
                     }
                 } else {
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(seq,

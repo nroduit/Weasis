@@ -176,30 +176,27 @@ public final class JIThumbnailList extends JList
 
     @Override
     public String getToolTipText(final MouseEvent evt) {
-        // if (!JIPreferences.getInstance().isThumbnailToolTips()) {
-        // return null;
-        // }
-        // Get item index
         final int index = locationToIndex(evt.getPoint());
         if (index < 0) {
             return ""; //$NON-NLS-1$
         }
 
-        // Get item
         final Object item = getModel().getElementAt(index);
 
-        if (((MediaElement) item).getName() == null) {
+        if (item == null || ((MediaElement) item).getName() == null) {
             return null;
         }
 
         StringBuilder toolTips = new StringBuilder();
         toolTips.append("<html>"); //$NON-NLS-1$
-        toolTips.append(Messages.getString("JIThumbnailList.1")); //$NON-NLS-1$
+        toolTips.append(((MediaElement) item).getName());
+        toolTips.append("<br>"); //$NON-NLS-1$
+        toolTips.append(Messages.getString("JIThumbnailList.size")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(FileUtil.formatSize(((MediaElement) item).getLength()));
         toolTips.append("<br>"); //$NON-NLS-1$
 
-        toolTips.append(Messages.getString("JIThumbnailList.size")); //$NON-NLS-1$
+        toolTips.append(Messages.getString("JIThumbnailList.date")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(TagW.formatDateTime(new Date(((MediaElement) item).getLastModified())));
         toolTips.append("<br>"); //$NON-NLS-1$
@@ -440,7 +437,6 @@ public final class JIThumbnailList extends JList
 
             final int val = (lastIndex + visibleItems >= getModel().getSize()) ? getModel().getSize() - 1
                 : lastIndex + visibleItems;
-            // log.debug("Next index is " + val + " " + lastIndex + " " + visibleItems + " " + visibleRows);
             clearSelection();
             setSelectedIndex(val);
             fireSelectionValueChanged(val, val, false);
@@ -462,7 +458,6 @@ public final class JIThumbnailList extends JList
             final int visibleItems = visibleRows * visibleColums;
 
             final int val = ((firstIndex - 1) - visibleItems < 0) ? 0 : (firstIndex - 1) - visibleItems;
-            // log.debug("Next index is " + val + " " + lastIndex + " " + visibleItems + " " + visibleRows);
             clearSelection();
             setSelectedIndex(val);
             fireSelectionValueChanged(val, val, false);
@@ -578,7 +573,8 @@ public final class JIThumbnailList extends JList
                 final MediaElement[] medias = selMedias;
 
                 JPopupMenu popupMenu = new JPopupMenu();
-                TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("JIThumbnailList.sel_menu"), popupMenu.getInsets()); //$NON-NLS-1$
+                TitleMenuItem itemTitle =
+                    new TitleMenuItem(Messages.getString("JIThumbnailList.sel_menu"), popupMenu.getInsets()); //$NON-NLS-1$
                 popupMenu.add(itemTitle);
                 popupMenu.addSeparator();
 
@@ -612,14 +608,15 @@ public final class JIThumbnailList extends JList
                     popupMenu.add(menuItem);
                 } else {
                     JMenu menu = new JMenu(Messages.getString("JIThumbnailList.open_win")); //$NON-NLS-1$
-                    JMenuItem menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.stack_mode")) { //$NON-NLS-1$
+                    JMenuItem menuItem =
+                        new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.stack_mode")) { //$NON-NLS-1$
 
-                        @Override
-                        public void actionPerformed(final ActionEvent e) {
-                            openGroup(medias, false, true, false, false);
-                        }
+                            @Override
+                            public void actionPerformed(final ActionEvent e) {
+                                openGroup(medias, false, true, false, false);
+                            }
 
-                    });
+                        });
                     menu.add(menuItem);
                     menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.layout_mode")) { //$NON-NLS-1$
 
