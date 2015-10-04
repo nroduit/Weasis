@@ -39,6 +39,7 @@ import br.com.animati.texture.mpr3dview.api.AbstractInfoLayer;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
 import br.com.animati.texture.mpr3dview.api.DisplayUtils;
 import br.com.animati.texture.mpr3dview.internal.Messages;
+import br.com.animati.texturedicom.ImageSeries;
 
 /**
  *

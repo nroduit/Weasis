@@ -28,10 +28,10 @@ public class MathUtil {
     }
 
     public static double getOrientation(double x1, double y1, double x2, double y2) {
-        // utilise arctan2 pour lever l'ambiguité 180 - degrés
+        // Use arctan2 to handle to handle possible negative values
         double teta = Math.atan2(y1 - y2, x1 - x2);
         double angle = Math.toDegrees(teta); // convert from radians to degrees
-        // conversion angle trigonométrique de 0 à 180 degrés
+        // Return the orientation from 0 to 180 degrees
         if (angle < 0) {
             angle = -angle;
         } else {

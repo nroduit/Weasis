@@ -78,6 +78,8 @@ import br.com.animati.texture.codec.StaticHelpers;
 import br.com.animati.texture.codec.TextureDicomSeries;
 import br.com.animati.texture.mpr3dview.ViewTexture.ViewType;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
+import br.com.animati.texturedicom.ColorMask;
+import br.com.animati.texturedicom.TextureImageCanvas;
 
 /**
  *

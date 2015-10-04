@@ -38,32 +38,18 @@ public class ToggleSelectionModel extends DefaultListSelectionModel {
         }
     }
 
-    /**
-     * @return the cntrlKey
-     */
     public final synchronized boolean isCntrlKey() {
         return this.cntrlKey;
     }
 
-    /**
-     * @param cntrlKey
-     *            the cntrlKey to set
-     */
     public final synchronized void setCntrlKey(final boolean cntrlKey) {
         this.cntrlKey = cntrlKey;
     }
 
-    /**
-     * @return the shiftKey
-     */
     public final synchronized boolean isShiftKey() {
         return this.shiftKey;
     }
 
-    /**
-     * @param shiftKey
-     *            the shiftKey to set
-     */
     public final synchronized void setShiftKey(final boolean shiftKey) {
         this.shiftKey = shiftKey;
     }

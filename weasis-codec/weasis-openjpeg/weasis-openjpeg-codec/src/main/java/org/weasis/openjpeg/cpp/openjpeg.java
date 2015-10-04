@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -369,15 +369,15 @@ public class openjpeg {
 
     /*
      * ==========================================================
-     * 
+     *
      * image functions definitions
-     * 
+     *
      * ==========================================================
      */
 
     /**
      * Create an image
-     * 
+     *
      * @param numcmpts
      *            number of components
      * @param cmptparms
@@ -391,7 +391,7 @@ public class openjpeg {
 
     /**
      * Deallocate any resources associated with an image
-     * 
+     *
      * @param image
      *            image to be destroyed
      */
@@ -399,42 +399,42 @@ public class openjpeg {
 
     /**
      * Creates an image without allocating memory for the image (used in the new version of the library).
-     * 
+     *
      * @param numcmpts
      *            the number of components
      * @param cmptparms
      *            the components parameters
      * @param clrspc
      *            the image color space
-     * 
+     *
      * @return a new image structure if successful, NULL otherwise.
      */
     // public static native @ByPtr opj_image opj_image_tile_create(@Cast("unsigned int") int numcmpts,
     // opj_image_cmptparm_t *cmptparms, OPJ_COLOR_SPACE clrspc);
 
     /*
-     * 
-     * 
+     *
+     *
      * /* ==========================================================
-     * 
+     *
      * codec functions definitions
-     * 
+     *
      * ==========================================================
      */
 
     /**
      * Creates a J2K/JP2 decompression structure
-     * 
+     *
      * @param format
      *            Decoder to select
-     * 
+     *
      * @return Returns a handle to a decompressor if successful, returns NULL otherwise
      */
     public static native @Cast("void**") Pointer opj_create_decompress(@Cast("OPJ_CODEC_FORMAT") int format);
 
     /**
      * Destroy a decompressor handle
-     * 
+     *
      * @param p_codec
      *            decompressor handle to destroy
      */
@@ -442,7 +442,7 @@ public class openjpeg {
 
     /**
      * Read after the codestream if necessary
-     * 
+     *
      * @param p_codec
      *            the JPEG2000 codec to read.
      * @param p_stream
@@ -453,7 +453,7 @@ public class openjpeg {
 
     /**
      * Set decoding parameters to default values
-     * 
+     *
      * @param parameters
      *            Decompression parameters
      */
@@ -462,12 +462,12 @@ public class openjpeg {
     /**
      * Setup the decoder with decompression parameters provided by the user and with the message handler provided by the
      * user.
-     * 
+     *
      * @param p_codec
      *            decompressor handler
      * @param parameters
      *            decompression parameters
-     * 
+     *
      * @return true if the decoder is correctly set
      */
     public static native @Cast("OPJ_BOOL") boolean opj_setup_decoder(@Cast("void**") Pointer p_codec,
@@ -475,14 +475,14 @@ public class openjpeg {
 
     /**
      * Decodes an image header.
-     * 
+     *
      * @param p_stream
      *            the jpeg2000 stream.
      * @param p_codec
      *            the jpeg2000 codec to read.
      * @param p_image
      *            the image structure initialized with the characteristics of encoded image.
-     * 
+     *
      * @return true if the main header of the codestream and the JP2 header is correctly read.
      */
     public static native @Cast("OPJ_BOOL") boolean opj_read_header(@Cast("void**") Pointer p_stream,
@@ -491,7 +491,7 @@ public class openjpeg {
     /**
      * Sets the given area to be decoded. This function should be called right after opj_read_header and before any tile
      * header reading.
-     * 
+     *
      * @param p_codec
      *            the jpeg2000 codec.
      * @param p_image
@@ -504,7 +504,7 @@ public class openjpeg {
      *            the up position of the rectangle to decode (in image coordinates).
      * @param p_end_y
      *            the bottom position of the rectangle to decode (in image coordinates).
-     * 
+     *
      * @return true if the area could be set.
      */
     public static native @Cast("OPJ_BOOL") boolean opj_set_decode_area(@Cast("void**") Pointer p_codec,
@@ -513,7 +513,7 @@ public class openjpeg {
 
     /**
      * Decode an image from a JPEG-2000 codestream
-     * 
+     *
      * @param p_decompressor
      *            decompressor handle
      * @param p_stream
@@ -527,7 +527,7 @@ public class openjpeg {
 
     /**
      * Get the decoded tile from the codec
-     * 
+     *
      * @param p_codec
      *            the jpeg2000 codec.
      * @param p_stream
@@ -536,7 +536,7 @@ public class openjpeg {
      *            output image
      * @param tile_index
      *            index of the tile which will be decode
-     * 
+     *
      * @return true if success, otherwise false
      */
     public static native @Cast("OPJ_BOOL") boolean opj_get_decoded_tile(@Cast("void**") Pointer p_codec,
@@ -544,12 +544,12 @@ public class openjpeg {
 
     /**
      * Set the resolution factor of the decoded image
-     * 
+     *
      * @param p_codec
      *            the jpeg2000 codec.
      * @param res_factor
      *            resolution factor to set
-     * 
+     *
      * @return true if success, otherwise false
      */
     public static native @Cast("OPJ_BOOL") boolean opj_set_decoded_resolution_factor(@Cast("void**") Pointer p_codec,
@@ -616,19 +616,19 @@ public class openjpeg {
 
     /*
      * ==========================================================
-     * 
+     *
      * stream functions definitions
-     * 
+     *
      * ==========================================================
      */
 
     /**
      * Creates an abstract stream. This function does nothing except allocating memory and initializing the abstract
      * stream.
-     * 
+     *
      * @param p_is_input
      *            if set to true then the stream will be an input stream, an output stream else.
-     * 
+     *
      * @return a stream object.
      */
     public static native @Cast("void**") Pointer opj_stream_default_create(@Cast("OPJ_BOOL") boolean p_is_input);
@@ -636,12 +636,12 @@ public class openjpeg {
     /**
      * Creates an abstract stream. This function does nothing except allocating memory and initializing the abstract
      * stream.
-     * 
+     *
      * @param p_buffer_size
      *            FIXME DOC
      * @param p_is_input
      *            if set to true then the stream will be an input stream, an output stream else.
-     * 
+     *
      * @return a stream object.
      */
     public static native @Cast("void**") Pointer opj_stream_create(@Cast("OPJ_SIZE_T") long p_buffer_size,
@@ -650,7 +650,7 @@ public class openjpeg {
     /**
      * Destroys a stream created by opj_create_stream. This function does NOT close the abstract stream. If needed the
      * user must close its own implementation of the stream.
-     * 
+     *
      * @param p_stream
      *            the stream to destroy.
      */
@@ -661,7 +661,7 @@ public class openjpeg {
 
     /**
      * Sets the given data to be used as a user data for the stream.
-     * 
+     *
      * @param p_stream
      *            the stream to modify
      * @param p_data
@@ -674,7 +674,7 @@ public class openjpeg {
 
     /**
      * Sets the length of the user data for the stream.
-     * 
+     *
      * @param p_stream
      *            the stream to modify
      * @param data_length
@@ -689,14 +689,14 @@ public class openjpeg {
 
     /*
      * ==========================================================
-     * 
+     *
      * event manager functions definitions
-     * 
+     *
      * ==========================================================
      */
     /**
      * Set the info handler use by openjpeg.
-     * 
+     *
      * @param p_codec
      *            the codec previously initialise
      * @param p_callback
@@ -709,7 +709,7 @@ public class openjpeg {
 
     /**
      * Set the warning handler use by openjpeg.
-     * 
+     *
      * @param p_codec
      *            the codec previously initialise
      * @param p_callback
@@ -722,7 +722,7 @@ public class openjpeg {
 
     /**
      * Set the error handler use by openjpeg.
-     * 
+     *
      * @param p_codec
      *            the codec previously initialise
      * @param p_callback

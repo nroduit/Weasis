@@ -241,7 +241,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
             LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
 
             int response = JOptionPane.showConfirmDialog(this,
-                "No file has been found from DICOMDIR, do you want to import manually?", this.getTitle(),
+                Messages.getString("DicomExplorer.mes_import_manual"), this.getTitle(), //$NON-NLS-1$
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
             if (response == JOptionPane.YES_OPTION) {
@@ -282,6 +282,10 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
             } else {
                 dvs.addAll(Arrays.asList(new File("/media").listFiles())); //$NON-NLS-1$
                 dvs.addAll(Arrays.asList(new File("/mnt").listFiles())); //$NON-NLS-1$
+                File userDir = new File("/media/" + System.getProperty("user.name", "local")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                if (userDir.exists()) {
+                    dvs.addAll(Arrays.asList(userDir.listFiles()));
+                }
             }
         } catch (Throwable e) {
             LOGGER.error("Error when reading device directories: {}", e.getMessage()); //$NON-NLS-1$

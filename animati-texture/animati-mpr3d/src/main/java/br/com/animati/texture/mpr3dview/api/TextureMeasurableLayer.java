@@ -30,10 +30,12 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.graphic.Graphic;
 
-import com.jogamp.opengl.util.texture.TextureData;
-
 import br.com.animati.texture.mpr3dview.ViewTexture;
 import br.com.animati.texture.mpr3dview.internal.Activator;
+import br.com.animati.texturedicom.TextureData;
+import br.com.animati.texturedicom.rendering.RenderHelper;
+import br.com.animati.texturedicom.rendering.RenderResult;
+import br.com.animati.texturedicom.rendering.RenderResultListener;
 
 /**
  *
@@ -136,7 +138,7 @@ public class TextureMeasurableLayer implements MeasurableLayer {
 
     /**
      * Used for DEBUG.
-     * 
+     *
      * @param image
      * @param transform
      * @param mShape

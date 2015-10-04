@@ -39,10 +39,10 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.codec.utils.DicomImageUtils;
-import org.weasis.dicom.codec.utils.LutParameters;
 
-import com.jogamp.opengl.util.texture.TextureData;
+import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.ImageSeriesSliceAddedListener;
+import br.com.animati.texturedicom.TextureData;
 
 /**
  * Builds the texturedicom ImageSeries.
@@ -558,77 +558,6 @@ public class ImageSeriesFactory {
     }
 
     /**
-     * DICOM PS 3.3 $C.11.1 Modality LUT Module
-     *
-     * The LUT Data contains the LUT entry values.
-     *
-     * The output range of the Modality LUT Module depends on whether or not Rescale Slope (0028,1053) and Rescale
-     * Intercept (0028,1052) or the Modality LUT Sequence (0028,3000) are used. In the case where Rescale Slope and
-     * Rescale Intercept are used, the output ranges from (minimum pixel value*Rescale Slope+Rescale Intercept) to
-     * (maximum pixel value*Rescale - Slope+Rescale Intercept), where the minimum and maximum pixel values are
-     * determined by Bits Stored and Pixel Representation. Note: This range may be signed even if Pixel Representation
-     * is unsigned.
-     *
-     * In the case where the Modality LUT Sequence is used, the output range is from 0 to 2n-1 where n is the third
-     * value of LUT Descriptor. This range is always unsigned.
-     *
-     * @param pixelPadding
-     * @return The modality lookup table.
-     */
-    public static LookupTableJAI getModalityLookup(final DicomImageElement elmt, final boolean pixelPadding) {
-
-        Integer paddingValue = elmt.getPaddingValue();
-
-        // Always false, becouse inversion will be done by the texture.
-        final boolean inverseLUTAction = false;
-
-        final LookupTableJAI mLUTSeq = (LookupTableJAI) elmt.getTagValue(TagW.ModalityLUTData);
-
-        if (mLUTSeq != null && (!pixelPadding || paddingValue == null)) {
-            return mLUTSeq;
-        }
-        boolean modSeqLUT = mLUTSeq != null;
-        boolean inverseLut = elmt.isPhotometricInterpretationInverse();
-        if (pixelPadding) {
-            inverseLut ^= inverseLUTAction;
-        }
-
-        LutParameters lutparams = elmt.getLutParameters(pixelPadding, modSeqLUT, inverseLut);
-        // Not required to have a modality lookup table
-        if (lutparams == null) {
-            return null;
-        }
-
-        LookupTableJAI modalityLookup = null;
-        if (modSeqLUT) {
-            if (mLUTSeq != null && mLUTSeq.getNumBands() == 1) {
-                if (mLUTSeq.getDataType() == DataBuffer.TYPE_BYTE) {
-                    byte[] data = mLUTSeq.getByteData(0);
-                    if (data != null) {
-                        modalityLookup = new LookupTableJAI(data, mLUTSeq.getOffset(0));
-                    }
-                } else {
-                    short[] data = mLUTSeq.getShortData(0);
-                    if (data != null) {
-                        modalityLookup = new LookupTableJAI(data, mLUTSeq.getOffset(0),
-                            mLUTSeq.getData() instanceof DataBufferUShort);
-                    }
-                }
-            }
-            if (modalityLookup == null) {
-                modalityLookup = mLUTSeq == null ? DicomImageUtils.createRescaleRampLut(lutparams) : mLUTSeq;
-            }
-        } else {
-            modalityLookup = DicomImageUtils.createRescaleRampLut(lutparams);
-        }
-
-        if (elmt.isPhotometricInterpretationMonochrome()) {
-            DicomImageUtils.applyPixelPaddingToModalityLUT(modalityLookup, lutparams);
-        }
-        return modalityLookup;
-    }
-
-    /**
      * Loads one image to a texture.
      *
      * @param element
@@ -653,7 +582,7 @@ public class ImageSeriesFactory {
         }
 
         // Modality LUT
-        final LookupTableJAI modalityLookup = getModalityLookup(dicomElement, true);
+        final LookupTableJAI modalityLookup = dicomElement.getModalityLookup(true);
 
         boolean hasModalityLUT = false;
         PlanarImage imageMLUT;

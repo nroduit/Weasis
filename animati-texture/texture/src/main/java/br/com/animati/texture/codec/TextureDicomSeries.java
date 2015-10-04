@@ -28,7 +28,8 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 
-import com.jogamp.opengl.util.texture.TextureData;
+import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.TextureData;
 
 /**
  * Implements methods to get the ImageSeries of texturedicom more usable by weasis components.

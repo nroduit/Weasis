@@ -26,6 +26,9 @@ import org.weasis.core.ui.graphic.model.Canvas;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.MainLayerModel;
 
+import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.TextureImageCanvas;
+
 /**
  *
  * @author Gabriela Bauermann (gabriela@animati.com.br)

@@ -51,7 +51,9 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -174,25 +176,33 @@ public final class JIThumbnailList extends JList
 
     @Override
     public String getToolTipText(final MouseEvent evt) {
-        // if (!JIPreferences.getInstance().isThumbnailToolTips()) {
-        // return null;
-        // }
-        // Get item index
         final int index = locationToIndex(evt.getPoint());
         if (index < 0) {
-            return "";
+            return ""; //$NON-NLS-1$
         }
 
-        // Get item
         final Object item = getModel().getElementAt(index);
 
-        if (((MediaElement) item).getName() == null) {
+        if (item == null || ((MediaElement) item).getName() == null) {
             return null;
         }
 
-        return "<html>" + ((MediaElement) item).getName() + "<br> Size: "
-            + intGroupFormat.format(((MediaElement) item).getLength() / 1024L) + " KB<br>" + "Date: "
-            + new Date(((MediaElement) item).getLastModified()).toString() + "</html>";
+        StringBuilder toolTips = new StringBuilder();
+        toolTips.append("<html>"); //$NON-NLS-1$
+        toolTips.append(((MediaElement) item).getName());
+        toolTips.append("<br>"); //$NON-NLS-1$
+        toolTips.append(Messages.getString("JIThumbnailList.size")); //$NON-NLS-1$
+        toolTips.append(StringUtil.COLON_AND_SPACE);
+        toolTips.append(FileUtil.formatSize(((MediaElement) item).getLength()));
+        toolTips.append("<br>"); //$NON-NLS-1$
+
+        toolTips.append(Messages.getString("JIThumbnailList.date")); //$NON-NLS-1$
+        toolTips.append(StringUtil.COLON_AND_SPACE);
+        toolTips.append(TagW.formatDateTime(new Date(((MediaElement) item).getLastModified())));
+        toolTips.append("<br>"); //$NON-NLS-1$
+        toolTips.append("</html>"); //$NON-NLS-1$
+
+        return toolTips.toString();
     }
 
     public void reset() {
@@ -219,7 +229,7 @@ public final class JIThumbnailList extends JList
                 Codec codec = reader.getCodec();
                 String sUID;
                 String gUID;
-                if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) {
+                if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) { //$NON-NLS-1$
                     if (reader.getMediaElement() == null) {
                         // DICOM is not readable
                         return null;
@@ -267,7 +277,7 @@ public final class JIThumbnailList extends JList
                     String tvalue;
 
                     Codec codec = reader.getCodec();
-                    if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) {
+                    if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) { //$NON-NLS-1$
                         if (reader.getMediaElement() == null) {
                             // DICOM is not readable
                             return;
@@ -409,7 +419,7 @@ public final class JIThumbnailList extends JList
         if (mediaElement != null) {
             String mime = mediaElement.getMimeType();
             if (mime != null) {
-                return mime.indexOf("dicom") != -1;
+                return mime.indexOf("dicom") != -1; //$NON-NLS-1$
             }
         }
         return false;
@@ -427,7 +437,6 @@ public final class JIThumbnailList extends JList
 
             final int val = (lastIndex + visibleItems >= getModel().getSize()) ? getModel().getSize() - 1
                 : lastIndex + visibleItems;
-            // log.debug("Next index is " + val + " " + lastIndex + " " + visibleItems + " " + visibleRows);
             clearSelection();
             setSelectedIndex(val);
             fireSelectionValueChanged(val, val, false);
@@ -449,7 +458,6 @@ public final class JIThumbnailList extends JList
             final int visibleItems = visibleRows * visibleColums;
 
             final int val = ((firstIndex - 1) - visibleItems < 0) ? 0 : (firstIndex - 1) - visibleItems;
-            // log.debug("Next index is " + val + " " + lastIndex + " " + visibleItems + " " + visibleRows);
             clearSelection();
             setSelectedIndex(val);
             fireSelectionValueChanged(val, val, false);
@@ -477,7 +485,7 @@ public final class JIThumbnailList extends JList
 
     private Action refreshAction() {
         // TODO set this action in toolbar
-        return new AbstractAction("Refresh List") {
+        return new AbstractAction(Messages.getString("JIThumbnailList.refresh_list")) { //$NON-NLS-1$
 
             @Override
             public void actionPerformed(final ActionEvent e) {
@@ -565,12 +573,13 @@ public final class JIThumbnailList extends JList
                 final MediaElement[] medias = selMedias;
 
                 JPopupMenu popupMenu = new JPopupMenu();
-                TitleMenuItem itemTitle = new TitleMenuItem("Selection Menu", popupMenu.getInsets());
+                TitleMenuItem itemTitle =
+                    new TitleMenuItem(Messages.getString("JIThumbnailList.sel_menu"), popupMenu.getInsets()); //$NON-NLS-1$
                 popupMenu.add(itemTitle);
                 popupMenu.addSeparator();
 
                 if (medias.length == 1) {
-                    JMenuItem menuItem = new JMenuItem(new AbstractAction("Open") {
+                    JMenuItem menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.open")) { //$NON-NLS-1$
 
                         @Override
                         public void actionPerformed(final ActionEvent e) {
@@ -579,7 +588,7 @@ public final class JIThumbnailList extends JList
                     });
                     popupMenu.add(menuItem);
 
-                    menuItem = new JMenuItem(new AbstractAction("Open in a new window") {
+                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.open_win")) { //$NON-NLS-1$
 
                         @Override
                         public void actionPerformed(final ActionEvent e) {
@@ -589,7 +598,7 @@ public final class JIThumbnailList extends JList
 
                     popupMenu.add(menuItem);
 
-                    menuItem = new JMenuItem(new AbstractAction("Add to the selected Window") {
+                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.open_sel_win")) { //$NON-NLS-1$
 
                         @Override
                         public void actionPerformed(final ActionEvent e) {
@@ -598,17 +607,18 @@ public final class JIThumbnailList extends JList
                     });
                     popupMenu.add(menuItem);
                 } else {
-                    JMenu menu = new JMenu("Open in a new window");
-                    JMenuItem menuItem = new JMenuItem(new AbstractAction("in stack mode") {
+                    JMenu menu = new JMenu(Messages.getString("JIThumbnailList.open_win")); //$NON-NLS-1$
+                    JMenuItem menuItem =
+                        new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.stack_mode")) { //$NON-NLS-1$
 
-                        @Override
-                        public void actionPerformed(final ActionEvent e) {
-                            openGroup(medias, false, true, false, false);
-                        }
+                            @Override
+                            public void actionPerformed(final ActionEvent e) {
+                                openGroup(medias, false, true, false, false);
+                            }
 
-                    });
+                        });
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(new AbstractAction("in layout mode") {
+                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.layout_mode")) { //$NON-NLS-1$
 
                         @Override
                         public void actionPerformed(final ActionEvent e) {
@@ -619,8 +629,8 @@ public final class JIThumbnailList extends JList
                     menu.add(menuItem);
                     popupMenu.add(menu);
 
-                    menu = new JMenu("Add to the selected Window");
-                    menuItem = new JMenuItem(new AbstractAction("in stack mode") {
+                    menu = new JMenu(Messages.getString("JIThumbnailList.add_to_win")); //$NON-NLS-1$
+                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.stack_mode")) { //$NON-NLS-1$
 
                         @Override
                         public void actionPerformed(final ActionEvent e) {
@@ -629,7 +639,7 @@ public final class JIThumbnailList extends JList
 
                     });
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(new AbstractAction("in layout mode") {
+                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.layout_mode")) { //$NON-NLS-1$
 
                         @Override
                         public void actionPerformed(final ActionEvent e) {

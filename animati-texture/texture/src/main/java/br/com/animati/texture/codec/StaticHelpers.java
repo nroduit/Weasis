@@ -27,6 +27,9 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 
+import br.com.animati.texturedicom.ColorMask;
+import br.com.animati.texturedicom.cl.CLConvolution;
+
 /**
  *
  * @author Gabriela Bauermann (gabriela@animati.com.br)
@@ -207,7 +210,6 @@ public final class StaticHelpers {
 
         Collections.sort(cmList, new Comparator<ColorMask>() {
             @Override
-            @Override
             public int compare(ColorMask o1, ColorMask o2) {
                 if (o1 == null || o2 == null || o1.toString() == null || o2.toString() == null) {
                     return 0;
@@ -256,7 +258,6 @@ public final class StaticHelpers {
             LUT_VOLUMETRIC.setImage(StaticHelpers.class.getResource("/textures/DefaultVolumetricColorMask.png"));
 
             Collections.sort(cmList, new Comparator<ColorMask>() {
-                @Override
                 @Override
                 public int compare(ColorMask o1, ColorMask o2) {
                     if (o1 == null || o2 == null || o1.toString() == null || o2.toString() == null) {

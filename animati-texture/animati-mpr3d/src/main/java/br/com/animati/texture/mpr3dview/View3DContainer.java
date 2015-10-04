@@ -86,6 +86,8 @@ import br.com.animati.texture.mpr3dview.internal.Messages;
 import br.com.animati.texture.mpr3dview.tool.DisplayTool;
 import br.com.animati.texture.mpr3dview.tool.ImageTool;
 import br.com.animati.texture.mpr3dview.tool.TextureToolbar;
+import br.com.animati.texturedicom.ControlAxes;
+import br.com.animati.texturedicom.ImageSeries;
 
 /**
  *

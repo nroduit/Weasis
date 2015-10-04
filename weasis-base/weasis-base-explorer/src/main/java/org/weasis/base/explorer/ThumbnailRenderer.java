@@ -23,8 +23,8 @@ import org.weasis.core.api.util.FontTools;
 public class ThumbnailRenderer extends JPanel implements ListCellRenderer {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
-    private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER);
-    private final JLabel descriptionLabel = new JLabel("", SwingConstants.CENTER);
+    private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER); //$NON-NLS-1$
+    private final JLabel descriptionLabel = new JLabel("", SwingConstants.CENTER); //$NON-NLS-1$
     private static final Color back = new Color(242, 242, 242);
 
     public ThumbnailRenderer() {

@@ -50,10 +50,10 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     private static final JIExplorerContext treeContext = new JIExplorerContext();
 
-    public static final String BUTTON_NAME = "Explorer";
-    public static final String NAME = "Media Explorer";
-    public static final String P_LAST_DIR = "last.dir";
-    private static final String PREFERENCE_NODE = "view";
+    public static final String BUTTON_NAME = "Explorer"; //$NON-NLS-1$
+    public static final String NAME = Messages.getString("DefaultExplorer.name"); //$NON-NLS-1$
+    public static final String P_LAST_DIR = "last.dir"; //$NON-NLS-1$
+    private static final String PREFERENCE_NODE = "view"; //$NON-NLS-1$
 
     protected FileTreeModel model;
     protected TreePath clickedPath;
@@ -75,7 +75,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         this.changed = false;
 
         this.model = model;
-        tree.putClientProperty("JTree.lineStyle", "Angled");
+        tree.putClientProperty("JTree.lineStyle", "Angled"); //$NON-NLS-1$ //$NON-NLS-2$
 
         final TreeRenderer renderer = new TreeRenderer();
         tree.setCellRenderer(renderer);
@@ -89,10 +89,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         tree.setAlignmentX((float) 0.5);
         tree.setShowsRootHandles(false);
-        // setTransferHandler(new NodeTransferHandler());
         tree.setDragEnabled(false);
 
-        // gotoLastDirectory();
         JScrollPane treePane = new JScrollPane(tree);
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, treePane, jilist);
         splitPane.setOneTouchExpandable(true);
@@ -102,7 +100,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         treePane.setMinimumSize(minimumSize);
         treePane.setMinimumSize(minimumSize);
 
-        // jRootPanel.setPreferredSize(new Dimension(500, 700));
         jRootPanel.setLayout(new BorderLayout());
         jRootPanel.add(splitPane, BorderLayout.CENTER);
     }
@@ -117,10 +114,10 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         Preferences prefs =
             BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
         if (prefs == null) {
-            prefDir = new File(System.getProperty("user.home"));
+            prefDir = new File(System.getProperty("user.home")); //$NON-NLS-1$
         } else {
             Preferences p = prefs.node(PREFERENCE_NODE);
-            prefDir = new File(p.get(P_LAST_DIR, System.getProperty("user.home")));
+            prefDir = new File(p.get(P_LAST_DIR, System.getProperty("user.home"))); //$NON-NLS-1$
         }
 
         if (prefDir.canRead() && prefDir.isDirectory()) {
@@ -199,7 +196,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
 
     public final TreeNode findChildNode(final TreeNode parentTreeNode, final File selectedSubDir) {
-        // log.info("findChildNode " + selectedSubDir.getPath());
         if (!parentTreeNode.isExplored()) {
             parentTreeNode.explore();
         }
@@ -221,8 +217,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
 
     public final TreeNode findNodeForDir(final File dir) {
-        // log.info("findNodeForDir " + dir.getPath());
-
         TreeNode parentNode = (TreeNode) tree.getModel().getRoot();
 
         if (!parentNode.isExplored()) {
@@ -277,10 +271,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             }
 
             if (pathNotFound) {
-                // log.info("findNodeForDir NULL");
                 return null;
             } else {
-                // log.info("findNodeForDir " + parentNode);
                 return parentNode;
             }
         }
@@ -371,7 +363,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
         try {
             JPopupMenu popupMenu = new JPopupMenu();
-            TitleMenuItem itemTitle = new TitleMenuItem("Selected Path", popupMenu.getInsets());
+            TitleMenuItem itemTitle =
+                new TitleMenuItem(Messages.getString("DefaultExplorer.sel_path"), popupMenu.getInsets()); //$NON-NLS-1$
             popupMenu.add(itemTitle);
             popupMenu.addSeparator();
 
@@ -382,7 +375,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                 return null;
             }
 
-            JMenuItem menuItem = new JMenuItem(new AbstractAction(tree.isExpanded(path) ? "Collapse" : "Expand") {
+            JMenuItem menuItem = new JMenuItem(new AbstractAction(tree.isExpanded(path)
+                ? Messages.getString("DefaultExplorer.collapse") : Messages.getString("DefaultExplorer.expand")) { //$NON-NLS-1$ //$NON-NLS-2$
 
                 @Override
                 public void actionPerformed(final ActionEvent e) {
@@ -398,7 +392,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             });
             popupMenu.add(menuItem);
 
-            menuItem = new JMenuItem(new AbstractAction("Refresh") {
+            menuItem = new JMenuItem(new AbstractAction(Messages.getString("DefaultExplorer.refresh")) { //$NON-NLS-1$
 
                 @Override
                 public void actionPerformed(final ActionEvent e) {
@@ -410,8 +404,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             popupMenu.addSeparator();
 
             boolean importAction = false;
-            JMenu scan = new JMenu("Import to");
-            JMenu scansub = new JMenu("Import subfolders to");
+            JMenu scan = new JMenu(Messages.getString("DefaultExplorer.import_to")); //$NON-NLS-1$
+            JMenu scansub = new JMenu(Messages.getString("DefaultExplorer.import_sub")); //$NON-NLS-1$
 
             synchronized (UIManager.EXPLORER_PLUGINS) {
                 for (final DataExplorerView dataExplorerView : UIManager.EXPLORER_PLUGINS) {
@@ -475,7 +469,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
         final TreeNode node = findNodeForDir(selectedDir);
         if (node == null) {
-            // log.debug("expandPaths NULL ");
             return;
         }
 
@@ -487,7 +480,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
         if (!tree.isExpanded(newPath)) {
             tree.expandPath(newPath);
-            // log.debug("expandPaths expandPath " + newPath);
         }
         tree.setSelectionPath(newPath);
         tree.scrollPathToVisible(newPath);

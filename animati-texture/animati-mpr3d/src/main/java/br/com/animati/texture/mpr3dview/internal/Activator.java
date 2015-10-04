@@ -25,6 +25,9 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.viewer2d.EventManager;
 
+import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.cl.CLManager;
+
 /**
  *
  * @author Gabriela Bauermann (gabriela@animati.com.br)

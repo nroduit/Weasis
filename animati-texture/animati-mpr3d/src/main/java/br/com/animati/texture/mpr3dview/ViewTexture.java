@@ -131,6 +131,11 @@ import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
 import br.com.animati.texture.mpr3dview.api.TextureMeasurableLayer;
 import br.com.animati.texture.mpr3dview.internal.Activator;
 import br.com.animati.texture.mpr3dview.internal.Messages;
+import br.com.animati.texturedicom.ColorMask;
+import br.com.animati.texturedicom.ControlAxes;
+import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.TextureImageCanvas;
+import br.com.animati.texturedicom.cl.CLConvolution;
 
 /**
  *

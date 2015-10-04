@@ -35,6 +35,7 @@ import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -67,11 +68,12 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
         new Measurement(Messages.getString("measure.centerx"), 7, true, true, false); //$NON-NLS-1$
     public static final Measurement CENTROID_Y =
         new Measurement(Messages.getString("measure.centery"), 8, true, true, false); //$NON-NLS-1$
-    public static final Measurement WIDTH_MBR =
-        new Measurement(Messages.getString("measure.width") + " (MBR)", 9, false, true, false); //$NON-NLS-1$
-    public static final Measurement HEIGHT_MBR =
-        new Measurement(Messages.getString("measure.height") + " (MBR)", 10, false, true, false); //$NON-NLS-1$
-
+    public static final Measurement WIDTH_OMBB =
+        new Measurement(Messages.getString("measure.width") + " (OMBB)", 9, false, true, false); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final Measurement LENGTH_OMBB =
+        new Measurement(Messages.getString("measure.length") + " (OMBB)", 10, false, true, false); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final Measurement ORIENTATION_OMBB =
+        new Measurement(Messages.getString("measure.orientation") + " (OMBB)", 10, false, true, false); //$NON-NLS-1$ //$NON-NLS-2$
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public PolygonGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
@@ -271,23 +273,28 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                     val = (lineSegmentList != null) ? getPerimeter(lineSegmentList) * ratio : null;
                     measVal.add(new MeasureItem(PERIMETER, val, unitStr));
                 }
-                if (releaseEvent && (WIDTH_MBR.isComputed() || HEIGHT_MBR.isComputed())) {
+                if (releaseEvent && (WIDTH_OMBB.isComputed() || LENGTH_OMBB.isComputed())) {
+                    Double l = null;
                     Double w = null;
-                    Double h = null;
+                    Double o = null;
 
                     MinimumEnclosingRectangle rect = new MinimumEnclosingRectangle(handlePointList, false);
                     List<java.awt.geom.Point2D.Double> minRect = rect.getMinimumRectangle();
                     if (minRect != null && minRect.size() == 4) {
-                        w = ratio * minRect.get(0).distance(minRect.get(1));
-                        h = ratio * minRect.get(1).distance(minRect.get(2));
-                        if (w < h) {
-                            double tmp = w;
-                            w = h;
-                            h = tmp;
+                        l = ratio * minRect.get(0).distance(minRect.get(1));
+                        w = ratio * minRect.get(1).distance(minRect.get(2));
+                        o = MathUtil.getOrientation(minRect.get(0), minRect.get(1));
+                        if (l < w) {
+                            double tmp = l;
+                            l = w;
+                            w = tmp;
+                            o = MathUtil.getOrientation(minRect.get(1), minRect.get(2));
                         }
+
                     }
-                    measVal.add(new MeasureItem(WIDTH_MBR, w, unitStr));
-                    measVal.add(new MeasureItem(HEIGHT_MBR, h, unitStr));
+                    measVal.add(new MeasureItem(LENGTH_OMBB, l, unitStr));
+                    measVal.add(new MeasureItem(WIDTH_OMBB, w, unitStr));
+                    measVal.add(new MeasureItem(ORIENTATION_OMBB, o, Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
 
                 List<MeasureItem> stats = getImageStatistics(layer, releaseEvent);

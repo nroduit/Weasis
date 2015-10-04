@@ -8,9 +8,6 @@ import org.weasis.core.api.media.data.MediaElement;
 
 public class OrderedFileList extends Vector<MediaElement> {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = -6210090952004948225L;
     private static final int SORT_BY_PATH = 4;
     private static final int SORT_BY_DATE = 3;

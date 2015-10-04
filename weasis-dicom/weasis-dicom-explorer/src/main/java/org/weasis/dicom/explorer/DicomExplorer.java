@@ -1286,19 +1286,23 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         SeriesPane p = getSeriesPane(s);
                         if (p != null) {
                             JViewport vp = thumnailView.getViewport();
-                            Point pt2 =
-                                SwingUtilities.convertPoint(p, new Point(0, p.getHeight() / 2), patientContainer);
-                            pt2.x = vp.getViewPosition().x;
-                            pt2.y -= vp.getHeight() / 2;
-                            int maxHeight = (int) (vp.getViewSize().getHeight() - vp.getExtentSize().getHeight());
-                            if (pt2.y < 0) {
-                                pt2.y = 0;
-                            } else if (pt2.y > maxHeight) {
-                                pt2.y = maxHeight;
+                            Rectangle bound = vp.getViewRect();
+                            Point ptmin = SwingUtilities.convertPoint(p, new Point(0, 0), patientContainer);
+                            Point ptmax = SwingUtilities.convertPoint(p, new Point(0, p.getHeight()), patientContainer);
+                            if (!bound.contains(ptmin.x, ptmin.y) || !bound.contains(ptmax.x, ptmax.y)) {
+                                Point pt = vp.getViewPosition();
+                                pt.y = (ptmax.y - ptmin.y) / 2;
+                                pt.y -= vp.getHeight() / 2;
+                                int maxHeight = (int) (vp.getViewSize().getHeight() - vp.getExtentSize().getHeight());
+                                if (pt.y < 0) {
+                                    pt.y = 0;
+                                } else if (pt.y > maxHeight) {
+                                    pt.y = maxHeight;
+                                }
+                                vp.setViewPosition(pt);
+                                // Clear the selection when another view is selected
+                                getSelectionList().clear();
                             }
-                            vp.setViewPosition(pt2);
-                            // Clear the selection when another view is selected
-                            getSelectionList().clear();
                         }
                     }
                 }
@@ -1604,7 +1608,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
                             final GraphicsDevice[] gd = ge.getScreenDevices();
                             if (gd.length > 0) {
-                                JMenu subMenu = new JMenu("Open in screen");
+                                JMenu subMenu = new JMenu(Messages.getString("DicomExplorer.open_screen")); //$NON-NLS-1$
                                 for (int i = 0; i < gd.length; i++) {
                                     GraphicsConfiguration config = gd[i].getDefaultConfiguration();
                                     final Rectangle b = config.getBounds();
@@ -1960,7 +1964,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                             int response =
                                 JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(DicomExplorer.this),
-                                    "No file has been found from DICOMDIR, do you want to import manually?",
+                                    Messages.getString("DicomExplorer.mes_import_manual"), //$NON-NLS-1$
                                     (String) this.getValue(Action.NAME), JOptionPane.YES_NO_OPTION,
                                     JOptionPane.WARNING_MESSAGE);
 
@@ -1968,7 +1972,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
                                 DicomImport dialog =
                                     new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
-                                dialog.showPage(Messages.getString("DicomDirImport.imp_dicom")); //$NON-NLS-1$
+                                dialog.showPage(Messages.getString("LocalImport.local_dev")); //$NON-NLS-1$
                                 AbstractItemDialogPage page = dialog.getCurrentPage();
                                 if (page instanceof LocalImport) {
                                     ((LocalImport) page).setImportPath(file.getParent());
