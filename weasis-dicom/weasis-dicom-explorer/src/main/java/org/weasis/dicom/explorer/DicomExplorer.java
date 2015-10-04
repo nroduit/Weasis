@@ -1291,7 +1291,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             Point ptmax = SwingUtilities.convertPoint(p, new Point(0, p.getHeight()), patientContainer);
                             if (!bound.contains(ptmin.x, ptmin.y) || !bound.contains(ptmax.x, ptmax.y)) {
                                 Point pt = vp.getViewPosition();
-                                pt.y = (ptmax.y - ptmin.y) / 2;
+                                pt.y = ptmin.y + (ptmax.y - ptmin.y) / 2;
                                 pt.y -= vp.getHeight() / 2;
                                 int maxHeight = (int) (vp.getViewSize().getHeight() - vp.getExtentSize().getHeight());
                                 if (pt.y < 0) {
