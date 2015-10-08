@@ -367,15 +367,19 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
      * @return the corrected level to be applied to this series.
      */
     public int getCorrectedValueForLevel(int level) {
-        Float interceptVal = (Float) getTagValue(TagW.RescaleIntercept);
-        double intercept = 0.0d;
-        if (TextureData.Format.UnsignedShort.equals(getTextureData().getFormat()) && interceptVal != null) {
-            intercept = interceptVal;
-        }
         Float slopeVal = (Float) getTagValue(TagW.RescaleSlope);
         final double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
 
-        double lev = (level / slope) + (windowingMinInValue - (intercept / slope));
+        Float interceptVal = (Float) getTagValue(TagW.RescaleIntercept);
+        if (interceptVal == null) {
+            interceptVal = 0.0F;
+        }
+        double intercept = 0.0d;
+        if (TextureData.Format.UnsignedShort.equals(getTextureData().getFormat())) {
+            intercept = (windowingMinInValue - (interceptVal / slope));
+        } 
+
+        double lev = (level / slope) + intercept;
         return (int) Math.round(lev);
     }
 
