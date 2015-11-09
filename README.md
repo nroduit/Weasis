@@ -60,5 +60,7 @@ See the instructions [here](http://www.dcm4che.org/confluence/display/WEA/Buildi
 
 The snapshot version may require to build first other snapshot dependencies:
 
-* [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools)
-* [dcm4che3 - dcm4che-native-codec branch](https://github.com/nroduit/dcm4che/tree/dcm4che-native-codec)
+1. [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools)
+1. In weasis-parent, run "mvn clean install"
+1. In weasis-codec, run "mvn clean install"
+1. [dcm4che3 - dcm4che-native-codec branch](https://github.com/nroduit/dcm4che/tree/dcm4che-native-codec)
