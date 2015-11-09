@@ -74,7 +74,7 @@
 		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-tools</artifactId>
-			<version>0.9.8-SNAPSHOT</version>
+			<version>1.0.0-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>junit</groupId>
