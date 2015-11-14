@@ -352,6 +352,8 @@ public class DicomPrint {
             dcmObj.setInt(Tag.BitsAllocated, VR.US, 8);
             dcmObj.setInt(Tag.BitsStored, VR.US, 8);
             dcmObj.setInt(Tag.HighBit, VR.US, 7);
+            // Assumed that the displayed image has always an 1/1 aspect ratio.
+            dcmObj.setInt(Tag.PixelAspectRatio, VR.IS, 1, 1);
             // Issue with some PrintSCP servers
             // dcmObj.putString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
             if (printInColor) {
