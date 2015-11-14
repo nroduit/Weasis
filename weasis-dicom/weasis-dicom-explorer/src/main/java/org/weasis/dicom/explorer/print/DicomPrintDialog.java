@@ -666,7 +666,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
             dicomPrint.printImage(dicomPrint.printImage(layout, printOptions));
         } catch (Exception ex) {
             AuditLog.logError(LOGGER, ex, "DICOM Print Service"); //$NON-NLS-1$
-            JOptionPane.showMessageDialog(this, Messages.getString(Messages.getString("DicomPrintDialog.error_print")), // $NON-NLS-1$ //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("DicomPrintDialog.error_print"), // $NON-NLS-1$ //$NON-NLS-1$
                 Messages.getString(Messages.getString("DicomPrintDialog.error")), JOptionPane.ERROR_MESSAGE); // $NON-NLS-1$ //$NON-NLS-1$
         } finally {
             layout.dispose();
