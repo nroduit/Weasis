@@ -24,17 +24,17 @@
 
 		<pack200.ext></pack200.ext>
 
-		<felix.framework.version>5.0.1-p1</felix.framework.version>
+		<felix.framework.version>5.4.0-p1</felix.framework.version>
 		<felix.gogo.version>0.16.2</felix.gogo.version>
-		<felix.gogo.shell.version>0.10.0-r1</felix.gogo.shell.version>
-		<felix.gogo.command.version>0.14.0</felix.gogo.command.version>
+		<felix.gogo.shell.version>0.12.0</felix.gogo.shell.version>
+		<felix.gogo.command.version>0.16.0</felix.gogo.command.version>
 
 		<felix.servlet.version>1.0.0</felix.servlet.version>
-		<felix.bundlerepository.version>2.0.4</felix.bundlerepository.version>
-		<felix.configadmin.version>1.8.6</felix.configadmin.version>
+		<felix.bundlerepository.version>2.0.6</felix.bundlerepository.version>
+		<felix.configadmin.version>1.8.8</felix.configadmin.version>
 		<felix.prefs.version>1.0.6</felix.prefs.version>
-		<felix.scr.version>1.8.2</felix.scr.version>
-		<felix.metatype.version>1.0.12</felix.metatype.version>
+		<felix.scr.version>2.0.2</felix.scr.version>
+		<felix.metatype.version>1.1.2</felix.metatype.version>
 		<slf4j.version>1.7.5</slf4j.version>
 		<sling.commons.log.version>3.0.2-r1</sling.commons.log.version>
 
