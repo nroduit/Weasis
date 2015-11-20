@@ -35,7 +35,7 @@ AMD ATI: Radeon HD (2000 ou higher)
 - Build and Run the same way you do with Weasis, the only diference is that you have to install TextureDicom manually.
 The .jar is on weasis_texture/animati-texture/animatik-lib folder. If you use Netbeans, you just have open de Dependency folder, click with the right button on the TextureDicom entry and chose Instal manually. Or you can do it using maven command line.
 
-ex.: mvn install:install-file -Dfile=TextureDicom-1.1.9.jar -DgroupId=br.com.animati -DartifactId=texturedicom_pg -Dversion=1.1.9 -Dpackaging=jar
+ex.: mvn install:install-file -Dfile=TextureDicom_1110.jar -DgroupId=br.com.animati -DartifactId=texturedicom_pg -Dversion=1.1.10 -Dpackaging=jar
 
 
 ### About the modules ###
