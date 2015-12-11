@@ -187,7 +187,7 @@ public class ByteLutCollection {
                 if (files[i].isFile() && files[i].canRead()) {
                     try {
                         scan = new Scanner(files[i], "UTF-8"); //$NON-NLS-1$
-                        byte[][] lut = readLutFile(new Scanner(files[i], "UTF-8")); //$NON-NLS-1$
+                        byte[][] lut = readLutFile(scan); // $NON-NLS-1$
                         luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut,
                             ByteLutCollection.invert(lut)));
                     } catch (Exception e) {
