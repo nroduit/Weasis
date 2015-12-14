@@ -52,16 +52,15 @@ import org.weasis.dicom.explorer.GraphicUtil;
 public class PRManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
 
-    // private PresentationStateReader prReader;
-    // private DicomImageElement image;
-    //
-    // private PRManager(PresentationStateReader reader, DicomImageElement img) {
-    // if (reader == null || img == null) {
-    // throw new IllegalArgumentException("Arguments cannot be null");
-    // }throws IllegalStateException
-    // this.image = img;
-    // this.prReader = reader;
-    // }
+    public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
+    public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel"; //$NON-NLS-1$
+    public static final String TAG_ORIG_ModalityLUTData = "original.modality.lut"; //$NON-NLS-1$
+    public static final String TAG_ORIG_RescaleSlope = "original.rescale.slope"; //$NON-NLS-1$
+    public static final String TAG_ORIG_RescaleIntercept = "original.rescale.intercept"; //$NON-NLS-1$
+    public static final String TAG_ORIG_RescaleType = "original.rescale.type"; //$NON-NLS-1$
+    public static final String TAG_ORIG_PresentationLUTShape = "original.pr.lut.shape"; //$NON-NLS-1$
+    public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
+    public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers"; //$NON-NLS-1$
 
     public static void applyPresentationState(View2d view, PresentationStateReader reader, DicomImageElement img) {
         if (view == null || reader == null || img == null) {
@@ -83,7 +82,7 @@ public class PRManager {
                 event.setShareObject(layer.getIdentifier());
                 eventManager.fireSeriesViewerListeners(event);
             }
-            view.setActionsInView(PresentationStateReader.TAG_DICOM_LAYERS, list);
+            view.setActionsInView(PRManager.TAG_DICOM_LAYERS, list);
             view.getLayerModel().SortLayersFromLevel();
         }
     }

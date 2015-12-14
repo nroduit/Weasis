@@ -168,14 +168,12 @@ public class DicomMediaUtils {
      * @param dicomLutObject
      *            defines LUT data dicom structure
      *
-     * @param isValueRepresentationSigned
-     *            of the descriptor (US or SS) is specified by Pixel Representation (0028,0103).
      * @return LookupTableJAI object if Data Element and Descriptors are consistent
      *
      * @see - Dicom Standard 2011 - PS 3.3 § C.11 LOOK UP TABLES AND PRESENTATION STATES
      */
 
-    public static LookupTableJAI createLut(Attributes dicomLutObject, boolean isValueRepresentationSigned) {
+    public static LookupTableJAI createLut(Attributes dicomLutObject) {
         if (dicomLutObject == null || dicomLutObject.isEmpty()) {
             return null;
         }
@@ -205,17 +203,17 @@ public class DicomMediaUtils {
 
             int dataLength = 0; // number of entry values in the LUT Data.
 
+            // LUT Data contains the LUT entry values, assuming data is always unsigned data
+            byte[] bData = null;
+            try {
+                bData = dicomLutObject.getBytes(Tag.LUTData);
+            } catch (IOException e) {
+                LOGGER.error("Cannot get byte[] of {}: {} ", TagUtils.toString(Tag.LUTData), e.getMessage()); //$NON-NLS-1$
+                return null;
+            }
+
             if (numBits <= 8) { // LUT Data should be stored in 8 bits allocated format
-
-                // LUT Data contains the LUT entry values, assuming data is always unsigned data
-                byte[] bData = null;
-                try {
-                    bData = dicomLutObject.getBytes(Tag.LUTData);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                if (bData != null && numEntries <= 256 && (bData.length == (numEntries << 1))) {
+                if (numEntries <= 256 && (bData.length == (numEntries << 1))) {
                     // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits
 
                     byte[] bDataNew = new byte[numEntries];
@@ -232,45 +230,23 @@ public class DicomMediaUtils {
                     lookupTable = new LookupTableJAI(bData, offset); // LUT entry value range should be [0,255]
                 }
             } else if (numBits <= 16) { // LUT Data should be stored in 16 bits allocated format
+                // LUT Data contains the LUT entry values, assuming data is always unsigned data
+                short[] sData = new short[numEntries];
+                ByteUtils.bytesToShorts(bData, 0, sData, 0, sData.length, dicomLutObject.bigEndian());
 
                 if (numEntries <= 256) {
-
-                    // LUT Data contains the LUT entry values, assuming data is always unsigned data
-                    byte[] bData = null;
-                    try {
-                        bData = dicomLutObject.getBytes(Tag.LUTData);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits
+                    byte[] bDataNew = new byte[numEntries];
+                    for (int i = 0; i < numEntries; i++) {
+                        bDataNew[i] = (byte) (sData[i] * 255 / ((1 << numBits) -1));
                     }
-
-                    if (bData != null && bData.length == (numEntries << 1)) {
-
-                        // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits
-
-                        byte[] bDataNew = new byte[numEntries];
-                        int byteShift = (dicomLutObject.bigEndian() ? 1 : 0);
-                        for (int i = 0; i < numEntries; i++) {
-                            bDataNew[i] = bData[(i << 1) + byteShift];
-                        }
-
-                        dataLength = bDataNew.length;
-                        lookupTable = new LookupTableJAI(bDataNew, offset);
-                    }
-
+                    dataLength = bDataNew.length;
+                    lookupTable = new LookupTableJAI(bDataNew, offset);
                 } else {
-
                     // LUT Data contains the LUT entry values, assuming data is always unsigned data
-                    // short[] sData = dicomLutObject.getShorts(Tag.LUTData);
-                    int[] iData = DicomMediaUtils.getIntAyrrayFromDicomElement(dicomLutObject, Tag.LUTData, null);
-                    if (iData != null) {
-                        short[] sData = new short[iData.length];
-                        for (int i = 0; i < iData.length; i++) {
-                            sData[i] = (short) iData[i];
-                        }
+                    dataLength = sData.length;
+                    lookupTable = new LookupTableJAI(sData, offset, true);
 
-                        dataLength = sData.length;
-                        lookupTable = new LookupTableJAI(sData, offset, true);
-                    }
                 }
             } else {
                 LOGGER.debug("Illegal number of bits for each entry in the LUT Data"); //$NON-NLS-1$
@@ -482,10 +458,6 @@ public class DicomMediaUtils {
 
     public static void buildLUTs(HashMap<TagW, Object> dicomTagMap) {
         if (dicomTagMap != null) {
-
-            Integer pixelRepresentation = (Integer) dicomTagMap.get(TagW.PixelRepresentation);
-            boolean isPixelRepresentationSigned = (pixelRepresentation != null && pixelRepresentation != 0);
-
             // NOTE : Either a Modality LUT Sequence containing a single Item or Rescale Slope and Intercept values
             // shall be present but not both (@see Dicom Standard 2011 - PS 3.3 § C.11.1 Modality LUT Module)
 
@@ -505,8 +477,7 @@ public class DicomMediaUtils {
                 }
 
                 if (canApplyMLUT) {
-                    DicomMediaUtils.setTagNoNull(dicomTagMap, TagW.ModalityLUTData,
-                        createLut(mLutItems[0], isPixelRepresentationSigned));
+                    DicomMediaUtils.setTagNoNull(dicomTagMap, TagW.ModalityLUTData, createLut(mLutItems[0]));
                     DicomMediaUtils.setTagNoNull(dicomTagMap, TagW.ModalityLUTType,
                         getStringFromDicomElement(mLutItems[0], Tag.ModalityLUTType));
                     DicomMediaUtils.setTagNoNull(dicomTagMap, TagW.ModalityLUTExplanation, // Optional Tag
@@ -561,38 +532,10 @@ public class DicomMediaUtils {
                 LookupTableJAI[] voiLUTsData = new LookupTableJAI[voiLUTSequence.length];
                 String[] voiLUTsExplanation = new String[voiLUTSequence.length];
 
-                boolean isOutModalityLutSigned = isPixelRepresentationSigned;
-
-                // Evaluate outModality min value if signed
-                LookupTableJAI modalityLookup = (LookupTableJAI) dicomTagMap.get(TagW.ModalityLUTData);
-
-                Integer smallestPixelValue = (Integer) dicomTagMap.get(TagW.SmallestImagePixelValue);
-                float minPixelValue = (smallestPixelValue == null) ? 0.0f : smallestPixelValue.floatValue();
-
-                if (modalityLookup == null) {
-                    Float intercept = (Float) dicomTagMap.get(TagW.RescaleIntercept);
-                    Float slope = (Float) dicomTagMap.get(TagW.RescaleSlope);
-
-                    slope = (slope == null) ? 1.0f : slope;
-                    intercept = (intercept == null) ? 0.0f : intercept;
-
-                    if ((minPixelValue * slope + intercept) < 0) {
-                        isOutModalityLutSigned = true;
-                    }
-                } else {
-                    int minInLutValue = modalityLookup.getOffset();
-                    int maxInLutValue = modalityLookup.getOffset() + modalityLookup.getNumEntries() - 1;
-
-                    if (minPixelValue >= minInLutValue && minPixelValue <= maxInLutValue
-                        && modalityLookup.lookup(0, (int) minPixelValue) < 0) {
-                        isOutModalityLutSigned = true;
-                    }
-                }
-
                 for (int i = 0; i < voiLUTSequence.length; i++) {
                     Attributes voiLUTobj = voiLUTSequence[i];
                     if (containsLUTAttributes(voiLUTobj)) {
-                        voiLUTsData[i] = createLut(voiLUTobj, isOutModalityLutSigned);
+                        voiLUTsData[i] = createLut(voiLUTobj);
                         voiLUTsExplanation[i] = getStringFromDicomElement(voiLUTobj, Tag.LUTExplanation);
                     } else {
                         LOGGER.info("Cannot read VOI LUT Data [{}]", i); //$NON-NLS-1$
@@ -634,10 +577,9 @@ public class DicomMediaUtils {
              */
             Attributes[] prLUTSequence = (Attributes[]) dicomTagMap.get(TagW.PresentationLUTSequence);
             if (prLUTSequence != null && prLUTSequence.length > 0) {
-                DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsData, createLut(prLUTSequence[0], false));
+                DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsData, createLut(prLUTSequence[0]));
                 DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsExplanation,
                     getStringFromDicomElement(prLUTSequence[0], Tag.LUTExplanation)); // Optional Tag
-                // TODO implement PresentationLUTSequence renderer
             }
         }
     }
@@ -875,11 +817,27 @@ public class DicomMediaUtils {
         }
     }
 
-    public static Area buildShutterArea(Attributes dcmObject) {
+    public static void setShutterColor(HashMap<TagW, Object> tagList, Attributes attributes) {
+        Integer psVal = getIntegerFromDicomElement(attributes, Tag.ShutterPresentationValue, null);
+        setTagNoNull(tagList, TagW.ShutterPSValue, psVal);
+        float[] rgb = CIELab.convertToFloatLab(
+            DicomMediaUtils.getIntAyrrayFromDicomElement(attributes, Tag.ShutterPresentationColorCIELabValue, null));
+        Color color =
+            rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb, (int[]) null);
+        setTagNoNull(tagList, TagW.ShutterRGBColor, color);
+    }
+
+    /**
+     * @see <a href="http://dicom.nema.org/MEDICAL/DICOM/current/output/chtml/part03/sect_C.7.6.11.html">C.7.6.11
+     *      Display Shutter Module</a>
+     * @see <a href="http://dicom.nema.org/MEDICAL/DICOM/current/output/chtml/part03/sect_C.7.6.15.html">C.7.6.15 Bitmap
+     *      Display Shutter Module</a>
+     * 
+     */
+    public static void setShutter(HashMap<TagW, Object> tagList, Attributes dcmObject) {
         Area shape = null;
         String shutterShape = getStringFromDicomElement(dcmObject, Tag.ShutterShape);
         if (shutterShape != null) {
-            // RECTANGULAR is legal
             if (shutterShape.contains("RECTANGULAR") || shutterShape.contains("RECTANGLE")) { //$NON-NLS-1$ //$NON-NLS-2$
                 Rectangle2D rect = new Rectangle2D.Double();
                 rect.setFrameFromDiagonal(getIntegerFromDicomElement(dcmObject, Tag.ShutterLeftVerticalEdge, 0),
@@ -895,7 +853,7 @@ public class DicomMediaUtils {
                 if (centerOfCircularShutter != null && centerOfCircularShutter.length >= 2) {
                     Ellipse2D ellipse = new Ellipse2D.Double();
                     int radius = getIntegerFromDicomElement(dcmObject, Tag.RadiusOfCircularShutter, 0);
-                    // Thanks Dicom for reversing x,y by row,column
+                    // Thanks DICOM for reversing x,y by row,column
                     ellipse.setFrameFromCenter(centerOfCircularShutter[1], centerOfCircularShutter[0],
                         centerOfCircularShutter[1] + radius, centerOfCircularShutter[0] + radius);
                     if (shape == null) {
@@ -911,7 +869,7 @@ public class DicomMediaUtils {
                 if (points != null) {
                     Polygon polygon = new Polygon();
                     for (int i = 0; i < points.length / 2; i++) {
-                        // Thanks Dicom for reversing x,y by row,column
+                        // Thanks DICOM for reversing x,y by row,column
                         polygon.addPoint(points[i * 2 + 1], points[i * 2]);
                     }
                     if (shape == null) {
@@ -921,8 +879,14 @@ public class DicomMediaUtils {
                     }
                 }
             }
+
+            if (shape != null) {
+                setTagNoNull(tagList, TagW.ShutterFinalShape, shape);
+            }
+
+            // Set color also for BITMAP shape (bitmap is extracted in overlay class)
+            setShutterColor(tagList, dcmObject);
         }
-        return shape;
     }
 
     public static void writeFunctionalGroupsSequence(HashMap<TagW, Object> tagList, Attributes dcm) {
@@ -1012,19 +976,7 @@ public class DicomMediaUtils {
              */
             Attributes macroFrameDisplayShutter = dcm.getNestedDataset(Tag.FrameDisplayShutterSequence);
             if (macroFrameDisplayShutter != null) {
-                Area shape = buildShutterArea(macroFrameDisplayShutter);
-                if (shape != null) {
-                    setTagNoNull(tagList, TagW.ShutterFinalShape, shape);
-                    Integer psVal =
-                        getIntegerFromDicomElement(macroFrameDisplayShutter, Tag.ShutterPresentationValue, null);
-                    setTagNoNull(tagList, TagW.ShutterPSValue, psVal);
-                    float[] rgb =
-                        CIELab.convertToFloatLab(DicomMediaUtils.getIntAyrrayFromDicomElement(macroFrameDisplayShutter,
-                            Tag.ShutterPresentationColorCIELabValue, null));
-                    Color color = rgb == null ? null
-                        : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb, (int[]) null);
-                    setTagNoNull(tagList, TagW.ShutterRGBColor, color);
-                }
+                setShutter(tagList, macroFrameDisplayShutter);
             }
 
             /**
@@ -1166,6 +1118,7 @@ public class DicomMediaUtils {
                 Sequence presentationLUT = dcmItems.getSequence(Tag.PresentationLUTSequence);
                 if (presentationLUT != null) {
                     setTagNoNull(tagList, TagW.PresentationLUTSequence, presentationLUT);
+                    setTagNoNull(tagList, TagW.PresentationLUTShape, "IDENTITY");
                 } else {
                     // value: INVERSE, IDENTITY
                     // INVERSE => must inverse values (same as monochrome 1)

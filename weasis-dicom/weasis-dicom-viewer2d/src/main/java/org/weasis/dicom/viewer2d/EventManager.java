@@ -101,7 +101,6 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -1038,7 +1037,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             List<PresetWindowLevel> presetList = image.getPresetList(pixelPadding);
             if (pr) {
                 List<PresetWindowLevel> prPresets =
-                    (List<PresetWindowLevel>) view2d.getActionValue(PresentationStateReader.PR_PRESETS);
+                    (List<PresetWindowLevel>) view2d.getActionValue(PRManager.PR_PRESETS);
                 if (prPresets != null) {
                     presetList = prPresets;
                 }

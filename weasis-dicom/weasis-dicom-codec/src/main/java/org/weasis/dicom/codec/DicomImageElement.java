@@ -73,10 +73,20 @@ public class DicomImageElement extends ImageElement {
 
     public DicomImageElement(DcmMediaReader mediaIO, Object key) {
         super(mediaIO, key);
+        
+        initPixelConfiguration();
+    }
+    
+    public void initPixelConfiguration(){
+        this.pixelSizeX = 1.0;
+        this.pixelSizeY = 1.0;
+        this.pixelSpacingUnit = Unit.PIXEL;
+        
+        double[] val = null;
         String modality = (String) mediaIO.getTagValue(TagW.Modality);
         if (!"SC".equals(modality) && !"OT".equals(modality)) { //$NON-NLS-1$ //$NON-NLS-2$
             // Physical distance in mm between the center of each pixel (ratio in mm)
-            double[] val = (double[]) mediaIO.getTagValue(TagW.PixelSpacing);
+           val = (double[]) mediaIO.getTagValue(TagW.PixelSpacing);
             if (val == null || val.length != 2) {
                 val = (double[]) mediaIO.getTagValue(TagW.ImagerPixelSpacing);
                 // Follows D. Clunie recommendations
@@ -93,20 +103,8 @@ public class DicomImageElement extends ImageElement {
                  */
                 setPixelSize(val[1], val[0]);
                 pixelSpacingUnit = Unit.MILLIMETER;
-            } else if (val == null) {
-                int[] aspects = (int[]) mediaIO.getTagValue(TagW.PixelAspectRatio);
-                if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
-                    /*
-                     * Set the Pixel Aspect Ratio to the pixel size of the image to stretch the rendered image (for
-                     * having square pixel on the display image)
-                     */
-                    if (aspects[1] < aspects[0]) {
-                        setPixelSize(1.0, (double) aspects[0] / (double) aspects[1]);
-                    } else {
-                        setPixelSize((double) aspects[1] / (double) aspects[0], 1.0);
-                    }
-                }
             }
+            
             // DICOM $C.11.1.1.2 Modality LUT and Rescale Type
             // Specifies the units of the output of the Modality LUT or rescale operation.
             // Defined Terms:
@@ -125,6 +123,21 @@ public class DicomImageElement extends ImageElement {
             }
 
         }
+        
+        if (val == null) {
+            int[] aspects = (int[]) mediaIO.getTagValue(TagW.PixelAspectRatio);
+            if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
+                /*
+                 * Set the Pixel Aspect Ratio to the pixel size of the image to stretch the rendered image (for
+                 * having square pixel on the display image)
+                 */
+                if (aspects[1] < aspects[0]) {
+                    setPixelSize(1.0, (double) aspects[0] / (double) aspects[1]);
+                } else {
+                    setPixelSize((double) aspects[1] / (double) aspects[0], 1.0);
+                }
+            }
+        } 
     }
 
     /**

@@ -426,19 +426,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     public void setTag(TagW tag, Object value) {
-        if (tag != null) {
-            if (value instanceof Sequence) {
-                Sequence seq = (Sequence) value;
-                Attributes[] list = new Attributes[seq.size()];
-                for (int i = 0; i < list.length; i++) {
-                    Attributes attributes = seq.get(i);
-                    list[i] = attributes.getParent() == null ? attributes : new Attributes(attributes);
-                }
-                tags.put(tag, list);
-            } else {
-                tags.put(tag, value);
-            }
-        }
+        DicomMediaUtils.setTag(tags, tag, value);
     }
 
     public void setTagNoNull(TagW tag, Object value) {
@@ -515,6 +503,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             // Set the series list for applying the PR
             setTagNoNull(TagW.ReferencedSeriesSequence, header.getSequence(Tag.ReferencedSeriesSequence));
             DicomMediaUtils.readPRLUTsModule(header, tags);
+            setTagNoNull(TagW.HasOverlay, DicomMediaUtils.hasOverlay(header));
         }
         if (pr || ko) {
             // Set other required fields
@@ -527,19 +516,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
         DicomMediaUtils.buildLUTs(tags);
         DicomMediaUtils.computeSlicePositionVector(tags);
-
-        Area shape = DicomMediaUtils.buildShutterArea(header);
-        if (shape != null) {
-            setTagNoNull(TagW.ShutterFinalShape, shape);
-            Integer psVal = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.ShutterPresentationValue, null);
-            setTagNoNull(TagW.ShutterPSValue, psVal);
-            float[] rgb = CIELab.convertToFloatLab(
-                DicomMediaUtils.getIntAyrrayFromDicomElement(header, Tag.ShutterPresentationColorCIELabValue, null));
-            Color color =
-                rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb, (int[]) null);
-            setTagNoNull(TagW.ShutterRGBColor, color);
-
-        }
+        DicomMediaUtils.setShutter(tags, header);
         DicomMediaUtils.computeSUVFactor(header, tags, 0);
 
         // Remove sequence item
@@ -698,8 +675,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
              *
              * @see - Dicom Standard 2011 - PS 3.5 § 8.1.2 Overlay data encoding of related data elements
              */
-            if (header.getInt(Tag.OverlayBitsAllocated, 0) > 1 && bitsStored < bitsAllocated
-                && dataType >= DataBuffer.TYPE_BYTE && dataType < DataBuffer.TYPE_INT) {
+            if (bitsStored < bitsAllocated && dataType >= DataBuffer.TYPE_BYTE && dataType < DataBuffer.TYPE_INT
+                && Overlays.getEmbeddedOverlayGroupOffsets(header).length > 0) {
                 int high = highBit + 1;
                 int val = (1 << high) - 1;
                 if (high > bitsStored) {
@@ -811,16 +788,16 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 if (media.getTagValue(TagW.OverlayBurninData) == null) {
                     // Serialize overlay (from pixel data)
                     Attributes ds = getDicomObject();
-                    int[] overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ds, 0xffff);
+                    int[] embeddedOverlayGroupOffsets = Overlays.getEmbeddedOverlayGroupOffsets(ds);
 
-                    if (overlayGroupOffsets.length > 0) {
+                    if (embeddedOverlayGroupOffsets.length > 0) {
                         FileOutputStream fileOut = null;
                         ObjectOutput objOut = null;
                         try {
-                            byte[][] overlayData = new byte[overlayGroupOffsets.length][];
+                            byte[][] overlayData = new byte[embeddedOverlayGroupOffsets.length][];
                             Raster raster = buffer.getData();
-                            for (int i = 0; i < overlayGroupOffsets.length; i++) {
-                                overlayData[i] = OverlayUtils.extractOverlay(overlayGroupOffsets[i], raster, ds);
+                            for (int i = 0; i < embeddedOverlayGroupOffsets.length; i++) {
+                                overlayData[i] = OverlayUtils.extractOverlay(embeddedOverlayGroupOffsets[i], raster, ds);
                             }
                             File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                             fileOut = new FileOutputStream(file);

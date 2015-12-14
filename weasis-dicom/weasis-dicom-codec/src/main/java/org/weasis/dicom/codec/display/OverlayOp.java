@@ -49,17 +49,16 @@ public class OverlayOp extends AbstractOp {
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();
         if (OpEvent.ImageChange.equals(type) || OpEvent.ResetDisplay.equals(type)) {
-            ImageElement img = event.getImage();
-            boolean noMedia = img == null;
-            setParam(P_IMAGE_ELEMENT, noMedia ? null : img);
             setParam(P_PR_ELEMENT, null);
+            setParam(P_IMAGE_ELEMENT, event.getImage());
         } else if (OpEvent.ApplyPR.equals(type)) {
             HashMap<String, Object> p = event.getParams();
             if (p != null) {
-                Object pr = p.get(ActionW.PR_STATE.cmd());
+                Object prReader = p.get(ActionW.PR_STATE.cmd());
+                PRSpecialElement pr = (prReader instanceof PresentationStateReader)
+                    ? ((PresentationStateReader) prReader).getDicom() : null;
+                setParam(P_PR_ELEMENT, pr);
                 setParam(P_IMAGE_ELEMENT, event.getImage());
-                setParam(P_PR_ELEMENT,
-                    pr instanceof PresentationStateReader ? ((PresentationStateReader) pr).getDicom() : null);
             }
         }
     }
@@ -74,31 +73,25 @@ public class OverlayOp extends AbstractOp {
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
         } else if (overlay) {
             RenderedImage imgOverlay = null;
-
             ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
+            
             if (image != null) {
                 boolean overlays = JMVUtils.getNULLtoFalse(image.getTagValue(TagW.HasOverlay));
-                if (!overlays) {
-                    Object pr = params.get(P_PR_ELEMENT);
-                    if (pr instanceof PRSpecialElement) {
-                        overlays =
-                            DicomMediaUtils.hasOverlay(((PRSpecialElement) pr).getMediaReader().getDicomObject());
-                    }
-                }
+
                 if (overlays && image.getMediaReader() instanceof DicomMediaIO) {
                     DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();
                     try {
                         if (image.getKey() instanceof Integer) {
                             int frame = (Integer) image.getKey();
-                            Integer height = (Integer) reader.getTagValue(TagW.Rows);
-                            Integer width = (Integer) reader.getTagValue(TagW.Columns);
+                            Integer height = (Integer) image.getTagValue(TagW.Rows);
+                            Integer width = (Integer) image.getTagValue(TagW.Columns);
                             if (height != null && width != null) {
                                 imgOverlay = PlanarImage.wrapRenderedImage(
-                                    OverlayUtils.getOverlays(image, reader, frame, width, height, params));
+                                    OverlayUtils.getBinaryOverlays(image, reader.getDicomObject(), frame, width, height, params));
                             }
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LOGGER.error("Applying overlays: {}", e.getMessage()); //$NON-NLS-1$
                     }
                 }
             }
@@ -107,5 +100,4 @@ public class OverlayOp extends AbstractOp {
 
         params.put(OUTPUT_IMG, result);
     }
-
 }
