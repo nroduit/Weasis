@@ -58,7 +58,6 @@ public class PRManager {
     public static final String TAG_ORIG_RescaleSlope = "original.rescale.slope"; //$NON-NLS-1$
     public static final String TAG_ORIG_RescaleIntercept = "original.rescale.intercept"; //$NON-NLS-1$
     public static final String TAG_ORIG_RescaleType = "original.rescale.type"; //$NON-NLS-1$
-    public static final String TAG_ORIG_PresentationLUTShape = "original.pr.lut.shape"; //$NON-NLS-1$
     public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
     public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers"; //$NON-NLS-1$
 

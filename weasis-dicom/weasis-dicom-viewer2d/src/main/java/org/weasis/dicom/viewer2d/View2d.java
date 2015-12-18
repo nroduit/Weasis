@@ -464,9 +464,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
 
             // Restore Presentation LUT Shape
-            if (actionsInView.containsKey(PRManager.TAG_ORIG_PresentationLUTShape)) {
-                m.setTag(TagW.PresentationLUTShape, actionsInView.remove(PRManager.TAG_ORIG_PresentationLUTShape));
-            }
+            m.initInverseLUT();
 
             // Restore presets
             actionsInView.remove(PRManager.PR_PRESETS);
@@ -576,9 +574,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
 
         Object prLutShape = tags.get(TagW.PresentationLUTShape);
-        if (prLutShape != null) {
-            actionsInView.put(PRManager.TAG_ORIG_PresentationLUTShape, img.getTagValue(TagW.PresentationLUTShape));
-            img.setTag(TagW.PresentationLUTShape, prLutShape);
+        if (prLutShape instanceof String) {
+            img.forceInverseLUT("INVERSE".equals(prLutShape));
         }
 
         LookupTableJAI prLutData = (LookupTableJAI) tags.get(TagW.PRLUTsData);

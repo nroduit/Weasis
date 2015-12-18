@@ -70,11 +70,13 @@ public class DicomImageElement extends ImageElement {
 
     private volatile List<PresetWindowLevel> windowingPresetCollection = null;
     private volatile Collection<LutShape> lutShapeCollection = null;
+    private boolean inverseLUT = false;
 
     public DicomImageElement(DcmMediaReader mediaIO, Object key) {
         super(mediaIO, key);
         
         initPixelConfiguration();
+        initInverseLUT();
     }
     
     public void initPixelConfiguration(){
@@ -140,6 +142,17 @@ public class DicomImageElement extends ImageElement {
         } 
     }
 
+    public void initInverseLUT(){
+        String prLUTShape = (String) getTagValue(TagW.PresentationLUTShape);
+        inverseLUT = prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1" //$NON-NLS-1$ //$NON-NLS-2$
+            .equalsIgnoreCase(getPhotometricInterpretation());
+    }
+    
+    public void forceInverseLUT(boolean inverseLUT){
+        this.inverseLUT = inverseLUT;
+    }
+    
+    
     /**
      * @return return the min value after modality pixel transformation and after pixel padding operation if padding
      *         exists.
@@ -182,9 +195,7 @@ public class DicomImageElement extends ImageElement {
     }
 
     public boolean isPhotometricInterpretationInverse() {
-        String prLUTShape = (String) getTagValue(TagW.PresentationLUTShape);
-        return prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1" //$NON-NLS-1$ //$NON-NLS-2$
-            .equalsIgnoreCase(getPhotometricInterpretation());
+        return inverseLUT;
     }
 
     /**
