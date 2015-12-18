@@ -194,9 +194,7 @@ public class DicomMediaUtils {
             int numEntries = (descriptor[0] == 0) ? 65536 : descriptor[0];
 
             // Second value is mapped to the first entry in the LUT.
-            int offset = (numEntries <= 65536) ? //
-                ((numEntries <= 256) ? (byte) descriptor[1] : (short) descriptor[1]) : //
-                descriptor[1]; // necessary to cast in order to get negative value when present
+            int offset = (short) descriptor[1]; // necessary to cast in order to get negative value when present
 
             // Third value specifies the number of bits for each entry in the LUT Data.
             int numBits = descriptor[2];
@@ -218,8 +216,8 @@ public class DicomMediaUtils {
 
                     byte[] bDataNew = new byte[numEntries];
                     int byteShift = (dicomLutObject.bigEndian() ? 1 : 0);
-                    for (int i = 0; i < numEntries; i++) {
-                        bDataNew[i] = bData[(i << 1) + byteShift];
+                    for (int i = 0; i < bDataNew.length; i++) {
+                        bDataNew[i] = bData[(i << 1) | byteShift];
                     }
 
                     dataLength = bDataNew.length;
@@ -236,9 +234,12 @@ public class DicomMediaUtils {
 
                 if (numEntries <= 256) {
                     // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits
+                    int maxIn = (1 << numBits) - 1;
+                    int maxOut = numEntries - 1;
+
                     byte[] bDataNew = new byte[numEntries];
                     for (int i = 0; i < numEntries; i++) {
-                        bDataNew[i] = (byte) (sData[i] * 255 / ((1 << numBits) -1));
+                        bDataNew[i] = (byte) ((sData[i] & 0xffff) * maxOut / maxIn);
                     }
                     dataLength = bDataNew.length;
                     lookupTable = new LookupTableJAI(bDataNew, offset);
