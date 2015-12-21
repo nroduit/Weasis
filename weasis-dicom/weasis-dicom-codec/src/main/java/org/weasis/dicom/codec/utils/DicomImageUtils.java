@@ -85,7 +85,6 @@ public class DicomImageUtils {
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
         window = (window < 1f) ? 1f : window;
 
-        // TODO - use bitsAllocated as a parameter instead of extrapolated one
         int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
         int outRangeSize = (1 << bitsAllocated) - 1;
         float maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
@@ -509,13 +508,6 @@ public class DicomImageUtils {
         float highLevel = center + width / 2f;
 
         int maxInLutIndex = Array.getLength(inLutDataArray) - 1;
-
-        // Assuming lookupSequence is continuous, values at both ends should reflect maxima and minima
-        // This assumption avoid computing min/max by scaning the full table
-        // int minLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, 0);
-        // int maxLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, lookupRangeSize);
-        // int lookupValueRange = Math.abs(maxLookupValue - minLookupValue);
-
         int minLookupValue = Integer.MAX_VALUE;
         int maxLookupValue = Integer.MIN_VALUE;
         for (int i = 0; i < Array.getLength(inLutDataArray); i++) {

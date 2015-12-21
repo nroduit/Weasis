@@ -318,8 +318,8 @@ public class ImageToolkit {
 
         // Get pixel values of Min and Max (values must not be rescaled rescaled, works only for ImageElement not for
         // DicomImageElement class)
-        int minValue = (int) image.getMinValue(pixelPadding);
-        int maxValue = (int) image.getMaxValue(pixelPadding);
+        int minValue = (int) image.getMinValue(null, pixelPadding);
+        int maxValue = (int) image.getMaxValue(null, pixelPadding);
         int tableLength = (maxValue - minValue + 1);
 
         double low = level - window / 2.0;

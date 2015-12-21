@@ -54,10 +54,6 @@ public class PRManager {
 
     public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
     public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel"; //$NON-NLS-1$
-    public static final String TAG_ORIG_ModalityLUTData = "original.modality.lut"; //$NON-NLS-1$
-    public static final String TAG_ORIG_RescaleSlope = "original.rescale.slope"; //$NON-NLS-1$
-    public static final String TAG_ORIG_RescaleIntercept = "original.rescale.intercept"; //$NON-NLS-1$
-    public static final String TAG_ORIG_RescaleType = "original.rescale.type"; //$NON-NLS-1$
     public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
     public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers"; //$NON-NLS-1$
 
@@ -112,10 +108,12 @@ public class PRManager {
                 Rectangle2D modelArea = view.getViewModel().getModelArea();
                 double width = area == null ? modelArea.getWidth() : area.getWidth();
                 double height = area == null ? modelArea.getHeight() : area.getHeight();
+                double offsetx = area == null ? 0.0 : area.getX() / area.getWidth();
+                double offsety = area == null ? 0.0 : area.getY() / area.getHeight();
                 AffineTransform inverse = null;
                 if (rotation != 0 || flip) {
-                    // Create inverse transformation
-                    inverse = AffineTransform.getTranslateInstance(0, 0);
+                    // Create inverse transformation for display coordinates (will convert in real coordinates)
+                    inverse = AffineTransform.getTranslateInstance(offsetx, offsety);
                     if (flip) {
                         inverse.scale(-1.0, 1.0);
                         inverse.translate(-1.0, 0.0);

@@ -18,6 +18,7 @@ import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -101,6 +102,7 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -357,13 +359,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         (Float) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MIN.cmd());
                     Float levelMax =
                         (Float) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MAX.cmd());
-
+                    Object prReader = view2d.getActionValue(ActionW.PR_STATE.cmd());
+                    HashMap<TagW, Object> prTags = (prReader instanceof PresentationStateReader)
+                        ? ((PresentationStateReader) prReader).getDicom().getTags() : null;
                     if (levelMin == null || levelMax == null) {
-                        levelMin = Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
-                        levelMax = Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
+                        levelMin = Math.min(levelValue - windowValue / 2.0f, image.getMinValue(prTags, pixelPadding));
+                        levelMax = Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(prTags, pixelPadding));
                     } else {
-                        levelMin = Math.min(levelMin, image.getMinValue(pixelPadding));
-                        levelMax = Math.max(levelMax, image.getMaxValue(pixelPadding));
+                        levelMin = Math.min(levelMin, image.getMinValue(prTags, pixelPadding));
+                        levelMax = Math.max(levelMax, image.getMaxValue(prTags, pixelPadding));
                     }
 
                     // FIX : setting actionInView here without firing a propertyChange avoid another call to
@@ -1007,7 +1011,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             Float levelValue = (Float) node.getParam(ActionW.LEVEL.cmd());
             LutShape lutShapeItem = (LutShape) node.getParam(ActionW.LUT_SHAPE.cmd());
             boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-            boolean pr = view2d.getActionValue(ActionW.PR_STATE.cmd()) != null;
+            Object prReader = view2d.getActionValue(ActionW.PR_STATE.cmd());
+            HashMap<TagW, Object> prTags = (prReader instanceof PresentationStateReader)
+                ? ((PresentationStateReader) prReader).getDicom().getTags() : null;
 
             defaultPresetAction.setSelectedWithoutTriggerAction(defaultPreset);
 
@@ -1023,11 +1029,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             Float levelMin = (Float) node.getParam(ActionW.LEVEL_MIN.cmd());
             Float levelMax = (Float) node.getParam(ActionW.LEVEL_MAX.cmd());
             if (levelMin == null || levelMax == null) {
-                minLevel = (int) Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
-                maxLevel = (int) Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
+                minLevel = (int) Math.min(levelValue - windowValue / 2.0f, image.getMinValue(prTags, pixelPadding));
+                maxLevel = (int) Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(prTags, pixelPadding));
             } else {
-                minLevel = (int) Math.min(levelMin, image.getMinValue(pixelPadding));
-                maxLevel = (int) Math.max(levelMax, image.getMaxValue(pixelPadding));
+                minLevel = (int) Math.min(levelMin, image.getMinValue(prTags, pixelPadding));
+                maxLevel = (int) Math.max(levelMax, image.getMaxValue(prTags, pixelPadding));
             }
             window = (int) Math.max(windowValue, maxLevel - minLevel);
 
@@ -1035,7 +1041,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             levelAction.setMinMaxValueWithoutTriggerAction(minLevel, maxLevel, levelValue.intValue());
 
             List<PresetWindowLevel> presetList = image.getPresetList(pixelPadding);
-            if (pr) {
+            if (prReader != null) {
                 List<PresetWindowLevel> prPresets =
                     (List<PresetWindowLevel>) view2d.getActionValue(PRManager.PR_PRESETS);
                 if (prPresets != null) {
@@ -1046,7 +1052,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             presetAction.setSelectedItemWithoutTriggerAction(preset);
 
             Collection<LutShape> lutShapeList = image.getLutShapeCollection(pixelPadding);
-            if (pr && lutShapeList != null && lutShapeItem != null && !lutShapeList.contains(lutShapeItem)) {
+            if (prReader != null && lutShapeList != null && lutShapeItem != null
+                && !lutShapeList.contains(lutShapeItem)) {
                 // Make a copy of the image list
                 ArrayList<LutShape> newList = new ArrayList<LutShape>(lutShapeList.size() + 1);
                 newList.add(lutShapeItem);

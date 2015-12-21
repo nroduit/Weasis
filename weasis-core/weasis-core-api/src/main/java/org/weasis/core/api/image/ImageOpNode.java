@@ -37,6 +37,8 @@ public interface ImageOpNode extends Cloneable {
 
     void setAllParameters(Map<String, Object> map);
 
+    void removeParam(String key);
+
     void clearParams();
 
     /**
@@ -45,4 +47,5 @@ public interface ImageOpNode extends Cloneable {
     void clearIOCache();
 
     void handleImageOpEvent(ImageOpEvent event);
+
 }

@@ -12,7 +12,9 @@ package org.weasis.dicom.codec.display;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.image.DataBuffer;
 import java.awt.image.MultiPixelPackedSampleModel;
@@ -91,14 +93,16 @@ public class ShutterOp extends AbstractOp {
                 setParam(P_PR_ELEMENT, pr);
                 setParam(P_IMAGE_ELEMENT, event.getImage());
 
-                // if (area != null) {
-                // Area shape = (Area) actionsInView.get(TagW.ShutterFinalShape.getName());
-                // if (shape != null) {
-                // Area trArea = new Area(shape);
-                // trArea.transform(AffineTransform.getTranslateInstance(-area.getX(), -area.getY()));
-                // actionsInView.put(TagW.ShutterFinalShape.getName(), trArea);
-                // }
-                // }
+                Area shape = (Area) params.get(P_SHAPE);
+                if (shape != null) {
+                    Rectangle area =
+                        (Rectangle) ((PresentationStateReader) prReader).getTagValue(ActionW.CROP.cmd(), null);
+                    if (area != null) {
+                        Area trArea = new Area(shape);
+                        trArea.transform(AffineTransform.getTranslateInstance(-area.getX(), -area.getY()));
+                        setParam(P_SHAPE, trArea);
+                    }
+                }
             }
         }
     }
@@ -122,8 +126,8 @@ public class ShutterOp extends AbstractOp {
                 result = MergeImgOp.combineTwoImages(source,
                     ImageFiler.getEmptyImage(color, source.getWidth(), source.getHeight()), getAsImage(area, source));
             }
-        } 
-        
+        }
+
         // Potentially override the shutter in the original dicom
         if (shutter && params.get(P_PS_VALUE) != null && (pr instanceof PRSpecialElement)) {
             DicomMediaIO prReader = ((PRSpecialElement) pr).getMediaReader();
@@ -147,15 +151,15 @@ public class ShutterOp extends AbstractOp {
                             OverlayUtils.getShutterOverlay(attributes, frame, width, height, shuttOverlayGroup));
                         if (color.length == 1) {
                             transperency = color[0];
-                            imgOverlay = MergeImgOp.combineTwoImages(source, alpha, transperency);
+                            imgOverlay = MergeImgOp.combineTwoImages(result, alpha, transperency);
                         } else {
-                            imgOverlay = MergeImgOp.combineTwoImages(source,
+                            imgOverlay = MergeImgOp.combineTwoImages(result,
                                 ImageFiler.getEmptyImage(color, width, height), alpha);
                         }
                     }
                 }
             }
-            result = imgOverlay == null ? source : imgOverlay;
+            result = imgOverlay == null ? result : imgOverlay;
         }
 
         params.put(OUTPUT_IMG, result);

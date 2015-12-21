@@ -92,7 +92,7 @@ public class PresentationStateReader {
     public void readGrayscaleSoftcopyModule(DicomImageElement img) {
         if (dcmobj != null) {
             List<PresetWindowLevel> presets =
-                PresetWindowLevel.getPresetCollection(img, prSpecialElement.geTags(), true);
+                PresetWindowLevel.getPresetCollection(img, prSpecialElement.getTags(), true);
             if (presets != null && presets.size() > 0) {
                 tags.put(ActionW.PRESET.cmd(), presets);
             }

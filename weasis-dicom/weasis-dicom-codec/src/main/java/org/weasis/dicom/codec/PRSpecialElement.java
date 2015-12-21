@@ -12,7 +12,7 @@ public class PRSpecialElement extends DicomSpecialElement {
         super(mediaIO);
     }
 
-    public HashMap<TagW, Object> geTags() {
+    public HashMap<TagW, Object> getTags() {
         return tags;
     }
 

@@ -1109,13 +1109,13 @@ public class DicomMediaUtils {
         }
     }
 
+    /**
+     * @see <a href="http://dicom.nema.org/medical/Dicom/current/output/chtml/part03/sect_C.11.6.html">C.11.6 Softcopy Presentation LUT Module</a>
+     */
     public static void applyPrLutModule(Attributes dcmItems, HashMap<TagW, Object> tagList) {
         if (dcmItems != null && tagList != null) {
             // TODO implement 1.2.840.10008.5.1.4.1.1.11.2 -5 color and xray
             if ("1.2.840.10008.5.1.4.1.1.11.1".equals(dcmItems.getString(Tag.SOPClassUID))) { //$NON-NLS-1$
-                /**
-                 * @see - Dicom Standard 2011 - PS 3.3 § C.11.6 Softcopy Presentation LUT Module
-                 */
                 Sequence presentationLUT = dcmItems.getSequence(Tag.PresentationLUTSequence);
                 if (presentationLUT != null) {
                     setTagNoNull(tagList, TagW.PresentationLUTSequence, presentationLUT);

@@ -110,9 +110,9 @@ public class PresetWindowLevel {
         return false;
     }
 
-    public static List<PresetWindowLevel> getPresetCollection(DicomImageElement image, HashMap<TagW, Object> tags,
+    public static List<PresetWindowLevel> getPresetCollection(DicomImageElement image, HashMap<TagW, Object> params,
         boolean pixelPadding) {
-        if (image == null || tags == null) {
+        if (image == null || params == null) {
             return null;
         }
 
@@ -120,11 +120,11 @@ public class PresetWindowLevel {
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
 
-        Float[] levelList = (Float[]) tags.get(TagW.WindowCenter);
-        Float[] windowList = (Float[]) tags.get(TagW.WindowWidth);
+        Float[] levelList = (Float[]) params.get(TagW.WindowCenter);
+        Float[] windowList = (Float[]) params.get(TagW.WindowWidth);
         // optional attributes
-        String[] wlExplanationList = (String[]) tags.get(TagW.WindowCenterWidthExplanation);
-        String lutFunctionDescriptor = (String) tags.get(TagW.VOILutFunction);
+        String[] wlExplanationList = (String[]) params.get(TagW.WindowCenterWidthExplanation);
+        String lutFunctionDescriptor = (String) params.get(TagW.VOILutFunction);
 
         LutShape defaultLutShape = LutShape.LINEAR; // Implicitly defined as default function in DICOM standard
 
@@ -171,8 +171,8 @@ public class PresetWindowLevel {
             }
         }
 
-        LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) tags.get(TagW.VOILUTsData);
-        String[] voiLUTsExplanation = (String[]) tags.get(TagW.VOILUTsExplanation); // optional attribute
+        LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) params.get(TagW.VOILUTsData);
+        String[] voiLUTsExplanation = (String[]) params.get(TagW.VOILUTsExplanation); // optional attribute
 
         if (voiLUTsData != null) {
             String defaultExplanation = Messages.getString("PresetWindowLevel.voi_lut"); //$NON-NLS-1$
@@ -187,7 +187,7 @@ public class PresetWindowLevel {
                 }
 
                 PresetWindowLevel preset =
-                    buildPresetFromLutData(voiLUTsData[i], image, pixelPadding, explanation + dicomKeyWord);
+                    buildPresetFromLutData(voiLUTsData[i], image, params, pixelPadding, explanation + dicomKeyWord);
                 if (preset == null) {
                     continue;
                 }
@@ -203,7 +203,7 @@ public class PresetWindowLevel {
         }
 
         PresetWindowLevel autoLevel = new PresetWindowLevel(fullDynamicExplanation,
-            image.getFullDynamicWidth(pixelPadding), image.getFullDynamicCenter(pixelPadding), defaultLutShape);
+            image.getFullDynamicWidth(params, pixelPadding), image.getFullDynamicCenter(params, pixelPadding), defaultLutShape);
         // Set O shortcut for auto levels
         autoLevel.setKeyCode(KeyEvent.VK_0);
         presetList.add(autoLevel);
@@ -220,7 +220,7 @@ public class PresetWindowLevel {
     }
 
     public static PresetWindowLevel buildPresetFromLutData(LookupTableJAI voiLUTsData, DicomImageElement image,
-        boolean pixelPadding, String explanation) {
+        HashMap<TagW, Object> params, boolean pixelPadding, String explanation) {
         if (voiLUTsData == null || explanation == null) {
             return null;
         }
@@ -240,11 +240,11 @@ public class PresetWindowLevel {
 
         minValueLookup = Math.min(minValueLookup, maxValueLookup);
         maxValueLookup = Math.max(minValueLookup, maxValueLookup);
-        int minAllocatedValue = image.getMinAllocatedValue(pixelPadding);
+        int minAllocatedValue = image.getMinAllocatedValue(params, pixelPadding);
         if (minValueLookup < minAllocatedValue) {
             minValueLookup = minAllocatedValue;
         }
-        int maxAllocatedValue = image.getMaxAllocatedValue(pixelPadding);
+        int maxAllocatedValue = image.getMaxAllocatedValue(params, pixelPadding);
         if (maxValueLookup > maxAllocatedValue) {
             maxValueLookup = maxAllocatedValue;
         }

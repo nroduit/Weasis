@@ -143,22 +143,22 @@ public class ImageElement extends MediaElement<PlanarImage> {
     }
 
     public float getDefaultWindow(boolean pixelPadding) {
-        return getMaxValue(pixelPadding) - getMinValue(pixelPadding);
+        return getMaxValue(null, pixelPadding) - getMinValue(null, pixelPadding);
     }
 
     public float getDefaultLevel(boolean pixelPadding) {
         if (isImageAvailable()) {
-            float min = getMinValue(pixelPadding);
-            return min + (getMaxValue(pixelPadding) - min) / 2.f;
+            float min = getMinValue(null, pixelPadding);
+            return min + (getMaxValue(null, pixelPadding) - min) / 2.f;
         }
         return 0.0f;
     }
 
-    public float getMaxValue(boolean pixelPadding) {
+    public float getMaxValue(HashMap<TagW, Object> params, boolean pixelPadding) {
         return maxPixelValue == null ? 0.0f : maxPixelValue;
     }
 
-    public float getMinValue(boolean pixelPadding) {
+    public float getMinValue(HashMap<TagW, Object> params, boolean pixelPadding) {
         return minPixelValue == null ? 0.0f : minPixelValue;
     }
 
@@ -277,6 +277,10 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return mediaIO.getMediaFragment(this);
     }
 
+    public RenderedImage getRenderedImage(final RenderedImage imageSource) {
+        return getRenderedImage(imageSource, null);
+    }
+
     /**
      * @param imageSource
      *            is the RenderedImage upon which transformation is done
@@ -289,32 +293,20 @@ public class ImageElement extends MediaElement<PlanarImage> {
      *            considered
      * @return
      */
-
-    protected RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
-        Boolean pixelPadding) {
-
+    public RenderedImage getRenderedImage(final RenderedImage imageSource, HashMap<String, Object> params) {
         if (imageSource == null) {
             return null;
         }
+
+        Float window = (params == null) ? null : (Float) params.get(ActionW.WINDOW.cmd());
+        Float level = (params == null) ? null : (Float) params.get(ActionW.LEVEL.cmd());
+        Boolean pixelPadding = (params == null) ? null : (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
 
         pixelPadding = (pixelPadding == null) ? true : pixelPadding;
         window = (window == null) ? getDefaultWindow(pixelPadding) : window;
         level = (level == null) ? getDefaultLevel(pixelPadding) : level;
 
         return ImageToolkit.getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
-    }
-
-    public RenderedImage getRenderedImage(final RenderedImage imageSource) {
-        return getRenderedImage(imageSource, null);
-    }
-
-    public RenderedImage getRenderedImage(final RenderedImage imageSource, HashMap<String, Object> params) {
-
-        Float window = (params == null) ? null : (Float) params.get(ActionW.WINDOW.cmd());
-        Float level = (params == null) ? null : (Float) params.get(ActionW.LEVEL.cmd());
-        Boolean pixelPadding = (params == null) ? null : (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
-
-        return getRenderedImage(imageSource, window, level, pixelPadding);
     }
 
     /**
@@ -351,8 +343,12 @@ public class ImageElement extends MediaElement<PlanarImage> {
             }
         }
         if (manager != null && cacheImage != null) {
-            manager.setFirstNode(cacheImage);
-            RenderedImage img = manager.process();
+            RenderedImage img = manager.getLastNodeOutputImage();
+            if (manager.getFirstNodeInputImage() != cacheImage || img == null) {
+                manager.setFirstNode(cacheImage);
+                img = manager.process();
+            }
+
             if (img != null) {
                 cacheImage = PlanarImage.wrapRenderedImage(img);
             }

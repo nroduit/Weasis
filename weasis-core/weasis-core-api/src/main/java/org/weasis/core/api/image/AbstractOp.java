@@ -68,6 +68,13 @@ public abstract class AbstractOp implements ImageOpNode {
     }
 
     @Override
+    public void removeParam(String key) {
+        if (key != null) {
+            params.remove(key);
+        }
+    }
+
+    @Override
     public boolean isEnabled() {
         return JMVUtils.getNULLtoTrue(params.get(ENABLE));
     }

@@ -927,6 +927,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void updateAffineTransform() {
+        Rectangle2D modelArea = getViewModel().getModelArea();
         double viewScale = getViewModel().getViewScale();
         affineTransform.setToScale(viewScale, viewScale);
 
@@ -938,9 +939,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (flip != null && flip) {
                 rotationAngle = 360 - rotationAngle;
             }
-            Rectangle2D imageCanvas = getViewModel().getModelArea();
-            affineTransform.rotate(Math.toRadians(rotationAngle), imageCanvas.getWidth() / 2.0,
-                imageCanvas.getHeight() / 2.0);
+            affineTransform.rotate(Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0,
+                modelArea.getHeight() / 2.0);
         }
         if (flip != null && flip) {
             // Using only one allows to enable or disable flip with the rotation action
@@ -957,7 +957,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // at = new AffineTransform(new double[] {-1.0,0.0,0.0,-1.0});
             // at.translate(-imageWid, -imageHt);
             affineTransform.scale(-1.0, 1.0);
-            affineTransform.translate(-getViewModel().getModelArea().getWidth(), 0.0);
+            affineTransform.translate(-modelArea.getWidth(), 0.0);
+        }
+        Point offset = (Point) actionsInView.get("layer.offset");
+        if (offset != null) {
+            // TODO not consistent with image coordinates after crop
+            affineTransform.translate(-offset.getX(), -offset.getY());
         }
 
         try {

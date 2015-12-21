@@ -430,9 +430,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             if (windowValue != null && levelValue != null) {
                 boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
                 windowAction.setMinMaxValueWithoutTriggerAction(0,
-                    (int) (image.getMaxValue(pixelPadding) - image.getMinValue(pixelPadding)), windowValue.intValue());
-                levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(pixelPadding),
-                    (int) image.getMaxValue(pixelPadding), levelValue.intValue());
+                    (int) (image.getMaxValue(null, pixelPadding) - image.getMinValue(null, pixelPadding)),
+                    windowValue.intValue());
+                levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(null, pixelPadding),
+                    (int) image.getMaxValue(null, pixelPadding), levelValue.intValue());
             }
         }
 
