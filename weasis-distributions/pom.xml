@@ -526,6 +526,16 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<dependencies>
+		<dependency>
+			<!-- http://www.tuckey.org/urlrewrite/ -->
+			<groupId>org.tuckey</groupId>
+			<artifactId>urlrewritefilter</artifactId>
+			<version>4.0.3</version>
+		</dependency>
+	</dependencies>
+
 	<profiles>
 		<profile>
 			<id>pack200</id>
