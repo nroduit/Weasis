@@ -161,8 +161,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             Object[] options = { box1, box2, boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE, null, null, null);
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(INC_DICOMDIR, String.valueOf(box1.isSelected()));
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
@@ -197,8 +196,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             Object[] options = { palenSlider1, boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE, null, null, null);
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(IMG_QUALITY, String.valueOf(slider.getValue()));
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
@@ -206,8 +204,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else if (EXPORT_FORMAT[3].equals(seltected)) {
             Object[] options = { boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE, null, null, null);
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
             }
@@ -216,8 +213,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false"))); //$NON-NLS-1$
             Object[] options = { box1, boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE, null, null, null);
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(HEIGHT_BITS, String.valueOf(box1.isSelected()));
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
@@ -576,7 +572,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         }
     }
 
-    private static String buildPath(MediaElement<PlanarImage> img, boolean keepNames, boolean writeDicomdir,
+    public static String buildPath(MediaElement<PlanarImage> img, boolean keepNames, boolean writeDicomdir,
         boolean cdCompatible, DefaultMutableTreeNode node, String iuid) {
         StringBuilder buffer = new StringBuilder();
         // Cannot keep folders names with DICOMDIR (could be not valid)

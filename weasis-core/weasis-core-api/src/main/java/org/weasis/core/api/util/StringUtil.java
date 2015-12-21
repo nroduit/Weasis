@@ -112,4 +112,18 @@ public class StringUtil {
     public static boolean hasText(String str) {
         return hasText((CharSequence) str);
     }
+
+    public static String getEmpty2NullObject(Object object) {
+        if (object == null) {
+            return "";
+        }
+        return object.toString();
+    }
+
+    public static String getEmpty2NullEnum(Enum<?> object) {
+        if (object == null) {
+            return "";
+        }
+        return object.name();
+    }
 }
