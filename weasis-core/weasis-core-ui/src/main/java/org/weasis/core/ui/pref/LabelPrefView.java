@@ -67,8 +67,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         setBorder(new EmptyBorder(15, 10, 10, 10));
         try {
             JMVUtils.setList(jComboName, Messages.getString("LabelPrefView.default"), //$NON-NLS-1$
-                GraphicsEnvironment.getLocalGraphicsEnvironment()
-                    .getAvailableFontFamilyNames());
+                GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
             jbInit();
             initialize();
         } catch (Exception ex) {

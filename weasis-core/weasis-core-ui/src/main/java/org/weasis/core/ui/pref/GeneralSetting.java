@@ -373,8 +373,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}"); //$NON-NLS-1$
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         AuditLog.createOrUpdateLogger(context, "default.log", new String[] { "org" }, level.toString(), logFile, //$NON-NLS-1$ //$NON-NLS-2$
-            pattern, fileNb,
-            fileSize);
+            pattern, fileNb, fileSize);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
         if (look != null) {

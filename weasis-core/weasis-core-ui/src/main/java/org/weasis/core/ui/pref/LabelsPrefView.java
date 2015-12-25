@@ -80,8 +80,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
         JPanel panel1 = new JPanel();
         panel1.setBorder(new TitledBorder(null, Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING, //$NON-NLS-1$
-            TitledBorder.TOP, null,
-            null));
+            TitledBorder.TOP, null, null));
         add(panel1, BorderLayout.CENTER);
         panel1.setLayout(new BorderLayout(0, 0));
 
