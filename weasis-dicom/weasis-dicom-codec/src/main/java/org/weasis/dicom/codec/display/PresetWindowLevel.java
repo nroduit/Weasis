@@ -202,8 +202,9 @@ public class PresetWindowLevel {
             }
         }
 
-        PresetWindowLevel autoLevel = new PresetWindowLevel(fullDynamicExplanation,
-            image.getFullDynamicWidth(params, pixelPadding), image.getFullDynamicCenter(params, pixelPadding), defaultLutShape);
+        PresetWindowLevel autoLevel =
+            new PresetWindowLevel(fullDynamicExplanation, image.getFullDynamicWidth(params, pixelPadding),
+                image.getFullDynamicCenter(params, pixelPadding), defaultLutShape);
         // Set O shortcut for auto levels
         autoLevel.setKeyCode(KeyEvent.VK_0);
         presetList.add(autoLevel);

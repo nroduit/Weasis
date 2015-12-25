@@ -10,11 +10,9 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
-import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
@@ -60,7 +58,6 @@ import javax.media.jai.operator.NullDescriptor;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
-import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
@@ -82,7 +79,6 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
-import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
@@ -573,7 +569,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             setTagNoNull(TagW.ContentDate, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentDate, null));
             setTagNoNull(TagW.ContentTime, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentTime, null));
             setTagNoNull(TagW.DiffusionBValue,
-                    DicomMediaUtils.getDoubleFromDicomElement(header, Tag.DiffusionBValue, null));
+                DicomMediaUtils.getDoubleFromDicomElement(header, Tag.DiffusionBValue, null));
 
             if (tags.get(TagW.AcquisitionDate) == null) {
                 // For Secondary Capture replace by DateOfSecondaryCapture
@@ -797,7 +793,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                             byte[][] overlayData = new byte[embeddedOverlayGroupOffsets.length][];
                             Raster raster = buffer.getData();
                             for (int i = 0; i < embeddedOverlayGroupOffsets.length; i++) {
-                                overlayData[i] = OverlayUtils.extractOverlay(embeddedOverlayGroupOffsets[i], raster, ds);
+                                overlayData[i] =
+                                    OverlayUtils.extractOverlay(embeddedOverlayGroupOffsets[i], raster, ds);
                             }
                             File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                             fileOut = new FileOutputStream(file);

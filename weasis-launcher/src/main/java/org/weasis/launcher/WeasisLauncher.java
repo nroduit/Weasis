@@ -458,8 +458,7 @@ public class WeasisLauncher {
                                 : mainFrame.getRootPaneContainer().getContentPane(),
                             String.format(Messages.getString("WeasisLauncher.msg"), appName), //$NON-NLS-1$
                             String.format(Messages.getString("WeasisLauncher.first"), appName), //$NON-NLS-1$
-                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
-                            null, options, null);
+                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, null);
 
                         if (response == 0) {
                             // Write "false" in weasis.properties. It can be useful when preferences are store remotely.

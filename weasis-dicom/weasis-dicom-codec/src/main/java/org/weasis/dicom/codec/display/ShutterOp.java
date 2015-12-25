@@ -20,7 +20,6 @@ import java.awt.image.DataBuffer;
 import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
-import java.io.IOException;
 import java.util.HashMap;
 
 import javax.media.jai.PlanarImage;
@@ -29,7 +28,6 @@ import javax.media.jai.TiledImage;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.image.Overlays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;

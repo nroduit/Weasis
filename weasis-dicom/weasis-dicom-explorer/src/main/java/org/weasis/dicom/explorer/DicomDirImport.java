@@ -240,8 +240,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         } else {
             LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
 
-            int response = JOptionPane.showConfirmDialog(this,
-                Messages.getString("DicomExplorer.mes_import_manual"), this.getTitle(), //$NON-NLS-1$
+            int response = JOptionPane.showConfirmDialog(this, Messages.getString("DicomExplorer.mes_import_manual"), //$NON-NLS-1$
+                this.getTitle(),
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
             if (response == JOptionPane.YES_OPTION) {

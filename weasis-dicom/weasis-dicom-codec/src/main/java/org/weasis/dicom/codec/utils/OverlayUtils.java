@@ -27,7 +27,6 @@
  */
 package org.weasis.dicom.codec.utils;
 
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.ComponentSampleModel;
 import java.awt.image.DataBuffer;
@@ -43,20 +42,15 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.HashMap;
 
-import javax.media.jai.PlanarImage;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.image.Overlays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
-import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.display.OverlayOp;
 
 public class OverlayUtils {
@@ -116,26 +110,26 @@ public class OverlayUtils {
             Overlays.applyOverlay(ovlyData != null ? 0 : frameIndex, raster, attributes, overlayGroupOffsets[i],
                 grayscaleValue >>> (16 - outBits), ovlyData);
         }
-        
+
         Object pr = params.get(OverlayOp.P_PR_ELEMENT);
         if (pr instanceof PRSpecialElement) {
             Attributes ovlyAttrs = ((PRSpecialElement) pr).getMediaReader().getDicomObject();
             overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ovlyAttrs, 0xffff);
             Integer shuttOverlayGroup =
-                DicomMediaUtils.getIntegerFromDicomElement(ovlyAttrs, Tag.ShutterOverlayGroup, Integer.MIN_VALUE);      
+                DicomMediaUtils.getIntegerFromDicomElement(ovlyAttrs, Tag.ShutterOverlayGroup, Integer.MIN_VALUE);
 
             // grayscaleValue = Overlays.getRecommendedDisplayGrayscaleValue(psAttrs, gg0000);
             for (int i = 0; i < overlayGroupOffsets.length; i++) {
                 if (shuttOverlayGroup != overlayGroupOffsets[i]) {
-                Overlays.applyOverlay(frameIndex, raster, ovlyAttrs, overlayGroupOffsets[i],
-                    grayscaleValue >>> (16 - outBits), null);
+                    Overlays.applyOverlay(frameIndex, raster, ovlyAttrs, overlayGroupOffsets[i],
+                        grayscaleValue >>> (16 - outBits), null);
                 }
             }
         }
-        
+
         return overBi;
     }
-    
+
     public static RenderedImage getShutterOverlay(Attributes attributes, int frameIndex, int width, int height,
         int shuttOverlayGroup) throws IOException {
         IndexColorModel icm =
@@ -146,7 +140,7 @@ public class OverlayUtils {
 
         return overBi;
     }
-    
+
     public static byte[] extractOverlay(int gg0000, Raster raster, Attributes attrs) {
         if (attrs.getInt(Tag.OverlayBitsAllocated | gg0000, 1) == 1) {
             return null;

@@ -29,7 +29,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
 public class OverlayOp extends AbstractOp {
@@ -74,7 +73,7 @@ public class OverlayOp extends AbstractOp {
         } else if (overlay) {
             RenderedImage imgOverlay = null;
             ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
-            
+
             if (image != null) {
                 boolean overlays = JMVUtils.getNULLtoFalse(image.getTagValue(TagW.HasOverlay));
 
@@ -86,8 +85,8 @@ public class OverlayOp extends AbstractOp {
                             Integer height = (Integer) image.getTagValue(TagW.Rows);
                             Integer width = (Integer) image.getTagValue(TagW.Columns);
                             if (height != null && width != null) {
-                                imgOverlay = PlanarImage.wrapRenderedImage(
-                                    OverlayUtils.getBinaryOverlays(image, reader.getDicomObject(), frame, width, height, params));
+                                imgOverlay = PlanarImage.wrapRenderedImage(OverlayUtils.getBinaryOverlays(image,
+                                    reader.getDicomObject(), frame, width, height, params));
                             }
                         }
                     } catch (IOException e) {

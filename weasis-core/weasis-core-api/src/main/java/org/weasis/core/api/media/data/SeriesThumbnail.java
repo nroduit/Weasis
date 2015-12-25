@@ -299,8 +299,8 @@ public class SeriesThumbnail extends Thumbnail
         int hbleft = y + height - 2;
         if (splitNb != null) {
             g2d.drawString("#" + splitNb + " [" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                                                                           //$NON-NLS-1$ $NON-NLS-2$
-                                                                                           //$NON-NLS-1$ $NON-NLS-3$
+                                                                                           // $NON-NLS-1$ $NON-NLS-2$
+                                                                                           // $NON-NLS-1$ $NON-NLS-3$
         } else {
             g2d.drawString("[" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ $NON-NLS-2$
         }

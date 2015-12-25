@@ -24,7 +24,7 @@ import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 
 public class WindowAndPresetsOp extends WindowOp {
-    
+
     public static final String P_PR_ELEMENT = "pr.element"; //$NON-NLS-1$
 
     @Override
@@ -65,7 +65,7 @@ public class WindowAndPresetsOp extends WindowOp {
                     PRSpecialElement pr = (prReader instanceof PresentationStateReader)
                         ? ((PresentationStateReader) prReader).getDicom() : null;
                     setParam(P_PR_ELEMENT, pr);
-                    
+
                     PresetWindowLevel preset = (PresetWindowLevel) p.get(ActionW.PRESET.cmd());
                     if (preset == null && img instanceof DicomImageElement) {
                         preset = ((DicomImageElement) img).getDefaultPreset(pixelPadding);
@@ -80,7 +80,7 @@ public class WindowAndPresetsOp extends WindowOp {
     private void setPreset(PresetWindowLevel preset, ImageElement img, boolean pixelPadding) {
         boolean p = preset != null;
         PRSpecialElement pr = (PRSpecialElement) getParam(P_PR_ELEMENT);
-        HashMap<TagW, Object> prTags = pr == null ? null: pr.getTags();
+        HashMap<TagW, Object> prTags = pr == null ? null : pr.getTags();
         setParam(ActionW.PRESET.cmd(), preset);
         setParam(ActionW.DEFAULT_PRESET.cmd(), true);
 

@@ -157,7 +157,8 @@ public abstract class AbstractBufferHandler {
         file = new File(filename);
         if (file.exists()) {
             int i = JOptionPane.showConfirmDialog(getParentComponent(),
-                String.format(Messages.getString("AbstractBufferHandler.exist"), file.getName()), Messages //$NON-NLS-1$
+                String.format(Messages.getString("AbstractBufferHandler.exist"), file.getName()), //$NON-NLS-1$
+                Messages
                     .getString("AbstractBufferHandler.save_as"), //$NON-NLS-1$
                 0);
             if (i != 0) {

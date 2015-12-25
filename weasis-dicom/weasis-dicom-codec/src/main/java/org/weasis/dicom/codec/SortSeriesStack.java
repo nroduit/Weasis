@@ -106,27 +106,28 @@ public final class SortSeriesStack {
             return Messages.getString("SortSeriesStack.content_time"); //$NON-NLS-1$
         }
     };
-    
-    public static final SeriesComparator<DicomImageElement> diffusionBValue = new SeriesComparator<DicomImageElement>() {
 
-        @Override
-        public int compare(DicomImageElement m1, DicomImageElement m2) {
-            Double val1 = (Double) m1.getTagValue(TagW.DiffusionBValue);
-            Double val2 = (Double) m2.getTagValue(TagW.DiffusionBValue);
-            if (val1 == null || val2 == null) {
-                return 0;
+    public static final SeriesComparator<DicomImageElement> diffusionBValue =
+        new SeriesComparator<DicomImageElement>() {
+
+            @Override
+            public int compare(DicomImageElement m1, DicomImageElement m2) {
+                Double val1 = (Double) m1.getTagValue(TagW.DiffusionBValue);
+                Double val2 = (Double) m2.getTagValue(TagW.DiffusionBValue);
+                if (val1 == null || val2 == null) {
+                    return 0;
+                }
+                return val1.compareTo(val2);
             }
-            return val1.compareTo(val2);
-        }
 
-        @Override
-        public String toString() {
-            return Messages.getString("SortSeriesStack.dvalue"); //$NON-NLS-1$
-        }
-    };
+            @Override
+            public String toString() {
+                return Messages.getString("SortSeriesStack.dvalue"); //$NON-NLS-1$
+            }
+        };
 
     public static SeriesComparator<DicomImageElement>[] getValues() {
-        return new SeriesComparator[] { instanceNumber, slicePosition,
-            sliceLocation, contentTime, acquisitionTime, diffusionBValue };
+        return new SeriesComparator[] { instanceNumber, slicePosition, sliceLocation, contentTime, acquisitionTime,
+            diffusionBValue };
     }
 }

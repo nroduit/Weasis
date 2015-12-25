@@ -145,17 +145,14 @@ public class InfoLayer implements AnnotationsLayer {
         if (getDisplayPreferences(WINDOW_LEVEL)) {
             GraphicLabel.paintFontOutline(g2,
                 Messages.getString("InfoLayer.wl") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                    + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd())
-                    + "/" + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), //$NON-NLS-1$
+                    + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) + "/" //$NON-NLS-1$
+                    + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()),
                 border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
-            GraphicLabel.paintFontOutline(g2,
-                Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                    + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()),
-                border,
-                drawY);
+            GraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+                + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {

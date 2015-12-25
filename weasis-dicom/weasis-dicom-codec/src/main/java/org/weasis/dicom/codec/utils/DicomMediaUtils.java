@@ -833,7 +833,7 @@ public class DicomMediaUtils {
      *      Display Shutter Module</a>
      * @see <a href="http://dicom.nema.org/MEDICAL/DICOM/current/output/chtml/part03/sect_C.7.6.15.html">C.7.6.15 Bitmap
      *      Display Shutter Module</a>
-     * 
+     *
      */
     public static void setShutter(HashMap<TagW, Object> tagList, Attributes dcmObject) {
         Area shape = null;
@@ -1110,7 +1110,8 @@ public class DicomMediaUtils {
     }
 
     /**
-     * @see <a href="http://dicom.nema.org/medical/Dicom/current/output/chtml/part03/sect_C.11.6.html">C.11.6 Softcopy Presentation LUT Module</a>
+     * @see <a href="http://dicom.nema.org/medical/Dicom/current/output/chtml/part03/sect_C.11.6.html">C.11.6 Softcopy
+     *      Presentation LUT Module</a>
      */
     public static void applyPrLutModule(Attributes dcmItems, HashMap<TagW, Object> tagList) {
         if (dcmItems != null && tagList != null) {

@@ -442,7 +442,7 @@ public class DownloadManager {
             }
 
         } catch (Throwable t) {
-            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString();  //$NON-NLS-1$//$NON-NLS-2$
+            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
             LOGGER.error(message);
 
             if (LOGGER.isDebugEnabled()) {

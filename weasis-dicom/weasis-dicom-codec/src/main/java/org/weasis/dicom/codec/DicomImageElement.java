@@ -148,8 +148,8 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getMinValue(HashMap<TagW, Object> params, boolean pixelPadding) {
         // Computes min and max as slope can be negative
-        return Math.min(pixel2mLUT(super.getMinValue(params, pixelPadding),params, pixelPadding),
-            pixel2mLUT(super.getMaxValue(params, pixelPadding),params, pixelPadding));
+        return Math.min(pixel2mLUT(super.getMinValue(params, pixelPadding), params, pixelPadding),
+            pixel2mLUT(super.getMaxValue(params, pixelPadding), params, pixelPadding));
     }
 
     /**
@@ -159,8 +159,8 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getMaxValue(HashMap<TagW, Object> params, boolean pixelPadding) {
         // Computes min and max as slope can be negative
-        return Math.max(pixel2mLUT(super.getMinValue(params, pixelPadding),params, pixelPadding),
-            pixel2mLUT(super.getMaxValue(params, pixelPadding), params,pixelPadding));
+        return Math.max(pixel2mLUT(super.getMinValue(params, pixelPadding), params, pixelPadding),
+            pixel2mLUT(super.getMaxValue(params, pixelPadding), params, pixelPadding));
     }
 
     @Override
@@ -184,7 +184,7 @@ public class DicomImageElement extends ImageElement {
 
     public boolean isPhotometricInterpretationInverse(HashMap<TagW, Object> params) {
         String prLUTShape = (String) (params == null ? null : params.get(TagW.PresentationLUTShape));
-        if(prLUTShape == null){
+        if (prLUTShape == null) {
             prLUTShape = (String) getTagValue(TagW.PresentationLUTShape);
         }
         boolean inverseLUT = prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1" //$NON-NLS-1$ //$NON-NLS-2$
@@ -297,7 +297,8 @@ public class DicomImageElement extends ImageElement {
 
     }
 
-    public LutParameters getLutParameters(HashMap<TagW, Object> params, boolean pixelPadding, LookupTableJAI mLUTSeq, boolean inversePaddingMLUT) {
+    public LutParameters getLutParameters(HashMap<TagW, Object> params, boolean pixelPadding, LookupTableJAI mLUTSeq,
+        boolean inversePaddingMLUT) {
         Integer paddingValue = getPaddingValue();
 
         boolean isSigned = isPixelRepresentationSigned();
@@ -363,7 +364,7 @@ public class DicomImageElement extends ImageElement {
                 if (super.getMinValue(params, false) >= mLUTSeq.getOffset()
                     && super.getMaxValue(params, false) < mLUTSeq.getOffset() + mLUTSeq.getNumEntries()) {
                     return mLUTSeq;
-                } else if(prModLut == null){
+                } else if (prModLut == null) {
                     // Remove MLut as it cannot be used.
                     tags.remove(TagW.ModalityLUTData);
                     LOGGER.warn(
@@ -430,8 +431,8 @@ public class DicomImageElement extends ImageElement {
      *
      * @return 8 bits unsigned Lookup Table
      */
-    public LookupTableJAI getVOILookup(HashMap<TagW, Object> params, Float window, Float level, Float minLevel, Float maxLevel, LutShape shape,
-        boolean fillLutOutside, boolean pixelPadding) {
+    public LookupTableJAI getVOILookup(HashMap<TagW, Object> params, Float window, Float level, Float minLevel,
+        Float maxLevel, LutShape shape, boolean fillLutOutside, boolean pixelPadding) {
 
         if (window == null || level == null || shape == null || minLevel == null || maxLevel == null) {
             return null;
@@ -766,18 +767,19 @@ public class DicomImageElement extends ImageElement {
                  */
                 return imageModalityTransformed;
             }
-            
+
             LookupTableJAI voiLookup = null;
-            if (prLutData == null || lut.getLookup() !=null) {
-               voiLookup = getVOILookup(prTags, windowValue, levelValue, minLevel, maxLevel, lut, JMVUtils.getNULLtoFalse(fillLutOutside), pixPadding);
+            if (prLutData == null || lut.getLookup() != null) {
+                voiLookup = getVOILookup(prTags, windowValue, levelValue, minLevel, maxLevel, lut,
+                    JMVUtils.getNULLtoFalse(fillLutOutside), pixPadding);
             }
-                
+
             if (prLutData == null) {
                 // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
                 return LookupDescriptor.create(imageModalityTransformed, voiLookup,
                     LayoutUtil.createGrayRenderedImage());
             }
-            
+
             RenderedImage imageVoiTransformed = voiLookup == null ? imageModalityTransformed
                 : LookupDescriptor.create(imageModalityTransformed, voiLookup, null);
             // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.

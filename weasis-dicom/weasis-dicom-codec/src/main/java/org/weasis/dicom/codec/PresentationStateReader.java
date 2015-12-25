@@ -114,7 +114,7 @@ public class PresentationStateReader {
                 return;
             }
             for (Attributes item : srcSeq) {
-                if (isModuleAppicable(item, img)) { 
+                if (isModuleAppicable(item, img)) {
                     float[] spacing =
                         DicomMediaUtils.getFloatArrayFromDicomElement(item, Tag.PresentationPixelSpacing, null);
                     if (spacing != null && spacing.length == 2) {
