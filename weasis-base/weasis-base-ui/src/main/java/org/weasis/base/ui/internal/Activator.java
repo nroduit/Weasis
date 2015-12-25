@@ -13,7 +13,10 @@ package org.weasis.base.ui.internal;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
+import javax.swing.LookAndFeel;
+
 import org.apache.felix.service.command.CommandProcessor;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -28,14 +31,33 @@ import org.weasis.base.ui.gui.WeasisWinPropertyChangeListener;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.pref.GeneralSetting;
 
 public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
+        // Starts core bundles for initialization before calling UI components
+        Bundle bundle = FrameworkUtil.getBundle(BundleTools.class);
+        if (bundle != null) {
+            bundle.start();
+        }
+        bundle = FrameworkUtil.getBundle(UIManager.class);
+        if (bundle != null) {
+            bundle.start();
+        }
+        String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.look");
+        if (StringUtil.hasText(className)) {
+            LookAndFeel lf = javax.swing.UIManager.getLookAndFeel();
+            if (lf == null || !className.equals(lf.getClass().getName())) {
+                GeneralSetting.setLookAndFeel(className);
+            }
+        }
 
         // WeasisWin must be instantiate in the EDT
         GuiExecutor.instance().invokeAndWait(new Runnable() {

@@ -35,7 +35,7 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.registry.RenderableRegistryMode;
 import javax.media.jai.registry.RenderedRegistryMode;
 
-import com.sun.media.jai.opimage.RIFUtil;
+import org.weasis.core.api.image.util.JAIUtil;
 
 public class RectifyUShortToShortDataDescriptor extends OperationDescriptorImpl implements RenderedImageFactory {
 
@@ -44,16 +44,16 @@ public class RectifyUShortToShortDataDescriptor extends OperationDescriptorImpl 
      */
     private static final String[][] resources = { { "GlobalName", "RectifyUShortToShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "LocalName", "RectifyUShortToShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "RectifyUShortToShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Description", //$NON-NLS-1$
-                        "Rectify image with unsigned short data to signed short data (Workaround for imageio codecs issue" }, //$NON-NLS-1$
+        { "Description", //$NON-NLS-1$
+            "Rectify image with unsigned short data to signed short data (Workaround for imageio codecs issue" }, //$NON-NLS-1$
 
-                    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Version", "1.0" } //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" } //$NON-NLS-1$ //$NON-NLS-2$
 
     };
 
@@ -103,7 +103,7 @@ public class RectifyUShortToShortDataDescriptor extends OperationDescriptorImpl 
     public RenderedImage create(ParameterBlock args, RenderingHints renderHints) {
         // Get ImageLayout from renderHints if any.
         RenderedImage src = args.getRenderedSource(0);
-        ImageLayout layout = RIFUtil.getImageLayoutHint(renderHints);
+        ImageLayout layout = JAIUtil.getImageLayoutHint(renderHints);
         if (layout == null) {
             layout = new ImageLayout(src);
         }

@@ -40,7 +40,7 @@
 
 		<dockingframes.version>1.1.2-P14e</dockingframes.version>
 		<substance.version>7.3</substance.version>
-		<jai.version>1.1.4-b05</jai.version>
+		<jai.version>1.1.4-b07</jai.version>
 		<jai.native.version>1.1.4-b03</jai.native.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
 		<weasis.jpeg.native.version>1.0.3-6b</weasis.jpeg.native.version>
