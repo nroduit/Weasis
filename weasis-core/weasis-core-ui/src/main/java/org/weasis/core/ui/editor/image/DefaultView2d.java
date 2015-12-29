@@ -524,6 +524,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setImage(E img) {
+        boolean updateGraphics = false;
         imageLayer.setEnableDispOperations(false);
         if (img == null) {
             actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
@@ -541,6 +542,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else {
             E oldImage = imageLayer.getSourceImage();
             if (img != null && !img.equals(oldImage)) {
+                updateGraphics = true;
                 actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
                 if ((eventManager.getSelectedViewPane() == this)) {
                     ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
@@ -578,27 +580,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
                 imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
-                AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
-                if (layer != null) {
-                    synchronized (this) {
-                        // TODO Handle several layers
-                        GraphicList gl = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
-                        if (gl != null) {
-                            // TODO handle graphics without shape, exclude them!
-                            layer.setGraphics(gl);
-                            synchronized (gl.list) {
-                                for (Graphic graphic : gl.list) {
-                                    graphic.updateLabel(img, this);
-                                }
-                            }
-                        } else {
-                            GraphicList graphics = new GraphicList();
-                            img.setTag(TagW.MeasurementGraphics, graphics);
-                            layer.setGraphics(graphics);
-                        }
-                    }
-                }
-
                 if (AuditLog.LOGGER.isInfoEnabled()) {
                     PlanarImage image = img.getImage();
                     if (image != null) {
@@ -621,6 +602,30 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
             // Apply all image processing operation for visualization
             imageLayer.setEnableDispOperations(true);
+
+            if (updateGraphics) {
+                // After getting a new image iterator, update the measurements
+                AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
+                if (layer != null) {
+                    synchronized (this) {
+                        // TODO Handle several layers
+                        GraphicList gl = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
+                        if (gl != null) {
+                            // TODO handle graphics without shape, exclude them!
+                            layer.setGraphics(gl);
+                            synchronized (gl.list) {
+                                for (Graphic graphic : gl.list) {
+                                    graphic.updateLabel(true, this);
+                                }
+                            }
+                        } else {
+                            GraphicList graphics = new GraphicList();
+                            img.setTag(TagW.MeasurementGraphics, graphics);
+                            layer.setGraphics(graphics);
+                        }
+                    }
+                }
+            }
 
             if (panner != null) {
                 panner.updateImage();

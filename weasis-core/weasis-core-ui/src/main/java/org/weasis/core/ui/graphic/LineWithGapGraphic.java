@@ -12,36 +12,40 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.List;
 
 import javax.swing.Icon;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.util.MouseEventDouble;
 
-@Root(name = "lineWithGap")
+@XmlType(name = "lineWithGap")
+@XmlAccessorType(XmlAccessType.NONE)
 public class LineWithGapGraphic extends AbstractDragGraphic {
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptA, ptB; // Let AB be a simple a line segment
     protected boolean lineABvalid; // estimate if line segment is valid or not
 
-    @Element(name = "centerGap", required = false)
+    @XmlElement(name = "centerGap", required = false)
     protected Point2D centerGap;
-    @Element(name = "gapSize")
+    @XmlElement(name = "gapSize")
     protected int gapSize;
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public LineWithGapGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(2, paintColor, lineThickness, labelVisible);
+    }
 
     public LineWithGapGraphic(Point2D.Double ptStart, Point2D.Double ptEnd, float lineThickness, Color paintColor,
         boolean labelVisible, Point2D centerGap, int gapSize) throws InvalidShapeException {
@@ -59,20 +63,8 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
         buildShape(null);
     }
 
-    protected LineWithGapGraphic(
-        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
-        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
-        @Attribute(name = "label_visible") boolean labelVisible,
-        @Element(name = "centerGap", required = false) Point2D centerGap, @Element(name = "gapSize") int gapSize)
-            throws InvalidShapeException {
-        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
-        if (handlePointTotalNumber != 2) {
-            throw new InvalidShapeException("Not a valid LineWithGapGraphic!"); //$NON-NLS-1$
-        }
-        this.gapSize = gapSize;
-        this.centerGap = centerGap;
-        buildShape(null);
+    public static LineWithGapGraphic createDefaultInstance() {
+        return new LineWithGapGraphic(1.0f, Color.YELLOW, true);
     }
 
     protected void setHandlePointList(Point2D.Double ptStart, Point2D.Double ptEnd) {

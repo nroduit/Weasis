@@ -5,6 +5,7 @@
 	com.sun.awt, \
 	com.sun.image.codec.jpeg, \
 	com.sun.imageio.spi, \
+	com.sun.xml.internal.bind, \
 	javax.accessibility, \
 	javax.imageio, \
 	javax.imageio.event, \
@@ -23,6 +24,7 @@
 	javax.swing.table, \
 	javax.swing.text, \
 	javax.swing.tree, \
+	javax.xml.bind, \
 	javax.xml.parsers, \
 	javax.xml.namespace, \
 	javax.xml.stream, \
@@ -126,6 +128,6 @@
 	weasis.user=${user.name},\
 	weasis.user.prefs=superuser
 
--runvm: -Xms32m -Xmx512m
+-runvm: -Xms32m -Xmx512m -Dsun.awt.disablegrab=true
 
 #-runtrace: true

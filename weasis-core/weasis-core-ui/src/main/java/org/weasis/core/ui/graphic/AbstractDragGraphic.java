@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -34,6 +35,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
  * @author Nicolas Roduit,Benoit Jacquemoud
  */
 
+@XmlTransient
 public abstract class AbstractDragGraphic extends BasicGraphic {
 
     private boolean resizingOrMoving = false;
@@ -65,7 +67,7 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
     protected abstract void buildShape(MouseEventDouble mouseEvent);
 
     @Override
-    protected void buildShape() {
+    public void buildShape() {
         if (isShapeValid()) {
             buildShape(null);
         }

@@ -12,7 +12,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Line2D;
@@ -22,11 +21,10 @@ import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlType;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -34,7 +32,8 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
-@Root(name = "line")
+@XmlType(name = "line", factoryMethod = "createDefaultInstance")
+@XmlAccessorType(XmlAccessType.NONE)
 public class LineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
@@ -77,16 +76,8 @@ public class LineGraphic extends AbstractDragGraphic {
         buildShape(null);
     }
 
-    protected LineGraphic(
-        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
-        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
-        @Attribute(name = "label_visible") boolean labelVisible) throws InvalidShapeException {
-        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
-        if (handlePointTotalNumber != 2) {
-            throw new InvalidShapeException("Not a valid LineGraphic!"); //$NON-NLS-1$
-        }
-        buildShape(null);
+    public static LineGraphic createDefaultInstance() {
+        return new LineGraphic(1.0f, Color.YELLOW, true);
     }
 
     protected void setHandlePointList(Point2D.Double ptStart, Point2D.Double ptEnd) {

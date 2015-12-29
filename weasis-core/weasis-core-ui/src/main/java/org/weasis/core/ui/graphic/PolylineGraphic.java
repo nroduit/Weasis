@@ -20,11 +20,10 @@ import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlType;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -37,7 +36,9 @@ import org.weasis.core.ui.util.MouseEventDouble;
  *
  * @author Nicolas Roduit
  */
-@Root(name = "polyline")
+
+@XmlType(name = "polyline", factoryMethod = "createDefaultInstance")
+@XmlAccessorType(XmlAccessType.NONE)
 public class PolylineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(PolylineGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
@@ -64,11 +65,8 @@ public class PolylineGraphic extends AbstractDragGraphic {
         this(handlePointList, handlePointList.size(), color, f, labelVisible);
     }
 
-    protected PolylineGraphic(
-        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
-        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
-        @Attribute(name = "label_visible") boolean labelVisible) throws InvalidShapeException {
+    protected PolylineGraphic(List<Point2D.Double> handlePointList, int handlePointTotalNumber, Paint paintColor,
+        float lineThickness, boolean labelVisible) throws InvalidShapeException {
         super(handlePointList, BasicGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
         if (handlePointList == null || handlePointList.size() < 2) {
             throw new InvalidShapeException("Polyline must have at least 2 points!"); //$NON-NLS-1$
@@ -99,6 +97,10 @@ public class PolylineGraphic extends AbstractDragGraphic {
             }
             buildShape(null);
         }
+    }
+
+    public static PolylineGraphic createDefaultInstance() {
+        return new PolylineGraphic(1.0f, Color.YELLOW, true);
     }
 
     @Override

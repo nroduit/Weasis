@@ -35,7 +35,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.serialize.DefaultSerializer;
+import org.weasis.core.ui.serialize.XmlSerializer;
 
 public class ViewerPluginBuilder {
     public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer"; //$NON-NLS-1$
@@ -253,7 +253,7 @@ public class ViewerPluginBuilder {
             if (medias != null) {
                 for (MediaElement<?> media : medias) {
                     if (media instanceof ImageElement) {
-                        DefaultSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
+                        XmlSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
                     }
                 }
             }

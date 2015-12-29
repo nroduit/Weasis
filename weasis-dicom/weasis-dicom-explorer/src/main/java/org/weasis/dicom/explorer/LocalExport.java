@@ -65,7 +65,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.serialize.DefaultSerializer;
+import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -426,7 +426,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             File destinationFile = new File(destinationDir, instance + ".jpg"); //$NON-NLS-1$
                             ImageFiler.writeJPG(destinationFile, image, jpegQuality / 100.0f);
                             if (writeGraphics) {
-                                DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
+                                XmlSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                         } else {
                             LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
@@ -440,7 +440,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             File destinationFile = new File(destinationDir, instance + ".png"); //$NON-NLS-1$
                             ImageFiler.writePNG(destinationFile, image);
                             if (writeGraphics) {
-                                DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
+                                XmlSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                         } else {
                             LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
@@ -454,7 +454,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             File destinationFile = new File(destinationDir, instance + ".tif"); //$NON-NLS-1$
                             ImageFiler.writeTIFF(destinationFile, image, false, false, false);
                             if (writeGraphics) {
-                                DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
+                                XmlSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                         } else {
                             LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
@@ -528,7 +528,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         if (img.saveToFile(destinationFile)) {
                             if (writeGraphics) {
                                 // TODO remove me and use PR
-                                DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
+                                XmlSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                             if (!writeInDicomDir(writer, img, node, iuid, destinationFile)) {
                                 continue TreePath;

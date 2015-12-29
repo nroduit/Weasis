@@ -188,7 +188,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         transform.add(panel);
 
-        JLabel label = new JLabel(MeasureToolBar.lineGraphic.getUIName() + StringUtil.COLON);
+        JLabel label = new JLabel(Messages.getString("MeasureToolBar.line") + StringUtil.COLON); //$NON-NLS-1$
         panel.add(label);
 
         JButton button = new JButton(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$

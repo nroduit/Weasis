@@ -11,7 +11,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
@@ -21,12 +20,10 @@ import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlType;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementArray;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
@@ -41,7 +38,8 @@ import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.util.MouseEventDouble;
 
-@Root(name = "pixelInfo")
+@XmlType(name = "pixelInfo", factoryMethod = "createDefaultInstance")
+@XmlAccessorType(XmlAccessType.NONE)
 public class PixelInfoGraphic extends AnnotationGraphic {
 
     public static final Icon ICON = new ImageIcon(PixelInfoGraphic.class.getResource("/icon/22x22/draw-pixelinfo.png")); //$NON-NLS-1$
@@ -62,14 +60,8 @@ public class PixelInfoGraphic extends AnnotationGraphic {
         super(lineThickness, paintColor, labelVisible);
     }
 
-    protected PixelInfoGraphic(
-        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
-        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
-        @Attribute(name = "label_visible") boolean labelVisible, @Attribute(name = "fill") boolean filled,
-        @ElementArray(name = "text") String[] labelStringArray) throws InvalidShapeException {
-        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled,
-            labelStringArray);
+    public static PixelInfoGraphic createDefaultInstance() {
+        return new PixelInfoGraphic(1.0f, Color.YELLOW, true);
     }
 
     @Override

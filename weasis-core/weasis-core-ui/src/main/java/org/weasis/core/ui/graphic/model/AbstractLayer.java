@@ -21,8 +21,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.Graphic;
@@ -349,9 +347,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
     }
 
-    @Root
     public static class Identifier {
-        @Attribute(name = "id")
         private final int defaultLevel;
         private final String title;
 

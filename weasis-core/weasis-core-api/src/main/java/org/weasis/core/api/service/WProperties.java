@@ -182,7 +182,7 @@ public class WProperties extends Properties {
 
     public void setColorProperty(String key, Color color) {
         if (isValid(key, color)) {
-            this.put(key, color2Hexadecimal(color));
+            this.put(key, color2Hexadecimal(color, true));
         }
     }
 
@@ -219,20 +219,24 @@ public class WProperties extends Properties {
         return key != null;
     }
 
-    public static String color2Hexadecimal(Color c) {
-        int val = c == null ? 0 : c.getRGB() & 0x00ffffff;
+    public static String color2Hexadecimal(Color c, boolean alpha) {
+        int val = c == null ? 0 : alpha ? c.getRGB() : c.getRGB() & 0x00ffffff;
         return Integer.toHexString(val);
     }
 
     public static Color hexadecimal2Color(String hexColor) {
-        int intValue = 0;
+        int intValue = 0xff000000;
         if (hexColor != null) {
             try {
-                intValue = Integer.parseInt(hexColor, 16);
+                if (hexColor.length() > 6) {
+                    intValue = (int) (Long.parseLong(hexColor, 16) & 0xffffffff);
+                } else {
+                    intValue |= Integer.parseInt(hexColor, 16);
+                }
             } catch (NumberFormatException e) {
             }
         }
-        return new Color(intValue);
+        return new Color(intValue, true);
     }
 
     public static void setProperty(WProperties properties, String key, Preferences prefNode, String defaultValue) {
