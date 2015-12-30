@@ -14,8 +14,9 @@ import javax.imageio.spi.ImageReaderSpi;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.weasis.imageio.codec.ImageioUtil;
 import org.weasis.openjpeg.NativeJ2kImageReaderSpi;
+
+import com.sun.media.imageioimpl.common.ImageioUtil;
 
 public class Activator implements BundleActivator {
 

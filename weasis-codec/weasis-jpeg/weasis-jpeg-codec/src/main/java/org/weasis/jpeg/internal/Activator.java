@@ -14,10 +14,11 @@ import javax.imageio.spi.ImageReaderSpi;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.weasis.imageio.codec.ImageioUtil;
 import org.weasis.jpeg.NativeJLSImageReaderSpi;
 import org.weasis.jpeg.NativeJLSImageWriterSpi;
 import org.weasis.jpeg.NativeJPEGImageReaderSpi;
+
+import com.sun.media.imageioimpl.common.ImageioUtil;
 
 public class Activator implements BundleActivator {
 
