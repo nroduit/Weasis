@@ -26,7 +26,7 @@ import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.Properties;
 import org.weasis.openjpeg.internal.OpenJpegCodec;
 
-@Properties({ @Platform(include = { "openjpeg.h", "openjpegutils.h" }) })
+@Properties({ @Platform(include = { "openjpegutils.h" }) })
 public class openjpeg {
 
     static {
@@ -50,30 +50,29 @@ public class openjpeg {
                     OPJ_CODEC_JPP = 3, // JPP-stream (JPEG 2000, JPIP) : to be coded
                     OPJ_CODEC_JPX = 4; // JPX file format (JPEG 2000 Part-2) : to be coded
 
-    public static class j2kfile extends Pointer {
+    public static class SourceData extends Pointer {
         static {
             Loader.load();
         }
 
-        public j2kfile() {
+        public SourceData() {
             allocate();
         }
 
         private native void allocate();
 
-        @Cast("char*")
+        @Cast("unsigned char*")
         private native ByteBuffer data();
 
-        public native void data(@Cast("char*") ByteBuffer buf);
+        public native void data(@Cast("unsigned char*") ByteBuffer buf);
 
-        @Cast("char*")
-        private native ByteBuffer curData();
+        public native @ByVal SizeTPointer size();
 
-        public native void curData(@Cast("char*") ByteBuffer buf);
+        public native void size(@ByVal SizeTPointer size);
 
-        public native @ByVal SizeTPointer count();
+        public native @ByVal SizeTPointer offset();
 
-        public native void count(@ByVal SizeTPointer count);
+        public native void offset(@ByVal SizeTPointer offset);
 
     }
 
@@ -647,6 +646,9 @@ public class openjpeg {
     public static native @Cast("void**") Pointer opj_stream_create(@Cast("OPJ_SIZE_T") long p_buffer_size,
         @Cast("OPJ_BOOL") boolean p_is_input);
 
+    public static native @Cast("void**") Pointer opj_stream_create_memory_stream(SourceData p_mem,
+        @Cast("OPJ_SIZE_T") long p_size, @Cast("OPJ_BOOL") boolean p_is_read_stream);
+
     /**
      * Destroys a stream created by opj_create_stream. This function does NOT close the abstract stream. If needed the
      * user must close its own implementation of the stream.
@@ -656,8 +658,6 @@ public class openjpeg {
      */
 
     public static native void opj_stream_destroy(@Cast("void**") Pointer p_stream);
-
-    public static native void opj_stream_init_function(@Cast("void**") Pointer l_stream);
 
     /**
      * Sets the given data to be used as a user data for the stream.
@@ -669,7 +669,7 @@ public class openjpeg {
      * @param p_function
      *            the function to free p_data when opj_stream_destroy() is called.
      */
-    public static native void opj_stream_set_user_data(@Cast("void**") Pointer p_stream, j2kfile p_data,
+    public static native void opj_stream_set_user_data(@Cast("void**") Pointer p_stream, SourceData p_data,
         close_stream close_function);
 
     /**

@@ -61,6 +61,7 @@ final class NativeJ2kImageWriter extends NativeImageWriter {
         }
 
         RenderedImage renderedImage = image.getRenderedImage();
+
         // Throws exception if the renderedImage cannot be encoded.
         ImageUtil.canEncodeImage(this, renderedImage.getColorModel(), renderedImage.getSampleModel());
 
@@ -68,20 +69,13 @@ final class NativeJ2kImageWriter extends NativeImageWriter {
             renderedImage = convertTo3BandRGB(renderedImage);
         }
 
-        // int bitDepth = renderedImage.getColorModel().getComponentSize(0);
-        // if ((param == null
-        // || (param.getCompressionMode() == ImageWriteParam.MODE_EXPLICIT && !param.isCompressionLossless()))
-        // && bitDepth > 12) {
-        // throw new IIOException("JPEG baseline encoding is limited to 12 bits: " + this);
-        // }
-
-        NativeJ2kImage nImage = new NativeJ2kImage();
-
-        int[] supportedFormats = new int[] { ImageParameters.CM_GRAY, ImageParameters.CM_S_RGB,
-            ImageParameters.CM_S_YCC, ImageParameters.CM_E_YCC, ImageParameters.CM_CMYK };
-        formatInputDataBuffer(nImage, renderedImage, param, false, supportedFormats);
-
         try {
+            NativeJ2kImage nImage = new NativeJ2kImage();
+
+            int[] supportedFormats = new int[] { ImageParameters.CM_GRAY, ImageParameters.CM_S_RGB,
+                ImageParameters.CM_S_YCC, ImageParameters.CM_E_YCC, ImageParameters.CM_CMYK };
+            formatInputDataBuffer(nImage, renderedImage, param, false, supportedFormats);
+
             OpenJpegCodec encoder = getCodec();
             String error = encoder.compress(nImage, stream.getStream(), null);
             if (error != null) {

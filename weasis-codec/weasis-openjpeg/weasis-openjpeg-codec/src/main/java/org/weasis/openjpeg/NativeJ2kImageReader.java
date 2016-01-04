@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.openjpeg;
 
-import java.awt.Rectangle;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -45,8 +44,8 @@ class NativeJ2kImageReader extends NativeImageReader {
     }
 
     @Override
-    protected final synchronized NativeImage nativeDecode(InputStream stream, ImageReadParam param, int imageIndex,
-        Rectangle region) throws IOException {
+    protected final synchronized NativeImage nativeDecode(InputStream stream, ImageReadParam param, int imageIndex)
+        throws IOException {
 
         ImageInputStream iis = null;
         if (stream instanceof InputStreamAdapter) {
@@ -67,7 +66,7 @@ class NativeJ2kImageReader extends NativeImageReader {
             FileStreamSegment.adaptParametersFromStream(iis, mlImage);
 
             long start = System.currentTimeMillis();
-            String error = decoder.decompress(mlImage, region);
+            String error = decoder.decompress(mlImage, param);
             if (error != null) {
                 throw new IIOException("Native J2K codec error: " + error);
             }
@@ -102,7 +101,7 @@ class NativeJ2kImageReader extends NativeImageReader {
             throw new IllegalArgumentException("input is not an ImageInputStream!");
         }
         // FIXME skip stream!
-        retval = nativeDecode(stream, null, index, null) != null;
+        retval = nativeDecode(stream, null, index) != null;
 
         if (retval) {
             long pos = ((ImageInputStream) input).getStreamPosition();

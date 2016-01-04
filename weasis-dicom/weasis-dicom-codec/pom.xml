@@ -51,12 +51,12 @@
 			<artifactId>dcm4che-image</artifactId>
 			<version>3.3.8-SNAPSHOT</version>
 		</dependency>
-				<dependency>
+		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-imageio</artifactId>
 			<version>3.3.8-SNAPSHOT</version>
 		</dependency>
-				<dependency>
+		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-imageio-rle</artifactId>
 			<version>3.3.8-SNAPSHOT</version>

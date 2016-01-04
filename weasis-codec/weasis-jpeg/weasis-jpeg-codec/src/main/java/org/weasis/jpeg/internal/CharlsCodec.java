@@ -18,6 +18,7 @@ import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
 
+import javax.imageio.ImageReadParam;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
@@ -64,7 +65,8 @@ public class CharlsCodec implements NativeCodec {
     }
 
     @Override
-    public String decompress(NativeImage nImage, Rectangle region) throws IOException {
+    public String decompress(NativeImage nImage, ImageReadParam param) throws IOException {
+        // TODO use ImageReadParam
         int ret = 0;
         FileStreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
