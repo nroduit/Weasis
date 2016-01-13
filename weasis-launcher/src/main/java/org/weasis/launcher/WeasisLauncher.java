@@ -117,6 +117,8 @@ public class WeasisLauncher {
 
     private static String APP_PROPERTY_FILE = "weasis.properties"; //$NON-NLS-1$
     public static final String P_WEASIS_VERSION = "weasis.version"; //$NON-NLS-1$
+    public static final String P_WEASIS_PROFILE = "weasis.profile"; //$NON-NLS-1$
+    public static final String P_WEASIS_NAME = "weasis.name"; //$NON-NLS-1$
     public static final String P_WEASIS_PATH = "weasis.path"; //$NON-NLS-1$
     private static final String P_WEASIS_RES_DATE = "weasis.resources.date"; //$NON-NLS-1$
     static Properties modulesi18n = null;
@@ -309,10 +311,14 @@ public class WeasisLauncher {
             serverProp.setProperty(AutoProcessor.AUTO_DEPLOY_DIR_PROPERY, bundleDir);
         }
 
+        String profileName = serverProp.getProperty(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
+        serverProp.setProperty(P_WEASIS_PROFILE, profileName);
+
         // Define the sourceID for the temp and cache directory. The portable version will always have the same
         // sourceID.
         String sourceID =
-            toHex((portable == null ? System.getProperty("weasis.codebase.url", "unknown") : "portable").hashCode()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            toHex((portable == null ? System.getProperty("weasis.codebase.url", "unknown") + profileName : "portable") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                .hashCode());
         System.setProperty("weasis.source.id", sourceID); //$NON-NLS-1$
 
         cacheDir = serverProp.getProperty(Constants.FRAMEWORK_STORAGE) + "-" + sourceID; //$NON-NLS-1$
@@ -351,7 +357,7 @@ public class WeasisLauncher {
             // and auto-install/auto-start properties.
             loader.setFelix(serverProp, m_activator.getBundleContext());
             loader.writeLabel(
-                String.format(Messages.getString("WeasisLauncher.starting"), System.getProperty("weasis.name"))); //$NON-NLS-1$ //$NON-NLS-2$
+                String.format(Messages.getString("WeasisLauncher.starting"), System.getProperty(P_WEASIS_NAME))); //$NON-NLS-1$
             m_tracker =
                 new ServiceTracker(m_activator.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", //$NON-NLS-1$
                     null);
@@ -452,7 +458,7 @@ public class WeasisLauncher {
                         Object[] options =
                             { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-                        String appName = System.getProperty("weasis.name"); //$NON-NLS-1$
+                        String appName = System.getProperty(P_WEASIS_NAME); 
                         int response = JOptionPane.showOptionDialog(
                             mainFrame.getRootPaneContainer() == null ? null
                                 : mainFrame.getRootPaneContainer().getContentPane(),
@@ -506,7 +512,7 @@ public class WeasisLauncher {
                 final String releaseNotesUrl = s_prop.getProperty("weasis.releasenotes"); //$NON-NLS-1$
                 final StringBuilder message = new StringBuilder("<P>"); //$NON-NLS-1$
                 message.append(String.format(Messages.getString("WeasisLauncher.change.version"), //$NON-NLS-1$
-                    System.getProperty("weasis.name"), versionOld, versionNew)); //$NON-NLS-1$
+                    System.getProperty(P_WEASIS_NAME), versionOld, versionNew)); 
 
                 EventQueue.invokeLater(new Runnable() {
                     @Override
@@ -857,10 +863,13 @@ public class WeasisLauncher {
         System.out.println("Operating system: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
 
         String dir = new File(s_prop.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
-        System.setProperty("weasis.name", s_prop.getProperty("weasis.name", "Weasis")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        String profileName = s_prop.getProperty("weasis.profile", "default"); //$NON-NLS-1$ //$NON-NLS-2$
-        System.setProperty("weasis.profile", profileName); //$NON-NLS-1$
         System.setProperty(P_WEASIS_PATH, dir);
+
+        String weasisName = s_prop.getProperty(P_WEASIS_NAME, "Weasis");//$NON-NLS-1$
+        System.setProperty(P_WEASIS_NAME, weasisName); 
+
+        String profileName = s_prop.getProperty(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
+        System.setProperty(P_WEASIS_PROFILE, profileName);
 
         String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
         boolean localSessionUser = user == null;
