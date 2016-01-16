@@ -7,6 +7,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class SOPInstanceReference extends Module {
 
@@ -35,7 +36,14 @@ public class SOPInstanceReference extends Module {
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////
-
+    public int[] getReferencedFrameNumber() {
+        return DicomMediaUtils.getIntAyrrayFromDicomElement(dcmItems, Tag.ReferencedFrameNumber, null);
+    }
+    
+    public void setReferencedFrameNumber(int... frameNumber) {
+        dcmItems.setInt(Tag.ReferencedFrameNumber, VR.IS, frameNumber);
+    }
+    
     public String getReferencedSOPInstanceUID() {
         return dcmItems.getString(Tag.ReferencedSOPInstanceUID);
     }

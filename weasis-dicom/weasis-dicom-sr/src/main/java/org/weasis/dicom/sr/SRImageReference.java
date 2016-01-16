@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
+import org.weasis.dicom.codec.macro.SOPInstanceReference;
 
 public class SRImageReference {
-    private ImageSOPInstanceReference imageSOPInstanceReference;
+    private SOPInstanceReference sopInstanceReference;
     private List<Graphic> graphics;
     private final String nodeLevel;
 
@@ -25,12 +25,12 @@ public class SRImageReference {
         }
     }
 
-    public ImageSOPInstanceReference getImageSOPInstanceReference() {
-        return imageSOPInstanceReference;
+    public SOPInstanceReference getSopInstanceReference() {
+        return sopInstanceReference;
     }
 
-    public void setImageSOPInstanceReference(ImageSOPInstanceReference imageSOPInstanceReference) {
-        this.imageSOPInstanceReference = imageSOPInstanceReference;
+    public void setSopInstanceReference(SOPInstanceReference sopInstanceReference) {
+        this.sopInstanceReference = sopInstanceReference;
     }
 
     public List<Graphic> getGraphics() {

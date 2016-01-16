@@ -18,7 +18,6 @@ import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
-import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
 import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -246,8 +245,8 @@ public class SRReader {
                         imgRef = new SRImageReference(level);
                         map.put(level, imgRef);
                     }
-                    if (imgRef.getImageSOPInstanceReference() == null) {
-                        imgRef.setImageSOPInstanceReference(new ImageSOPInstanceReference(item));
+                    if (imgRef.getSopInstanceReference() == null) {
+                        imgRef.setSopInstanceReference(new SOPInstanceReference(item));
                     }
 
                     // int[] frames = ref.getReferencedFrameNumber();

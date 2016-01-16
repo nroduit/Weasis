@@ -73,6 +73,7 @@ import org.weasis.dicom.codec.DicomVideoElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.dicom.codec.RejectedKOSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -703,6 +704,31 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (specialElementList != null) {
             String referencedSeriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
             return DicomSpecialElement.getKoSpecialElements(specialElementList, referencedSeriesInstanceUID);
+        }
+        return null;
+    }
+
+    public static Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
+        MediaSeries<DicomImageElement> dicomSeries) {
+        // Get all DicomSpecialElement at patient level
+        List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
+
+        if (specialElementList != null) {
+            String referencedSeriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+            return DicomSpecialElement.getRejectionKoSpecialElements(specialElementList, referencedSeriesInstanceUID);
+        }
+        return null;
+    }
+
+    public static RejectedKOSpecialElement getRejectionKoSpecialElement(MediaSeries<DicomImageElement> dicomSeries,
+        String sopUID, Integer frameNumber) {
+        // Get all DicomSpecialElement at patient level
+        List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
+
+        if (specialElementList != null) {
+            String referencedSeriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+            return DicomSpecialElement.getRejectionKoSpecialElement(specialElementList, referencedSeriesInstanceUID,
+                sopUID, frameNumber);
         }
         return null;
     }

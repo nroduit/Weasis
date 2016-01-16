@@ -68,6 +68,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.RejectedKOSpecialElement;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.CornerInfoData;
 import org.weasis.dicom.codec.display.Modality;
@@ -253,6 +254,17 @@ public class InfoLayer implements AnnotationsLayer {
 
                 GraphicLabel.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
                 drawY -= fontHeight;
+            }
+
+            Object key = dcm.getKey();
+            RejectedKOSpecialElement koElement = DicomModel.getRejectionKoSpecialElement(view2DPane.getSeries(),
+                (String) dcm.getTagValue(TagW.SOPInstanceUID), key instanceof Integer ? (Integer) key + 1 : null);
+
+            if (koElement != null) {
+                float y = midy;
+                String message = "Not a valid image: " + koElement.getDocumentTitle();
+                GraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y,
+                    Color.RED);
             }
         }
 

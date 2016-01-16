@@ -65,6 +65,7 @@ import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderItem;
+import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
@@ -157,6 +158,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
             @Override
             public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+                if(RejectedKOSpecialElement.isRejectionKOS(mediaIO)){
+                    return new RejectedKOSpecialElement(mediaIO);
+                }
                 return new KOSpecialElement(mediaIO);
             }
         });
@@ -1515,6 +1519,14 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                             throw new IOException("Unsupported Transfer Syntax: " + tsuid); //$NON-NLS-1$
                         }
                         this.decompressor = readerItem.getImageReader();
+
+//                        ImageReaderParam param =
+//                                        ImageReaderFactory.getImageReaderParam(tsuid);
+//                                if (param == null)
+//                                    throw new UnsupportedOperationException("Unsupported Transfer Syntax: " + tsuid);
+//                        this.decompressor =
+//                            ImageReaderFactory.getImageReader(param);
+                        
                         // this.patchJpegLS = param.patchJPEGLS;
                         this.pixeldataFragments = (Fragments) pixdata;
                     }
