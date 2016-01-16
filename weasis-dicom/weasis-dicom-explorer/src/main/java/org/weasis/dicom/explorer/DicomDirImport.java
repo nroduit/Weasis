@@ -236,7 +236,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         List<LoadSeries> loadSeries = loadDicomDir(file, dicomModel, chckbxWriteInCache.isSelected());
 
         if (loadSeries != null && loadSeries.size() > 0) {
-            DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, dicomModel));
+            DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
         } else {
             LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
 

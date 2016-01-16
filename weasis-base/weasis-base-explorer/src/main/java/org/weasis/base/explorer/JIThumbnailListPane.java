@@ -3,12 +3,13 @@ package org.weasis.base.explorer;
 import java.awt.Cursor;
 import java.io.File;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
+
+import org.weasis.core.api.util.ThreadUtil;
 
 public class JIThumbnailListPane extends JScrollPane implements DiskFileList {
 
@@ -16,7 +17,7 @@ public class JIThumbnailListPane extends JScrollPane implements DiskFileList {
     private final ExecutorService pool;
 
     public JIThumbnailListPane(final FileTreeModel model, final OrderedFileList dObjList) {
-        this.pool = Executors.newFixedThreadPool(1);
+        this.pool = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail List");
         if (dObjList != null) {
             list = new JIThumbnailList(model, dObjList);
         } else {

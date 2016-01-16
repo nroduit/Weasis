@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.SubsampleAverageDescriptor;
@@ -18,6 +17,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.util.ThreadUtil;
 
 import com.sun.media.jai.codec.FileSeekableStream;
 import com.sun.media.jai.codec.ImageCodec;
@@ -28,7 +28,7 @@ public final class JIThumbnailCache {
     private static JIThumbnailCache instance;
     // Set only one concurrent thread, because of the imageio issue with native library
     // (https://jai-imageio-core.dev.java.net/issues/show_bug.cgi?id=126)
-    private static final ExecutorService qExecutor = Executors.newFixedThreadPool(1);
+    private static final ExecutorService qExecutor = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail Cache");
 
     private final Map<String, ThumbnailIcon> cachedThumbnails;
 

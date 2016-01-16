@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import javax.media.jai.JAI;
@@ -35,6 +34,7 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.ThreadUtil;
 
 public class ImageElement extends MediaElement<PlanarImage> {
 
@@ -52,7 +52,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
      * .availableProcessors() / 2));
      */
     // TODO evaluate the difference, keep one thread with sun decoder. (seems to hangs on shutdown)
-    public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(1);
+    public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader");
 
     private static final SoftHashMap<ImageElement, PlanarImage> mCache = new SoftHashMap<ImageElement, PlanarImage>() {
 
@@ -363,7 +363,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
     private PlanarImage startImageLoading() throws OutOfMemoryError {
         PlanarImage cacheImage;
         if ((cacheImage = mCache.get(this)) == null && readable && setAsLoading()) {
-            logger.debug("Asking for reading image: {}", this); //$NON-NLS-1$
+            logger.debug("Asking for reading image: {}", this.getMediaURI()); //$NON-NLS-1$
             Load ref = new Load();
             Future<PlanarImage> future = IMAGE_LOADER.submit(ref);
             PlanarImage img = null;

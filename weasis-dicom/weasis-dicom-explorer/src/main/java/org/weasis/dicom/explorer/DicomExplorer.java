@@ -1920,7 +1920,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     @Override
     public void importFiles(File[] files, boolean recursive) {
         if (files != null) {
-            DicomModel.loadingExecutor.execute(new LoadLocalDicom(files, recursive, model));
+            DicomModel.LOADING_EXECUTOR.execute(new LoadLocalDicom(files, recursive, model));
         }
     }
 
@@ -1958,7 +1958,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     } else {
                         List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
                         if (loadSeries != null && loadSeries.size() > 0) {
-                            DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, model));
+                            DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, model));
                         } else {
                             LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
 

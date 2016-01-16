@@ -1224,7 +1224,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 }
                 DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
                 LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
-                DicomModel.loadingExecutor.execute(dicom);
+                DicomModel.LOADING_EXECUTOR.execute(dicom);
                 return true;
             }
             return false;

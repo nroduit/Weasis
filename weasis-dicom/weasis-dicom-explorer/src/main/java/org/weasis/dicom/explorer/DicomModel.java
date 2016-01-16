@@ -31,8 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
@@ -60,6 +59,7 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.Base64;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -104,7 +104,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         modelStrucure.add(series);
     }
 
-    public static final Executor loadingExecutor = Executors.newSingleThreadExecutor();
+    public static final ExecutorService LOADING_EXECUTOR = ThreadUtil.buildNewSingleThreadExecutor("Dicom Model");
+
     private static final Collator collator = Collator.getInstance(Locale.getDefault());
 
     public static final Comparator<Object> PATIENT_COMPARATOR = new Comparator<Object>() {
@@ -1110,14 +1111,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (int i = 0; i < files.length; i++) {
                         files[i] = new File(args.get(i));
                     }
-                    loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
+                    LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
                 } else if (opt.isSet("remote")) { //$NON-NLS-1$
-                    loadingExecutor
+                    LOADING_EXECUTOR
                         .execute(new LoadRemoteDicomURL(args.toArray(new String[args.size()]), DicomModel.this));
                 }
                 // build WADO series list to download
                 else if (opt.isSet("wado")) { //$NON-NLS-1$
-                    loadingExecutor
+                    LOADING_EXECUTOR
                         .execute(new LoadRemoteDicomManifest(args.toArray(new String[args.size()]), DicomModel.this));
                 } else if (opt.isSet("iwado")) { //$NON-NLS-1$
                     String[] xmlRef = args.toArray(new String[args.size()]);
@@ -1134,7 +1135,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                             e.printStackTrace();
                         }
                     }
-                    loadingExecutor.execute(new LoadRemoteDicomManifest(xmlFiles, DicomModel.this));
+                    LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(xmlFiles, DicomModel.this));
                 }
                 // Get DICOM folder (by default DICOM, dicom, IHE_PDI, ihe_pdi) at the same level at the Weasis
                 // executable file
@@ -1172,9 +1173,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                             loadSeries = dirImport.readDicomDir();
                         }
                         if (loadSeries != null && loadSeries.size() > 0) {
-                            loadingExecutor.execute(new LoadDicomDir(loadSeries, DicomModel.this));
+                            LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, DicomModel.this));
                         } else {
-                            loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
+                            LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
                         }
                     }
                 }

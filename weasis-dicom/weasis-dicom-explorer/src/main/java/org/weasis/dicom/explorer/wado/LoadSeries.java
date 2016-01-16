@@ -63,6 +63,7 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -331,7 +332,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         if (wado == null) {
             return false;
         }
-        ExecutorService imageDownloader = Executors.newFixedThreadPool(concurrentDownloads);
+        ExecutorService imageDownloader =
+            ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader");
         ArrayList<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
         GuiExecutor.instance().execute(new Runnable() {
@@ -502,19 +504,19 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
                 @Override
                 public void run() {
-                    String studyUID = ""; //$NON-NLS-1$
-                    String seriesUID = ""; //$NON-NLS-1$
-                    if (!wadoParameters.isRequireOnlySOPInstanceUID()) {
-                        MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-                        studyUID = (String) study.getTagValue(TagW.StudyInstanceUID);
-                        seriesUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
-                    }
                     File file = null;
                     if (instance.getDirectDownloadFile() == null) {
+                        String studyUID = ""; //$NON-NLS-1$
+                        String seriesUID = ""; //$NON-NLS-1$
+                        if (!wadoParameters.isRequireOnlySOPInstanceUID()) {
+                            MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+                            studyUID = (String) study.getTagValue(TagW.StudyInstanceUID);
+                            seriesUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+                        }
                         try {
                             file = getJPEGThumnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            log.error("Error on downloading thbumbnail: {}", e.getMessage()); //$NON-NLS-1$
                         }
                     } else {
                         String thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
@@ -531,10 +533,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                                         file = outFile;
                                     }
                                 }
-                            } catch (MalformedURLException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                            } catch (Exception e) {
+                                log.error("Error on getting thbumbnail: {}", e.getMessage()); //$NON-NLS-1$
                             }
                         }
                     }
@@ -553,7 +553,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                     }
                 }
             };
-            executor.submit(thumbnailLoader);
+            Thumbnail.THUMB_LOADER.submit(thumbnailLoader);
         }
     }
 
