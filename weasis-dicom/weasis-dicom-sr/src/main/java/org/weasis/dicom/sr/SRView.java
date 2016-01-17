@@ -55,7 +55,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
-import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
+import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -197,7 +197,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     private void openRelatedSeries(String reference) {
         SRImageReference imgRef = map.get(reference);
         if (imgRef != null) {
-            ImageSOPInstanceReference ref = imgRef.getImageSOPInstanceReference();
+            SOPInstanceReference ref = imgRef.getSopInstanceReference();
             if (ref != null) {
                 DataExplorerView dicomView = org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
                 DicomModel model = null;

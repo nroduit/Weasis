@@ -46,13 +46,11 @@ public class KernelData implements Serializable {
         new KernelData(Messages.getString("KernelData.8"), false, 3, 3, new float[] { -1.0F, //$NON-NLS-1$
             -1.0F, -1.0F, -1.0F, 8.0F, -1.0F, -1.0F, -1.0F, -1.0F });
     public static final KernelData STRONGEDGE = new KernelData(Messages.getString("KernelData.9"), false, 5, 5, //$NON-NLS-1$
-        new float[] { -2.0F,
-            -2.0F, -2.0F, -2.0F, -2.0F, -2.0F, -3.0F, -3.0F, -3.0F, -2.0F, -2.0F, -3.0F, 53.0F, -3.0F, -2.0F, -2.0F,
-            -3.0F, -3.0F, -3.0F, -2.0F, -2.0F, -2.0F, -2.0F, -2.0F, -2.0F });
+        new float[] { -2.0F, -2.0F, -2.0F, -2.0F, -2.0F, -2.0F, -3.0F, -3.0F, -3.0F, -2.0F, -2.0F, -3.0F, 53.0F, -3.0F,
+            -2.0F, -2.0F, -3.0F, -3.0F, -3.0F, -2.0F, -2.0F, -2.0F, -2.0F, -2.0F, -2.0F });
     public static final KernelData OUTLINE = new KernelData(Messages.getString("KernelData.10"), false, 5, 5, //$NON-NLS-1$
-        new float[] { 1.0F, 1.0F,
-            1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, -16.0F, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F,
-            1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F });
+        new float[] { 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, -16.0F, 0.0F, 1.0F, 1.0F,
+            0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F });
 
     public static final KernelData EMBOSS =
         new KernelData(Messages.getString("KernelData.11"), false, 3, 3, new float[] { -5.0F, 0.0F, //$NON-NLS-1$

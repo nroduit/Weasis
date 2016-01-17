@@ -70,9 +70,11 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         super(WeasisWin.getInstance().getFrame(),
             String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true); //$NON-NLS-1$
         try {
-            sysTable = new JTable(new SimpleTableModel(
-                new String[] { Messages.getString("WeasisAboutBox.prop"), Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$ //$NON-NLS-2$
-                createSysInfo()));
+            sysTable =
+                new JTable(new SimpleTableModel(
+                    new String[] { Messages.getString("WeasisAboutBox.prop"), //$NON-NLS-1$
+                        Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$
+                    createSysInfo()));
             sysTable.getColumnModel().setColumnMargin(5);
             JMVUtils.formatTableHeaders(sysTable, SwingConstants.CENTER);
             jbInit();

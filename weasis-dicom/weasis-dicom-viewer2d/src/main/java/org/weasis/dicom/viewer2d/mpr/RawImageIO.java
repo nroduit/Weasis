@@ -143,8 +143,8 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
                     pb.addSource(buffer);
                     // Tile size are set in this operation
                     img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
-                } else
-                    if (buffer.getTileWidth() != ImageFiler.TILESIZE || buffer.getTileHeight() != ImageFiler.TILESIZE) {
+                } else if (buffer.getTileWidth() != ImageFiler.TILESIZE
+                    || buffer.getTileHeight() != ImageFiler.TILESIZE) {
                     img = ImageFiler.tileImage(buffer);
                 } else {
                     img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));

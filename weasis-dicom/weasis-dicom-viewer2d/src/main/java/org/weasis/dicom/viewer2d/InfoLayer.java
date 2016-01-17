@@ -67,6 +67,8 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.RejectedKOSpecialElement;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.CornerInfoData;
 import org.weasis.dicom.codec.display.Modality;
@@ -253,8 +255,22 @@ public class InfoLayer implements AnnotationsLayer {
                 GraphicLabel.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
                 drawY -= fontHeight;
             }
+
+            Object key = dcm.getKey();
+            RejectedKOSpecialElement koElement = DicomModel.getRejectionKoSpecialElement(view2DPane.getSeries(),
+                (String) dcm.getTagValue(TagW.SOPInstanceUID), key instanceof Integer ? (Integer) key + 1 : null);
+
+            if (koElement != null) {
+                float y = midy;
+                String message = "Not a valid image: " + koElement.getDocumentTitle();
+                GraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y,
+                    Color.RED);
+            }
         }
 
+        Object prReader = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
+        HashMap<TagW, Object> prTags = (prReader instanceof PresentationStateReader)
+            ? ((PresentationStateReader) prReader).getDicom().getTags() : null;
         if (getDisplayPreferences(PIXEL) && hideMin) {
             StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel")); //$NON-NLS-1$
             sb.append(StringUtil.COLON_AND_SPACE);
@@ -284,8 +300,8 @@ public class InfoLayer implements AnnotationsLayer {
                 if (dcm != null) {
                     boolean pixelPadding =
                         (Boolean) disOp.getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd());
-                    float minModLUT = image.getMinValue(pixelPadding);
-                    float maxModLUT = image.getMaxValue(pixelPadding);
+                    float minModLUT = image.getMinValue(prTags, pixelPadding);
+                    float maxModLUT = image.getMaxValue(prTags, pixelPadding);
                     float minp = level.floatValue() - window.floatValue() / 2.0f;
                     float maxp = level.floatValue() + window.floatValue() / 2.0f;
                     if (minp > maxModLUT || maxp < minModLUT) {
@@ -701,18 +717,20 @@ public class InfoLayer implements AnnotationsLayer {
         final float lowLevel = Math.round(level - window / 2);
         final float highLevel = Math.round(level + window / 2);
 
-        int lowInputValue =
-            (int) (image.getMinValue(pixelPadding) < lowLevel ? lowLevel : image.getMinValue(pixelPadding));
-        int highInputValue =
-            (int) (image.getMaxValue(pixelPadding) > highLevel ? highLevel : image.getMaxValue(pixelPadding));
+        Object prReader = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
+        HashMap<TagW, Object> prTags = (prReader instanceof PresentationStateReader)
+            ? ((PresentationStateReader) prReader).getDicom().getTags() : null;
+        int lowInputValue = (int) (image.getMinValue(prTags, pixelPadding) < lowLevel ? lowLevel
+            : image.getMinValue(prTags, pixelPadding));
+        int highInputValue = (int) (image.getMaxValue(prTags, pixelPadding) > highLevel ? highLevel
+            : image.getMaxValue(prTags, pixelPadding));
 
         final boolean inverseLut = (Boolean) wlOp.getParam(ActionW.INVERT_LUT.cmd());
 
         LutShape lutShape = (LutShape) wlOp.getParam(ActionW.LUT_SHAPE.cmd());
 
-        LookupTableJAI lookup = image.getVOILookup(image.getModalityLookup(pixelPadding), window, level, null, null,
-            lutShape, true, pixelPadding);
-            // Note : when fillLutOutside argument is true lookupTable returned is full range allocated
+        LookupTableJAI lookup = image.getVOILookup(prTags, window, level, null, null, lutShape, true, pixelPadding);
+        // Note : when fillLutOutside argument is true lookupTable returned is full range allocated
 
         // System.out.println(lutShape.toString());
         final byte[] fullRangeVoiLUT = lookup.getByteData(0);
@@ -941,7 +959,8 @@ public class InfoLayer implements AnnotationsLayer {
         // Draw Histogram
 
         boolean showHistogram = true;
-        Histogram histogram = showHistogram ? image.getHistogram(view2DPane.getSourceImage(), pixelPadding) : null;
+        Histogram histogram =
+            showHistogram ? image.getHistogram(view2DPane.getSourceImage(), null, pixelPadding) : null;
 
         if (histogram != null) {
 

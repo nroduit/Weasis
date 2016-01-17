@@ -134,9 +134,8 @@ public class SeriesBuilder {
                                 // The reference image is the first of the saggital stack (Left)
                                 rotate(vc, vr, Math.toRadians(270), resr);
                                 recParams[0] = new ViewParameter(".2", SliceOrientation.AXIAL, false, null, //$NON-NLS-1$
-                                    new double[] { resr.x,
-                                        resr.y, resr.z, row[0], row[1], row[2] },
-                                    true, true, new Object[] { 0.0, false }, frUID);
+                                    new double[] { resr.x, resr.y, resr.z, row[0], row[1], row[2] }, true, true,
+                                    new Object[] { 0.0, false }, frUID);
                                 recParams[1] = new ViewParameter(".3", SliceOrientation.CORONAL, false, //$NON-NLS-1$
                                     TransposeDescriptor.ROTATE_270,
                                     new double[] { resr.x, resr.y, resr.z, col[0], col[1], col[2] }, true, true,
@@ -145,9 +144,8 @@ public class SeriesBuilder {
                                 // The reference image is the first of the coronal stack (Anterior)
                                 rotate(vc, vr, Math.toRadians(90), resc);
                                 recParams[0] = new ViewParameter(".2", SliceOrientation.AXIAL, false, null, //$NON-NLS-1$
-                                    new double[] { row[0],
-                                        row[1], row[2], resc.x, resc.y, resc.z },
-                                    false, true, new Object[] { 0.0, false }, frUID);
+                                    new double[] { row[0], row[1], row[2], resc.x, resc.y, resc.z }, false, true,
+                                    new Object[] { 0.0, false }, frUID);
 
                                 rotate(vc, vr, Math.toRadians(90), resr);
                                 recParams[1] = new ViewParameter(".3", SliceOrientation.SAGITTAL, true, //$NON-NLS-1$
@@ -158,9 +156,8 @@ public class SeriesBuilder {
                                 // The reference image is the last of the axial stack (Head)
                                 rotate(vc, vr, Math.toRadians(270), resc);
                                 recParams[0] = new ViewParameter(".2", SliceOrientation.CORONAL, true, null, //$NON-NLS-1$
-                                    new double[] {
-                                        row[0], row[1], row[2], resc.x, resc.y, resc.z },
-                                    false, false, new Object[] { 0.0, false }, frUID);
+                                    new double[] { row[0], row[1], row[2], resc.x, resc.y, resc.z }, false, false,
+                                    new Object[] { 0.0, false }, frUID);
 
                                 rotate(vr, vc, Math.toRadians(90), resr);
                                 recParams[1] = new ViewParameter(".3", SliceOrientation.SAGITTAL, true, //$NON-NLS-1$
@@ -366,15 +363,13 @@ public class SeriesBuilder {
             Tag.PatientBirthTime, Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence,
             Tag.PatientWeight, Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
 
-                        Tag.StudyID,
-            Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments, Tag.AccessionNumber,
+            Tag.StudyID, Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments, Tag.AccessionNumber,
             Tag.ModalitiesInStudy,
 
-                        Tag.Modality,
-            Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName, Tag.InstitutionName,
-            Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer, Tag.ManufacturerModelName,
-            Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined, Tag.ModalityLUTSequence,
-            Tag.VOILUTSequence };
+            Tag.Modality, Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName,
+            Tag.InstitutionName, Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer,
+            Tag.ManufacturerModelName, Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined,
+            Tag.ModalityLUTSequence, Tag.VOILUTSequence };
 
         Arrays.sort(COPIED_ATTRS);
         final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);

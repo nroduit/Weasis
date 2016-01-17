@@ -44,15 +44,15 @@ public class FormatBinaryDescriptor extends OperationDescriptorImpl implements R
      */
     private static final String[][] resources = { { "GlobalName", "FormatBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "LocalName", "FormatBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "FormatBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Description", "format bilevel to be displayed correctly" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Description", "format bilevel to be displayed correctly" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String supportedModes[] = { "rendered" }; //$NON-NLS-1$
 

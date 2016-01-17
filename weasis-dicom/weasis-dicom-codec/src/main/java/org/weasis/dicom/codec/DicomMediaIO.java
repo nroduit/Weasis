@@ -10,11 +10,9 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
-import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
@@ -60,7 +58,6 @@ import javax.media.jai.operator.NullDescriptor;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
-import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
@@ -68,6 +65,7 @@ import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderItem;
+import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
@@ -82,7 +80,6 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
-import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
@@ -161,6 +158,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
             @Override
             public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+                if(RejectedKOSpecialElement.isRejectionKOS(mediaIO)){
+                    return new RejectedKOSpecialElement(mediaIO);
+                }
                 return new KOSpecialElement(mediaIO);
             }
         });
@@ -426,19 +426,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     public void setTag(TagW tag, Object value) {
-        if (tag != null) {
-            if (value instanceof Sequence) {
-                Sequence seq = (Sequence) value;
-                Attributes[] list = new Attributes[seq.size()];
-                for (int i = 0; i < list.length; i++) {
-                    Attributes attributes = seq.get(i);
-                    list[i] = attributes.getParent() == null ? attributes : new Attributes(attributes);
-                }
-                tags.put(tag, list);
-            } else {
-                tags.put(tag, value);
-            }
-        }
+        DicomMediaUtils.setTag(tags, tag, value);
     }
 
     public void setTagNoNull(TagW tag, Object value) {
@@ -515,6 +503,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             // Set the series list for applying the PR
             setTagNoNull(TagW.ReferencedSeriesSequence, header.getSequence(Tag.ReferencedSeriesSequence));
             DicomMediaUtils.readPRLUTsModule(header, tags);
+            setTagNoNull(TagW.HasOverlay, DicomMediaUtils.hasOverlay(header));
         }
         if (pr || ko) {
             // Set other required fields
@@ -527,19 +516,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
         DicomMediaUtils.buildLUTs(tags);
         DicomMediaUtils.computeSlicePositionVector(tags);
-
-        Area shape = DicomMediaUtils.buildShutterArea(header);
-        if (shape != null) {
-            setTagNoNull(TagW.ShutterFinalShape, shape);
-            Integer psVal = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.ShutterPresentationValue, null);
-            setTagNoNull(TagW.ShutterPSValue, psVal);
-            float[] rgb = CIELab.convertToFloatLab(
-                DicomMediaUtils.getIntAyrrayFromDicomElement(header, Tag.ShutterPresentationColorCIELabValue, null));
-            Color color =
-                rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb, (int[]) null);
-            setTagNoNull(TagW.ShutterRGBColor, color);
-
-        }
+        DicomMediaUtils.setShutter(tags, header);
         DicomMediaUtils.computeSUVFactor(header, tags, 0);
 
         // Remove sequence item
@@ -596,7 +573,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             setTagNoNull(TagW.ContentDate, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentDate, null));
             setTagNoNull(TagW.ContentTime, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentTime, null));
             setTagNoNull(TagW.DiffusionBValue,
-                    DicomMediaUtils.getDoubleFromDicomElement(header, Tag.DiffusionBValue, null));
+                DicomMediaUtils.getDoubleFromDicomElement(header, Tag.DiffusionBValue, null));
 
             if (tags.get(TagW.AcquisitionDate) == null) {
                 // For Secondary Capture replace by DateOfSecondaryCapture
@@ -698,8 +675,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
              *
              * @see - Dicom Standard 2011 - PS 3.5 § 8.1.2 Overlay data encoding of related data elements
              */
-            if (header.getInt(Tag.OverlayBitsAllocated, 0) > 1 && bitsStored < bitsAllocated
-                && dataType >= DataBuffer.TYPE_BYTE && dataType < DataBuffer.TYPE_INT) {
+            if (bitsStored < bitsAllocated && dataType >= DataBuffer.TYPE_BYTE && dataType < DataBuffer.TYPE_INT
+                && Overlays.getEmbeddedOverlayGroupOffsets(header).length > 0) {
                 int high = highBit + 1;
                 int val = (1 << high) - 1;
                 if (high > bitsStored) {
@@ -811,16 +788,17 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 if (media.getTagValue(TagW.OverlayBurninData) == null) {
                     // Serialize overlay (from pixel data)
                     Attributes ds = getDicomObject();
-                    int[] overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ds, 0xffff);
+                    int[] embeddedOverlayGroupOffsets = Overlays.getEmbeddedOverlayGroupOffsets(ds);
 
-                    if (overlayGroupOffsets.length > 0) {
+                    if (embeddedOverlayGroupOffsets.length > 0) {
                         FileOutputStream fileOut = null;
                         ObjectOutput objOut = null;
                         try {
-                            byte[][] overlayData = new byte[overlayGroupOffsets.length][];
+                            byte[][] overlayData = new byte[embeddedOverlayGroupOffsets.length][];
                             Raster raster = buffer.getData();
-                            for (int i = 0; i < overlayGroupOffsets.length; i++) {
-                                overlayData[i] = OverlayUtils.extractOverlay(overlayGroupOffsets[i], raster, ds);
+                            for (int i = 0; i < embeddedOverlayGroupOffsets.length; i++) {
+                                overlayData[i] =
+                                    OverlayUtils.extractOverlay(embeddedOverlayGroupOffsets[i], raster, ds);
                             }
                             File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                             fileOut = new FileOutputStream(file);
@@ -1541,6 +1519,14 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                             throw new IOException("Unsupported Transfer Syntax: " + tsuid); //$NON-NLS-1$
                         }
                         this.decompressor = readerItem.getImageReader();
+
+//                        ImageReaderParam param =
+//                                        ImageReaderFactory.getImageReaderParam(tsuid);
+//                                if (param == null)
+//                                    throw new UnsupportedOperationException("Unsupported Transfer Syntax: " + tsuid);
+//                        this.decompressor =
+//                            ImageReaderFactory.getImageReader(param);
+                        
                         // this.patchJpegLS = param.patchJPEGLS;
                         this.pixeldataFragments = (Fragments) pixdata;
                     }

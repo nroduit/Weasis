@@ -18,14 +18,6 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 public class PresentationStateReader {
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
-    public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
-    public static final String TAG_OLD_PIX_SIZE = "original.pixel.spacing"; //$NON-NLS-1$
-    public static final String TAG_OLD_ModalityLUTData = "original.modality.lut"; //$NON-NLS-1$
-    public static final String TAG_OLD_RescaleSlope = "original.rescale.slope"; //$NON-NLS-1$
-    public static final String TAG_OLD_RescaleIntercept = "original.rescale.intercept"; //$NON-NLS-1$
-    public static final String TAG_OLD_RescaleType = "original.rescale.type"; //$NON-NLS-1$
-    public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers"; //$NON-NLS-1$
-
     private final PRSpecialElement prSpecialElement;
     private final Attributes dcmobj;
     private final HashMap<String, Object> tags = new HashMap<String, Object>();
@@ -100,7 +92,7 @@ public class PresentationStateReader {
     public void readGrayscaleSoftcopyModule(DicomImageElement img) {
         if (dcmobj != null) {
             List<PresetWindowLevel> presets =
-                PresetWindowLevel.getPresetCollection(img, prSpecialElement.geTags(), true);
+                PresetWindowLevel.getPresetCollection(img, prSpecialElement.getTags(), true);
             if (presets != null && presets.size() > 0) {
                 tags.put(ActionW.PRESET.cmd(), presets);
             }
@@ -123,26 +115,18 @@ public class PresentationStateReader {
             }
             for (Attributes item : srcSeq) {
                 if (isModuleAppicable(item, img)) {
-                    double[] pixelsize = null;
                     float[] spacing =
                         DicomMediaUtils.getFloatArrayFromDicomElement(item, Tag.PresentationPixelSpacing, null);
                     if (spacing != null && spacing.length == 2) {
-                        pixelsize = new double[] { spacing[1], spacing[0] };
+                        tags.put(TagW.PixelSpacing.getName(), new double[] { spacing[1], spacing[0] });
                     }
                     if (spacing == null) {
                         int[] aspects =
                             DicomMediaUtils.getIntAyrrayFromDicomElement(item, Tag.PresentationPixelAspectRatio, null);
-                        if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
-                            // set the aspects to the pixel size of the image to stretch the image rendering (square
-                            // pixel)
-                            if (aspects[1] < aspects[0]) {
-                                pixelsize = new double[] { 1.0, (double) aspects[0] / (double) aspects[1] };
-                            } else {
-                                pixelsize = new double[] { (double) aspects[1] / (double) aspects[0], 1.0 };
-                            }
+                        if (aspects != null) {
+                            tags.put(TagW.PixelAspectRatio.getName(), aspects);
                         }
                     }
-                    tags.put(TagW.PixelSpacing.getName(), pixelsize);
 
                     String presentationMode = item.getString(Tag.PresentationSizeMode);
                     int[] tlhc =
@@ -165,15 +149,13 @@ public class PresentationStateReader {
                     }
                     tags.put("presentationMode", presentationMode); //$NON-NLS-1$
                     if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
-                        tags.put(ActionW.ZOOM.cmd(), 0.0);
+                        tags.put(ActionW.ZOOM.cmd(), -200.0);
                     } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
                         tags.put(ActionW.ZOOM.cmd(),
                             (double) item.getFloat(Tag.PresentationPixelMagnificationRatio, 1.0f));
                     } else if ("TRUE SIZE".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
-                        // TODO required to calibrate the screen (Measure physically two lines displayed on screen, must
-                        // be
-                        // square pixel)
-                        // tags.put(ActionW.ZOOM.cmd(), 0.0);
+                        // Required to calibrate the screen in preferences
+                        tags.put(ActionW.ZOOM.cmd(), -100.0);
                     }
                     // Cannot apply a second DisplayedAreaModule to the image. It makes no sense.
                     break;

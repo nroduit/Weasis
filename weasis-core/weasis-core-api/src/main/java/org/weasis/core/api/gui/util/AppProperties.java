@@ -77,7 +77,8 @@ public class AppProperties {
     public static final File FILE_CACHE_DIR = buildAccessibleTempDirectory("cache"); //$NON-NLS-1$
 
     public static final String OPERATING_SYSTEM = System.getProperty("os.name", "unknown").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
-                                                                                                          //$NON-NLS-1$ ;
+                                                                                                          // $NON-NLS-1$
+                                                                                                          // ;
 
     public static final GhostGlassPane glassPane = new GhostGlassPane();
 

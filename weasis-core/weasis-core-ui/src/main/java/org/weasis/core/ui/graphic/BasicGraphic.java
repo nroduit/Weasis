@@ -20,11 +20,15 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
-import org.simpleframework.xml.convert.Convert;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
@@ -40,11 +44,20 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
-import org.weasis.core.ui.serialize.ColorConverter;
-import org.weasis.core.ui.serialize.Point2DConverter;
+import org.weasis.core.ui.serialize.ColorModelAdapter;
+import org.weasis.core.ui.serialize.PointAdapter;
 import org.weasis.core.ui.util.MouseEventDouble;
 
-@Root
+@XmlRootElement(name = "graphic")
+@XmlSeeAlso({ org.weasis.core.ui.graphic.AngleToolGraphic.class, org.weasis.core.ui.graphic.AnnotationGraphic.class,
+    org.weasis.core.ui.graphic.PixelInfoGraphic.class, org.weasis.core.ui.graphic.CobbAngleToolGraphic.class,
+    org.weasis.core.ui.graphic.OpenAngleToolGraphic.class, org.weasis.core.ui.graphic.EllipseGraphic.class,
+    org.weasis.core.ui.graphic.FourPointsAngleToolGraphic.class, org.weasis.core.ui.graphic.LineGraphic.class,
+    org.weasis.core.ui.graphic.PerpendicularLineGraphic.class, org.weasis.core.ui.graphic.LineWithGapGraphic.class,
+    org.weasis.core.ui.graphic.ParallelLineGraphic.class, org.weasis.core.ui.graphic.PointGraphic.class,
+    org.weasis.core.ui.graphic.PolygonGraphic.class, org.weasis.core.ui.graphic.PolylineGraphic.class,
+    org.weasis.core.ui.graphic.RectangleGraphic.class, org.weasis.core.ui.graphic.ThreePointsCircleGraphic.class })
+@XmlAccessorType(XmlAccessType.NONE)
 public abstract class BasicGraphic implements Graphic {
 
     public static final int UNDEFINED = -1;
@@ -63,23 +76,24 @@ public abstract class BasicGraphic implements Graphic {
     protected Shape shape;
     protected boolean selected = false;
 
-    @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class)
-    @Convert(Point2DConverter.class)
+    @XmlElementWrapper(name = "pts")
+    @XmlElement(name = "pt")
+    @XmlJavaTypeAdapter(PointAdapter.Point2DAdapter.class)
     protected List<Point2D.Double> handlePointList;
-    @Attribute(name = "handle_pts_nb")
+    @XmlAttribute(name = "handle_pts_nb")
     protected int handlePointTotalNumber;
-    @Element(name = "paint", required = false)
-    @Convert(ColorConverter.class)
+    @XmlElement(name = "paint", required = false)
+    @XmlJavaTypeAdapter(ColorModelAdapter.PaintAdapter.class)
     protected Paint colorPaint;
-    @Attribute(name = "thickness", required = false)
+    @XmlAttribute(name = "thickness", required = false)
     protected float lineThickness;
-    @Attribute(name = "fill", required = false)
+    @XmlAttribute(name = "fill", required = false)
     protected boolean filled;
-    @Attribute(name = "label_visible", required = false)
+    @XmlAttribute(name = "label_visible", required = false)
     protected boolean labelVisible;
-    @Element(name = "label", required = false)
+    @XmlElement(name = "label", required = false)
     protected GraphicLabel graphicLabel;
-    @Attribute(name = "class_id")
+    @XmlAttribute(name = "class_id")
     protected int classID;
 
     public BasicGraphic() {
@@ -120,8 +134,6 @@ public abstract class BasicGraphic implements Graphic {
         this.filled = filled;
         this.classID = classID;
     }
-
-    protected abstract void buildShape();
 
     @Override
     public Shape getShape() {
@@ -616,6 +628,11 @@ public abstract class BasicGraphic implements Graphic {
             if (labelList.size() > 0) {
                 labels = labelList.toArray(new String[labelList.size()]);
             }
+        }
+
+        if (labels == null && view2d == null && graphicLabel != null) {
+            // When building shape, keep the previous labels (instanstiates from jaxb)
+            labels = graphicLabel.labelStringArray;
         }
 
         setLabel(labels, view2d, pos);

@@ -15,8 +15,8 @@ import javax.imageio.ImageIO;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.weasis.core.api.image.util.JAIUtil;
-import org.weasis.imageio.codec.ImageioUtil;
 
+import com.sun.media.imageioimpl.common.ImageioUtil;
 import com.sun.media.imageioimpl.plugins.bmp.BMPImageReaderSpi;
 import com.sun.media.imageioimpl.plugins.bmp.BMPImageWriterSpi;
 import com.sun.media.imageioimpl.plugins.gif.GIFImageWriterSpi;

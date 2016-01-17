@@ -90,15 +90,13 @@ public class SeriesBuilder {
                 Tag.PatientBirthTime, Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence,
                 Tag.PatientWeight, Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
 
-                            Tag.StudyID,
-                Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments, Tag.AccessionNumber,
+                Tag.StudyID, Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments, Tag.AccessionNumber,
                 Tag.ModalitiesInStudy,
 
-                            Tag.Modality,
-                Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName, Tag.InstitutionName,
-                Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer, Tag.ManufacturerModelName,
-                Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined, Tag.FrameOfReferenceUID,
-                Tag.ModalityLUTSequence, Tag.VOILUTSequence };
+                Tag.Modality, Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName,
+                Tag.InstitutionName, Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer,
+                Tag.ManufacturerModelName, Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined,
+                Tag.FrameOfReferenceUID, Tag.ModalityLUTSequence, Tag.VOILUTSequence };
 
             Arrays.sort(COPIED_ATTRS);
             final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);

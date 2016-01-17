@@ -31,9 +31,25 @@ public final class EscapeChars {
      *
      * <P>
      * The following characters are replaced with corresponding HTML character entities :
-     * <table border='1' cellpadding='3' cellspacing='0'> <tr> <th>Character</th> <th>Replacement</th> </tr> <tr>
-     * <td><</td> <td>&lt;</td> </tr> <tr> <td>></td> <td>&gt;</td> </tr> <tr> <td>&</td> <td>&amp;</td> </tr> <tr> <td>
-     * "</td>
+     * <table border='1' cellpadding='3' cellspacing='0'>
+     * <tr>
+     * <th>Character</th>
+     * <th>Replacement</th>
+     * </tr>
+     * <tr>
+     * <td><</td>
+     * <td>&lt;</td>
+     * </tr>
+     * <tr>
+     * <td>></td>
+     * <td>&gt;</td>
+     * </tr>
+     * <tr>
+     * <td>&</td>
+     * <td>&amp;</td>
+     * </tr>
+     * <tr>
+     * <td>"</td>
      * <td>&quot;</td>
      * </tr>
      * <tr>
@@ -289,9 +305,25 @@ public final class EscapeChars {
      *
      * <P>
      * The following characters are replaced with corresponding character entities :
-     * <table border='1' cellpadding='3' cellspacing='0'> <tr> <th>Character</th> <th>Encoding</th> </tr> <tr>
-     * <td><</td> <td>&lt;</td> </tr> <tr> <td>></td> <td>&gt;</td> </tr> <tr> <td>&</td> <td>&amp;</td> </tr> <tr> <td>
-     * "</td>
+     * <table border='1' cellpadding='3' cellspacing='0'>
+     * <tr>
+     * <th>Character</th>
+     * <th>Encoding</th>
+     * </tr>
+     * <tr>
+     * <td><</td>
+     * <td>&lt;</td>
+     * </tr>
+     * <tr>
+     * <td>></td>
+     * <td>&gt;</td>
+     * </tr>
+     * <tr>
+     * <td>&</td>
+     * <td>&amp;</td>
+     * </tr>
+     * <tr>
+     * <td>"</td>
      * <td>&quot;</td>
      * </tr>
      * <tr>

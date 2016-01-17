@@ -50,8 +50,8 @@ public class WindowOp extends AbstractOp {
                 boolean pixelPadding = JMVUtils.getNULLtoTrue(getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
                 setParam(ActionW.WINDOW.cmd(), img.getDefaultWindow(pixelPadding));
                 setParam(ActionW.LEVEL.cmd(), img.getDefaultLevel(pixelPadding));
-                setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pixelPadding));
-                setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(pixelPadding));
+                setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(null, pixelPadding));
+                setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(null, pixelPadding));
             }
         }
     }

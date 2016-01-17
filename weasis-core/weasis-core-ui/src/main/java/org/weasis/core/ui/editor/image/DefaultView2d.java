@@ -524,6 +524,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setImage(E img) {
+        boolean updateGraphics = false;
         imageLayer.setEnableDispOperations(false);
         if (img == null) {
             actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
@@ -541,6 +542,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else {
             E oldImage = imageLayer.getSourceImage();
             if (img != null && !img.equals(oldImage)) {
+                updateGraphics = true;
                 actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
                 if ((eventManager.getSelectedViewPane() == this)) {
                     ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
@@ -578,27 +580,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
                 imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
-                AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
-                if (layer != null) {
-                    synchronized (this) {
-                        // TODO Handle several layers
-                        GraphicList gl = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
-                        if (gl != null) {
-                            // TODO handle graphics without shape, exclude them!
-                            layer.setGraphics(gl);
-                            synchronized (gl.list) {
-                                for (Graphic graphic : gl.list) {
-                                    graphic.updateLabel(img, this);
-                                }
-                            }
-                        } else {
-                            GraphicList graphics = new GraphicList();
-                            img.setTag(TagW.MeasurementGraphics, graphics);
-                            layer.setGraphics(graphics);
-                        }
-                    }
-                }
-
                 if (AuditLog.LOGGER.isInfoEnabled()) {
                     PlanarImage image = img.getImage();
                     if (image != null) {
@@ -621,6 +602,30 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
             // Apply all image processing operation for visualization
             imageLayer.setEnableDispOperations(true);
+
+            if (updateGraphics) {
+                // After getting a new image iterator, update the measurements
+                AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
+                if (layer != null) {
+                    synchronized (this) {
+                        // TODO Handle several layers
+                        GraphicList gl = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
+                        if (gl != null) {
+                            // TODO handle graphics without shape, exclude them!
+                            layer.setGraphics(gl);
+                            synchronized (gl.list) {
+                                for (Graphic graphic : gl.list) {
+                                    graphic.updateLabel(true, this);
+                                }
+                            }
+                        } else {
+                            GraphicList graphics = new GraphicList();
+                            img.setTag(TagW.MeasurementGraphics, graphics);
+                            layer.setGraphics(graphics);
+                        }
+                    }
+                }
+            }
 
             if (panner != null) {
                 panner.updateImage();
@@ -927,6 +932,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void updateAffineTransform() {
+        Rectangle2D modelArea = getViewModel().getModelArea();
         double viewScale = getViewModel().getViewScale();
         affineTransform.setToScale(viewScale, viewScale);
 
@@ -938,9 +944,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (flip != null && flip) {
                 rotationAngle = 360 - rotationAngle;
             }
-            Rectangle2D imageCanvas = getViewModel().getModelArea();
-            affineTransform.rotate(Math.toRadians(rotationAngle), imageCanvas.getWidth() / 2.0,
-                imageCanvas.getHeight() / 2.0);
+            affineTransform.rotate(Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0,
+                modelArea.getHeight() / 2.0);
         }
         if (flip != null && flip) {
             // Using only one allows to enable or disable flip with the rotation action
@@ -957,7 +962,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // at = new AffineTransform(new double[] {-1.0,0.0,0.0,-1.0});
             // at.translate(-imageWid, -imageHt);
             affineTransform.scale(-1.0, 1.0);
-            affineTransform.translate(-getViewModel().getModelArea().getWidth(), 0.0);
+            affineTransform.translate(-modelArea.getWidth(), 0.0);
+        }
+        Point offset = (Point) actionsInView.get("layer.offset");
+        if (offset != null) {
+            // TODO not consistent with image coordinates after crop
+            affineTransform.translate(-offset.getX(), -offset.getY());
         }
 
         try {

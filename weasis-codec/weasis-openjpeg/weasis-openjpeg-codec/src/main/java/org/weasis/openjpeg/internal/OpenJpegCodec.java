@@ -12,9 +12,13 @@ package org.weasis.openjpeg.internal;
 
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
+import java.nio.ShortBuffer;
 
+import javax.imageio.ImageReadParam;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
@@ -30,10 +34,9 @@ import org.weasis.image.jni.NativeImage;
 import org.weasis.openjpeg.J2kParameters;
 import org.weasis.openjpeg.NativeJ2kImage;
 import org.weasis.openjpeg.cpp.openjpeg;
-import org.weasis.openjpeg.cpp.openjpeg.close_stream;
+import org.weasis.openjpeg.cpp.openjpeg.SourceData;
 import org.weasis.openjpeg.cpp.openjpeg.error_handler;
 import org.weasis.openjpeg.cpp.openjpeg.info_handler;
-import org.weasis.openjpeg.cpp.openjpeg.j2kfile;
 import org.weasis.openjpeg.cpp.openjpeg.opj_image;
 import org.weasis.openjpeg.cpp.openjpeg.opj_image_comp;
 import org.weasis.openjpeg.cpp.openjpeg.warning_handler;
@@ -64,22 +67,16 @@ public class OpenJpegCodec implements NativeCodec {
             try {
                 MappedByteBuffer buffer = seg.getDirectByteBuffer(0);
 
-                l_stream = openjpeg.opj_stream_create(0x10000, true); // 65536 bytes
+                SourceData j2kFile = new SourceData();
+                j2kFile.data(buffer);
+                SizeTPointer size = new SizeTPointer(1);
+                size.put(buffer.limit());
+                j2kFile.size(size);
 
+                l_stream = openjpeg.opj_stream_create_memory_stream(j2kFile, 0x10000, true); // 65536 bytes
                 if (l_stream.isNull()) {
                     throw new IOException("Cannot initialize stream!");
                 }
-
-                j2kfile j2kFile = new j2kfile();
-                j2kFile.data(buffer);
-                j2kFile.curData(buffer);
-                SizeTPointer size = new SizeTPointer(1);
-                size.put(buffer.limit());
-                j2kFile.count(size);
-                openjpeg.opj_stream_set_user_data(l_stream, j2kFile, new close_stream());
-                openjpeg.opj_stream_set_user_data_length(l_stream, buffer.limit());
-
-                openjpeg.opj_stream_init_function(l_stream);
 
                 codec = getCodec(params.getType());
                 if (codec.isNull()) {
@@ -105,6 +102,9 @@ public class OpenJpegCodec implements NativeCodec {
                     throw new IOException("Failed to read the j2k header");
                 }
                 setParameters(nImage.getImageParameters(), image);
+                // keep a reference to be not garbage collected
+                buffer.clear();
+                j2kFile.deallocate();
             } finally {
                 if (l_stream != null) {
                     openjpeg.opj_stream_destroy(l_stream);
@@ -125,12 +125,10 @@ public class OpenJpegCodec implements NativeCodec {
     }
 
     @Override
-    public String decompress(NativeImage nImage, Rectangle region) throws IOException {
+    public String decompress(NativeImage nImage, ImageReadParam param) throws IOException {
         String msg = null;
         FileStreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
-            ImageParameters params = nImage.getImageParameters();
-
             Pointer l_stream = null;
             Pointer codec = null;
             openjpeg.opj_image image = null;
@@ -141,22 +139,17 @@ public class OpenJpegCodec implements NativeCodec {
                 // boolean signed = params.isSignedData();
 
                 J2kParameters j2kparams = (J2kParameters) nImage.getImageParameters();
-                l_stream = openjpeg.opj_stream_create(OPJ_J2K_STREAM_CHUNK_SIZE, true);
 
+                SourceData j2kFile = new SourceData();
+                j2kFile.data(buffer);
+                SizeTPointer srcDataSize = new SizeTPointer(1);
+                srcDataSize.put(buffer.limit());
+                j2kFile.size(srcDataSize);
+
+                l_stream = openjpeg.opj_stream_create_memory_stream(j2kFile, OPJ_J2K_STREAM_CHUNK_SIZE, true);
                 if (l_stream.isNull()) {
                     throw new IOException("Cannot initialize stream!");
                 }
-
-                j2kfile j2kFile = new j2kfile();
-                j2kFile.data(buffer);
-                j2kFile.curData(buffer);
-                SizeTPointer size = new SizeTPointer(1);
-                size.put(buffer.limit());
-                j2kFile.count(size);
-                openjpeg.opj_stream_set_user_data(l_stream, j2kFile, new close_stream());
-                openjpeg.opj_stream_set_user_data_length(l_stream, buffer.limit());
-
-                openjpeg.opj_stream_init_function(l_stream);
 
                 codec = getCodec(j2kparams.getType());
                 if (codec.isNull()) {
@@ -186,12 +179,12 @@ public class OpenJpegCodec implements NativeCodec {
                     throw new IOException("Failed to read the j2k header");
                 }
                 setParameters(nImage.getImageParameters(), image);
-                int bps = params.getBitsPerSample();
+                int bps = j2kparams.getBitsPerSample();
                 if (bps < 1 || bps > 16) {
                     throw new IllegalArgumentException("Invalid bit per sample: " + bps);
                 }
 
-                Rectangle area = region;
+                Rectangle area = param.getSourceRegion();
                 // Rectangle area = new Rectangle();
                 // area.width = j2kparams.getWidth();
                 // area.height = j2kparams.getHeight();
@@ -236,10 +229,13 @@ public class OpenJpegCodec implements NativeCodec {
                 // }
                 // }
                 // } else {
+
+                long start = System.currentTimeMillis();
                 /* Get the decoded image */
                 if (!(openjpeg.opj_decode(codec, l_stream, image) && openjpeg.opj_end_decompress(codec, l_stream))) {
                     throw new IOException("Failed to set the decoded image!");
                 }
+                LOGGER.debug("OpenJPEG decode time: {} ms", (System.currentTimeMillis() - start)); //$NON-NLS-1$
                 // }
 
                 // if (tile_index >= 0) {
@@ -263,17 +259,22 @@ public class OpenJpegCodec implements NativeCodec {
                 // }
                 // }
 
-                /* Close the byte stream */
+                /*
+                 * Has not effect on releasing memory but only keep a reference to be not garbage collected during the
+                 * native decode (ByteBuffer.allocateDirect() has PhantomReference)
+                 */
+                buffer.clear();
                 openjpeg.opj_stream_destroy(l_stream);
+                j2kFile.deallocate();
                 l_stream.deallocate();
                 l_stream = null;
 
                 int bands = image.numcomps();
                 if (bands > 0) {
 
-                    if (image.color_space() == openjpeg.OPJ_CLRSPC_SYCC) {
-                        openjpeg.color_sycc_to_rgb(image);
-                    }
+                    // if (image.color_space() == openjpeg.OPJ_CLRSPC_SYCC) {
+                    // openjpeg.color_sycc_to_rgb(image);
+                    // }
 
                     // if(image.color_space() != openjpeg.OPJ_CLRSPC_SYCC
                     // && bands == 3 && image->comps[0].dx == image->comps[0].dy
@@ -293,7 +294,10 @@ public class OpenJpegCodec implements NativeCodec {
 
                     // Build outputStream here and transform to an array
                     // Convert band interleaved from openjpeg to pixel interleaved (to display)
-                    int imgSize = params.getWidth() * params.getHeight();
+                    if (area == null) {
+                        area = new Rectangle(0, 0, j2kparams.getWidth(), j2kparams.getHeight());
+                    }
+                    int imgSize = area.width * area.height;
                     int length = imgSize * bands;
                     Object array = null;
                     if (bps > 0 && bps <= 16) {
@@ -372,6 +376,117 @@ public class OpenJpegCodec implements NativeCodec {
 
     @Override
     public String compress(NativeImage nImage, ImageOutputStream ouputStream, Rectangle region) throws IOException {
+        String msg = null;
+        if (nImage != null && ouputStream != null && nImage.getInputBuffer() != null) {
+            try {
+                J2kParameters params = (J2kParameters) nImage.getImageParameters();
+                int bps = params.getBitsPerSample();
+                if (bps < 1 || bps > 16) {
+                    return "OPENJPEG codec: invalid bit per sample: " + bps;
+                }
+                int samplesPerPixel = params.getSamplesPerPixel();
+                if (samplesPerPixel != 1 && samplesPerPixel != 3) {
+                    return "OPENJPEG codec supports only 1 and 3 bands!";
+                }
+
+                Buffer b = nImage.getInputBuffer();
+
+                ByteBuffer buffer;
+                if (b instanceof ByteBuffer) {
+                    buffer = ByteBuffer.allocateDirect(b.limit());
+                    buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    buffer.put(((ByteBuffer) b));
+                } else if (b instanceof ShortBuffer) {
+                    ShortBuffer sBuf = (ShortBuffer) b;
+                    buffer = ByteBuffer.allocateDirect(sBuf.limit() * 2);
+                    buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    while (sBuf.hasRemaining()) {
+                        buffer.putShort(sBuf.get());
+                    }
+                } else {
+                    return "JPGLS codec exception: not valid input buffer";
+                }
+
+                // set lossless
+                // parameters.tcp_numlayers = 1;
+                // parameters.tcp_rates[0] = 0;
+                // parameters.cp_disto_alloc = 1;
+                //
+                // if (!openjpeg.opj_setup_eecoder(codec, parameters)) {
+                // throw new IOException("Failed to setup the decoder");
+                // }
+
+            } finally {
+                // Do not close inChannel (comes from image input stream)
+            }
+        }
+        // // set lossless
+        // parameters.tcp_numlayers = 1;
+        // parameters.tcp_rates[0] = 0;
+        // parameters.cp_disto_alloc = 1;
+        //
+        // if(djcp->getUseCustomOptions())
+        // {
+        // parameters.cblockw_init = djcp->get_cblkwidth();
+        // parameters.cblockh_init = djcp->get_cblkheight();
+        // }
+        //
+        // // turn on/off MCT depending on transfer syntax
+        // if(supportedTransferSyntax() == EXS_JPEG2000LosslessOnly)
+        // parameters.tcp_mct = 0;
+        // else if(supportedTransferSyntax() == EXS_JPEG2000MulticomponentLosslessOnly)
+        // parameters.tcp_mct = (image->numcomps >= 3) ? 1 : 0;
+        //
+        // // We have no idea how big the compressed pixel data will be and we have no
+        // // way to find out, so we just allocate a buffer large enough for the raw data
+        // // plus a little more for JPEG metadata.
+        // // Yes, this is way too much for just a little JPEG metadata, but some
+        // // test-images showed that the buffer previously was too small. Plus, at some
+        // // places charls fails to do proper bounds checking and writes behind the end
+        // // of the buffer (sometimes way behind its end...).
+        // size_t size = frameSize + 1024;
+        // Uint8 *buffer = new Uint8[size];
+        //
+        // // Set up the information structure for OpenJPEG
+        // opj_stream_t *l_stream = NULL;
+        // opj_codec_t* l_codec = NULL;
+        // l_codec = opj_create_compress(OPJ_CODEC_J2K);
+        //
+        // opj_set_info_handler(l_codec, msg_callback, NULL);
+        // opj_set_warning_handler(l_codec, msg_callback, NULL);
+        // opj_set_error_handler(l_codec, msg_callback, NULL);
+        //
+        // if (result.good() && !opj_setup_encoder(l_codec, &parameters, image))
+        // {
+        // opj_destroy_codec(l_codec);
+        // l_codec = NULL;
+        // result = EC_MemoryExhausted;
+        // }
+        //
+        // DecodeData mysrc((unsigned char*)buffer, size);
+        // l_stream = opj_stream_create_memory_stream(&mysrc, size, OPJ_FALSE);
+        //
+        // if(!opj_start_compress(l_codec,image,l_stream))
+        // {
+        // result = EC_CorruptedData;
+        // }
+        //
+        // if(result.good() && !opj_encode(l_codec, l_stream))
+        // {
+        // result = EC_InvalidStream;
+        // }
+        //
+        // if(result.good() && opj_end_compress(l_codec, l_stream))
+        // {
+        // result = EC_Normal;
+        // }
+        //
+        // opj_stream_destroy(l_stream); l_stream = NULL;
+        // opj_destroy_codec(l_codec); l_codec = NULL;
+        // opj_image_destroy(image); image = NULL;
+        //
+        // size = mysrc.offset;
+
         return null;
     }
 

@@ -19,6 +19,7 @@ import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
 
+import javax.imageio.ImageReadParam;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
@@ -61,6 +62,8 @@ public class JpegCodec implements NativeCodec {
                         msg = val == null ? "error" : val.msg().getString();
                     }
                 }
+                // keep a reference to be not garbage collected
+                buffer.clear();
             } finally {
                 // Do not close inChannel (comes from image input stream)
                 decomp.deallocate();
@@ -70,7 +73,8 @@ public class JpegCodec implements NativeCodec {
     }
 
     @Override
-    public String decompress(NativeImage nImage, Rectangle region) throws IOException {
+    public String decompress(NativeImage nImage, ImageReadParam param) throws IOException {
+        // TODO use ImageReadParam
         String msg = null;
         FileStreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
@@ -116,7 +120,8 @@ public class JpegCodec implements NativeCodec {
                         nImage.setOutputBuffer((bps > 8 && bps <= 16) ? outBuf.asShortBuffer() : outBuf);
                     }
                 }
-
+                // keep a reference to be not garbage collected
+                buffer.clear();
             } finally {
                 decomp.deallocate();
                 // Do not close inChannel (comes from image input stream)
@@ -181,6 +186,8 @@ public class JpegCodec implements NativeCodec {
                 // start = System.currentTimeMillis();
                 // // byte[] to = null;
                 // RETURN_MSG val = comp.encode(columns, rows, interpr, samplesPerPixel, buffer, outBuf, bytesWritten);
+                // // keep a reference to be not garbage collected
+                // buffer.clear();
                 // if (val == null || val.code() != libijg.OK) {
                 // msg = val == null ? "error" : val.msg().getString();
                 // }
@@ -197,6 +204,7 @@ public class JpegCodec implements NativeCodec {
                 // //$NON-NLS-1$
                 // }
             } finally {
+                nImage.setInputBuffer(null);
                 // Do not close inChannel (comes from image input stream)
             }
         }

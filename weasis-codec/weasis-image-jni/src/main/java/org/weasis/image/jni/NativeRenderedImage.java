@@ -75,12 +75,12 @@ public class NativeRenderedImage extends SimpleRenderedImage {
             int x = tileXToX(tileX);
             int y = tileYToY(tileY);
 
-            Rectangle region = null;
             if (tiled) {
-                region = new Rectangle(x, y, tileWidth, tileHeight);
+                param.setSourceRegion(new Rectangle(x, y, tileWidth, tileHeight));
             }
+            // param.setDestinationType(new ImageTypeSpecifier(colorModel, sampleModel));
 
-            NativeImage img = reader.getImage(imageIndex, param, region);
+            NativeImage img = reader.getImage(imageIndex, param);
 
             if (img == null) {
                 return null;

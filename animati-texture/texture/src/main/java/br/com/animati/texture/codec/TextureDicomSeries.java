@@ -377,7 +377,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         double intercept = 0.0d;
         if (TextureData.Format.UnsignedShort.equals(getTextureData().getFormat())) {
             intercept = (windowingMinInValue - (interceptVal / slope));
-        } 
+        }
 
         double lev = (level / slope) + intercept;
         return (int) Math.round(lev);
@@ -458,7 +458,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     public boolean isPhotometricInterpretationInverse(int currentSlice) {
         Object media = getSeries().getMedia(currentSlice, null, seriesComparator);
         if (media instanceof DicomImageElement) {
-            return ((DicomImageElement) media).isPhotometricInterpretationInverse();
+            return ((DicomImageElement) media).isPhotometricInterpretationInverse(null);
         }
         return false;
     }

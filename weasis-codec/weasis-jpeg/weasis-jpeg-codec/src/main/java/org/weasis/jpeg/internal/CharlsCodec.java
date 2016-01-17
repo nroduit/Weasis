@@ -18,6 +18,7 @@ import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
 
+import javax.imageio.ImageReadParam;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
@@ -52,6 +53,7 @@ public class CharlsCodec implements NativeCodec {
                 if (ret == libijg.OK) {
                     setParameters((JpegParameters) nImage.getImageParameters(), p);
                 }
+                buffer.clear();
             } finally {
                 // Do not close inChannel (comes from image input stream)
                 p.deallocate();
@@ -64,7 +66,8 @@ public class CharlsCodec implements NativeCodec {
     }
 
     @Override
-    public String decompress(NativeImage nImage, Rectangle region) throws IOException {
+    public String decompress(NativeImage nImage, ImageReadParam param) throws IOException {
+        // TODO use ImageReadParam
         int ret = 0;
         FileStreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
@@ -105,6 +108,8 @@ public class CharlsCodec implements NativeCodec {
 
                 ByteStreamInfo outStream = libijg.FromByteArray(outBuf, size2);
                 ret = libijg.JpegLsDecodeStream(outStream, input, p);
+                // keep a reference to be not garbage collected
+                buffer.clear();
 
                 if (ret == libijg.OK) {
                     int bps = p.bitspersample();
@@ -183,12 +188,15 @@ public class CharlsCodec implements NativeCodec {
                 SizeTPointer bytesWritten = new SizeTPointer(1);
 
                 ret = libijg.JpegLsEncodeStream(outStream, bytesWritten, input, p);
+                // keep a reference to be not garbage collected
+                buffer.clear();
 
                 if (ret == libijg.OK) {
                     outBuf.rewind();
                     NativeImage.writeByteBuffer(ouputStream, outBuf, (int) bytesWritten.get());
                 }
             } finally {
+                nImage.setInputBuffer(null);
                 // Do not close inChannel (comes from image input stream)
                 p.deallocate();
                 if (input != null) {

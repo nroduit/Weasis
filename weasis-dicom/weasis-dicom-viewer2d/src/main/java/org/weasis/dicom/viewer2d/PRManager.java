@@ -52,16 +52,10 @@ import org.weasis.dicom.explorer.GraphicUtil;
 public class PRManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
 
-    // private PresentationStateReader prReader;
-    // private DicomImageElement image;
-    //
-    // private PRManager(PresentationStateReader reader, DicomImageElement img) {
-    // if (reader == null || img == null) {
-    // throw new IllegalArgumentException("Arguments cannot be null");
-    // }throws IllegalStateException
-    // this.image = img;
-    // this.prReader = reader;
-    // }
+    public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
+    public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel"; //$NON-NLS-1$
+    public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
+    public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers"; //$NON-NLS-1$
 
     public static void applyPresentationState(View2d view, PresentationStateReader reader, DicomImageElement img) {
         if (view == null || reader == null || img == null) {
@@ -83,7 +77,7 @@ public class PRManager {
                 event.setShareObject(layer.getIdentifier());
                 eventManager.fireSeriesViewerListeners(event);
             }
-            view.setActionsInView(PresentationStateReader.TAG_DICOM_LAYERS, list);
+            view.setActionsInView(PRManager.TAG_DICOM_LAYERS, list);
             view.getLayerModel().SortLayersFromLevel();
         }
     }
@@ -114,10 +108,12 @@ public class PRManager {
                 Rectangle2D modelArea = view.getViewModel().getModelArea();
                 double width = area == null ? modelArea.getWidth() : area.getWidth();
                 double height = area == null ? modelArea.getHeight() : area.getHeight();
+                double offsetx = area == null ? 0.0 : area.getX() / area.getWidth();
+                double offsety = area == null ? 0.0 : area.getY() / area.getHeight();
                 AffineTransform inverse = null;
                 if (rotation != 0 || flip) {
-                    // Create inverse transformation
-                    inverse = AffineTransform.getTranslateInstance(0, 0);
+                    // Create inverse transformation for display coordinates (will convert in real coordinates)
+                    inverse = AffineTransform.getTranslateInstance(offsetx, offsety);
                     if (flip) {
                         inverse.scale(-1.0, 1.0);
                         inverse.translate(-1.0, 0.0);

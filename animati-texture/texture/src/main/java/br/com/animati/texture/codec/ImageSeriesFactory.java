@@ -284,8 +284,8 @@ public class ImageSeriesFactory {
         // ActionW.IMAGE_PIX_PADDING is true by default, so we just use true for now.
         boolean pixelPadding = true;
 
-        int minValue = (int) elmt.getMinValue(pixelPadding);
-        int maxValue = (int) elmt.getMaxValue(pixelPadding);
+        int minValue = (int) elmt.getMinValue(null, pixelPadding);
+        int maxValue = (int) elmt.getMaxValue(null, pixelPadding);
 
         int minInValue = Math.min(maxValue, minValue);
         int maxInValue = Math.max(maxValue, minValue);
@@ -582,7 +582,7 @@ public class ImageSeriesFactory {
         }
 
         // Modality LUT
-        final LookupTableJAI modalityLookup = dicomElement.getModalityLookup(true);
+        final LookupTableJAI modalityLookup = dicomElement.getModalityLookup(null, true);
 
         boolean hasModalityLUT = false;
         PlanarImage imageMLUT;

@@ -63,24 +63,6 @@ import org.weasis.core.ui.util.WtoolBar;
 public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
     public static final SelectGraphic selectionGraphic = new SelectGraphic(1.0f, Color.WHITE);
-    public static final LineGraphic lineGraphic = new LineGraphic(1.0f, Color.YELLOW, true);
-    public static final AngleToolGraphic angleToolGraphic = new AngleToolGraphic(1.0f, Color.YELLOW, true);
-
-    public static final RectangleGraphic rectangleGraphic = new RectangleGraphic(1.0f, Color.YELLOW, true);
-    public static final EllipseGraphic ellipseGraphic = new EllipseGraphic(1.0f, Color.YELLOW, true);
-    public static final ThreePointsCircleGraphic threePtCircleGraphic =
-        new ThreePointsCircleGraphic(1.0f, Color.YELLOW, true);
-    public static final PolygonGraphic polygonGraphic = new PolygonGraphic(1.0f, Color.YELLOW, true);
-    public static final PolylineGraphic polylineGraphic = new PolylineGraphic(1.0f, Color.YELLOW, true);
-    public static final PerpendicularLineGraphic perpendicularToolGraphic =
-        new PerpendicularLineGraphic(1.0f, Color.YELLOW, true);
-    public static final ParallelLineGraphic parallelLineGraphic = new ParallelLineGraphic(1.0f, Color.YELLOW, true);
-    public static final OpenAngleToolGraphic openAngleToolGraphic = new OpenAngleToolGraphic(1.0f, Color.YELLOW, true);
-    public static final FourPointsAngleToolGraphic fourPointsAngleToolGraphic =
-        new FourPointsAngleToolGraphic(1.0f, Color.YELLOW, true);
-    public static final CobbAngleToolGraphic cobbAngleToolGraphic = new CobbAngleToolGraphic(1.0f, Color.YELLOW, true);
-    public static final PixelInfoGraphic pixelInfoGraphic = new PixelInfoGraphic(1.0f, Color.YELLOW, true);
-    public static final AnnotationGraphic textGrahic = new AnnotationGraphic(1.0f, Color.YELLOW, true);
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
     public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
@@ -91,46 +73,46 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             graphicList.add(selectionGraphic);
         }
         if (p.getBooleanProperty("weasis.measure.line", true)) { //$NON-NLS-1$
-            graphicList.add(lineGraphic);
+            graphicList.add(LineGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.polyline", true)) { //$NON-NLS-1$
-            graphicList.add(polylineGraphic);
+            graphicList.add(PolylineGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.rectangle", true)) { //$NON-NLS-1$
-            graphicList.add(rectangleGraphic);
+            graphicList.add(RectangleGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.ellipse", true)) { //$NON-NLS-1$
-            graphicList.add(ellipseGraphic);
+            graphicList.add(EllipseGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.threeptcircle", true)) { //$NON-NLS-1$
-            graphicList.add(threePtCircleGraphic);
+            graphicList.add(ThreePointsCircleGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.polygon", true)) { //$NON-NLS-1$
-            graphicList.add(polygonGraphic);
+            graphicList.add(PolygonGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.perpendicular", true)) { //$NON-NLS-1$
-            graphicList.add(perpendicularToolGraphic);
+            graphicList.add(PerpendicularLineGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.parallele", true)) { //$NON-NLS-1$
-            graphicList.add(parallelLineGraphic);
+            graphicList.add(ParallelLineGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.angle", true)) { //$NON-NLS-1$
-            graphicList.add(angleToolGraphic);
+            graphicList.add(AngleToolGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.openangle", true)) { //$NON-NLS-1$
-            graphicList.add(openAngleToolGraphic);
+            graphicList.add(OpenAngleToolGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.fourptangle", true)) { //$NON-NLS-1$
-            graphicList.add(fourPointsAngleToolGraphic);
+            graphicList.add(FourPointsAngleToolGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.cobbangle", true)) { //$NON-NLS-1$
-            graphicList.add(cobbAngleToolGraphic);
+            graphicList.add(CobbAngleToolGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.pixelinfo", true)) { //$NON-NLS-1$
-            graphicList.add(pixelInfoGraphic);
+            graphicList.add(PixelInfoGraphic.createDefaultInstance());
         }
         if (p.getBooleanProperty("weasis.measure.textGrahic", true)) { //$NON-NLS-1$
-            graphicList.add(textGrahic);
+            graphicList.add(AnnotationGraphic.createDefaultInstance());
         }
 
     }

@@ -26,7 +26,7 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.registry.RenderableRegistryMode;
 import javax.media.jai.registry.RenderedRegistryMode;
 
-import com.sun.media.jai.opimage.RIFUtil;
+import org.weasis.core.api.image.util.JAIUtil;
 
 public class RectifySignedShortDataDescriptor extends OperationDescriptorImpl implements RenderedImageFactory {
 
@@ -35,18 +35,18 @@ public class RectifySignedShortDataDescriptor extends OperationDescriptorImpl im
      */
     private static final String[][] resources = { { "GlobalName", "RectifySignedShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "LocalName", "RectifySignedShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "RectifySignedShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Description", //$NON-NLS-1$
-                        "Operation to read correctly signed images (9-15 bits) (Workaround for imageio codecs issue" }, //$NON-NLS-1$
+        { "Description", //$NON-NLS-1$
+            "Operation to read correctly signed images (9-15 bits) (Workaround for imageio codecs issue" }, //$NON-NLS-1$
 
-                    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg0Desc", "Number of signifative bits" } }; //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg0Desc", "Number of signifative bits" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final Class[] paramClasses = { int[].class };
 
@@ -100,7 +100,7 @@ public class RectifySignedShortDataDescriptor extends OperationDescriptorImpl im
     @Override
     public RenderedImage create(ParameterBlock args, RenderingHints renderHints) {
         // Get ImageLayout from renderHints if any.
-        ImageLayout layout = RIFUtil.getImageLayoutHint(renderHints);
+        ImageLayout layout = JAIUtil.getImageLayoutHint(renderHints);
 
         return new RectifySignedShortDataOpImage(args.getRenderedSource(0), renderHints, layout,
             (int[]) args.getObjectParameter(0));

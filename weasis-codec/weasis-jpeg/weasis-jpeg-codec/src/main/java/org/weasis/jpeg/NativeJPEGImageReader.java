@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.jpeg;
 
-import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,8 +49,8 @@ class NativeJPEGImageReader extends NativeImageReader {
     }
 
     @Override
-    protected final synchronized NativeImage nativeDecode(InputStream stream, ImageReadParam param, int imageIndex,
-        Rectangle region) throws IOException {
+    protected final synchronized NativeImage nativeDecode(InputStream stream, ImageReadParam param, int imageIndex)
+        throws IOException {
 
         ImageInputStream iis = null;
         if (stream instanceof InputStreamAdapter) {
@@ -72,7 +71,7 @@ class NativeJPEGImageReader extends NativeImageReader {
             FileStreamSegment.adaptParametersFromStream(iis, mlImage);
 
             long start = System.currentTimeMillis();
-            String error = decoder.decompress(mlImage, region);
+            String error = decoder.decompress(mlImage, param);
             // TODO Get the ICC profile data.
             if (error != null) {
                 throw new IIOException("Native JPEG codec error: " + error);
@@ -109,7 +108,7 @@ class NativeJPEGImageReader extends NativeImageReader {
             throw new IllegalArgumentException("input is not an ImageInputStream!");
         }
 
-        retval = nativeDecode(stream, null, index, null) != null;
+        retval = nativeDecode(stream, null, index) != null;
 
         if (retval) {
             long pos = ((ImageInputStream) input).getStreamPosition();

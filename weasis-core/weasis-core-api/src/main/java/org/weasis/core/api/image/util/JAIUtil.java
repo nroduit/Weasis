@@ -1,10 +1,12 @@
 package org.weasis.core.api.image.util;
 
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderedImageFactory;
 
+import javax.media.jai.ImageLayout;
 import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptorImpl;
 import javax.media.jai.OperationRegistry;
@@ -77,6 +79,14 @@ public class JAIUtil {
                     }
                 }
             }
+        }
+    }
+
+    public static ImageLayout getImageLayoutHint(RenderingHints renderHints) {
+        if (renderHints == null) {
+            return null;
+        } else {
+            return (ImageLayout) renderHints.get(JAI.KEY_IMAGE_LAYOUT);
         }
     }
 }

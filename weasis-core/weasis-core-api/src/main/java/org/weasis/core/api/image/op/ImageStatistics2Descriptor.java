@@ -29,31 +29,31 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
      */
     private static final String[][] resources = { { "GlobalName", "ImageStatistics2" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "LocalName", "ImageStatistics2" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "ImageStatistics2" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Description", //$NON-NLS-1$
-                        "Finds the standard deviation, skewness and kurtosis of pixel values in each band with the option to exclude a range of values." }, //$NON-NLS-1$
+        { "Description", //$NON-NLS-1$
+            "Finds the standard deviation, skewness and kurtosis of pixel values in each band with the option to exclude a range of values." }, //$NON-NLS-1$
 
-                    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
         { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg0Desc", "The region of the image to scan" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg0Desc", "The region of the image to scan" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg1Desc", "The horizontal sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg1Desc", "The horizontal sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg3Desc", "Mean of pixel values" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg3Desc", "Mean of pixel values" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg3Desc", "The lowest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg3Desc", "The lowest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg4Desc", "The highest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg4Desc", "The highest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg5Desc", "The rescale slope" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg5Desc", "The rescale slope" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg6Desc", "The rescale intercept" } }; //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg6Desc", "The rescale intercept" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The modes that this operator supports. maybe one or more of "rendered", "renderable", "collection", and

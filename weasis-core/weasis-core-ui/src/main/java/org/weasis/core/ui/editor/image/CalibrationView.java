@@ -212,7 +212,7 @@ public class CalibrationView extends JPanel {
         if (gl != null) {
             synchronized (gl.list) {
                 for (Graphic graphic : gl.list) {
-                    graphic.updateLabel(image, view2d);
+                    graphic.updateLabel(true, view2d);
                 }
             }
         }

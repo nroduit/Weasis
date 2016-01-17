@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -36,6 +37,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
+import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class DicomSpecialElement extends MediaElement<PlanarImage> {
@@ -168,6 +170,29 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         return false;
     }
 
+    public static boolean isSopuidInReferencedSeriesSequence(Map<String, SOPInstanceReferenceAndMAC> seq, String sopUID,
+        Integer frameNumber) {
+        if (seq != null && StringUtil.hasText(sopUID) && seq.containsKey(sopUID)) {
+            if (frameNumber != null && frameNumber > 1) {
+                SOPInstanceReferenceAndMAC val = seq.get(sopUID);
+                int[] seqFrame = val == null ? null : val.getReferencedFrameNumber();
+                if (seqFrame == null || seqFrame.length == 0) {
+                    return true;
+                } else {
+                    for (int k : seqFrame) {
+                        if (k == frameNumber) {
+                            return true;
+                        }
+                    }
+                }
+            } else {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      *
      * @param seriesUID
@@ -197,15 +222,70 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                     || koElement.getMediaReader().isEditableDicom()) {
 
                     if (koElementSet == null) {
-                        // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DESCRIPTION);
                         koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DATE);
                     }
                     koElementSet.add(koElement);
                 }
             }
         }
-
         return koElementSet;
+    }
+
+    public static final Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
+        Collection<DicomSpecialElement> specialElements, String seriesUID) {
+
+        if (specialElements == null) {
+            return null;
+        }
+
+        SortedSet<RejectedKOSpecialElement> koElementSet = null;
+
+        for (DicomSpecialElement element : specialElements) {
+
+            if (element instanceof RejectedKOSpecialElement) {
+                RejectedKOSpecialElement koElement = (RejectedKOSpecialElement) element;
+
+                Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
+
+                if (seriesUID == null || referencedSeriesInstanceUIDSet.contains(seriesUID)
+                    || koElement.getMediaReader().isEditableDicom()) {
+
+                    if (koElementSet == null) {
+                        koElementSet = new TreeSet<RejectedKOSpecialElement>(ORDER_BY_DATE);
+                    }
+                    koElementSet.add(koElement);
+                }
+            }
+        }
+        return koElementSet;
+    }
+
+    public static final RejectedKOSpecialElement getRejectionKoSpecialElement(Collection<DicomSpecialElement> specialElements,
+        String seriesUID, String sopUID, Integer frameNumber) {
+
+        if (specialElements == null) {
+            return null;
+        }
+        List<RejectedKOSpecialElement> koList = null;
+
+        for (DicomSpecialElement element : specialElements) {
+            if (element instanceof RejectedKOSpecialElement) {
+                RejectedKOSpecialElement koElement = (RejectedKOSpecialElement) element;
+                if (isSopuidInReferencedSeriesSequence(koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID, frameNumber)) {
+                    if (koList == null) {
+                        koList = new ArrayList<RejectedKOSpecialElement>();
+                    }
+                    koList.add(koElement);
+                }
+            }
+        }
+
+        if (koList != null) {
+            // return the most recent Rejection Object
+            Collections.sort(koList, ORDER_BY_DATE);
+            return koList.get(0);
+        }
+        return null;
     }
 
     public static final List<PRSpecialElement> getPRSpecialElements(Collection<DicomSpecialElement> specialElements,

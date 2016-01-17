@@ -30,4 +30,6 @@ public interface OpManager extends OpEventListener, Cloneable {
 
     boolean setParamValue(String opName, String param, Object value);
 
+    void removeParam(String opName, String param);
+
 }

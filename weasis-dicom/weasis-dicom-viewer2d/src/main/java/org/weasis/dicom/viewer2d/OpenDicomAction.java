@@ -99,8 +99,7 @@ public class OpenDicomAction extends AbstractUIAction {
                 } else {
                     Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
                     JOptionPane.showMessageDialog(c, Messages.getString("OpenDicomAction.open_err_msg"), //$NON-NLS-1$
-                        getDescription(),
-                        JOptionPane.WARNING_MESSAGE);
+                        getDescription(), JOptionPane.WARNING_MESSAGE);
                 }
             }
             BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent()); //$NON-NLS-1$

@@ -13,6 +13,7 @@ package org.weasis.core.ui.pref;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -22,6 +23,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.Enumeration;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -373,8 +375,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}"); //$NON-NLS-1$
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         AuditLog.createOrUpdateLogger(context, "default.log", new String[] { "org" }, level.toString(), logFile, //$NON-NLS-1$ //$NON-NLS-2$
-            pattern, fileNb,
-            fileSize);
+            pattern, fileNb, fileSize);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
         if (look != null) {
@@ -448,6 +449,67 @@ public class GeneralSetting extends AbstractItemDialogPage {
         @Override
         public String toString() {
             return name;
+        }
+    }
+
+    public static String setLookAndFeel(String look) {
+        // Do not display metal LAF in bold, it is ugly
+        UIManager.put("swing.boldMetal", Boolean.FALSE); //$NON-NLS-1$
+        // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF
+        UIManager.put("Slider.paintValue", Boolean.FALSE); //$NON-NLS-1$
+
+        String laf = getAvailableLookAndFeel(look);
+        try {
+            UIManager.setLookAndFeel(laf);
+        } catch (Exception e) {
+            System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
+            laf = UIManager.getSystemLookAndFeelClassName();
+        }
+        // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
+        setUIFont(new javax.swing.plaf.FontUIResource("SansSerif", Font.PLAIN, 12)); //$NON-NLS-1$
+        return laf;
+    }
+
+    public static String getAvailableLookAndFeel(String look) {
+        UIManager.LookAndFeelInfo lafs[] = UIManager.getInstalledLookAndFeels();
+        String laf = null;
+        if (look != null) {
+            for (int i = 0, n = lafs.length; i < n; i++) {
+                if (lafs[i].getClassName().equals(look)) {
+                    laf = look;
+                    break;
+                }
+            }
+        }
+        if (laf == null) {
+            if ("Mac OS X".equals(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
+                laf = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
+            } else {
+                // Try to set Nimbus, concurrent thread issue
+                // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
+                for (int i = 0, n = lafs.length; i < n; i++) {
+                    if (lafs[i].getName().equals("Nimbus")) { //$NON-NLS-1$
+                        laf = lafs[i].getClassName();
+                        break;
+                    }
+                }
+            }
+            // Should never happen
+            if (laf == null) {
+                laf = UIManager.getSystemLookAndFeelClassName();
+            }
+
+        }
+        return laf;
+    }
+
+    public static void setUIFont(javax.swing.plaf.FontUIResource font) {
+        Enumeration<Object> keys = UIManager.getDefaults().keys();
+        while (keys.hasMoreElements()) {
+            Object key = keys.nextElement();
+            if (UIManager.get(key) instanceof javax.swing.plaf.FontUIResource) {
+                UIManager.put(key, font);
+            }
         }
     }
 }

@@ -18,7 +18,6 @@ import java.awt.geom.Area;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 
-import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.gui.util.KeyActionValue;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -31,10 +30,12 @@ import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
  *
  * @author Nicolas Roduit , Benoit Jacquemoud
  */
-@Root()
+
 public interface Graphic extends GUIEntry, KeyActionValue, Cloneable {
 
     Graphic deepCopy();
+
+    void buildShape();
 
     Area getArea(AffineTransform transform);
 

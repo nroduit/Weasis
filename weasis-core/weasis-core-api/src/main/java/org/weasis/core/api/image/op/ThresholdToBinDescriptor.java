@@ -28,18 +28,18 @@ public class ThresholdToBinDescriptor extends OperationDescriptorImpl implements
      */
     private static final String[][] resources = { { "GlobalName", "ThresholdToBin" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "LocalName", "ThresholdToBin" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "ThresholdToBin" }, //$NON-NLS-1$ //$NON-NLS-2$
         { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Description", "A sample operation that thresholds source pixels" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Description", "A sample operation that thresholds source pixels" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "DocURL", "http://www.mycompany.com/SampleDescriptor.html" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "http://www.mycompany.com/SampleDescriptor.html" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg0Desc", "min" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg0Desc", "min" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "arg1Desc", "max" } }; //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg1Desc", "max" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String[] paramNames = { "min", "max" }; //$NON-NLS-1$ //$NON-NLS-2$
     /**

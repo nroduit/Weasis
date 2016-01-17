@@ -242,6 +242,16 @@ public class SimpleOpManager implements OpManager {
     }
 
     @Override
+    public void removeParam(String opName, String param) {
+        if (opName != null && param != null) {
+            ImageOpNode node = getNode(opName);
+            if (node != null) {
+                node.removeParam(param);
+            }
+        }
+    }
+
+    @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         for (ImageOpNode node : operations) {
             node.handleImageOpEvent(event);

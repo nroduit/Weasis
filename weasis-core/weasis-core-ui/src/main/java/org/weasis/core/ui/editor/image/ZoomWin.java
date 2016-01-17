@@ -239,6 +239,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     protected void updateAffineTransform() {
+        Rectangle2D modelArea = getViewModel().getModelArea();
         double viewScale = getViewModel().getViewScale();
         affineTransform.setToScale(viewScale, viewScale);
 
@@ -249,9 +250,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             if (flip != null && flip) {
                 rotationAngle = 360 - rotationAngle;
             }
-            Rectangle2D imageCanvas = getViewModel().getModelArea();
-            affineTransform.rotate(rotationAngle * Math.PI / 180.0, imageCanvas.getWidth() / 2.0,
-                imageCanvas.getHeight() / 2.0);
+            affineTransform.rotate(rotationAngle * Math.PI / 180.0, modelArea.getWidth() / 2.0,
+                modelArea.getHeight() / 2.0);
         }
         if (flip != null && flip) {
             // Using only one allows to enable or disable flip with the rotation action
@@ -269,6 +269,10 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             // at.translate(-imageWid, -imageHt);
             affineTransform.scale(-1.0, 1.0);
             affineTransform.translate(-getViewModel().getModelArea().getWidth(), 0.0);
+        }
+        Point offset = (Point) view2d.getActionValue("layer.offset");
+        if (offset != null) {
+            affineTransform.translate(-offset.getX(), -offset.getY());
         }
 
         try {

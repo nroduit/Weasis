@@ -36,7 +36,7 @@ public class NonEditableGraphic extends BasicGraphic {
     }
 
     @Override
-    protected void buildShape() {
+    public void buildShape() {
         updateLabel(null, null);
     }
 

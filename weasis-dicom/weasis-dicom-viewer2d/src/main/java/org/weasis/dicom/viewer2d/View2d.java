@@ -13,6 +13,7 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -23,8 +24,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
@@ -37,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -60,6 +58,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -75,6 +74,7 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -162,10 +162,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         SimpleOpManager manager = imageLayer.getDisplayOpManager();
         manager.addImageOperationAction(new WindowAndPresetsOp());
-        manager.addImageOperationAction(new OverlayOp());
         manager.addImageOperationAction(new FilterOp());
         manager.addImageOperationAction(new PseudoColorOp());
         manager.addImageOperationAction(new ShutterOp());
+        manager.addImageOperationAction(new OverlayOp());
         // Zoom and Rotation must be the last operations for the lens
         manager.addImageOperationAction(new ZoomOp());
         manager.addImageOperationAction(new RotationOp());
@@ -422,14 +422,15 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         PresentationStateReader pr =
             val instanceof PRSpecialElement ? new PresentationStateReader((PRSpecialElement) val) : null;
         actionsInView.put(ActionW.PR_STATE.cmd(), pr == null ? val : pr);
+        boolean spatialTransformation = actionsInView.get(ActionW.PREPROCESSING.cmd()) != null;
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
         // Delete previous PR Layers
         ArrayList<AbstractLayer.Identifier> dcmLayers =
-            (ArrayList<AbstractLayer.Identifier>) actionsInView.get(PresentationStateReader.TAG_DICOM_LAYERS);
+            (ArrayList<AbstractLayer.Identifier>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
         if (dcmLayers != null) {
             PRManager.deleteDicomLayers(dcmLayers, getLayerModel());
-            actionsInView.remove(PresentationStateReader.TAG_DICOM_LAYERS);
+            actionsInView.remove(PRManager.TAG_DICOM_LAYERS);
         }
 
         DicomImageElement m = getImage();
@@ -438,32 +439,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         imageLayer.setEnableDispOperations(false);
         imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, m, null));
 
+        boolean changePixConfig = JMVUtils.getNULLtoFalse(actionsInView.get(PRManager.TAG_CHANGE_PIX_CONFIG));
         if (m != null) {
             // Restore the original image pixel size
-            double[] prPixSize = (double[]) actionsInView.get(PresentationStateReader.TAG_OLD_PIX_SIZE);
-            if (prPixSize != null && prPixSize.length == 2) {
-                m.setPixelSize(prPixSize[0], prPixSize[1]);
-                actionsInView.remove(PresentationStateReader.TAG_OLD_PIX_SIZE);
-            }
-
-            // Restore Modality LUT Sequence
-            if (actionsInView.containsKey(PresentationStateReader.TAG_OLD_ModalityLUTData)) {
-                m.setTag(TagW.ModalityLUTData, actionsInView.get(PresentationStateReader.TAG_OLD_ModalityLUTData));
-                actionsInView.remove(PresentationStateReader.TAG_OLD_ModalityLUTData);
-            } else {
-                if (actionsInView.containsKey(PresentationStateReader.TAG_OLD_RescaleSlope)) {
-                    m.setTag(TagW.RescaleSlope, actionsInView.get(PresentationStateReader.TAG_OLD_RescaleSlope));
-                    m.setTag(TagW.RescaleIntercept,
-                        actionsInView.get(PresentationStateReader.TAG_OLD_RescaleIntercept));
-                    m.setTag(TagW.RescaleType, actionsInView.get(PresentationStateReader.TAG_OLD_RescaleType));
-                    actionsInView.remove(PresentationStateReader.TAG_OLD_RescaleSlope);
-                    actionsInView.remove(PresentationStateReader.TAG_OLD_RescaleIntercept);
-                    actionsInView.remove(PresentationStateReader.TAG_OLD_RescaleType);
+            if (changePixConfig) {
+                m.initPixelConfiguration();
+                ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+                if (spUnitAction instanceof ComboItemListener) {
+                    ((ComboItemListener) spUnitAction).setSelectedItem(m.getPixelSpacingUnit());
                 }
             }
 
             // Restore presets
-            actionsInView.remove(PresentationStateReader.PR_PRESETS);
+            actionsInView.remove(PRManager.PR_PRESETS);
+
+            // Restore zoom
+            actionsInView.remove(PRManager.TAG_PR_ZOOM);
 
             // Reset crop
             final Rectangle modelArea = getImageBounds(m);
@@ -493,7 +484,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Rectangle area = (Rectangle) actionsInView.get(ActionW.CROP.cmd());
         if (area != null && !area.equals(getViewModel().getModelArea())) {
             ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
-            getViewModel().setModelArea(area);
+            getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
+            actionsInView.put("layer.offset", new Point(area.x, area.y));
         }
         imageLayer.setPreprocessing((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
         if (pr != null) {
@@ -507,10 +499,17 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 flip.setParam(FlipOp.P_FLIP, actionsInView.get(ActionW.FLIP.cmd()));
             }
         }
-        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
-        if (!ZoomType.CURRENT.equals(type)) {
-            Double zoom = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            zoom(zoom == null ? 0.0 : zoom);
+
+        Double zoom = (Double) actionsInView.get(PRManager.TAG_PR_ZOOM);
+        // Special Cases: -200.0 => best fit, -100.0 => real world size
+        if (zoom != null && zoom != -200.0 && zoom != -100.0) {
+            actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.CURRENT);
+            zoom(zoom);
+        } else if (zoom != null) {
+            actionsInView.put(ViewCanvas.zoomTypeCmd, zoom == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
+            zoom(0.0);
+        } else if (changePixConfig || spatialTransformation) {
+            zoom(0.0);
         }
 
         ((DefaultViewModel) getViewModel()).setEnableViewModelChangeListeners(true);
@@ -520,27 +519,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     private void applyPresentationState(PresentationStateReader reader, DicomImageElement img) {
-        HashMap<TagW, Object> tags = reader.getDicom().geTags();
-        // Set Modality LUT before creating presets
-        Object mLUT = tags.get(TagW.ModalityLUTData);
-        if (mLUT != null) {
-            actionsInView.put(PresentationStateReader.TAG_OLD_ModalityLUTData, img.getTagValue(TagW.ModalityLUTData));
-            img.setTag(TagW.ModalityLUTData, mLUT);
-        } else {
-            Object rs = tags.get(TagW.RescaleSlope);
-            Object ri = tags.get(TagW.RescaleIntercept);
-            Object rt = tags.get(TagW.RescaleType);
-            if (rs != null && ri != null && rt != null) {
-                actionsInView.put(PresentationStateReader.TAG_OLD_RescaleSlope, img.getTagValue(TagW.RescaleSlope));
-                actionsInView.put(PresentationStateReader.TAG_OLD_RescaleIntercept,
-                    img.getTagValue(TagW.RescaleIntercept));
-                actionsInView.put(PresentationStateReader.TAG_OLD_RescaleType, img.getTagValue(TagW.RescaleType));
-                img.setTag(TagW.RescaleSlope, rs);
-                img.setTag(TagW.RescaleIntercept, ri);
-                img.setTag(TagW.RescaleType, rt);
-            }
-        }
-
         PRManager.applyPresentationState(this, reader, img);
         actionsInView.put(ActionW.ROTATION.cmd(), reader.getTagValue(ActionW.ROTATION.cmd(), 0));
         actionsInView.put(ActionW.FLIP.cmd(), reader.getTagValue(ActionW.FLIP.cmd(), false));
@@ -550,39 +528,44 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             PresetWindowLevel p = presets.get(0);
             actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
-            boolean pixelPadding = JMVUtils
-                .getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
-            // actionsInView.put(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pixelPadding));
-            // actionsInView.put(ActionW.LEVEL_MAX.cmd(), img.getMinValue(pixelPadding));
-            actionsInView.put(PresentationStateReader.PR_PRESETS, presets);
+            actionsInView.put(PRManager.PR_PRESETS, presets);
             actionsInView.put(ActionW.PRESET.cmd(), p);
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());
             actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
         }
 
-        // setShutter(reader.getDicom());
-        Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
-
         double[] prPixSize = (double[]) reader.getTagValue(TagW.PixelSpacing.getName(), null);
-        if (prPixSize != null && prPixSize.length == 2) {
-            actionsInView.put(PresentationStateReader.TAG_OLD_PIX_SIZE, img.getDisplayPixelSize());
+        if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
             img.setPixelSize(prPixSize[0], prPixSize[1]);
-
-            // if (area != null && img.getRescaleX() != img.getRescaleY()) {
-            // area =
-            // new Rectangle((int) Math.ceil(area.getX() * img.getRescaleX() - 0.5), (int) Math.ceil(area.getY()
-            // * img.getRescaleY() - 0.5), (int) Math.ceil(area.getWidth() * img.getRescaleX() - 0.5),
-            // (int) Math.ceil(area.getHeight() * img.getRescaleY() - 0.5));
-            // }
-
-        }
-        if (area != null) {
-            Area shape = (Area) actionsInView.get(TagW.ShutterFinalShape.getName());
-            if (shape != null) {
-                Area trArea = new Area(shape);
-                trArea.transform(AffineTransform.getTranslateInstance(-area.getX(), -area.getY()));
-                actionsInView.put(TagW.ShutterFinalShape.getName(), trArea);
+            img.setPixelSpacingUnit(Unit.MILLIMETER);
+            actionsInView.put(PRManager.TAG_CHANGE_PIX_CONFIG, true);
+            ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+            if (spUnitAction instanceof ComboItemListener) {
+                ((ComboItemListener) spUnitAction).setSelectedItem(Unit.MILLIMETER);
             }
+        }
+        if (prPixSize == null) {
+            int[] aspects = (int[]) reader.getTagValue(TagW.PixelAspectRatio.getName(), null);
+            if (aspects != null && aspects.length == 2) {
+                double[] prevPixSize = img.getDisplayPixelSize();
+                if (aspects[0] != aspects[1] || prevPixSize[0] != prevPixSize[1]) {
+                    // set the aspects to the pixel size of the image to stretch the image rendering (square pixel)
+                    double[] pixelsize;
+                    if (aspects[1] < aspects[0]) {
+                        pixelsize = new double[] { 1.0, (double) aspects[0] / (double) aspects[1] };
+                    } else {
+                        pixelsize = new double[] { (double) aspects[1] / (double) aspects[0], 1.0 };
+                    }
+                    img.setPixelSize(pixelsize[0], pixelsize[1]);
+                    img.setPixelSpacingUnit(Unit.PIXEL);
+                    actionsInView.put(PRManager.TAG_CHANGE_PIX_CONFIG, true);
+                    // TODO update graphics
+                }
+            }
+        }
+
+        Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
+        if (area != null) {
             RenderedImage source = getSourceImage();
             if (source != null) {
                 area = area.intersection(
@@ -599,8 +582,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
         actionsInView.put(ActionW.CROP.cmd(), area);
         actionsInView.put(CropOp.P_SHIFT_TO_ORIGIN, true);
-        double zoom = (Double) reader.getTagValue(ActionW.ZOOM.cmd(), 0.0d);
-        actionsInView.put(ActionW.ZOOM.cmd(), zoom);
+
+        actionsInView.put(PRManager.TAG_PR_ZOOM, reader.getTagValue(ActionW.ZOOM.cmd(), null));
     }
 
     public void updateKOButtonVisibleState() {
@@ -1046,17 +1029,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     @Override
-    protected PlanarImage getPreprocessedImage(DicomImageElement imageElement) {
-        return imageElement.getImage();
-    }
-
-    @Override
     protected void fillPixelInfo(final PixelInfo pixelInfo, final DicomImageElement imageElement, final double[] c) {
         if (c != null && c.length >= 1) {
             boolean pixelPadding = JMVUtils
                 .getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
+
+            Object prReader = getActionValue(ActionW.PR_STATE.cmd());
+            HashMap<TagW, Object> params = null;
+            if (prReader instanceof PresentationStateReader) {
+                params = ((PresentationStateReader) prReader).getDicom().getTags();
+            }
             for (int i = 0; i < c.length; i++) {
-                c[i] = imageElement.pixel2mLUT((float) c[i], pixelPadding);
+                c[i] = imageElement.pixel2mLUT((float) c[i], params, pixelPadding);
             }
             pixelInfo.setValues(c);
         }
@@ -1240,7 +1224,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 }
                 DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
                 LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
-                DicomModel.loadingExecutor.execute(dicom);
+                DicomModel.LOADING_EXECUTOR.execute(dicom);
                 return true;
             }
             return false;

@@ -23,6 +23,7 @@ import java.util.List;
 import javax.media.jai.OpImage;
 import javax.media.jai.ROIShape;
 import javax.media.jai.RenderedOp;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.weasis.core.api.image.op.ImageStatistics2Descriptor;
 import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
@@ -32,6 +33,7 @@ import org.weasis.core.api.media.data.TagW;
 /**
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
+@XmlTransient
 public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implements ImageStatistics {
 
     public AbstractDragGraphicArea(int handlePointTotalNumber) {

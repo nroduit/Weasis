@@ -1,7 +1,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Paint;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
@@ -9,11 +8,11 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 import javax.swing.Icon;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlType;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
@@ -25,11 +24,16 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 // TODO should a draggable graphic
 
-@Root(name = "point")
+@XmlType(name = "point", factoryMethod = "createDefaultInstance")
+@XmlAccessorType(XmlAccessType.NONE)
 public class PointGraphic extends BasicGraphic {
 
-    @Attribute(name = "pt_size")
+    @XmlAttribute(name = "pt_size")
     private int pointSize;
+
+    public PointGraphic(float lineThickness, Color paintColor, boolean labelVisible) throws IllegalStateException {
+        super(0, paintColor, lineThickness, labelVisible);
+    }
 
     public PointGraphic(Point2D.Double point, float lineThickness, Color paintColor, boolean labelVisible,
         boolean filled, int pointSize) throws IllegalStateException {
@@ -42,21 +46,12 @@ public class PointGraphic extends BasicGraphic {
         buildShape();
     }
 
-    protected PointGraphic(
-        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
-        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
-        @Element(name = "paint", required = false) Paint paintColor, @Attribute(name = "thickness") float lineThickness,
-        @Attribute(name = "label_visible") boolean labelVisible, @Attribute(name = "pt_size") int pointSize)
-            throws InvalidShapeException {
-        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
-        if (handlePointTotalNumber != 1) {
-            throw new InvalidShapeException("Not a valid PointGraphic!"); //$NON-NLS-1$
-        }
-        buildShape();
+    public static PointGraphic createDefaultInstance() {
+        return new PointGraphic(1.0f, Color.YELLOW, true);
     }
 
     @Override
-    protected void buildShape() {
+    public void buildShape() {
         if (this.handlePointList.size() == 1) {
             Point2D.Double point = this.handlePointList.get(0);
             Ellipse2D ellipse = new Ellipse2D.Double(point.getX() - pointSize / 2.0f, point.getY() - pointSize / 2.0f,

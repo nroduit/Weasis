@@ -23,35 +23,43 @@ import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
-import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Root;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
-@Root(name = "label")
+@XmlRootElement(name = "label")
+@XmlAccessorType(XmlAccessType.NONE)
 public class GraphicLabel implements Cloneable {
     /**
      * GROWING_BOUND min value is 3 because paintBoundOutline grows of 2 pixels the outer rectangle painting, and
      * paintFontOutline grows of 1 pixel all string painting
      */
     public static final int GROWING_BOUND = 3;
+    @XmlElementWrapper(name = "text")
+    @XmlElement(name = "string")
     protected String[] labelStringArray;
 
     protected Rectangle2D labelBounds;
     protected double labelWidth;
     protected double labelHeight;
 
-    @Attribute(name = "offsetX")
+    @XmlAttribute(name = "offsetX")
     protected double offsetX;
-    @Attribute(name = "offsetY")
+    @XmlAttribute(name = "offsetY")
     protected double offsetY;
 
     public GraphicLabel() {
         this(0.0, 0.0);
     }
 
-    public GraphicLabel(@Attribute(name = "offsetX") double offsetX, @Attribute(name = "offsetY") double offsetY) {
+    public GraphicLabel(double offsetX, double offsetY) {
         this.offsetX = offsetX;
         this.offsetY = offsetY;
         reset();

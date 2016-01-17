@@ -94,14 +94,15 @@ public class libijg {
                      * the source image is YCbCr in which case no color conversion is performed.
                      */
 
-    /**
-     * encode color images in RGB unless the source image is YCbCr in which case no color conversion is performed.
-     */
+                    /**
+                     * encode color images in RGB unless the source image is YCbCr in which case no color conversion is
+                     * performed.
+                     */
                     ECC_lossyRGB = 1,
 
-    /**
-     * convert color images to monochrome before compressing
-     */
+                    /**
+                     * convert color images to monochrome before compressing
+                     */
                     ECC_monochrome = 2;
 
     /**

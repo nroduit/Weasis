@@ -31,7 +31,9 @@ import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
 import org.weasis.dicom.codec.pref.DicomPrefManager;
-import org.weasis.imageio.codec.ImageioUtil;
+
+import com.sun.media.imageioimpl.common.ImageioUtil;
+
 
 public class Activator implements BundleActivator, ServiceListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
