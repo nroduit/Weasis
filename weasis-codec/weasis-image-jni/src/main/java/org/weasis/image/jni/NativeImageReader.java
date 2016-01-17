@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.weasis.image.jni;
 
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
@@ -256,7 +254,7 @@ public abstract class NativeImageReader extends ImageReader {
             throw new IllegalArgumentException("input is not an ImageInputStream!");
         }
         // FIXME skip stream!
-        retval = nativeDecode(stream, null, index, null) != null;
+        retval = nativeDecode(stream, null, index) != null;
 
         if (retval) {
             long pos = ((ImageInputStream) input).getStreamPosition();
@@ -275,15 +273,13 @@ public abstract class NativeImageReader extends ImageReader {
      *            an input stream
      * @param param
      * @param imageIndex
-     * @param region
      * @return NativeImage
      * @throws IOException
      */
-    protected abstract NativeImage nativeDecode(InputStream stream, ImageReadParam param, int imageIndex,
-        Rectangle region) throws IOException;
+    protected abstract NativeImage nativeDecode(InputStream stream, ImageReadParam param, int imageIndex)
+        throws IOException;
 
-    protected synchronized NativeImage getImage(int imageIndex, ImageReadParam param, Rectangle region)
-        throws IOException {
+    protected synchronized NativeImage getImage(int imageIndex, ImageReadParam param) throws IOException {
         NativeImage nativeImage = nativeImages.get(imageIndex);
         if (nativeImage != null && nativeImage.getOutputBuffer() != null) {
             return nativeImage;
@@ -299,7 +295,7 @@ public abstract class NativeImageReader extends ImageReader {
             throw new IllegalArgumentException("input is not an ImageInputStream!");
         }
 
-        nativeImage = nativeDecode(stream, param, imageIndex, region);
+        nativeImage = nativeDecode(stream, param, imageIndex);
         if (nativeImage != null) {
             checkParameters(nativeImage.getImageParameters(), param);
             nativeImages.put(imageIndex, nativeImage);
@@ -498,14 +494,15 @@ public abstract class NativeImageReader extends ImageReader {
 
     @Override
     public synchronized RenderedImage readAsRenderedImage(int imageIndex, ImageReadParam param) throws IOException {
-        // return read(imageIndex, param);
-        return new NativeRenderedImage(this, param, imageIndex);
+        return read(imageIndex, param);
+        // TODO must be validated as the image reading concurrency is outside the pool thread
+        // return new NativeRenderedImage(this, param, imageIndex);
     }
 
     @Override
     public synchronized BufferedImage read(int imageIndex, ImageReadParam param) throws IOException {
         long start = System.currentTimeMillis();
-        NativeImage img = getImage(imageIndex, param, param.getSourceRegion());
+        NativeImage img = getImage(imageIndex, param);
         if (img == null) {
             return null;
         }
@@ -518,7 +515,7 @@ public abstract class NativeImageReader extends ImageReader {
         ImageTypeSpecifier type = createImageType(img.getImageParameters(), null, null, null, null, null);
         // Create a new raster and copy the data.
         SampleModel sm = type.getSampleModel();
-        WritableRaster raster = Raster.createWritableRaster(sm, db, new Point(0, 0));
+        WritableRaster raster = Raster.createWritableRaster(sm, db, param.getDestinationOffset());
 
         long stop = System.currentTimeMillis();
         LOGGER.debug("Building BufferedImage time: {} ms", (stop - start)); //$NON-NLS-1$

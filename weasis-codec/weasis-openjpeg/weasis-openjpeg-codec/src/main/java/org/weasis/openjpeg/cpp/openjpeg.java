@@ -683,9 +683,15 @@ public class openjpeg {
     public static native void opj_stream_set_user_data_length(@Cast("void**") Pointer p_stream,
         @Cast("unsigned long") long data_length);
 
-    public static native void color_sycc_to_rgb(@ByPtr opj_image p_image);
-
+    // public static native void color_sycc_to_rgb(@ByPtr opj_image p_image);
+    //
     // public static native void color_apply_icc_profile(@ByPtr opj_image p_image);
+    //
+    // public static native void color_cielab_to_rgb(@ByPtr opj_image p_image);
+    //
+    // public static native void color_cmyk_to_rgb(@ByPtr opj_image p_image);
+    //
+    // public static native void color_esycc_to_rgb(@ByPtr opj_image p_image);
 
     /*
      * ==========================================================

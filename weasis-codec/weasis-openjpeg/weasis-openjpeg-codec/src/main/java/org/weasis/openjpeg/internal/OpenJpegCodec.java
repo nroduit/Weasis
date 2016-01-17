@@ -102,6 +102,9 @@ public class OpenJpegCodec implements NativeCodec {
                     throw new IOException("Failed to read the j2k header");
                 }
                 setParameters(nImage.getImageParameters(), image);
+                // keep a reference to be not garbage collected
+                buffer.clear();
+                j2kFile.deallocate();
             } finally {
                 if (l_stream != null) {
                     openjpeg.opj_stream_destroy(l_stream);
@@ -139,9 +142,9 @@ public class OpenJpegCodec implements NativeCodec {
 
                 SourceData j2kFile = new SourceData();
                 j2kFile.data(buffer);
-                SizeTPointer size = new SizeTPointer(1);
-                size.put(buffer.limit());
-                j2kFile.size(size);
+                SizeTPointer srcDataSize = new SizeTPointer(1);
+                srcDataSize.put(buffer.limit());
+                j2kFile.size(srcDataSize);
 
                 l_stream = openjpeg.opj_stream_create_memory_stream(j2kFile, OPJ_J2K_STREAM_CHUNK_SIZE, true);
                 if (l_stream.isNull()) {
@@ -256,17 +259,22 @@ public class OpenJpegCodec implements NativeCodec {
                 // }
                 // }
 
-                /* Close the byte stream */
+                /*
+                 * Has not effect on releasing memory but only keep a reference to be not garbage collected during the
+                 * native decode (ByteBuffer.allocateDirect() has PhantomReference)
+                 */
+                buffer.clear();
                 openjpeg.opj_stream_destroy(l_stream);
+                j2kFile.deallocate();
                 l_stream.deallocate();
                 l_stream = null;
 
                 int bands = image.numcomps();
                 if (bands > 0) {
 
-                    if (image.color_space() == openjpeg.OPJ_CLRSPC_SYCC) {
-                        openjpeg.color_sycc_to_rgb(image);
-                    }
+                    // if (image.color_space() == openjpeg.OPJ_CLRSPC_SYCC) {
+                    // openjpeg.color_sycc_to_rgb(image);
+                    // }
 
                     // if(image.color_space() != openjpeg.OPJ_CLRSPC_SYCC
                     // && bands == 3 && image->comps[0].dx == image->comps[0].dy

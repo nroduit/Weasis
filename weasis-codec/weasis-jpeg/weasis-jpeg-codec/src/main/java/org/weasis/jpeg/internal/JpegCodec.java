@@ -62,6 +62,8 @@ public class JpegCodec implements NativeCodec {
                         msg = val == null ? "error" : val.msg().getString();
                     }
                 }
+                // keep a reference to be not garbage collected
+                buffer.clear();
             } finally {
                 // Do not close inChannel (comes from image input stream)
                 decomp.deallocate();
@@ -118,7 +120,8 @@ public class JpegCodec implements NativeCodec {
                         nImage.setOutputBuffer((bps > 8 && bps <= 16) ? outBuf.asShortBuffer() : outBuf);
                     }
                 }
-
+                // keep a reference to be not garbage collected
+                buffer.clear();
             } finally {
                 decomp.deallocate();
                 // Do not close inChannel (comes from image input stream)
@@ -183,6 +186,8 @@ public class JpegCodec implements NativeCodec {
                 // start = System.currentTimeMillis();
                 // // byte[] to = null;
                 // RETURN_MSG val = comp.encode(columns, rows, interpr, samplesPerPixel, buffer, outBuf, bytesWritten);
+                // // keep a reference to be not garbage collected
+                // buffer.clear();
                 // if (val == null || val.code() != libijg.OK) {
                 // msg = val == null ? "error" : val.msg().getString();
                 // }
@@ -199,6 +204,7 @@ public class JpegCodec implements NativeCodec {
                 // //$NON-NLS-1$
                 // }
             } finally {
+                nImage.setInputBuffer(null);
                 // Do not close inChannel (comes from image input stream)
             }
         }
