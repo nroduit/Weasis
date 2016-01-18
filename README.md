@@ -54,13 +54,16 @@ The master branch contains Weasis 2.0.x, the next major release is 2.5.x and the
 
 ## Build weasis ##
 
-Prerequisites: JDK 6 and Maven 3
+Prerequisites: JDK 7 and Maven 3
 
 See the instructions [here](http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source)
 
 The snapshot version may require to build first other snapshot dependencies:
+1. [dcm4che3 - imagio-codec-all branch](https://github.com/nroduit/dcm4che/tree/imagio-codec-all), run "mvn clean install"
+1. In weasis root directory, run "mvn clean install"
 
+The sequence to rebuild all the libraries:
 1. [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools) run "mvn clean install"
 1. In weasis root directory, run "mvn clean install" (will have errors in weasis-dicom-codec, just continue to the next point)
-1. [dcm4che3 - dcm4che-native-codec branch](https://github.com/nroduit/dcm4che/tree/dcm4che-native-codec), run "mvn clean install"
+1. [dcm4che3 - imagio-codec-all branch](https://github.com/nroduit/dcm4che/tree/imagio-codec-all), run "mvn clean install"
 1. In weasis root directory, run "mvn clean install"
