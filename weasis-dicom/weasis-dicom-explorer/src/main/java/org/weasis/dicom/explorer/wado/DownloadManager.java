@@ -71,7 +71,6 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -632,8 +631,7 @@ public class DownloadManager {
                     if (TagW.DICOM_LEVEL.Instance.name().equals(xmler.getName().getLocalPart())) {
                         String sopInstanceUID = getTagAttribute(xmler, TagW.SOPInstanceUID.getTagName(), null);
                         if (sopInstanceUID != null) {
-                            String tsuid = getTagAttribute(xmler, TagW.TransferSyntaxUID.getTagName(), null);
-                            DicomInstance dcmInstance = new DicomInstance(sopInstanceUID, tsuid);
+                            DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
                             if (containsInstance && dicomInstances.contains(dcmInstance)) {
                                 LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                             } else {
@@ -657,13 +655,6 @@ public class DownloadManager {
         }
 
         if (dicomInstances.size() > 0) {
-            if (dicomInstances.size() == 1
-                && "1.2.840.10008.1.2.4.100".equals(dicomInstances.get(0).getTransferSyntaxUID())) { //$NON-NLS-1$
-                model.removeHierarchyNode(study, dicomSeries);
-                dicomSeries = new DicomVideoSeries((DicomSeries) dicomSeries);
-                model.addHierarchyNode(study, dicomSeries);
-            }
-
             final LoadSeries loadSeries = new LoadSeries(dicomSeries, model,
                 BundleTools.SYSTEM_PREFERENCES.getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
             loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));

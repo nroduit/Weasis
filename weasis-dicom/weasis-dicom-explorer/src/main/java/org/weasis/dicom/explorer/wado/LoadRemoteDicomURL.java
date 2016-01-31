@@ -97,7 +97,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
             for (int i = 0; i < urls.length; i++) {
                 if (urls[i] != null) {
                     String url = urls[i].toString();
-                    DicomInstance dcmInstance = new DicomInstance(url, null);
+                    DicomInstance dcmInstance = new DicomInstance(url);
                     dcmInstance.setDirectDownloadFile(url);
                     dicomInstances.add(dcmInstance);
                 }

@@ -378,7 +378,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                     }
                     // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
                     String wado_tsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
-                    if (wado_tsuid != null && !wado_tsuid.equals("")) { //$NON-NLS-1$
+                    if (StringUtil.hasText(wado_tsuid)) {
                         // On Mac and Win 64 some decoders (JPEGImageReaderCodecLib) are missing, ask for uncompressed
                         // syntax for TSUID: 1.2.840.10008.1.2.4.51, 1.2.840.10008.1.2.4.57
                         // 1.2.840.10008.1.2.4.70 1.2.840.10008.1.2.4.80, 1.2.840.10008.1.2.4.81

@@ -34,7 +34,6 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
@@ -184,8 +183,7 @@ public class DicomDirLoader {
                     String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUIDInFile);
 
                     if (sopInstanceUID != null) {
-                        DicomInstance dcmInstance =
-                            new DicomInstance(sopInstanceUID, instance.getString(Tag.TransferSyntaxUID));
+                        DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
                         if (containsInstance && dicomInstances.contains(dcmInstance)) {
                             LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                         } else {
@@ -211,13 +209,6 @@ public class DicomDirLoader {
                 }
 
                 if (dicomInstances.size() > 0) {
-                    if (dicomInstances.size() == 1
-                        && "1.2.840.10008.1.2.4.100".equals(dicomInstances.get(0).getTransferSyntaxUID())) { //$NON-NLS-1$
-                        dicomModel.removeHierarchyNode(study, dicomSeries);
-                        dicomSeries = new DicomVideoSeries((DicomSeries) dicomSeries);
-                        dicomModel.addHierarchyNode(study, dicomSeries);
-                    }
-
                     dicomSeries.setTag(TagW.DirectDownloadThumbnail, readDicomDirIcon(iconInstance));
                     dicomSeries.setTag(TagW.ReadFromDicomdir, true);
                     final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel, 1, writeInCache);
