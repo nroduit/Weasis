@@ -18,11 +18,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -30,10 +34,17 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
+import org.weasis.core.api.media.data.Series;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.internal.Activator;
+
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
 
 public class DicomExport extends AbstractWizardDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomExport.class);
@@ -91,6 +102,8 @@ public class DicomExport extends AbstractWizardDialog {
         properties.put(dicomModel.getClass().getName(), dicomModel);
         properties.put(treeModel.getClass().getName(), treeModel);
 
+        initTreeCheckingModel();
+
         ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
         list.add(new LocalExport(dicomModel, treeModel));
 
@@ -116,6 +129,47 @@ public class DicomExport extends AbstractWizardDialog {
         }
 
         iniTree();
+    }
+
+    /**
+     * Set the checking Paths for the CheckTreeModel to the open Series for the current selected Patient only <br>
+     */
+    private void initTreeCheckingModel() {
+
+        TreeCheckingModel checkingModel = treeModel.getCheckingModel();
+        checkingModel.setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
+
+        DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+        if (explorer instanceof DicomExplorer) {
+
+            @SuppressWarnings("rawtypes")
+            Set<Series> openSeriesSet = ((DicomExplorer) explorer).getSelectedPatientOpenSeries();
+            Object rootNode = treeModel.getModel().getRoot();
+
+            if (openSeriesSet.size() > 0 && rootNode instanceof DefaultMutableTreeNode) {
+                List<TreePath> selectedSeriesPathsList = new ArrayList<TreePath>();
+
+                for (Enumeration<DefaultMutableTreeNode> enumTreeNode =
+                    ((DefaultMutableTreeNode) rootNode).breadthFirstEnumeration(); enumTreeNode.hasMoreElements();) {
+
+                    DefaultMutableTreeNode treeNode = enumTreeNode.nextElement();
+                    if (treeNode.getLevel() != 3) { // 3 stands for Series Level
+                        continue;
+                    }
+
+                    Object userObject = treeNode.getUserObject();
+                    if (userObject instanceof DicomSeries && openSeriesSet.contains(userObject)) {
+                        selectedSeriesPathsList.add(new TreePath(treeNode.getPath()));
+                    }
+                }
+
+                if (selectedSeriesPathsList.isEmpty() == false) {
+                    TreePath[] seriesCheckingPaths =
+                        selectedSeriesPathsList.toArray(new TreePath[selectedSeriesPathsList.size()]);
+                    checkingModel.setCheckingPaths(seriesCheckingPaths);
+                }
+            }
+        }
     }
 
     private void exportSelection(boolean closeWin) {
