@@ -67,12 +67,14 @@ public class ExportTree extends JScrollPane {
          * For medical use recommendation is to default select the whole series related to studies to be analyzed
          */
 
-        TreeCheckingModel checkingModel = checkTreeModel.getCheckingModel();
-        TreePath[] checkingPaths = checkTreeModel.getCheckingPaths();
-        checkboxTree.setCheckingModel(checkingModel); // be aware that checkingPaths is cleared at this point
+        // TreeCheckingModel checkingModel = checkTreeModel.getCheckingModel();
+        // checkboxTree.setCheckingModel(checkingModel);
+        // !! DONT REUSE THE CHECKING MODEL LIKE ABOVE SINCE IT IS CLEARED AT INIT !!
 
-        // checkingModel.setCheckingMode(checkTreeModel.getCheckingModel().getCheckingMode());
-        // -- checkingMode is alreadySet inDicomExport
+        TreeCheckingModel checkingModel = checkboxTree.getCheckingModel();
+        checkingModel.setCheckingMode(checkTreeModel.getCheckingModel().getCheckingMode());
+
+        TreePath[] checkingPaths = checkTreeModel.getCheckingPaths();
 
         if (checkingPaths != null && checkingPaths.length > 0) {
             Set<TreePath> seriesPathsSet = new HashSet<TreePath>(checkingPaths.length);
