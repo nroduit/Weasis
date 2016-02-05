@@ -1,12 +1,9 @@
-/* Copyright (c) 2001-2004, David A. Clunie DBA Pixelmed Publishing. All rights reserved. */
+/* Copyright (c) 2001-2015, David A. Clunie DBA Pixelmed Publishing. All rights reserved. */
 
 package org.weasis.dicom.codec.geometry;
 
-import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
@@ -18,21 +15,11 @@ import javax.vecmath.Vector3d;
 public class IntersectSlice extends LocalizerPoster {
 
     public IntersectSlice(Vector3d row, Vector3d column, Point3d tlhc, Tuple3d voxelSpacing, Tuple3d dimensions) {
-        localizerRow = row;
-        localizerColumn = column;
-        localizerTLHC = tlhc;
-        localizerVoxelSpacing = voxelSpacing;
-        localizerDimensions = dimensions;
-        doCommonConstructorStuff();
+        super(row, column, tlhc, voxelSpacing, dimensions);
     }
 
     public IntersectSlice(GeometryOfSlice geometry) {
-        localizerRow = geometry.getRow();
-        localizerColumn = geometry.getColumn();
-        localizerTLHC = geometry.getTLHC();
-        localizerVoxelSpacing = geometry.getVoxelSpacing();
-        localizerDimensions = geometry.getDimensions();
-        doCommonConstructorStuff();
+        super(geometry);
     }
 
     private boolean allTrue(boolean[] array) {
@@ -56,8 +43,6 @@ public class IntersectSlice extends LocalizerPoster {
 
     private boolean[] classifyCornersOfRectangleIntoEdgesCrossingZPlane(Point3d[] corners) {
         int size = corners.length;
-        double[] thisArray = new double[3];
-        double[] nextArray = new double[3];
         boolean classification[] = new boolean[size];
         for (int i = 0; i < size; ++i) {
             int next = (i == size - 1) ? 0 : i + 1;
@@ -70,7 +55,7 @@ public class IntersectSlice extends LocalizerPoster {
     @Override
     public List<Point2D.Double> getOutlineOnLocalizerForThisGeometry(Vector3d row, Vector3d column, Point3d tlhc,
         Tuple3d voxelSpacing, double sliceThickness, Tuple3d dimensions) {
-        // System.err.println("IntersectSlice.getOutlineOnLocalizerForThisGeometry()");
+
         Point3d[] corners = getCornersOfSourceRectangleInSourceSpace(row, column, tlhc, voxelSpacing, dimensions);
         for (int i = 0; i < 4; ++i) {
             // We want to consider each edge of the source slice with respect to
@@ -87,32 +72,21 @@ public class IntersectSlice extends LocalizerPoster {
 
         boolean edges[] = classifyCornersOfRectangleIntoEdgesCrossingZPlane(corners);
 
-        Vector shapes = null;
         if (allTrue(edges)) {
             // System.err.println("Source in exactly the same plane as the localizer");
-            shapes = drawOutlineOnLocalizer(corners); // draw a rectangle
+            return drawOutlineOnLocalizer(corners); // draw a rectangle
         } else if (oppositeEdges(edges)) {
             // System.err.println("Opposite edges cross the localizer");
             // draw line between where two edges cross (have zero Z value)
-            shapes = drawLinesBetweenAnyPointsWhichIntersectPlaneWhereZIsZero(corners);
+            return drawLinesBetweenAnyPointsWhichIntersectPlaneWhereZIsZero(corners);
         } else if (adjacentEdges(edges)) {
             // System.err.println("Adjacent edges cross the localizer");
             // draw line between where two edges cross (have zero Z value)
-            shapes = drawLinesBetweenAnyPointsWhichIntersectPlaneWhereZIsZero(corners);
+            return drawLinesBetweenAnyPointsWhichIntersectPlaneWhereZIsZero(corners);
         } else {
             // System.err.println("No edges cross the localizer");
             // draw nothing
+            return null;
         }
-        if (shapes != null && shapes.size() > 0) {
-            // shapes.remove(shapes.size() - 1);
-            int size = shapes.size();
-            List<Point2D.Double> pts = new ArrayList<Point2D.Double>(size);
-            for (int i = 0; i < size; ++i) {
-                Line2D.Double line = (Line2D.Double) shapes.get(i);
-                pts.add(new Point2D.Double(line.getX2(), line.getY2()));
-            }
-            return pts;
-        }
-        return null;
     }
 }
