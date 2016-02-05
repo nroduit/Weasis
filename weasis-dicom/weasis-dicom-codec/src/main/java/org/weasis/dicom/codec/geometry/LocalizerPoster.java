@@ -91,7 +91,7 @@ public abstract class LocalizerPoster {
         if (Math.abs(column.lengthSquared() - 1) > 0.001) {
             throw new IllegalArgumentException("Column not a unit vector"); //$NON-NLS-1$
         }
-        if (row.dot(column) > 0.001) {
+        if (row.dot(column) > 0.005) {
             throw new IllegalArgumentException("Row and column vectors are not orthogonal"); //$NON-NLS-1$
         }
     }
