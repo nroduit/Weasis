@@ -174,6 +174,10 @@ public final class EscapeChars {
      * Note that JSTL's {@code <c:out>} escapes <em>only the first
      * five</em> of the above characters.
      */
+
+    private EscapeChars() {
+    }
+
     public static String forHTML(String aText) {
         if (aText == null) {
             return ""; //$NON-NLS-1$
@@ -488,9 +492,8 @@ public final class EscapeChars {
      * Insensitive to case.
      */
     public static String forScriptTagsOnly(String aText) {
-        String result = null;
         Matcher matcher = SCRIPT.matcher(aText);
-        result = matcher.replaceAll("&lt;SCRIPT>"); //$NON-NLS-1$
+        String result = matcher.replaceAll("&lt;SCRIPT>"); //$NON-NLS-1$
         matcher = SCRIPT_END.matcher(result);
         result = matcher.replaceAll("&lt;/SCRIPT>"); //$NON-NLS-1$
         return result;
@@ -534,7 +537,6 @@ public final class EscapeChars {
         } else {
             regex = "\n\r"; //$NON-NLS-1$
         }
-        String[] ret = unformatted.split(regex);
-        return ret;
+        return unformatted.split(regex);
     }
 }

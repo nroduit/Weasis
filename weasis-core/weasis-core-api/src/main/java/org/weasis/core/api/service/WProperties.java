@@ -17,11 +17,15 @@ import java.util.Properties;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.Base64;
 
 public class WProperties extends Properties {
 
-    private final BundleContext context;
+    private static final Logger LOGGER = LoggerFactory.getLogger(WProperties.class);
+
+    private final transient BundleContext context;
 
     public WProperties() {
         context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -124,9 +128,9 @@ public class WProperties extends Properties {
         if (isKeyValid(key)) {
             final String value = this.getProperty(key);
             if (value != null) {
-                if (value.equalsIgnoreCase("true")) { //$NON-NLS-1$
+                if ("true".equalsIgnoreCase(value)) { //$NON-NLS-1$
                     result = true;
-                } else if (value.equalsIgnoreCase("false")) { //$NON-NLS-1$
+                } else if ("false".equalsIgnoreCase(value)) { //$NON-NLS-1$
                     result = false;
                 }
             }
@@ -191,7 +195,7 @@ public class WProperties extends Properties {
             try {
                 this.put(key, Base64.encodeBytes(value, Base64.GZIP));
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("Set byte property", e);
             }
         }
     }
@@ -204,7 +208,7 @@ public class WProperties extends Properties {
                 try {
                     result = Base64.decode(value);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Get byte property", e);
                 }
             }
         }
@@ -234,6 +238,7 @@ public class WProperties extends Properties {
                     intValue |= Integer.parseInt(hexColor, 16);
                 }
             } catch (NumberFormatException e) {
+                LOGGER.error("Cannot parse color {} into int", hexColor);
             }
         }
         return new Color(intValue, true);

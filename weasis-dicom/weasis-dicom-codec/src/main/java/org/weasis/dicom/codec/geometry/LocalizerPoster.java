@@ -320,7 +320,7 @@ public abstract class LocalizerPoster {
         int size = corners.length;
         double[] thisArray = new double[3];
         double[] nextArray = new double[3];
-        ArrayList<Point3d> intersections = new ArrayList<Point3d>();
+        ArrayList<Point3d> intersections = new ArrayList<>();
         for (int i = 0; i < size; ++i) {
             int next = (i == size - 1) ? 0 : i + 1;
             corners[i].get(thisArray);
@@ -348,7 +348,7 @@ public abstract class LocalizerPoster {
     }
 
     protected List<Point3d> getIntersectionsOfCubeWithZPlane(Point3d[] corners) {
-        ArrayList<Point3d> intersections = new ArrayList<Point3d>(4);
+        ArrayList<Point3d> intersections = new ArrayList<>(4);
 
         // the check and traversal order are very dependent on the order of the
         // corners which are { tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB }

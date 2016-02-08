@@ -14,7 +14,11 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.SocketAddress;
+import java.util.Collections;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -24,6 +28,8 @@ import java.util.List;
  */
 
 public class ProxyDetector {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyDetector.class);
 
     public static final String HTTP_PROXY_HOST_PROPERTY = "http.proxyHost"; //$NON-NLS-1$
     public static final String HTTP_PROXY_PORT_PROPERTY = "http.proxyPort"; //$NON-NLS-1$
@@ -45,6 +51,7 @@ public class ProxyDetector {
     public static final String DIRECT_CONNECTION_PROPERTY = "javaplugin.proxy.config.type"; //$NON-NLS-1$
 
     private static final String PROXY_PROPERTY = "java.net.useSystemProxies"; //$NON-NLS-1$
+    private static final ProxyDetector INSTANCE = new ProxyDetector();
 
     private final List<Proxy> proxies;
     private final Proxy proxyToUse;
@@ -56,21 +63,11 @@ public class ProxyDetector {
 
     /**
      *
-     * ProxyDetectorHolder is loaded on the first execution of ProxyDetector.getInstance() or the first access to
-     * ProxyDetectorHolder.INSTANCE, not before.
-     */
-
-    private static class ProxyDetectorHolder {
-        private static final ProxyDetector INSTANCE = new ProxyDetector();
-    }
-
-    /**
-     *
      * @return the instance
      */
 
     public static ProxyDetector getInstance() {
-        return ProxyDetectorHolder.INSTANCE;
+        return INSTANCE;
     }
 
     /**
@@ -86,20 +83,18 @@ public class ProxyDetector {
     private List<Proxy> initProxies() {
 
         final String valuePropertyBefore = System.getProperty(PROXY_PROPERTY);
+        System.setProperty(PROXY_PROPERTY, "true"); //$NON-NLS-1$
 
         try {
-            System.setProperty(PROXY_PROPERTY, "true"); //$NON-NLS-1$
             return ProxySelector.getDefault().select(new java.net.URI("http://www.google.com")); //$NON-NLS-1$
-
         } catch (Exception e) {
-            System.out.println(e.getMessage());
-
+            LOGGER.error("Cannot find proxy configuration", e);
         } finally {
             if (valuePropertyBefore != null) {
                 System.setProperty(PROXY_PROPERTY, valuePropertyBefore);
             }
         }
-        return java.util.Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 
     /**

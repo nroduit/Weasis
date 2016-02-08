@@ -7,7 +7,9 @@ import java.util.Locale;
 import org.weasis.core.api.service.BundleTools;
 
 public class LocalUtil {
-    private static Locale LOCALE_FORMAT = null;
+    private static final String FORMAT_CODE = "locale.format.code"; // $NON-NLS-1$
+
+    private static Locale localeFormat = null;
 
     private LocalUtil() {
     }
@@ -44,9 +46,9 @@ public class LocalUtil {
     }
 
     public static Locale getLocaleFormat() {
-        Locale l = LOCALE_FORMAT;
+        Locale l = LocalUtil.localeFormat;
         if (l == null) {
-            String code = BundleTools.SYSTEM_PREFERENCES.getProperty("locale.format.code"); //$NON-NLS-1$
+            String code = BundleTools.SYSTEM_PREFERENCES.getProperty(FORMAT_CODE);
             if (StringUtil.hasLength(code)) {
                 l = LocalUtil.textToLocale(code);
             }
@@ -59,11 +61,11 @@ public class LocalUtil {
 
     public static void setLocaleFormat(Locale value) {
         if (value == null) {
-            BundleTools.SYSTEM_PREFERENCES.remove("locale.format.code"); //$NON-NLS-1$
+            BundleTools.SYSTEM_PREFERENCES.remove(FORMAT_CODE);
         } else {
-            BundleTools.SYSTEM_PREFERENCES.put("locale.format.code", LocalUtil.localeToText(value)); //$NON-NLS-1$
+            BundleTools.SYSTEM_PREFERENCES.put(FORMAT_CODE, LocalUtil.localeToText(value));
         }
-        LOCALE_FORMAT = value;
+        LocalUtil.localeFormat = value;
     }
 
     public static NumberFormat getNumberInstance() {

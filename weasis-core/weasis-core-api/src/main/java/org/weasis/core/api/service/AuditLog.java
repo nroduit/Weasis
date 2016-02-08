@@ -30,7 +30,8 @@ public class AuditLog {
         public static LEVEL getLevel(String level) {
             try {
                 return LEVEL.valueOf(level);
-            } catch (Exception e) {
+            } catch (Exception ignore) {
+                // Do nothing
             }
             return INFO;
         }
@@ -39,7 +40,7 @@ public class AuditLog {
     public static void createOrUpdateLogger(BundleContext bundleContext, String loggerKey, String[] loggerVal,
         String level, String logFile, String pattern, String nbFiles, String logSize) {
         if (bundleContext != null && loggerKey != null && loggerVal != null && loggerVal.length > 0) {
-            ServiceReference configurationAdminReference =
+            ServiceReference<?> configurationAdminReference =
                 bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
             if (configurationAdminReference != null) {
                 ConfigurationAdmin confAdmin =
@@ -51,7 +52,7 @@ public class AuditLog {
                         if (logConfiguration == null) {
                             logConfiguration = confAdmin.createFactoryConfiguration(
                                 "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
-                            loggingProperties = new Hashtable<String, Object>();
+                            loggingProperties = new Hashtable<>();
                             loggingProperties.put(LOG_LOGGERS, loggerVal);
                             // add this property to give us something unique to re-find this configuration
                             loggingProperties.put(loggerKey, loggerVal[0]);
@@ -73,7 +74,7 @@ public class AuditLog {
                         }
                         logConfiguration.update(loggingProperties);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LOGGER.error("Update log parameters", e);
                     }
                 }
             }
@@ -90,7 +91,7 @@ public class AuditLog {
                     logConfiguration = configs[0];
                 }
             } catch (InvalidSyntaxException e) {
-                // ignore this as we'll create what we need
+                LOGGER.error("", e);
             }
         }
         return logConfiguration;

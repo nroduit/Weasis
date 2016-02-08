@@ -48,7 +48,6 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.api.util.FileUtil;
 
 import com.sun.media.jai.codec.FileSeekableStream;
 import com.sun.media.jai.codec.ImageCodec;
@@ -69,11 +68,11 @@ import com.sun.media.jai.util.ImageUtil;
 public class ImageFiler extends AbstractBufferHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageFiler.class);
+    private static final String TIFF_TAG = "tiff_directory";
 
     public static final String[] OUTPUT_TYPE = { "Binary", "Gray Levels", "Color" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     public static final int TILESIZE = 512;
     public static final int LIMIT_TO_TILE = 768;
-    public int saveMode = 0;
     public static final int SAVE_TILED = 0;
     public static final int SAVE_MULTI = 3;
     public static final int SAVE_CANVAS = 1;
@@ -88,6 +87,7 @@ public class ImageFiler extends AbstractBufferHandler {
 
     @Override
     protected void handleNewDocument() {
+        // Do nothing
     }
 
     @Override
@@ -105,22 +105,12 @@ public class ImageFiler extends AbstractBufferHandler {
         if (file.exists() && !file.canWrite()) {
             return false;
         }
-        OutputStream os = null;
-        try {
-            os = new FileOutputStream(file);
+
+        try (OutputStream os = new FileOutputStream(file)) {
             writeTIFF(os, source, tiled, addThumb, jpegCompression);
-        } catch (OutOfMemoryError e) {
-            LOGGER.error(e.getMessage());
+        } catch (OutOfMemoryError | IOException e) {
+            LOGGER.error("", e);
             return false;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return false;
-        } finally {
-            try {
-                os.flush();
-                os.close();
-            } catch (IOException ex1) {
-            }
         }
         return true;
     }
@@ -138,7 +128,8 @@ public class ImageFiler extends AbstractBufferHandler {
                 pb.setParameter("Input", in); //$NON-NLS-1$
                 src = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
                 src = getReadableImage(src);
-            } catch (Exception ex) {
+            } catch (Exception e) {
+                LOGGER.error("Cannot load image", e);
             }
         }
         return src;
@@ -175,12 +166,12 @@ public class ImageFiler extends AbstractBufferHandler {
     // }
 
     public static boolean writeTIFF(String fichier, RenderedImage source, boolean tiled, boolean addThumb,
-        boolean jpegCompression) throws Exception {
+        boolean jpegCompression) throws IOException {
         return writeTIFF(new File(fichier), source, tiled, addThumb, jpegCompression);
     }
 
     private static void writeTIFF(OutputStream os, RenderedImage source, boolean tiled, boolean addThumb,
-        boolean jpegCompression) throws Exception {
+        boolean jpegCompression) throws IOException {
         TIFFEncodeParam param = new TIFFEncodeParam();
         if (tiled) {
             param.setWriteTiled(true);
@@ -196,17 +187,17 @@ public class ImageFiler extends AbstractBufferHandler {
             param.setJPEGEncodeParam(wparam);
         }
         if (addThumb) {
-            ArrayList<TIFFField> extraFields = new ArrayList<TIFFField>(6);
+            ArrayList<TIFFField> extraFields = new ArrayList<>(6);
             int fileVal = getResolutionInDpi(source);
             if (fileVal > 0) {
-                TIFFDirectory dir = (TIFFDirectory) source.getProperty("tiff_directory"); //$NON-NLS-1$
+                TIFFDirectory dir = (TIFFDirectory) source.getProperty(TIFF_TAG); // $NON-NLS-1$
                 TIFFField f;
                 f = dir.getField(282);
-                long[][] l_xRes = f.getAsRationals();
+                long[][] xRes = f.getAsRationals();
                 f = dir.getField(283);
-                long[][] l_yRes = f.getAsRationals();
+                long[][] yRes = f.getAsRationals();
                 f = dir.getField(296);
-                char[] l_resUnit = f.getAsChars();
+                char[] resUnit = f.getAsChars();
                 f = dir.getField(271);
                 if (f != null) {
                     extraFields.add(new TIFFField(271, TIFFField.TIFF_ASCII, 1, new String[] { f.getAsString(0) }));
@@ -215,9 +206,9 @@ public class ImageFiler extends AbstractBufferHandler {
                 if (f != null) {
                     extraFields.add(new TIFFField(272, TIFFField.TIFF_ASCII, 1, new String[] { f.getAsString(0) }));
                 }
-                extraFields.add(new TIFFField(282, TIFFField.TIFF_RATIONAL, l_xRes.length, l_xRes));
-                extraFields.add(new TIFFField(283, TIFFField.TIFF_RATIONAL, l_yRes.length, l_yRes));
-                extraFields.add(new TIFFField(296, TIFFField.TIFF_SHORT, l_resUnit.length, l_resUnit));
+                extraFields.add(new TIFFField(282, TIFFField.TIFF_RATIONAL, xRes.length, xRes));
+                extraFields.add(new TIFFField(283, TIFFField.TIFF_RATIONAL, yRes.length, yRes));
+                extraFields.add(new TIFFField(296, TIFFField.TIFF_SHORT, resUnit.length, resUnit));
 
             }
             extraFields.add(new TIFFField(305, TIFFField.TIFF_ASCII, 1, new String[] { AppProperties.WEASIS_NAME }));
@@ -225,7 +216,7 @@ public class ImageFiler extends AbstractBufferHandler {
 
             if (!binary) {
                 // Doesn't support bilevel image (or binary to grayscale).
-                ArrayList<RenderedImage> list = new ArrayList<RenderedImage>();
+                ArrayList<RenderedImage> list = new ArrayList<>();
                 list.add(Thumbnail.createThumbnail(source));
                 param.setExtraImages(list.iterator());
             }
@@ -254,7 +245,7 @@ public class ImageFiler extends AbstractBufferHandler {
                 }
 
             } catch (IOException ex) {
-                ex.printStackTrace();
+                LOGGER.error("Cannot read thumbnail", ex);
                 return null;
             }
         }
@@ -265,7 +256,7 @@ public class ImageFiler extends AbstractBufferHandler {
         RenderedImage thumbnail = null;
         try {
             String mimeType = MimeInspector.getMimeType(file);
-            if (mimeType != null && (mimeType.equals("image/tiff") || mimeType.equals("image/x-tiff"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (mimeType != null && ("image/tiff".equals(mimeType) || "image/x-tiff".equals(mimeType))) { //$NON-NLS-1$ //$NON-NLS-2$
                 ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
                 int count = dec.getNumPages();
                 if (count == 2) {
@@ -277,15 +268,15 @@ public class ImageFiler extends AbstractBufferHandler {
             }
 
         } catch (IOException ex) {
-            ex.printStackTrace();
+            LOGGER.error("Cannot read thumbnail", ex);
             return null;
         }
         return thumbnail;
     }
 
     private static int getResolutionInDpi(RenderedImage source) {
-        if (source.getProperty("tiff_directory") instanceof TIFFDirectory) { //$NON-NLS-1$
-            TIFFDirectory dir = (TIFFDirectory) source.getProperty("tiff_directory"); //$NON-NLS-1$
+        if (source.getProperty(TIFF_TAG) instanceof TIFFDirectory) { // $NON-NLS-1$
+            TIFFDirectory dir = (TIFFDirectory) source.getProperty(TIFF_TAG); // $NON-NLS-1$
             TIFFField fieldx = dir.getField(282); // 282 is X_resolution
             TIFFField fieldy = dir.getField(283); // 283 is Y_resolution
             TIFFField fieldUnit = dir.getField(296); // 296 is unit
@@ -308,28 +299,17 @@ public class ImageFiler extends AbstractBufferHandler {
         if (file.exists() && !file.canWrite()) {
             return false;
         }
-        OutputStream os = null;
-        try {
-            os = new FileOutputStream(file);
+
+        try (OutputStream os = new FileOutputStream(file)) {
             writePNG(os, source);
-        } catch (OutOfMemoryError e) {
-            // JMVisionWin.setOutOfMemoryMessage();
+        } catch (OutOfMemoryError | IOException e) {
+            LOGGER.error("", e);
             return false;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return false;
-        } finally {
-            FileUtil.safeClose(os);
         }
         return true;
     }
 
-    public static boolean writePNG(String fichier, RenderedImage source) throws Exception {
-        File file = new File(fichier);
-        return writePNG(file, source);
-    }
-
-    private static void writePNG(OutputStream os, RenderedImage source) throws Exception {
+    private static void writePNG(OutputStream os, RenderedImage source) throws IOException {
         PNGEncodeParam param = new PNGEncodeParam.Palette();
         ImageEncoder enc = ImageCodec.createImageEncoder("PNG", os, param); //$NON-NLS-1$
         enc.encode(source);
@@ -339,41 +319,31 @@ public class ImageFiler extends AbstractBufferHandler {
         if (file.exists() && !file.canWrite()) {
             return false;
         }
-        ImageOutputStream os = null;
         ImageWriter writer = null;
         try {
-            Iterator iter = ImageIO.getImageWritersByFormatName("JPEG"); //$NON-NLS-1$
+            Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG"); //$NON-NLS-1$
             if (iter.hasNext()) {
-                writer = (ImageWriter) iter.next();
-                os = ImageIO.createImageOutputStream(file);
-                writer.setOutput(os);
-                JPEGImageWriteParam iwp = new JPEGImageWriteParam(null);
-                iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                iwp.setCompressionQuality(quality);
-                writer.write(null, new IIOImage(source, null, null), iwp);
+                writer = iter.next();
+                try (ImageOutputStream os = ImageIO.createImageOutputStream(file)) {
+                    writer.setOutput(os);
+                    JPEGImageWriteParam iwp = new JPEGImageWriteParam(null);
+                    iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                    iwp.setCompressionQuality(quality);
+                    writer.write(null, new IIOImage(source, null, null), iwp);
+                }
             }
-        } catch (OutOfMemoryError e) {
-            // JMVisionWin.setOutOfMemoryMessage();
-            return false;
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (OutOfMemoryError | IOException e) {
+            LOGGER.error("", e);
             return false;
         } finally {
-            try {
-                if (os != null) {
-                    os.flush();
-                    writer.dispose();
-                    os.close();
-                }
-            } catch (IOException e) {
-                // Do nothing
+            if (writer != null) {
+                writer.dispose();
             }
-
         }
         return true;
     }
 
-    public static boolean writeJPG(String fichier, PlanarImage source) throws Exception {
+    public static boolean writeJPG(String fichier, PlanarImage source) throws IOException {
         File file = new File(fichier);
         return writePNG(file, source);
     }
@@ -385,9 +355,9 @@ public class ImageFiler extends AbstractBufferHandler {
                 dst = source;
                 if (source.getColorModel() instanceof IndexColorModel) {
                     IndexColorModel icm = (IndexColorModel) source.getColorModel();
-                    byte[] table_data = new byte[icm.getMapSize()];
-                    icm.getReds(table_data);
-                    if (table_data[0] != (byte) 0x00) {
+                    byte[] tableData = new byte[icm.getMapSize()];
+                    icm.getReds(tableData);
+                    if (tableData[0] != (byte) 0x00) {
                         ImageLayout layout = new ImageLayout();
                         layout.setSampleModel(
                             LayoutUtil.createBinarySampelModel(source.getTileWidth(), source.getTileHeight()));
@@ -404,19 +374,21 @@ public class ImageFiler extends AbstractBufferHandler {
             } else {
                 dst = source;
             }
+
+            String bdSel = "bandSelect";
             int numBands = dst.getSampleModel().getNumBands();
             if (numBands == 2) {
-                ParameterBlockJAI pb = new ParameterBlockJAI("bandSelect"); //$NON-NLS-1$
+                ParameterBlockJAI pb = new ParameterBlockJAI(bdSel); // $NON-NLS-1$
                 pb.addSource(dst);
                 pb.setParameter("bandIndices", new int[] { 0, 1, 0 }); //$NON-NLS-1$
-                dst = JAI.create("bandSelect", pb, null); //$NON-NLS-1$
+                dst = JAI.create(bdSel, pb, null); // $NON-NLS-1$
             }
             // for image with alpha channel
             else if (numBands > 3) {
-                ParameterBlockJAI pb = new ParameterBlockJAI("bandSelect"); //$NON-NLS-1$
+                ParameterBlockJAI pb = new ParameterBlockJAI(bdSel); // $NON-NLS-1$
                 pb.addSource(dst);
                 pb.setParameter("bandIndices", new int[] { 0, 1, 2 }); //$NON-NLS-1$
-                dst = JAI.create("bandSelect", pb, null); //$NON-NLS-1$
+                dst = JAI.create(bdSel, pb, null); // $NON-NLS-1$
             }
         }
         return dst;
@@ -474,12 +446,12 @@ public class ImageFiler extends AbstractBufferHandler {
     }
 
     public static File cacheTiledImage(RenderedImage img, MediaElement<?> media) {
-        if ((img.getWidth() > 2 * ImageFiler.TILESIZE || img.getHeight() > 2 * ImageFiler.TILESIZE)) {
+        if (img.getWidth() > 2 * ImageFiler.TILESIZE || img.getHeight() > 2 * ImageFiler.TILESIZE) {
             File imgCacheFile = null;
             try {
                 imgCacheFile = File.createTempFile("tiled_", ".tif", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("", e);
             }
 
             if (ImageFiler.writeTIFF(imgCacheFile, img, true, false, false)) {
@@ -495,8 +467,8 @@ public class ImageFiler extends AbstractBufferHandler {
             ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
             return dec.decodeAsRenderedImage();
 
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (IOException e) {
+            LOGGER.error("", e);
         }
         return null;
     }
@@ -511,8 +483,8 @@ public class ImageFiler extends AbstractBufferHandler {
                     return src2;
                 }
             }
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (IOException e) {
+            LOGGER.error("", e);
         }
         return null;
     }
