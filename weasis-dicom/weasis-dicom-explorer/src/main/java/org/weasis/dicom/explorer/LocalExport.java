@@ -79,11 +79,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
     public static final String LAST_DIR = "lastExportDir";//$NON-NLS-1$
-    private static final String INC_DICOMDIR = "exp.include.dicomdir";//$NON-NLS-1$
-    private static final String KEEP_INFO_DIR = "exp.keep.dir.name";//$NON-NLS-1$
-    private static final String IMG_QUALITY = "exp.img.quality";//$NON-NLS-1$
-    private static final String HEIGHT_BITS = "exp.8bis";//$NON-NLS-1$
-    private static final String CD_COMPATIBLE = "exp.cd";//$NON-NLS-1$
+    public static final String INC_DICOMDIR = "exp.include.dicomdir";//$NON-NLS-1$
+    public static final String KEEP_INFO_DIR = "exp.keep.dir.name";//$NON-NLS-1$
+    public static final String IMG_QUALITY = "exp.img.quality";//$NON-NLS-1$
+    public static final String HEIGHT_BITS = "exp.8bis";//$NON-NLS-1$
+    public static final String CD_COMPATIBLE = "exp.cd";//$NON-NLS-1$
 
     public static final String[] EXPORT_FORMAT = { "DICOM", "DICOM ZIP", "JPEG", "PNG", "TIFF" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
@@ -161,8 +161,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             Object[] options = { box1, box2, boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE, null, null, null);
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(INC_DICOMDIR, String.valueOf(box1.isSelected()));
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
@@ -197,8 +196,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             Object[] options = { palenSlider1, boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE, null, null, null);
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(IMG_QUALITY, String.valueOf(slider.getValue()));
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
@@ -206,8 +204,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else if (EXPORT_FORMAT[3].equals(seltected)) {
             Object[] options = { boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE, null, null, null);
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
             }
@@ -216,8 +213,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false"))); //$NON-NLS-1$
             Object[] options = { box1, boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE, null, null, null);
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(HEIGHT_BITS, String.valueOf(box1.isSelected()));
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
