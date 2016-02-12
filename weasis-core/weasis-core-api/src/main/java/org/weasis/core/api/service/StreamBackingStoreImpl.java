@@ -75,7 +75,7 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
             savedData = this.load(prefs.getBackingStoreManager(), prefs.getDescription());
         } catch (BackingStoreException e1) {
             // if the file is empty or corrupted
-            LOGGER.error("Cannot store preferences", e1);
+            LOGGER.error("Cannot store preferences", e1); //$NON-NLS-1$
         }
 
         final PreferencesImpl rootPrefs;

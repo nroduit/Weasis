@@ -62,7 +62,7 @@ public class BundleTools {
             dir.mkdirs();
         } catch (Exception e) {
             dir = new File(AppProperties.WEASIS_PATH);
-            LOGGER.error("Init weasis path dir", e);
+            LOGGER.error("Init weasis path dir", e); //$NON-NLS-1$
         }
         propsFile = new File(dir, "weasis.properties"); //$NON-NLS-1$
     }
@@ -76,7 +76,7 @@ public class BundleTools {
             try {
                 propsFile.createNewFile();
             } catch (IOException e) {
-                LOGGER.error("", e);
+                LOGGER.error("", e); //$NON-NLS-1$
             }
         }
     }

@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 public class GzipManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(GzipManager.class);
 
-    private static final String ERROR_CTX = "Cannot gzip uncompress"; // $NON-NLS-1$
+    private static final String ERROR_CTX = "Cannot gzip uncompress"; //$NON-NLS-1$
 
     private GzipManager() {
     }
@@ -44,7 +44,7 @@ public class GzipManager {
             gzipOut.finish();
             return true;
         } catch (IOException e) {
-            LOGGER.error("Cannot gzip compress", e);
+            LOGGER.error("Cannot gzip compress", e); //$NON-NLS-1$
             return false;
         } finally {
             FileUtil.safeClose(in);

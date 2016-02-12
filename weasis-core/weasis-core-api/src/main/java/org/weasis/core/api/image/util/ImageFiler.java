@@ -68,7 +68,7 @@ import com.sun.media.jai.util.ImageUtil;
 public class ImageFiler extends AbstractBufferHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageFiler.class);
-    private static final String TIFF_TAG = "tiff_directory";
+    private static final String TIFF_TAG = "tiff_directory"; //$NON-NLS-1$
 
     public static final String[] OUTPUT_TYPE = { "Binary", "Gray Levels", "Color" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     public static final int TILESIZE = 512;
@@ -109,7 +109,7 @@ public class ImageFiler extends AbstractBufferHandler {
         try (OutputStream os = new FileOutputStream(file)) {
             writeTIFF(os, source, tiled, addThumb, jpegCompression);
         } catch (OutOfMemoryError | IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
             return false;
         }
         return true;
@@ -129,7 +129,7 @@ public class ImageFiler extends AbstractBufferHandler {
                 src = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
                 src = getReadableImage(src);
             } catch (Exception e) {
-                LOGGER.error("Cannot load image", e);
+                LOGGER.error("Cannot load image", e); //$NON-NLS-1$
             }
         }
         return src;
@@ -245,7 +245,7 @@ public class ImageFiler extends AbstractBufferHandler {
                 }
 
             } catch (IOException ex) {
-                LOGGER.error("Cannot read thumbnail", ex);
+                LOGGER.error("Cannot read thumbnail", ex); //$NON-NLS-1$
                 return null;
             }
         }
@@ -268,7 +268,7 @@ public class ImageFiler extends AbstractBufferHandler {
             }
 
         } catch (IOException ex) {
-            LOGGER.error("Cannot read thumbnail", ex);
+            LOGGER.error("Cannot read thumbnail", ex); //$NON-NLS-1$
             return null;
         }
         return thumbnail;
@@ -303,7 +303,7 @@ public class ImageFiler extends AbstractBufferHandler {
         try (OutputStream os = new FileOutputStream(file)) {
             writePNG(os, source);
         } catch (OutOfMemoryError | IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
             return false;
         }
         return true;
@@ -333,7 +333,7 @@ public class ImageFiler extends AbstractBufferHandler {
                 }
             }
         } catch (OutOfMemoryError | IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
             return false;
         } finally {
             if (writer != null) {
@@ -375,7 +375,7 @@ public class ImageFiler extends AbstractBufferHandler {
                 dst = source;
             }
 
-            String bdSel = "bandSelect";
+            String bdSel = "bandSelect"; //$NON-NLS-1$
             int numBands = dst.getSampleModel().getNumBands();
             if (numBands == 2) {
                 ParameterBlockJAI pb = new ParameterBlockJAI(bdSel); // $NON-NLS-1$
@@ -451,7 +451,7 @@ public class ImageFiler extends AbstractBufferHandler {
             try {
                 imgCacheFile = File.createTempFile("tiled_", ".tif", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (IOException e) {
-                LOGGER.error("", e);
+                LOGGER.error("", e); //$NON-NLS-1$
             }
 
             if (ImageFiler.writeTIFF(imgCacheFile, img, true, false, false)) {
@@ -468,7 +468,7 @@ public class ImageFiler extends AbstractBufferHandler {
             return dec.decodeAsRenderedImage();
 
         } catch (IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
         }
         return null;
     }
@@ -484,7 +484,7 @@ public class ImageFiler extends AbstractBufferHandler {
                 }
             }
         } catch (IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
         }
         return null;
     }

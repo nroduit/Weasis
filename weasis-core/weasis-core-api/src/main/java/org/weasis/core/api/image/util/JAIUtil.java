@@ -77,7 +77,7 @@ public class JAIUtil {
                             tileCache.add(img, ti, tj, tile);
                         }
                     } catch (Exception ex) {
-                        LOGGER.error("Cannot add tile to cache", ex);
+                        LOGGER.error("Cannot add tile to cache", ex); //$NON-NLS-1$
                     }
                 }
             }

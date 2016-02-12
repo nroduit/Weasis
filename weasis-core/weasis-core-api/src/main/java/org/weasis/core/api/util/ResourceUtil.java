@@ -74,11 +74,11 @@ public class ResourceUtil {
 
     public static File getResource(String filename) {
         if (!StringUtil.hasText(filename)) {
-            throw new IllegalArgumentException("Empty filename");
+            throw new IllegalArgumentException("Empty filename"); //$NON-NLS-1$
         }
-        String path = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path");
+        String path = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"); //$NON-NLS-1$
         if (!StringUtil.hasText(path)) {
-            throw new IllegalArgumentException("Empty system property: weasis.resources.path");
+            throw new IllegalArgumentException("Empty system property: weasis.resources.path"); //$NON-NLS-1$
         }
 
         return new File(path, filename); // $NON-NLS-1$

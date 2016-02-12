@@ -96,7 +96,7 @@ public final class FileUtil {
             try {
                 object.close();
             } catch (Exception e) {
-                LOGGER.error("Cannot close AutoCloseable", e);
+                LOGGER.error("Cannot close AutoCloseable", e); //$NON-NLS-1$
             }
         }
     }
@@ -139,7 +139,7 @@ public final class FileUtil {
                 LOGGER.warn("Cannot delete {}", fileOrDirectory.getPath()); //$NON-NLS-1$
             }
         } catch (Exception e) {
-            LOGGER.error("Cannot delete", e);
+            LOGGER.error("Cannot delete", e); //$NON-NLS-1$
         }
     }
 
@@ -188,7 +188,7 @@ public final class FileUtil {
             try {
                 writer.close();
             } catch (XMLStreamException e) {
-                LOGGER.error("Cannot close XMLStreamWriter", e);
+                LOGGER.error("Cannot close XMLStreamWriter", e); //$NON-NLS-1$
             }
         }
     }
@@ -198,7 +198,7 @@ public final class FileUtil {
             try {
                 xmler.close();
             } catch (XMLStreamException e) {
-                LOGGER.error("Cannot close XMLStreamException", e);
+                LOGGER.error("Cannot close XMLStreamException", e); //$NON-NLS-1$
             }
         }
     }
@@ -261,7 +261,7 @@ public final class FileUtil {
         try (InputStream input = url.openStream(); FileOutputStream outputStream = new FileOutputStream(outFilename)) {
             return writeStream(input, outputStream);
         } catch (IOException e) {
-            LOGGER.error("Write url into file", e);
+            LOGGER.error("Write url into file", e); //$NON-NLS-1$
             return 0;
         }
     }
@@ -528,7 +528,7 @@ public final class FileUtil {
                     return Integer.valueOf(val);
                 }
             } catch (NumberFormatException e) {
-                LOGGER.error("Cannot parse integer {} of {}", val, attribute);
+                LOGGER.error("Cannot parse integer {} of {}", val, attribute); //$NON-NLS-1$
             }
         }
         return defaultValue;

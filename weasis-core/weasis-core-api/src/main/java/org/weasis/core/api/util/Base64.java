@@ -1,3 +1,15 @@
+/*******************************************************************************
+ * Copyright (c) 2014 Weasis Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Robert Harder - initial API and implementation
+ *     Nicolas Roduit - Java 7 migration
+ *******************************************************************************/
+
 package org.weasis.core.api.util;
 
 import java.io.BufferedInputStream;
@@ -757,7 +769,7 @@ public class Base64 {
         try {
             return new String(encoded, PREFERRED_ENCODING);
         } catch (java.io.UnsupportedEncodingException uue) {
-            LOGGER.error("", uue);
+            LOGGER.error("", uue); //$NON-NLS-1$
             return new String(encoded);
         }
     }
@@ -1104,7 +1116,7 @@ public class Base64 {
         try {
             bytes = s.getBytes(PREFERRED_ENCODING);
         } catch (java.io.UnsupportedEncodingException uee) {
-            LOGGER.error("", uee);
+            LOGGER.error("", uee); //$NON-NLS-1$
             bytes = s.getBytes();
         }
 
@@ -1210,7 +1222,7 @@ public class Base64 {
         } catch (IOException e) {
             throw e;
         } catch (ClassNotFoundException e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(ois);
         }

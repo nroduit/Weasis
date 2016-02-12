@@ -88,7 +88,7 @@ public class ProxyDetector {
         try {
             return ProxySelector.getDefault().select(new java.net.URI("http://www.google.com")); //$NON-NLS-1$
         } catch (Exception e) {
-            LOGGER.error("Cannot find proxy configuration", e);
+            LOGGER.error("Cannot find proxy configuration", e); //$NON-NLS-1$
         } finally {
             if (valuePropertyBefore != null) {
                 System.setProperty(PROXY_PROPERTY, valuePropertyBefore);

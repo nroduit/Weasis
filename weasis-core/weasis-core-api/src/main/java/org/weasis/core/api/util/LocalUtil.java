@@ -7,7 +7,7 @@ import java.util.Locale;
 import org.weasis.core.api.service.BundleTools;
 
 public class LocalUtil {
-    private static final String FORMAT_CODE = "locale.format.code"; // $NON-NLS-1$
+    private static final String FORMAT_CODE = "locale.format.code"; //$NON-NLS-1$
 
     private static Locale localeFormat = null;
 

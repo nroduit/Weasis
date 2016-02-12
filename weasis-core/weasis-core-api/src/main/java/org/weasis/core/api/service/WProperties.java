@@ -195,7 +195,7 @@ public class WProperties extends Properties {
             try {
                 this.put(key, Base64.encodeBytes(value, Base64.GZIP));
             } catch (IOException e) {
-                LOGGER.error("Set byte property", e);
+                LOGGER.error("Set byte property", e); //$NON-NLS-1$
             }
         }
     }
@@ -208,7 +208,7 @@ public class WProperties extends Properties {
                 try {
                     result = Base64.decode(value);
                 } catch (IOException e) {
-                    LOGGER.error("Get byte property", e);
+                    LOGGER.error("Get byte property", e); //$NON-NLS-1$
                 }
             }
         }
@@ -238,7 +238,7 @@ public class WProperties extends Properties {
                     intValue |= Integer.parseInt(hexColor, 16);
                 }
             } catch (NumberFormatException e) {
-                LOGGER.error("Cannot parse color {} into int", hexColor);
+                LOGGER.error("Cannot parse color {} into int", hexColor); //$NON-NLS-1$
             }
         }
         return new Color(intValue, true);

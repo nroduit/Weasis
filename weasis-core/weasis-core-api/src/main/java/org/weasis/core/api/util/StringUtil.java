@@ -125,14 +125,14 @@ public class StringUtil {
 
     public static String getEmpty2NullObject(Object object) {
         if (object == null) {
-            return "";
+            return ""; //$NON-NLS-1$
         }
         return object.toString();
     }
 
     public static String getEmpty2NullEnum(Enum<?> object) {
         if (object == null) {
-            return "";
+            return ""; //$NON-NLS-1$
         }
         return object.name();
     }
