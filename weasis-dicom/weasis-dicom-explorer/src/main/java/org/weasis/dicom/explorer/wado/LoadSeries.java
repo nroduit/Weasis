@@ -35,7 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.swing.JProgressBar;
 
@@ -90,20 +89,18 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     public static final File DICOM_TMP_DIR = AppProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
     public static final TagW DOWNLOAD_START_TIME = new TagW("", TagType.Time, 3); //$NON-NLS-1$
 
-    private static final ExecutorService executor = Executors.newFixedThreadPool(3);
-
     public enum Status {
         Downloading, Paused, Complete, Cancelled, Error
     };
 
     public final int concurrentDownloads;
     private final DicomModel dicomModel;
-    private final Series dicomSeries;
+    private final Series<?> dicomSeries;
     private final JProgressBar progressBar;
     private volatile DownloadPriority priority = null;
     private final boolean writeInCache;
 
-    public LoadSeries(Series dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
+    public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
         super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
@@ -131,7 +128,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         this.concurrentDownloads = concurrentDownloads;
     }
 
-    public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
+    public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
         boolean writeInCache) {
         super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
@@ -263,7 +260,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                     list.remove(dicomSeries);
                     for (MediaSeriesGroup s : list) {
                         if (s instanceof Series && uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
-                            val += ((Series) s).size(null);
+                            val += ((Series<?>) s).size(null);
                         }
                     }
                 }
@@ -285,7 +282,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         return buf.toString();
     }
 
-    private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String sopUID) {
+    private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series<?> dicomSeries, String sopUID) {
         if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
             return true;
         }
@@ -586,12 +583,12 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
     private static void addListenerToThumbnail(final Thumbnail thumbnail, final LoadSeries loadSeries,
         final DicomModel dicomModel) {
-        final Series series = loadSeries.getDicomSeries();
+        final Series<?> series = loadSeries.getDicomSeries();
         thumbnail.addMouseListener(DicomExplorer.createThumbnailMouseAdapter(series, dicomModel, loadSeries));
         thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(series, dicomModel));
     }
 
-    public Series getDicomSeries() {
+    public Series<?> getDicomSeries() {
         return dicomSeries;
     }
 
