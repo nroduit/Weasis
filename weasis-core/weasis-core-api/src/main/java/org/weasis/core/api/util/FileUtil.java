@@ -11,15 +11,12 @@
 package org.weasis.core.api.util;
 
 import java.io.BufferedInputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
@@ -52,7 +49,10 @@ public final class FileUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
 
     public static final int FILE_BUFFER = 4096;
-    private static final double BASE = 1024, KB = BASE, MB = KB * BASE, GB = MB * BASE;
+    private static final double BASE = 1024;
+    private static final double KB = BASE;
+    private static final double MB = KB * BASE;
+    private static final double GB = MB * BASE;
     private static final DecimalFormat DEC_FORMAT = new DecimalFormat("#.##"); //$NON-NLS-1$
     private static final int[] ILLEGAL_CHARS = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
         20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 34, 42, 47, 58, 60, 62, 63, 92, 124 };
@@ -91,34 +91,12 @@ public final class FileUtil {
         return getValidFileName(val);
     }
 
-    public static void safeClose(final Closeable object) {
+    public static void safeClose(final AutoCloseable object) {
         if (object != null) {
             try {
                 object.close();
-            } catch (IOException e) {
-                LOGGER.debug(e.getMessage());
-            }
-        }
-    }
-
-    public static void safeClose(ImageInputStream stream) {
-        if (stream != null) {
-            try {
-                stream.flush();
-                stream.close();
-            } catch (IOException e) {
-                LOGGER.debug(e.getMessage());
-            }
-        }
-    }
-
-    public static void safeClose(ObjectOutput stream) {
-        if (stream != null) {
-            try {
-                stream.flush();
-                stream.close();
-            } catch (IOException e) {
-                LOGGER.debug(e.getMessage());
+            } catch (Exception e) {
+                LOGGER.error("Cannot close AutoCloseable", e); //$NON-NLS-1$
             }
         }
     }
@@ -146,24 +124,22 @@ public final class FileUtil {
                 if (f.isDirectory()) {
                     deleteDirectoryContents(f, deleteDirLevel, level + 1);
                 } else {
-                    try {
-                        if (!f.delete()) {
-                            LOGGER.warn("Cannot delete {}", f.getPath()); //$NON-NLS-1$
-                        }
-                    } catch (Exception e) {
-                        LOGGER.error(e.getMessage());
-                    }
+                    deleteFile(f);
                 }
             }
         }
         if (level >= deleteDirLevel) {
-            try {
-                if (!dir.delete()) {
-                    LOGGER.warn("Cannot delete {}", dir.getPath()); //$NON-NLS-1$
-                }
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage());
+            deleteFile(dir);
+        }
+    }
+
+    private static void deleteFile(File fileOrDirectory) {
+        try {
+            if (!fileOrDirectory.delete()) {
+                LOGGER.warn("Cannot delete {}", fileOrDirectory.getPath()); //$NON-NLS-1$
             }
+        } catch (Exception e) {
+            LOGGER.error("Cannot delete", e); //$NON-NLS-1$
         }
     }
 
@@ -196,15 +172,9 @@ public final class FileUtil {
             for (File f : childDirs) {
                 if (f.isDirectory()) {
                     recursiveDelete(f, deleteRoot);
-                    f.delete();
+                    deleteFile(f);
                 } else {
-                    try {
-                        if (!f.delete()) {
-                            LOGGER.info("Cannot delete {}", f.getPath()); //$NON-NLS-1$
-                        }
-                    } catch (Exception e) {
-                        LOGGER.error(e.getMessage());
-                    }
+                    deleteFile(f);
                 }
             }
         }
@@ -218,7 +188,7 @@ public final class FileUtil {
             try {
                 writer.close();
             } catch (XMLStreamException e) {
-                LOGGER.debug(e.getMessage());
+                LOGGER.error("Cannot close XMLStreamWriter", e); //$NON-NLS-1$
             }
         }
     }
@@ -228,7 +198,7 @@ public final class FileUtil {
             try {
                 xmler.close();
             } catch (XMLStreamException e) {
-                LOGGER.debug(e.getMessage());
+                LOGGER.error("Cannot close XMLStreamException", e); //$NON-NLS-1$
             }
         }
     }
@@ -288,21 +258,12 @@ public final class FileUtil {
      *         interruption
      */
     public static int writeFile(URL url, File outFilename) {
-        InputStream input;
-        try {
-            input = url.openStream();
+        try (InputStream input = url.openStream(); FileOutputStream outputStream = new FileOutputStream(outFilename)) {
+            return writeStream(input, outputStream);
         } catch (IOException e) {
-            LOGGER.error(e.getMessage());
+            LOGGER.error("Write url into file", e); //$NON-NLS-1$
             return 0;
         }
-        FileOutputStream outputStream;
-        try {
-            outputStream = new FileOutputStream(outFilename);
-        } catch (FileNotFoundException e) {
-            LOGGER.error(e.getMessage());
-            return 0;
-        }
-        return writeStream(input, outputStream);
     }
 
     /**
@@ -324,22 +285,12 @@ public final class FileUtil {
             out.flush();
             return -1;
         } catch (InterruptedIOException e) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("Error when writing file", e); //$NON-NLS-1$
-            } else {
-                LOGGER.error(e.getMessage());
-            }
+            LOGGER.error("Interruption when writing file", e); //$NON-NLS-1$
             return e.bytesTransferred;
         } catch (IOException e) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("Error when writing file", e); //$NON-NLS-1$
-            } else {
-                LOGGER.error(e.getMessage());
-            }
+            LOGGER.error("Error when writing file", e); //$NON-NLS-1$
             return 0;
-        }
-
-        finally {
+        } finally {
             FileUtil.safeClose(inputStream);
             FileUtil.safeClose(out);
         }
@@ -358,17 +309,12 @@ public final class FileUtil {
             out.flush();
             return -1;
         } catch (InterruptedIOException e) {
+            LOGGER.error("Interruption when writing image", e); //$NON-NLS-1$
             return e.bytesTransferred;
         } catch (IOException e) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("Error when writing file", e); //$NON-NLS-1$
-            } else {
-                LOGGER.error(e.getMessage());
-            }
+            LOGGER.error("Error when writing image", e); //$NON-NLS-1$
             return 0;
-        }
-
-        finally {
+        } finally {
             FileUtil.safeClose(inputStream);
             FileUtil.safeClose(out);
         }
@@ -400,17 +346,11 @@ public final class FileUtil {
         if (inputStream == null || out == null) {
             return false;
         }
-        try {
-            FileChannel fci = inputStream.getChannel();
-            FileChannel fco = out.getChannel();
+        try (FileChannel fci = inputStream.getChannel(); FileChannel fco = out.getChannel()) {
             fco.transferFrom(fci, 0, fci.size());
             return true;
         } catch (Exception e) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("nio exception", e); //$NON-NLS-1$
-            } else {
-                LOGGER.error(e.getMessage());
-            }
+            LOGGER.error("Write file", e); //$NON-NLS-1$
             return false;
         } finally {
             FileUtil.safeClose(inputStream);
@@ -422,9 +362,9 @@ public final class FileUtil {
         if (in == null || out == null) {
             return false;
         }
-        try {
-            ReadableByteChannel readChannel = Channels.newChannel(in);
-            WritableByteChannel writeChannel = Channels.newChannel(out);
+        try (ReadableByteChannel readChannel = Channels.newChannel(in);
+                        WritableByteChannel writeChannel = Channels.newChannel(out)) {
+
             ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
 
             while (readChannel.read(buffer) != -1) {
@@ -434,11 +374,7 @@ public final class FileUtil {
             }
             return true;
         } catch (IOException e) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("nio exception", e); //$NON-NLS-1$
-            } else {
-                LOGGER.error(e.getMessage());
-            }
+            LOGGER.error("Write file", e); //$NON-NLS-1$
             return false;
         } finally {
             FileUtil.safeClose(in);
@@ -450,39 +386,27 @@ public final class FileUtil {
         if (source == null || destination == null) {
             return false;
         }
-        FileChannel in = null;
-        FileChannel out = null;
-        try {
-            in = new FileInputStream(source).getChannel();
-            out = new FileOutputStream(destination).getChannel();
+
+        try (FileInputStream inputStream = new FileInputStream(source);
+                        FileChannel in = inputStream.getChannel();
+                        FileOutputStream outputStream = new FileOutputStream(destination);
+                        FileChannel out = outputStream.getChannel()) {
+
             in.transferTo(0, in.size(), out);
             return true;
         } catch (IOException e) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("nio exception", e); //$NON-NLS-1$
-            } else {
-                LOGGER.error(e.getMessage());
-            }
+            LOGGER.error("Copy file", e); //$NON-NLS-1$
             return false;
-        } finally {
-            FileUtil.safeClose(in);
-            FileUtil.safeClose(out);
         }
-
     }
 
     public static Properties readProperties(File propsFile, Properties props) {
         Properties p = props == null ? new Properties() : props;
         if (propsFile != null && propsFile.canRead()) {
-            FileInputStream fileStream = null;
-            try {
-                fileStream = new FileInputStream(propsFile);
+            try (FileInputStream fileStream = new FileInputStream(propsFile)) {
                 p.load(fileStream);
             } catch (IOException e) {
-                LOGGER.error("Error when reading properties: {}", propsFile); //$NON-NLS-1$
-                LOGGER.error(e.getMessage());
-            } finally {
-                FileUtil.safeClose(fileStream);
+                LOGGER.error("Error when reading properties", e); //$NON-NLS-1$
             }
         }
         return p;
@@ -490,15 +414,10 @@ public final class FileUtil {
 
     public static void storeProperties(File propsFile, Properties props, String comments) {
         if (props != null && propsFile != null) {
-            FileOutputStream fout = null;
-            try {
-                fout = new FileOutputStream(propsFile);
+            try (FileOutputStream fout = new FileOutputStream(propsFile)) {
                 props.store(fout, comments);
             } catch (IOException e) {
-                LOGGER.error("Error when writing properties: {}", propsFile); //$NON-NLS-1$
-                LOGGER.error(e.getMessage());
-            } finally {
-                FileUtil.safeClose(fout);
+                LOGGER.error("Error when writing properties", e); //$NON-NLS-1$
             }
         }
     }
@@ -508,16 +427,15 @@ public final class FileUtil {
             return;
         }
         URI base = directory.toURI();
-        Deque<File> queue = new LinkedList<File>();
+        Deque<File> queue = new LinkedList<>();
         queue.push(directory);
-        OutputStream out = null;
-        ZipOutputStream zout = null;
-        try {
-            out = new FileOutputStream(zipfile);
-            zout = new ZipOutputStream(out);
+
+        // The resources will be closed in reverse order of the order in which they are created in try().
+        // Zip stream must be close before out stream.
+        try (OutputStream out = new FileOutputStream(zipfile); ZipOutputStream zout = new ZipOutputStream(out)) {
             while (!queue.isEmpty()) {
-                directory = queue.pop();
-                for (File entry : directory.listFiles()) {
+                File dir = queue.pop();
+                for (File entry : dir.listFiles()) {
                     String name = base.relativize(entry.toURI()).getPath();
                     if (entry.isDirectory()) {
                         queue.push(entry);
@@ -532,10 +450,6 @@ public final class FileUtil {
                     }
                 }
             }
-        } finally {
-            // Zip stream must be close before out stream.
-            safeClose(zout);
-            safeClose(out);
         }
     }
 
@@ -543,8 +457,9 @@ public final class FileUtil {
         if (inputStream == null || directory == null) {
             return;
         }
-        ZipInputStream zis = new ZipInputStream(new BufferedInputStream(inputStream));
-        try {
+
+        try (BufferedInputStream bufInStream = new BufferedInputStream(inputStream);
+                        ZipInputStream zis = new ZipInputStream(bufInStream)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 File file = new File(directory, entry.getName());
@@ -556,29 +471,26 @@ public final class FileUtil {
                 }
             }
         } finally {
-            safeClose(zis);
+            FileUtil.safeClose(inputStream);
         }
-
     }
 
     public static void unzip(File zipfile, File directory) throws IOException {
         if (zipfile == null || directory == null) {
             return;
         }
-        ZipFile zfile = new ZipFile(zipfile);
-        Enumeration<? extends ZipEntry> entries = zfile.entries();
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            File file = new File(directory, entry.getName());
-            if (entry.isDirectory()) {
-                file.mkdirs();
-            } else {
-                file.getParentFile().mkdirs();
-                InputStream in = zfile.getInputStream(entry);
-                try {
-                    copyZip(in, file);
-                } finally {
-                    in.close();
+        try (ZipFile zfile = new ZipFile(zipfile)) {
+            Enumeration<? extends ZipEntry> entries = zfile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                File file = new File(directory, entry.getName());
+                if (entry.isDirectory()) {
+                    file.mkdirs();
+                } else {
+                    file.getParentFile().mkdirs();
+                    try (InputStream in = zfile.getInputStream(entry)) {
+                        copyZip(in, file);
+                    }
                 }
             }
         }
@@ -597,31 +509,26 @@ public final class FileUtil {
     }
 
     private static void copyZip(File file, OutputStream out) throws IOException {
-        InputStream in = new FileInputStream(file);
-        try {
+        try (InputStream in = new FileInputStream(file)) {
             copy(in, out);
-        } finally {
-            in.close();
         }
     }
 
     private static void copyZip(InputStream in, File file) throws IOException {
-        OutputStream out = new FileOutputStream(file);
-        try {
+        try (OutputStream out = new FileOutputStream(file)) {
             copy(in, out);
-        } finally {
-            out.close();
         }
     }
 
     public static Integer getIntegerTagAttribute(XMLStreamReader xmler, String attribute, Integer defaultValue) {
         if (attribute != null) {
+            String val = xmler.getAttributeValue(null, attribute);
             try {
-                String val = xmler.getAttributeValue(null, attribute);
                 if (val != null) {
                     return Integer.valueOf(val);
                 }
             } catch (NumberFormatException e) {
+                LOGGER.error("Cannot parse integer {} of {}", val, attribute); //$NON-NLS-1$
             }
         }
         return defaultValue;

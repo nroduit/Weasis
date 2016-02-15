@@ -20,13 +20,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.util.FileUtil;
 
 public class BundleTools {
-    public static final Map<String, String> SESSION_TAGS_MANIFEST = new HashMap<String, String>(3);
-    public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<String, String>(3);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BundleTools.class);
+
+    public static final Map<String, String> SESSION_TAGS_MANIFEST = new HashMap<>(3);
+    public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<>(3);
 
     static {
         for (Iterator<Entry<Object, Object>> iter = System.getProperties().entrySet().iterator(); iter.hasNext();) {
@@ -58,7 +62,7 @@ public class BundleTools {
             dir.mkdirs();
         } catch (Exception e) {
             dir = new File(AppProperties.WEASIS_PATH);
-            e.printStackTrace();
+            LOGGER.error("Init weasis path dir", e); //$NON-NLS-1$
         }
         propsFile = new File(dir, "weasis.properties"); //$NON-NLS-1$
     }
@@ -72,9 +76,12 @@ public class BundleTools {
             try {
                 propsFile.createNewFile();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("", e); //$NON-NLS-1$
             }
         }
+    }
+
+    private BundleTools() {
     }
 
     public static Codec getCodec(String mimeType, String preferredCodec) {

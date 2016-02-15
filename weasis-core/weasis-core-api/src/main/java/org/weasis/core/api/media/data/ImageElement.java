@@ -52,7 +52,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
      * .availableProcessors() / 2));
      */
     // TODO evaluate the difference, keep one thread with sun decoder. (seems to hangs on shutdown)
-    public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader");
+    public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader"); //$NON-NLS-1$
 
     private static final SoftHashMap<ImageElement, PlanarImage> mCache = new SoftHashMap<ImageElement, PlanarImage>() {
 

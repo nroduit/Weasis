@@ -11,13 +11,12 @@
 package org.weasis.core.api.image.util;
 
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.gui.util.MathUtil;
 
-// A simple histogram class to count the frequency of
-// values of a parameter of interest.
-
+// A simple histogram class 
 public class BasicHist {
 
-    public static final String[] STATISTICS_LIST =
+    private static final String[] STATISTICS_LIST =
         { Messages.getString("BasicHist.pix"), Messages.getString("BasicHist.min"), Messages.getString("BasicHist.max"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             Messages.getString("BasicHist.mean"), Messages.getString("BasicHist.median"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("BasicHist.thresh"), Messages.getString("BasicHist.std"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -32,7 +31,7 @@ public class BasicHist {
 
     // The constructor will create an array of a given
     // number of bins. The range of the histogram given
-    // by the upper and lower limt values.
+    // by the upper and lower limit values.
     public BasicHist(int numBins, double lo, double hi) {
         this.numBins = numBins;
         bins = new int[numBins];
@@ -144,10 +143,10 @@ public class BasicHist {
             stat[2] = -Double.MAX_VALUE;
             for (int i = 0; i < bins.length; i++) {
                 double val = bins[i];
-                if (val != 0 && i < stat[1]) {
+                if (MathUtil.isDifferentToZero(val) && i < stat[1]) {
                     stat[1] = i;
                 }
-                if (val != 0 && i > stat[2]) {
+                if (MathUtil.isDifferentToZero(val) && i > stat[2]) {
                     stat[2] = i;
                 }
                 stat[0] += val;
@@ -183,40 +182,40 @@ public class BasicHist {
     }
 
     public static double getEntropy(int[] data, double nbPixels) {
-        double H = 0.0;
+        double entropy = 0.0;
         if (data == null || data.length < 1) {
             return 0.0;
         } else {
             double log2 = Math.log(2.0);
             for (int b = 0; b < data.length; b++) {
                 double p = data[b] / nbPixels;
-                if (p != 0.0) {
-                    H -= p * (Math.log(p) / log2);
+                if (MathUtil.isDifferentToZero(p)) {
+                    entropy -= p * (Math.log(p) / log2);
                 }
             }
         }
-        return H;
+        return entropy;
     }
 
     public static double medianBin(final int[] bin, int halfEntries) {
         if (bin == null || bin.length < 1) {
             return 0.0;
         } else {
-            int sum_bin_entries = 0;
-            int sum = 0;
+            int sumBinEntries = 0;
+            int sum;
             for (int i = 0; i < bin.length; i++) {
-                sum = sum_bin_entries + bin[i];
+                sum = sumBinEntries + bin[i];
                 // Check if bin crosses halfTotal point
                 if (sum >= halfEntries) {
                     // Scale linearly across the bin
-                    int dif = halfEntries - sum_bin_entries;
+                    int dif = halfEntries - sumBinEntries;
                     double frac = 0.0;
                     if (bin[i] > 0) {
                         frac = ((double) dif) / (double) bin[i];
                     }
-                    return (i + frac);
+                    return i + frac;
                 }
-                sum_bin_entries = sum;
+                sumBinEntries = sum;
             }
         }
         return 0.0;

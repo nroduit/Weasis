@@ -15,7 +15,11 @@ import javax.media.jai.RegistryElementDescriptor;
 import javax.media.jai.TileCache;
 import javax.media.jai.registry.RIFRegistry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class JAIUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JAIUtil.class);
 
     private JAIUtil() {
     }
@@ -63,11 +67,9 @@ public class JAIUtil {
         if (img != null && tileBounds != null) {
             TileCache tileCache = getJAI().getTileCache();
 
-            int ti, tj;
-
             // Loop over tiles within the clipping region
-            for (tj = tileBounds.y; tj <= tileBounds.height; tj++) {
-                for (ti = tileBounds.x; ti <= tileBounds.width; ti++) {
+            for (int tj = tileBounds.y; tj <= tileBounds.height; tj++) {
+                for (int ti = tileBounds.x; ti <= tileBounds.width; ti++) {
                     try {
                         Raster tile = tileCache.getTile(img, ti, tj);
                         if (tile == null) {
@@ -75,7 +77,7 @@ public class JAIUtil {
                             tileCache.add(img, ti, tj, tile);
                         }
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        LOGGER.error("Cannot add tile to cache", ex); //$NON-NLS-1$
                     }
                 }
             }

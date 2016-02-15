@@ -1,11 +1,17 @@
 package org.weasis.core.api.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 
 public class StringUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StringUtil.class);
 
     public static final String COLON = Messages.getString("StringUtil.colon"); //$NON-NLS-1$
     public static final String COLON_AND_SPACE = Messages.getString("StringUtil.colon_space"); //$NON-NLS-1$
+
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
+    private static final int[] EMPTY_INT_ARRAY = new int[0];
 
     public enum Suffix {
         NO(""), //$NON-NLS-1$
@@ -14,19 +20,23 @@ public class StringUtil {
 
         THREE_PTS("..."); //$NON-NLS-1$
 
-        private final String suffix;
+        private final String value;
 
         private Suffix(String suffix) {
-            this.suffix = suffix;
+            this.value = suffix;
         }
 
-        public String getSuffix() {
-            return suffix;
+        public String getValue() {
+            return value;
+        }
+
+        public int getLength() {
+            return value.length();
         }
 
         @Override
         public String toString() {
-            return suffix;
+            return value;
         }
     };
 
@@ -35,10 +45,10 @@ public class StringUtil {
 
     public static String getTruncatedString(String name, int limit, Suffix suffix) {
         if (name != null && name.length() > limit) {
-            int sLength = suffix.getSuffix().length();
+            int sLength = suffix.getLength();
             int end = limit - sLength;
             if (end > 0 && end + sLength < name.length()) {
-                return name.substring(0, end).concat(suffix.getSuffix());
+                return name.substring(0, end).concat(suffix.getValue());
             }
         }
         return name;
@@ -55,7 +65,7 @@ public class StringUtil {
         if (delimiter != null && StringUtil.hasText(val)) {
             return val.split(delimiter);
         }
-        return null;
+        return EMPTY_STRING_ARRAY;
     }
 
     public static int[] getIntegerArray(String val, String delimiter) {
@@ -67,7 +77,7 @@ public class StringUtil {
             }
             return res;
         }
-        return null;
+        return EMPTY_INT_ARRAY;
     }
 
     public static int getInteger(String val) {
@@ -75,7 +85,7 @@ public class StringUtil {
             try {
                 return Integer.parseInt(val.trim());
             } catch (NumberFormatException e) {
-                System.out.print("Cannot convert " + val + " to int"); //$NON-NLS-1$ //$NON-NLS-2$
+                LOGGER.warn("Cannot parse {} to int", val); //$NON-NLS-1$
             }
         }
         return 0;
@@ -89,7 +99,7 @@ public class StringUtil {
     }
 
     public static boolean hasLength(CharSequence str) {
-        return (str != null && str.length() > 0);
+        return str != null && str.length() > 0;
     }
 
     public static boolean hasLength(String str) {
@@ -115,14 +125,14 @@ public class StringUtil {
 
     public static String getEmpty2NullObject(Object object) {
         if (object == null) {
-            return "";
+            return ""; //$NON-NLS-1$
         }
         return object.toString();
     }
 
     public static String getEmpty2NullEnum(Enum<?> object) {
         if (object == null) {
-            return "";
+            return ""; //$NON-NLS-1$
         }
         return object.name();
     }

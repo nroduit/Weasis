@@ -11,10 +11,8 @@
 package org.weasis.core.api.gui.util;
 
 import java.awt.Component;
-import java.awt.EventQueue;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,8 +21,9 @@ import java.io.OutputStream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
-import javax.swing.plaf.basic.BasicFileChooserUI;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 
 /**
@@ -33,18 +32,16 @@ import org.weasis.core.api.Messages;
  * @author Nicolas Roduit
  */
 public abstract class AbstractBufferHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBufferHandler.class);
 
-    protected String lastPath;
     private String path;
     private boolean isDirty;
     private final Component parent;
     private String addOpenMessage = ""; //$NON-NLS-1$
-    private static Float version;
     private FileFilter fileFilter;
 
     public AbstractBufferHandler(Component component) {
         parent = component;
-        // lastPath = IniProps.getLastRecentFile();
     }
 
     public void setDirty(boolean flag) {
@@ -57,17 +54,10 @@ public abstract class AbstractBufferHandler {
 
     protected void setPath(String s) {
         path = s;
-        if (s != null) {
-            lastPath = s;
-        }
     }
 
     public String getPath() {
         return path;
-    }
-
-    public String getLastValidPath() {
-        return lastPath;
     }
 
     public boolean newDocument() {
@@ -143,12 +133,13 @@ public abstract class AbstractBufferHandler {
         }
         File file = jfilechooser.getSelectedFile();
         String filename;
-        String extension = null;
-        try {
-            extension = "." + ((FileFormatFilter) jfilechooser.getFileFilter()).getDefaultExtension(); //$NON-NLS-1$
-        } catch (Exception ex) {
-            extension = ""; //$NON-NLS-1$
+        String extension = ""; //$NON-NLS-1$
+
+        FileFilter filter = jfilechooser.getFileFilter();
+        if (filter instanceof FileFormatFilter) {
+            extension = "." + ((FileFormatFilter) filter).getDefaultExtension(); //$NON-NLS-1$
         }
+
         if ((file.getPath()).endsWith(extension)) {
             filename = file.getPath();
         } else {
@@ -158,8 +149,7 @@ public abstract class AbstractBufferHandler {
         if (file.exists()) {
             int i = JOptionPane.showConfirmDialog(getParentComponent(),
                 String.format(Messages.getString("AbstractBufferHandler.exist"), file.getName()), //$NON-NLS-1$
-                Messages
-                    .getString("AbstractBufferHandler.save_as"), //$NON-NLS-1$
+                Messages.getString("AbstractBufferHandler.save_as"), //$NON-NLS-1$
                 0);
             if (i != 0) {
                 return false;
@@ -193,86 +183,17 @@ public abstract class AbstractBufferHandler {
         return true;
     }
 
-    protected JFileChooser configureForLastPath(JFileChooser jfilechooser) {
-        String s = getLastValidPath();
-        if (s != null) {
-            try {
-                File file = new File((new File(s)).getParent());
-                jfilechooser.setCurrentDirectory(file);
-            } catch (NullPointerException nullpointerexception) {
-            }
-        }
-        return jfilechooser;
-    }
-
     protected JFileChooser getOpenFileChooser() {
-        JFileChooser fileChooser;
-        String jVersion = System.getProperty("java.version"); //$NON-NLS-1$
-        String targetVersion = "1.5."; //$NON-NLS-1$
-        if (jVersion.startsWith(targetVersion)) { // same version
-            fileChooser = new JFileChooser() {
-
-                /** @todo bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4678049 */
-                @Override
-                public void setFileFilter(FileFilter filter) {
-                    super.setFileFilter(filter);
-                    if (!(getUI() instanceof BasicFileChooserUI)) {
-                        return;
-                    }
-                    final BasicFileChooserUI ui = (BasicFileChooserUI) getUI();
-                    final String name = ui.getFileName().trim();
-                    if ((name == null) || (name.length() == 0)) {
-                        return;
-                    }
-                    EventQueue.invokeLater(new Thread() {
-
-                        @Override
-                        public void run() {
-                            String currentName = ui.getFileName();
-                            if ((currentName == null) || (currentName.length() == 0)) {
-                                ui.setFileName(name);
-                            }
-                        }
-                    });
-                }
-            };
-        } else {
-            fileChooser = new JFileChooser();
-        }
+        JFileChooser fileChooser = new JFileChooser(getLastFolder());
         fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
-        return configureForLastPath(fileChooser);
+        return fileChooser;
     }
 
     protected JFileChooser getSaveFileChooser() {
-        JFileChooser fileChooser = new JFileChooser() {
-
-            /** @todo bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4678049 */
-            @Override
-            public void setFileFilter(FileFilter filter) {
-                super.setFileFilter(filter);
-                if (!(getUI() instanceof BasicFileChooserUI)) {
-                    return;
-                }
-                final BasicFileChooserUI ui = (BasicFileChooserUI) getUI();
-                final String name = ui.getFileName().trim();
-                if ((name == null) || (name.length() == 0)) {
-                    return;
-                }
-                EventQueue.invokeLater(new Thread() {
-
-                    @Override
-                    public void run() {
-                        String currentName = ui.getFileName();
-                        if ((currentName == null) || (currentName.length() == 0)) {
-                            ui.setFileName(name);
-                        }
-                    }
-                });
-            }
-        };
+        JFileChooser fileChooser = new JFileChooser(getLastFolder());
         fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        return configureForLastPath(fileChooser);
+        return fileChooser;
     }
 
     protected Component getParentComponent() {
@@ -282,40 +203,23 @@ public abstract class AbstractBufferHandler {
     protected abstract void handleNewDocument();
 
     protected boolean handleOpenDocument(String s) {
-        FileInputStream fileinputstream = null;
         boolean flag = true;
-        try {
-            fileinputstream = new FileInputStream(s);
-            flag = handleOpenDocument(((fileinputstream)));
-        } catch (FileNotFoundException filenotfoundexception) {
+        try (FileInputStream fileInputstream = new FileInputStream(s)) {
+            flag = handleOpenDocument(fileInputstream);
+        } catch (IOException e) {
             flag = false;
-        } finally {
-            if (fileinputstream != null) {
-                try {
-                    fileinputstream.close();
-                } catch (IOException ioexception) {
-                }
-            }
+            LOGGER.error("Cannot open {}", s, e); //$NON-NLS-1$
         }
         return flag;
     }
 
     protected boolean handleSaveDocument(String s) {
-        FileOutputStream fileoutputstream = null;
         boolean flag = true;
-        try {
-            fileoutputstream = new FileOutputStream(s);
-            flag = handleSaveDocument(((fileoutputstream)));
-        } catch (FileNotFoundException filenotfoundexception) {
+        try (FileOutputStream fileoutputstream = new FileOutputStream(s)) {
+            flag = handleSaveDocument(fileoutputstream);
+        } catch (IOException e) {
             flag = false;
-        } finally {
-            if (fileoutputstream != null) {
-                try {
-                    fileoutputstream.flush();
-                    fileoutputstream.close();
-                } catch (IOException ioexception) {
-                }
-            }
+            LOGGER.error("Cannot save {}", s, e); //$NON-NLS-1$
         }
         return flag;
     }
@@ -324,20 +228,16 @@ public abstract class AbstractBufferHandler {
 
     protected abstract boolean handleSaveDocument(OutputStream outputstream);
 
+    protected String getLastFolder() {
+        return null;
+    }
+
     public void setAddOpenMessage(String addOpenMessage) {
         this.addOpenMessage = addOpenMessage;
     }
 
-    public static void setVersion(Float fileVersion) {
-        version = fileVersion;
-    }
-
     public String getAddOpenMessage() {
         return addOpenMessage;
-    }
-
-    public static Float getVersion() {
-        return version;
     }
 
     public FileFilter getFileFilter() {

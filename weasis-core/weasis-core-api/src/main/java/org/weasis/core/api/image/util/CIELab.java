@@ -7,8 +7,8 @@ public class CIELab extends ColorSpace {
     private static final ColorSpace CIEXYZ = ColorSpace.getInstance(ColorSpace.CS_CIEXYZ);
     private static final double N = 4.0 / 29.0;
 
-    private Object readResolve() {
-        return getInstance();
+    CIELab() {
+        super(ColorSpace.TYPE_Lab, 3);
     }
 
     private static class Holder {
@@ -17,6 +17,10 @@ public class CIELab extends ColorSpace {
 
     public static CIELab getInstance() {
         return Holder.INSTANCE;
+    }
+
+    private Object readResolve() {
+        return getInstance();
     }
 
     @Override
@@ -62,10 +66,6 @@ public class CIELab extends ColorSpace {
     public float[] toRGB(float[] colorvalue) {
         float[] xyz = toCIEXYZ(colorvalue);
         return CIEXYZ.toRGB(xyz);
-    }
-
-    CIELab() {
-        super(ColorSpace.TYPE_Lab, 3);
     }
 
     private static double f(double x) {

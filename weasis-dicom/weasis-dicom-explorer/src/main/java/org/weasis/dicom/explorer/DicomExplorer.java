@@ -41,8 +41,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -1030,10 +1032,37 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         return panel_1;
     }
 
-    public boolean isPatientHasOpenSeries(MediaSeriesGroup p) {
+    @SuppressWarnings("rawtypes")
+    public Set<Series> getSelectedPatientOpenSeries() {
+        return getPatientOpenSeries(selectedPatient.patient);
+    }
 
-        Collection<MediaSeriesGroup> studies = model.getChildren(p);
+    @SuppressWarnings("rawtypes")
+    public Set<Series> getPatientOpenSeries(MediaSeriesGroup patient) {
+        Set<Series> openSeriesSet = new LinkedHashSet<Series>();
+
+        if (patient != null) {
+            synchronized (model) {
+                Collection<MediaSeriesGroup> studies = model.getChildren(patient);
+                for (Iterator<MediaSeriesGroup> iterator = studies.iterator(); iterator.hasNext();) {
+                    MediaSeriesGroup study = iterator.next();
+                    Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
+                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
+                        MediaSeriesGroup seq = it.next();
+                        if (seq instanceof Series && Boolean.TRUE.equals(seq.getTagValue(TagW.SeriesOpen))) {
+                            openSeriesSet.add((Series) seq);
+                        }
+                    }
+                }
+            }
+        }
+        return openSeriesSet;
+    }
+
+    public boolean isPatientHasOpenSeries(MediaSeriesGroup patient) {
+
         synchronized (model) {
+            Collection<MediaSeriesGroup> studies = model.getChildren(patient);
             for (Iterator<MediaSeriesGroup> iterator = studies.iterator(); iterator.hasNext();) {
                 MediaSeriesGroup study = iterator.next();
                 Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
