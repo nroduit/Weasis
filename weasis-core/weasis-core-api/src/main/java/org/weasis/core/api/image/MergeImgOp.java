@@ -25,11 +25,6 @@ import org.weasis.core.api.image.util.ImageFiler;
 
 import com.sun.media.jai.util.ImageUtil;
 
-/**
- * This operation should
- *
- * @version $Rev$ $Date$
- */
 public class MergeImgOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(MergeImgOp.class);
 

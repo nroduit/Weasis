@@ -17,10 +17,8 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagW;
 
 public interface DataExplorerModel {
-    TreeModelNode root = new TreeModelNode(0, 0, TagW.RootElement);
 
     List<Codec> getCodecPlugins();
 

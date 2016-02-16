@@ -30,7 +30,7 @@ public abstract class MediaElement<E> {
     protected boolean localFile;
     protected String name = ""; //$NON-NLS-1$
     protected File file;
-    private transient boolean loading = false;
+    private volatile boolean loading = false;
 
     public MediaElement(MediaReader<E> mediaIO, Object key) {
         if (mediaIO == null) {
@@ -134,14 +134,15 @@ public abstract class MediaElement<E> {
     }
 
     protected final synchronized boolean setAsLoading() {
-        if (!this.loading) {
-            return (this.loading = true);
+        if (!loading) {
+            loading = true;
+            return loading;
         }
         return false;
     }
 
     protected final synchronized void setAsLoaded() {
-        this.loading = false;
+        loading = false;
     }
 
     public final synchronized boolean isLoading() {

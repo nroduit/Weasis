@@ -21,7 +21,6 @@ import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -82,11 +81,11 @@ public class DicomDirLoader {
                     String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID),
                         dcmPatient.getString(Tag.IssuerOfPatientID), name, null);
 
-                    patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
+                    patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
                     if (patient == null) {
                         patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
                         DicomMediaUtils.writeMetaData(patient, dcmPatient);
-                        dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
+                        dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
                         pat++;
                     }
                     parseStudy(patient, dcmPatient);

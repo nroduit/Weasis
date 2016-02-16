@@ -12,9 +12,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -55,7 +55,7 @@ public class CheckTreeModel {
     public static DefaultTreeModel buildModel(DicomModel dicomModel) {
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(DicomExplorer.ALL_PATIENTS);
         synchronized (dicomModel) {
-            for (Iterator<MediaSeriesGroup> iterator = dicomModel.getChildren(TreeModel.rootNode).iterator(); iterator
+            for (Iterator<MediaSeriesGroup> iterator = dicomModel.getChildren(MediaSeriesGroupNode.rootNode).iterator(); iterator
                 .hasNext();) {
                 MediaSeriesGroup pt = iterator.next();
                 DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);

@@ -10,15 +10,17 @@
  ******************************************************************************/
 package org.weasis.core.api.internal.mime;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class InvalidMagicMimeEntryException extends Exception {
+
+    private static final long serialVersionUID = -1765168312253063736L;
 
     public InvalidMagicMimeEntryException() {
         super("Invalid Magic Mime Entry: Unknown entry"); //$NON-NLS-1$
     }
 
-    public InvalidMagicMimeEntryException(ArrayList mimeMagicEntry) {
+    public InvalidMagicMimeEntryException(List<String> mimeMagicEntry) {
         super("Invalid Magic Mime Entry: " + mimeMagicEntry.toString()); //$NON-NLS-1$
     }
 }

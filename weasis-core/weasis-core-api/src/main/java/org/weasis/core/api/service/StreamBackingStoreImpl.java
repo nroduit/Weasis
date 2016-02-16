@@ -182,9 +182,8 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
                     if (prefs.getProperties().isEmpty() && prefs.getChildren().isEmpty()) {
                         prefs.getOrCreateNode(startKey);
                     }
-                    // Return to the parent tag
                     if (startKey.equals(xmler.getName().getLocalPart())) {
-                        return;
+                        return; // Return to the parent tag
                     }
                     break;
                 default:

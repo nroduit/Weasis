@@ -53,7 +53,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
@@ -532,7 +531,7 @@ public class DownloadManager {
 
         String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name, null);
 
-        MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
+        MediaSeriesGroup patient = model.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
         if (patient == null) {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             patient.setTag(TagW.PatientID, patientID);
@@ -542,7 +541,7 @@ public class DownloadManager {
             patient.setTag(TagW.PatientBirthDate, birthdate);
             patient.setTagNoNull(TagW.PatientBirthTime,
                 TagW.getDicomTime(getTagAttribute(xmler, TagW.PatientBirthTime.getTagName(), null)));
-            model.addHierarchyNode(TreeModel.rootNode, patient);
+            model.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
             LOGGER.info("Adding new patient: " + patient); //$NON-NLS-1$
         }
 

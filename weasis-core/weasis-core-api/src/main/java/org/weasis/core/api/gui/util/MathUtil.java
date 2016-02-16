@@ -25,31 +25,41 @@ public class MathUtil {
     }
 
     public static boolean isEqualToZero(float val) {
-        return Math.abs(val) < FLOAT_EPSILON;
+        return Math.copySign(val, 1.0) < FLOAT_EPSILON;
     }
 
     public static boolean isDifferentToZero(float val) {
-        return Math.abs(val) > FLOAT_EPSILON;
+        return Math.copySign(val, 1.0) > FLOAT_EPSILON;
     }
 
     public static boolean isEqual(float a, float b) {
-        // similar to Math.abs(x), but with different NaN semantics
+        // Math.copySign is similar to Math.abs(x), but with different NaN semantics
         return Math.copySign(a - b, 1.0) <= FLOAT_EPSILON || (a == b) // infinities equal themselves
             || (Float.isNaN(a) && Float.isNaN(b));
     }
 
+    public static boolean isDifferent(float a, float b) {
+        // Math.copySign is similar to Math.abs(x), but with different NaN semantics
+        return Math.copySign(a - b, 1.0) >= FLOAT_EPSILON;
+    }
+
     public static boolean isEqualToZero(double val) {
-        return Math.abs(val) < DOUBLE_EPSILON;
+        return Math.copySign(val, 1.0) < DOUBLE_EPSILON;
     }
 
     public static boolean isDifferentToZero(double val) {
-        return Math.abs(val) > DOUBLE_EPSILON;
+        return Math.copySign(val, 1.0) > DOUBLE_EPSILON;
     }
 
     public static boolean isEqual(double a, double b) {
-        // similar to Math.abs(x), but with different NaN semantics
+        // Math.copySign is imilar to Math.abs(x), but with different NaN semantics
         return Math.copySign(a - b, 1.0) <= DOUBLE_EPSILON || (a == b) // infinities equal themselves
             || (Double.isNaN(a) && Double.isNaN(b));
+    }
+
+    public static boolean isDifferent(double a, double b) {
+        // Math.copySign is similar to Math.abs(x), but with different NaN semantics
+        return Math.copySign(a - b, 1.0) >= DOUBLE_EPSILON;
     }
 
     public static double computeDistanceFloat(double x1, double y1, double x2, double y2) {

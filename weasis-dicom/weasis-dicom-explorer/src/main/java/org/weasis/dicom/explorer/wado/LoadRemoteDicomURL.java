@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -74,12 +73,12 @@ public class LoadRemoteDicomURL extends ExplorerTask {
         }
         if (seriesUID != null) {
             String unknown = DicomMediaIO.NO_VALUE;
-            MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, unknown);
+            MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, unknown);
             if (patient == null) {
                 patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, unknown, TagW.PatientName);
                 patient.setTag(TagW.PatientID, unknown);
                 patient.setTag(TagW.PatientName, unknown);
-                dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
+                dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
             }
             MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, unknown);
             if (study == null) {

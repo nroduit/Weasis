@@ -22,7 +22,6 @@ import java.util.UUID;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
@@ -216,7 +215,7 @@ public class ViewerPluginBuilder {
 
         String sUID = seriesUID == null ? UUID.randomUUID().toString() : seriesUID;
         String gUID = groupUID == null ? UUID.randomUUID().toString() : groupUID;
-        MediaSeriesGroup group1 = DefaultDataModel.getHierarchyNode(TreeModel.rootNode, gUID);
+        MediaSeriesGroup group1 = DefaultDataModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, gUID);
         if (group1 == null) {
             if (groupName == null || groupValue == null) {
                 group1 = new MediaSeriesGroupNode(TagW.Group, gUID);
@@ -224,7 +223,7 @@ public class ViewerPluginBuilder {
                 group1 = new MediaSeriesGroupNode(TagW.Group, gUID, groupName);
                 group1.setTag(groupName, groupValue);
             }
-            DefaultDataModel.addHierarchyNode(TreeModel.rootNode, group1);
+            DefaultDataModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, group1);
         }
 
         MediaSeriesGroup group2 = DefaultDataModel.getHierarchyNode(group1, sUID);

@@ -23,7 +23,8 @@ import org.weasis.core.api.Messages;
 
 public class SimpleOpManager implements OpManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleOpManager.class);
-    public static final String NAME = Messages.getString("SimpleOpManager.img_op"); //$NON-NLS-1$
+
+    public static final String IMAGE_OP_NAME = Messages.getString("SimpleOpManager.img_op"); //$NON-NLS-1$
 
     public enum Position {
         BEFORE, AFTER
@@ -38,8 +39,8 @@ public class SimpleOpManager implements OpManager {
     }
 
     public SimpleOpManager(String name) {
-        this.operations = new ArrayList<ImageOpNode>();
-        this.nodes = new HashMap<String, ImageOpNode>();
+        this.operations = new ArrayList<>();
+        this.nodes = new HashMap<>();
         setName(name);
     }
 
@@ -48,7 +49,7 @@ public class SimpleOpManager implements OpManager {
     }
 
     public synchronized void setName(String name) {
-        this.name = name == null ? NAME : name;
+        this.name = name == null ? IMAGE_OP_NAME : name;
     }
 
     @Override

@@ -20,6 +20,9 @@ import org.weasis.core.api.Messages;
 
 public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
+    public static final MediaSeriesGroup rootNode =
+        new MediaSeriesGroupNode(TagW.RootElement, "__ROOT__", TagW.RootElement); //$NON-NLS-1$
+
     private final TagW tagID;
     private final TagW displayTag;
     private final HashMap<TagW, Object> tags;
@@ -34,7 +37,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
             throw new IllegalArgumentException("tagID or identifier cannot be null"); //$NON-NLS-1$
         }
         this.displayTag = displayTag == null ? tagID : displayTag;
-        this.tags = new HashMap<TagW, Object>();
+        this.tags = new HashMap<>();
         this.tagID = tagID;
         tags.put(tagID, identifier);
     }
@@ -132,7 +135,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
     @Override
     public void dispose() {
-
+        // Nothing to dispose
     }
 
     // can be null

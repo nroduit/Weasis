@@ -28,7 +28,6 @@ public class ObservableEvent extends PropertyChangeEvent {
         if (actionCommand == null) {
             throw new IllegalArgumentException("null source"); //$NON-NLS-1$
         }
-
         this.actionCommand = actionCommand;
     }
 

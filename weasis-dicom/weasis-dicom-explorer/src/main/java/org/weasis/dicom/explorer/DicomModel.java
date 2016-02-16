@@ -99,7 +99,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public static final ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(5);
 
     static {
-        modelStrucure.add(root);
+        modelStrucure.add(TreeModelNode.ROOT);
         modelStrucure.add(patient);
         modelStrucure.add(study);
         modelStrucure.add(series);
@@ -323,7 +323,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     private final HashMap<Modality, TagW[]> splittingRules = new HashMap<Modality, TagW[]>();
 
     public DicomModel() {
-        model = new Tree<MediaSeriesGroup>(rootNode);
+        model = new Tree<MediaSeriesGroup>(MediaSeriesGroupNode.rootNode);
         // Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
         // if (prefs == null) {
         // } else {
@@ -427,7 +427,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void dispose() {
         synchronized (model) {
-            for (Iterator<MediaSeriesGroup> iterator = this.getChildren(TreeModel.rootNode).iterator(); iterator
+            for (Iterator<MediaSeriesGroup> iterator = this.getChildren(MediaSeriesGroupNode.rootNode).iterator(); iterator
                 .hasNext();) {
                 MediaSeriesGroup pt = iterator.next();
                 Collection<MediaSeriesGroup> studies = this.getChildren(pt);
@@ -536,7 +536,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
 
         String patientPseudoUID = (String) dicomSpecialElement.getTagValue(TagW.PatientPseudoUID);
-        MediaSeriesGroup patientGroup = getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
+        MediaSeriesGroup patientGroup = getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
 
         if (patientGroup == null) {
             return;
@@ -651,7 +651,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
                 }
             }
-            removeHierarchyNode(rootNode, patientGroup);
+            removeHierarchyNode(MediaSeriesGroupNode.rootNode, patientGroup);
             LOGGER.info("Remove Patient: {}", patientGroup); //$NON-NLS-1$
         }
     }
@@ -900,11 +900,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     private void rebuildSeries(DicomMediaIO dicomReader, MediaElement media) {
         String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
-        MediaSeriesGroup patient = getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
+        MediaSeriesGroup patient = getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
         if (patient == null) {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             dicomReader.writeMetaData(patient);
-            addHierarchyNode(TreeModel.rootNode, patient);
+            addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
             LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
         }
 
@@ -1237,7 +1237,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         // In Weasis, Global Identity of the patient is composed of the patientID and the birth date by
                         // default
                         // TODO handle preferences choice for patientUID
-                        patientGroup = getHierarchyNode(TreeModel.rootNode, patientUID);
+                        patientGroup = getHierarchyNode(MediaSeriesGroupNode.rootNode, patientUID);
                         if (patientGroup == null) {
                             System.out.println("Cannot find patient: " + patientUID); //$NON-NLS-1$
                             continue;
@@ -1246,12 +1246,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         }
                     }
                 } else if (opt.isSet("all")) { //$NON-NLS-1$
-                    for (MediaSeriesGroup patientGroup : model.getSuccessors(rootNode)) {
+                    for (MediaSeriesGroup patientGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
                         removePatient(patientGroup);
                     }
                 } else if (opt.isSet("study")) { //$NON-NLS-1$
                     for (String studyUID : args) {
-                        for (MediaSeriesGroup ptGroup : model.getSuccessors(rootNode)) {
+                        for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
                             MediaSeriesGroup stGroup = getHierarchyNode(ptGroup, studyUID);
                             if (stGroup != null) {
                                 removeStudy(stGroup);
@@ -1261,7 +1261,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
                 } else if (opt.isSet("series")) { //$NON-NLS-1$
                     for (String seriesUID : args) {
-                        patientLevel: for (MediaSeriesGroup ptGroup : model.getSuccessors(rootNode)) {
+                        patientLevel: for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
                             for (MediaSeriesGroup stGroup : model.getSuccessors(ptGroup)) {
                                 MediaSeriesGroup series = getHierarchyNode(stGroup, seriesUID);
                                 if (series instanceof Series) {

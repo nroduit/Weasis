@@ -19,6 +19,7 @@ import javax.media.jai.JAI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.ImageToolkit;
 
 public class ZoomOp extends AbstractOp {
@@ -64,7 +65,7 @@ public class ZoomOp extends AbstractOp {
 
         if (zoomFactorX == null || zoomFactorY == null) {
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else if (zoomFactorX != 1.0 || zoomFactorY != 1.0) {
+        } else if (MathUtil.isDifferent(zoomFactorX, 1.0) || MathUtil.isDifferent(zoomFactorY, 1.0)) {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(source);
             pb.add(Math.abs(zoomFactorX.floatValue()));
