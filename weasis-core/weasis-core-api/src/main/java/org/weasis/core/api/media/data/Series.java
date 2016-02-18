@@ -104,11 +104,6 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
-
-    @Override
     public void add(E media) {
         medias.add(media);
         resetSortedMediasMap();

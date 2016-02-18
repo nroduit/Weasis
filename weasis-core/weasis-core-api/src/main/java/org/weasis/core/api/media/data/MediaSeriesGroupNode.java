@@ -86,7 +86,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         }
         // Should never happens, but it does very rarely ?
         if (val == null) {
-            return super.hashCode();
+            return tags.hashCode();
         }
         return val.hashCode();
     }

@@ -37,8 +37,8 @@ import org.weasis.core.api.util.LocalUtil;
 public class TagW implements Transferable, Serializable {
     public static final AtomicInteger AppID = new AtomicInteger(1);
     private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
-    // TODO date format in general settings
-    public static final long MILLIS_PER_DAY = 24 * 60 * 60 * 1000;
+
+    public static final long MILLIS_PER_DAY = 24 * 60 * 60 * (long)1000;
     public static final DateFormat DATE_FORMATTER = LocalUtil.getDateInstance(DateFormat.MEDIUM);
     public static final DateFormat TIME_FORMATTER = new SimpleDateFormat("HH:mm:ss.SSSSSS"); //$NON-NLS-1$
     public static final DateFormat DATETIME_FORMATTER =

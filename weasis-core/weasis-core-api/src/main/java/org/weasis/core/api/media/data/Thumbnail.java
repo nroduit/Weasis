@@ -251,7 +251,8 @@ public class Thumbnail extends JLabel {
                                             } else if (thumb instanceof PlanarImage) {
                                                 thumbnail = ((PlanarImage) thumb).getAsBufferedImage();
                                             }
-                                            if (thumbnail == null && (file != null || image != null)) {
+                                            
+                                            if (thumbnail == null) {
                                                 readable = false;
                                             } else {
                                                 imageSoftRef = new SoftReference<BufferedImage>(thumbnail);
@@ -304,7 +305,7 @@ public class Thumbnail extends JLabel {
                                 } catch (ExecutionException e) {
                                     AuditLog.logError(LOGGER, e, "Error: Cannot read pixel data!:" + file); //$NON-NLS-1$
                                 }
-                                if (thumb == null && (file != null || media != null)) {
+                                if (thumb == null && media != null) {
                                     readable = false;
                                 } else {
                                     imageSoftRef = new SoftReference<BufferedImage>(thumb);
