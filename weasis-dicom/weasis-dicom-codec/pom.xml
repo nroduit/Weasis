@@ -44,22 +44,22 @@
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-core</artifactId>
-			<version>3.3.4-r1</version>
+			<version>3.3.7-r1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-image</artifactId>
-			<version>3.3.4</version>
+			<version>3.3.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-net</artifactId>
-			<version>3.3.4</version>
+			<version>3.3.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-tools</artifactId>
-			<version>0.9.7</version>
+			<version>0.9.8</version>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>

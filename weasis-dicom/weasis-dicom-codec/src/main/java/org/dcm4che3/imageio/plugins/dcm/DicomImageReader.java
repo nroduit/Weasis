@@ -240,7 +240,7 @@ public class DicomImageReader extends ImageReader {
             }
             return wr;
         }
-        iis.seek(pixeldata.offset + frameIndex * frameLength);
+        iis.seek(pixeldata.offset() + frameIndex * frameLength);
         WritableRaster wr = Raster.createWritableRaster(createSampleModel(dataType, banded), null);
         DataBuffer buf = wr.getDataBuffer();
         if (buf instanceof DataBufferByte) {

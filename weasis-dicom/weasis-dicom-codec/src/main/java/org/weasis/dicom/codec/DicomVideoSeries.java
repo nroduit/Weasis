@@ -69,8 +69,8 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
                                 File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                 in = new FileInputStream(dcmVideo.getFile());
                                 out = new FileOutputStream(videoFile);
-                                StreamUtils.skipFully(in, bulkData.offset);
-                                StreamUtils.copy(in, out, bulkData.length);
+                                StreamUtils.skipFully(in, bulkData.offset());
+                                StreamUtils.copy(in, out, bulkData.length());
                                 dcmVideo.setVideoFile(videoFile);
                                 this.add(dcmVideo);
                             } catch (Exception e) {

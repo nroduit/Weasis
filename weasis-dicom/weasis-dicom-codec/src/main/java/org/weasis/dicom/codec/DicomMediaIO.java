@@ -357,7 +357,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     private ImageReader initRawImageReader() {
         long[] frameOffsets = new long[numberOfFrame];
-        frameOffsets[0] = pixeldata.offset;
+        frameOffsets[0] = pixeldata.offset();
         for (int i = 1; i < frameOffsets.length; i++) {
             frameOffsets[i] = frameOffsets[i - 1] + frameLength;
         }
@@ -1094,7 +1094,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 }
                 return wr;
             }
-            iis.seek(pixeldata.offset + frameIndex * frameLength);
+            iis.seek(pixeldata.offset() + frameIndex * frameLength);
             WritableRaster wr = Raster.createWritableRaster(createSampleModel(dataType, banded), null);
             DataBuffer buf = wr.getDataBuffer();
             if (buf instanceof DataBufferByte) {
