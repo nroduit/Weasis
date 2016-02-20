@@ -36,7 +36,7 @@
 		<felix.scr.version>2.0.2</felix.scr.version>
 		<felix.metatype.version>1.1.2</felix.metatype.version>
 		<slf4j.version>1.7.5</slf4j.version>
-		<sling.commons.log.version>3.0.2-r1</sling.commons.log.version>
+		<sling.commons.log.version>3.0.2-r2</sling.commons.log.version>
 
 		<dockingframes.version>1.1.2-P14e</dockingframes.version>
 		<substance.version>7.3</substance.version>

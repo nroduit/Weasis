@@ -207,7 +207,7 @@
 		<dependency>
 			<groupId>org.apache.sling</groupId>
 			<artifactId>org.apache.sling.commons.log</artifactId>
-			<version>3.0.2-r1</version>
+			<version>3.0.2-r2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
