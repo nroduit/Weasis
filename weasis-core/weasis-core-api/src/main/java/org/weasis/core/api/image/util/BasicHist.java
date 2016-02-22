@@ -143,10 +143,10 @@ public class BasicHist {
             stat[2] = -Double.MAX_VALUE;
             for (int i = 0; i < bins.length; i++) {
                 double val = bins[i];
-                if (MathUtil.isDifferentToZero(val) && i < stat[1]) {
+                if (MathUtil.isDifferentFromZero(val) && i < stat[1]) {
                     stat[1] = i;
                 }
-                if (MathUtil.isDifferentToZero(val) && i > stat[2]) {
+                if (MathUtil.isDifferentFromZero(val) && i > stat[2]) {
                     stat[2] = i;
                 }
                 stat[0] += val;
@@ -189,7 +189,7 @@ public class BasicHist {
             double log2 = Math.log(2.0);
             for (int b = 0; b < data.length; b++) {
                 double p = data[b] / nbPixels;
-                if (MathUtil.isDifferentToZero(p)) {
+                if (MathUtil.isDifferentFromZero(p)) {
                     entropy -= p * (Math.log(p) / log2);
                 }
             }

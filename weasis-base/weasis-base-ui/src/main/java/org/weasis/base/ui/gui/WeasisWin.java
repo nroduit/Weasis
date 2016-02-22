@@ -516,15 +516,13 @@ public class WeasisWin {
     private boolean registerDetachWindow(final ViewerPlugin plugin, Rectangle screenBound) {
         if (plugin != null && screenBound != null) {
             ViewerPlugin oldWin = null;
+
             synchronized (UIManager.VIEWER_PLUGINS) {
-                Dialog old = null;
                 for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
                     ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
                     if (p.getDockable().isExternalizable()) {
                         Dialog dialog = WinUtil.getParentDialog(p);
-                        old = dialog;
-                        if (dialog != null && old != dialog
-                            && screenBound.equals(WinUtil.getClosedScreenBound(dialog.getBounds()))) {
+                        if (dialog != null && screenBound.equals(WinUtil.getClosedScreenBound(dialog.getBounds()))) {
                             oldWin = p;
                             break;
                         }

@@ -349,15 +349,10 @@ public class DownloadManager {
                 }
             }
 
-        } catch (Throwable t) {
+        } catch (Exception e) {
             final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
-            LOGGER.error(message);
 
-            if (LOGGER.isDebugEnabled()) {
-                t.printStackTrace();
-            } else {
-                LOGGER.error(t.toString());
-            }
+            LOGGER.error("{}", message, e);
 
             final int messageType = JOptionPane.ERROR_MESSAGE;
 

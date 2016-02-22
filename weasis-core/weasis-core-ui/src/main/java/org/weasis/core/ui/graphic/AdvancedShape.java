@@ -16,9 +16,13 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.gui.util.MathUtil;
 
 public class AdvancedShape implements Shape {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdvancedShape.class);
 
     /**
      * First element should be considered as the main shape used for drawing of the main features of graphic.<br>
@@ -33,7 +37,7 @@ public class AdvancedShape implements Shape {
         if (graphic == null) {
             throw new IllegalArgumentException("Graphic cannot be null!"); //$NON-NLS-1$
         }
-        shapeList = new ArrayList<BasicShape>(initialShapeNumber);
+        shapeList = new ArrayList<>(initialShapeNumber);
         this.graphic = graphic;
     }
 
@@ -116,7 +120,7 @@ public class AdvancedShape implements Shape {
                     g2d.draw(drawingShape);
 
                     Boolean itemFilled = item.getFilled();
-                    if ((itemFilled == null ? filled : itemFilled)) {
+                    if (itemFilled == null ? filled : itemFilled) {
                         g2d.fill(drawingShape);
                     }
                 }
@@ -132,8 +136,11 @@ public class AdvancedShape implements Shape {
      * @return a shape which is by convention the first shape in the list which is dedicated to the user tool drawing
      */
     public Shape getGeneralShape() {
-        if (shapeList.size() > 0 && shapeList.get(0) != null) {
-            return shapeList.get(0).getRealShape();
+        if (!shapeList.isEmpty()) {
+            BasicShape s = shapeList.get(0);
+            if (s != null) {
+                return s.getRealShape();
+            }
         }
         return null;
     }
@@ -296,9 +303,8 @@ public class AdvancedShape implements Shape {
                     strokedArea = new Area(strokedShape);
                 }
 
-            } catch (Throwable e) {
-                e.printStackTrace();
-                System.err.println("This shape cannot be drawn, the graphic is deleted."); //$NON-NLS-1$
+            } catch (Exception e) {
+                LOGGER.error("This shape cannot be drawn, the graphic is deleted.", e); //$NON-NLS-1$
                 graphic.fireRemoveAction();
             }
             if (strokedArea != null) {
@@ -351,7 +357,7 @@ public class AdvancedShape implements Shape {
         public void changelineThickness(float width) {
             if (!fixedLineWidth && stroke instanceof BasicStroke) {
                 BasicStroke s = (BasicStroke) stroke;
-                if (s.getLineWidth() != width) {
+                if (MathUtil.isDifferent(s.getLineWidth(), width)) {
                     stroke = new BasicStroke(width, s.getEndCap(), s.getLineJoin(), s.getMiterLimit(), s.getDashArray(),
                         s.getDashPhase());
                 }
@@ -418,7 +424,7 @@ public class AdvancedShape implements Shape {
         public Shape getRealShape() {
             double scalingFactor = GeomUtil.extractScalingFactor(transform);
             double scale = (scalingFactor < scalingMin) ? scalingMin : scalingFactor;
-            return scale != 0 ? GeomUtil.getScaledShape(shape, 1 / scale, anchorPoint) : null;
+            return MathUtil.isDifferentFromZero(scale) ? GeomUtil.getScaledShape(shape, 1 / scale, anchorPoint) : null;
         }
     }
 
@@ -449,13 +455,15 @@ public class AdvancedShape implements Shape {
 
             double scale = GeomUtil.extractScalingFactor(transform);
             double angleRad = GeomUtil.extractAngleRad(transform);
+            boolean scaled = MathUtil.isDifferent(scale, 1.0);
+            boolean rotated = MathUtil.isDifferentFromZero(angleRad);
 
             invTransform.translate(anchorPoint.getX(), anchorPoint.getY());
 
-            if (scale != 1.0) {
+            if (scaled) {
                 invTransform.scale(1 / scale, 1 / scale);
             }
-            if (angleRad != 0) {
+            if (rotated) {
                 invTransform.rotate(-angleRad);
             }
             if ((transform.getType() & AffineTransform.TYPE_FLIP) != 0) {
@@ -494,12 +502,15 @@ public class AdvancedShape implements Shape {
 
             double scale = GeomUtil.extractScalingFactor(transform);
             double angleRad = GeomUtil.extractAngleRad(transform);
+            boolean scaled = MathUtil.isDifferent(scale, 1.0);
+            boolean rotated = MathUtil.isDifferentFromZero(angleRad);
 
             invTransform.translate(anchorPoint.getX(), anchorPoint.getY());
-            if (scale != 1.0) {
+
+            if (scaled) {
                 invTransform.scale(1 / scale, 1 / scale);
             }
-            if (angleRad != 0) {
+            if (rotated) {
                 invTransform.rotate(-angleRad);
             }
             invTransform.translate(-anchorPoint.getX(), -anchorPoint.getY());
@@ -509,10 +520,10 @@ public class AdvancedShape implements Shape {
                 // Find the intersection between the line and the text box
                 AffineTransform tr = new AffineTransform();
                 tr.translate(anchorPoint.getX(), anchorPoint.getY());
-                if (scale != 1.0) {
+                if (scaled) {
                     tr.scale(scale, scale);
                 }
-                if (angleRad != 0) {
+                if (rotated) {
                     tr.rotate(angleRad);
                 }
                 tr.translate(-anchorPoint.getX(), -anchorPoint.getY());

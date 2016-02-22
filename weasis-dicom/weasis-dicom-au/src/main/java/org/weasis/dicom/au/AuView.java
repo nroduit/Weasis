@@ -163,16 +163,12 @@ public class AuView extends JPanel implements SeriesViewerListener {
     private void showPlayer(final DicomSpecialElement media)
         throws IOException, UnsupportedAudioFileException, LineUnavailableException {
 
-        AudioInputStream audioStream = getAudioInputStream(media);
-        try {
+        try (AudioInputStream audioStream = getAudioInputStream(media)) {
             DataLine.Info info = new DataLine.Info(Clip.class, audioStream.getFormat());
             clip = (Clip) AudioSystem.getLine(info);
             clip.open(audioStream);
-        } finally {
-            if (audioStream != null) {
-                audioStream.close();
-            }
         }
+
         // Get the clip length in microseconds and convert to milliseconds
         audioLength = (int) (clip.getMicrosecondLength() / 1000);
 

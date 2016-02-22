@@ -67,7 +67,7 @@ public final class JIUtility {
                 final String deviceName = new String(device);
                 final File deviceFile = new File(deviceName);
 
-                if ((deviceFile != null) && deviceFile.exists()) {
+                if (deviceFile.exists()) {
                     rootsVector.addElement(deviceFile);
                 }
             }

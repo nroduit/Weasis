@@ -69,7 +69,7 @@ public class RotationOp extends AbstractOp {
                 // origin (top left not the center of the image)
                 float diffw = source.getWidth() / 2.0f - result.getWidth() / 2.0f;
                 float diffh = source.getHeight() / 2.0f - result.getHeight() / 2.0f;
-                if (MathUtil.isDifferentToZero(diffw) || MathUtil.isDifferentToZero(diffh)) {
+                if (MathUtil.isDifferentFromZero(diffw) || MathUtil.isDifferentFromZero(diffh)) {
                     pb = new ParameterBlock();
                     pb.addSource(result);
                     pb.add(diffw);

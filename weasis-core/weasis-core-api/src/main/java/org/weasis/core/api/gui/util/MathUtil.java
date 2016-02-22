@@ -28,7 +28,7 @@ public class MathUtil {
         return Math.copySign(val, 1.0) < FLOAT_EPSILON;
     }
 
-    public static boolean isDifferentToZero(float val) {
+    public static boolean isDifferentFromZero(float val) {
         return Math.copySign(val, 1.0) > FLOAT_EPSILON;
     }
 
@@ -47,7 +47,7 @@ public class MathUtil {
         return Math.copySign(val, 1.0) < DOUBLE_EPSILON;
     }
 
-    public static boolean isDifferentToZero(double val) {
+    public static boolean isDifferentFromZero(double val) {
         return Math.copySign(val, 1.0) > DOUBLE_EPSILON;
     }
 

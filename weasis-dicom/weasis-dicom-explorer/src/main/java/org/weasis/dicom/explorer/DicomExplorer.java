@@ -215,6 +215,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final JPanel panel_2 = new JPanel();
     private final JToggleButton btnMoreOptions = new JToggleButton(Messages.getString("DicomExplorer.more_opt")); //$NON-NLS-1$
     private final JPanel panel_3 = new JPanel();
+    private boolean verticalLayout = true;
 
     private final AbstractAction importAction = new AbstractAction(BUTTON_NAME) {
 
@@ -530,18 +531,17 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
 
         public void addPane(PatientPane patientPane, int position) {
-            boolean vertical = true;
-            // boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) ||
+            // boolean verticalLayout = ToolWindowAnchor.RIGHT.equals(getAnchor()) ||
             // ToolWindowAnchor.LEFT.equals(getAnchor());
-            constraint.gridx = vertical ? 0 : position;
-            constraint.gridy = vertical ? position : 0;
+            constraint.gridx = verticalLayout ? 0 : position;
+            constraint.gridy = verticalLayout ? position : 0;
 
             remove(filler);
-            constraint.weightx = vertical ? 1.0 : 0.0;
-            constraint.weighty = vertical ? 0.0 : 1.0;
+            constraint.weightx = verticalLayout ? 1.0 : 0.0;
+            constraint.weighty = verticalLayout ? 0.0 : 1.0;
             add(patientPane, constraint);
-            constraint.weightx = vertical ? 0.0 : 1.0;
-            constraint.weighty = vertical ? 1.0 : 0.0;
+            constraint.weightx = verticalLayout ? 0.0 : 1.0;
+            constraint.weighty = verticalLayout ? 1.0 : 0.0;
             add(filler, constraint);
         }
 
@@ -687,13 +687,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
 
         public void addPane(StudyPane studyPane, int position) {
-            boolean vertical = true;
-            // boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) ||
+            // boolean verticalLayout = ToolWindowAnchor.RIGHT.equals(getAnchor()) ||
             // ToolWindowAnchor.LEFT.equals(getAnchor());
-            constraint.gridx = vertical ? 0 : position;
-            constraint.gridy = vertical ? position : 0;
+            constraint.gridx = verticalLayout ? 0 : position;
+            constraint.gridy = verticalLayout ? position : 0;
 
-            constraint.weightx = vertical ? 1.0 : 0.0;
+            constraint.weightx = verticalLayout ? 1.0 : 0.0;
             constraint.weighty = 0.0;
 
             add(studyPane, constraint);
@@ -746,10 +745,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
 
         private void refreshLayout() {
-            boolean vertical = true;
-            // boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) ||
+            // boolean verticalLayout = ToolWindowAnchor.RIGHT.equals(getAnchor()) ||
             // ToolWindowAnchor.LEFT.equals(getAnchor());
-            this.setLayout(vertical ? new WrapLayout(FlowLayout.LEFT) : new BoxLayout(this, BoxLayout.X_AXIS));
+            this.setLayout(verticalLayout ? new WrapLayout(FlowLayout.LEFT) : new BoxLayout(this, BoxLayout.X_AXIS));
         }
 
         private void showAllSeries() {
@@ -1460,9 +1458,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     @Override
     protected void changeToolWindowAnchor(CLocation clocation) {
         removeAll();
-        boolean vertical = true;
-        // boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
-        add(getPanel(), vertical ? BorderLayout.NORTH : BorderLayout.WEST);
+        // boolean verticalLayout = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
+        add(getPanel(), verticalLayout ? BorderLayout.NORTH : BorderLayout.WEST);
         patientContainer.refreshLayout();
         // ToolWindow win = getToolWindow();
         // if (win != null) {
@@ -1470,11 +1467,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         // (DockedTypeDescriptor) win.getTypeDescriptor(ToolWindowType.DOCKED);
         // int width = this.getDockableWidth();
         // if (width > 0) {
-        // dockedTypeDescriptor.setDockLength(vertical ? width : width + 15);
+        // dockedTypeDescriptor.setDockLength(verticalLayout ? width : width + 15);
         // }
         // }
         add(thumnailView, BorderLayout.CENTER);
-        add(loadingPanel, vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
+        add(loadingPanel, verticalLayout ? BorderLayout.SOUTH : BorderLayout.EAST);
     }
 
     public synchronized void addTaskToGlobalProgression(final ExplorerTask task) {

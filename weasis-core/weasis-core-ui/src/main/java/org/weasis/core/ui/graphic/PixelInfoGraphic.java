@@ -92,7 +92,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
                     // call buildShape
                     return;
                 }
-                if (labelStringArray == null || labelHeight == 0 || labelWidth == 0) {
+                if (labelHeight == 0 || labelWidth == 0) {
                     // This graphic cannot be displayed, remove it.
                     fireRemoveAction();
                     return;
@@ -163,7 +163,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
             }
 
             if (measureToolListener != null && !isMultiSelection) {
-                Unit displayUnit = view2d == null ? null : (Unit) view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd());
+                Unit displayUnit = (Unit) view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd());
                 List<MeasureItem> measList = computeMeasurements(layer, true, displayUnit);
                 measureToolListener.updateMeasuredItems(measList);
             }

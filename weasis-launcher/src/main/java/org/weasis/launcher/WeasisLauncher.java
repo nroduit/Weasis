@@ -909,38 +909,38 @@ public class WeasisLauncher {
                 s_prop.getProperty("weasis.portable.dicom.directory")); //$NON-NLS-1$
         }
 
-        File profile_props = new File(prefDir, APP_PROPERTY_FILE);
-        Properties l_prop = readProperties(profile_props);
+        File profileProps = new File(prefDir, APP_PROPERTY_FILE);
+        Properties lProp = readProperties(profileProps);
         // General Preferences priority order:
         // 1) Last value (does not exist for first launch of Weasis in an operating system session).
         // 2) Java System property
         // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension of config)
         // 4) default value
 
-        final String lang = getGeneralProperty("locale.lang.code", "en", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("locale.format.code", "system", s_prop, l_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$
+        final String lang = getGeneralProperty("locale.lang.code", "en", s_prop, lProp, true, false); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("locale.format.code", "system", s_prop, lProp, true, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
-        getGeneralProperty("org.apache.sling.commons.log.level", "INFO", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.level", "INFO", s_prop, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         // Empty string make the file log writer disable
         String logActivatation =
-            getGeneralProperty("org.apache.sling.commons.log.file.activate", "false", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+            getGeneralProperty("org.apache.sling.commons.log.file.activate", "false", s_prop, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         if ("true".equalsIgnoreCase(logActivatation)) { //$NON-NLS-1$
             String logFile = dir + File.separator + "log" + File.separator + "default.log"; //$NON-NLS-1$ //$NON-NLS-2$
             s_prop.setProperty("org.apache.sling.commons.log.file", logFile); //$NON-NLS-1$
-            l_prop.remove("org.apache.sling.commons.log.file"); //$NON-NLS-1$
+            lProp.remove("org.apache.sling.commons.log.file"); //$NON-NLS-1$
         }
 
-        getGeneralProperty("org.apache.sling.commons.log.file.number", "5", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", s_prop, l_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.file.number", "5", s_prop, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", s_prop, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("org.apache.sling.commons.log.pattern", //$NON-NLS-1$
-            "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}", s_prop, l_prop, false, true); //$NON-NLS-1$
+            "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}", s_prop, lProp, false, true); //$NON-NLS-1$
 
-        URI translation_modules = null;
+        URI translationModules = null;
         if (portable != null) {
             File file = new File(portable, "weasis/bundle-i18n/buildNumber.properties"); //$NON-NLS-1$
             if (file.canRead()) {
-                translation_modules = file.toURI();
+                translationModules = file.toURI();
                 String path = file.getParentFile().toURI().toString();
                 System.setProperty("weasis.i18n", path); //$NON-NLS-1$
                 System.out.println("i18n path: " + path); //$NON-NLS-1$
@@ -950,14 +950,14 @@ public class WeasisLauncher {
             if (path != null) {
                 path += path.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 try {
-                    translation_modules = new URI(path);
+                    translationModules = new URI(path);
                 } catch (URISyntaxException e) {
                     System.err.println("Cannot find translation modules: " + e); //$NON-NLS-1$
                 }
             }
         }
-        if (translation_modules != null) {
-            modulesi18n = readProperties(translation_modules, null);
+        if (translationModules != null) {
+            modulesi18n = readProperties(translationModules, null);
             if (modulesi18n != null) {
                 System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
@@ -998,7 +998,7 @@ public class WeasisLauncher {
             }
         }
 
-        String localLook = l_prop.getProperty("weasis.look", null); //$NON-NLS-1$
+        String localLook = lProp.getProperty("weasis.look", null); //$NON-NLS-1$
         // installSubstanceLookAndFeels must be the first condition to install substance if necessary
         if (LookAndFeels.installSubstanceLookAndFeels() && look == null) {
             if ("Mac OS X".equals(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -1070,7 +1070,7 @@ public class WeasisLauncher {
             System.err.println("WARNING : Unable to set the Look&Feel " + look); //$NON-NLS-1$
             e.printStackTrace();
         }
-        l_prop.put("weasis.look", look); //$NON-NLS-1$
+        lProp.put("weasis.look", look); //$NON-NLS-1$
         System.out.println("weasis.look: " + look); //$NON-NLS-1$
 
         File sourceID_props = new File(dir, System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1102,7 +1102,7 @@ public class WeasisLauncher {
                     localSourceProp.put(P_WEASIS_RES_DATE, date);
                 }
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             cacheDir = null;
             System.err.println(e.getMessage());
         }
@@ -1118,7 +1118,7 @@ public class WeasisLauncher {
         s_prop.setProperty("weasis.resources.path", cacheDir.getPath()); //$NON-NLS-1$
 
         // Splash screen that shows bundles loading
-        final WeasisLoader loader = new WeasisLoader(cacheDir, mainFrame, l_prop);
+        final WeasisLoader loader = new WeasisLoader(cacheDir, mainFrame, lProp);
         // Display splash screen
         loader.open();
 
@@ -1130,7 +1130,7 @@ public class WeasisLauncher {
                 update = true;
             }
         }
-        FileUtil.storeProperties(profile_props, l_prop, null);
+        FileUtil.storeProperties(profileProps, lProp, null);
 
         // Clean cache if Weasis has crashed during the previous launch
         boolean cleanCache = Boolean.parseBoolean(s_prop.getProperty("weasis.clean.previous.version")); //$NON-NLS-1$
@@ -1143,7 +1143,7 @@ public class WeasisLauncher {
         // Clean cache when version has changed
         else if (cleanCache && versionNew != null) {
             if (!versionNew.equals(versionOld)) {
-                System.out.printf("Clean previous Weasis version: %s \n", versionOld); //$NON-NLS-1$
+                System.out.println(String.format("Clean previous Weasis version: %s", versionOld)); //$NON-NLS-1$
                 s_prop.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
                 System.out.println("Clean plug-in cache because the version has changed"); //$NON-NLS-1$
             }
@@ -1160,19 +1160,9 @@ public class WeasisLauncher {
         Properties properties = new Properties();
 
         if (propsFile.canRead()) {
-            FileInputStream fis = null;
-            try {
-                fis = new FileInputStream(propsFile);
+            try (FileInputStream fis = new FileInputStream(propsFile)) {
                 properties.load(fis);
-
-            } catch (Throwable t) {
-            } finally {
-                try {
-                    if (fis != null) {
-                        fis.close();
-                    }
-                } catch (IOException e) {
-                }
+            } catch (Exception e) {
             }
         } else {
             File appFoler = new File(System.getProperty(P_WEASIS_PATH, "")); //$NON-NLS-1$

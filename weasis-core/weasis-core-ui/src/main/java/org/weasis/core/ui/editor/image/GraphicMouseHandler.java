@@ -182,7 +182,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             if (mouseEvt.isShiftDown()) {
                 List<Graphic> selectedGraphList = new ArrayList<Graphic>(layerModel.getSelectedGraphics());
 
-                if (selectedGraphList != null && selectedGraphList.size() > 0) {
+                if (!selectedGraphList.isEmpty()) {
                     if (newSelectedGraphList == null) {
                         newSelectedGraphList = new ArrayList<Graphic>(selectedGraphList);
                     } else {
