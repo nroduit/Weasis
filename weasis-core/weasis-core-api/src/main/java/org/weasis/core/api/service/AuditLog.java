@@ -11,12 +11,14 @@ import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.StringUtil;
 
 public class AuditLog {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(AuditLog.class);
 
     public static final String LOG_LEVEL = "org.apache.sling.commons.log.level"; //$NON-NLS-1$
+    public static final String LOG_STACKTRACE_LIMIT = "org.apache.sling.commons.log.stack.limit"; //$NON-NLS-1$
     public static final String LOG_FILE_ACTIVATION = "org.apache.sling.commons.log.file.activate"; //$NON-NLS-1$
     public static final String LOG_FILE = "org.apache.sling.commons.log.file"; //$NON-NLS-1$
     public static final String LOG_FILE_NUMBER = "org.apache.sling.commons.log.file.number"; //$NON-NLS-1$
@@ -38,7 +40,7 @@ public class AuditLog {
     };
 
     public static void createOrUpdateLogger(BundleContext bundleContext, String loggerKey, String[] loggerVal,
-        String level, String logFile, String pattern, String nbFiles, String logSize) {
+        String level, String logFile, String pattern, String nbFiles, String logSize, String limit) {
         if (bundleContext != null && loggerKey != null && loggerVal != null && loggerVal.length > 0) {
             ServiceReference<?> configurationAdminReference =
                 bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
@@ -71,6 +73,9 @@ public class AuditLog {
                         }
                         if (pattern != null) {
                             loggingProperties.put(LOG_PATTERN, pattern);
+                        }
+                        if (limit != null) {
+                            loggingProperties.put(LOG_STACKTRACE_LIMIT, StringUtil.hasText(limit) ? limit : "-1");
                         }
                         logConfiguration.update(loggingProperties);
                     } catch (IOException e) {
