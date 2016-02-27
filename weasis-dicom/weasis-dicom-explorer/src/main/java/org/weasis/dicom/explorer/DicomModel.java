@@ -427,8 +427,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void dispose() {
         synchronized (model) {
-            for (Iterator<MediaSeriesGroup> iterator = this.getChildren(MediaSeriesGroupNode.rootNode).iterator(); iterator
-                .hasNext();) {
+            for (Iterator<MediaSeriesGroup> iterator =
+                this.getChildren(MediaSeriesGroupNode.rootNode).iterator(); iterator.hasNext();) {
                 MediaSeriesGroup pt = iterator.next();
                 Collection<MediaSeriesGroup> studies = this.getChildren(pt);
                 for (Iterator<MediaSeriesGroup> iterator2 = studies.iterator(); iterator2.hasNext();) {
@@ -1190,7 +1190,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                             }
                         }
 
-                        ArrayList<LoadSeries> loadSeries = null;
+                        List<LoadSeries> loadSeries = null;
                         File dcmDirFile = new File(baseDir, "DICOMDIR"); //$NON-NLS-1$
                         if (dcmDirFile.canRead()) {
                             // Copy images in cache if property weasis.portable.dicom.cache = true (default is true)
@@ -1261,7 +1261,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
                 } else if (opt.isSet("series")) { //$NON-NLS-1$
                     for (String seriesUID : args) {
-                        patientLevel: for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
+                        patientLevel: for (MediaSeriesGroup ptGroup : model
+                            .getSuccessors(MediaSeriesGroupNode.rootNode)) {
                             for (MediaSeriesGroup stGroup : model.getSuccessors(ptGroup)) {
                                 MediaSeriesGroup series = getHierarchyNode(stGroup, seriesUID);
                                 if (series instanceof Series) {
