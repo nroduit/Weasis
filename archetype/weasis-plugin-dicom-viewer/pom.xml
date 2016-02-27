@@ -28,11 +28,4 @@
       </plugins>
     </pluginManagement>
   </build>
-
-  <distributionManagement>
-    <repository>
-      <id>releases</id>
-      <url>http://dicom.vital-it.ch:8087/nexus/content/repositories/releases</url>
-    </repository>
-  </distributionManagement>
 </project>
