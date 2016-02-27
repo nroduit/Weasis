@@ -64,14 +64,12 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
-import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderItem;
-import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
-import org.dcm4che3.imageio.stream.SegmentedImageInputStream;
+import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.slf4j.Logger;
@@ -360,7 +358,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     private ImageReader initRawImageReader() {
         long[] frameOffsets = new long[numberOfFrame];
-        frameOffsets[0] = pixeldata.offset();
+        frameOffsets[0] = pixeldata.offset;
         for (int i = 1; i < frameOffsets.length; i++) {
             frameOffsets[i] = frameOffsets[i - 1] + frameLength;
         }
@@ -1045,11 +1043,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         // Extract compressed file
         // FileUtil.writeFile(new SegmentedInputImageStream(iis, pixeldataFragments, frameIndex), new FileOutputStream(
         // new File(AppProperties.FILE_CACHE_DIR, new File(uri).getName() + frameIndex + ".jpg")));
-        org.dcm4che3.imageio.stream.SegmentedImageInputStream siis = buildSegmentedImageInputStream(frameIndex);
+        org.dcm4che3.imageio.stream.SegmentedInputImageStream siis = buildSegmentedImageInputStream(frameIndex);
         return patchJpegLS != null ? new PatchJPEGLSImageInputStream(siis, patchJpegLS) : siis;
     }
 
-    private SegmentedImageInputStream buildSegmentedImageInputStream(int frameIndex) throws IOException {
+    private SegmentedInputImageStream buildSegmentedImageInputStream(int frameIndex) throws IOException {
         int nbFragments = pixeldataFragments.size();
         long[] offsets = null;
         int[] length = null;
@@ -1059,16 +1057,16 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             length = new int[offsets.length];
             int index = frameIndex < nbFragments - 1 ? frameIndex + 1 : nbFragments - 1;
             BulkData bulkData = (BulkData) pixeldataFragments.get(index);
-            offsets[0] = bulkData.offset();
-            length[0] = bulkData.length();
+            offsets[0] = bulkData.offset;
+            length[0] = bulkData.length;
         } else {
             if (numberOfFrame == 1) {
                 offsets = new long[nbFragments - 1];
                 length = new int[offsets.length];
                 for (int i = 0; i < length.length; i++) {
                     BulkData bulkData = (BulkData) pixeldataFragments.get(i + frameIndex + 1);
-                    offsets[i] = bulkData.offset();
-                    length[i] = bulkData.length();
+                    offsets[i] = bulkData.offset;
+                    length[i] = bulkData.length;
                 }
             } else {
                 // Multi-frames where each frames can have multiple fragments.
@@ -1080,8 +1078,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                     for (int i = 1; i < nbFragments; i++) {
                         BulkData bulkData = (BulkData) pixeldataFragments.get(i);
                         ImageReaderSpi provider = decompressor.getOriginatingProvider();
-                        if (provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedImageInputStream(iis,
-                            bulkData.offset(), bulkData.length(), false))) {
+                        if (provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
+                            new long[]{bulkData.offset}, new int[]{bulkData.length}))) {
                             fragmentsPositions.add(i);
                         }
                     }
@@ -1096,8 +1094,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                     length = new int[offsets.length];
                     for (int i = 0; i < offsets.length; i++) {
                         BulkData bulkData = (BulkData) pixeldataFragments.get(start + i);
-                        offsets[i] = bulkData.offset();
-                        length[i] = bulkData.length();
+                        offsets[i] = bulkData.offset;
+                        length[i] = bulkData.length;
                     }
                 } else {
                     throw new IOException("Cannot match all the fragments to all the frames!");
@@ -1105,7 +1103,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             }
         }
 
-        return new org.dcm4che3.imageio.stream.SegmentedImageInputStream(iis, offsets, length);
+        return new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis, offsets, length);
     }
 
     @Override
@@ -1134,7 +1132,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 }
                 return wr;
             }
-            iis.seek(pixeldata.offset() + frameIndex * frameLength);
+            iis.seek(pixeldata.offset + frameIndex * frameLength);
             WritableRaster wr = Raster.createWritableRaster(createSampleModel(dataType, banded), null);
             DataBuffer buf = wr.getDataBuffer();
             if (buf instanceof DataBufferByte) {
@@ -1514,7 +1512,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                             // compressed = true;
                         }
                     } else if (pixdata instanceof Fragments) {
-                        ImageReaderItem readerItem = ImageReaderFactory.getImageReader(tsuid);
+                        ImageReaderFactory.ImageReaderItem readerItem = ImageReaderFactory.getImageReader(tsuid);
                         if (readerItem == null) {
                             throw new IOException("Unsupported Transfer Syntax: " + tsuid); //$NON-NLS-1$
                         }

@@ -99,6 +99,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final JSpinner spinner_1 = new JSpinner();
     private final Component horizontalStrut_1 = Box.createHorizontalStrut(10);
     private final Component horizontalStrut_2 = Box.createHorizontalStrut(10);
+    private final JPanel panel_1 = new JPanel();
+    private final JLabel lblStacktraceLimit = new JLabel("Stacktrace Limit" + StringUtil.COLON);
+    private final JComboBox comboBoxStackLimit =
+        new JComboBox(new String[] { "", "0", "1", "3", "5", "10", "20", "50", "100" });
 
     public GeneralSetting() {
         super(pageName);
@@ -110,7 +114,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             jbInit();
             initialize(true);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot initialize GeneralSetting", e); //$NON-NLS-1$
         }
         // Object comp = jComboBoxlnf.getUI().getAccessibleChild(jComboBoxlnf, 0);
         // if (comp instanceof BasicComboPopup) {
@@ -123,10 +127,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
         this.setLayout(gridBagLayout1);
         jLabelMLook.setText(Messages.getString("GeneralSetting.lf") + StringUtil.COLON); //$NON-NLS-1$
 
-        GridBagConstraints gbc_button = new GridBagConstraints();
-        gbc_button.insets = new Insets(7, 5, 5, 15);
-        gbc_button.gridx = 2;
-        gbc_button.gridy = 0;
+        GridBagConstraints gbcButton = new GridBagConstraints();
+        gbcButton.insets = new Insets(7, 5, 5, 15);
+        gbcButton.gridx = 2;
+        gbcButton.gridy = 0;
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -139,15 +143,15 @@ public class GeneralSetting extends AbstractItemDialogPage {
                             Dialog dialog = WinUtil.getParentDialog(GeneralSetting.this);
                             UIManager.setLookAndFeel(finalLafClassName);
                             SwingUtilities.updateComponentTreeUI(dialog);
-                        } catch (Exception exception) {
-                            System.out.println("Can't change look and feel"); //$NON-NLS-1$
+                        } catch (Exception e) {
+                            LOGGER.error("Can't change look and feel", e); //$NON-NLS-1$
                         }
                     }
                 };
                 GuiExecutor.instance().execute(runnable);
             }
         });
-        add(button, gbc_button);
+        add(button, gbcButton);
 
         GridBagConstraints gbc_label = new GridBagConstraints();
         gbc_label.insets = new Insets(15, 10, 5, 5);
@@ -210,16 +214,13 @@ public class GeneralSetting extends AbstractItemDialogPage {
         GridBagConstraints gbc_panel = new GridBagConstraints();
         gbc_panel.anchor = GridBagConstraints.WEST;
         gbc_panel.gridwidth = 4;
-        gbc_panel.insets = new Insets(5, 10, 5, 10);
+        gbc_panel.insets = new Insets(5, 5, 0, 10);
         gbc_panel.fill = GridBagConstraints.HORIZONTAL;
         gbc_panel.gridx = 0;
         gbc_panel.gridy = 5;
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEADING);
         add(panel, gbc_panel);
-        panel.add(lblLogLevel);
-        panel.add(comboBoxLogLevel);
-        panel.add(horizontalStrut);
         chckbxFileLog.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -244,6 +245,17 @@ public class GeneralSetting extends AbstractItemDialogPage {
         this.add(jComboBoxlnf, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(7, 2, 5, 15), 5, -2));
 
+        GridBagConstraints gbc_panel_1 = new GridBagConstraints();
+        gbc_panel_1.gridwidth = 4;
+        gbc_panel_1.insets = new Insets(0, 10, 5, 10);
+        gbc_panel_1.fill = GridBagConstraints.BOTH;
+        gbc_panel_1.gridx = 0;
+        gbc_panel_1.gridy = 6;
+        FlowLayout flowLayout_2 = (FlowLayout) panel_1.getLayout();
+        flowLayout_2.setAlignment(FlowLayout.LEADING);
+        add(panel_1, gbc_panel_1);
+        panel_1.add(lblLogLevel);
+
         JPanel panel_2 = new JPanel();
         FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
         flowLayout_1.setHgap(10);
@@ -254,10 +266,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_panel_2.weightx = 1.0;
         gbc_panel_2.anchor = GridBagConstraints.SOUTHWEST;
         gbc_panel_2.gridwidth = 4;
-        gbc_panel_2.insets = new Insets(5, 10, 5, 10);
+        gbc_panel_2.insets = new Insets(5, 10, 0, 10);
         gbc_panel_2.fill = GridBagConstraints.HORIZONTAL;
         gbc_panel_2.gridx = 0;
-        gbc_panel_2.gridy = 6;
+        gbc_panel_2.gridy = 7;
         add(panel_2, gbc_panel_2);
         JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
         panel_2.add(btnNewButton);
@@ -306,7 +318,19 @@ public class GeneralSetting extends AbstractItemDialogPage {
     protected void initialize(boolean afirst) {
         WProperties prfs = BundleTools.SYSTEM_PREFERENCES;
         chckbxConfirmClosing.setSelected(prfs.getBooleanProperty(BundleTools.CONFIRM_CLOSE, false));
+        panel_1.add(comboBoxLogLevel);
         comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prfs.getProperty(AuditLog.LOG_LEVEL, "INFO")));//$NON-NLS-1$
+        panel_1.add(horizontalStrut);
+
+        panel_1.add(lblStacktraceLimit);
+
+        int limit = getIntPreferences(AuditLog.LOG_STACKTRACE_LIMIT, 3, null);
+        if (limit > 0
+            && (limit != 1 || limit != 3 || limit != 5 || limit != 10 || limit != 20 || limit != 50 || limit != 100)) {
+            comboBoxStackLimit.addItem(Integer.toString(limit));
+        }
+        comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");// $NON-NLS-1$
+        panel_1.add(comboBoxStackLimit);
         chckbxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, ""))); //$NON-NLS-1$
         spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
         spinner_1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB")); //$NON-NLS-1$
@@ -355,6 +379,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
     public void closeAdditionalWindow() {
         BundleTools.SYSTEM_PREFERENCES.putBooleanProperty("weasis.confirm.closing", chckbxConfirmClosing.isSelected()); //$NON-NLS-1$
 
+        String limit = (String) comboBoxStackLimit.getSelectedItem();
+        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_STACKTRACE_LIMIT,
+            StringUtil.hasText(limit) ? limit : "-1");
+
         LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_ACTIVATION,
@@ -375,7 +403,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}]() {3} {5}"); //$NON-NLS-1$
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         AuditLog.createOrUpdateLogger(context, "default.log", new String[] { "org" }, level.toString(), logFile, //$NON-NLS-1$ //$NON-NLS-2$
-            pattern, fileNb, fileSize);
+            pattern, fileNb, fileSize, limit);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
         if (look != null) {
@@ -399,8 +427,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
                             SwingUtilities.updateComponentTreeUI(window);
                         }
 
-                    } catch (Exception exception) {
-                        System.out.println("Can't change look and feel"); //$NON-NLS-1$
+                    } catch (Exception e) {
+                        LOGGER.error("Can't change look and feel", e); //$NON-NLS-1$
                     }
                 }
             };
@@ -413,6 +441,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         BundleTools.SYSTEM_PREFERENCES.resetProperty(BundleTools.CONFIRM_CLOSE, "false");//$NON-NLS-1$
 
         // Reset properties used by OSGI service (Sling Logger)
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_STACKTRACE_LIMIT, "3"); //$NON-NLS-1$
         BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_LEVEL, "INFO"); //$NON-NLS-1$
         BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE, ""); //$NON-NLS-1$
         BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5"); //$NON-NLS-1$
@@ -462,8 +491,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
         try {
             UIManager.setLookAndFeel(laf);
         } catch (Exception e) {
-            System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
             laf = UIManager.getSystemLookAndFeelClassName();
+            LOGGER.error("Unable to set the Look&Feel", e); //$NON-NLS-1$
         }
         // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
         setUIFont(new javax.swing.plaf.FontUIResource("SansSerif", Font.PLAIN, 12)); //$NON-NLS-1$

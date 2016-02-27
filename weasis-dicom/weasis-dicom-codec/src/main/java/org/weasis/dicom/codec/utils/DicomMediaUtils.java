@@ -230,7 +230,7 @@ public class DicomMediaUtils {
             } else if (numBits <= 16) { // LUT Data should be stored in 16 bits allocated format
                 // LUT Data contains the LUT entry values, assuming data is always unsigned data
                 short[] sData = new short[numEntries];
-                ByteUtils.bytesToShorts(bData, 0, sData, 0, sData.length, dicomLutObject.bigEndian());
+                ByteUtils.bytesToShorts(bData, sData, 0, sData.length, dicomLutObject.bigEndian());
 
                 if (numEntries <= 256) {
                     // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits

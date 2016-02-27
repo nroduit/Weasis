@@ -140,7 +140,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
                 lastDir = files[0].getParent();
                 textField.setText(Messages.getString("LocalImport.multi_dir")); //$NON-NLS-1$
             }
-            if (lastDir != null) {
+            if (StringUtil.hasText(lastDir)) {
                 Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDirKey, lastDir);
             }
         }

@@ -158,9 +158,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
                                 if (!toolBar.isCommandActive(cmd)) {
                                     MouseActions mouseActions = eventManager.getMouseActions();
                                     mouseActions.setAction(MouseActions.LEFT, cmd);
-                                    if (view != null) {
-                                        view.setMouseActions(mouseActions);
-                                    }
+                                    view.setMouseActions(mouseActions);
                                     toolBar.changeButtonState(MouseActions.LEFT, cmd);
                                 }
                             }

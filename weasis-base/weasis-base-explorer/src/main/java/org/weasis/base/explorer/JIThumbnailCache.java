@@ -93,9 +93,7 @@ public final class JIThumbnailCache {
                     if (tiled_File != null) {
                         try {
                             ImageDecoder dec = ImageCodec.createImageDecoder("tiff", //$NON-NLS-1$
-                                new FileSeekableStream(tiled_File == null ? diskObject.getFile()
-                                    : new File(JIListModel.EXPLORER_CACHE_DIR, tiled_File)),
-                                null);
+                                new FileSeekableStream(new File(JIListModel.EXPLORER_CACHE_DIR, tiled_File)), null);
                             int count = dec.getNumPages();
                             if (count == 2) {
                                 RenderedImage src2 = dec.decodeAsRenderedImage(1);

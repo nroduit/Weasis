@@ -39,7 +39,7 @@ public class XmlSerializer {
 
                 return (GraphicList) jaxbUnmarshaller.unmarshal(gpxFile);
 
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 AuditLog.logError(LOGGER, e, "Cannot load xml: ");
             }
         }
@@ -83,7 +83,7 @@ public class XmlSerializer {
 
                 jaxbMarshaller.marshal(list, System.out);
                 jaxbMarshaller.marshal(list, gpxFile);
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 AuditLog.logError(LOGGER, e, "Cannot save xml: ");
             }
         }

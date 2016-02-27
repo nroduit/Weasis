@@ -84,7 +84,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>jai_imageio</artifactId>
-			<version>1.2.1</version>
+			<version>1.2.3</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

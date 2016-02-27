@@ -130,7 +130,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
                     // call buildShape
                     return;
                 }
-                if (labelStringArray == null || labelHeight == 0 || labelWidth == 0) {
+                if (labelHeight == 0 || labelWidth == 0) {
                     // This graphic cannot be displayed, remove it.
                     fireRemoveAction();
                     return;

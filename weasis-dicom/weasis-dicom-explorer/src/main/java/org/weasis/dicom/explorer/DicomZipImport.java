@@ -15,7 +15,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -114,7 +114,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
 
     public static void loadDicomZip(File file, DicomModel dicomModel) {
         if (file != null) {
-            ArrayList<LoadSeries> loadSeries = null;
+            List<LoadSeries> loadSeries = null;
             if (file.canRead()) {
                 File dir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip")); //$NON-NLS-1$ //$NON-NLS-2$
                 try {

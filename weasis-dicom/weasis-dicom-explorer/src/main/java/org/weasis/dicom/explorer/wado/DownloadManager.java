@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
@@ -43,6 +44,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.Source;
 import javax.xml.transform.stax.StAXSource;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
@@ -51,7 +53,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
@@ -62,7 +63,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -71,7 +71,6 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -82,6 +81,9 @@ import org.xml.sax.SAXException;
 public class DownloadManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadManager.class);
+
+    public static final String TAG_XML_ROOT = "manifest"; //$NON-NLS-1$
+    public static final String TAG_PR_ROOT = "presentation"; //$NON-NLS-1$
 
     public static final String CONCURRENT_SERIES = "download.concurrent.series"; //$NON-NLS-1$
     public static final ArrayList<LoadSeries> TASKS = new ArrayList<LoadSeries>();
@@ -258,46 +260,10 @@ public class DownloadManager {
             }
 
             LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
-
-            if (urlConnection instanceof HttpURLConnection) {
-                HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
-
-                LOGGER.debug("HttpURLConnection previous ConnectTimeout : {} sec", //$NON-NLS-1$
-                    TimeUnit.MILLISECONDS.toSeconds(httpURLConnection.getConnectTimeout()));
-                httpURLConnection.setConnectTimeout(5000);
-                LOGGER.debug("HttpURLConnection new ConnectTimeout : {} sec", //$NON-NLS-1$
-                    TimeUnit.MILLISECONDS.toSeconds(httpURLConnection.getConnectTimeout()));
-
-                int responseCode = httpURLConnection.getResponseCode();
-                if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
-                    // Following is only intended LOG more info about Http Server Error
-
-                    InputStream errorStream = httpURLConnection.getErrorStream();
-                    if (errorStream != null) {
-                        BufferedReader reader = null;
-                        try {
-                            reader = new BufferedReader(new InputStreamReader(errorStream, "UTF-8")); //$NON-NLS-1$
-                            StringBuilder stringBuilder = new StringBuilder();
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                stringBuilder.append(line);
-                            }
-                            String errorDescription = stringBuilder.toString();
-                            if (StringUtil.hasText(errorDescription)) {
-                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " [" //$NON-NLS-1$ //$NON-NLS-2$
-                                    + httpURLConnection.getResponseMessage() + "]", errorDescription); //$NON-NLS-1$
-                            }
-                        } finally {
-                            if (reader != null) {
-                                reader.close();
-                            }
-                        }
-                    }
-                }
-            }
+            logHttpError(urlConnection);
 
             if (path.endsWith(".gz")) { //$NON-NLS-1$
-                stream = GzipManager.gzipUncompressToStream(urlConnection.getInputStream());
+                stream = new BufferedInputStream(new GZIPInputStream(urlConnection.getInputStream()));
             } else if (path.endsWith(".xml")) { //$NON-NLS-1$
                 stream = urlConnection.getInputStream();
             } else {
@@ -324,7 +290,9 @@ public class DownloadManager {
             Source xmlFile = new StAXSource(xmler);
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
-                Schema schema = schemaFactory.newSchema(DownloadManager.class.getResource("/config/wado_query.xsd"));//$NON-NLS-1$
+                Schema schema = schemaFactory.newSchema(new Source[] {
+                    new StreamSource(DownloadManager.class.getResource("/config/wado_query.xsd").toExternalForm()), //$NON-NLS-1$
+                    new StreamSource(DownloadManager.class.getResource("/config/wado_query25.xsd").toExternalForm()) }); //$NON-NLS-1$
                 Validator validator = schema.newValidator();
                 validator.validate(xmlFile);
                 LOGGER.info("[Validate with XSD schema] wado_query is valid"); //$NON-NLS-1$
@@ -343,96 +311,36 @@ public class DownloadManager {
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
-                        // First Tag must <wado_query>
-                        if (WadoParameters.TAG_DOCUMENT_ROOT.equals(key)) {
-                            String wadoURL = getTagAttribute(xmler, WadoParameters.TAG_WADO_URL, null);
-                            boolean onlySopUID =
-                                Boolean.valueOf(getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
-                            String additionnalParameters =
-                                getTagAttribute(xmler, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
-                            String overrideList = getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
-                            String webLogin = getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
-                            final WadoParameters wadoParameters =
-                                new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
-                            int pat = 0;
-                            MediaSeriesGroup patient = null;
-                            while (xmler.hasNext()) {
+                        // xmlns="http://www.weasis.org/xsd/2.5"
+                        if (TAG_XML_ROOT.equals(key)) {
+                            boolean state = true;
+                            while (xmler.hasNext() && state) {
                                 eventType = xmler.next();
                                 switch (eventType) {
                                     case XMLStreamConstants.START_ELEMENT:
-                                        // <Patient> Tag
-                                        if (TagW.DICOM_LEVEL.Patient.name().equals(xmler.getName().getLocalPart())) {
-                                            patient = readPatient(model, seriesList, xmler, wadoParameters);
-                                            pat++;
-                                        } else if (WadoParameters.TAG_HTTP_TAG.equals(xmler.getName().getLocalPart())) {
-                                            String httpkey = getTagAttribute(xmler, "key", null); //$NON-NLS-1$
-                                            String httpvalue = getTagAttribute(xmler, "value", null); //$NON-NLS-1$
-                                            wadoParameters.addHttpTag(httpkey, httpvalue);
-                                            // <Message> tag
-                                        } else if ("Message".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
-                                            final String title = getTagAttribute(xmler, "title", null); //$NON-NLS-1$
-                                            final String message = getTagAttribute(xmler, "description", null); //$NON-NLS-1$
-                                            if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
-                                                String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
-                                                final int messageType =
-                                                    "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE //$NON-NLS-1$
-                                                        : "INFO" //$NON-NLS-1$
-                                                            .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
-                                                                : JOptionPane.WARNING_MESSAGE;
-
-                                                GuiExecutor.instance().execute(new Runnable() {
-
-                                                    @Override
-                                                    public void run() {
-
-                                                        PluginTool explorer = null;
-                                                        DataExplorerView dicomExplorer =
-                                                            UIManager.getExplorerplugin(DicomExplorer.NAME);
-                                                        if (dicomExplorer instanceof PluginTool) {
-                                                            explorer = (PluginTool) dicomExplorer;
-                                                        }
-                                                        ColorLayerUI layer =
-                                                            ColorLayerUI.createTransparentLayerUI(explorer);
-                                                        JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer),
-                                                            message, title, JOptionPane.DEFAULT_OPTION, messageType,
-                                                            null, null, null);
-                                                        if (layer != null) {
-                                                            layer.hideUI();
-                                                        }
-                                                    }
-                                                });
-
-                                            }
+                                        key = xmler.getName().getLocalPart();
+                                        if (WadoParameters.TAG_DOCUMENT_ROOT.equals(key)) {
+                                            readWadoQuery(model, seriesList, xmler);
+                                        } else if (TAG_PR_ROOT.equals(key)) {
+                                            // GraphicList list = XmlSerializer.readMeasurementGraphics(gpxFile);
+                                            // if (list != null) {
+                                            // loader.setTag(TagW.MeasurementGraphics, list);
+                                            // }
+                                        }
+                                        break;
+                                    case XMLStreamConstants.END_ELEMENT:
+                                        if (TAG_XML_ROOT.equals(xmler.getName().getLocalPart())) {
+                                            state = false;
                                         }
                                         break;
                                     default:
                                         break;
                                 }
                             }
-                            if (pat == 1) {
-                                // In case of the patient already exists, select it
-                                final MediaSeriesGroup uniquePatient = patient;
-                                GuiExecutor.instance().execute(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        synchronized (UIManager.VIEWER_PLUGINS) {
-                                            for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
-                                                if (uniquePatient.equals(p.getGroupID())) {
-                                                    p.setSelectedAndGetFocus();
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                });
-                            }
-                            for (LoadSeries loadSeries : seriesList) {
-                                String modality = (String) loadSeries.getDicomSeries().getTagValue(TagW.Modality);
-                                boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
-                                if (!ps) {
-                                    loadSeries.startDownloadImageReference(wadoParameters);
-                                }
+                        } else {
+                            // Try to read old manifest: xmlns="http://www.weasis.org/xsd"
+                            if (WadoParameters.TAG_DOCUMENT_ROOT.equals(key)) {
+                                readWadoQuery(model, seriesList, xmler);
                             }
                         }
                         break;
@@ -441,15 +349,10 @@ public class DownloadManager {
                 }
             }
 
-        } catch (Throwable t) {
+        } catch (Exception e) {
             final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
-            LOGGER.error(message);
 
-            if (LOGGER.isDebugEnabled()) {
-                t.printStackTrace();
-            } else {
-                LOGGER.error(t.toString());
-            }
+            LOGGER.error("{}", message, e);
 
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
@@ -479,6 +382,135 @@ public class DownloadManager {
         return seriesList;
     }
 
+    private static void readWadoQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
+        throws XMLStreamException {
+        String wadoURL = getTagAttribute(xmler, WadoParameters.TAG_WADO_URL, null);
+        boolean onlySopUID = Boolean.valueOf(getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
+        String additionnalParameters = getTagAttribute(xmler, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
+        String overrideList = getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
+        String webLogin = getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
+        final WadoParameters wadoParameters =
+            new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+        int pat = 0;
+        MediaSeriesGroup patient = null;
+        boolean state = true;
+        while (xmler.hasNext() && state) {
+            int eventType = xmler.next();
+            switch (eventType) {
+                case XMLStreamConstants.START_ELEMENT:
+                    String key = xmler.getName().getLocalPart();
+                    // <Patient> Tag
+                    if (TagW.DICOM_LEVEL.Patient.name().equals(key)) {
+                        patient = readPatient(model, seriesList, xmler, wadoParameters);
+                        pat++;
+                    } else if (WadoParameters.TAG_HTTP_TAG.equals(key)) {
+                        String httpkey = getTagAttribute(xmler, "key", null); //$NON-NLS-1$
+                        String httpvalue = getTagAttribute(xmler, "value", null); //$NON-NLS-1$
+                        wadoParameters.addHttpTag(httpkey, httpvalue);
+                        // <Message> tag
+                    } else if ("Message".equals(key)) { //$NON-NLS-1$
+                        final String title = getTagAttribute(xmler, "title", null); //$NON-NLS-1$
+                        final String message = getTagAttribute(xmler, "description", null); //$NON-NLS-1$
+                        if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
+                            String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
+                            final int messageType =
+                                "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE //$NON-NLS-1$
+                                    : "INFO" //$NON-NLS-1$
+                                        .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
+                                            : JOptionPane.WARNING_MESSAGE;
+
+                            GuiExecutor.instance().execute(new Runnable() {
+
+                                @Override
+                                public void run() {
+
+                                    PluginTool explorer = null;
+                                    DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+                                    if (dicomExplorer instanceof PluginTool) {
+                                        explorer = (PluginTool) dicomExplorer;
+                                    }
+                                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
+                                    JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, title,
+                                        JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                                    if (layer != null) {
+                                        layer.hideUI();
+                                    }
+                                }
+                            });
+
+                        }
+                    }
+                    break;
+                case XMLStreamConstants.END_ELEMENT:
+                    if (WadoParameters.TAG_DOCUMENT_ROOT.equals(xmler.getName().getLocalPart())) {
+                        state = false;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (pat == 1) {
+            // In case of the patient already exists, select it
+            final MediaSeriesGroup uniquePatient = patient;
+            GuiExecutor.instance().execute(new Runnable() {
+
+                @Override
+                public void run() {
+                    synchronized (UIManager.VIEWER_PLUGINS) {
+                        for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
+                            if (uniquePatient.equals(p.getGroupID())) {
+                                p.setSelectedAndGetFocus();
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        for (LoadSeries loadSeries : seriesList) {
+            String modality = (String) loadSeries.getDicomSeries().getTagValue(TagW.Modality);
+            boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+            if (!ps) {
+                loadSeries.startDownloadImageReference(wadoParameters);
+            }
+        }
+
+    }
+
+    private static void logHttpError(URLConnection urlConnection) {
+        if (urlConnection instanceof HttpURLConnection) {
+            HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
+            httpURLConnection.setConnectTimeout(5000);
+
+            try {
+                int responseCode = httpURLConnection.getResponseCode();
+                if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
+                    // Following is only intended LOG more info about Http Server Error
+
+                    InputStream errorStream = httpURLConnection.getErrorStream();
+                    if (errorStream != null) {
+                        try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8"); //$NON-NLS-1$
+                                        BufferedReader reader = new BufferedReader(inputStream)) {
+                            StringBuilder stringBuilder = new StringBuilder();
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                stringBuilder.append(line);
+                            }
+                            String errorDescription = stringBuilder.toString();
+                            if (StringUtil.hasText(errorDescription)) {
+                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " [" //$NON-NLS-1$ //$NON-NLS-2$
+                                    + httpURLConnection.getResponseMessage() + "]", errorDescription); //$NON-NLS-1$
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("lOG http response message", e);
+            }
+        }
+    }
+
     private static MediaSeriesGroup readPatient(DicomModel model, ArrayList<LoadSeries> seriesList,
         XMLStreamReader xmler, WadoParameters wadoParameters) throws XMLStreamException {
         // PatientID, PatientBirthDate, StudyInstanceUID, SeriesInstanceUID and SOPInstanceUID override
@@ -494,7 +526,7 @@ public class DownloadManager {
 
         String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name, null);
 
-        MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
+        MediaSeriesGroup patient = model.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
         if (patient == null) {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             patient.setTag(TagW.PatientID, patientID);
@@ -504,7 +536,7 @@ public class DownloadManager {
             patient.setTag(TagW.PatientBirthDate, birthdate);
             patient.setTagNoNull(TagW.PatientBirthTime,
                 TagW.getDicomTime(getTagAttribute(xmler, TagW.PatientBirthTime.getTagName(), null)));
-            model.addHierarchyNode(TreeModel.rootNode, patient);
+            model.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
             LOGGER.info("Adding new patient: " + patient); //$NON-NLS-1$
         }
 
@@ -632,8 +664,7 @@ public class DownloadManager {
                     if (TagW.DICOM_LEVEL.Instance.name().equals(xmler.getName().getLocalPart())) {
                         String sopInstanceUID = getTagAttribute(xmler, TagW.SOPInstanceUID.getTagName(), null);
                         if (sopInstanceUID != null) {
-                            String tsuid = getTagAttribute(xmler, TagW.TransferSyntaxUID.getTagName(), null);
-                            DicomInstance dcmInstance = new DicomInstance(sopInstanceUID, tsuid);
+                            DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
                             if (containsInstance && dicomInstances.contains(dcmInstance)) {
                                 LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                             } else {
@@ -657,13 +688,6 @@ public class DownloadManager {
         }
 
         if (dicomInstances.size() > 0) {
-            if (dicomInstances.size() == 1
-                && "1.2.840.10008.1.2.4.100".equals(dicomInstances.get(0).getTransferSyntaxUID())) { //$NON-NLS-1$
-                model.removeHierarchyNode(study, dicomSeries);
-                dicomSeries = new DicomVideoSeries((DicomSeries) dicomSeries);
-                model.addHierarchyNode(study, dicomSeries);
-            }
-
             final LoadSeries loadSeries = new LoadSeries(dicomSeries, model,
                 BundleTools.SYSTEM_PREFERENCES.getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
             loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));

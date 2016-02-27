@@ -179,34 +179,32 @@ public class GraphicUtil {
         } else if (INTERPOLATED.equalsIgnoreCase(type)) {
             if (points != null && points.length >= 2) {
                 // Only non editable graphic (required control point tool)
-                if (points != null) {
-                    int size = points.length / 2;
-                    if (size >= 2) {
-                        Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
-                        double lx = isDisp ? points[0] * width : points[0];
-                        double ly = isDisp ? points[1] * height : points[1];
-                        path.moveTo(lx, ly);
-                        for (int i = 1; i < size; i++) {
-                            double x = isDisp ? points[i * 2] * width : points[i * 2];
-                            double y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
+                int size = points.length / 2;
+                if (size >= 2) {
+                    Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
+                    double lx = isDisp ? points[0] * width : points[0];
+                    double ly = isDisp ? points[1] * height : points[1];
+                    path.moveTo(lx, ly);
+                    for (int i = 1; i < size; i++) {
+                        double x = isDisp ? points[i * 2] * width : points[i * 2];
+                        double y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
 
-                            double dx = lx - x;
-                            double dy = ly - y;
-                            double dist = Math.sqrt(dx * dx + dy * dy);
-                            double ux = -dy / dist;
-                            double uy = dx / dist;
+                        double dx = lx - x;
+                        double dy = ly - y;
+                        double dist = Math.sqrt(dx * dx + dy * dy);
+                        double ux = -dy / dist;
+                        double uy = dx / dist;
 
-                            // Use 1/4 distance in the perpendicular direction
-                            double cx = (lx + x) * 0.5 + dist * 0.25 * ux;
-                            double cy = (ly + y) * 0.5 + dist * 0.25 * uy;
+                        // Use 1/4 distance in the perpendicular direction
+                        double cx = (lx + x) * 0.5 + dist * 0.25 * ux;
+                        double cy = (ly + y) * 0.5 + dist * 0.25 * uy;
 
-                            path.quadTo(cx, cy, x, y);
-                            lx = x;
-                            ly = y;
-                        }
-                        shape = new NonEditableGraphic(path, 1.0f, color, labelVisible,
-                            getBooleanValue(go, Tag.GraphicFilled));
+                        path.quadTo(cx, cy, x, y);
+                        lx = x;
+                        ly = y;
                     }
+                    shape =
+                        new NonEditableGraphic(path, 1.0f, color, labelVisible, getBooleanValue(go, Tag.GraphicFilled));
                 }
             }
         }

@@ -179,9 +179,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
                         if (!toolBar.isCommandActive(cmd)) {
                             MouseActions mouseActions = eventManager.getMouseActions();
                             mouseActions.setAction(MouseActions.LEFT, cmd);
-                            if (view != null) {
-                                view.setMouseActions(mouseActions);
-                            }
+                            view.setMouseActions(mouseActions);
                             toolBar.changeButtonState(MouseActions.LEFT, cmd);
                         }
                     }

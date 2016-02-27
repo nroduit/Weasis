@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -47,9 +48,9 @@ public class MimeInspector {
     public static final Icon pdfIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/pdf.png")); //$NON-NLS-1$
     private static Properties mimeTypes;
 
-    private static ArrayList<MagicMimeEntry> mMagicMimeEntries = new ArrayList<MagicMimeEntry>();
+    private static ArrayList<MagicMimeEntry> mMagicMimeEntries = new ArrayList<>();
 
-    // Initialise the class in preperation for mime type detection
+    // Initialize the class in preparation for mime type detection
     static {
         mimeTypes = new Properties();
         InputStream fileStream = null;
@@ -131,8 +132,7 @@ public class MimeInspector {
         int lastPos = fileName.lastIndexOf("."); //$NON-NLS-1$
         String extension = lastPos > 0 ? fileName.substring(lastPos + 1).trim() : null;
 
-        String mimeType = null;
-
+        String mimeType;
         // Get Mime Type form the extension if the length > 0 and < 5
         if (extension != null && extension.length() > 0 && extension.length() < 5) {
             mimeType = mimeTypes.getProperty(extension.toLowerCase());
@@ -154,7 +154,7 @@ public class MimeInspector {
     private static void parse(Reader r) throws IOException {
         BufferedReader br = new BufferedReader(r);
         String line;
-        ArrayList<String> sequence = new ArrayList<String>();
+        ArrayList<String> sequence = new ArrayList<>();
 
         line = br.readLine();
         while (true) {
@@ -267,18 +267,19 @@ public class MimeInspector {
     }
 
     public static List<String> getExtensions(String mime) {
-        ArrayList<String> list = new ArrayList<String>();
-        if (mime != null) {
-            String[] mimes = mime.split(","); //$NON-NLS-1$
-            Set<Entry<Object, Object>> entries = mimeTypes.entrySet();
-            for (Entry<Object, Object> entry : entries) {
-                String key = (String) entry.getKey();
-                String val = (String) entry.getValue();
-                if (val != null) {
-                    for (String m : mimes) {
-                        if (val.equals(m)) {
-                            list.add(key);
-                        }
+        if (mime == null) {
+            return Collections.emptyList();
+        }
+        ArrayList<String> list = new ArrayList<>();
+        String[] mimes = mime.split(","); //$NON-NLS-1$
+        Set<Entry<Object, Object>> entries = mimeTypes.entrySet();
+        for (Entry<Object, Object> entry : entries) {
+            String key = (String) entry.getKey();
+            String val = (String) entry.getValue();
+            if (val != null) {
+                for (String m : mimes) {
+                    if (val.equals(m)) {
+                        list.add(key);
                     }
                 }
             }

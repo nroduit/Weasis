@@ -450,7 +450,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
                 setImage(media);
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             AuditLog.logError(LOGGER, e, "Unexpected error:"); //$NON-NLS-1$
             imageLayer.setImage(null, null);
             closeLens();
@@ -1030,44 +1030,39 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
 
                 E imgElement = getImage();
-                if (value != null) {
-                    if (value.getView() == this) {
-                        if (tileOffset != 0) {
-                            // Index could have changed when loading series.
-                            imgElement = series.getMedia(value.getSeriesIndex() + tileOffset,
-                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                getCurrentSortComparator());
-                        } else if (value.getMedia() instanceof ImageElement) {
-                            imgElement = (E) value.getMedia();
-                        }
-                    } else if (value.getLocation() != null) {
-                        Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
-                        if (cutlines != null && cutlines) {
-                            // Compute cutlines from the location of selected image
-                            computeCrosslines(value.getLocation().doubleValue());
-                        } else {
-                            double location = value.getLocation().doubleValue();
-                            // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and related
-                            // to
-                            // a specific series
-                            // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
-                            // if (offset != null) {
-                            // location += offset;
-                            // }
-                            imgElement = series.getNearestImage(location, tileOffset,
-                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                getCurrentSortComparator());
-
-                            AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
-                        }
-                    } else {
-                        // When no 3D information on the slice position
+                if (value.getView() == this) {
+                    if (tileOffset != 0) {
+                        // Index could have changed when loading series.
                         imgElement = series.getMedia(value.getSeriesIndex() + tileOffset,
+                            (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
+                    } else if (value.getMedia() instanceof ImageElement) {
+                        imgElement = (E) value.getMedia();
+                    }
+                } else if (value.getLocation() != null) {
+                    Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
+                    if (cutlines != null && cutlines) {
+                        // Compute cutlines from the location of selected image
+                        computeCrosslines(value.getLocation().doubleValue());
+                    } else {
+                        double location = value.getLocation().doubleValue();
+                        // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and related
+                        // to
+                        // a specific series
+                        // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
+                        // if (offset != null) {
+                        // location += offset;
+                        // }
+                        imgElement = series.getNearestImage(location, tileOffset,
                             (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
 
                         AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
                     }
+                } else {
+                    // When no 3D information on the slice position
+                    imgElement = series.getMedia(value.getSeriesIndex() + tileOffset,
+                        (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
 
+                    AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
                 }
 
                 Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());

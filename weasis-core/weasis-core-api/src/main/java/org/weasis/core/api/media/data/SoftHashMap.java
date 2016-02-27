@@ -23,26 +23,26 @@ import java.util.Set;
 public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
 
     /** The internal HashMap that will hold the SoftReference. */
-    protected final Map<K, SoftReference<V>> hash = new HashMap<K, SoftReference<V>>();
+    protected final Map<K, SoftReference<V>> hash = new HashMap<>();
 
-    protected final Map<SoftReference<V>, K> reverseLookup = new HashMap<SoftReference<V>, K>();
+    protected final Map<SoftReference<V>, K> reverseLookup = new HashMap<>();
 
     /** Reference queue for cleared SoftReference objects. */
-    private final ReferenceQueue<V> queue = new ReferenceQueue<V>();
+    private final ReferenceQueue<V> queue = new ReferenceQueue<>();
 
     @Override
     public V get(Object key) {
         expungeStaleEntries();
         V result = null;
         // We get the SoftReference represented by that key
-        SoftReference<V> soft_ref = hash.get(key);
-        if (soft_ref != null) {
+        SoftReference<V> softRef = hash.get(key);
+        if (softRef != null) {
             // From the SoftReference we get the value, which can be
             // null if it has been garbage collected
-            result = soft_ref.get();
+            result = softRef.get();
             if (result == null) {
                 // If the value has been garbage collected, remove the entry from the HashMap.
-                removeElement(soft_ref);
+                removeElement(softRef);
             }
         }
         return result;
@@ -65,9 +65,9 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable
     @Override
     public V put(K key, V value) {
         expungeStaleEntries();
-        SoftReference<V> soft_ref = new SoftReference<V>(value, queue);
-        reverseLookup.put(soft_ref, key);
-        SoftReference<V> result = hash.put(key, soft_ref);
+        SoftReference<V> softRef = new SoftReference<>(value, queue);
+        reverseLookup.put(softRef, key);
+        SoftReference<V> result = hash.put(key, softRef);
         if (result == null) {
             return null;
         }
@@ -105,7 +105,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable
     @Override
     public Set<Entry<K, V>> entrySet() {
         expungeStaleEntries();
-        Set<Entry<K, V>> result = new LinkedHashSet<Entry<K, V>>();
+        Set<Entry<K, V>> result = new LinkedHashSet<>();
         for (final Entry<K, SoftReference<V>> entry : hash.entrySet()) {
             final V value = entry.getValue().get();
             if (value != null) {
@@ -135,18 +135,18 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable
     @Override
     public boolean containsKey(Object key) {
         expungeStaleEntries();
-        SoftReference<V> soft_ref = hash.get(key);
-        if (soft_ref != null) {
+        SoftReference<V> softRef = hash.get(key);
+        if (softRef != null) {
             // From the SoftReference we get the value, which can be
             // null if it has been garbage collected
-            V result = soft_ref.get();
+            V result = softRef.get();
             if (result != null) {
                 return true;
             }
             // If the value has been garbage collected, remove the
             // entry from the HashMap.
             hash.remove(key);
-            reverseLookup.remove(soft_ref);
+            reverseLookup.remove(softRef);
         }
         return false;
     }

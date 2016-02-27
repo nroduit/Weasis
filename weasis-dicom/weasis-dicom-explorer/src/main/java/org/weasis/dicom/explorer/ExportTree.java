@@ -12,6 +12,8 @@ package org.weasis.dicom.explorer;
 
 import java.awt.event.MouseEvent;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
@@ -21,23 +23,25 @@ import javax.swing.tree.TreePath;
 import org.weasis.dicom.explorer.CheckTreeModel.ToolTipTreeNode;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
 public class ExportTree extends JScrollPane {
 
-    private final CheckboxTree tree;
-    private final CheckTreeModel model;
+    private final CheckboxTree checkboxTree;
+    private final CheckTreeModel checkTreeModel;
 
     public ExportTree(DicomModel dicomModel) {
         this(new CheckTreeModel(dicomModel));
     }
 
-    public ExportTree(CheckTreeModel model) {
-        if (model == null) {
+    public ExportTree(final CheckTreeModel checkTreeModel) {
+        if (checkTreeModel == null) {
             throw new IllegalArgumentException();
         }
-        this.model = model;
-        this.tree = new CheckboxTree(model.getModel()) {
+
+        this.checkTreeModel = checkTreeModel;
+
+        checkboxTree = new CheckboxTree(checkTreeModel.getModel()) {
             @Override
             public String getToolTipText(MouseEvent evt) {
                 if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
@@ -55,19 +59,53 @@ public class ExportTree extends JScrollPane {
         };
 
         // Register tooltips
-        this.tree.setToolTipText(""); //$NON-NLS-1$
-        this.tree.setCheckingModel(model.getCheckingModel());
-        this.tree.getCheckingModel().setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
-        expandTree(tree, model.getRootNode(), 3);
-        setViewportView(tree);
+        checkboxTree.setToolTipText(""); //$NON-NLS-1$
+
+        /**
+         * At this point checking Paths are supposed to be binded at Series Level but depending on the CheckingMode it
+         * may also contains parents treeNode paths.<br>
+         * For medical use recommendation is to default select the whole series related to studies to be analyzed
+         */
+
+        TreeCheckingModel checkingModel = checkTreeModel.getCheckingModel();
+        TreePath[] checkingPaths = checkTreeModel.getCheckingPaths();
+        checkboxTree.setCheckingModel(checkingModel); // be aware that checkingPaths is cleared at this point
+
+        // checkingModel.setCheckingMode(checkTreeModel.getCheckingModel().getCheckingMode());
+        // -- checkingMode is alreadySet inDicomExport
+
+        if (checkingPaths != null && checkingPaths.length > 0) {
+            Set<TreePath> seriesPathsSet = new HashSet<TreePath>(checkingPaths.length);
+            Set<TreePath> studyPathsSet = new HashSet<TreePath>();
+
+            for (TreePath checkingPath : checkingPaths) {
+                if (checkingPath.getPathCount() == 4) { // 4 stands for Series Level
+                    seriesPathsSet.add(checkingPath);
+                    studyPathsSet.add(checkingPath.getParentPath());
+                }
+            }
+
+            if (studyPathsSet.isEmpty() == false) {
+                TreePath[] studyCheckingPaths = studyPathsSet.toArray(new TreePath[studyPathsSet.size()]);
+                checkboxTree.setCheckingPaths(studyCheckingPaths);
+            }
+
+            if (seriesPathsSet.isEmpty() == false) {
+                TreePath[] seriesSelectionPaths = seriesPathsSet.toArray(new TreePath[seriesPathsSet.size()]);
+                checkboxTree.setSelectionPaths(seriesSelectionPaths);
+            }
+        }
+
+        expandTree(checkboxTree, checkTreeModel.getRootNode(), 2); // 2 stands for Study Level
+        setViewportView(checkboxTree);
     }
 
     public CheckboxTree getTree() {
-        return tree;
+        return checkboxTree;
     }
 
     public CheckTreeModel getModel() {
-        return model;
+        return checkTreeModel;
     }
 
     public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {

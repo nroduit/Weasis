@@ -14,13 +14,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.TagW;
 
 public interface TreeModel {
-
-    String ROOT_IDENTIFIER = "__ROOT__"; //$NON-NLS-1$
-    MediaSeriesGroup rootNode = new MediaSeriesGroupNode(TagW.RootElement, ROOT_IDENTIFIER, TagW.RootElement);
 
     List<TreeModelNode> getModelStructure();
 

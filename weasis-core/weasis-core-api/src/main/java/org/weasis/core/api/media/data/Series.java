@@ -49,10 +49,10 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
         }
     }
 
-    private final DataFlavor[] flavors = { sequenceDataFlavor };
+    private static final DataFlavor[] flavors = { sequenceDataFlavor };
     private PropertyChangeSupport propertyChange = null;
     protected final List<E> medias;
-    protected final Map<Comparator<E>, List<E>> sortedMedias = new HashMap<Comparator<E>, List<E>>(6);
+    protected final Map<Comparator<E>, List<E>> sortedMedias = new HashMap<>(6);
     protected final Comparator<E> mediaOrder;
     protected SeriesImporter seriesLoader;
     private double fileSize;
@@ -72,13 +72,14 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
     public Series(TagW tagID, Object identifier, TagW displayTag, List<E> list, Comparator<E> mediaOrder) {
         super(tagID, identifier, displayTag);
         this.mediaOrder = mediaOrder;
-        if (list == null) {
-            list = new ArrayList<E>();
+        List<E> ls = list;
+        if (ls == null) {
+            ls = new ArrayList<>();
             fileSize = 0.0;
         } else if (mediaOrder != null) {
-            Collections.sort(list, mediaOrder);
+            Collections.sort(ls, mediaOrder);
         }
-        medias = Collections.synchronizedList(list);
+        medias = Collections.synchronizedList(ls);
     }
 
     protected void resetSortedMediasMap() {
@@ -93,18 +94,13 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
         if (comparator != null && !comparator.equals(mediaOrder)) {
             List<E> sorted = sortedMedias.get(comparator);
             if (sorted == null) {
-                sorted = new ArrayList<E>(medias);
+                sorted = new ArrayList<>(medias);
                 Collections.sort(sorted, comparator);
                 sortedMedias.put(comparator, sorted);
             }
             return sorted;
         }
         return medias;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
     }
 
     @Override
@@ -211,11 +207,6 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
         return filter == null ? new ArrayList<E>(sortedList) : Filter.makeList(filter.filter(sortedList));
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.weasis.media.data.MediaSeries#getMedia(int)
-     */
     @Override
     public final E getMedia(int index, Filter<E> filter, Comparator<E> sort) {
         List<E> sortedList = getSortedMedias(sort);

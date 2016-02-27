@@ -599,9 +599,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 MouseActions mouseActions = getMouseActions();
                 if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
                     mouseActions.setAction(MouseActions.LEFT, command);
-                    if (view != null) {
-                        view.setMouseActions(mouseActions);
-                    }
+                    view.setMouseActions(mouseActions);
                     toolBar.changeButtonState(MouseActions.LEFT, command);
                 }
             }

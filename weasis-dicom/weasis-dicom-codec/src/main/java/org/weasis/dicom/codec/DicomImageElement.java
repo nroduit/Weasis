@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import javax.media.jai.Histogram;
 import javax.media.jai.JAI;
@@ -146,7 +147,7 @@ public class DicomImageElement extends ImageElement {
      *         exists.
      */
     @Override
-    public float getMinValue(HashMap<TagW, Object> params, boolean pixelPadding) {
+    public float getMinValue(Map<TagW, Object> params, boolean pixelPadding) {
         // Computes min and max as slope can be negative
         return Math.min(pixel2mLUT(super.getMinValue(params, pixelPadding), params, pixelPadding),
             pixel2mLUT(super.getMaxValue(params, pixelPadding), params, pixelPadding));
@@ -157,7 +158,7 @@ public class DicomImageElement extends ImageElement {
      *         exists.
      */
     @Override
-    public float getMaxValue(HashMap<TagW, Object> params, boolean pixelPadding) {
+    public float getMaxValue(Map<TagW, Object> params, boolean pixelPadding) {
         // Computes min and max as slope can be negative
         return Math.max(pixel2mLUT(super.getMinValue(params, pixelPadding), params, pixelPadding),
             pixel2mLUT(super.getMaxValue(params, pixelPadding), params, pixelPadding));
@@ -182,7 +183,7 @@ public class DicomImageElement extends ImageElement {
         return (pixelRepresentation != null) && (pixelRepresentation != 0);
     }
 
-    public boolean isPhotometricInterpretationInverse(HashMap<TagW, Object> params) {
+    public boolean isPhotometricInterpretationInverse(Map<TagW, Object> params) {
         String prLUTShape = (String) (params == null ? null : params.get(TagW.PresentationLUTShape));
         if (prLUTShape == null) {
             prLUTShape = (String) getTagValue(TagW.PresentationLUTShape);
@@ -200,7 +201,7 @@ public class DicomImageElement extends ImageElement {
      *
      * @return
      */
-    public boolean isModalityLutOutSigned(HashMap<TagW, Object> params, boolean pixelPadding) {
+    public boolean isModalityLutOutSigned(Map<TagW, Object> params, boolean pixelPadding) {
         boolean signed = isPixelRepresentationSigned();
         return getMinValue(params, pixelPadding) < 0 ? true : signed;
     }
@@ -213,19 +214,19 @@ public class DicomImageElement extends ImageElement {
         return (Integer) getTagValue(TagW.BitsAllocated);
     }
 
-    public float getRescaleIntercept(HashMap<TagW, Object> params) {
+    public float getRescaleIntercept(Map<TagW, Object> params) {
         Float prIntercept = (Float) (params != null ? params.get(TagW.RescaleIntercept) : null);
         Float intercept = prIntercept == null ? (Float) getTagValue(TagW.RescaleIntercept) : prIntercept;
         return (intercept == null) ? 0.0f : intercept.floatValue();
     }
 
-    public float getRescaleSlope(HashMap<TagW, Object> params) {
+    public float getRescaleSlope(Map<TagW, Object> params) {
         Float prSlope = (Float) (params != null ? params.get(TagW.RescaleSlope) : null);
         Float slope = prSlope == null ? (Float) getTagValue(TagW.RescaleSlope) : prSlope;
         return (slope == null) ? 1.0f : slope.floatValue();
     }
 
-    public float pixel2mLUT(float pixelValue, HashMap<TagW, Object> params, boolean pixelPadding) {
+    public float pixel2mLUT(float pixelValue,Map<TagW, Object> params, boolean pixelPadding) {
         LookupTableJAI lookup = getModalityLookup(params, pixelPadding);
         if (lookup != null) {
             if (pixelValue >= lookup.getOffset() && pixelValue < lookup.getOffset() + lookup.getNumEntries()) {
@@ -235,14 +236,14 @@ public class DicomImageElement extends ImageElement {
         return pixelValue;
     }
 
-    public int getMinAllocatedValue(HashMap<TagW, Object> params, boolean pixelPadding) {
+    public int getMinAllocatedValue(Map<TagW, Object> params, boolean pixelPadding) {
         boolean signed = isModalityLutOutSigned(params, pixelPadding);
         int bitsAllocated = getBitsAllocated();
         int maxValue = signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1);
         return (signed ? -(maxValue + 1) : 0);
     }
 
-    public int getMaxAllocatedValue(HashMap<TagW, Object> params, boolean pixelPadding) {
+    public int getMaxAllocatedValue(Map<TagW, Object> params, boolean pixelPadding) {
         boolean signed = isModalityLutOutSigned(params, pixelPadding);
         int bitsAllocated = getBitsAllocated();
         return signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1);
@@ -297,7 +298,7 @@ public class DicomImageElement extends ImageElement {
 
     }
 
-    public LutParameters getLutParameters(HashMap<TagW, Object> params, boolean pixelPadding, LookupTableJAI mLUTSeq,
+    public LutParameters getLutParameters(Map<TagW, Object> params, boolean pixelPadding, LookupTableJAI mLUTSeq,
         boolean inversePaddingMLUT) {
         Integer paddingValue = getPaddingValue();
 
@@ -331,7 +332,7 @@ public class DicomImageElement extends ImageElement {
 
     }
 
-    public LookupTableJAI getModalityLookup(HashMap<TagW, Object> params, boolean pixelPadding) {
+    public LookupTableJAI getModalityLookup(Map<TagW, Object> params, boolean pixelPadding) {
         return getModalityLookup(params, pixelPadding, false);
     }
 
@@ -354,7 +355,7 @@ public class DicomImageElement extends ImageElement {
      * @param inverseLUT
      * @return the modality lookup table
      */
-    protected LookupTableJAI getModalityLookup(HashMap<TagW, Object> params, boolean pixelPadding,
+    protected LookupTableJAI getModalityLookup(Map<TagW, Object> params, boolean pixelPadding,
         boolean inverseLUTAction) {
         Integer paddingValue = getPaddingValue();
         LookupTableJAI prModLut = (LookupTableJAI) (params != null ? params.get(TagW.ModalityLUTData) : null);
@@ -689,7 +690,7 @@ public class DicomImageElement extends ImageElement {
      * @return
      */
     @Override
-    public RenderedImage getRenderedImage(final RenderedImage imageSource, HashMap<String, Object> params) {
+    public RenderedImage getRenderedImage(final RenderedImage imageSource, Map<String, Object> params) {
         if (imageSource == null) {
             return null;
         }

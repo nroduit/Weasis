@@ -19,6 +19,7 @@ import org.weasis.core.api.media.data.TagW;
  *
  */
 public class TreeModelNode {
+    public static final TreeModelNode ROOT = new TreeModelNode(0, 0, TagW.RootElement);
 
     private final int depth;
     private final int nodePosition;

@@ -21,11 +21,11 @@ import javax.media.jai.operator.TransposeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.ImageToolkit;
 
 public class RotationOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(RotationOp.class);
-    private static final double EPSILON = 1e-5;
 
     public static final String OP_NAME = Messages.getString("RotationOperation.title"); //$NON-NLS-1$
 
@@ -52,15 +52,11 @@ public class RotationOp extends AbstractOp {
         } else if (rotationAngle != 0 && rotationAngle != 360) {
             // optimize rotation by right angles
             TransposeType rotOp = null;
-
-            if (Math.abs(rotationAngle - 90) < EPSILON) {
-                // 90 degree
+            if (rotationAngle == 90) {
                 rotOp = TransposeDescriptor.ROTATE_90;
-            } else if (Math.abs(rotationAngle - 180) < EPSILON) {
-                // 180 degree
+            } else if (rotationAngle == 180) {
                 rotOp = TransposeDescriptor.ROTATE_180;
-            } else if (Math.abs(rotationAngle - 270) < EPSILON) {
-                // 270 degree
+            } else if (rotationAngle == 270) {
                 rotOp = TransposeDescriptor.ROTATE_270;
             }
             if (rotOp != null) {
@@ -73,7 +69,7 @@ public class RotationOp extends AbstractOp {
                 // origin (top left not the center of the image)
                 float diffw = source.getWidth() / 2.0f - result.getWidth() / 2.0f;
                 float diffh = source.getHeight() / 2.0f - result.getHeight() / 2.0f;
-                if (diffw != 0.0f || diffh != 0.0f) {
+                if (MathUtil.isDifferentFromZero(diffw) || MathUtil.isDifferentFromZero(diffh)) {
                     pb = new ParameterBlock();
                     pb.addSource(result);
                     pb.add(diffw);

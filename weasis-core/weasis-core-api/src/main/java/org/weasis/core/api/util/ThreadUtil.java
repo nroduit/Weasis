@@ -8,6 +8,10 @@ import java.util.concurrent.TimeUnit;
 
 public class ThreadUtil {
 
+    private ThreadUtil() {
+        super();
+    }
+
     public static final ExecutorService buildNewSingleThreadExecutor(final String name) {
         return buildNewFixedThreadExecutor(1, name);
     }

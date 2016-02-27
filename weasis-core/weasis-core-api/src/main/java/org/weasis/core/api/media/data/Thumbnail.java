@@ -55,7 +55,7 @@ public class Thumbnail extends JLabel {
 
     public static final File THUMBNAIL_CACHE_DIR =
         AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
-    public static final ExecutorService THUMB_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail Loader");
+    public static final ExecutorService THUMB_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail Loader"); //$NON-NLS-1$
 
     public static final RenderingHints DownScaleQualityHints =
         new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -251,7 +251,8 @@ public class Thumbnail extends JLabel {
                                             } else if (thumb instanceof PlanarImage) {
                                                 thumbnail = ((PlanarImage) thumb).getAsBufferedImage();
                                             }
-                                            if (thumbnail == null && (file != null || image != null)) {
+                                            
+                                            if (thumbnail == null) {
                                                 readable = false;
                                             } else {
                                                 imageSoftRef = new SoftReference<BufferedImage>(thumbnail);
@@ -304,7 +305,7 @@ public class Thumbnail extends JLabel {
                                 } catch (ExecutionException e) {
                                     AuditLog.logError(LOGGER, e, "Error: Cannot read pixel data!:" + file); //$NON-NLS-1$
                                 }
-                                if (thumb == null && (file != null || media != null)) {
+                                if (thumb == null && media != null) {
                                     readable = false;
                                 } else {
                                     imageSoftRef = new SoftReference<BufferedImage>(thumb);

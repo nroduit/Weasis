@@ -163,16 +163,12 @@ public class AuView extends JPanel implements SeriesViewerListener {
     private void showPlayer(final DicomSpecialElement media)
         throws IOException, UnsupportedAudioFileException, LineUnavailableException {
 
-        AudioInputStream audioStream = getAudioInputStream(media);
-        try {
+        try (AudioInputStream audioStream = getAudioInputStream(media)) {
             DataLine.Info info = new DataLine.Info(Clip.class, audioStream.getFormat());
             clip = (Clip) AudioSystem.getLine(info);
             clip.open(audioStream);
-        } finally {
-            if (audioStream != null) {
-                audioStream.close();
-            }
         }
+
         // Get the clip length in microseconds and convert to milliseconds
         audioLength = (int) (clip.getMicrosecondLength() / 1000);
 
@@ -402,7 +398,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                             int bitsPerSample = attritutes.getInt(Tag.WaveformBitsAllocated, 0);
                             String spInterpretation = attritutes.getString(Tag.WaveformSampleInterpretation, 0);
 
-                            in = new DcmAudioStream(new FileInputStream(dcmAudio.getFile()), bulkData.offset());
+                            in = new DcmAudioStream(new FileInputStream(dcmAudio.getFile()), bulkData.offset);
                             // StreamUtils.skipFully(in, bulkData.offset);
                             // StreamUtils.copy(in, outData, bulkData.length);
 
@@ -432,7 +428,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                             }
 
                             AudioInputStream audioInputStream =
-                                new AudioInputStream(in, audioFormat, bulkData.length() / audioFormat.getFrameSize());
+                                new AudioInputStream(in, audioFormat, bulkData.length / audioFormat.getFrameSize());
                             return audioInputStream;
                         } catch (Exception e) {
                             e.printStackTrace();

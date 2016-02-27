@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlType;
 
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -216,15 +217,15 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
         linesParallel = intersectABsegment = intersectCDsegment = false;
         angleDeg = 0.0;
 
-        lineABvalid = (ptA != null && ptB != null && !ptB.equals(ptA));
-        lineCDvalid = (ptC != null && ptD != null && !ptC.equals(ptD));
+        lineABvalid = ptA != null && ptB != null && !ptB.equals(ptA);
+        lineCDvalid = ptC != null && ptD != null && !ptC.equals(ptD);
 
         if (lineABvalid && lineCDvalid) {
 
             double denominator = (ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY())
                 - (ptB.getY() - ptA.getY()) * (ptD.getX() - ptC.getX());
 
-            linesParallel = (denominator == 0); // If denominator is zero, AB & CD are parallel
+            linesParallel = MathUtil.isEqualToZero(denominator); // If denominator is zero, AB & CD are parallel
 
             if (!linesParallel) {
 

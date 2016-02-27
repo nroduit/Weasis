@@ -23,29 +23,18 @@
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+
 	<repositories>
 		<repository>
-			<id>weasis</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
+			<id>mvn-repo-master</id>
+			<url>https://raw.github.com/nroduit/mvn-repo/master/</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
 		</repository>
 	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>weasis</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
-		</pluginRepository>
-	</pluginRepositories>
-	<!-- Maven server for deploying releases -->
-	<distributionManagement>
-		<repository>
-			<id>releases</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/repositories/releases</url>
-		</repository>
-		<snapshotRepository>
-			<id>snapshots</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/repositories/snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
+
 	<issueManagement>
 		<system>JIRA</system>
 		<url>http://www.dcm4che.org/jira/browse/WEA</url>
@@ -207,7 +196,7 @@
 		<dependency>
 			<groupId>org.apache.sling</groupId>
 			<artifactId>org.apache.sling.commons.log</artifactId>
-			<version>3.0.2-r1</version>
+			<version>3.0.2-r2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

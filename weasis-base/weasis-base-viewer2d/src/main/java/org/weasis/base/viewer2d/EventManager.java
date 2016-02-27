@@ -282,9 +282,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                                     String cmd = ActionW.MEASURE.cmd();
                                     if (!toolBar.isCommandActive(cmd)) {
                                         mouseActions.setAction(MouseActions.LEFT, cmd);
-                                        if (view != null) {
-                                            view.setMouseActions(mouseActions);
-                                        }
+                                        view.setMouseActions(mouseActions);
                                         toolBar.changeButtonState(MouseActions.LEFT, cmd);
                                     }
                                 }

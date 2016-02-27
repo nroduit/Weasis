@@ -261,17 +261,15 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 }
             }
 
-            if (series == null) {
-                Collection<MediaSeriesGroup> studyList = model.getChildren(patient);
-                synchronized (model) {
-                    for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
-                        MediaSeriesGroup st = it.next();
-                        if (st != study) {
-                            series = findSOPInstanceReference(model, st, sopUID);
-                        }
-                        if (series != null) {
-                            return series;
-                        }
+            Collection<MediaSeriesGroup> studyList = model.getChildren(patient);
+            synchronized (model) {
+                for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
+                    MediaSeriesGroup st = it.next();
+                    if (st != study) {
+                        series = findSOPInstanceReference(model, st, sopUID);
+                    }
+                    if (series != null) {
+                        return series;
                     }
                 }
             }

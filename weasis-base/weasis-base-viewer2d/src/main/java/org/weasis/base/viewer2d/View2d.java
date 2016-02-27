@@ -727,8 +727,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                             }
                             if (openPlugin == null) {
                                 if (View2d.this.getSeries() != null) {
-                                    ViewerPluginBuilder.openSequenceInDefaultPlugin(seq,
-                                        model == null ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
+                                    ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model, true, true);
                                     return true;
                                 }
                             } else {

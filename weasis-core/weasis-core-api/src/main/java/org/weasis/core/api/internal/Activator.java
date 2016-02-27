@@ -73,9 +73,8 @@ public class Activator implements BundleActivator, ServiceListener {
         jai.setImagingListener(new ImagingListener() {
 
             @Override
-            public boolean errorOccurred(String message, Throwable thrown, Object where, boolean isRetryable)
-                throws RuntimeException {
-                LOGGER.error("JAI error ocurred: {}", message); //$NON-NLS-1$
+            public boolean errorOccurred(String message, Throwable thrown, Object where, boolean isRetryable) {
+                LOGGER.error("JAI Error in {}: {}", where, message, thrown); //$NON-NLS-1$
                 return false;
             }
         });
@@ -110,13 +109,14 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
+        // TODO should be stop in after all bundles implementing preferences
     }
 
     @Override
     public synchronized void serviceChanged(ServiceEvent event) {
-        ServiceReference<?> m_ref = event.getServiceReference();
+        ServiceReference<?> sRef = event.getServiceReference();
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-        Codec codec = (Codec) context.getService(m_ref);
+        Codec codec = (Codec) context.getService(sRef);
         if (codec == null) {
             return;
         }
@@ -134,7 +134,7 @@ public class Activator implements BundleActivator, ServiceListener {
                 BundleTools.CODEC_PLUGINS.remove(codec);
             }
             // Unget service object and null references.
-            context.ungetService(m_ref);
+            context.ungetService(sRef);
         }
     }
 
@@ -147,7 +147,7 @@ public class Activator implements BundleActivator, ServiceListener {
             AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", //$NON-NLS-1$
                 AppProperties.WEASIS_PATH + File.separator + "log" + File.separator + "audit-" //$NON-NLS-1$ //$NON-NLS-2$
                     + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$
-                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null); //$NON-NLS-1$
+                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null, "0"); //$NON-NLS-1$
             AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {
             ServiceReference<ConfigurationAdmin> configurationAdminReference =
@@ -159,7 +159,7 @@ public class Activator implements BundleActivator, ServiceListener {
                     if (logConfiguration == null) {
                         logConfiguration = confAdmin
                             .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
-                        Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
+                        Dictionary<String, Object> loggingProperties = new Hashtable<>();
                         loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); //$NON-NLS-1$ //$NON-NLS-2$
                         // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
                         loggingProperties.put("org.apache.sling.commons.log.names", loggerVal); //$NON-NLS-1$

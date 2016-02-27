@@ -37,6 +37,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
 
     private SliderChangeListener currentAction;
     private final JSliderW slider;
+    private boolean vertical = true;
 
     public MiniTool(String pluginName) {
         super(BUTTON_NAME, pluginName, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.Type.TOOL, 5);
@@ -44,12 +45,11 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         dockable.setTitleShown(false);
         setDockableWidth(40);
         currentAction = getActions()[0];
-        slider = createSlider(currentAction);
+        slider = createSlider(currentAction, vertical);
         jbInit();
     }
 
     private void jbInit() {
-        boolean vertical = true;
         // boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
         setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
 
@@ -79,9 +79,8 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
 
     public abstract SliderChangeListener[] getActions();
 
-    public static JSliderW createSlider(final SliderChangeListener action) {
+    public static JSliderW createSlider(final SliderChangeListener action, boolean vertical) {
         // boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
-        boolean vertical = true;
         JSliderW slider = new JSliderW(action.getMin(), action.getMax(), action.getValue());
         slider.setdisplayValueInTitle(false);
         slider.setInverted(vertical);

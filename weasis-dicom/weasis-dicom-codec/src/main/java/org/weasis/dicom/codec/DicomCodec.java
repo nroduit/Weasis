@@ -12,6 +12,7 @@ package org.weasis.dicom.codec;
 
 import java.net.URI;
 import java.util.Hashtable;
+import java.util.List;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
@@ -43,7 +44,8 @@ public class DicomCodec implements Codec {
     public static final BulkDataDescriptor BULKDATA_DESCRIPTOR = new BulkDataDescriptor() {
 
         @Override
-        public boolean isBulkData(String privateCreator, int tag, VR vr, int length, ItemPointer... itemPointer) {
+        public boolean isBulkData(List<ItemPointer> itemPointer,
+            String privateCreator, int tag, VR vr, int length) {
             switch (TagUtils.normalizeRepeatingGroup(tag)) {
                 case Tag.PixelDataProviderURL:
                 case Tag.AudioSampleData:
@@ -52,9 +54,9 @@ public class DicomCodec implements Codec {
                 case Tag.OverlayData:
                 case Tag.EncapsulatedDocument:
                 case Tag.PixelData:
-                    return itemPointer.length == 0;
+                    return itemPointer.isEmpty();
                 case Tag.WaveformData:
-                    return itemPointer.length == 1 && itemPointer[0].sequenceTag == Tag.WaveformSequence;
+                    return itemPointer.size() == 1 && itemPointer.get(0).sequenceTag == Tag.WaveformSequence;
             }
             if (TagUtils.isPrivateTag(tag)) {
                 return length > 5000; // Do no read in memory private value more than 5 KB

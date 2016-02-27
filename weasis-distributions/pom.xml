@@ -35,9 +35,9 @@
 		<felix.scr.version>2.0.2</felix.scr.version>
 		<felix.metatype.version>1.1.2</felix.metatype.version>
 		<slf4j.version>1.7.5</slf4j.version>
-		<sling.commons.log.version>3.0.2-r1</sling.commons.log.version>
+		<sling.commons.log.version>3.0.2-r2</sling.commons.log.version>
 
-		<dockingframes.version>1.1.2-P14e</dockingframes.version>
+		<dockingframes.version>1.1.2-P16a</dockingframes.version>
 		<substance.version>7.3</substance.version>
 		<jai.version>1.1.4-b07</jai.version>
 		<jai.native.version>1.1.4-b03</jai.native.version>
@@ -52,13 +52,19 @@
 
 		<windowsName>weasis-native</windowsName>
 	</properties>
-
+	
+	<pluginRepositories>
+		<pluginRepository>
+			<id>mvn-repo-master</id>
+			<url>https://raw.github.com/nroduit/mvn-repo/master/</url>
+		</pluginRepository>
+	</pluginRepositories>
+	
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.10</version>
 				<executions>
 					<execution>
 						<id>copy-bundles</id>

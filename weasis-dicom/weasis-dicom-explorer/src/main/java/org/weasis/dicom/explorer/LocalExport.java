@@ -79,11 +79,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
     public static final String LAST_DIR = "lastExportDir";//$NON-NLS-1$
-    private static final String INC_DICOMDIR = "exp.include.dicomdir";//$NON-NLS-1$
-    private static final String KEEP_INFO_DIR = "exp.keep.dir.name";//$NON-NLS-1$
-    private static final String IMG_QUALITY = "exp.img.quality";//$NON-NLS-1$
-    private static final String HEIGHT_BITS = "exp.8bis";//$NON-NLS-1$
-    private static final String CD_COMPATIBLE = "exp.cd";//$NON-NLS-1$
+    public static final String INC_DICOMDIR = "exp.include.dicomdir";//$NON-NLS-1$
+    public static final String KEEP_INFO_DIR = "exp.keep.dir.name";//$NON-NLS-1$
+    public static final String IMG_QUALITY = "exp.img.quality";//$NON-NLS-1$
+    public static final String HEIGHT_BITS = "exp.8bis";//$NON-NLS-1$
+    public static final String CD_COMPATIBLE = "exp.cd";//$NON-NLS-1$
 
     public static final String[] EXPORT_FORMAT = { "DICOM", "DICOM ZIP", "JPEG", "PNG", "TIFF" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 

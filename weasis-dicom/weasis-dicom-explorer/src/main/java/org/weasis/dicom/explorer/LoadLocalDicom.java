@@ -18,7 +18,6 @@ import java.util.Iterator;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
@@ -135,11 +134,11 @@ public class LoadLocalDicom extends ExplorerTask {
     private SeriesThumbnail buildDicomStructure(DicomMediaIO dicomReader, boolean open) {
         SeriesThumbnail thumb = null;
         String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
-        MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
+        MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
         if (patient == null) {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             dicomReader.writeMetaData(patient);
-            dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
+            dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
             LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
         }
 
