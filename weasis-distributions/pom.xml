@@ -50,7 +50,14 @@
 
 		<windowsName>weasis-native</windowsName>
 	</properties>
-
+	
+	<pluginRepositories>
+		<pluginRepository>
+			<id>mvn-repo-master</id>
+			<url>https://raw.github.com/nroduit/mvn-repo/master/</url>
+		</pluginRepository>
+	</pluginRepositories>
+	
 	<build>
 		<plugins>
 			<plugin>
