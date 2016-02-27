@@ -398,7 +398,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                             int bitsPerSample = attritutes.getInt(Tag.WaveformBitsAllocated, 0);
                             String spInterpretation = attritutes.getString(Tag.WaveformSampleInterpretation, 0);
 
-                            in = new DcmAudioStream(new FileInputStream(dcmAudio.getFile()), bulkData.offset());
+                            in = new DcmAudioStream(new FileInputStream(dcmAudio.getFile()), bulkData.offset);
                             // StreamUtils.skipFully(in, bulkData.offset);
                             // StreamUtils.copy(in, outData, bulkData.length);
 
@@ -428,7 +428,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                             }
 
                             AudioInputStream audioInputStream =
-                                new AudioInputStream(in, audioFormat, bulkData.length() / audioFormat.getFrameSize());
+                                new AudioInputStream(in, audioFormat, bulkData.length / audioFormat.getFrameSize());
                             return audioInputStream;
                         } catch (Exception e) {
                             e.printStackTrace();

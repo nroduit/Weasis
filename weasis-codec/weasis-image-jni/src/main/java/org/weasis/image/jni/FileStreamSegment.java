@@ -123,7 +123,7 @@ public class FileStreamSegment {
             return;
         }
         // Not a good practice but necessary to remove the dependency with dcm4che lib
-        if ("org.dcm4che3.imageio.stream.SegmentedImageInputStream".equals(iis.getClass().getName())) {
+        if ("org.dcm4che3.imageio.stream.SegmentedInputImageStream".equals(iis.getClass().getName())) {
             try {
                 Class<? extends ImageInputStream> clazz = iis.getClass();
                 Field f_stream = clazz.getDeclaredField("stream");
@@ -208,6 +208,8 @@ public class FileStreamSegment {
         } else if (iis instanceof MemoryCacheImageInputStream) {
             // TODO load in inputBuffer
             throw new IllegalArgumentException("No adaptor implemented yet for MemoryCacheImageInputStream");
+        } else {
+            throw new IllegalArgumentException("No stream adaptor found!");
         }
     }
 

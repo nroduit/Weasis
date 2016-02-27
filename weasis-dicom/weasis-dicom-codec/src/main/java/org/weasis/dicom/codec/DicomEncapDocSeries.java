@@ -68,8 +68,8 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                         File file = File.createTempFile("encap_", "." + extension, AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                         in = new FileInputStream(dcmEnc.getFile());
                         out = new FileOutputStream(file);
-                        StreamUtils.skipFully(in, bulkData.offset());
-                        StreamUtils.copy(in, out, bulkData.length());
+                        StreamUtils.skipFully(in, bulkData.offset);
+                        StreamUtils.copy(in, out, bulkData.length);
                         dcmEnc.setDocument(file);
                         this.add(dcmEnc);
                     } catch (Exception e) {
