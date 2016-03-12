@@ -108,9 +108,9 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private MediaSeries<?> currentSeries;
     private boolean anonymize = false;
 
-    private final static Highlighter.HighlightPainter searchHighlightPainter =
+    private static final Highlighter.HighlightPainter searchHighlightPainter =
         new SearchHighlightPainter(new Color(255, 125, 0));
-    private final static Highlighter.HighlightPainter searchResultHighlightPainter =
+    private static final Highlighter.HighlightPainter searchResultHighlightPainter =
         new SearchHighlightPainter(Color.YELLOW);
 
     public DicomFieldsView() {
@@ -206,31 +206,34 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
     private void displayAllDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
         StyledDocument doc = jTextPaneAll.getStyledDocument();
+        int oldCaretPosition = jTextPaneAll.getCaretPosition();
         try {
             // clear previous text
             doc.remove(0, doc.getLength());
             if (media != null) {
-                MediaReader loader = media.getMediaReader();
+                MediaReader<?> loader = media.getMediaReader();
                 if (loader instanceof DicomMediaIO) {
                     DicomMetaData metaData = null;
                     try {
                         metaData = (DicomMetaData) ((DicomMediaIO) loader).getStreamMetadata();
                     } catch (IOException e) {
-                        LOGGER.error(e.getMessage());
+                        LOGGER.error("Get metadata", e);
                     }
                     if (metaData != null) {
                         printAttribute(metaData.getFileMetaInformation(), doc);
                         printAttribute(metaData.getAttributes(), doc);
                     }
                 } else if (loader instanceof DcmMediaReader) {
-                    printAttribute(((DcmMediaReader) loader).getDicomObject(), doc);
+                    printAttribute(((DcmMediaReader<?>) loader).getDicomObject(), doc);
                 }
                 // Remove first return
                 doc.remove(0, 1);
             }
-        } catch (BadLocationException ble) {
-            ble.getStackTrace();
+        } catch (BadLocationException e) {
+            LOGGER.error("Clear document", e);
         }
+        oldCaretPosition = oldCaretPosition > doc.getLength() ? doc.getLength() : oldCaretPosition;
+        jTextPaneAll.setCaretPosition(oldCaretPosition);
         allPane.setViewportView(jTextPaneAll);
     }
 
@@ -269,7 +272,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
         Sequence seq = dcmObj.getSequence(tag);
         if (seq != null) {
-            if (seq.size() > 0) {
+            if (!seq.isEmpty()) {
                 printSequence(seq, doc, buf);
             } else {
                 buf.insert(0, "\n"); //$NON-NLS-1$
@@ -345,34 +348,36 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
 
     private void displayLimitedDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
-
         StyledDocument doc = jTextPaneLimited.getStyledDocument();
+        int oldCaretPosition = jTextPaneLimited.getCaretPosition();
         try {
             // clear previous text
             doc.remove(0, doc.getLength());
-            if (media != null) {
-                DataExplorerView dicomView = org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
+        } catch (BadLocationException e) {
+            LOGGER.error("Clear document", e);
+        }
+        if (media != null) {
+            DataExplorerView dicomView = org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
 
-                if (dicomView != null) {
-                    DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
+            if (dicomView != null) {
+                DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
 
-                    MediaReader loader = media.getMediaReader();
-                    if (loader instanceof DcmMediaReader) {
-                        writeItems(Messages.getString("DicomFieldsView.pat"), PATIENT, //$NON-NLS-1$
-                            model.getParent(series, DicomModel.patient), doc);
-                        writeItems(Messages.getString("DicomFieldsView.station"), STATION, series, doc); //$NON-NLS-1$
-                        writeItems(Messages.getString("DicomFieldsView.study"), STUDY, //$NON-NLS-1$
-                            model.getParent(series, DicomModel.study), doc);
-                        writeItems(Messages.getString("DicomFieldsView.series"), SERIES, series, doc); //$NON-NLS-1$
-                        writeItems(Messages.getString("DicomFieldsView.object"), IMAGE, null, doc); //$NON-NLS-1$
-                        writeItems(Messages.getString("DicomFieldsView.plane"), IMAGE_PLANE, null, doc); //$NON-NLS-1$
-                        writeItems(Messages.getString("DicomFieldsView.acqu"), IMAGE_ACQ, null, doc); //$NON-NLS-1$
-                    }
+                MediaReader loader = media.getMediaReader();
+                if (loader instanceof DcmMediaReader) {
+                    writeItems(Messages.getString("DicomFieldsView.pat"), PATIENT, //$NON-NLS-1$
+                        model.getParent(series, DicomModel.patient), doc);
+                    writeItems(Messages.getString("DicomFieldsView.station"), STATION, series, doc); //$NON-NLS-1$
+                    writeItems(Messages.getString("DicomFieldsView.study"), STUDY, //$NON-NLS-1$
+                        model.getParent(series, DicomModel.study), doc);
+                    writeItems(Messages.getString("DicomFieldsView.series"), SERIES, series, doc); //$NON-NLS-1$
+                    writeItems(Messages.getString("DicomFieldsView.object"), IMAGE, null, doc); //$NON-NLS-1$
+                    writeItems(Messages.getString("DicomFieldsView.plane"), IMAGE_PLANE, null, doc); //$NON-NLS-1$
+                    writeItems(Messages.getString("DicomFieldsView.acqu"), IMAGE_ACQ, null, doc); //$NON-NLS-1$
                 }
             }
-        } catch (BadLocationException ble) {
-            ble.getStackTrace();
         }
+        oldCaretPosition = oldCaretPosition > doc.getLength() ? doc.getLength() : oldCaretPosition;
+        jTextPaneLimited.setCaretPosition(oldCaretPosition);
         limitedPane.setViewportView(jTextPaneLimited);
     }
 
@@ -392,7 +397,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                             StringUtil.COLON_AND_SPACE + TagW.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$
                     }
                 } catch (BadLocationException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Writing textissue", e);
                 }
             }
         }
@@ -401,7 +406,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 String formatTitle = PATIENT == tags ? title + "\n" : "\n" + title + "\n"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 doc.insertString(insertTitle, formatTitle, doc.getStyle("title")); //$NON-NLS-1$
             } catch (BadLocationException e) {
-                e.printStackTrace();
+                LOGGER.error("Writing text issue", e);
             }
         }
     }
@@ -453,7 +458,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
 
     static class SearchPanel extends JPanel {
-        private final List<Integer> searchPostions = new ArrayList<Integer>();
+        private final List<Integer> searchPostions = new ArrayList<>();
         private final JTextComponent textComponent;
         private int currentSearchIndex = 0;
         private String currentSearchPattern;
@@ -474,11 +479,12 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 public void actionPerformed(ActionEvent evt) {
                     currentSearchPattern = tf.getText().trim();
                     highlight(currentSearchPattern);
-                    if (searchPostions.size() > 0) {
+                    if (!searchPostions.isEmpty()) {
                         try {
                             textComponent.scrollRectToVisible(textComponent.modelToView(searchPostions.get(0)));
                             textComponent.requestFocusInWindow();
                         } catch (BadLocationException e) {
+                            LOGGER.error("Scroll to highight", e);
                         }
                     }
                 }
@@ -528,14 +534,14 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
 
         private void previous() {
-            if (searchPostions.size() > 0) {
+            if (!searchPostions.isEmpty()) {
                 currentSearchIndex = currentSearchIndex <= 0 ? searchPostions.size() - 1 : currentSearchIndex - 1;
                 showCurrentSearch(currentSearchPattern);
             }
         }
 
         private void next() {
-            if (searchPostions.size() > 0) {
+            if (!searchPostions.isEmpty()) {
                 currentSearchIndex = currentSearchIndex >= searchPostions.size() - 1 ? 0 : currentSearchIndex + 1;
                 showCurrentSearch(currentSearchPattern);
             }
@@ -549,19 +555,20 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     Highlighter hilite = textComponent.getHighlighter();
                     Document doc = textComponent.getDocument();
                     String text = doc.getText(0, doc.getLength()).toUpperCase();
-                    pattern = pattern.toUpperCase();
+                    String patternUp = pattern.toUpperCase();
                     int pos = 0;
 
-                    while ((pos = text.indexOf(pattern, pos)) >= 0) {
-                        if (searchPostions.size() == 0) {
-                            hilite.addHighlight(pos, pos + pattern.length(), searchHighlightPainter);
+                    while ((pos = text.indexOf(patternUp, pos)) >= 0) {
+                        if (searchPostions.isEmpty()) {
+                            hilite.addHighlight(pos, pos + patternUp.length(), searchHighlightPainter);
                         } else {
-                            hilite.addHighlight(pos, pos + pattern.length(), searchResultHighlightPainter);
+                            hilite.addHighlight(pos, pos + patternUp.length(), searchResultHighlightPainter);
                         }
                         searchPostions.add(pos);
-                        pos += pattern.length();
+                        pos += patternUp.length();
                     }
                 } catch (BadLocationException e) {
+                    LOGGER.error("Highight result of search", e);
                 }
             }
         }
@@ -576,7 +583,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
 
         public void showCurrentSearch(String pattern) {
-            if (searchPostions.size() > 0 && StringUtil.hasText(pattern)) {
+            if (!searchPostions.isEmpty() && StringUtil.hasText(pattern)) {
                 removeHighlights(textComponent);
 
                 try {
@@ -595,6 +602,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     }
                     textComponent.scrollRectToVisible(textComponent.modelToView(curPos));
                 } catch (BadLocationException e) {
+                    LOGGER.error("Highight result of search", e);
                 }
             }
         }
