@@ -122,7 +122,7 @@ public class GeometryOfSlice {
         normal.normalize();
         normalArray = new double[3];
         normal.get(normalArray);
-        normalArray[2] = normalArray[2] * -1;
+        // normalArray[2] = normalArray[2] * -1;
         normal = new Vector3d(normalArray);
     }
 
