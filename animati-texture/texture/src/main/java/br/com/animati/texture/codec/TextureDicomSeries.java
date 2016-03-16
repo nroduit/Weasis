@@ -525,7 +525,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     public GeometryOfSlice getSliceGeometry(int currentSlice) {
         Object media = getSeries().getMedia(currentSlice - 1, null, seriesComparator);
         if (media instanceof DicomImageElement) {
-            return ((DicomImageElement) media).getSliceGeometry();
+            return ((DicomImageElement) media).getDispSliceGeometry();
         }
         return null;
     }
