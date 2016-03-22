@@ -1155,11 +1155,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                             && hasSameSize(series, s)) {
                                             // If the image has the same reference and the same spatial calibration, all
                                             // the actions are synchronized
-                                            if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
+                                            if (oldSynch == null || oldSynch.isOriginal()
+                                                || !oldSynch.getMode().equals(synch.getMode())) {
                                                 oldSynch = synch.clone();
                                             }
                                         } else {
-                                            if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
+                                            if (oldSynch == null || oldSynch.isOriginal()
+                                                || !oldSynch.getMode().equals(synch.getMode())) {
                                                 oldSynch = synch.clone();
                                                 for (Entry<String, Boolean> a : oldSynch.getActions().entrySet()) {
                                                     a.setValue(false);
@@ -1170,11 +1172,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                     } else {
                                         pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
                                         if (pane instanceof MprView) {
-                                            if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
+                                            if (oldSynch == null || oldSynch.isOriginal()
+                                                || !oldSynch.getMode().equals(synch.getMode())) {
                                                 oldSynch = synch.clone();
                                             }
                                         } else {
-                                            if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
+                                            if (oldSynch == null || oldSynch.isOriginal()
+                                                || !oldSynch.getMode().equals(synch.getMode())) {
                                                 oldSynch = synch.clone();
                                                 for (Entry<String, Boolean> a : oldSynch.getActions().entrySet()) {
                                                     a.setValue(false);
