@@ -16,12 +16,14 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.border.TitledBorder;
+import org.apache.commons.io.FileUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,18 +117,33 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
     public static void loadDicomZip(File file, DicomModel dicomModel) {
         if (file != null) {
             ArrayList<LoadSeries> loadSeries = null;
+            File dir = null;
             if (file.canRead()) {
-                File dir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip")); //$NON-NLS-1$ //$NON-NLS-2$
+                dir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip")); //$NON-NLS-1$ //$NON-NLS-2$
                 try {
                     FileUtil.unzip(file, dir);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                DicomDirLoader dirImport = new DicomDirLoader(new File(dir, "DICOMDIR"), dicomModel, false); //$NON-NLS-1$
-                loadSeries = dirImport.readDicomDir();
+                
+                // Prevents problems with special characters.
+                Iterator<File> fileIterator = FileUtils.iterateFiles(dir, null, true);
+                while (fileIterator.hasNext()) {
+                    File f = fileIterator.next();
+                    if (f.getName().equals("DICOMDIR")) {
+                        DicomDirLoader dirImport = new DicomDirLoader(f, dicomModel, true);
+                        loadSeries = dirImport.readDicomDir();
+                        break;
+                    }
+                }
             }
             if (loadSeries != null && loadSeries.size() > 0) {
                 DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, dicomModel));
+            } else if (dir != null) {
+                // Has files, but not a DICOMDIR.
+                File[] files = new File[] { dir };
+                LoadLocalDicom dicom = new LoadLocalDicom(files, true, dicomModel);
+                DicomModel.loadingExecutor.execute(dicom);
             } else {
                 LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
             }
