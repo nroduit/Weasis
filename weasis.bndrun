@@ -75,7 +75,7 @@
 	weasis-jpeg-codec;version='[2.5.0,2.5.1)',\
 	weasis-jpeg-codec-linux-x86-64;version='[1.0.3,1.0.4)',\
 	weasis-openjpeg-codec;version='[2.5.0,2.5.1)',\
-	weasis-openjpeg-codec-linux-x86-64;version='[2.1.4,2.1.5)'
+	weasis-openjpeg-codec-linux-x86-64;version='[2.1.5,2.1.6)'
 
 -runrequires: \
 	osgi.identity;filter:='(osgi.identity=org.apache.felix.gogo.runtime)',\
