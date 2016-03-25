@@ -133,7 +133,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public static final String PREFERENCE_NODE = "dicom.explorer"; //$NON-NLS-1$
     public static final String BUTTON_NAME = Messages.getString("DicomExplorer.btn_title"); //$NON-NLS-1$
     public static final String DESCRIPTION = Messages.getString("DicomExplorer.desc"); //$NON-NLS-1$
-    // private static final JMenuItem openDicomMenu = new JMenuItem(OpenMediaAction.getInstance());
     public static final String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat"); //$NON-NLS-1$
     public static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st"); //$NON-NLS-1$
     public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
@@ -141,11 +140,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private JPanel panel = null;
     private PatientPane selectedPatient = null;
 
-    private final List<PatientPane> patientPaneList = new ArrayList<PatientPane>();
-    private final HashMap<MediaSeriesGroup, List<StudyPane>> patient2study =
-        new HashMap<MediaSeriesGroup, List<StudyPane>>();
-    private final HashMap<MediaSeriesGroup, List<SeriesPane>> study2series =
-        new HashMap<MediaSeriesGroup, List<SeriesPane>>();
+    private final List<PatientPane> patientPaneList = new ArrayList<>();
+    private final HashMap<MediaSeriesGroup, List<StudyPane>> patient2study = new HashMap<>();
+    private final HashMap<MediaSeriesGroup, List<SeriesPane>> study2series = new HashMap<>();
     private final JScrollPane thumnailView = new JScrollPane();
     private final LoadingPanel loadingPanel = new LoadingPanel();
     private final SeriesSelectionModel selectionList;
@@ -180,8 +177,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             }
         }
     };
-    private final JComboBox patientCombobox = new JComboBox(modelPatient);
-    private final JComboBox studyCombobox = new JComboBox(modelStudy);
+    private final JComboBox<?> patientCombobox = new JComboBox<>(modelPatient);
+    private final JComboBox<?> studyCombobox = new JComboBox<>(modelStudy);
     protected final PatientContainerPane patientContainer = new PatientContainerPane();
     private final transient ItemListener patientChangeListener = new ItemListener() {
 
@@ -286,6 +283,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     modelStudy.removeAllElements();
                     modelStudy.insertElementAt(ALL_STUDIES, 0);
                     modelStudy.setSelectedItem(ALL_STUDIES);
+                    koOpen.setVisible(false);
                 }
                 return;
             }
@@ -300,7 +298,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 StudyPane st = studies.get(i);
                 if (st.isStudy(study)) {
                     studies.remove(i);
-                    if (studies.size() == 0) {
+                    if (studies.isEmpty()) {
                         patient2study.remove(patient);
                         // throw a new event for removing the patient
                         model.removePatient(patient);
@@ -329,7 +327,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 SeriesPane se = seriesList.get(j);
                 if (se.isSeries(series)) {
                     seriesList.remove(j);
-                    if (seriesList.size() == 0) {
+                    if (seriesList.isEmpty()) {
                         study2series.remove(study);
                         // throw a new event for removing the patient
                         model.removeStudy(study);
