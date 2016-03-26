@@ -16,7 +16,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.AudioVideoElement;
 import org.weasis.core.api.media.data.TagW;
 
-public class DicomVideoElement extends AudioVideoElement {
+public class DicomVideoElement extends AudioVideoElement  implements FileExtractor {
 
     public static final String MPEG_MIMETYPE = "video/mpeg"; //$NON-NLS-1$
 
@@ -51,11 +51,12 @@ public class DicomVideoElement extends AudioVideoElement {
         return pixelSpacingUnit;
     }
 
-    public File getVideoFile() {
-        return videoFile;
-    }
-
     public void setVideoFile(File videoFile) {
         this.videoFile = videoFile;
+    }
+
+    @Override
+    public File getExtractFile() {
+        return videoFile;
     }
 }

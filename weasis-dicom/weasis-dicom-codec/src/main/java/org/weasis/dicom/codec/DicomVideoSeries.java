@@ -127,7 +127,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
     public File getExtractFile() {
         DicomVideoElement media = getMedia(MEDIA_POSITION.FIRST, null, null);
         if (media != null) {
-            return media.getVideoFile();
+            return media.getExtractFile();
         }
         return null;
     }

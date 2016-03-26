@@ -56,7 +56,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                 Attributes ds = dicomImageLoader.getDicomObject();
                 String mime = ds.getString(Tag.MIMETypeOfEncapsulatedDocument);
                 List<String> extensions = MimeInspector.getExtensions(mime);
-                if (extensions.size() > 0) {
+                if (!extensions.isEmpty()) {
                     extension = extensions.get(0);
                 }
                 Object data = dicomImageLoader.getDicomObject().getValue(Tag.EncapsulatedDocument);
@@ -114,7 +114,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     public File getExtractFile() {
         DicomEncapDocElement media = getMedia(MEDIA_POSITION.FIRST, null, null);
         if (media != null) {
-            return media.getDocument();
+            return media.getExtractFile();
         }
         return null;
     }
