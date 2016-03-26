@@ -75,8 +75,8 @@ public class ExportTree extends JScrollPane {
         // -- checkingMode is alreadySet inDicomExport
 
         if (checkingPaths != null && checkingPaths.length > 0) {
-            Set<TreePath> seriesPathsSet = new HashSet<TreePath>(checkingPaths.length);
-            Set<TreePath> studyPathsSet = new HashSet<TreePath>();
+            Set<TreePath> seriesPathsSet = new HashSet<>(checkingPaths.length);
+            Set<TreePath> studyPathsSet = new HashSet<>();
 
             for (TreePath checkingPath : checkingPaths) {
                 if (checkingPath.getPathCount() == 4) { // 4 stands for Series Level

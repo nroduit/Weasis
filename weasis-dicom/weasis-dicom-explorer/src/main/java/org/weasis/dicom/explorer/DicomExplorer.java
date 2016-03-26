@@ -1028,14 +1028,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         return panel_1;
     }
 
-    @SuppressWarnings("rawtypes")
     public Set<Series> getSelectedPatientOpenSeries() {
         return getPatientOpenSeries(selectedPatient.patient);
     }
 
-    @SuppressWarnings("rawtypes")
     public Set<Series> getPatientOpenSeries(MediaSeriesGroup patient) {
-        Set<Series> openSeriesSet = new LinkedHashSet<Series>();
+        Set<Series> openSeriesSet = new LinkedHashSet<>();
 
         if (patient != null) {
             synchronized (model) {

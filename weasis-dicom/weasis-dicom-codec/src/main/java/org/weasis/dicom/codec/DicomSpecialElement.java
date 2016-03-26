@@ -107,7 +107,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                     out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                     return true;
                 } catch (IOException e) {
-                    LOGGER.error("Cannot write dicom ({}): {}", getLabel(), e.getMessage()); //$NON-NLS-1$
+                    LOGGER.error("Cannot write dicom ({}): {}", getLabel(), e); //$NON-NLS-1$
                 } finally {
                     FileUtil.safeClose(out);
                 }
@@ -222,7 +222,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                     || koElement.getMediaReader().isEditableDicom()) {
 
                     if (koElementSet == null) {
-                        koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DATE);
+                        koElementSet = new TreeSet<>(ORDER_BY_DATE);
                     }
                     koElementSet.add(koElement);
                 }
@@ -251,7 +251,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                     || koElement.getMediaReader().isEditableDicom()) {
 
                     if (koElementSet == null) {
-                        koElementSet = new TreeSet<RejectedKOSpecialElement>(ORDER_BY_DATE);
+                        koElementSet = new TreeSet<>(ORDER_BY_DATE);
                     }
                     koElementSet.add(koElement);
                 }
@@ -260,8 +260,8 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         return koElementSet;
     }
 
-    public static final RejectedKOSpecialElement getRejectionKoSpecialElement(Collection<DicomSpecialElement> specialElements,
-        String seriesUID, String sopUID, Integer frameNumber) {
+    public static final RejectedKOSpecialElement getRejectionKoSpecialElement(
+        Collection<DicomSpecialElement> specialElements, String seriesUID, String sopUID, Integer frameNumber) {
 
         if (specialElements == null) {
             return null;
@@ -271,7 +271,8 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         for (DicomSpecialElement element : specialElements) {
             if (element instanceof RejectedKOSpecialElement) {
                 RejectedKOSpecialElement koElement = (RejectedKOSpecialElement) element;
-                if (isSopuidInReferencedSeriesSequence(koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID, frameNumber)) {
+                if (isSopuidInReferencedSeriesSequence(koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID,
+                    frameNumber)) {
                     if (koList == null) {
                         koList = new ArrayList<RejectedKOSpecialElement>();
                     }
@@ -306,7 +307,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                     frameNumber)) {
 
                     if (prList == null) {
-                        prList = new ArrayList<PRSpecialElement>();
+                        prList = new ArrayList<>();
                     }
                     prList.add(prElement);
 
@@ -314,13 +315,12 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
             }
         }
         if (prList != null) {
-            // Collections.sort(koElementSet, ORDER_BY_DESCRIPTION);
             Collections.sort(prList, ORDER_BY_DATE);
         }
         return prList;
     }
 
-    public final static SeriesComparator<DicomSpecialElement> ORDER_BY_DESCRIPTION =
+    public static final SeriesComparator<DicomSpecialElement> ORDER_BY_DESCRIPTION =
         new SeriesComparator<DicomSpecialElement>() {
             @Override
             public int compare(DicomSpecialElement arg0, DicomSpecialElement arg1) {
@@ -328,7 +328,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
             }
         };
 
-    public final static SeriesComparator<DicomSpecialElement> ORDER_BY_DATE =
+    public static final SeriesComparator<DicomSpecialElement> ORDER_BY_DATE =
         new SeriesComparator<DicomSpecialElement>() {
 
             @Override

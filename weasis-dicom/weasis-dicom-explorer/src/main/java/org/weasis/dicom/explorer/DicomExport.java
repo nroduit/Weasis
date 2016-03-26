@@ -98,13 +98,13 @@ public class DicomExport extends AbstractWizardDialog {
 
     @Override
     protected void initializePages() {
-        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        Hashtable<String, Object> properties = new Hashtable<>();
         properties.put(dicomModel.getClass().getName(), dicomModel);
         properties.put(treeModel.getClass().getName(), treeModel);
 
         initTreeCheckingModel();
 
-        ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
+        ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
         list.add(new LocalExport(dicomModel, treeModel));
 
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -142,12 +142,11 @@ public class DicomExport extends AbstractWizardDialog {
         DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
         if (explorer instanceof DicomExplorer) {
 
-            @SuppressWarnings("rawtypes")
             Set<Series> openSeriesSet = ((DicomExplorer) explorer).getSelectedPatientOpenSeries();
             Object rootNode = treeModel.getModel().getRoot();
 
             if (openSeriesSet.size() > 0 && rootNode instanceof DefaultMutableTreeNode) {
-                List<TreePath> selectedSeriesPathsList = new ArrayList<TreePath>();
+                List<TreePath> selectedSeriesPathsList = new ArrayList<>();
 
                 for (Enumeration<DefaultMutableTreeNode> enumTreeNode =
                     ((DefaultMutableTreeNode) rootNode).breadthFirstEnumeration(); enumTreeNode.hasMoreElements();) {
@@ -185,8 +184,8 @@ public class DicomExport extends AbstractWizardDialog {
             }
             try {
                 selectedPage.exportDICOM(treeModel, null);
-            } catch (IOException e1) {
-                LOGGER.error("DICOM export failed", e1.getMessage()); //$NON-NLS-1$
+            } catch (IOException e) {
+                LOGGER.error("DICOM export failed", e); //$NON-NLS-1$
             }
         }
     }
