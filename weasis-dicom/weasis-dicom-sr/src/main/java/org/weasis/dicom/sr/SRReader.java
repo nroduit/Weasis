@@ -228,7 +228,7 @@ public class SRReader {
                 Attributes val = c.getMeasuredValue();
                 if (val != null) {
                     html.append(val.getFloat(Tag.NumericValue, 0.0f));
-                    Attributes item = dcmItems.getNestedDataset(Tag.MeasurementUnitsCodeSequence);
+                    Attributes item = val.getNestedDataset(Tag.MeasurementUnitsCodeSequence);
                     if (item != null) {
                         Code unit = new Code(item);
                         html.append(" "); //$NON-NLS-1$
