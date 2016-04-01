@@ -28,6 +28,7 @@ import com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageWriterCodecLibSpi;
 import com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageWriterSpi;
 import com.sun.media.imageioimpl.plugins.png.CLibPNGImageReaderSpi;
 import com.sun.media.imageioimpl.plugins.png.CLibPNGImageWriterSpi;
+import com.sun.media.imageioimpl.plugins.pnm.PNMImageReaderSpi;
 import com.sun.media.imageioimpl.plugins.pnm.PNMImageWriterSpi;
 import com.sun.media.imageioimpl.plugins.raw.RawImageReaderSpi;
 import com.sun.media.imageioimpl.plugins.raw.RawImageWriterSpi;
@@ -52,10 +53,11 @@ public class Activator implements BundleActivator {
 
         Class[] jaiCodecs = { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class,
             CLibJPEGImageReaderSpi.class, CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class,
-            J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class, BMPImageReaderSpi.class, RawImageReaderSpi.class,
-            TIFFImageReaderSpi.class, CLibJPEGImageWriterSpi.class, CLibPNGImageWriterSpi.class,
-            J2KImageWriterSpi.class, J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class,
-            GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
+            J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class, BMPImageReaderSpi.class, PNMImageReaderSpi.class,
+            RawImageReaderSpi.class, TIFFImageReaderSpi.class, CLibJPEGImageWriterSpi.class,
+            CLibPNGImageWriterSpi.class, J2KImageWriterSpi.class, J2KImageWriterCodecLibSpi.class,
+            WBMPImageWriterSpi.class, BMPImageWriterSpi.class, GIFImageWriterSpi.class, PNMImageWriterSpi.class,
+            RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
             ImageioUtil.registerServiceProvider(c);
@@ -73,10 +75,11 @@ public class Activator implements BundleActivator {
 
         Class[] jaiCodecs = { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class,
             CLibJPEGImageReaderSpi.class, CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class,
-            J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class, BMPImageReaderSpi.class, RawImageReaderSpi.class,
-            TIFFImageReaderSpi.class, CLibJPEGImageWriterSpi.class, CLibPNGImageWriterSpi.class,
-            J2KImageWriterSpi.class, J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class,
-            GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
+            J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class, BMPImageReaderSpi.class, PNMImageReaderSpi.class,
+            RawImageReaderSpi.class, TIFFImageReaderSpi.class, CLibJPEGImageWriterSpi.class,
+            CLibPNGImageWriterSpi.class, J2KImageWriterSpi.class, J2KImageWriterCodecLibSpi.class,
+            WBMPImageWriterSpi.class, BMPImageWriterSpi.class, GIFImageWriterSpi.class, PNMImageWriterSpi.class,
+            RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
             ImageioUtil.unRegisterServiceProvider(c);
