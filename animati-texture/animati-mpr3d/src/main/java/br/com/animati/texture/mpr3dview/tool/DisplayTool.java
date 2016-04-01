@@ -65,8 +65,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     private DefaultMutableTreeNode dicomInfo;
     private DefaultMutableTreeNode drawings;
+    private DefaultMutableTreeNode minAnnotations;
     private TreePath rootPath;
-    private JPanel panel_foot;
+    private JPanel panelFoot;
 
     public DisplayTool(String pluginName) {
         super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 10);
@@ -85,6 +86,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
         dicomInfo = new DefaultMutableTreeNode(DICOM_ANNOTATIONS, true);
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ANNOTATIONS, true));
+        minAnnotations = new DefaultMutableTreeNode(AnnotationsLayer.MIN_ANNOTATIONS, false);
+        dicomInfo.add(minAnnotations);
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ANONYM_ANNOTATIONS, false));
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.SCALE, true));
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.IMAGE_ORIENTATION, true));
@@ -145,7 +148,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                                 for (ViewCanvas<DicomImageElement> v : views) {
                                     AnnotationsLayer layer = v.getInfoLayer();
                                     if (layer != null) {
-                                        if (layer.setDisplayPreferencesValue(AnnotationsLayer.MIN_DISPLAY, false)) {
+                                        if (layer.setDisplayPreferencesValue(AnnotationsLayer.MIN_ANNOTATIONS, false)) {
                                             v.getJComponent().repaint();
                                         }
                                         if (selected != v.getInfoLayer().isVisible()) {
@@ -210,13 +213,13 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         expandTree(tree, rootNode);
         add(new JScrollPane(tree), BorderLayout.CENTER);
 
-        panel_foot = new JPanel();
+        panelFoot = new JPanel();
         // To handle selection color with all L&Fs
-        panel_foot.setUI(new javax.swing.plaf.PanelUI() {
+        panelFoot.setUI(new javax.swing.plaf.PanelUI() {
         });
-        panel_foot.setOpaque(true);
-        panel_foot.setBackground(JMVUtils.TREE_BACKROUND);
-        add(panel_foot, BorderLayout.SOUTH);
+        panelFoot.setOpaque(true);
+        panelFoot.setBackground(JMVUtils.TREE_BACKROUND);
+        add(panelFoot, BorderLayout.SOUTH);
     }
 
     private void initPathSelection(TreePath path, boolean selected) {
@@ -312,7 +315,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             ViewCanvas<DicomImageElement> selView = GUIManager.getInstance().getSelectedViewPane();
             // Use an intermediate state of the minimal DICOM information. Triggered only from the shortcut SPACE or I
             boolean minDisp =
-                selView != null && selView.getInfoLayer().getDisplayPreferences(AnnotationsLayer.MIN_DISPLAY);
+                selView != null && selView.getInfoLayer().getDisplayPreferences(AnnotationsLayer.MIN_ANNOTATIONS);
 
             if (checked && !minDisp) {
                 ImageViewerPlugin<DicomImageElement> container = GUIManager.getInstance().getSelectedView2dContainer();
@@ -333,16 +336,19 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                         AnnotationsLayer layer = v.getInfoLayer();
                         if (layer != null) {
                             layer.setVisible(true);
-                            if (layer.setDisplayPreferencesValue(AnnotationsLayer.MIN_DISPLAY, true)) {
+                            if (layer.setDisplayPreferencesValue(AnnotationsLayer.MIN_ANNOTATIONS, true)) {
                                 v.getJComponent().repaint();
                             }
                         }
                     }
                 }
+                model.addCheckingPath(new TreePath(minAnnotations.getPath()));
             } else if (checked) {
                 model.removeCheckingPath(path);
+                model.removeCheckingPath(new TreePath(minAnnotations.getPath()));
             } else {
                 model.addCheckingPath(path);
+                model.removeCheckingPath(new TreePath(minAnnotations.getPath()));
             }
         } else if (EVENT.ADD_LAYER.equals(e)) {
             Object obj = event.getSharedObject();

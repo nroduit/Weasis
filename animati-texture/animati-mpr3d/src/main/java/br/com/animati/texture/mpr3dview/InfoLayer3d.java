@@ -78,7 +78,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
         displayPreferences.put(FRAME, true);
         displayPreferences.put(PRELOADING_BAR, true);
         displayPreferences.put(MODALITY, true);
-        displayPreferences.put(MIN_DISPLAY, false);
+        displayPreferences.put(MIN_ANNOTATIONS, false);
     }
 
     @Override
@@ -116,7 +116,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
         final Rectangle bound = getOwnerBounds();
         final float fontHeight = FontTools.getAccurateFontHeight(g2d);
         float drawY = bound.height - border - 1.5f; // -1.5 for outline
-        boolean hideMin = !getDisplayPreferences(MIN_DISPLAY);
+        boolean hideMin = !getDisplayPreferences(MIN_ANNOTATIONS);
 
         /* Informações no canto inferior esquerdo */
         if (owner instanceof ViewTexture) {
