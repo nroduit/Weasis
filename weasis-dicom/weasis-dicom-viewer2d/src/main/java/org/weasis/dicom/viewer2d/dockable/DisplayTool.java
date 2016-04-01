@@ -74,16 +74,16 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private boolean initPathSelection;
     private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
 
-    private DefaultMutableTreeNode image;
+    private DefaultMutableTreeNode imageNode;
     private DefaultMutableTreeNode dicomInfo;
     private DefaultMutableTreeNode drawings;
-    private DefaultMutableTreeNode min_annotations;
+    private DefaultMutableTreeNode minAnnotations;
     private TreePath rootPath;
-    private JPanel panel_foot;
+    private JPanel panelFoot;
 
     public DisplayTool(String pluginName) {
         super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 10);
-        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
+        dockable.setTitleIcon(new ImageIcon(DisplayTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
         setDockableWidth(210);
 
         tree = new CheckboxTree();
@@ -95,15 +95,15 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     public void iniTree() {
         tree.getCheckingModel().setCheckingMode(CheckingMode.SIMPLE);
-        image = new DefaultMutableTreeNode(IMAGE, true);
-        image.add(new DefaultMutableTreeNode(DICOM_IMAGE_OVERLAY, false));
-        image.add(new DefaultMutableTreeNode(DICOM_SHUTTER, false));
-        image.add(new DefaultMutableTreeNode(DICOM_PIXEL_PADDING, false));
-        rootNode.add(image);
+        imageNode = new DefaultMutableTreeNode(IMAGE, true);
+        imageNode.add(new DefaultMutableTreeNode(DICOM_IMAGE_OVERLAY, false));
+        imageNode.add(new DefaultMutableTreeNode(DICOM_SHUTTER, false));
+        imageNode.add(new DefaultMutableTreeNode(DICOM_PIXEL_PADDING, false));
+        rootNode.add(imageNode);
         dicomInfo = new DefaultMutableTreeNode(DICOM_ANNOTATIONS, true);
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ANNOTATIONS, true));
-        min_annotations = new DefaultMutableTreeNode(AnnotationsLayer.MIN_ANNOTATIONS, false);
-        dicomInfo.add(min_annotations);
+        minAnnotations = new DefaultMutableTreeNode(AnnotationsLayer.MIN_ANNOTATIONS, false);
+        dicomInfo.add(minAnnotations);
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ANONYM_ANNOTATIONS, false));
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.SCALE, true));
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.LUT, true));
@@ -162,7 +162,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     }
                     if (views != null) {
                         if (rootNode.equals(parent)) {
-                            if (image.equals(selObject)) {
+                            if (imageNode.equals(selObject)) {
                                 for (ViewCanvas<DicomImageElement> v : views) {
                                     if (selected != v.getImageLayer().isVisible()) {
                                         v.getImageLayer().setVisible(selected);
@@ -185,7 +185,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                                     v.setDrawingsVisibility(selected);
                                 }
                             }
-                        } else if (image.equals(parent)) {
+                        } else if (imageNode.equals(parent)) {
                             if (selObject != null) {
                                 if (DICOM_IMAGE_OVERLAY.equals(selObject.toString())) {
                                     sendPropertyChangeEvent(views, ActionW.IMAGE_OVERLAY.cmd(), selected);
@@ -245,13 +245,13 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         expandTree(tree, rootNode);
         add(new JScrollPane(tree), BorderLayout.CENTER);
 
-        panel_foot = new JPanel();
+        panelFoot = new JPanel();
         // To handle selection color with all L&Fs
-        panel_foot.setUI(new javax.swing.plaf.PanelUI() {
+        panelFoot.setUI(new javax.swing.plaf.PanelUI() {
         });
-        panel_foot.setOpaque(true);
-        panel_foot.setBackground(JMVUtils.TREE_BACKROUND);
-        add(panel_foot, BorderLayout.SOUTH);
+        panelFoot.setOpaque(true);
+        panelFoot.setBackground(JMVUtils.TREE_BACKROUND);
+        add(panelFoot, BorderLayout.SOUTH);
     }
 
     private void sendPropertyChangeEvent(ArrayList<ViewCanvas<DicomImageElement>> views, String cmd, boolean selected) {
@@ -261,7 +261,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     private void iniDicomView(OpManager disOp, String op, String param, int index) {
-        TreeNode treeNode = image.getChildAt(index);
+        TreeNode treeNode = imageNode.getChildAt(index);
         if (treeNode != null) {
             Boolean val = (Boolean) disOp.getParamValue(op, param);
             initPathSelection(getTreePath(treeNode), val == null ? false : val);
@@ -281,7 +281,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             initPathSelection = true;
             // Image node
             OpManager disOp = view.getDisplayOpManager();
-            initPathSelection(getTreePath(image), view.getImageLayer().isVisible());
+            initPathSelection(getTreePath(imageNode), view.getImageLayer().isVisible());
             iniDicomView(disOp, OverlayOp.OP_NAME, OverlayOp.P_SHOW, 0);
             iniDicomView(disOp, ShutterOp.OP_NAME, ShutterOp.P_SHOW, 1);
             iniDicomView(disOp, WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
@@ -327,22 +327,22 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 Panner<?> panner = view.getPanner();
                 if (panner != null) {
 
-                    // int cps = panel_foot.getComponentCount();
+                    // int cps = panelFoot.getComponentCount();
                     // if (cps > 0) {
-                    // Component cp = panel_foot.getComponent(0);
+                    // Component cp = panelFoot.getComponent(0);
                     // if (cp != panner) {
                     // if (cp instanceof Thumbnail) {
                     // ((Thumbnail) cp).removeMouseAndKeyListener();
                     // }
                     // panner.registerListeners();
-                    // panel_foot.removeAll();
-                    // panel_foot.add(panner);
+                    // panelFoot.removeAll();
+                    // panelFoot.add(panner);
                     // panner.revalidate();
                     // panner.repaint();
                     // }
                     // } else {
                     // panner.registerListeners();
-                    // panel_foot.add(panner);
+                    // panelFoot.add(panner);
                     // }
                 }
             }
@@ -419,13 +419,13 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                         }
                     }
                 }
-                model.addCheckingPath(new TreePath(min_annotations.getPath()));
+                model.addCheckingPath(new TreePath(minAnnotations.getPath()));
             } else if (checked) {
                 model.removeCheckingPath(path);
-                model.removeCheckingPath(new TreePath(min_annotations.getPath()));
+                model.removeCheckingPath(new TreePath(minAnnotations.getPath()));
             } else {
                 model.addCheckingPath(path);
-                model.removeCheckingPath(new TreePath(min_annotations.getPath()));
+                model.removeCheckingPath(new TreePath(minAnnotations.getPath()));
             }
         } else if (EVENT.ADD_LAYER.equals(e)) {
             Object obj = event.getSharedObject();
