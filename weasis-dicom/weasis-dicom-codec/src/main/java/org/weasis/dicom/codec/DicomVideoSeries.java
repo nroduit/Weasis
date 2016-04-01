@@ -13,8 +13,10 @@ package org.weasis.dicom.codec;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.dcm4che3.data.BulkData;
@@ -22,6 +24,8 @@ import org.dcm4che3.data.Fragments;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.StreamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
@@ -29,7 +33,9 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 
-public class DicomVideoSeries extends Series<DicomVideoElement> implements FileExtractor {
+public class DicomVideoSeries extends Series<DicomVideoElement> implements FilesExtractor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomVideoSeries.class);
 
     private int width = 256;
     private int height = 256;
@@ -60,6 +66,9 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
                 Object pixdata = dicomImageLoader.getDicomObject().getValue(Tag.PixelData, holder);
                 if (pixdata instanceof Fragments) {
                     Fragments fragments = (Fragments) pixdata;
+                    // Should have only 2 fragments: 1) compression marker 2) video stream
+                    // One fragment shall contain the whole video stream.
+                    // see http://dicom.nema.org/MEDICAL/Dicom/current/output/chtml/part05/sect_8.2.5.html
                     for (Object data : fragments) {
                         if (data instanceof BulkData) {
                             BulkData bulkData = (BulkData) data;
@@ -74,7 +83,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
                                 dcmVideo.setVideoFile(videoFile);
                                 this.add(dcmVideo);
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                LOGGER.error("Cannot extract video stream", e);
                             } finally {
                                 FileUtil.safeClose(out);
                                 FileUtil.safeClose(in);
@@ -124,12 +133,16 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
     }
 
     @Override
-    public File getExtractFile() {
-        DicomVideoElement media = getMedia(MEDIA_POSITION.FIRST, null, null);
-        if (media != null) {
-            return media.getExtractFile();
+    public List<File> getExtractFiles() {
+        // Should have only one file as all the DicomVideoElement items are split in sub-series
+        List<File> files = new ArrayList<>();
+        Iterable<DicomVideoElement> mediaList = getMedias(null, null);
+        synchronized (this) {
+            for (Iterator<DicomVideoElement> iter = mediaList.iterator(); iter.hasNext();) {
+                DicomVideoElement dcm = iter.next();
+                files.add(dcm.getExtractFile());
+            }
         }
-        return null;
+        return files;
     }
-
 }
