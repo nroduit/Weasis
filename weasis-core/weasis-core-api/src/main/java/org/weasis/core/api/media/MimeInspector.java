@@ -67,7 +67,7 @@ public class MimeInspector {
         InputStream is = MimeInspector.class.getResourceAsStream("/magic.mime"); //$NON-NLS-1$
         if (is != null) {
             try {
-                parse(new InputStreamReader(is, "UTF8")); //$NON-NLS-1$
+                MimeInspector.parse(new InputStreamReader(is, "UTF8")); //$NON-NLS-1$
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {

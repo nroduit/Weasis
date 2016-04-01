@@ -318,16 +318,11 @@ public class DicomMediaUtils {
             return null;
         }
         return dicom.getStrings(tag);
-        // DicomElement element = dicom.get(tag);
-        // if (element == null || element.isEmpty()) {
-        // return defaultValue;
-        // }
-        // return element.getStrings(dicom.getSpecificCharacterSet(), false);
     }
 
     public static Date getDateFromDicomElement(Attributes dicom, int tag, Date defaultValue) {
         if (dicom == null || !dicom.containsValue(tag)) {
-            return null;
+            return defaultValue;
         }
         return dicom.getDate(tag, defaultValue);
     }

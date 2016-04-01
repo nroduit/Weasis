@@ -237,17 +237,23 @@ public class InfoLayer implements AnnotationsLayer {
             drawY -= fontHeight;
             if ("01".equals(dcm.getTagValue(TagW.LossyImageCompression))) { //$NON-NLS-1$
                 double[] rates = (double[]) dcm.getTagValue(TagW.LossyImageCompressionRatio);
-                String[] methods = (String[]) dcm.getTagValue(TagW.LossyImageCompressionMethod);
                 StringBuilder buf =
                     new StringBuilder(Messages.getString("InfoLayer.lossy") + StringUtil.COLON_AND_SPACE);//$NON-NLS-1$
                 if (rates != null && rates.length > 0) {
-                    if (methods != null && methods.length > 0) {
-                        buf.append(methods[0]);
+                    for (int i = 0; i < rates.length; i++) {
+                        if (i > 0) {
+                            buf.append(",");
+                        }
+                        buf.append(" ["); //$NON-NLS-1$
+                        buf.append((int) rates[i]);
+                        buf.append(":1"); //$NON-NLS-1$
+                        buf.append(']');
                     }
-                    buf.append(" ["); //$NON-NLS-1$
-                    buf.append((int) rates[0]);
-                    buf.append(":1"); //$NON-NLS-1$
-                    buf.append(']');
+                } else {
+                    String val = (String) dcm.getTagValue(TagW.DerivationDescription);
+                    if (val != null) {
+                        buf.append(val);
+                    }
                 }
 
                 GraphicLabel.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
