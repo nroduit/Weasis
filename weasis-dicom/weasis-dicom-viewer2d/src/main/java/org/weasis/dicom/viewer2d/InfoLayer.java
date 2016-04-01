@@ -115,7 +115,7 @@ public class InfoLayer implements AnnotationsLayer {
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
         displayPreferences.put(PRELOADING_BAR, true);
-        displayPreferences.put(MIN_DISPLAY, false);
+        displayPreferences.put(MIN_ANNOTATIONS, false);
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
 
@@ -143,7 +143,7 @@ public class InfoLayer implements AnnotationsLayer {
         prefs.put(ROTATION, getDisplayPreferences(ROTATION));
         prefs.put(FRAME, getDisplayPreferences(FRAME));
         prefs.put(PRELOADING_BAR, getDisplayPreferences(PRELOADING_BAR));
-        prefs.put(MIN_DISPLAY, getDisplayPreferences(MIN_DISPLAY));
+        prefs.put(MIN_ANNOTATIONS, getDisplayPreferences(MIN_ANNOTATIONS));
         return layer;
     }
 
@@ -186,7 +186,7 @@ public class InfoLayer implements AnnotationsLayer {
 
         g2.setPaint(color);
 
-        boolean hideMin = !getDisplayPreferences(MIN_DISPLAY);
+        boolean hideMin = !getDisplayPreferences(MIN_ANNOTATIONS);
         final float fontHeight = FontTools.getAccurateFontHeight(g2);
         final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
         float drawY = bound.height - border - 1.5f; // -1.5 for outline

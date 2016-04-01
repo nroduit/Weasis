@@ -1586,7 +1586,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     final List<MediaSeries<? extends MediaElement<?>>> seriesList;
                     if (multipleMimes) {
                         // Filter the list to have only one mime type
-                        seriesList = new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+                        seriesList = new ArrayList<>();
                         for (Series s : selList) {
                             if (mime.equals(s.getMimeType())) {
                                 seriesList.add(s);
