@@ -76,7 +76,6 @@ import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.RejectedKOSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
-import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 import org.weasis.dicom.explorer.wado.DicomManager;
@@ -96,7 +95,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public static final TreeModelNode study = new TreeModelNode(2, 0, TagW.StudyInstanceUID);
     public static final TreeModelNode series = new TreeModelNode(3, 0, TagW.SubseriesInstanceUID);
 
-    public static final ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(5);
+    public static final ArrayList<TreeModelNode> modelStrucure = new ArrayList<>(5);
 
     static {
         modelStrucure.add(TreeModelNode.ROOT);
@@ -320,7 +319,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     private PropertyChangeSupport propertyChange = null;
     private final TagW[] multiframeSplittingRules =
         new TagW[] { TagW.ImageType, TagW.SOPInstanceUID, TagW.FrameType, TagW.FrameAcquisitionNumber, TagW.StackID };
-    private final HashMap<Modality, TagW[]> splittingRules = new HashMap<Modality, TagW[]>();
+    private final HashMap<Modality, TagW[]> splittingRules = new HashMap<>();
 
     public DicomModel() {
         model = new Tree<MediaSeriesGroup>(MediaSeriesGroupNode.rootNode);
@@ -353,18 +352,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
         }
         return codecPlugins;
-    }
-
-    private static final Integer getOrientationLabelPosition(String orientationPlane) {
-        if (orientationPlane == null) {
-            return 0;
-        }
-        for (int i = 0; i < ImageOrientation.LABELS.length; i++) {
-            if (ImageOrientation.LABELS[i].equals(orientationPlane)) {
-                return i;
-            }
-        }
-        return 0;
     }
 
     @Override
@@ -412,7 +399,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             synchronized (model) {
                 Tree<MediaSeriesGroup> tree = model.getTree(node);
                 if (tree != null) {
-                    Tree<MediaSeriesGroup> parent = null;
+                    Tree<MediaSeriesGroup> parent;
                     while ((parent = tree.getParent()) != null) {
                         if (parent.getHead().getTagID().equals(modelNode.getTagElement())) {
                             return parent.getHead();
@@ -556,11 +543,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         if (isSpecialModality(dicomSeries)) {
 
-            @SuppressWarnings("unchecked")
             List<DicomSpecialElement> specialElementList =
                 (List<DicomSpecialElement>) dicomSeries.getTagValue(TagW.DicomSpecialElementList);
 
-            @SuppressWarnings("unchecked")
             List<DicomSpecialElement> patientSpecialElementList =
                 (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
 
@@ -575,7 +560,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     new ObservableEvent(ObservableEvent.BasicAction.Update, this, null, dicomSpecialElement));
             }
 
-            if (specialElementList.size() == 0) {
+            if (specialElementList.isEmpty()) {
                 removeSeries(dicomSeries);
             }
         }
@@ -583,10 +568,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void removeSeries(MediaSeriesGroup dicomSeries) {
         if (dicomSeries != null) {
-            if (DownloadManager.TASKS.size() > 0) {
-                if (dicomSeries instanceof DicomSeries) {
-                    DownloadManager.stopDownloading((DicomSeries) dicomSeries, this);
-                }
+            if (!DownloadManager.TASKS.isEmpty() && dicomSeries instanceof DicomSeries) {
+                DownloadManager.stopDownloading((DicomSeries) dicomSeries, this);
             }
             // remove first series in UI (Dicom Explorer, Viewer using this series)
             firePropertyChange(
@@ -601,7 +584,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void removeStudy(MediaSeriesGroup studyGroup) {
         if (studyGroup != null) {
-            if (DownloadManager.TASKS.size() > 0) {
+            if (!DownloadManager.TASKS.isEmpty()) {
                 Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
                 for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                     MediaSeriesGroup group = it.next();
@@ -625,7 +608,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void removePatient(MediaSeriesGroup patientGroup) {
         if (patientGroup != null) {
-            if (DownloadManager.TASKS.size() > 0) {
+            if (!DownloadManager.TASKS.isEmpty()) {
                 Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
                 for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
                     MediaSeriesGroup studyGroup = it.next();
@@ -1015,7 +998,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
                 if (original.size(null) > 0) {
-                    // Always split when it is a video or a document
+                    // Always split when it is a video or a encapsulated document
                     if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
                         splitSeries(dicomReader, original, media);
                         return true;

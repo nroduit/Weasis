@@ -13,6 +13,7 @@ package org.weasis.core.ui.util;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
@@ -20,13 +21,13 @@ import javax.swing.MutableComboBoxModel;
 
 public class ArrayListComboBoxModel extends AbstractListModel implements MutableComboBoxModel, ComboBoxModel {
     private Object selectedItem;
-    private final ArrayList items;
+    private final List items;
 
     public ArrayListComboBoxModel() {
         items = new ArrayList();
     }
 
-    public ArrayListComboBoxModel(ArrayList arrayList) {
+    public ArrayListComboBoxModel(List arrayList) {
         items = arrayList;
     }
 

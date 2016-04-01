@@ -26,7 +26,7 @@ public class NativeJLSImageReaderSpi extends ImageReaderSpi {
 
     static final String[] NAMES = { "jpeg-ls", "JPEG-LS" };
     static final String[] SUFFIXES = { "jls" };
-    static final String[] MIMES = { "image/jpeg" };
+    static final String[] MIMES = { "image/jpeg-ls" };
 
     private boolean registered = false;
 

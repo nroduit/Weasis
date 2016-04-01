@@ -27,11 +27,15 @@ import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.internal.mime.InvalidMagicMimeEntryException;
 import org.weasis.core.api.internal.mime.MagicMimeEntry;
 import org.weasis.core.api.util.FileUtil;
 
 public class MimeInspector {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MimeInspector.class);
+
     public static final String UNKNOWN_MIME_TYPE = "application/x-unknown-mime-type"; //$NON-NLS-1$
     public static final Icon unknownIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/unknown.png")); //$NON-NLS-1$
     public static final Icon textIcon =
@@ -59,7 +63,7 @@ public class MimeInspector {
             fileStream = MimeInspector.class.getResourceAsStream("/mime-types.properties"); //$NON-NLS-1$
             mimeTypes.load(fileStream);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error when reading mime-types", e);
         } finally {
             FileUtil.safeClose(fileStream);
         }
@@ -67,12 +71,10 @@ public class MimeInspector {
         // Parse and initialize the magic.mime rules
         InputStream is = MimeInspector.class.getResourceAsStream("/magic.mime"); //$NON-NLS-1$
         if (is != null) {
-            try {
-                parse(new InputStreamReader(is, "UTF8")); //$NON-NLS-1$
+            try (InputStreamReader streamReader = new InputStreamReader(is, "UTF8")) {
+                MimeInspector.parse(streamReader); // $NON-NLS-1$
             } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                FileUtil.safeClose(is);
+                LOGGER.error("Parse magic mime-types", e);
             }
         }
     }
@@ -86,16 +88,12 @@ public class MimeInspector {
         MagicMimeEntry me = getMagicMimeEntry(mimeType);
         if (me != null) {
             // Otherwise find Mime Type from the magic number in file
-            RandomAccessFile raf = null;
-            try {
-                raf = new RandomAccessFile(file, "r"); //$NON-NLS-1$
+            try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {//$NON-NLS-1$
                 if (mimeType.equals(me.getMatch(raf))) {
                     return true;
                 }
             } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                FileUtil.safeClose(raf);
+                LOGGER.error("", e);
             }
         }
         return false;
@@ -110,14 +108,10 @@ public class MimeInspector {
         String mimeType = null;
 
         // Otherwise find Mime Type from the magic number in file
-        RandomAccessFile raf = null;
-        try {
-            raf = new RandomAccessFile(file, "r"); //$NON-NLS-1$
+        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {//$NON-NLS-1$
             mimeType = MimeInspector.getMagicMimeType(raf);
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            FileUtil.safeClose(raf);
+            LOGGER.error("Error when getting mime-type", e);
         }
         return mimeType;
     }
@@ -199,8 +193,7 @@ public class MimeInspector {
             MagicMimeEntry magicEntry = new MagicMimeEntry(aStringArray);
             mMagicMimeEntries.add(magicEntry);
         } catch (InvalidMagicMimeEntryException e) {
-            // Continue on but lets print an exception so people can see there is a problem
-            e.printStackTrace();
+            LOGGER.error("Error when adding mime {}", aStringArray, e);
         }
     }
 

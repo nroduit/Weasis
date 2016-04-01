@@ -27,18 +27,17 @@ import org.weasis.core.api.gui.InfoViewListPanel;
 import org.weasis.core.api.util.LocalUtil;
 
 /**
- *
+ * Common DICOM tags used by the application. The role of these tags is to provide a high level accessibility of common
+ * tags (DICOM and non DICOM).
  *
  * @version $Rev$ $Date$
  */
-
-// TODO - should be in some kind of weasis-dicom package and not in weasis-core
 
 public class TagW implements Transferable, Serializable {
     public static final AtomicInteger AppID = new AtomicInteger(1);
     private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
 
-    public static final long MILLIS_PER_DAY = 24 * 60 * 60 * (long)1000;
+    public static final long MILLIS_PER_DAY = 24 * 60 * 60 * (long) 1000;
     public static final DateFormat DATE_FORMATTER = LocalUtil.getDateInstance(DateFormat.MEDIUM);
     public static final DateFormat TIME_FORMATTER = new SimpleDateFormat("HH:mm:ss.SSSSSS"); //$NON-NLS-1$
     public static final DateFormat DATETIME_FORMATTER =
@@ -235,12 +234,13 @@ public class TagW implements Transferable, Serializable {
         new TagW(0x00282112, "Lossy Image Compression Ratio", TagType.DoubleArray); //$NON-NLS-1$
     public static final TagW LossyImageCompressionMethod =
         new TagW(0x00282114, "Lossy Image Compression Method", TagType.StringArray); //$NON-NLS-1$
+    public static final TagW DerivationDescription = new TagW(0x00082111, "Derivation Description", TagType.String); //$NON-NLS-1$
 
     // Only a single Item shall be included in this sequence
     public static final TagW PresentationLUTSequence = new TagW(0x20500010, "Presentation LUT Sequence", //$NON-NLS-1$
         TagType.Sequence);
     public static final TagW PRLUTsExplanation = new TagW("Presentation State LUT Explanation", TagType.String); //$NON-NLS-1$
-    public static final TagW PRLUTsData = new TagW("Presentation State LUT Data", TagType.Object); //$NON-NLS-1$ ;
+    public static final TagW PRLUTsData = new TagW("Presentation State LUT Data", TagType.Object); //$NON-NLS-1$
     public static final TagW PresentationLUTShape = new TagW(0x20500020, "Presentation LUT Shape", TagType.String); //$NON-NLS-1$
 
     public static final TagW PixelDataProviderURL = new TagW(0x00287FE0, "Pixel Data Provider URL", TagType.String); //$NON-NLS-1$
@@ -289,7 +289,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW PurposeOfReferenceCodeSequence =
         new TagW(0x0040A170, "Purpose Of Reference Code Sequence", TagType.Sequence); //$NON-NLS-1$
     public static final TagW CurrentRequestedProcedureEvidenceSequence =
-        new TagW(0x0040A375, "Current Requested Procedure Evidence Sequence", TagType.Sequence); //$NON-NLS-1$ ;
+        new TagW(0x0040A375, "Current Requested Procedure Evidence Sequence", TagType.Sequence); //$NON-NLS-1$
 
     public static final TagW DiffusionBValue = new TagW(0x00189087, "Difusion b-value", TagType.Double); //$NON-NLS-1$
 
@@ -426,6 +426,7 @@ public class TagW implements Transferable, Serializable {
                     case 'D':
                         str = str.replaceFirst("D", " days"); //$NON-NLS-1$ //$NON-NLS-2$
                         break;
+                    default:
                 }
             } else {
                 str = ""; //$NON-NLS-1$

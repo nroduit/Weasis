@@ -1,5 +1,5 @@
 -runfw: org.apache.felix.framework;version='[5.2.0,5.2.0]'
--runee: JavaSE-1.8
+-runee: JavaSE-1.7
 -runsystemcapabilities: ${native_capability}
 -runsystempackages: \
 	com.sun.awt, \
@@ -75,7 +75,7 @@
 	weasis-jpeg-codec;version='[2.5.0,2.5.1)',\
 	weasis-jpeg-codec-linux-x86-64;version='[1.0.3,1.0.4)',\
 	weasis-openjpeg-codec;version='[2.5.0,2.5.1)',\
-	weasis-openjpeg-codec-linux-x86-64;version='[2.1.4,2.1.5)'
+	weasis-openjpeg-codec-linux-x86-64;version='[2.1.5,2.1.6)'
 
 -runrequires: \
 	osgi.identity;filter:='(osgi.identity=org.apache.felix.gogo.runtime)',\

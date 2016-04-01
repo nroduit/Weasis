@@ -77,6 +77,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private DefaultMutableTreeNode image;
     private DefaultMutableTreeNode dicomInfo;
     private DefaultMutableTreeNode drawings;
+    private DefaultMutableTreeNode min_annotations;
     private TreePath rootPath;
     private JPanel panel_foot;
 
@@ -101,6 +102,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         rootNode.add(image);
         dicomInfo = new DefaultMutableTreeNode(DICOM_ANNOTATIONS, true);
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ANNOTATIONS, true));
+        min_annotations = new DefaultMutableTreeNode(AnnotationsLayer.MIN_ANNOTATIONS, false);
+        dicomInfo.add(min_annotations);
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ANONYM_ANNOTATIONS, false));
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.SCALE, true));
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.LUT, true));
@@ -170,9 +173,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                                 for (ViewCanvas<DicomImageElement> v : views) {
                                     AnnotationsLayer layer = v.getInfoLayer();
                                     if (layer != null) {
-                                        if (layer.setDisplayPreferencesValue(AnnotationsLayer.MIN_DISPLAY, false)) {
-                                            v.getJComponent().repaint();
-                                        }
                                         if (selected != v.getInfoLayer().isVisible()) {
                                             v.getInfoLayer().setVisible(selected);
                                             v.getJComponent().repaint();
@@ -391,7 +391,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             ViewCanvas<DicomImageElement> selView = EventManager.getInstance().getSelectedViewPane();
             // Use an intermediate state of the minimal DICOM information. Triggered only from the shortcut SPACE or I
             boolean minDisp =
-                selView != null && selView.getInfoLayer().getDisplayPreferences(AnnotationsLayer.MIN_DISPLAY);
+                selView != null && selView.getInfoLayer().getDisplayPreferences(AnnotationsLayer.MIN_ANNOTATIONS);
 
             if (checked && !minDisp) {
                 ImageViewerPlugin<DicomImageElement> container =
@@ -413,16 +413,19 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                         AnnotationsLayer layer = v.getInfoLayer();
                         if (layer != null) {
                             layer.setVisible(true);
-                            if (layer.setDisplayPreferencesValue(AnnotationsLayer.MIN_DISPLAY, true)) {
+                            if (layer.setDisplayPreferencesValue(AnnotationsLayer.MIN_ANNOTATIONS, true)) {
                                 v.getJComponent().repaint();
                             }
                         }
                     }
                 }
+                model.addCheckingPath(new TreePath(min_annotations.getPath()));
             } else if (checked) {
                 model.removeCheckingPath(path);
+                model.removeCheckingPath(new TreePath(min_annotations.getPath()));
             } else {
                 model.addCheckingPath(path);
+                model.removeCheckingPath(new TreePath(min_annotations.getPath()));
             }
         } else if (EVENT.ADD_LAYER.equals(e)) {
             Object obj = event.getSharedObject();

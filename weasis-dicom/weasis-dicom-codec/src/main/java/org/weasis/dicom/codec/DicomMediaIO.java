@@ -156,7 +156,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
             @Override
             public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
-                if(RejectedKOSpecialElement.isRejectionKOS(mediaIO)){
+                if (RejectedKOSpecialElement.isRejectionKOS(mediaIO)) {
                     return new RejectedKOSpecialElement(mediaIO);
                 }
                 return new KOSpecialElement(mediaIO);
@@ -660,12 +660,18 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             setTagNoNull(TagW.PixelPaddingRangeLimit, DicomMediaUtils.getIntPixelValue(header,
                 Tag.PixelPaddingRangeLimit, pixelRepresentation != 0, bitsStored));
 
-            setTagNoNull(TagW.LossyImageCompression, header.getString(Tag.LossyImageCompression));
+            /*
+             * * @see <a
+             * href="http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.html#sect_C.7.6.1.1.5">C
+             * .7.6.1.1.5 Lossy Image Compression</a>
+             */
+            setTagNoNull(TagW.LossyImageCompression,
+                header.getString(Tag.LossyImageCompression, header.getString(Tag.LossyImageCompressionRetired)));
             setTagNoNull(TagW.LossyImageCompressionRatio,
                 DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.LossyImageCompressionRatio, null));
             setTagNoNull(TagW.LossyImageCompressionMethod,
                 DicomMediaUtils.getStringArrayFromDicomElement(header, Tag.LossyImageCompressionMethod));
-
+            setTagNoNull(TagW.DerivationDescription, header.getString(Tag.DerivationDescription));
             /*
              *
              * For overlays encoded in Overlay Data Element (60xx,3000), Overlay Bits Allocated (60xx,0100) is always 1
@@ -1079,7 +1085,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                         BulkData bulkData = (BulkData) pixeldataFragments.get(i);
                         ImageReaderSpi provider = decompressor.getOriginatingProvider();
                         if (provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
-                            new long[]{bulkData.offset}, new int[]{bulkData.length}))) {
+                            new long[] { bulkData.offset }, new int[] { bulkData.length }))) {
                             fragmentsPositions.add(i);
                         }
                     }
@@ -1518,13 +1524,13 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                         }
                         this.decompressor = readerItem.getImageReader();
 
-//                        ImageReaderParam param =
-//                                        ImageReaderFactory.getImageReaderParam(tsuid);
-//                                if (param == null)
-//                                    throw new UnsupportedOperationException("Unsupported Transfer Syntax: " + tsuid);
-//                        this.decompressor =
-//                            ImageReaderFactory.getImageReader(param);
-                        
+                        // ImageReaderParam param =
+                        // ImageReaderFactory.getImageReaderParam(tsuid);
+                        // if (param == null)
+                        // throw new UnsupportedOperationException("Unsupported Transfer Syntax: " + tsuid);
+                        // this.decompressor =
+                        // ImageReaderFactory.getImageReader(param);
+
                         // this.patchJpegLS = param.patchJPEGLS;
                         this.pixeldataFragments = (Fragments) pixdata;
                     }

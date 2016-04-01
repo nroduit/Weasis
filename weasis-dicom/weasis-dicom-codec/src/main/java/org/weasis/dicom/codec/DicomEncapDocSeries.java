@@ -13,6 +13,7 @@ package org.weasis.dicom.codec;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -22,6 +23,8 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.StreamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
@@ -30,7 +33,9 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 
-public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements FileExtractor {
+public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements FilesExtractor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomEncapDocSeries.class);
 
     public DicomEncapDocSeries(String subseriesInstanceUID) {
         super(TagW.SubseriesInstanceUID, subseriesInstanceUID, TagW.SubseriesInstanceUID);
@@ -56,9 +61,10 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                 Attributes ds = dicomImageLoader.getDicomObject();
                 String mime = ds.getString(Tag.MIMETypeOfEncapsulatedDocument);
                 List<String> extensions = MimeInspector.getExtensions(mime);
-                if (extensions.size() > 0) {
+                if (!extensions.isEmpty()) {
                     extension = extensions.get(0);
                 }
+                // see http://dicom.nema.org/MEDICAL/Dicom/current/output/chtml/part03/sect_C.24.2.html
                 Object data = dicomImageLoader.getDicomObject().getValue(Tag.EncapsulatedDocument);
                 if (data instanceof BulkData) {
                     BulkData bulkData = (BulkData) data;
@@ -73,7 +79,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                         dcmEnc.setDocument(file);
                         this.add(dcmEnc);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        LOGGER.error("Cannot extract encapsulated document", e);
                     } finally {
                         FileUtil.safeClose(out);
                         FileUtil.safeClose(in);
@@ -111,12 +117,17 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     }
 
     @Override
-    public File getExtractFile() {
-        DicomEncapDocElement media = getMedia(MEDIA_POSITION.FIRST, null, null);
-        if (media != null) {
-            return media.getDocument();
+    public List<File> getExtractFiles() {
+        // Should have only one file as all the DicomEncapDocElement items are split in sub-series
+        List<File> files = new ArrayList<>();
+        Iterable<DicomEncapDocElement> mediaList = getMedias(null, null);
+        synchronized (this) {
+            for (Iterator<DicomEncapDocElement> iter = mediaList.iterator(); iter.hasNext();) {
+                DicomEncapDocElement dcm = iter.next();
+                files.add(dcm.getExtractFile());
+            }
         }
-        return null;
+        return files;
     }
 
 }

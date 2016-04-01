@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.util.StringUtil;
 
 public class MagicMimeEntry {
@@ -482,10 +483,10 @@ public class MagicMimeEntry {
             got = Long.parseLong(testContent);
         }
 
-        long found = bbuf.getInt();
+        long found = MathUtil.getUnsignedInt(bbuf.getInt());
 
         if (needMask) {
-            found = (short) (found & lMask);
+            found = found & lMask;
         }
 
         if (got != found) {

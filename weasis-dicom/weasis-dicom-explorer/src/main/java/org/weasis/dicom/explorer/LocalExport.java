@@ -70,6 +70,7 @@ import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -346,7 +347,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         }
     }
 
-    private String getinstanceFileName(DicomImageElement img) {
+    private static String getinstanceFileName(MediaElement<?> img) {
         Integer instance = (Integer) img.getTagValue(TagW.InstanceNumber);
         if (instance != null) {
             String val = instance.toString();
@@ -372,101 +373,99 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         boolean more8bits = Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false")); //$NON-NLS-1$
         boolean writeGraphics = chckbxGraphics.isSelected();
 
-        synchronized (model) {
-            TreePath[] paths = model.getCheckingPaths();
-            for (TreePath treePath : paths) {
-                if (task.isCancelled()) {
-                    return;
-                }
-
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-
-                if (node.getUserObject() instanceof DicomImageElement) {
-                    DicomImageElement img = (DicomImageElement) node.getUserObject();
-                    // Get instance number instead SOPInstanceUID to handle multiframe
-                    String instance = getinstanceFileName(img);
-                    StringBuilder buffer = new StringBuilder();
-                    if (keepNames) {
-                        TreeNode[] objects = node.getPath();
-                        if (objects.length > 3) {
-                            buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[1].toString()));
-                            buffer.append(File.separator);
-                            buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[2].toString()));
-                            buffer.append(File.separator);
-                            String seriesName = FileUtil.getValidFileNameWithoutHTML(objects[3].toString());
-                            if (seriesName.length() > 30) {
-                                buffer.append(seriesName, 0, 27);
-                                buffer.append(Messages.getString("LocalExport.partialtext_symbol")); //$NON-NLS-1$
-                            } else {
-                                buffer.append(seriesName);
-                            }
-                            buffer.append('-');
-                            // Hash of UID to guaranty the unique behavior of the name.
-                            buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
-                        }
-                    } else {
-                        buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
-                        buffer.append(File.separator);
-                        buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
-                        buffer.append(File.separator);
-                        buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
-                        instance = makeFileIDs(instance);
+        try {
+            synchronized (model) {
+                TreePath[] paths = model.getCheckingPaths();
+                for (TreePath treePath : paths) {
+                    if (task.isCancelled()) {
+                        return;
                     }
 
-                    File destinationDir = new File(exportDir, buffer.toString());
-                    destinationDir.mkdirs();
+                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
 
-                    RenderedImage image = img.getImage(null);
+                    if (node.getUserObject() instanceof DicomImageElement) {
+                        DicomImageElement img = (DicomImageElement) node.getUserObject();
+                        // Get instance number instead SOPInstanceUID to handle multiframe
+                        String instance = getinstanceFileName(img);
+                        if (!keepNames) {
+                            instance = makeFileIDs(instance);
+                        }
+                        String path = buildPath(img, keepNames, node);
+                        File destinationDir = new File(exportDir, path);
+                        destinationDir.mkdirs();
 
-                    if (EXPORT_FORMAT[2].equals(format)) {
-                        if (image != null) {
-                            image = img.getRenderedImage(image);
-                        }
-                        if (image != null) {
-                            File destinationFile = new File(destinationDir, instance + ".jpg"); //$NON-NLS-1$
-                            ImageFiler.writeJPG(destinationFile, image, jpegQuality / 100.0f);
-                            if (writeGraphics) {
-                                XmlSerializer.writeMeasurementGraphics(img, destinationFile);
-                            }
-                        } else {
-                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
-                        }
-                    }
-                    if (EXPORT_FORMAT[3].equals(format)) {
-                        if (image != null) {
-                            image = img.getRenderedImage(image);
-                        }
-                        if (image != null) {
-                            File destinationFile = new File(destinationDir, instance + ".png"); //$NON-NLS-1$
-                            ImageFiler.writePNG(destinationFile, image);
-                            if (writeGraphics) {
-                                XmlSerializer.writeMeasurementGraphics(img, destinationFile);
-                            }
-                        } else {
-                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
-                        }
-                    }
-                    if (EXPORT_FORMAT[4].equals(format)) {
-                        if (image != null) {
-                            if (!more8bits) {
+                        RenderedImage image = img.getImage(null);
+
+                        if (EXPORT_FORMAT[2].equals(format)) {
+                            if (image != null) {
                                 image = img.getRenderedImage(image);
                             }
-                            File destinationFile = new File(destinationDir, instance + ".tif"); //$NON-NLS-1$
-                            ImageFiler.writeTIFF(destinationFile, image, false, false, false);
-                            if (writeGraphics) {
-                                XmlSerializer.writeMeasurementGraphics(img, destinationFile);
+                            if (image != null) {
+                                File destinationFile = new File(destinationDir, instance + ".jpg"); //$NON-NLS-1$
+                                ImageFiler.writeJPG(destinationFile, image, jpegQuality / 100.0f);
+                                if (writeGraphics) {
+                                    XmlSerializer.writeMeasurementGraphics(img, destinationFile);
+                                }
+                            } else {
+                                LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                             }
-                        } else {
-                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
+                        }
+                        if (EXPORT_FORMAT[3].equals(format)) {
+                            if (image != null) {
+                                image = img.getRenderedImage(image);
+                            }
+                            if (image != null) {
+                                File destinationFile = new File(destinationDir, instance + ".png"); //$NON-NLS-1$
+                                ImageFiler.writePNG(destinationFile, image);
+                                if (writeGraphics) {
+                                    XmlSerializer.writeMeasurementGraphics(img, destinationFile);
+                                }
+                            } else {
+                                LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
+                            }
+                        }
+                        if (EXPORT_FORMAT[4].equals(format)) {
+                            if (image != null) {
+                                if (!more8bits) {
+                                    image = img.getRenderedImage(image);
+                                }
+                                File destinationFile = new File(destinationDir, instance + ".tif"); //$NON-NLS-1$
+                                ImageFiler.writeTIFF(destinationFile, image, false, false, false);
+                                if (writeGraphics) {
+                                    XmlSerializer.writeMeasurementGraphics(img, destinationFile);
+                                }
+                            } else {
+                                LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
+                            }
+                        }
+
+                        // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
+                        img.removeImageFromCache();
+                    } else if (node.getUserObject() instanceof MediaElement<?>
+                        && node.getUserObject() instanceof FileExtractor) {
+                        MediaElement<?> dcm = (MediaElement<?>) node.getUserObject();
+                        File fileSrc = ((FileExtractor) dcm).getExtractFile();
+                        if (fileSrc != null) {
+                            // Get instance number instead SOPInstanceUID to handle multiframe
+                            String instance = getinstanceFileName(dcm);
+                            if (!keepNames) {
+                                instance = makeFileIDs(instance);
+                            }
+                            String path = buildPath(dcm, keepNames, node);
+                            File destinationDir = new File(exportDir, path);
+                            destinationDir.mkdirs();
+
+                            File destinationFile =
+                                new File(destinationDir, instance + FileUtil.getExtension(fileSrc.getName()));
+                            FileUtil.nioCopyFile(fileSrc, destinationFile);
                         }
                     }
-
-                    // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
-                    img.removeImageFromCache();
                 }
-            }
-        }
 
+            }
+        } catch (Exception e) {
+            LOGGER.error("Cannot extract media from DICOM", e);
+        }
     }
 
     private void writeDicom(ExplorerTask task, File exportDir, CheckTreeModel model, boolean zipFile)
@@ -485,8 +484,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             writeDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip")); //$NON-NLS-1$ //$NON-NLS-2$
         } else {
             Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
-            keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
             writeDicomdir = Boolean.valueOf(pref.getProperty(INC_DICOMDIR, "true"));//$NON-NLS-1$
+            keepNames = writeDicomdir ? false : Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
             cdCompatible = Boolean.valueOf(pref.getProperty(CD_COMPATIBLE, "false"));//$NON-NLS-1$
             writeDir = exportDir;
         }
@@ -519,8 +518,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             // Write only once the file for multiframe
                             continue TreePath;
                         }
+                        if (!keepNames) {
+                            iuid = makeFileIDs(iuid);
+                        }
 
-                        String path = buildPath(img, keepNames, writeDicomdir, cdCompatible, node, iuid);
+                        String path = buildPath(img, keepNames, writeDicomdir, cdCompatible, node);
                         File destinationDir = new File(writeDir, path);
                         destinationDir.mkdirs();
 
@@ -539,7 +541,26 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     } else if (node.getUserObject() instanceof DicomSpecialElement) {
                         DicomSpecialElement dcm = (DicomSpecialElement) node.getUserObject();
                         String iuid = (String) dcm.getTagValue(TagW.SOPInstanceUID);
-                        String path = buildPath(dcm, keepNames, writeDicomdir, cdCompatible, node, iuid);
+                        String path = buildPath(dcm, keepNames, writeDicomdir, cdCompatible, node);
+                        File destinationDir = new File(writeDir, path);
+                        destinationDir.mkdirs();
+
+                        File destinationFile = new File(destinationDir, iuid);
+                        if (dcm.saveToFile(destinationFile)) {
+                            if (!writeInDicomDir(writer, dcm, node, iuid, destinationFile)) {
+                                continue TreePath;
+                            }
+                        } else {
+                            // LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
+                        }
+                    } else if (node.getUserObject() instanceof MediaElement<?>) {
+                        MediaElement<?> dcm = (MediaElement<?>) node.getUserObject();
+                        String iuid = (String) dcm.getTagValue(TagW.SOPInstanceUID);
+                        if (!keepNames) {
+                            iuid = makeFileIDs(iuid);
+                        }
+
+                        String path = buildPath(dcm, keepNames, writeDicomdir, cdCompatible, node);
                         File destinationDir = new File(writeDir, path);
                         destinationDir.mkdirs();
 
@@ -554,6 +575,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     }
                 }
             }
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("Cannot export DICOM", e);
         } finally {
             if (writer != null) {
                 // Commit DICOMDIR changes and close the file
@@ -565,15 +590,15 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             try {
                 FileUtil.zip(writeDir, exportDir);
             } catch (Exception e) {
-                LOGGER.error("Cannot export DICOM ZIP file: {}", exportDir); //$NON-NLS-1$
+                LOGGER.error("Cannot export DICOM ZIP file: {}", exportDir, e); //$NON-NLS-1$
             } finally {
                 FileUtil.recursiveDelete(writeDir);
             }
         }
     }
 
-    public static String buildPath(MediaElement<PlanarImage> img, boolean keepNames, boolean writeDicomdir,
-        boolean cdCompatible, DefaultMutableTreeNode node, String iuid) {
+    public static String buildPath(MediaElement<?> img, boolean keepNames, boolean writeDicomdir, boolean cdCompatible,
+        DefaultMutableTreeNode node) {
         StringBuilder buffer = new StringBuilder();
         // Cannot keep folders names with DICOMDIR (could be not valid)
         if (keepNames && !writeDicomdir) {
@@ -594,23 +619,51 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
             buffer.append(File.separator);
             buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
-            iuid = makeFileIDs(iuid);
         }
         return buffer.toString();
     }
 
-    private static boolean writeInDicomDir(DicomDirWriter writer, MediaElement<PlanarImage> img,
-        DefaultMutableTreeNode node, String iuid, File destinationFile) throws IOException {
+    public static String buildPath(MediaElement<?> img, boolean keepNames, DefaultMutableTreeNode node) {
+        StringBuilder buffer = new StringBuilder();
+        if (keepNames) {
+            TreeNode[] objects = node.getPath();
+            if (objects.length > 3) {
+                buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[1].toString()));
+                buffer.append(File.separator);
+                buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[2].toString()));
+                buffer.append(File.separator);
+                String seriesName = FileUtil.getValidFileNameWithoutHTML(objects[3].toString());
+                if (seriesName.length() > 30) {
+                    buffer.append(seriesName, 0, 27);
+                    buffer.append(Messages.getString("LocalExport.partialtext_symbol")); //$NON-NLS-1$
+                } else {
+                    buffer.append(seriesName);
+                }
+                buffer.append('-');
+                // Hash of UID to guaranty the unique behavior of the name.
+                buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
+            }
+        } else {
+            buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
+            buffer.append(File.separator);
+            buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
+            buffer.append(File.separator);
+            buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
+        }
+        return buffer.toString();
+    }
+
+    private static boolean writeInDicomDir(DicomDirWriter writer, MediaElement<?> img, DefaultMutableTreeNode node,
+        String iuid, File destinationFile) throws IOException {
         if (writer != null) {
-            Attributes fmi = null;
-            Attributes dataset = null;
-            DcmMediaReader dicomImageLoader = (DcmMediaReader) img.getMediaReader();
-            dataset = dicomImageLoader.getDicomObject();
-            if (dataset == null) {
+            DcmMediaReader<?> dicomImageLoader = (DcmMediaReader<?>) img.getMediaReader();
+            if (!(img.getMediaReader() instanceof DcmMediaReader)
+                || ((DcmMediaReader<?>) img.getMediaReader()).getDicomObject() == null) {
                 LOGGER.error("Cannot export DICOM file: ", img.getFile()); //$NON-NLS-1$
                 return false;
             }
-            fmi = dataset.createFileMetaInformation(UID.ImplicitVRLittleEndian);
+            Attributes dataset = dicomImageLoader.getDicomObject();
+            Attributes fmi = dataset.createFileMetaInformation(UID.ImplicitVRLittleEndian);
 
             String miuid = fmi.getString(Tag.MediaStorageSOPInstanceUID, null);
 
@@ -640,12 +693,14 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                      * not correspond to one of the images of the Series.
                      */
                     if (seriesRec != null && node.getParent() instanceof DefaultMutableTreeNode) {
-                        DicomImageElement midImage =
-                            ((DicomSeries) ((DefaultMutableTreeNode) node.getParent()).getUserObject())
-                                .getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
-                        Attributes iconItem = mkIconItem(midImage);
-                        if (iconItem != null) {
-                            seriesRec.newSequence(Tag.IconImageSequence, 1).add(iconItem);
+                        Object userObject = ((DefaultMutableTreeNode) node.getParent()).getUserObject();
+                        if (userObject instanceof DicomSeries) {
+                            DicomImageElement midImage =
+                                ((DicomSeries) userObject).getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
+                            Attributes iconItem = mkIconItem(midImage);
+                            if (iconItem != null) {
+                                seriesRec.newSequence(Tag.IconImageSequence, 1).add(iconItem);
+                            }
                         }
                     }
                     writer.addLowerDirectoryRecord(studyRec, seriesRec);
@@ -669,8 +724,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     private static String toHex(int val) {
         char[] ch8 = new char[8];
-        for (int i = 8; --i >= 0; val >>= 4) {
-            ch8[i] = HEX_DIGIT[val & 0xf];
+        for (int i = 8, k = val; --i >= 0; k >>= 4) {
+            ch8[i] = HEX_DIGIT[k & 0xf];
         }
 
         return String.valueOf(ch8);

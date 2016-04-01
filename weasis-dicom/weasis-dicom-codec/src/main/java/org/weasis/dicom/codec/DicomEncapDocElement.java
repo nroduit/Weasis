@@ -17,7 +17,7 @@ import javax.media.jai.PlanarImage;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 
-public class DicomEncapDocElement extends MediaElement<PlanarImage> {
+public class DicomEncapDocElement extends MediaElement<PlanarImage> implements FileExtractor {
     private File document = null;
 
     public DicomEncapDocElement(DicomMediaIO mediaIO, Object key) {
@@ -37,12 +37,13 @@ public class DicomEncapDocElement extends MediaElement<PlanarImage> {
         return val == null ? super.getMimeType() : val;
     }
 
-    public File getDocument() {
-        return document;
-    }
-
     public void setDocument(File document) {
         this.document = document;
+    }
+
+    @Override
+    public File getExtractFile() {
+        return document;
     }
 
 }

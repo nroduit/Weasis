@@ -295,16 +295,11 @@ public class DicomMediaUtils {
             return null;
         }
         return dicom.getStrings(tag);
-        // DicomElement element = dicom.get(tag);
-        // if (element == null || element.isEmpty()) {
-        // return defaultValue;
-        // }
-        // return element.getStrings(dicom.getSpecificCharacterSet(), false);
     }
 
     public static Date getDateFromDicomElement(Attributes dicom, int tag, Date defaultValue) {
         if (dicom == null || !dicom.containsValue(tag)) {
-            return null;
+            return defaultValue;
         }
         return dicom.getDate(tag, defaultValue);
     }
@@ -829,6 +824,8 @@ public class DicomMediaUtils {
     }
 
     /**
+     * Build the shape from DICOM Shutter
+     * 
      * @see <a href="http://dicom.nema.org/MEDICAL/DICOM/current/output/chtml/part03/sect_C.7.6.11.html">C.7.6.11
      *      Display Shutter Module</a>
      * @see <a href="http://dicom.nema.org/MEDICAL/DICOM/current/output/chtml/part03/sect_C.7.6.15.html">C.7.6.15 Bitmap
