@@ -64,6 +64,14 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 public class DicomPrint {
 
     private DicomPrintOptions dicomPrintOptions;
+    private int interpolation;
+    private double placeholderX;
+    private double placeholderY;
+
+    private int lastx;
+    private double lastwx;
+    private double[] lastwy;
+    private double wx;
 
     public DicomPrint(DicomPrintOptions dicomPrintOptions) {
         this.dicomPrintOptions = dicomPrintOptions;
@@ -73,105 +81,77 @@ public class DicomPrint {
         if (layout == null) {
             return null;
         }
-        Dimension dimGrid = layout.getLayoutModel().getGridSize();
-        FilmSize filmSize = dicomPrintOptions.getFilmSizeId();
-        DotPerInches dpi = dicomPrintOptions.getDpi();
 
-        int width = filmSize.getWidth(dpi);
-        int height = filmSize.getHeight(dpi);
-
-        if ("LANDSCAPE".equals(dicomPrintOptions.getFilmOrientation())) { //$NON-NLS-1$
-            int tmp = width;
-            width = height;
-            height = tmp;
-        }
-
-        Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
-        Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
-
-        String mType = dicomPrintOptions.getMagnificationType();
-        int interpolation = 1;
-
-        if ("REPLICATE".equals(mType)) { //$NON-NLS-1$
-            interpolation = 0;
-        } else if ("CUBIC".equals(mType)) { //$NON-NLS-1$
-            interpolation = 2;
-        }
-
-        // Printable size
-        double placeholderX = width - (dimGrid.width + 1) * 5;
-        double placeholderY = height - (dimGrid.height + 1) * 5;
-
-        int lastx = 0;
-        double lastwx = 0.0;
-        double[] lastwy = new double[dimGrid.width];
-        double wx = 0.0;
-
-        BufferedImage bufferedImage;
-        if (printOptions.isColor()) {
-            bufferedImage = createRGBBufferedImage(width, height);
-        } else {
-            bufferedImage = createGrayBufferedImage(width, height);
-        }
+        BufferedImage bufferedImage = initialize(layout, printOptions);
         Graphics2D g2d = (Graphics2D) bufferedImage.getGraphics();
 
         if (g2d != null) {
+            Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
+            Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
             g2d.setBackground(background);
             if (!Color.BLACK.equals(background)) {
                 // Change background color
-                g2d.clearRect(0, 0, width, height);
+                g2d.clearRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
             }
             final LinkedHashMap<LayoutConstraints, Component> elements = layout.getLayoutModel().getConstraints();
             Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
             while (enumVal.hasNext()) {
                 Entry<LayoutConstraints, Component> e = enumVal.next();
                 LayoutConstraints key = e.getKey();
-                ExportImage image = (ExportImage) e.getValue();
-                if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
-                    image.getInfoLayer().setVisible(false);
-                }
+                Component value = e.getValue();
 
+                boolean printable = value instanceof ExportImage;
+                ExportImage image = null;
                 double padX = 0.0;
                 double padY = 0.0;
-                Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-                Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
-                Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
-                RenderedImage img = image.getSourceImage();
-                if (img != null && originCenter != null && originZoom != null) {
-                    boolean bestfit = originZoom <= 0.0;
-                    double canvasWidth;
-                    double canvasHeight;
-                    if (bestfit || originSize == null) {
-                        canvasWidth = img.getWidth() * image.getImage().getRescaleX();
-                        canvasHeight = img.getHeight() * image.getImage().getRescaleY();
-                    } else {
-                        canvasWidth = originSize.getWidth() / originZoom;
-                        canvasHeight = originSize.getHeight() / originZoom;
-                    }
-                    double scaleCanvas =
-                        Math.min(placeholderX * key.weightx / canvasWidth, placeholderY * key.weighty / canvasHeight);
 
-                    // Set the print area in pixel
-                    double cw = canvasWidth * scaleCanvas;
-                    double ch = canvasHeight * scaleCanvas;
-                    image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
-
-                    if (printOptions.isCenter()) {
-                        padX = (placeholderX * key.weightx - cw) * 0.5;
-                        padY = (placeholderY * key.weighty - ch) * 0.5;
-                    } else {
-                        padX = 0.0;
-                        padY = 0.0;
+                if (printable) {
+                    image = (ExportImage) value;
+                    if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
+                        image.getInfoLayer().setVisible(false);
                     }
 
-                    image.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
-                    double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
-                    // Resize in best fit window
-                    image.zoom(scaleFactor);
-                    if (bestfit) {
-                        image.center();
-                    } else {
-                        image.setCenter(originCenter.getX(), originCenter.getY());
+                    Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
+                    Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+                    Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
+                    RenderedImage img = image.getSourceImage();
+                    if (img != null && originCenter != null && originZoom != null) {
+                        boolean bestfit = originZoom <= 0.0;
+                        double canvasWidth;
+                        double canvasHeight;
+                        if (bestfit || originSize == null) {
+                            canvasWidth = img.getWidth() * image.getImage().getRescaleX();
+                            canvasHeight = img.getHeight() * image.getImage().getRescaleY();
+                        } else {
+                            canvasWidth = originSize.getWidth() / originZoom;
+                            canvasHeight = originSize.getHeight() / originZoom;
+                        }
+                        double scaleCanvas = Math.min(placeholderX * key.weightx / canvasWidth,
+                            placeholderY * key.weighty / canvasHeight);
+
+                        // Set the print area in pixel
+                        double cw = canvasWidth * scaleCanvas;
+                        double ch = canvasHeight * scaleCanvas;
+                        image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
+
+                        if (printOptions.isCenter()) {
+                            padX = (placeholderX * key.weightx - cw) * 0.5;
+                            padY = (placeholderY * key.weighty - ch) * 0.5;
+                        } else {
+                            padX = 0.0;
+                            padY = 0.0;
+                        }
+
+                        image.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION,
+                            interpolation);
+                        double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
+                        // Resize in best fit window
+                        image.zoom(scaleFactor);
+                        if (bestfit) {
+                            image.center();
+                        } else {
+                            image.setCenter(originCenter.getX(), originCenter.getY());
+                        }
                     }
                 }
 
@@ -190,27 +170,68 @@ public class DicomPrint {
                     lastwy[i] += key.weighty;
                 }
 
-                boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
+                if (printable) {
+                    boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
 
-                // Set us to the upper left corner
-                g2d.translate(x, y);
-                g2d.setClip(image.getBounds());
-                image.draw(g2d);
-                ImagePrint.restoreDoubleBuffering(image, wasBuffered);
-                g2d.translate(-x, -y);
+                    // Set us to the upper left corner
+                    g2d.translate(x, y);
+                    g2d.setClip(image.getBounds());
+                    image.draw(g2d);
+                    ImagePrint.restoreDoubleBuffering(image, wasBuffered);
+                    g2d.translate(-x, -y);
 
-                if (!borderColor.equals(background)) {
-                    // Change background color
-                    g2d.setClip(null);
-                    g2d.setColor(borderColor);
-                    g2d.setStroke(new BasicStroke(2));
-                    Dimension viewSize = image.getSize();
-                    g2d.drawRect((int) x - 1, (int) y - 1, viewSize.width + 1, viewSize.height + 1);
+                    if (!borderColor.equals(background)) {
+                        // Change background color
+                        g2d.setClip(null);
+                        g2d.setColor(borderColor);
+                        g2d.setStroke(new BasicStroke(2));
+                        Dimension viewSize = image.getSize();
+                        g2d.drawRect((int) x - 1, (int) y - 1, viewSize.width + 1, viewSize.height + 1);
+                    }
                 }
             }
         }
 
         return bufferedImage;
+    }
+
+    private BufferedImage initialize(ExportLayout<ImageElement> layout, PrintOptions printOptions) {
+        Dimension dimGrid = layout.getLayoutModel().getGridSize();
+        FilmSize filmSize = dicomPrintOptions.getFilmSizeId();
+        DotPerInches dpi = dicomPrintOptions.getDpi();
+
+        int width = filmSize.getWidth(dpi);
+        int height = filmSize.getHeight(dpi);
+
+        if ("LANDSCAPE".equals(dicomPrintOptions.getFilmOrientation())) { //$NON-NLS-1$
+            int tmp = width;
+            width = height;
+            height = tmp;
+        }
+
+        String mType = dicomPrintOptions.getMagnificationType();
+        interpolation = 1;
+
+        if ("REPLICATE".equals(mType)) { //$NON-NLS-1$
+            interpolation = 0;
+        } else if ("CUBIC".equals(mType)) { //$NON-NLS-1$
+            interpolation = 2;
+        }
+
+        // Printable size
+        placeholderX = width - (dimGrid.width + 1) * 5.0;
+        placeholderY = height - (dimGrid.height + 1) * 5.0;
+
+        lastx = 0;
+        lastwx = 0.0;
+        lastwy = new double[dimGrid.width];
+        wx = 0.0;
+
+        if (printOptions.isColor()) {
+            return createRGBBufferedImage(width, height);
+        } else {
+            return createGrayBufferedImage(width, height);
+        }
     }
 
     /**

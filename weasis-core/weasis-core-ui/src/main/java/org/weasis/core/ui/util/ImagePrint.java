@@ -172,50 +172,58 @@ public class ImagePrint implements Printable {
         while (enumVal.hasNext()) {
             Entry<LayoutConstraints, Component> e = enumVal.next();
             LayoutConstraints key = e.getKey();
-            ExportImage image = (ExportImage) e.getValue();
-            if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
-                image.getInfoLayer().setVisible(false);
-            }
+            Component value = e.getValue();
+
+            boolean ImagePrintable = value instanceof ExportImage;
+            ExportImage image = null;
             double padX = 0.0;
             double padY = 0.0;
-            Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-            Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
-            Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
-            RenderedImage img = image.getSourceImage();
-            if (img != null && originCenter != null && originZoom != null) {
-                boolean bestfit = originZoom <= 0.0;
-                double canvasWidth;
-                double canvasHeight;
-                if (bestfit || originSize == null) {
-                    canvasWidth = img.getWidth() * image.getImage().getRescaleX();
-                    canvasHeight = img.getHeight() * image.getImage().getRescaleY();
-                } else {
-                    canvasWidth = originSize.getWidth() / originZoom;
-                    canvasHeight = originSize.getHeight() / originZoom;
-                }
-                double scaleCanvas =
-                    Math.min(placeholderX * key.weightx / canvasWidth, placeholderY * key.weighty / canvasHeight);
 
-                // Set the print area in pixel
-                double cw = canvasWidth * scaleCanvas;
-                double ch = canvasHeight * scaleCanvas;
-                image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
-
-                if (printOptions.isCenter()) {
-                    padX = (placeholderX * key.weightx - cw) * 0.5;
-                    padY = (placeholderY * key.weighty - ch) * 0.5;
-                } else {
-                    padX = 0.0;
-                    padY = 0.0;
+            if (ImagePrintable) {
+                image = (ExportImage) value;
+                if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
+                    image.getInfoLayer().setVisible(false);
                 }
 
-                double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
-                // Resize in best fit window
-                image.zoom(scaleFactor);
-                if (bestfit) {
-                    image.center();
-                } else {
-                    image.setCenter(originCenter.getX(), originCenter.getY());
+                Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
+                Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+                Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
+                RenderedImage img = image.getSourceImage();
+                if (img != null && originCenter != null && originZoom != null) {
+                    boolean bestfit = originZoom <= 0.0;
+                    double canvasWidth;
+                    double canvasHeight;
+                    if (bestfit || originSize == null) {
+                        canvasWidth = img.getWidth() * image.getImage().getRescaleX();
+                        canvasHeight = img.getHeight() * image.getImage().getRescaleY();
+                    } else {
+                        canvasWidth = originSize.getWidth() / originZoom;
+                        canvasHeight = originSize.getHeight() / originZoom;
+                    }
+                    double scaleCanvas =
+                        Math.min(placeholderX * key.weightx / canvasWidth, placeholderY * key.weighty / canvasHeight);
+
+                    // Set the print area in pixel
+                    double cw = canvasWidth * scaleCanvas;
+                    double ch = canvasHeight * scaleCanvas;
+                    image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
+
+                    if (printOptions.isCenter()) {
+                        padX = (placeholderX * key.weightx - cw) * 0.5;
+                        padY = (placeholderY * key.weighty - ch) * 0.5;
+                    } else {
+                        padX = 0.0;
+                        padY = 0.0;
+                    }
+
+                    double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
+                    // Resize in best fit window
+                    image.zoom(scaleFactor);
+                    if (bestfit) {
+                        image.center();
+                    } else {
+                        image.setCenter(originCenter.getX(), originCenter.getY());
+                    }
                 }
             }
 
@@ -233,13 +241,15 @@ public class ImagePrint implements Printable {
                 lastwy[i] += key.weighty;
             }
 
-            // Set us to the upper left corner
-            g2d.translate(x, y);
-            boolean wasBuffered = disableDoubleBuffering(image);
-            g2d.setClip(image.getBounds());
-            image.draw(g2d);
-            restoreDoubleBuffering(image, wasBuffered);
-            g2d.translate(-x, -y);
+            if (ImagePrintable) {
+                // Set us to the upper left corner
+                g2d.translate(x, y);
+                boolean wasBuffered = disableDoubleBuffering(image);
+                g2d.setClip(image.getBounds());
+                image.draw(g2d);
+                restoreDoubleBuffering(image, wasBuffered);
+                g2d.translate(-x, -y);
+            }
         }
     }
 

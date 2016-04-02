@@ -19,8 +19,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
@@ -42,6 +42,7 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
@@ -176,7 +177,7 @@ public class DicomPrintDialog extends JDialog {
 
     /** Creates new form DicomPrintDialog */
     public DicomPrintDialog(Window parent, String title, ImageViewerEventManager eventManager) {
-        super(parent, ModalityType.APPLICATION_MODAL);
+        super(parent, title, ModalityType.APPLICATION_MODAL);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         portraitDisplayFormatsModel = new DefaultComboBoxModel(new String[] { "STANDARD\\1,1" }); //$NON-NLS-1$
@@ -628,45 +629,32 @@ public class DicomPrintDialog extends JDialog {
         printOptions.setColor(dicomPrintOptions.isPrintInColor());
 
         ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
-        // TODO make printable component
-        boolean isPrintable = true;
-        Iterator<LayoutConstraints> enumVal = container.getLayoutModel().getConstraints().keySet().iterator();
-        while (enumVal.hasNext()) {
-            try {
-                String type = enumVal.next().getType();
-                if (!"org.weasis.core.ui.editor.image.DefaultView2d".equals(type)) { //$NON-NLS-1$
-                    isPrintable = false;
-                    break;
-                }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        if (!isPrintable) {
-            JOptionPane.showMessageDialog(this, Messages.getString(Messages.getString("DicomPrintDialog.no_print")), //$NON-NLS-1$
+        List<DefaultView2d<ImageElement>> views = container.getImagePanels();
+        if (views.isEmpty()) {
+            JOptionPane.showMessageDialog(this, Messages.getString("DicomPrintDialog.no_print"), //$NON-NLS-1$
                 null, JOptionPane.ERROR_MESSAGE);
             doClose();
             return;
         }
         doClose();
 
-        ArrayList<DefaultView2d<ImageElement>> views;
+        GridBagLayoutModel layoutModel = container.getLayoutModel();
         if (chckbxSelctedView.isSelected()) {
-            // One View
-            views = new ArrayList<DefaultView2d<ImageElement>>(1);
-            views.add(eventManager.getSelectedViewPane());
-        } else {
-            // Several views
-            views = container.getImagePanels();
+            final LinkedHashMap<LayoutConstraints, Component> elements =
+                new LinkedHashMap<LayoutConstraints, Component>(1);
+            layoutModel = new GridBagLayoutModel(elements, "sel_tmp", "", null);
+            DefaultView2d val = eventManager.getSelectedViewPane();
+            elements.put(new LayoutConstraints(val.getClass().getName(), 0, 0, 0, 1, 1, 1.0, 1.0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH), val);
         }
-        ExportLayout<ImageElement> layout = new ExportLayout<ImageElement>(views, container.getLayoutModel());
+        ExportLayout<ImageElement> layout = new ExportLayout<ImageElement>(layoutModel);
         try {
             dicomPrint.printImage(dicomPrint.printImage(layout, printOptions));
         } catch (Exception ex) {
             AuditLog.logError(LOGGER, ex, "DICOM Print Service"); //$NON-NLS-1$
             JOptionPane.showMessageDialog(this, Messages.getString("DicomPrintDialog.error_print"), // $NON-NLS-1$ //$NON-NLS-1$
-                Messages.getString(Messages.getString("DicomPrintDialog.error")), JOptionPane.ERROR_MESSAGE); // $NON-NLS-1$ //$NON-NLS-1$
+                Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); // $NON-NLS-1$ //$NON-NLS-1$
         } finally {
             layout.dispose();
         }

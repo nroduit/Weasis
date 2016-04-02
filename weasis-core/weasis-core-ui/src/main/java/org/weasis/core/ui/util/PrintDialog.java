@@ -19,17 +19,19 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Iterator;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
-import org.weasis.core.api.image.LayoutConstraints;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -41,10 +43,8 @@ import org.weasis.core.ui.util.PrintOptions.SCALE;
  */
 public class PrintDialog extends javax.swing.JDialog {
 
-    /** A return status code - returned if Cancel button has been pressed */
-    public static final int RET_CANCEL = 0;
-    /** A return status code - returned if OK button has been pressed */
-    public static final int RET_OK = 1;
+    private static final Logger LOGGER = LoggerFactory.getLogger(PrintDialog.class);
+
     private javax.swing.JCheckBox annotationsCheckBox;
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel customImageSizeLabel;
@@ -54,14 +54,13 @@ public class PrintDialog extends javax.swing.JDialog {
     private javax.swing.JLabel positionLabel;
     private javax.swing.JButton printButton;
 
-    private int returnStatus = RET_CANCEL;
     private ImageViewerEventManager eventManager;
     private JCheckBox chckbxSelctedView;
     private JSpinner spinner;
 
     /** Creates new form PrintDialog */
     public PrintDialog(Window parent, String title, ImageViewerEventManager eventManager) {
-        super(parent, ModalityType.APPLICATION_MODAL);
+        super(parent, title, ModalityType.APPLICATION_MODAL);
         this.eventManager = eventManager;
         boolean layout = eventManager.getSelectedView2dContainer().getImagePanels().size() > 1;
         initComponents(layout);
@@ -231,22 +230,9 @@ public class PrintDialog extends javax.swing.JDialog {
         }
 
         ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
-        // TODO make printable component
-        boolean isPrintable = true;
-        Iterator<LayoutConstraints> enumVal = container.getLayoutModel().getConstraints().keySet().iterator();
-        while (enumVal.hasNext()) {
-            try {
-                String type = enumVal.next().getType();
-                if (!"org.weasis.core.ui.editor.image.DefaultView2d".equals(type)) { //$NON-NLS-1$
-                    isPrintable = false;
-                    break;
-                }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        if (!isPrintable) {
+        List<DefaultView2d<ImageElement>> views = container.getImagePanels();
+        if (views.isEmpty()) {
             JOptionPane.showMessageDialog(this, Messages.getString("PrintDialog.no_print"), null, //$NON-NLS-1$
                 JOptionPane.ERROR_MESSAGE);
             doClose();
@@ -254,10 +240,9 @@ public class PrintDialog extends javax.swing.JDialog {
         }
         doClose();
 
-        if (container.getImagePanels().size() > 1 && !chckbxSelctedView.isSelected()) {
+        if (views.size() > 1 && !chckbxSelctedView.isSelected()) {
             // Several views
-            ExportLayout<ImageElement> layout =
-                new ExportLayout<ImageElement>(container.getImagePanels(), container.getLayoutModel());
+            ExportLayout<ImageElement> layout = new ExportLayout<ImageElement>(container.getLayoutModel());
             ImagePrint print = new ImagePrint(layout, printOptions);
             print.print();
             layout.dispose();

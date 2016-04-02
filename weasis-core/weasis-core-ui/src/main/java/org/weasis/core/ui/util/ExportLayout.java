@@ -14,13 +14,15 @@ package org.weasis.core.ui.util;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.swing.JPanel;
 import javax.swing.plaf.PanelUI;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
@@ -29,33 +31,18 @@ import org.weasis.core.ui.editor.image.ExportImage;
 
 public class ExportLayout<E extends ImageElement> extends JPanel {
 
-    /**
-     * The array of display panes located in this image view panel.
-     */
-    protected final ArrayList<ExportImage<E>> viewList;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExportLayout.class);
 
     protected final JPanel grid;
     protected GridBagLayoutModel layoutModel;
 
-    public ExportLayout(ArrayList<DefaultView2d<E>> view2ds, GridBagLayoutModel layoutModel) {
-        this.viewList = new ArrayList<ExportImage<E>>(view2ds.size());
-        for (DefaultView2d<E> v : view2ds) {
-            ExportImage export = new ExportImage(v);
-            export.getInfoLayer().setBorder(3);
-            viewList.add(export);
-        }
+    public ExportLayout(GridBagLayoutModel layoutModel) {
         grid = new JPanel();
         // For having a black background with any Look and Feel
         grid.setUI(new PanelUI() {
         });
         setGridBackground(Color.BLACK);
-        this.layoutModel = layoutModel;
-        try {
-            this.layoutModel = (GridBagLayoutModel) this.layoutModel.clone();
-        } catch (CloneNotSupportedException e1) {
-            e1.printStackTrace();
-        }
-        setLayoutModel();
+        adaptLayoutModel(layoutModel);
         add(grid, BorderLayout.CENTER);
     }
 
@@ -69,23 +56,39 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         return layoutModel;
     }
 
-    private void setLayoutModel() {
-        final LinkedHashMap<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
-        Iterator<LayoutConstraints> enumVal = elements.keySet().iterator();
-        int index = 0;
+    private void adaptLayoutModel(GridBagLayoutModel layoutModel) {
+        final Map<LayoutConstraints, Component> old = layoutModel.getConstraints();
+        final LinkedHashMap<LayoutConstraints, Component> elements =
+            new LinkedHashMap<LayoutConstraints, Component>(old.size());
+        this.layoutModel = new GridBagLayoutModel(elements, "exp_tmp", "", null);
+        Iterator<LayoutConstraints> enumVal = old.keySet().iterator();
+
         while (enumVal.hasNext()) {
             LayoutConstraints e = enumVal.next();
-            ExportImage<E> v = viewList.get(index);
-            elements.put(e, v);
+            Component v = old.get(e);
+            LayoutConstraints constraint = (LayoutConstraints) e.clone();
+
+            if (v instanceof DefaultView2d) {
+                ExportImage export = new ExportImage((DefaultView2d) v);
+                export.getInfoLayer().setBorder(3);
+                elements.put(constraint, export);
+                v = export;
+            } else {
+                // Create a new empty panel to net steel the component from the original layout
+                v = new JPanel();
+                elements.put(constraint, v);
+            }
+
             grid.add(v, e);
-            index++;
         }
         grid.revalidate();
     }
 
     public void dispose() {
-        for (ExportImage<E> v : viewList) {
-            v.dispose();
+        for (Component c : layoutModel.getConstraints().values()) {
+            if (c instanceof ExportImage) {
+                ((ExportImage) c).dispose();
+            }
         }
     }
 
