@@ -552,7 +552,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 }
 
                 if (updateAll) {
-                    ArrayList<ViewCanvas<DicomImageElement>> viewList = getImagePanels(true);
+                    List<ViewCanvas<DicomImageElement>> viewList = getImagePanels(true);
                     for (ViewCanvas<DicomImageElement> view : viewList) {
                         ((View2d) view).updateKOButtonVisibleState();
                     }
@@ -565,7 +565,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                  * Set the selected view at the end of the list to trigger the synchronization of the SCROLL_SERIES
                  * action at the end of the process
                  */
-                ArrayList<ViewCanvas<DicomImageElement>> viewList = getImagePanels(true);
+                List<ViewCanvas<DicomImageElement>> viewList = getImagePanels(true);
 
                 for (ViewCanvas<DicomImageElement> view : viewList) {
 
@@ -593,18 +593,18 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         return View2dFactory.getViewTypeNumber(layout, defaultClass);
     }
 
     @Override
-    public boolean isViewType(Class defaultClass, String type) {
+    public boolean isViewType(Class<?> defaultClass, String type) {
         if (defaultClass != null) {
             try {
-                Class clazz = Class.forName(type);
+                Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Checking view", e);
             }
         }
         return false;
@@ -623,23 +623,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
         try {
             // FIXME use classloader.loadClass or injection
-            Class cl = Class.forName(clazz);
+            Class<?> cl = Class.forName(clazz);
             JComponent component = (JComponent) cl.newInstance();
             if (component instanceof SeriesViewerListener) {
                 eventManager.addSeriesViewerListener((SeriesViewerListener) component);
             }
             return component;
-
-        } catch (InstantiationException e1) {
-            e1.printStackTrace();
-        } catch (IllegalAccessException e1) {
-            e1.printStackTrace();
-        }
-
-        catch (ClassNotFoundException e1) {
-            e1.printStackTrace();
-        } catch (ClassCastException e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }

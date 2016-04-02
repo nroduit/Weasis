@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.SwingPropertyChangeSupport;
@@ -685,7 +686,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
                 addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
 
-                final ArrayList<ViewCanvas<E>> panes = viewerPlugin.getImagePanels();
+                final List<ViewCanvas<E>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 if (SynchView.NONE.equals(synchView)) {
                     for (int i = 0; i < panes.size(); i++) {

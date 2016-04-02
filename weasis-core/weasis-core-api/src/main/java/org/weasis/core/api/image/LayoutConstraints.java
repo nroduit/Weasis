@@ -37,7 +37,7 @@ public class LayoutConstraints extends GridBagConstraints implements Comparable<
 
     @Override
     public int compareTo(LayoutConstraints o) {
-        return (layoutID < o.layoutID ? -1 : (layoutID == o.layoutID ? 0 : 1));
+        return layoutID < o.layoutID ? -1 : (layoutID == o.layoutID ? 0 : 1);
     }
 
 }

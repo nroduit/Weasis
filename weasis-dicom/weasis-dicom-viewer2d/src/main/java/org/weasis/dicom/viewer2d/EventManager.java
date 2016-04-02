@@ -305,8 +305,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         }
                     } else {
                         if (selectedView2dContainer != null) {
-                            final ArrayList<ViewCanvas<DicomImageElement>> panes =
-                                selectedView2dContainer.getImagePanels();
+                            final List<ViewCanvas<DicomImageElement>> panes = selectedView2dContainer.getImagePanels();
                             for (ViewCanvas<DicomImageElement> p : panes) {
                                 Boolean cutlines = (Boolean) p.getActionValue(ActionW.SYNCH_CROSSLINE.cmd());
                                 if (cutlines != null && cutlines) {
@@ -654,7 +653,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
                 container.updateTileOffset();
                 if ((selectedView.getSeries() instanceof DicomSeries) == false) {
-                    ArrayList<ViewCanvas<DicomImageElement>> panes = selectedView2dContainer.getImagePanels(false);
+                    List<ViewCanvas<DicomImageElement>> panes = selectedView2dContainer.getImagePanels(false);
                     if (panes.size() > 0) {
                         selectedView2dContainer.setSelectedImagePane(panes.get(0));
                         return;
@@ -1098,7 +1097,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 // } else {
                 moveTroughSliceAction.enableAction(true);
                 // }
-                final ArrayList<ViewCanvas<DicomImageElement>> panes = viewerPlugin.getImagePanels();
+                final List<ViewCanvas<DicomImageElement>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 

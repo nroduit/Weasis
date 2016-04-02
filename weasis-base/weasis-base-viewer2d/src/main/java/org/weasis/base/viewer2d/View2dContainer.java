@@ -30,6 +30,8 @@ import javax.swing.SwingUtilities;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.dockable.DisplayTool;
 import org.weasis.base.viewer2d.dockable.ImageTool;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -68,6 +70,8 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
 
@@ -306,23 +310,15 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         }
         try {
             // FIXME use classloader.loadClass or injection
-            Class cl = Class.forName(clazz);
+            Class<?> cl = Class.forName(clazz);
             JComponent component = (JComponent) cl.newInstance();
             if (component instanceof SeriesViewerListener) {
                 eventManager.addSeriesViewerListener((SeriesViewerListener) component);
             }
             return component;
 
-        } catch (InstantiationException e1) {
-            e1.printStackTrace();
-        } catch (IllegalAccessException e1) {
-            e1.printStackTrace();
-        }
-
-        catch (ClassNotFoundException e1) {
-            e1.printStackTrace();
-        } catch (ClassCastException e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }
@@ -346,18 +342,18 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     }
 
     @Override
-    public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         return ViewerFactory.getViewTypeNumber(layout, defaultClass);
     }
 
     @Override
-    public boolean isViewType(Class defaultClass, String type) {
+    public boolean isViewType(Class<?> defaultClass, String type) {
         if (defaultClass != null) {
             try {
-                Class clazz = Class.forName(type);
+                Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Checking view type", e);
             }
         }
         return false;

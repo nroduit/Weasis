@@ -252,18 +252,18 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     @Override
-    public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         return 0;
     }
 
     @Override
-    public boolean isViewType(Class defaultClass, String type) {
+    public boolean isViewType(Class<?> defaultClass, String type) {
         if (defaultClass != null) {
             try {
-                Class clazz = Class.forName(type);
+                Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Checking view type", e);
             }
         }
         return false;
@@ -278,7 +278,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public JComponent createUIcomponent(String clazz) {
         try {
             // FIXME use classloader.loadClass or injection
-            Class cl = Class.forName(clazz);
+            Class<?> cl = Class.forName(clazz);
             JComponent component = (JComponent) cl.newInstance();
             if (component instanceof SeriesViewerListener) {
                 eventManager.addSeriesViewerListener((SeriesViewerListener) component);
@@ -287,8 +287,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                 srview = (SRView) component;
             }
             return component;
-        } catch (Exception e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }

@@ -331,18 +331,18 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     }
 
     @Override
-    public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         return View2dFactory.getViewTypeNumber(layout, defaultClass);
     }
 
     @Override
-    public boolean isViewType(Class defaultClass, String type) {
+    public boolean isViewType(Class<?> defaultClass, String type) {
         if (defaultClass != null) {
             try {
-                Class clazz = Class.forName(type);
+                Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Checking view type", e);
             }
         }
         return false;
@@ -361,23 +361,15 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
         try {
             // FIXME use classloader.loadClass or injection
-            Class cl = Class.forName(clazz);
+            Class<?> cl = Class.forName(clazz);
             JComponent component = (JComponent) cl.newInstance();
             if (component instanceof SeriesViewerListener) {
                 eventManager.addSeriesViewerListener((SeriesViewerListener) component);
             }
             return component;
 
-        } catch (InstantiationException e1) {
-            e1.printStackTrace();
-        } catch (IllegalAccessException e1) {
-            e1.printStackTrace();
-        }
-
-        catch (ClassNotFoundException e1) {
-            e1.printStackTrace();
-        } catch (ClassCastException e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }

@@ -22,6 +22,8 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.plaf.PanelUI;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
@@ -29,6 +31,8 @@ import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
 public class ExportLayout<E extends ImageElement> extends JPanel {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExportLayout.class);
 
     /**
      * The array of display panes located in this image view panel.
@@ -39,9 +43,9 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     protected GridBagLayoutModel layoutModel;
 
     public ExportLayout(List<ViewCanvas<E>> view2ds, GridBagLayoutModel layoutModel) {
-        this.viewList = new ArrayList<ExportImage<E>>(view2ds.size());
+        this.viewList = new ArrayList<>(view2ds.size());
         for (ViewCanvas<E> v : view2ds) {
-            ExportImage export = new ExportImage(v);
+            ExportImage<E> export = new ExportImage<>(v);
             export.getInfoLayer().setBorder(3);
             viewList.add(export);
         }
@@ -53,8 +57,8 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         this.layoutModel = layoutModel;
         try {
             this.layoutModel = (GridBagLayoutModel) this.layoutModel.clone();
-        } catch (CloneNotSupportedException e1) {
-            e1.printStackTrace();
+        } catch (CloneNotSupportedException e) {
+            LOGGER.error("Clone layoutModel", e);
         }
         setLayoutModel();
         add(grid, BorderLayout.CENTER);

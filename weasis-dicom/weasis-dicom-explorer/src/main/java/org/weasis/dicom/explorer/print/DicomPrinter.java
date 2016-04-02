@@ -71,7 +71,7 @@ public class DicomPrinter {
         }
     }
 
-    public static void loadPrintersSettings(javax.swing.JComboBox printersComboBox) {
+    public static void loadPrintersSettings(javax.swing.JComboBox<DicomPrinter> printersComboBox) {
         final BundleContext context = FrameworkUtil.getBundle(DicomPrinter.class).getBundleContext();
         File prefs = new File(BundlePreferences.getDataFolder(context), "dicomPrinters.xml"); //$NON-NLS-1$
         if (prefs.canRead()) {

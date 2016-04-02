@@ -339,7 +339,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             ImageViewerPlugin<DicomImageElement> container =
                                 this.eventManager.getSelectedView2dContainer();
                             if (container != null) {
-                                ArrayList<ViewCanvas<DicomImageElement>> viewpanels = container.getImagePanels();
+                                List<ViewCanvas<DicomImageElement>> viewpanels = container.getImagePanels();
                                 if (p3 != null) {
                                     for (ViewCanvas<DicomImageElement> v : viewpanels) {
                                         MediaSeries<DicomImageElement> s = v.getSeries();

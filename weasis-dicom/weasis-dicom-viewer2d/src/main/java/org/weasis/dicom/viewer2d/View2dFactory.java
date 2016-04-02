@@ -22,6 +22,8 @@ import javax.swing.ImageIcon;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
@@ -45,6 +47,7 @@ import org.weasis.dicom.explorer.DicomModel;
 @Service
 @Property(name = "service.name", value = "2D DICOM Viewer")
 public class View2dFactory implements SeriesViewerFactory {
+    private static final Logger LOGGER = LoggerFactory.getLogger(View2dFactory.class);
 
     public static final String NAME = Messages.getString("View2dFactory.title"); //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/dicom.png")); //$NON-NLS-1$
@@ -113,18 +116,18 @@ public class View2dFactory implements SeriesViewerFactory {
 
     }
 
-    public static int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public static int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         int val = 0;
         if (layout != null && defaultClass != null) {
             Iterator<LayoutConstraints> enumVal = layout.getConstraints().keySet().iterator();
             while (enumVal.hasNext()) {
                 try {
-                    Class clazz = Class.forName(enumVal.next().getType());
+                    Class<?> clazz = Class.forName(enumVal.next().getType());
                     if (defaultClass.isAssignableFrom(clazz)) {
                         val++;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Checking view", e);
                 }
             }
         }

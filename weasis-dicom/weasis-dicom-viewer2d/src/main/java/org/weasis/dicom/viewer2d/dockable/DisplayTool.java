@@ -148,7 +148,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
                     ImageViewerPlugin<DicomImageElement> container =
                         EventManager.getInstance().getSelectedView2dContainer();
-                    ArrayList<ViewCanvas<DicomImageElement>> views = null;
+                    List<ViewCanvas<DicomImageElement>> views = null;
                     if (container != null) {
                         if (applyAllViews.isSelected()) {
                             views = container.getImagePanels();
@@ -254,7 +254,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         add(panelFoot, BorderLayout.SOUTH);
     }
 
-    private void sendPropertyChangeEvent(ArrayList<ViewCanvas<DicomImageElement>> views, String cmd, boolean selected) {
+    private void sendPropertyChangeEvent(List<ViewCanvas<DicomImageElement>> views, String cmd, boolean selected) {
         for (ViewCanvas<DicomImageElement> v : views) {
             v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
         }
@@ -396,12 +396,12 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             if (checked && !minDisp) {
                 ImageViewerPlugin<DicomImageElement> container =
                     EventManager.getInstance().getSelectedView2dContainer();
-                ArrayList<ViewCanvas<DicomImageElement>> views = null;
+                List<ViewCanvas<DicomImageElement>> views = null;
                 if (container != null) {
                     if (applyAllViews.isSelected()) {
                         views = container.getImagePanels();
                     } else {
-                        views = new ArrayList<ViewCanvas<DicomImageElement>>(1);
+                        views = new ArrayList<>(1);
                         ViewCanvas<DicomImageElement> view = container.getSelectedImagePane();
                         if (view != null) {
                             views.add(view);
