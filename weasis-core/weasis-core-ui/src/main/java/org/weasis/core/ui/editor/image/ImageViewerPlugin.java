@@ -320,7 +320,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             selectedImagePane = view2ds.get(0);
 
             MouseActions mouseActions = eventManager.getMouseActions();
-            boolean tiledMode = SynchData.Mode.Tile.equals(synchView);
+            boolean tiledMode = SynchData.Mode.Tile.equals(synchView.getSynchData().getMode());
             for (int i = 0; i < view2ds.size(); i++) {
                 ViewCanvas<E> v = view2ds.get(i);
                 // Close lens because update does not work
