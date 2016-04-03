@@ -62,7 +62,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     public PrintDialog(Window parent, String title, ImageViewerEventManager<I> eventManager) {
         super(parent, title, ModalityType.APPLICATION_MODAL);
         this.eventManager = eventManager;
-        boolean layout = eventManager.getSelectedView2dContainer().getImagePanels().size() > 1;
+        boolean layout = eventManager.getSelectedView2dContainer().getLayoutModel().getConstraints().size() > 1;
         initComponents(layout);
         imageSizeComboBox();
         setOnlySelectedView(layout);
@@ -249,9 +249,9 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         // }
         doClose();
 
-        if (views.size() > 1 && !chckbxSelctedView.isSelected()) {
+        if (chckbxSelctedView != null && !chckbxSelctedView.isSelected()) {
             // Several views
-            ExportLayout<I> layout = new ExportLayout<>(views, container.getLayoutModel());
+            ExportLayout<I> layout = new ExportLayout<>(container.getLayoutModel());
             ImagePrint print = new ImagePrint(layout, printOptions);
             print.print();
             layout.dispose();

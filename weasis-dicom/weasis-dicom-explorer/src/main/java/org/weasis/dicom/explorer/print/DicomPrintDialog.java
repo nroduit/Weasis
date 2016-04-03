@@ -19,7 +19,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
@@ -41,6 +43,8 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -593,7 +597,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                dispose();
+                doClose();
             }
         });
     }
@@ -636,12 +640,15 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
         doClose();
 
+        GridBagLayoutModel layoutModel = container.getLayoutModel();
         if (chckbxSelctedView.isSelected()) {
-            // One View
-            views.clear();
-            views.add(eventManager.getSelectedViewPane());
+            final Map<LayoutConstraints, Component> elements = new LinkedHashMap<>(1);
+            layoutModel = new GridBagLayoutModel(elements, "sel_tmp", "", null);
+            ViewCanvas<I> val = eventManager.getSelectedViewPane();
+            elements.put(new LayoutConstraints(val.getClass().getName(), 0, 0, 0, 1, 1, 1.0, 1.0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH), val.getJComponent());
         }
-        ExportLayout<I> layout = new ExportLayout<>(views, container.getLayoutModel());
+        ExportLayout<I> layout = new ExportLayout<>(layoutModel);
         try {
             dicomPrint.printImage(dicomPrint.printImage(layout, printOptions));
         } catch (Exception e) {

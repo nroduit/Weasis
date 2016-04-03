@@ -32,8 +32,9 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
+import java.io.IOException;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 
@@ -50,6 +51,7 @@ import org.dcm4che3.net.DimseRSP;
 import org.dcm4che3.net.pdu.AAssociateRQ;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
@@ -64,6 +66,14 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 public class DicomPrint {
 
     private DicomPrintOptions dicomPrintOptions;
+    private int interpolation;
+    private double placeholderX;
+    private double placeholderY;
+
+    private int lastx;
+    private double lastwx;
+    private double[] lastwy;
+    private double wx;
 
     public DicomPrint(DicomPrintOptions dicomPrintOptions) {
         this.dicomPrintOptions = dicomPrintOptions;
@@ -73,6 +83,74 @@ public class DicomPrint {
         if (layout == null) {
             return null;
         }
+
+        BufferedImage bufferedImage = initialize(layout, printOptions);
+        Graphics2D g2d = (Graphics2D) bufferedImage.getGraphics();
+
+        if (g2d != null) {
+            Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
+            Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
+            g2d.setBackground(background);
+            if (!Color.BLACK.equals(background)) {
+                // Change background color
+                g2d.clearRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
+            }
+            final Map<LayoutConstraints, Component> elements = layout.getLayoutModel().getConstraints();
+            Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
+            while (enumVal.hasNext()) {
+                Entry<LayoutConstraints, Component> e = enumVal.next();
+                LayoutConstraints key = e.getKey();
+                Component value = e.getValue();
+
+                ExportImage<? extends ImageElement> image = null;
+                Point2D.Double pad = new Point2D.Double(0.0, 0.0);
+
+                if (value instanceof ExportImage) {
+                    image = (ExportImage) value;
+                    formatImage(image, printOptions, key, pad);
+                }
+
+                if (key.gridx == 0) {
+                    wx = 0.0;
+                } else if (lastx < key.gridx) {
+                    wx += lastwx;
+                }
+                double wy = lastwy[key.gridx];
+
+                double x = 5 + (placeholderX * wx) + (MathUtil.isEqualToZero(wx) ? 0 : key.gridx * 5) + pad.x;
+                double y = 5 + (placeholderY * wy) + (MathUtil.isEqualToZero(wy) ? 0 : key.gridy * 5) + pad.y;
+                lastx = key.gridx;
+                lastwx = key.weightx;
+                for (int i = key.gridx; i < key.gridx + key.gridwidth; i++) {
+                    lastwy[i] += key.weighty;
+                }
+
+                if (image != null) {
+                    boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
+
+                    // Set us to the upper left corner
+                    g2d.translate(x, y);
+                    g2d.setClip(image.getBounds());
+                    image.draw(g2d);
+                    ImagePrint.restoreDoubleBuffering(image, wasBuffered);
+                    g2d.translate(-x, -y);
+
+                    if (!borderColor.equals(background)) {
+                        // Change background color
+                        g2d.setClip(null);
+                        g2d.setColor(borderColor);
+                        g2d.setStroke(new BasicStroke(2));
+                        Dimension viewSize = image.getSize();
+                        g2d.drawRect((int) x - 1, (int) y - 1, viewSize.width + 1, viewSize.height + 1);
+                    }
+                }
+            }
+        }
+
+        return bufferedImage;
+    }
+
+    private BufferedImage initialize(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
         Dimension dimGrid = layout.getLayoutModel().getGridSize();
         FilmSize filmSize = dicomPrintOptions.getFilmSizeId();
         DotPerInches dpi = dicomPrintOptions.getDpi();
@@ -86,11 +164,8 @@ public class DicomPrint {
             height = tmp;
         }
 
-        Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
-        Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
-
         String mType = dicomPrintOptions.getMagnificationType();
-        int interpolation = 1;
+        interpolation = 1;
 
         if ("REPLICATE".equals(mType)) { //$NON-NLS-1$
             interpolation = 0;
@@ -99,118 +174,68 @@ public class DicomPrint {
         }
 
         // Printable size
-        double placeholderX = width - (dimGrid.width + 1) * 5;
-        double placeholderY = height - (dimGrid.height + 1) * 5;
+        placeholderX = width - (dimGrid.width + 1) * 5.0;
+        placeholderY = height - (dimGrid.height + 1) * 5.0;
 
-        int lastx = 0;
-        double lastwx = 0.0;
-        double[] lastwy = new double[dimGrid.width];
-        double wx = 0.0;
+        lastx = 0;
+        lastwx = 0.0;
+        lastwy = new double[dimGrid.width];
+        wx = 0.0;
 
-        BufferedImage bufferedImage;
         if (printOptions.isColor()) {
-            bufferedImage = createRGBBufferedImage(width, height);
+            return createRGBBufferedImage(width, height);
         } else {
-            bufferedImage = createGrayBufferedImage(width, height);
+            return createGrayBufferedImage(width, height);
         }
-        Graphics2D g2d = (Graphics2D) bufferedImage.getGraphics();
+    }
 
-        if (g2d != null) {
-            g2d.setBackground(background);
-            if (!Color.BLACK.equals(background)) {
-                // Change background color
-                g2d.clearRect(0, 0, width, height);
-            }
-            final LinkedHashMap<LayoutConstraints, Component> elements = layout.getLayoutModel().getConstraints();
-            Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
-            while (enumVal.hasNext()) {
-                Entry<LayoutConstraints, Component> e = enumVal.next();
-                LayoutConstraints key = e.getKey();
-                ExportImage<? extends ImageElement> image = (ExportImage<? extends ImageElement>) e.getValue();
-                if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
-                    image.getInfoLayer().setVisible(false);
-                }
-
-                double padX = 0.0;
-                double padY = 0.0;
-                Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-                Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
-                Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
-                RenderedImage img = image.getSourceImage();
-                if (img != null && originCenter != null && originZoom != null) {
-                    boolean bestfit = originZoom <= 0.0;
-                    double canvasWidth;
-                    double canvasHeight;
-                    if (bestfit || originSize == null) {
-                        canvasWidth = img.getWidth() * image.getImage().getRescaleX();
-                        canvasHeight = img.getHeight() * image.getImage().getRescaleY();
-                    } else {
-                        canvasWidth = originSize.getWidth() / originZoom;
-                        canvasHeight = originSize.getHeight() / originZoom;
-                    }
-                    double scaleCanvas =
-                        Math.min(placeholderX * key.weightx / canvasWidth, placeholderY * key.weighty / canvasHeight);
-
-                    // Set the print area in pixel
-                    double cw = canvasWidth * scaleCanvas;
-                    double ch = canvasHeight * scaleCanvas;
-                    image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
-
-                    if (printOptions.isCenter()) {
-                        padX = (placeholderX * key.weightx - cw) * 0.5;
-                        padY = (placeholderY * key.weighty - ch) * 0.5;
-                    } else {
-                        padX = 0.0;
-                        padY = 0.0;
-                    }
-
-                    image.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
-                    double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
-                    // Resize in best fit window
-                    image.zoom(scaleFactor);
-                    if (bestfit) {
-                        image.center();
-                    } else {
-                        image.setCenter(originCenter.getX(), originCenter.getY());
-                    }
-                }
-
-                if (key.gridx == 0) {
-                    wx = 0.0;
-                } else if (lastx < key.gridx) {
-                    wx += lastwx;
-                }
-                double wy = lastwy[key.gridx];
-
-                double x = 5 + (placeholderX * wx) + (wx == 0.0 ? 0 : key.gridx * 5) + padX;
-                double y = 5 + (placeholderY * wy) + (wy == 0.0 ? 0 : key.gridy * 5) + padY;
-                lastx = key.gridx;
-                lastwx = key.weightx;
-                for (int i = key.gridx; i < key.gridx + key.gridwidth; i++) {
-                    lastwy[i] += key.weighty;
-                }
-
-                boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
-
-                // Set us to the upper left corner
-                g2d.translate(x, y);
-                g2d.setClip(image.getBounds());
-                image.draw(g2d);
-                ImagePrint.restoreDoubleBuffering(image, wasBuffered);
-                g2d.translate(-x, -y);
-
-                if (!borderColor.equals(background)) {
-                    // Change background color
-                    g2d.setClip(null);
-                    g2d.setColor(borderColor);
-                    g2d.setStroke(new BasicStroke(2));
-                    Dimension viewSize = image.getSize();
-                    g2d.drawRect((int) x - 1, (int) y - 1, viewSize.width + 1, viewSize.height + 1);
-                }
-            }
+    private void formatImage(ExportImage<? extends ImageElement> image, PrintOptions printOptions,
+        LayoutConstraints key, Point2D.Double pad) {
+        if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
+            image.getInfoLayer().setVisible(false);
         }
 
-        return bufferedImage;
+        Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
+        Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+        Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
+        RenderedImage img = image.getSourceImage();
+        if (img != null && originCenter != null && originZoom != null) {
+            boolean bestfit = originZoom <= 0.0;
+            double canvasWidth;
+            double canvasHeight;
+            if (bestfit || originSize == null) {
+                canvasWidth = img.getWidth() * image.getImage().getRescaleX();
+                canvasHeight = img.getHeight() * image.getImage().getRescaleY();
+            } else {
+                canvasWidth = originSize.getWidth() / originZoom;
+                canvasHeight = originSize.getHeight() / originZoom;
+            }
+            double scaleCanvas =
+                Math.min(placeholderX * key.weightx / canvasWidth, placeholderY * key.weighty / canvasHeight);
+
+            // Set the print area in pixel
+            double cw = canvasWidth * scaleCanvas;
+            double ch = canvasHeight * scaleCanvas;
+            image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
+
+            if (printOptions.isCenter()) {
+                pad.x = (placeholderX * key.weightx - cw) * 0.5;
+                pad.y = (placeholderY * key.weighty - ch) * 0.5;
+            } else {
+                pad.x = 0.0;
+                pad.y = 0.0;
+            }
+
+            image.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
+            double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
+            // Resize in best fit window
+            image.zoom(scaleFactor);
+            if (bestfit) {
+                image.center();
+            } else {
+                image.setCenter(originCenter.getX(), originCenter.getY());
+            }
+        }
     }
 
     /**
@@ -221,16 +246,14 @@ public class DicomPrint {
         ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
         ColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
         WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
-        BufferedImage dest = new BufferedImage(cm, r, false, null);
-        return dest;
+        return new BufferedImage(cm, r, false, null);
     }
 
     public static BufferedImage createGrayBufferedImage(int destWidth, int destHeight) {
         ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
         ColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
         WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
-        BufferedImage dest = new BufferedImage(cm, r, false, null);
-        return dest;
+        return new BufferedImage(cm, r, false, null);
     }
 
     public void printImage(BufferedImage image) throws Exception {
@@ -252,7 +275,7 @@ public class DicomPrint {
         Device device = new Device(weasisAet);
         ApplicationEntity ae = new ApplicationEntity(weasisAet);
         Connection conn = new Connection();
-        // Executor executor = new NewThreadExecutor(weasisAet);
+
         ApplicationEntity remoteAE = new ApplicationEntity(dicomPrintOptions.getDicomPrinter().getAeTitle());
         Connection remoteConn = new Connection();
 
@@ -333,11 +356,11 @@ public class DicomPrint {
 
     }
 
-    private void dimseRSPHandler(DimseRSP response) throws Exception {
+    private void dimseRSPHandler(DimseRSP response) throws IOException, InterruptedException {
         response.next();
         Attributes command = response.getCommand();
         if (command.getInt(Tag.Status, 0) != 0) {
-            throw new Exception("Unable to print the image. DICOM response status: " + command.getInt(Tag.Status, 0)); //$NON-NLS-1$
+            throw new IOException("Unable to print the image. DICOM response status: " + command.getInt(Tag.Status, 0)); //$NON-NLS-1$
         }
     }
 
@@ -356,14 +379,15 @@ public class DicomPrint {
             dcmObj.setInt(Tag.PixelAspectRatio, VR.IS, 1, 1);
             // Issue with some PrintSCP servers
             // dcmObj.putString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
+
+            DataBuffer dataBuffer;
             if (printInColor) {
                 // Must be PixelInterleavedSampleModel
                 dcmObj.setInt(Tag.PlanarConfiguration, VR.US, 0);
+                dataBuffer = image.getRaster().getDataBuffer();
             } else {
-                image = convertRGBImageToMonochrome(image);
+                dataBuffer = convertRGBImageToMonochrome(image).getRaster().getDataBuffer();
             }
-
-            DataBuffer dataBuffer = image.getRaster().getDataBuffer();
 
             if (dataBuffer instanceof DataBufferByte) {
                 bytesOut = ((DataBufferByte) dataBuffer).getData();

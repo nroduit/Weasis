@@ -13,17 +13,17 @@ package org.weasis.core.api.image;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.swing.Icon;
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -35,23 +35,19 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class GridBagLayoutModel implements GUIEntry, Cloneable {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GridBagLayoutModel.class);
+
     private String title;
     private final Icon icon;
     private final String id;
 
-    private final LinkedHashMap<LayoutConstraints, Component> constraints;
+    private final Map<LayoutConstraints, Component> constraints;
 
     public GridBagLayoutModel(String id, String title, int rows, int cols, String defaultClass, Icon icon) {
         this.title = title;
         this.id = id;
         this.icon = icon;
-        if (cols < 1) {
-            cols = 1;
-        }
-        if (rows < 1) {
-            rows = 1;
-        }
-        this.constraints = new LinkedHashMap<LayoutConstraints, Component>(cols * rows);
+        this.constraints = new LinkedHashMap<>(cols * rows);
         double weightx = 1.0 / cols;
         double weighty = 1.0 / rows;
         for (int y = 0; y < rows; y++) {
@@ -62,8 +58,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
     }
 
-    public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, Component> constraints, String id, String title,
-        Icon icon) {
+    public GridBagLayoutModel(Map<LayoutConstraints, Component> constraints, String id, String title, Icon icon) {
         if (constraints == null) {
             throw new IllegalArgumentException("constraints cannot be null"); //$NON-NLS-1$
         }
@@ -77,13 +72,13 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         this.title = title;
         this.id = id;
         this.icon = icon;
-        this.constraints = new LinkedHashMap<LayoutConstraints, Component>();
+        this.constraints = new LinkedHashMap<>();
         try {
-            loadXML(stream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
+            SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+            SAXAdapter adapter = new SAXAdapter();
+            parser.parse(stream, adapter);
+        } catch (Exception e) {
+            LOGGER.error("Loading layout xml", e);
         }
     }
 
@@ -96,7 +91,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         return title;
     }
 
-    public LinkedHashMap<LayoutConstraints, Component> getConstraints() {
+    public Map<LayoutConstraints, Component> getConstraints() {
         return constraints;
     }
 
@@ -114,18 +109,6 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
             }
         }
         return new Dimension(lastx + 1, lasty + 1);
-    }
-
-    public void loadXML(InputStream stream) throws IOException, SAXException {
-        try {
-            SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-            SAXAdapter adapter = new SAXAdapter();
-            parser.parse(stream, adapter);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (FactoryConfigurationError e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private final class SAXAdapter extends DefaultHandler {

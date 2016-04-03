@@ -30,8 +30,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.Icon;
@@ -283,7 +283,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
         components.clear();
 
-        final LinkedHashMap<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
+        final Map<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
         Iterator<LayoutConstraints> enumVal = elements.keySet().iterator();
         while (enumVal.hasNext()) {
             LayoutConstraints e = enumVal.next();
@@ -349,7 +349,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     public void replaceView(ViewCanvas<E> oldView2d, ViewCanvas<E> newView2d) {
         if (oldView2d != null && newView2d != null) {
             grid.removeAll();
-            final LinkedHashMap<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
+            final Map<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
             Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
             while (enumVal.hasNext()) {
                 Entry<LayoutConstraints, Component> element = enumVal.next();
@@ -444,7 +444,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
 
     public void maximizedSelectedImagePane(final ViewCanvas<E> defaultView2d, MouseEvent evt) {
-        final LinkedHashMap<LayoutConstraints, Component> elements = layoutModel.getConstraints();
+        final Map<LayoutConstraints, Component> elements = layoutModel.getConstraints();
         // Prevent conflict with double click for stopping to draw a graphic (like polyline)
         List<AbstractDragGraphic> selGraphics = defaultView2d.getLayerModel().getSelectedDragableGraphics();
         if (selGraphics != null) {
