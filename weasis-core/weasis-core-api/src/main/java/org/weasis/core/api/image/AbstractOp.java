@@ -76,23 +76,23 @@ public abstract class AbstractOp implements ImageOpNode {
 
     @Override
     public boolean isEnabled() {
-        return JMVUtils.getNULLtoTrue(params.get(ENABLE));
+        return JMVUtils.getNULLtoTrue(params.get(Param.ENABLE));
     }
 
     @Override
     public void setEnabled(boolean enabled) {
-        params.put(ENABLE, enabled);
+        params.put(Param.ENABLE, enabled);
     }
 
     @Override
     public String getName() {
-        return (String) params.get(NAME);
+        return (String) params.get(Param.NAME);
     }
 
     @Override
     public void setName(String name) {
         if (name != null) {
-            params.put(NAME, name);
+            params.put(Param.NAME, name);
         }
     }
 

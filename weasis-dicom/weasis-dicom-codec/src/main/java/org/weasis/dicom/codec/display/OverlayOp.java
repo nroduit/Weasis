@@ -23,6 +23,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
+import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.image.MergeImgOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -64,7 +65,7 @@ public class OverlayOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         Boolean overlay = (Boolean) params.get(P_SHOW);
 
@@ -97,6 +98,6 @@ public class OverlayOp extends AbstractOp {
             result = imgOverlay == null ? source : MergeImgOp.combineTwoImages(source, imgOverlay, 255);
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 }

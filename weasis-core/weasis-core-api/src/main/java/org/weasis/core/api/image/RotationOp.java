@@ -42,7 +42,7 @@ public class RotationOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         Integer rotationAngle = (Integer) params.get(P_ROTATE);
 
@@ -99,7 +99,7 @@ public class RotationOp extends AbstractOp {
             }
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
 }

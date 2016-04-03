@@ -43,6 +43,7 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
@@ -336,7 +337,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
         E img = imageLayer.getSourceImage();
         if (img != null && node != null) {
-            node.setParam(ImageOpNode.INPUT_IMG, getSourceImage());
+            node.setParam(Param.INPUT_IMG, getSourceImage());
             node.setParam(ZoomOp.P_RATIO_X, viewScale * img.getRescaleX());
             node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
             actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
@@ -361,7 +362,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         // return the image before the zoom operation from the parent view
         ImageOpNode node = view2d.getImageLayer().getDisplayOpManager().getNode(ZoomOp.OP_NAME);
         if (node != null) {
-            return (RenderedImage) node.getParam(ImageOpNode.INPUT_IMG);
+            return (RenderedImage) node.getParam(Param.INPUT_IMG);
         }
         return view2d.getImageLayer().getDisplayOpManager().getLastNodeOutputImage();
     }
@@ -386,7 +387,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
         freezeOperations = new SimpleOpManager();
         for (ImageOpNode op : pManager.getOperations()) {
-            if (ZoomOp.OP_NAME.equals(op.getParam(ImageOpNode.NAME))) {
+            if (ZoomOp.OP_NAME.equals(op.getParam(Param.NAME))) {
                 break;
             }
             try {

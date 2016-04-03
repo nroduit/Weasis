@@ -58,7 +58,7 @@ public class WindowOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         ImageElement imageElement = (ImageElement) params.get(P_IMAGE_ELEMENT);
 
@@ -68,7 +68,7 @@ public class WindowOp extends AbstractOp {
             result = imageElement.getRenderedImage(source, params);
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
 }

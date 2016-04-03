@@ -711,7 +711,7 @@ public class InfoLayer implements AnnotationsLayer {
         final int maxOutputValue = 255;
 
         OpManager dispOp = view2DPane.getDisplayOpManager();
-        ImageOpNode wlOp = dispOp.getNode(ImageOpNode.NAME);
+        ImageOpNode wlOp = dispOp.getNode(ImageOpNode.Param.NAME);
         if (wlOp == null) {
             return;
         }
