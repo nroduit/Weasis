@@ -56,6 +56,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -254,7 +255,7 @@ public class InfoLayer implements AnnotationsLayer {
                 } else {
                     String val = (String) dcm.getTagValue(TagW.DerivationDescription);
                     if (val != null) {
-                        buf.append(val);
+                        buf.append(StringUtil.getTruncatedString(val, 25, Suffix.THREE_PTS));
                     }
                 }
 
