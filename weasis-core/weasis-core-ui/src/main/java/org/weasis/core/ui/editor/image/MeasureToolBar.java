@@ -65,7 +65,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final SelectGraphic selectionGraphic = new SelectGraphic(1.0f, Color.WHITE);
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
-    public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
+    public static final ArrayList<Graphic> graphicList = new ArrayList<>();
 
     static {
         WProperties p = BundleTools.SYSTEM_PREFERENCES;

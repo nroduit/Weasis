@@ -343,11 +343,6 @@ public class ImageFiler extends AbstractBufferHandler {
         return true;
     }
 
-    public static boolean writeJPG(String fichier, PlanarImage source) throws IOException {
-        File file = new File(fichier);
-        return writePNG(file, source);
-    }
-
     public static RenderedImage getReadableImage(RenderedImage source) {
         RenderedImage dst = null;
         if (source != null && source.getSampleModel() != null) {
