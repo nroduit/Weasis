@@ -2,6 +2,7 @@ package org.weasis.dicom.explorer;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -32,11 +33,13 @@ public class CheckTreeModel {
     private final DefaultMutableTreeNode rootNode;
     private final DefaultTreeModel model;
     private final TreeCheckingModel checkingModel;
+    private final List<TreePath> defaultSelectedPaths;
 
     public CheckTreeModel(DicomModel dicomModel) {
         this.model = buildModel(dicomModel);
         this.rootNode = (DefaultMutableTreeNode) model.getRoot();
         this.checkingModel = new DefaultTreeCheckingModel(model);
+        this.defaultSelectedPaths = Collections.synchronizedList(new ArrayList<TreePath>());
     }
 
     public DefaultMutableTreeNode getRootNode() {
@@ -53,6 +56,15 @@ public class CheckTreeModel {
 
     public TreePath[] getCheckingPaths() {
         return checkingModel.getCheckingPaths();
+    }
+
+    public void setDefaultSelectionPaths(List<TreePath> selectedPaths) {
+        defaultSelectedPaths.clear();
+        defaultSelectedPaths.addAll(selectedPaths);
+    }
+
+    public List<TreePath> getDefaultSelectedPaths() {
+        return defaultSelectedPaths;
     }
 
     private static void buildSeries(DefaultMutableTreeNode studyNode, Series<?> series) {

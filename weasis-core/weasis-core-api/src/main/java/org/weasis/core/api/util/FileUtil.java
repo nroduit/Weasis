@@ -171,7 +171,8 @@ public final class FileUtil {
         if (childDirs != null) {
             for (File f : childDirs) {
                 if (f.isDirectory()) {
-                    recursiveDelete(f, deleteRoot);
+                    // deleteRoot used only for the first level, directory is deleted in next line
+                    recursiveDelete(f, false);
                     deleteFile(f);
                 } else {
                     deleteFile(f);

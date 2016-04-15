@@ -67,13 +67,13 @@ public class DicomExport extends AbstractWizardDialog {
 
             }
         });
-        final GridBagConstraints gridBagConstraints_0 = new GridBagConstraints();
-        gridBagConstraints_0.insets = new Insets(10, 15, 10, 0);
-        gridBagConstraints_0.anchor = GridBagConstraints.EAST;
-        gridBagConstraints_0.gridy = 0;
-        gridBagConstraints_0.gridx = 0;
-        gridBagConstraints_0.weightx = 1.0;
-        jPanelButtom.add(exportandClose, gridBagConstraints_0);
+        final GridBagConstraints gridBagConstraints0 = new GridBagConstraints();
+        gridBagConstraints0.insets = new Insets(10, 15, 10, 0);
+        gridBagConstraints0.anchor = GridBagConstraints.EAST;
+        gridBagConstraints0.gridy = 0;
+        gridBagConstraints0.gridx = 0;
+        gridBagConstraints0.weightx = 1.0;
+        jPanelButtom.add(exportandClose, gridBagConstraints0);
 
         final JButton exportButton = new JButton();
         exportButton.addActionListener(new ActionListener() {
@@ -84,12 +84,12 @@ public class DicomExport extends AbstractWizardDialog {
             }
         });
         exportButton.setText(Messages.getString("DicomExport.exp")); //$NON-NLS-1$
-        final GridBagConstraints gridBagConstraints_1 = new GridBagConstraints();
-        gridBagConstraints_1.insets = new Insets(10, 15, 10, 0);
-        gridBagConstraints_1.anchor = GridBagConstraints.EAST;
-        gridBagConstraints_1.gridy = 0;
-        gridBagConstraints_1.gridx = 1;
-        jPanelButtom.add(exportButton, gridBagConstraints_1);
+        final GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
+        gridBagConstraints1.insets = new Insets(10, 15, 10, 0);
+        gridBagConstraints1.anchor = GridBagConstraints.EAST;
+        gridBagConstraints1.gridy = 0;
+        gridBagConstraints1.gridx = 1;
+        jPanelButtom.add(exportButton, gridBagConstraints1);
 
         initializePages();
         pack();
@@ -120,7 +120,7 @@ public class DicomExport extends AbstractWizardDialog {
                 }
             }
         } catch (InvalidSyntaxException e) {
-            e.printStackTrace();
+            LOGGER.error("Insert DICOM export plugins", e); //$NON-NLS-1$
         }
 
         InsertableUtil.sortInsertable(list);
@@ -133,9 +133,10 @@ public class DicomExport extends AbstractWizardDialog {
 
     /**
      * Set the checking Paths for the CheckTreeModel to the open Series for the current selected Patient only <br>
+     * 
+     * @return
      */
     private void initTreeCheckingModel() {
-
         TreeCheckingModel checkingModel = treeModel.getCheckingModel();
         checkingModel.setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
 
@@ -145,7 +146,7 @@ public class DicomExport extends AbstractWizardDialog {
             Set<Series> openSeriesSet = ((DicomExplorer) explorer).getSelectedPatientOpenSeries();
             Object rootNode = treeModel.getModel().getRoot();
 
-            if (openSeriesSet.size() > 0 && rootNode instanceof DefaultMutableTreeNode) {
+            if (!openSeriesSet.isEmpty() && rootNode instanceof DefaultMutableTreeNode) {
                 List<TreePath> selectedSeriesPathsList = new ArrayList<>();
 
                 for (Enumeration<DefaultMutableTreeNode> enumTreeNode =
@@ -162,10 +163,11 @@ public class DicomExport extends AbstractWizardDialog {
                     }
                 }
 
-                if (selectedSeriesPathsList.isEmpty() == false) {
+                if (!selectedSeriesPathsList.isEmpty()) {
                     TreePath[] seriesCheckingPaths =
                         selectedSeriesPathsList.toArray(new TreePath[selectedSeriesPathsList.size()]);
                     checkingModel.setCheckingPaths(seriesCheckingPaths);
+                    treeModel.setDefaultSelectionPaths(selectedSeriesPathsList);
                 }
             }
         }
@@ -175,7 +177,8 @@ public class DicomExport extends AbstractWizardDialog {
         Object object = null;
         try {
             object = jScrollPanePage.getViewport().getComponent(0);
-        } catch (Exception ex) {
+        } catch (Exception e) {
+            LOGGER.debug("Failed to extract DICOM export", e); //$NON-NLS-1$
         }
         if (object instanceof ExportDicom) {
             final ExportDicom selectedPage = (ExportDicom) object;
