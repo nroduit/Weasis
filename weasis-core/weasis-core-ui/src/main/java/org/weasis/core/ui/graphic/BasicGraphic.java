@@ -35,7 +35,6 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d;
-import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AdvancedShape.BasicShape;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
@@ -564,25 +563,13 @@ public abstract class BasicGraphic implements Graphic {
             releasedEvent = (Boolean) source;
         }
 
-        MeasureTool measureToolListener = null;
+        //MeasureTool measureToolListener = null;
         boolean isMultiSelection = false; // default is single selection
         AbstractLayerModel model = (view2d != null) ? view2d.getLayerModel() : null;
 
         if (model != null) {
             ArrayList<Graphic> selectedGraphics = model.getSelectedGraphics();
             isMultiSelection = selectedGraphics.size() > 1;
-
-            if (selectedGraphics.size() == 1 && selectedGraphics.get(0) == this) {
-                GraphicsListener[] gfxListeners = model.getGraphicSelectionListeners();
-                if (gfxListeners != null) {
-                    for (GraphicsListener listener : gfxListeners) {
-                        if (listener instanceof MeasureTool) {
-                            measureToolListener = (MeasureTool) listener;
-                            break;
-                        }
-                    }
-                }
-            }
         }
 
         List<MeasureItem> measList = null;
@@ -636,8 +623,11 @@ public abstract class BasicGraphic implements Graphic {
         setLabel(labels, view2d, pos);
 
         // update MeasureTool on the fly without calling again getMeasurements
-        if (measureToolListener != null) {
-            measureToolListener.updateMeasuredItems(isMultiSelection ? null : measList);
+        if (!isMultiSelection && model != null) {
+            GraphicsListener[] gfxListeners = model.getGraphicSelectionListeners();
+            for (GraphicsListener gfxListener : gfxListeners) {
+                gfxListener.updateMeasuredItems(measList);
+            }
         }
 
     }
