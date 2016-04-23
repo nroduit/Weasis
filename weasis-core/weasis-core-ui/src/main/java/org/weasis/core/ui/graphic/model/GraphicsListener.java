@@ -14,8 +14,12 @@ import java.util.List;
 
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.MeasureItem;
 
 public interface GraphicsListener {
 
     void handle(List<Graphic> selectedGraphics, ImageLayer layer);
+    
+    void updateMeasuredItems(List<MeasureItem> measureList);
+    
 }
