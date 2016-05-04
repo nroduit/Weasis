@@ -26,6 +26,7 @@ import javax.swing.JProgressBar;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
+import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +36,12 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.CheckTreeModel;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
@@ -206,7 +207,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
                 if (node.getUserObject() instanceof DicomImageElement) {
                     DicomImageElement img = (DicomImageElement) node.getUserObject();
-                    String iuid = (String) img.getTagValue(TagW.SOPInstanceUID);
+                    String iuid = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
                     int index = uids.indexOf(iuid);
                     if (index == -1) {
                         uids.add(iuid);
@@ -230,7 +231,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     }
                 } else if (node.getUserObject() instanceof DicomSpecialElement) {
                     DicomSpecialElement dcm = (DicomSpecialElement) node.getUserObject();
-                    String iuid = (String) dcm.getTagValue(TagW.SOPInstanceUID);
+                    String iuid = TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class);
                     String path = LocalExport.buildPath(dcm, false, false, false, node);
                     File destinationDir = new File(writeDir, path);
                     destinationDir.mkdirs();
@@ -241,7 +242,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     }
                 } else if (node.getUserObject() instanceof MediaElement<?>) {
                     MediaElement<?> dcm = (MediaElement<?>) node.getUserObject();
-                    String iuid = (String) dcm.getTagValue(TagW.SOPInstanceUID);
+                    String iuid = TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class);
 
                     String path = LocalExport.buildPath(dcm, false, false, false, node);
                     File destinationDir = new File(writeDir, path);

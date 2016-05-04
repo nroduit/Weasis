@@ -41,6 +41,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -85,11 +87,13 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SimpleTagable;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -115,10 +119,99 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; //$NON-NLS-1$
     public static final String UNREADABLE = "unreadable/dicom"; //$NON-NLS-1$
     public static final String SERIES_XDSI = "xds-i/dicom"; //$NON-NLS-1$
-    public static final String NO_VALUE = org.weasis.dicom.codec.Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
 
-    public static final Map<String, DicomSpecialElementFactory> DCM_ELEMENT_FACTORIES =
-        new HashMap<String, DicomSpecialElementFactory>();
+    private static final AtomicInteger instanceID = new AtomicInteger(1);
+    public static final TagManager tagManager = new TagManager();
+
+    static {
+        // PatientPseudoUID is the unique identifying tag for this patient group
+        // -------- Mandatory Tags --------
+        tagManager.addTag(Tag.PatientID, Level.PATIENT);
+        tagManager.addTag(Tag.PatientName, Level.PATIENT);
+        // -------- End of Mandatory Tags --------
+        tagManager.addTag(Tag.PatientBirthDate, Level.PATIENT);
+        tagManager.addTag(Tag.PatientBirthTime, Level.PATIENT);
+        tagManager.addTag(Tag.PatientAge, Level.PATIENT);
+        tagManager.addTag(Tag.PatientSex, Level.PATIENT);
+        tagManager.addTag(Tag.IssuerOfPatientID, Level.PATIENT);
+        tagManager.addTag(Tag.PatientWeight, Level.PATIENT);
+        tagManager.addTag(Tag.PatientComments, Level.PATIENT);
+
+        // StudyInstanceUID is the unique identifying tag for this study group
+        tagManager.addTag(Tag.StudyID, Level.STUDY);
+        tagManager.addTag(Tag.StudyDate, Level.STUDY);
+        tagManager.addTag(Tag.StudyTime, Level.STUDY);
+        tagManager.addTag(Tag.StudyDescription, Level.STUDY);
+        tagManager.addTag(Tag.StudyComments, Level.STUDY);
+        tagManager.addTag(Tag.AccessionNumber, Level.STUDY);
+        tagManager.addTag(Tag.ModalitiesInStudy, Level.STUDY); // not required
+        tagManager.addTag(Tag.NumberOfStudyRelatedInstances, Level.STUDY); // not required
+        tagManager.addTag(Tag.NumberOfStudyRelatedSeries, Level.STUDY); // not required
+
+        // SubseriesInstanceUID is the unique identifying tag for this series group
+        // -------- Mandatory Tags --------
+        tagManager.addTag(Tag.SeriesInstanceUID, Level.SERIES);
+        tagManager.addTag(Tag.Modality, Level.SERIES);
+        // -------- End of Mandatory Tags --------
+        tagManager.addTag(Tag.SeriesDescription, Level.SERIES);
+        tagManager.addTag(Tag.RetrieveAETitle, Level.SERIES); // not required
+        tagManager.addTag(Tag.ReferringPhysicianName, Level.SERIES);
+        tagManager.addTag(Tag.InstitutionName, Level.SERIES);
+        tagManager.addTag(Tag.InstitutionalDepartmentName, Level.SERIES);
+        tagManager.addTag(Tag.StationName, Level.SERIES);
+        tagManager.addTag(Tag.Manufacturer, Level.SERIES);
+        tagManager.addTag(Tag.ManufacturerModelName, Level.SERIES);
+        tagManager.addTag(Tag.SeriesNumber, Level.SERIES);
+        tagManager.addTag(Tag.NumberOfFrames, Level.SERIES);
+        tagManager.addTag(Tag.SeriesDate, Level.SERIES);
+        tagManager.addTag(Tag.SeriesTime, Level.SERIES);
+        tagManager.addTag(Tag.PerformedProcedureStepStartDate, Level.SERIES); // not required
+        tagManager.addTag(Tag.PerformedProcedureStepStartTime, Level.SERIES); // not required
+        // Should be in image
+        // C.7.6.5 Cine Module http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.5.html
+        tagManager.addTag(Tag.PreferredPlaybackSequencing, Level.SERIES);
+        tagManager.addTag(Tag.CineRate, Level.SERIES);
+        tagManager.addTag(Tag.RecommendedDisplayFrameRate, Level.SERIES);
+        tagManager.addTag(Tag.KVP, Level.SERIES);
+        tagManager.addTag(Tag.BodyPartExamined, Level.SERIES);
+        tagManager.addTag(Tag.FrameOfReferenceUID, Level.SERIES);
+        tagManager.addTag(Tag.NumberOfSeriesRelatedInstances, Level.SERIES);
+        tagManager.addTag(Tag.Laterality, Level.SERIES);
+
+        // SOPInstanceUID is the unique identifying tag of a DICOM object
+        // -------- Mandatory Tags --------
+        // Tags for identifying group (Patient, Study, Series)
+        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
+        tagManager.addTag(Tag.PatientName, Level.INSTANCE);
+        tagManager.addTag(Tag.PatientBirthDate, Level.INSTANCE);
+        tagManager.addTag(Tag.IssuerOfPatientID, Level.INSTANCE);
+        tagManager.addTag(Tag.StudyInstanceUID, Level.INSTANCE);
+        tagManager.addTag(Tag.SeriesInstanceUID, Level.INSTANCE);
+        tagManager.addTag(Tag.Modality, Level.INSTANCE);
+        // -------- End of Mandatory Tags --------
+
+        tagManager.addTag(Tag.GantryDetectorTilt, Level.INSTANCE);
+        tagManager.addTag(Tag.PatientOrientation, Level.INSTANCE);
+        tagManager.addTag(Tag.SliceLocation, Level.INSTANCE);
+        tagManager.addTag(Tag.SliceThickness, Level.INSTANCE);
+        tagManager.addTag(Tag.AcquisitionDate, Level.INSTANCE);
+        tagManager.addTag(Tag.AcquisitionTime, Level.INSTANCE);
+        tagManager.addTag(Tag.ContentDate, Level.INSTANCE);
+        tagManager.addTag(Tag.ContentTime, Level.INSTANCE);
+        tagManager.addTag(Tag.DiffusionBValue, Level.INSTANCE);
+        tagManager.addTag(Tag.MIMETypeOfEncapsulatedDocument, Level.INSTANCE);
+        tagManager.addTag(Tag.PixelDataProviderURL, Level.INSTANCE);
+        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
+        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
+        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
+        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
+        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
+
+        // TODO init with a profile
+        DicomMediaUtils.enableAnonymizationProfile(true);
+    }
+
+    public static final Map<String, DicomSpecialElementFactory> DCM_ELEMENT_FACTORIES = new HashMap<>();
 
     static {
         /*
@@ -196,10 +289,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     private URI uri;
     private int numberOfFrame;
-    private final HashMap<TagW, Object> tags;
+    private final Map<TagW, Object> tags;
     private volatile MediaElement[] image = null;
     private volatile String mimeType;
-    private final ArrayList<Integer> fragmentsPositions = new ArrayList<Integer>();
+    private final ArrayList<Integer> fragmentsPositions = new ArrayList<>();
 
     private volatile ImageInputStream iis;
     private DicomInputStream dis;
@@ -223,7 +316,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         super(DicomCodec.DicomImageReaderSpi);
         this.uri = uri;
         numberOfFrame = 0;
-        this.tags = new HashMap<TagW, Object>();
+        this.tags = new HashMap<>();
         mimeType = MIMETYPE;
     }
 
@@ -363,8 +456,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             frameOffsets[i] = frameOffsets[i - 1] + frameLength;
         }
         Dimension[] imageDimensions = new Dimension[numberOfFrame];
-        int width = (Integer) getTagValue(TagW.Columns);
-        int height = (Integer) getTagValue(TagW.Rows);
+        int width = TagD.getTagValue(this, Tag.Columns, Integer.class);
+        int height = TagD.getTagValue(this, Tag.Rows, Integer.class);
         Arrays.fill(imageDimensions, new Dimension(width, height));
 
         ColorModel cmodel = createColorModel(bitsStored, dataType);
@@ -374,13 +467,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             // Cannot handle tiles with subsampled model
             smodel = createSampleModel(dataType, banded);
         } else {
-            Integer col = (Integer) getTagValue(TagW.Columns);
-            Integer row = (Integer) getTagValue(TagW.Rows);
-            if (col >= 1024 || row >= 1024) {
-                col = Math.min(col, ImageFiler.TILESIZE);
-                row = Math.min(row, ImageFiler.TILESIZE);
+            if (width >= 1024 || height >= 1024) {
+                width = Math.min(width, ImageFiler.TILESIZE);
+                height = Math.min(height, ImageFiler.TILESIZE);
             }
-            smodel = pmi.createSampleModel(dataType, col, row, (Integer) getTagValue(TagW.SamplesPerPixel), banded);
+            smodel = pmi.createSampleModel(dataType, width, height, TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), banded);
         }
         RawImageInputStream riis =
             new RawImageInputStream(iis, new ImageTypeSpecifier(cmodel, smodel), frameOffsets, imageDimensions);
@@ -423,10 +514,17 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         return mimeType;
     }
 
+    @Override
+    public Object getTagValue(TagW tag) {
+        return tag == null ? null : tags.get(tag);
+    }
+
+    @Override
     public void setTag(TagW tag, Object value) {
         DicomMediaUtils.setTag(tags, tag, value);
     }
 
+    @Override
     public void setTagNoNull(TagW tag, Object value) {
         if (value != null) {
             setTag(tag, value);
@@ -434,8 +532,13 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     @Override
-    public Object getTagValue(TagW tag) {
-        return tags.get(tag);
+    public boolean containTagKey(TagW tag) {
+        return tags.containsKey(tag);
+    }
+
+    @Override
+    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
+        return tags.entrySet().iterator();
     }
 
     @Override
@@ -450,8 +553,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         // Series Group
         if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
             // Information for series ToolTips
-            group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
-            group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
+            group.setTagNoNull(TagD.get(Tag.PatientName), getTagValue(TagD.get(Tag.PatientName)));
+            group.setTagNoNull(TagD.get(Tag.StudyDescription), header.getString(Tag.StudyDescription));
 
             // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
             // MediaElement[] elements = getMediaElement();
@@ -468,136 +571,62 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         if (tags.size() > 0 || header == null) {
             return;
         }
+
+        tagManager.readTags(Level.INSTANCE, header, this);
+
         // -------- Mandatory Tags --------
         // Tags for identifying group (Patient, Study, Series)
-
-        String patientID = header.getString(Tag.PatientID, NO_VALUE);
-        setTag(TagW.PatientID, patientID);
-        String name = DicomMediaUtils.buildPatientName(header.getString(Tag.PatientName));
-        setTag(TagW.PatientName, name);
-        Date birthdate = DicomMediaUtils.getDateFromDicomElement(header, Tag.PatientBirthDate, null);
-        setTagNoNull(TagW.PatientBirthDate, birthdate);
         // Global Identifier for the patient.
-        setTag(TagW.PatientPseudoUID,
-            DicomMediaUtils.buildPatientPseudoUID(patientID, header.getString(Tag.IssuerOfPatientID), name, null));
-        setTag(TagW.StudyInstanceUID, header.getString(Tag.StudyInstanceUID, NO_VALUE));
-        setTag(TagW.SeriesInstanceUID, header.getString(Tag.SeriesInstanceUID, NO_VALUE));
-        setTag(TagW.Modality, header.getString(Tag.Modality, NO_VALUE));
-        setTag(TagW.InstanceNumber,
-            DicomMediaUtils.getIntegerFromDicomElement(header, Tag.InstanceNumber, TagW.AppID.incrementAndGet()));
-        setTag(TagW.SOPInstanceUID, header.getString(Tag.SOPInstanceUID, getTagValue(TagW.InstanceNumber).toString()));
+        setTag(TagW.PatientPseudoUID, DicomMediaUtils.buildPatientPseudoUID(this));
+
+        Integer instNb =
+            DicomMediaUtils.getIntegerFromDicomElement(header, Tag.InstanceNumber, instanceID.incrementAndGet());
+        setTag(TagD.get(Tag.InstanceNumber), instNb);
+        setTag(TagD.get(Tag.SOPInstanceUID), header.getString(Tag.SOPInstanceUID, String.valueOf(instNb)));
         if (fmi != null) {
-            setTagNoNull(TagW.TransferSyntaxUID, fmi.getString(Tag.TransferSyntaxUID));
+            setTagNoNull(TagD.get(Tag.TransferSyntaxUID), fmi.getString(Tag.TransferSyntaxUID));
         }
         // -------- End of Mandatory Tags --------
 
-        writeOnlyinstance(header);
+        writeImageValues(header);
         writeSharedFunctionalGroupsSequence(header);
-        DicomMediaUtils.writePerFrameFunctionalGroupsSequence(tags, header, 0);
+        DicomMediaUtils.writePerFrameFunctionalGroupsSequence(this, header, 0);
 
         boolean pr = SERIES_PR_MIMETYPE.equals(mimeType);
         boolean ko = SERIES_KO_MIMETYPE.equals(mimeType);
         if (pr) {
             // Set the series list for applying the PR
-            setTagNoNull(TagW.ReferencedSeriesSequence, header.getSequence(Tag.ReferencedSeriesSequence));
-            DicomMediaUtils.readPRLUTsModule(header, tags);
+            TagD.get(Tag.ReferencedSeriesSequence).readValue(header, this);
+            DicomMediaUtils.readPRLUTsModule(header, this);
             setTagNoNull(TagW.HasOverlay, DicomMediaUtils.hasOverlay(header));
         }
         if (pr || ko) {
             // Set other required fields
-            setTagNoNull(TagW.SeriesDescription, header.getString(Tag.SeriesDescription));
-            setTagNoNull(TagW.SeriesDate,
-                TagW.dateTime(DicomMediaUtils.getDateFromDicomElement(header, Tag.SeriesDate, null),
-                    DicomMediaUtils.getDateFromDicomElement(header, Tag.SeriesTime, null)));
-            setTagNoNull(TagW.SeriesNumber, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.SeriesNumber, null));
+            TagW[] tagIDs = TagD.getTagFromIDs(Tag.SeriesDescription, Tag.SeriesDate, Tag.SeriesTime, Tag.SeriesNumber);
+            for (TagW tag : tagIDs) {
+                tag.readValue(header, this);
+            }
         }
 
-        DicomMediaUtils.buildLUTs(tags);
-        DicomMediaUtils.computeSlicePositionVector(tags);
-        DicomMediaUtils.setShutter(tags, header);
-        DicomMediaUtils.computeSUVFactor(header, tags, 0);
-
-        // Remove sequence item
-        tags.remove(TagW.ModalityLUTSequence);
-        tags.remove(TagW.VOILUTSequence);
-        if (pr) {
-            tags.remove(TagW.PresentationLUTSequence);
-        }
+        DicomMediaUtils.computeSlicePositionVector(this);
+        DicomMediaUtils.setShutter(this, header);
+        DicomMediaUtils.computeSUVFactor(header, this, 0);
     }
 
     private void writeSharedFunctionalGroupsSequence(Attributes header) {
         if (header != null) {
-            DicomMediaUtils.writeFunctionalGroupsSequence(tags,
+            DicomMediaUtils.writeFunctionalGroupsSequence(this,
                 header.getNestedDataset(Tag.SharedFunctionalGroupsSequence));
         }
     }
 
-    private void writeOnlyinstance(Attributes header) {
-        if (header != null) {
-
-            // Instance tags
-            setTagNoNull(TagW.ImageType, DicomMediaUtils.getStringFromDicomElement(header, Tag.ImageType));
-            setTagNoNull(TagW.ImageComments, header.getString(Tag.ImageComments));
-            setTagNoNull(TagW.ImageLaterality, header.getString(Tag.ImageLaterality, header.getString(Tag.Laterality)));
-            // TODO test sequence
-            // Sequence bolusSeq = header.getSequence(Tag.ContrastBolusAgentSequence);
-            // setTagNoNull(TagW.ContrastBolusAgent, bolusSeq != null && bolusSeq.size() > 0 ? bolusSeq.toString()
-            // : header.getString(Tag.ContrastBolusAgent));
-            setTagNoNull(TagW.ContrastBolusAgent, header.getString(Tag.ContrastBolusAgent));
-            setTagNoNull(TagW.SOPClassUID, header.getString(Tag.SOPClassUID));
-            setTagNoNull(TagW.ScanningSequence,
-                DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanningSequence));
-            setTagNoNull(TagW.SequenceVariant, DicomMediaUtils.getStringFromDicomElement(header, Tag.SequenceVariant));
-            setTagNoNull(TagW.ScanOptions, DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanOptions));
-            setTagNoNull(TagW.RepetitionTime,
-                DicomMediaUtils.getFloatFromDicomElement(header, Tag.RepetitionTime, null));
-            setTagNoNull(TagW.EchoTime, DicomMediaUtils.getFloatFromDicomElement(header, Tag.EchoTime, null));
-            setTagNoNull(TagW.InversionTime, DicomMediaUtils.getFloatFromDicomElement(header, Tag.InversionTime, null));
-            setTagNoNull(TagW.EchoNumbers, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.EchoNumbers, null));
-            setTagNoNull(TagW.GantryDetectorTilt,
-                DicomMediaUtils.getFloatFromDicomElement(header, Tag.GantryDetectorTilt, null));
-            setTagNoNull(TagW.ConvolutionKernel,
-                DicomMediaUtils.getStringFromDicomElement(header, Tag.ConvolutionKernel));
-            setTagNoNull(TagW.FlipAngle, DicomMediaUtils.getFloatFromDicomElement(header, Tag.FlipAngle, null));
-            setTagNoNull(TagW.PatientOrientation,
-                DicomMediaUtils.getStringArrayFromDicomElement(header, Tag.PatientOrientation));
-            setTagNoNull(TagW.SliceLocation, DicomMediaUtils.getFloatFromDicomElement(header, Tag.SliceLocation, null));
-            setTagNoNull(TagW.SliceThickness,
-                DicomMediaUtils.getDoubleFromDicomElement(header, Tag.SliceThickness, null));
-            setTagNoNull(TagW.AcquisitionDate,
-                DicomMediaUtils.getDateFromDicomElement(header, Tag.AcquisitionDate, null));
-            setTagNoNull(TagW.AcquisitionTime,
-                DicomMediaUtils.getDateFromDicomElement(header, Tag.AcquisitionTime, null));
-            setTagNoNull(TagW.ContentDate, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentDate, null));
-            setTagNoNull(TagW.ContentTime, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentTime, null));
-            setTagNoNull(TagW.DiffusionBValue,
-                DicomMediaUtils.getDoubleFromDicomElement(header, Tag.DiffusionBValue, null));
-
-            if (tags.get(TagW.AcquisitionDate) == null) {
-                // For Secondary Capture replace by DateOfSecondaryCapture
-                Date date = DicomMediaUtils.getDateFromDicomElement(header, Tag.DateOfSecondaryCapture, null);
-                if (date != null) {
-                    setTagNoNull(TagW.AcquisitionDate, date);
-                    setTagNoNull(TagW.AcquisitionTime,
-                        DicomMediaUtils.getDateFromDicomElement(header, Tag.TimeOfSecondaryCapture, null));
-                }
-            }
-
-            writeImageValues(header);
-            setTagNoNull(TagW.MIMETypeOfEncapsulatedDocument, header.getString(Tag.MIMETypeOfEncapsulatedDocument));
-            setTagNoNull(TagW.PixelDataProviderURL, header.getString(Tag.PixelDataProviderURL));
-        }
-    }
-
     private void writeImageValues(Attributes header) {
-        if (hasPixel) {
-            setTagNoNull(TagW.ImagePositionPatient,
-                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImagePositionPatient, null));
-            setTagNoNull(TagW.ImageOrientationPatient,
-                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImageOrientationPatient, null));
+        if (header != null && hasPixel) {
+            TagD.get(Tag.ImagePositionPatient).readValue(header, this);
+            TagD.get(Tag.ImageOrientationPatient).readValue(header, this);
             setTagNoNull(TagW.ImageOrientationPlane,
                 ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
-                    (double[]) getTagValue(TagW.ImageOrientationPatient)));
+                    TagD.getTagValue(this, Tag.ImageOrientationPatient, double[].class)));
 
             bitsStored = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsStored, 8);
             bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsAllocated, bitsStored);
@@ -606,38 +635,27 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 highBit = bitsStored - 1;
             }
             int pixelRepresentation = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PixelRepresentation, 0);
-            setTagNoNull(TagW.BitsAllocated, bitsAllocated);
-            setTagNoNull(TagW.BitsStored, bitsStored);
-            setTagNoNull(TagW.PixelRepresentation, pixelRepresentation);
+            setTagNoNull(TagD.get(Tag.BitsAllocated), bitsAllocated);
+            setTagNoNull(TagD.get(Tag.BitsStored), bitsStored);
+            setTagNoNull(TagD.get(Tag.PixelRepresentation), pixelRepresentation);
 
-            setTagNoNull(TagW.ImagerPixelSpacing,
-                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImagerPixelSpacing, null));
-            setTagNoNull(TagW.PixelSpacing,
-                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.PixelSpacing, null));
-            setTagNoNull(TagW.PixelAspectRatio,
-                DicomMediaUtils.getIntAyrrayFromDicomElement(header, Tag.PixelAspectRatio, null));
-            setTagNoNull(TagW.PixelSpacingCalibrationDescription,
-                header.getString(Tag.PixelSpacingCalibrationDescription));
+            TagD.get(Tag.ImagerPixelSpacing).readValue(header, this);
+            TagD.get(Tag.PixelSpacing).readValue(header, this);
+            TagD.get(Tag.PixelAspectRatio).readValue(header, this);
+            TagD.get(Tag.PixelSpacingCalibrationDescription).readValue(header, this);
 
-            DicomMediaUtils.applyModalityLutModule(header, tags, null);
+            DicomMediaUtils.applyModalityLutModule(header, this, null);
 
-            setTagNoNull(TagW.PixelIntensityRelationship,
-                DicomMediaUtils.getStringFromDicomElement(header, Tag.PixelIntensityRelationship));
+            TagD.get(Tag.PixelIntensityRelationship).readValue(header, this);
 
-            DicomMediaUtils.applyVoiLutModule(header, header, tags, null);
+            DicomMediaUtils.applyVoiLutModule(header, header, this, null);
 
-            setTagNoNull(TagW.Units, header.getString(Tag.Units));
-
-            setTagNoNull(TagW.SmallestImagePixelValue, DicomMediaUtils.getIntPixelValue(header,
-                Tag.SmallestImagePixelValue, pixelRepresentation != 0, bitsStored));
-            setTagNoNull(TagW.LargestImagePixelValue, DicomMediaUtils.getIntPixelValue(header,
-                Tag.LargestImagePixelValue, pixelRepresentation != 0, bitsStored));
-            setTagNoNull(TagW.NumberOfFrames,
-                DicomMediaUtils.getIntegerFromDicomElement(header, Tag.NumberOfFrames, null));
+            TagD.get(Tag.Units).readValue(header, this);
+            TagD.get(Tag.NumberOfFrames).readValue(header, this);
             setTagNoNull(TagW.HasOverlay, DicomMediaUtils.hasOverlay(header));
 
             int samplesPerPixel = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.SamplesPerPixel, 1);
-            setTagNoNull(TagW.SamplesPerPixel, samplesPerPixel);
+            setTag(TagD.get(Tag.SamplesPerPixel), samplesPerPixel);
             banded = samplesPerPixel > 1
                 && DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PlanarConfiguration, 0) != 0;
             dataType = bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE
@@ -647,17 +665,17 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             }
             String photometricInterpretation = header.getString(Tag.PhotometricInterpretation, "MONOCHROME2"); //$NON-NLS-1$
             pmi = PhotometricInterpretation.fromString(photometricInterpretation);
-            setTagNoNull(TagW.PresentationLUTShape, header.getString(Tag.PresentationLUTShape));
-            setTagNoNull(TagW.PhotometricInterpretation, photometricInterpretation);
+            TagD.get(Tag.PresentationLUTShape).readValue(header, this);
+            setTag(TagD.get(Tag.PhotometricInterpretation), photometricInterpretation);
             setTag(TagW.MonoChrome,
                 samplesPerPixel == 1 && !"PALETTE COLOR".equalsIgnoreCase(photometricInterpretation)); //$NON-NLS-1$
 
-            setTagNoNull(TagW.Rows, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.Rows, 0));
-            setTagNoNull(TagW.Columns, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.Columns, 0));
+            setTag(TagD.get(Tag.Rows), DicomMediaUtils.getIntegerFromDicomElement(header, Tag.Rows, 0));
+            setTag(TagD.get(Tag.Columns), DicomMediaUtils.getIntegerFromDicomElement(header, Tag.Columns, 0));
 
-            setTagNoNull(TagW.PixelPaddingValue,
+            setTagNoNull(TagD.get(Tag.PixelPaddingValue),
                 DicomMediaUtils.getIntPixelValue(header, Tag.PixelPaddingValue, pixelRepresentation != 0, bitsStored));
-            setTagNoNull(TagW.PixelPaddingRangeLimit, DicomMediaUtils.getIntPixelValue(header,
+            setTagNoNull(TagD.get(Tag.PixelPaddingRangeLimit), DicomMediaUtils.getIntPixelValue(header,
                 Tag.PixelPaddingRangeLimit, pixelRepresentation != 0, bitsStored));
 
             /*
@@ -665,13 +683,12 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
              * href="http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.html#sect_C.7.6.1.1.5">C
              * .7.6.1.1.5 Lossy Image Compression</a>
              */
-            setTagNoNull(TagW.LossyImageCompression,
+            setTagNoNull(TagD.get(Tag.LossyImageCompression),
                 header.getString(Tag.LossyImageCompression, header.getString(Tag.LossyImageCompressionRetired)));
-            setTagNoNull(TagW.LossyImageCompressionRatio,
-                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.LossyImageCompressionRatio, null));
-            setTagNoNull(TagW.LossyImageCompressionMethod,
-                DicomMediaUtils.getStringArrayFromDicomElement(header, Tag.LossyImageCompressionMethod));
-            setTagNoNull(TagW.DerivationDescription, header.getString(Tag.DerivationDescription));
+            TagD.get(Tag.LossyImageCompressionRatio).readValue(header, this);
+            TagD.get(Tag.LossyImageCompressionMethod).readValue(header, this);
+            TagD.get(Tag.DerivationDescription).readValue(header, this);
+
             /*
              *
              * For overlays encoded in Overlay Data Element (60xx,3000), Overlay Bits Allocated (60xx,0100) is always 1
@@ -694,18 +711,18 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
                 if (high > bitsStored) {
                     // Combine to the slope value
-                    Float slopeVal = (Float) tags.get(TagW.RescaleSlope);
+                    Double slopeVal = TagD.getTagValue(this, Tag.RescaleSlope, Double.class);
                     if (slopeVal == null) {
-                        slopeVal = 1.0f;
+                        slopeVal = 1.0;
                         // Set valid modality LUT values
-                        Float ri = (Float) tags.get(TagW.RescaleIntercept);
-                        String rt = (String) tags.get(TagW.RescaleType);
-                        tags.put(TagW.RescaleIntercept, ri == null ? 0.0f : ri);
-                        tags.put(TagW.RescaleType, rt == null ? "US" : rt); //$NON-NLS-1$
+                        Double ri = TagD.getTagValue(this, Tag.RescaleIntercept, Double.class);
+                        String rt = TagD.getTagValue(this, Tag.RescaleType, String.class);
+                        setTag(TagD.get(Tag.RescaleIntercept), ri == null ? 0.0 : ri);
+                        setTag(TagD.get(Tag.RescaleType), rt == null ? "US" : rt); //$NON-NLS-1$
                     }
                     // Divide pixel value by (2 ^ rightBit) => remove right bits
                     slopeVal /= 1 << (high - bitsStored);
-                    tags.put(TagW.RescaleSlope, slopeVal);
+                    setTag(TagD.get(Tag.RescaleSlope), slopeVal);
                 }
             }
         }
@@ -731,7 +748,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             int frame = (Integer) media.getKey();
             if (frame >= 0 && frame < numberOfFrame && hasPixel) {
                 // read as tiled rendered image
-                LOGGER.debug("read dicom image frame: {} sopUID: {}", frame, tags.get(TagW.SOPInstanceUID)); //$NON-NLS-1$
+                LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", frame, TagD.getTagValue(this, Tag.SOPInstanceUID)); //$NON-NLS-1$
                 RenderedImage buffer = null;
                 // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
                 // if (jpipReader == null) {
@@ -862,11 +879,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                             // IF enhanced DICOM, instance number can be overridden later
                             // IF simple Multiframe instance number is necessary
                             for (int i = 0; i < image.length; i++) {
-                                image[i].setTag(TagW.InstanceNumber, i + 1);
+                                image[i].setTag(TagD.get(Tag.InstanceNumber), i + 1);
                             }
                         }
                     } else {
-                        String modality = (String) getTagValue(TagW.Modality);
+                        String modality = TagD.getTagValue(this, Tag.Modality, String.class);
                         if (modality != null) {
                             DicomSpecialElementFactory factory = DCM_ELEMENT_FACTORIES.get(modality);
                             if (factory != null) {
@@ -889,7 +906,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     public MediaSeries getMediaSeries() {
         Series<?> series = null;
         if (isReadableDicom()) {
-            String seriesUID = (String) getTagValue(TagW.SeriesInstanceUID);
+            String seriesUID = TagD.getTagValue(this, Tag.SeriesInstanceUID, String.class);
             series = buildSeries(seriesUID);
             writeMetaData(series);
             // no need to apply splitting rules
@@ -900,7 +917,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                     series.addMedia(media);
                 }
             }
-
         }
         return series;
     }
@@ -916,13 +932,14 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     @Override
-    public HashMap<TagW, Object> getMediaFragmentTags(Object key) {
+    public Map<TagW, Object> getMediaFragmentTags(Object key) {
         if (key instanceof Integer) {
             if ((Integer) key > 0) {
-                HashMap<TagW, Object> tagList = (HashMap<TagW, Object>) tags.clone();
-                if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(tagList, getDicomObject(), (Integer) key)) {
-                    DicomMediaUtils.buildLUTs(tagList);
-                    DicomMediaUtils.computeSlicePositionVector(tagList);
+                // Clone the shared tag
+                Map<TagW, Object> tagList = new HashMap<>(tags);
+                SimpleTagable tagable = new SimpleTagable(tagList);
+                if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(tagable, getDicomObject(), (Integer) key)) {
+                    DicomMediaUtils.computeSlicePositionVector(tagable);
                 }
                 return tagList;
             }
@@ -960,7 +977,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         if (desc[1] == null) {
             String ts = tsuid;
             if (ts == null) {
-                ts = NO_VALUE;
+                ts = TagW.NO_VALUE;
             }
             desc[1] = Messages.getString("DicomMediaIO.msg_no_reader") + StringUtil.COLON_AND_SPACE + ts; //$NON-NLS-1$
         }
@@ -981,13 +998,13 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     @Override
     public int getHeight(int frameIndex) throws IOException {
         checkIndex(frameIndex);
-        return (Integer) getTagValue(TagW.Rows);
+        return  TagD.getTagValue(this, Tag.Rows, Integer.class);
     }
 
     @Override
     public int getWidth(int frameIndex) throws IOException {
         checkIndex(frameIndex);
-        return (Integer) getTagValue(TagW.Columns);
+        return  TagD.getTagValue(this, Tag.Columns, Integer.class);
     }
 
     @Override
@@ -1505,9 +1522,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 if (readImageAfter && !tsuid.startsWith("1.2.840.10008.1.2.4.10") && hasPixel) { //$NON-NLS-1$
 
                     if (pixdata instanceof BulkData) {
-                        int width = (Integer) getTagValue(TagW.Columns);
-                        int height = (Integer) getTagValue(TagW.Rows);
-                        int samples = (Integer) getTagValue(TagW.SamplesPerPixel);
+                        int width = TagD.getTagValue(this, Tag.Columns, Integer.class);
+                        int height = TagD.getTagValue(this, Tag.Rows, Integer.class);
+                        int samples = TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class);
                         iis.setByteOrder(ds.bigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
                         this.frameLength = pmi.frameLength(width, height, samples, bitsAllocated);
                         this.pixeldata = (BulkData) pixdata;
@@ -1553,8 +1570,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     private SampleModel createSampleModel(int dataType, boolean banded) {
-        return pmi.createSampleModel(dataType, (Integer) getTagValue(TagW.Columns), (Integer) getTagValue(TagW.Rows),
-            (Integer) getTagValue(TagW.SamplesPerPixel), banded);
+        return pmi.createSampleModel(dataType, TagD.getTagValue(this, Tag.Columns, Integer.class),
+            TagD.getTagValue(this, Tag.Rows, Integer.class), TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class),
+            banded);
     }
 
     private ImageTypeSpecifier createImageType(int bits, int dataType, boolean banded) {

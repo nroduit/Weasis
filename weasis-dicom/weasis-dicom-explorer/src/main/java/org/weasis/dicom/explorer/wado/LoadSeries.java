@@ -40,6 +40,7 @@ import javax.swing.JProgressBar;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
+import org.dcm4che3.data.Tag;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
@@ -71,6 +72,8 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
@@ -87,7 +90,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     public static final String CONCURRENT_DOWNLOADS_IN_SERIES = "download.concurrent.series.images"; //$NON-NLS-1$
 
     public static final File DICOM_TMP_DIR = AppProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
-    public static final TagW DOWNLOAD_START_TIME = new TagW("", TagType.Time, 3); //$NON-NLS-1$
+    public static final TagW DOWNLOAD_START_TIME = new TagW("DownloadSartTime", TagType.TIME); //$NON-NLS-1$
 
     public enum Status {
         Downloading, Paused, Complete, Cancelled, Error
@@ -194,8 +197,9 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             DownloadManager.removeLoadSeries(this, dicomModel);
 
             AuditLog.LOGGER.info("{}:series uid:{} modality:{} nbImages:{} size:{} {}", //$NON-NLS-1$
-                new Object[] { getLoadType(), dicomSeries.toString(), dicomSeries.getTagValue(TagW.Modality),
-                    getImageNumber(), (long) dicomSeries.getFileSize(), getDownloadTime() });
+                new Object[] { getLoadType(), dicomSeries.toString(),
+                    TagD.getTagValue(dicomSeries, Tag.Modality, String.class), getImageNumber(),
+                    (long) dicomSeries.getFileSize(), getDownloadTime() });
             dicomSeries.removeTag(DOWNLOAD_START_TIME);
 
             final SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
@@ -254,12 +258,12 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         if (splitNb != null) {
             MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
             if (study != null) {
-                String uid = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+                String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
                 if (uid != null) {
                     Collection<MediaSeriesGroup> list = dicomModel.getChildren(study);
                     list.remove(dicomSeries);
                     for (MediaSeriesGroup s : list) {
-                        if (s instanceof Series && uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
+                        if (s instanceof Series && uid.equals(TagD.getTagValue(s, Tag.SeriesInstanceUID))) {
                             val += ((Series<?>) s).size(null);
                         }
                     }
@@ -283,20 +287,21 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series<?> dicomSeries, String sopUID) {
-        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
+        TagW sopTag = TagD.getUID(Level.INSTANCE);
+        if (dicomSeries.hasMediaContains(sopTag, sopUID)) {
             return true;
         }
         // Search in split Series, cannot use "has this series a SplitNumber" because splitting can be executed later
         // for Dicom Video and other special Dicom
-        String uid = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+        String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
         if (study != null && uid != null) {
             Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
             for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                 MediaSeriesGroup group = it.next();
                 if (dicomSeries != group && group instanceof Series) {
                     Series s = (Series) group;
-                    if (uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
-                        if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
+                    if (uid.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID))) {
+                        if (s.hasMediaContains(sopTag, sopUID)) {
                             return true;
                         }
                     }
@@ -357,8 +362,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 String studyUID = ""; //$NON-NLS-1$
                 String seriesUID = ""; //$NON-NLS-1$
                 if (!wado.isRequireOnlySOPInstanceUID()) {
-                    studyUID = (String) study.getTagValue(TagW.StudyInstanceUID);
-                    seriesUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+                    studyUID = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+                    seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
                 }
                 StringBuilder request = new StringBuilder(wado.getWadoURL());
                 if (instance.getDirectDownloadFile() == null) {
@@ -507,8 +512,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                         String seriesUID = ""; //$NON-NLS-1$
                         if (!wadoParameters.isRequireOnlySOPInstanceUID()) {
                             MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-                            studyUID = (String) study.getTagValue(TagW.StudyInstanceUID);
-                            seriesUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+                            studyUID = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+                            seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
                         }
                         try {
                             file = getJPEGThumnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
@@ -1099,13 +1104,13 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                         }
                         if (value != null) {
                             TagType type = tagElement.getType();
-                            if (TagType.String.equals(type)) {
+                            if (TagType.STRING.equals(type)) {
                                 dataset.setString(tag, dic.vrOf(tag), value.toString());
-                            } else if (TagType.Date.equals(type) || TagType.Time.equals(type)) {
+                            } else if (TagType.DATE.equals(type) || TagType.TIME.equals(type)) {
                                 dataset.setDate(tag, (Date) value);
-                            } else if (TagType.Integer.equals(type)) {
+                            } else if (TagType.INTEGER.equals(type)) {
                                 dataset.setInt(tag, dic.vrOf(tag), (Integer) value);
-                            } else if (TagType.Float.equals(type)) {
+                            } else if (TagType.FLOAT.equals(type)) {
                                 dataset.setFloat(tag, dic.vrOf(tag), (Float) value);
                             }
                         }

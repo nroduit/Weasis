@@ -71,7 +71,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
     public List<MeasureItem> getImageStatistics(MeasurableLayer layer, boolean releaseEvent) {
         if (layer != null) {
             if (layer.hasContent() && isShapeValid()) {
-                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
+                ArrayList<MeasureItem> measVal = new ArrayList<>();
 
                 if (IMAGE_MIN.isComputed() || IMAGE_MAX.isComputed() || IMAGE_MEAN.isComputed()) {
 
@@ -99,8 +99,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         // Get padding values => exclude values
                         Double excludedMin = null;
                         Double excludedMax = null;
-                        Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.PixelPaddingValue);
-                        Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.PixelPaddingRangeLimit);
+                        Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue"));
+                        Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingRangeLimit"));
                         if (paddingValue != null) {
                             if (paddingLimit == null) {
                                 paddingLimit = paddingValue;
@@ -127,8 +127,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
 
                         // LOGGER.error("Basic stats [ms]: {}", System.currentTimeMillis() - startTime);
                         // unit = pixelValue * rescale slope + rescale intercept
-                        Float slopeVal = (Float) layer.getSourceTagValue(TagW.RescaleSlope);
-                        Float interceptVal = (Float) layer.getSourceTagValue(TagW.RescaleIntercept);
+                        Double slopeVal = (Double) layer.getSourceTagValue(TagW.get("RescaleSlope"));
+                        Double interceptVal = (Double) layer.getSourceTagValue(TagW.get("RescaleIntercept"));
                         double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
                         double intercept = interceptVal == null ? 0.0f : interceptVal.doubleValue();
                         for (int i = 0; i < extrema[0].length; i++) {

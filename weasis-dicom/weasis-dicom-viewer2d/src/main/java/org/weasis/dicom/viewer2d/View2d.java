@@ -32,7 +32,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -51,6 +50,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -126,6 +126,7 @@ import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.ShutterOp;
@@ -333,7 +334,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     if (series != null && val instanceof Point2D.Double) {
                         Point2D.Double p = (Point2D.Double) val;
                         GeometryOfSlice sliceGeometry = this.getImage().getDispSliceGeometry();
-                        String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
+                        String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
                         if (sliceGeometry != null && fruid != null) {
                             Point3d p3 = Double.isNaN(p.x) ? null : sliceGeometry.getPosition(p);
                             ImageViewerPlugin<DicomImageElement> container =
@@ -347,7 +348,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                             continue;
                                         }
                                         if (v instanceof View2d
-                                            && fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
+                                            && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
                                             if (v != container.getSelectedImagePane()) {
                                                 DicomImageElement imgToUpdate = v.getImage();
                                                 if (imgToUpdate != null) {
@@ -374,7 +375,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                     if (s == null) {
                                         continue;
                                     }
-                                    if (v instanceof View2d && fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
+                                    if (v instanceof View2d
+                                        && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
                                         ((View2d) v).computeCrosshair(p3);
                                         v.getJComponent().repaint();
                                     }
@@ -534,7 +536,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
         }
 
-        double[] prPixSize = (double[]) reader.getTagValue(TagW.PixelSpacing.getName(), null);
+        double[] prPixSize = (double[]) reader.getTagValue(TagD.get(Tag.PixelSpacing).getKeyword(), null);
         if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
             img.setPixelSize(prPixSize[0], prPixSize[1]);
             img.setPixelSpacingUnit(Unit.MILLIMETER);
@@ -545,7 +547,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
         }
         if (prPixSize == null) {
-            int[] aspects = (int[]) reader.getTagValue(TagW.PixelAspectRatio.getName(), null);
+            int[] aspects = (int[]) reader.getTagValue(TagD.get(Tag.PixelAspectRatio).getKeyword(), null);
             if (aspects != null && aspects.length == 2) {
                 double[] prevPixSize = img.getDisplayPixelSize();
                 if (aspects[0] != aspects[1] || prevPixSize[0] != prevPixSize[1]) {
@@ -636,8 +638,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Object selectedKO = getActionValue(ActionW.KO_SELECTION.cmd());
 
         if (img != null) {
-            String sopInstanceUID = (String) img.getTagValue(TagW.SOPInstanceUID);
-            String seriesInstanceUID = (String) img.getTagValue(TagW.SeriesInstanceUID);
+            String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
+            String seriesInstanceUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
 
             if (sopInstanceUID != null && seriesInstanceUID != null) {
                 if ((selectedKO instanceof KOSpecialElement)) {
@@ -691,7 +693,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         if (series != null) {
             AuditLog.LOGGER.info("open:series nb:{} modality:{}", series.getSeriesNumber(), //$NON-NLS-1$
-                series.getTagValue(TagW.Modality));
+                TagD.getTagValue(series, Tag.Modality));
         }
 
         updateKOButtonVisibleState();
@@ -992,7 +994,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (s != null) {
             Object img = s.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
             if (img instanceof DicomImageElement) {
-                double[] v = (double[]) ((DicomImageElement) img).getTagValue(TagW.ImageOrientationPatient);
+                double[] v = TagD.getTagValue((DicomImageElement) img, Tag.ImageOrientationPatient, double[].class);
                 if (v != null && v.length == 6) {
                     String orientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
                         v[1], v[2], v[3], v[4], v[5]);
@@ -1034,13 +1036,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             boolean pixelPadding = JMVUtils
                 .getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
 
-            Object prReader = getActionValue(ActionW.PR_STATE.cmd());
-            HashMap<TagW, Object> params = null;
-            if (prReader instanceof PresentationStateReader) {
-                params = ((PresentationStateReader) prReader).getDicom().getTags();
-            }
+            Object val = getActionValue(ActionW.PR_STATE.cmd());
+            PresentationStateReader prReader =
+                (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
+
             for (int i = 0; i < c.length; i++) {
-                c[i] = imageElement.pixel2mLUT((float) c[i], params, pixelPadding);
+                c[i] = imageElement.pixel2mLUT(c[i], prReader, pixelPadding);
             }
             pixelInfo.setValues(c);
         }

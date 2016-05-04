@@ -65,6 +65,9 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagReadable;
+import org.weasis.core.api.media.data.TagUtil;
+import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.StringUtil;
@@ -79,26 +82,12 @@ import org.weasis.core.ui.util.RotatedIcon;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.explorer.wado.DicomManager;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomFieldsView.class);
-
-    private static final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.IssuerOfPatientID, TagW.PatientSex,
-        TagW.PatientBirthDate, TagW.PatientAge };
-    private static final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
-    private static final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID, TagW.AccessionNumber,
-        TagW.StudyDescription, TagW.StudyComments };
-    private static final TagW[] SERIES =
-        { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber, TagW.Modality, TagW.ReferringPhysicianName,
-            TagW.InstitutionName, TagW.InstitutionalDepartmentName, TagW.SeriesDescription, TagW.BodyPartExamined };
-    private static final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.FrameType, TagW.TransferSyntaxUID,
-        TagW.InstanceNumber, TagW.ImageComments, TagW.ImageLaterality, TagW.PhotometricInterpretation,
-        TagW.SamplesPerPixel, TagW.PixelRepresentation, TagW.Columns, TagW.Rows, TagW.ImageWidth, TagW.ImageHeight,
-        TagW.ImageDepth, TagW.BitsAllocated, TagW.BitsStored };
-    private static final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation, TagW.SliceThickness,
-        TagW.ImagePositionPatient, TagW.ImageOrientationPatient, };
-    private static final TagW[] IMAGE_ACQ = { TagW.KVP, TagW.ContrastBolusAgent };
 
     private final JScrollPane allPane = new JScrollPane();
     private final JScrollPane limitedPane = new JScrollPane();
@@ -359,20 +348,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         if (media != null) {
             DataExplorerView dicomView = org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
 
-            if (dicomView != null) {
+            if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
                 DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
 
                 MediaReader loader = media.getMediaReader();
                 if (loader instanceof DcmMediaReader) {
-                    writeItems(Messages.getString("DicomFieldsView.pat"), PATIENT, //$NON-NLS-1$
-                        model.getParent(series, DicomModel.patient), doc);
-                    writeItems(Messages.getString("DicomFieldsView.station"), STATION, series, doc); //$NON-NLS-1$
-                    writeItems(Messages.getString("DicomFieldsView.study"), STUDY, //$NON-NLS-1$
-                        model.getParent(series, DicomModel.study), doc);
-                    writeItems(Messages.getString("DicomFieldsView.series"), SERIES, series, doc); //$NON-NLS-1$
-                    writeItems(Messages.getString("DicomFieldsView.object"), IMAGE, null, doc); //$NON-NLS-1$
-                    writeItems(Messages.getString("DicomFieldsView.plane"), IMAGE_PLANE, null, doc); //$NON-NLS-1$
-                    writeItems(Messages.getString("DicomFieldsView.acqu"), IMAGE_ACQ, null, doc); //$NON-NLS-1$
+                    List<DicomData> list = DicomManager.getInstance().getLimitedDicomTags();
+                    for (DicomData dicomData : list) {
+                        writeItems(dicomData, getGroup(model, series, dicomData), doc);
+                    }
                 }
             }
         }
@@ -381,29 +365,45 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         limitedPane.setViewportView(jTextPaneLimited);
     }
 
-    private void writeItems(String title, TagW[] tags, MediaSeriesGroup group, StyledDocument doc) {
+    private MediaSeriesGroup getGroup(DicomModel model, MediaSeries<?> series, DicomData dicomData) {
+        Level level = dicomData.getLevel();
+
+        if (Level.PATIENT.equals(level)) {
+            return model.getParent(series, DicomModel.patient);
+        } else if (Level.STUDY.equals(level)) {
+            return model.getParent(series, DicomModel.study);
+        } else if (Level.SERIES.equals(level)) {
+            return model.getParent(series, DicomModel.series);
+        }
+        return null;
+    }
+
+    private void writeItems(DicomData dicomData, TagReadable group, StyledDocument doc) {
         Style regular = doc.getStyle("regular"); //$NON-NLS-1$
-        Style italic = doc.getStyle("italic"); //$NON-NLS-1$
+        Style bold = doc.getStyle("bold"); //$NON-NLS-1$
         int insertTitle = doc.getLength();
         boolean exist = false;
-        for (TagW t : tags) {
-            if (!anonymize || t.getAnonymizationType() != 1) {
-                try {
-                    Object val = group == null ? currentMedia.getTagValue(t) : group.getTagValue(t);
-                    if (val != null) {
-                        exist = true;
-                        doc.insertString(doc.getLength(), t.toString(), italic);
-                        doc.insertString(doc.getLength(),
-                            StringUtil.COLON_AND_SPACE + TagW.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$
+        for (TagView t : dicomData.getInfos()) {
+            for (TagW tag : t.getTag()) {
+                if (!anonymize || tag.getAnonymizationType() != 1) {
+                    try {
+                        Object val = TagUtil.getTagValue(tag, group, currentMedia);
+                        if (val != null) {
+                            exist = true;
+                            doc.insertString(doc.getLength(), tag.getDisplayedName(), regular);
+                            doc.insertString(doc.getLength(),
+                                StringUtil.COLON_AND_SPACE + tag.getFormattedText(val, null) + "\n", bold); //$NON-NLS-1$
+                            break;
+                        }
+                    } catch (BadLocationException e) {
+                        LOGGER.error("Writing textissue", e);
                     }
-                } catch (BadLocationException e) {
-                    LOGGER.error("Writing textissue", e);
                 }
             }
         }
         if (exist) {
             try {
-                String formatTitle = PATIENT == tags ? title + "\n" : "\n" + title + "\n"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                String formatTitle = insertTitle < 3 ? dicomData.getTitle() + "\n" : "\n" + dicomData.getTitle() + "\n"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 doc.insertString(insertTitle, formatTitle, doc.getStyle("title")); //$NON-NLS-1$
             } catch (BadLocationException e) {
                 LOGGER.error("Writing text issue", e);
@@ -606,5 +606,39 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 }
             }
         }
+    }
+
+    public static class DicomData {
+
+        private final String title;
+        private final TagView[] infos;
+        private final Level level;
+
+        public DicomData(String title, TagView[] infos, Level level) {
+            if (infos == null) {
+                throw new IllegalArgumentException();
+            }
+            this.title = title;
+            this.infos = infos;
+            this.level = level;
+            for (TagView tagView : infos) {
+                for (TagW tag : tagView.getTag()) {
+                    DicomMediaIO.tagManager.addTag(tag, level);
+                }
+            }
+        }
+
+        public TagView[] getInfos() {
+            return infos;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public Level getLevel() {
+            return level;
+        }
+
     }
 }

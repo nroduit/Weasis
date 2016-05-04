@@ -12,6 +12,7 @@ package org.weasis.dicom.codec;
 
 import java.util.Date;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 
@@ -22,8 +23,8 @@ public final class SortSeriesStack {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
-            Integer val1 = (Integer) m1.getTagValue(TagW.InstanceNumber);
-            Integer val2 = (Integer) m2.getTagValue(TagW.InstanceNumber);
+            Integer val1 = TagD.getTagValue(m1, Tag.InstanceNumber, Integer.class);
+            Integer val2 = TagD.getTagValue(m2, Tag.InstanceNumber, Integer.class);
             if (val1 == null || val2 == null) {
                 return 0;
             }
@@ -57,8 +58,8 @@ public final class SortSeriesStack {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
-            Float val1 = (Float) m1.getTagValue(TagW.SliceLocation);
-            Float val2 = (Float) m2.getTagValue(TagW.SliceLocation);
+            Double val1 = TagD.getTagValue(m1, Tag.SliceLocation, Double.class);
+            Double val2 = TagD.getTagValue(m2, Tag.SliceLocation, Double.class);
             if (val1 == null || val2 == null) {
                 return 0;
             }
@@ -76,8 +77,8 @@ public final class SortSeriesStack {
 
             @Override
             public int compare(DicomImageElement m1, DicomImageElement m2) {
-                Date val1 = (Date) m1.getTagValue(TagW.AcquisitionTime);
-                Date val2 = (Date) m2.getTagValue(TagW.AcquisitionTime);
+                Date val1 = TagD.getTagValue(m1, Tag.AcquisitionTime, Date.class);
+                Date val2 = TagD.getTagValue(m2, Tag.AcquisitionTime, Date.class);
                 if (val1 == null || val2 == null) {
                     return 0;
                 }
@@ -93,8 +94,8 @@ public final class SortSeriesStack {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
-            Date val1 = (Date) m1.getTagValue(TagW.ContentTime);
-            Date val2 = (Date) m2.getTagValue(TagW.ContentTime);
+            Date val1 =  TagD.getTagValue(m1, Tag.ContentTime, Date.class);
+            Date val2 =  TagD.getTagValue(m2, Tag.ContentTime, Date.class);
             if (val1 == null || val2 == null) {
                 return 0;
             }
@@ -112,8 +113,8 @@ public final class SortSeriesStack {
 
             @Override
             public int compare(DicomImageElement m1, DicomImageElement m2) {
-                Double val1 = (Double) m1.getTagValue(TagW.DiffusionBValue);
-                Double val2 = (Double) m2.getTagValue(TagW.DiffusionBValue);
+                Double val1 = TagD.getTagValue(m1, Tag.DiffusionBValue, Double.class);
+                Double val2 = TagD.getTagValue(m2, Tag.DiffusionBValue, Double.class);
                 if (val1 == null || val2 == null) {
                     return 0;
                 }

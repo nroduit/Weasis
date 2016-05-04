@@ -13,6 +13,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
@@ -20,9 +21,11 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.TagD;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultTreeCheckingModel;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
@@ -87,14 +90,14 @@ public class CheckTreeModel {
                 @Override
                 public String toString() {
                     MediaElement<?> m = (MediaElement<?>) getUserObject();
-                    Integer val = (Integer) m.getTagValue(TagW.InstanceNumber);
+                    Integer val = TagD.getTagValue(m, Tag.InstanceNumber, Integer.class);
                     StringBuilder buffer = new StringBuilder();
                     if (val != null) {
                         buffer.append("["); //$NON-NLS-1$
                         buffer.append(val);
                         buffer.append("] "); //$NON-NLS-1$
                     }
-                    String sopUID = (String) m.getTagValue(TagW.SOPInstanceUID);
+                    String sopUID = TagD.getTagValue(m, Tag.SOPInstanceUID, String.class);
                     if (sopUID != null) {
                         buffer.append(sopUID);
                     }
@@ -173,9 +176,9 @@ public class CheckTreeModel {
                             buf.append("<img src=\""); //$NON-NLS-1$
                             buf.append(url.toString());
                             buf.append("\"><br>"); //$NON-NLS-1$
-                            Date date = (Date) s.getTagValue(TagW.SeriesDate);
+                            Date date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
                             if (date != null) {
-                                buf.append(TagW.formatDateTime(date));
+                                buf.append(TagUtil.formatDateTime(date));
                             }
                             buf.append("</html>"); //$NON-NLS-1$
                             return buf.toString();
@@ -193,18 +196,18 @@ public class CheckTreeModel {
         public String toString() {
             MediaSeries<?> s = (MediaSeries<?>) getUserObject();
             StringBuilder buf = new StringBuilder();
-            Integer val = (Integer) s.getTagValue(TagW.SeriesNumber);
+            Integer val = TagD.getTagValue(s, Tag.SeriesNumber, Integer.class);
             if (val != null) {
                 buf.append("["); //$NON-NLS-1$
                 buf.append(val);
                 buf.append("] "); //$NON-NLS-1$
             }
-            String modality = (String) s.getTagValue(TagW.Modality);
+            String modality = TagD.getTagValue(s, Tag.Modality, String.class);
             if (modality != null) {
                 buf.append(modality);
                 buf.append(" "); //$NON-NLS-1$
             }
-            String desc = (String) s.getTagValue(TagW.SeriesDescription);
+            String desc = TagD.getTagValue(s, Tag.SeriesDescription, String.class);
             if (desc != null) {
                 buf.append(desc);
             }

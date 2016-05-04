@@ -83,8 +83,8 @@ public class ImageElement extends MediaElement<PlanarImage> {
     protected String pixelSizeCalibrationDescription = null;
     protected String pixelValueUnit = null;
 
-    protected Float minPixelValue;
-    protected Float maxPixelValue;
+    protected Double minPixelValue;
+    protected Double maxPixelValue;
 
     public ImageElement(MediaReader<PlanarImage> mediaIO, Object key) {
         super(mediaIO, key);
@@ -98,8 +98,8 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
             int datatype = img.getSampleModel().getDataType();
             if (datatype == DataBuffer.TYPE_BYTE && exclude8bitImage) {
-                this.minPixelValue = 0f;
-                this.maxPixelValue = 255f;
+                this.minPixelValue = 0.0;
+                this.maxPixelValue = 255.0;
             } else {
 
                 ParameterBlock pb = new ParameterBlock();
@@ -116,12 +116,12 @@ public class ImageElement extends MediaElement<PlanarImage> {
                     min = Math.min(min, extrema[0][i]);
                     max = Math.max(max, extrema[1][i]);
                 }
-                this.minPixelValue = (float) min;
-                this.maxPixelValue = (float) max;
+                this.minPixelValue = min;
+                this.maxPixelValue = max;
                 // Handle special case when min and max are equal, ex. black image
                 // + 1 to max enables to display the correct value
                 if (this.minPixelValue.equals(this.maxPixelValue)) {
-                    this.maxPixelValue += 1.0f;
+                    this.maxPixelValue += 1.0;
                 }
             }
         }
@@ -143,24 +143,24 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return LutShape.LINEAR;
     }
 
-    public float getDefaultWindow(boolean pixelPadding) {
+    public double getDefaultWindow(boolean pixelPadding) {
         return getMaxValue(null, pixelPadding) - getMinValue(null, pixelPadding);
     }
 
-    public float getDefaultLevel(boolean pixelPadding) {
+    public double getDefaultLevel(boolean pixelPadding) {
         if (isImageAvailable()) {
-            float min = getMinValue(null, pixelPadding);
-            return min + (getMaxValue(null, pixelPadding) - min) / 2.f;
+            double min = getMinValue(null, pixelPadding);
+            return min + (getMaxValue(null, pixelPadding) - min) / 2.0;
         }
         return 0.0f;
     }
 
-    public float getMaxValue(Map<TagW, Object> params, boolean pixelPadding) {
-        return maxPixelValue == null ? 0.0f : maxPixelValue;
+    public double getMaxValue(TagReadable tagable, boolean pixelPadding) {
+        return maxPixelValue == null ? 0.0 : maxPixelValue;
     }
 
-    public float getMinValue(Map<TagW, Object> params, boolean pixelPadding) {
-        return minPixelValue == null ? 0.0f : minPixelValue;
+    public double getMinValue(TagReadable tagable, boolean pixelPadding) {
+        return minPixelValue == null ? 0.0 : minPixelValue;
     }
 
     public int getRescaleWidth(int width) {
@@ -297,8 +297,8 @@ public class ImageElement extends MediaElement<PlanarImage> {
             return null;
         }
 
-        Float window = (params == null) ? null : (Float) params.get(ActionW.WINDOW.cmd());
-        Float level = (params == null) ? null : (Float) params.get(ActionW.LEVEL.cmd());
+        Double window = (params == null) ? null : (Double) params.get(ActionW.WINDOW.cmd());
+        Double level = (params == null) ? null : (Double) params.get(ActionW.LEVEL.cmd());
         Boolean pixelPadding = (params == null) ? null : (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
 
         pixelPadding = (pixelPadding == null) ? true : pixelPadding;

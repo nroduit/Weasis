@@ -57,19 +57,19 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
     protected SeriesImporter seriesLoader;
     private double fileSize;
 
-    public Series(TagW tagID, Object identifier, TagW displayTag) {
+    public Series(TagW tagID, Object identifier, TagView displayTag) {
         this(tagID, identifier, displayTag, null);
     }
 
-    public Series(TagW tagID, Object identifier, TagW displayTag, int initialCapacity) {
+    public Series(TagW tagID, Object identifier, TagView displayTag, int initialCapacity) {
         this(tagID, identifier, displayTag, new ArrayList<E>(initialCapacity));
     }
 
-    public Series(TagW tagID, Object identifier, TagW displayTag, List<E> list) {
+    public Series(TagW tagID, Object identifier, TagView displayTag, List<E> list) {
         this(tagID, identifier, displayTag, list, null);
     }
 
-    public Series(TagW tagID, Object identifier, TagW displayTag, List<E> list, Comparator<E> mediaOrder) {
+    public Series(TagW tagID, Object identifier, TagView displayTag, List<E> list, Comparator<E> mediaOrder) {
         super(tagID, identifier, displayTag);
         this.mediaOrder = mediaOrder;
         List<E> ls = list;
@@ -363,10 +363,11 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
     }
 
     protected void addToolTipsElement(StringBuilder toolTips, String title, TagW tag) {
-        Object tagValue = getTagValue(tag);
         toolTips.append(title);
         toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(tagValue == null ? "" : tagValue); //$NON-NLS-1$
+        if (tag != null) {
+            toolTips.append(tag.getFormattedText(getTagValue(tag)));
+        }
         toolTips.append("<br>"); //$NON-NLS-1$
     }
 
@@ -451,7 +452,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
 
     @Override
     public String getSeriesNumber() {
-        Integer val = (Integer) getTagValue(TagW.SeriesNumber);
+        Integer val = (Integer) getTagValue(TagW.get("SeriesNumber"));
         return val == null ? "" : val.toString(); //$NON-NLS-1$
     }
 }

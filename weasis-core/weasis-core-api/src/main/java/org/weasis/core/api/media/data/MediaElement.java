@@ -14,14 +14,15 @@ import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.weasis.core.api.util.FileUtil;
 
-public abstract class MediaElement<E> {
+public abstract class MediaElement<E> implements Tagable {
 
     // Metadata of the media
-    protected final HashMap<TagW, Object> tags;
+    protected final Map<TagW, Object> tags;
     // Reader of the media (local or remote)
     protected final MediaReader<E> mediaIO;
     // Key to identify the media (the URI passed to the Reader can contain several media elements)
@@ -38,7 +39,7 @@ public abstract class MediaElement<E> {
         }
         this.mediaIO = mediaIO;
         this.key = key;
-        HashMap<TagW, Object> t = mediaIO.getMediaFragmentTags(key);
+        Map<TagW, Object> t = mediaIO.getMediaFragmentTags(key);
         this.tags = t == null ? new HashMap<TagW, Object>() : t;
         URI uri = mediaIO.getMediaFragmentURI(key);
         if (uri == null) {
@@ -56,18 +57,21 @@ public abstract class MediaElement<E> {
         return mediaIO;
     }
 
+    @Override
     public void setTag(TagW tag, Object value) {
         if (tag != null) {
             tags.put(tag, value);
         }
     }
 
+    @Override
     public boolean containTagKey(TagW tag) {
         return tags.containsKey(tag);
     }
 
+    @Override
     public Object getTagValue(TagW tag) {
-        return tags.get(tag);
+        return tag == null ? null : tags.get(tag);
     }
 
     public TagW getTagElement(int id) {
@@ -81,7 +85,15 @@ public abstract class MediaElement<E> {
         return null;
     }
 
-    public Iterator<Entry<TagW, Object>> getTagIterator() {
+    @Override
+    public void setTagNoNull(TagW tag, Object value) {
+        if (value != null) {
+            setTag(tag, value);
+        }
+    }
+
+    @Override
+    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
         return tags.entrySet().iterator();
     }
 

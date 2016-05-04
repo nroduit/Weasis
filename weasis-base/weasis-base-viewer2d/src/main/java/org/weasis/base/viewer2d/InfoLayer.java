@@ -226,26 +226,32 @@ public class InfoLayer implements AnnotationsLayer {
             g2.setPaint(Color.white);
             Line2D.Float line = new Line2D.Float(x - 10f, y - 1f, x - 1f, y - 1f);
             g2.draw(line);
-            float stepWindow = (Float) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) / separation;
-            float firstlevel = (Float) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()) - stepWindow * 2f;
-            String str = "" + (int) firstlevel; //$NON-NLS-1$
-            GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f, y + midfontHeight);
-            for (int i = 1; i < separation; i++) {
-                float posY = y + i * step;
-                line.setLine(x - 5f, posY, x - 1f, posY);
-                g2.draw(line);
-                str = "" + (int) (firstlevel + i * stepWindow); //$NON-NLS-1$
-                GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
-                    posY + midfontHeight);
-            }
 
-            line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
-            g2.draw(line);
-            str = "" + (int) (firstlevel + 4 * stepWindow); //$NON-NLS-1$
-            GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
-                y + length + midfontHeight);
-            rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
-            g2.draw(rect);
+            Double ww = (Double) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
+            Double wl = (Double) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
+            if (ww != null && wl != null) {
+                int stepWindow = (int) (ww / separation);
+                int firstlevel = (int) (wl - stepWindow * 2.0);
+                String str = Integer.toString(firstlevel); // $NON-NLS-1$
+                GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f,
+                    y + midfontHeight);
+                for (int i = 1; i < separation; i++) {
+                    float posY = y + i * step;
+                    line.setLine(x - 5f, posY, x - 1f, posY);
+                    g2.draw(line);
+                    str = Integer.toString(firstlevel + i * stepWindow); // $NON-NLS-1$
+                    GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
+                        posY + midfontHeight);
+                }
+
+                line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
+                g2.draw(line);
+                str = Integer.toString(firstlevel + 4 * stepWindow); // $NON-NLS-1$
+                GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
+                    y + length + midfontHeight);
+                rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
+                g2.draw(rect);
+            }
 
             for (int k = 0; k < length; k++) {
                 g2.setPaint(new Color(table[0][k] & 0xff, table[1][k] & 0xff, table[2][k] & 0xff));

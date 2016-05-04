@@ -35,6 +35,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
@@ -59,7 +60,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
@@ -86,6 +86,8 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
@@ -441,14 +443,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 } else if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
-                    if (TagW.PatientPseudoUID.equals(group.getTagID())) {
+                    if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
                         }
                     }
                     // Study Group
-                    else if (TagW.StudyInstanceUID.equals(group.getTagID())) {
+                    else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
                             for (MediaSeriesGroup s : model.getChildren(group)) {
@@ -499,10 +501,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         if (view instanceof View2d) {
                             DicomImageElement img = view.getImage();
                             if (img != null) {
-                                if (DicomSpecialElement.isSopuidInReferencedSeriesSequence(
-                                    (Attributes[]) specialElement.getTagValue(TagW.ReferencedSeriesSequence),
-                                    (String) img.getTagValue(TagW.SeriesInstanceUID),
-                                    (String) img.getTagValue(TagW.SOPInstanceUID), (Integer) img.getKey())) {
+                                Attributes[] seq =
+                                    TagD.getTagValue(specialElement, Tag.ReferencedSeriesSequence, Attributes[].class);
+                                if (DicomSpecialElement.isSopuidInReferencedSeriesSequence(seq,
+                                    TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class),
+                                    TagD.getTagValue(img, Tag.SOPInstanceUID, String.class), (Integer) img.getKey())) {
                                     ((View2d) view).updatePR();
 
                                 }
@@ -578,7 +581,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     }
 
                     DicomSeries dicomSeries = (DicomSeries) view.getSeries();
-                    String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+                    String seriesInstanceUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
 
                     if (updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID) == false) {
                         continue;

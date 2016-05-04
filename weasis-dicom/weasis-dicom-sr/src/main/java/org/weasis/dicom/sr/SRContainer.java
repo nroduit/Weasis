@@ -38,7 +38,6 @@ import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
@@ -56,6 +55,8 @@ import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
@@ -228,14 +229,14 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                 } else if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
-                    if (TagW.PatientPseudoUID.equals(group.getTagID())) {
+                    if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
                         }
                     }
                     // Study Group
-                    else if (TagW.StudyInstanceUID.equals(group.getTagID())) {
+                    else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
                             for (MediaSeriesGroup s : model.getChildren(group)) {

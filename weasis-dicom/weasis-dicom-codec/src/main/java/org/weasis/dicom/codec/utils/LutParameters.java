@@ -1,8 +1,8 @@
 package org.weasis.dicom.codec.utils;
 
 public class LutParameters {
-    private final float intercept;
-    private final float slope;
+    private final double intercept;
+    private final double slope;
     private final Integer paddingMinValue;
     private final Integer paddingMaxValue;
     private final int bitsStored;
@@ -12,7 +12,7 @@ public class LutParameters {
     private final int bitsOutput;
     private final boolean inversePaddingMLUT;
 
-    public LutParameters(float intercept, float slope, boolean applyPadding, Integer paddingMinValue,
+    public LutParameters(double intercept, double slope, boolean applyPadding, Integer paddingMinValue,
         Integer paddingMaxValue, int bitsStored, boolean signed, boolean outputSigned, int bitsOutput,
         boolean inversePaddingMLUT) {
         this.intercept = intercept;
@@ -29,35 +29,67 @@ public class LutParameters {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof LutParameters) {
-            LutParameters p = (LutParameters) obj;
-            return p.intercept == intercept && p.slope == slope && p.applyPadding == applyPadding
-                && p.paddingMinValue == paddingMinValue && p.paddingMaxValue == paddingMaxValue
-                && p.bitsStored == bitsStored && p.signed == signed && p.isOutputSigned() == outputSigned
-                && p.bitsOutput == bitsOutput && p.isInversePaddingMLUT() == inversePaddingMLUT;
-        }
-        return false;
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        LutParameters other = (LutParameters) obj;
+        if (applyPadding != other.applyPadding)
+            return false;
+        if (bitsOutput != other.bitsOutput)
+            return false;
+        if (bitsStored != other.bitsStored)
+            return false;
+        if (Double.doubleToLongBits(intercept) != Double.doubleToLongBits(other.intercept))
+            return false;
+        if (inversePaddingMLUT != other.inversePaddingMLUT)
+            return false;
+        if (outputSigned != other.outputSigned)
+            return false;
+        if (paddingMaxValue == null) {
+            if (other.paddingMaxValue != null)
+                return false;
+        } else if (!paddingMaxValue.equals(other.paddingMaxValue))
+            return false;
+        if (paddingMinValue == null) {
+            if (other.paddingMinValue != null)
+                return false;
+        } else if (!paddingMinValue.equals(other.paddingMinValue))
+            return false;
+        if (signed != other.signed)
+            return false;
+        if (Double.doubleToLongBits(slope) != Double.doubleToLongBits(other.slope))
+            return false;
+        return true;
     }
 
     @Override
     public int hashCode() {
-        int hash = (signed ? 2 : 3) + (applyPadding ? 4 : 5) + (outputSigned ? 6 : 7) + (inversePaddingMLUT ? 8 : 9)
-            + bitsStored * 10 + bitsOutput * 14 + Float.floatToIntBits(slope) * 25
-            + Float.floatToIntBits(intercept) * 29;
-        if (paddingMinValue != null) {
-            hash += paddingMinValue * 19;
-        }
-        if (paddingMaxValue != null) {
-            hash += paddingMaxValue * 22;
-        }
-        return hash;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (applyPadding ? 1231 : 1237);
+        result = prime * result + bitsOutput;
+        result = prime * result + bitsStored;
+        long temp;
+        temp = Double.doubleToLongBits(intercept);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + (inversePaddingMLUT ? 1231 : 1237);
+        result = prime * result + (outputSigned ? 1231 : 1237);
+        result = prime * result + ((paddingMaxValue == null) ? 0 : paddingMaxValue.hashCode());
+        result = prime * result + ((paddingMinValue == null) ? 0 : paddingMinValue.hashCode());
+        result = prime * result + (signed ? 1231 : 1237);
+        temp = Double.doubleToLongBits(slope);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        return result;
     }
 
-    public float getIntercept() {
+    public double getIntercept() {
         return intercept;
     }
 
-    public float getSlope() {
+    public double getSlope() {
         return slope;
     }
 

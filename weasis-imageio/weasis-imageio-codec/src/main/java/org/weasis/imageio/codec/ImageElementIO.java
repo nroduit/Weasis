@@ -15,6 +15,7 @@ import java.io.RandomAccessFile;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -27,6 +28,7 @@ import javax.media.jai.PlanarImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
@@ -125,35 +127,36 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
         String sUID = null;
         MediaElement element = getSingleImage();
         if (element != null) {
-            sUID = (String) element.getTagValue(TagW.SeriesInstanceUID);
+            sUID = (String) element.getTagValue(TagW.get("SeriesInstanceUID"));
         }
         if (sUID == null) {
             sUID = uri == null ? "unknown" : uri.toString(); //$NON-NLS-1$
         }
-        MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, TagW.FileName) { // $NON-NLS-1$
+        MediaSeries<ImageElement> series =
+            new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) { // $NON-NLS-1$
 
-            @Override
-            public String getMimeType() {
-                synchronized (this) {
-                    for (ImageElement img : medias) {
-                        return img.getMimeType();
+                @Override
+                public String getMimeType() {
+                    synchronized (this) {
+                        for (ImageElement img : medias) {
+                            return img.getMimeType();
+                        }
+                    }
+                    return null;
+                }
+
+                @Override
+                public void addMedia(MediaElement media) {
+                    if (media instanceof ImageElement) {
+                        this.add((ImageElement) media);
+                        DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                        if (model != null) {
+                            model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
+                                new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
+                        }
                     }
                 }
-                return null;
-            }
-
-            @Override
-            public void addMedia(MediaElement media) {
-                if (media instanceof ImageElement) {
-                    this.add((ImageElement) media);
-                    DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
-                    if (model != null) {
-                        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                            new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
-                    }
-                }
-            }
-        };
+            };
 
         ImageElement img = getSingleImage();
         if (img != null) {
@@ -219,7 +222,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     @Override
     public Object getTagValue(TagW tag) {
         MediaElement element = getSingleImage();
-        if (element != null) {
+        if (tag != null && element != null) {
             return element.getTagValue(tag);
         }
         return null;
@@ -227,7 +230,26 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
 
     @Override
     public void replaceURI(URI uri) {
-        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
 
+    @Override
+    public void setTag(TagW tag, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean containTagKey(TagW tag) {
+        return false;
+    }
+
+    @Override
+    public void setTagNoNull(TagW tag, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
+        throw new UnsupportedOperationException();
     }
 }

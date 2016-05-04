@@ -48,6 +48,11 @@
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
+			<artifactId>dcm4che-dict</artifactId>
+			<version>dcm4chee-arc-light-5.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-image</artifactId>
 			<version>dcm4chee-arc-light-5.1.0</version>
 		</dependency>

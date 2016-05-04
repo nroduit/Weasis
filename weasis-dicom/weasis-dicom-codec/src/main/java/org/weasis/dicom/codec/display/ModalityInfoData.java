@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.display;
 
+import org.weasis.core.api.util.StringUtil;
+
 public class ModalityInfoData {
 
     private final Modality modality;
@@ -49,7 +51,7 @@ public class ModalityInfoData {
 
     @Override
     public String toString() {
-        String desc = modality.getDescription().equals("") ? "" : " (" + modality.getDescription() + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        String desc = StringUtil.hasText(modality.getDescription()) ? " (" + modality.getDescription() + ")" : ""; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         return modality.toString() + desc;
     }
 }

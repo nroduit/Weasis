@@ -16,6 +16,8 @@ import java.net.URI;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -45,6 +47,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
@@ -69,7 +72,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
         if (media == null) {
             throw new IllegalArgumentException("media uri is null"); //$NON-NLS-1$
         }
-        this.tags = new HashMap<TagW, Object>();
+        this.tags = new HashMap<>();
         this.uri = media;
         this.codec = codec;
     }
@@ -111,8 +114,8 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
         // Series Group
         if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
             // Information for series ToolTips
-            group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
-            group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
+            group.setTagNoNull(TagD.get(Tag.PatientName), getTagValue(TagD.get(Tag.PatientName)));
+            group.setTagNoNull(TagD.get(Tag.StudyDescription), header.getString(Tag.StudyDescription));
 
             // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
             // MediaElement[] elements = getMediaElement();
@@ -128,12 +131,14 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     @Override
     public PlanarImage getMediaFragment(MediaElement<PlanarImage> media) throws Exception {
         if (media != null && media.getFile() != null) {
-            ImageParameters h = new ImageParameters((Integer) media.getTagValue(TagW.Rows),
-                (Integer) media.getTagValue(TagW.Columns), (Integer) media.getTagValue(TagW.BitsAllocated),
-                (Integer) media.getTagValue(TagW.SamplesPerPixel), false);
+            Integer allocated = TagD.getTagValue(media, Tag.BitsAllocated, Integer.class);
+            Integer sample = TagD.getTagValue(media, Tag.SamplesPerPixel, Integer.class);
+            Integer rows = TagD.getTagValue(media, Tag.Rows, Integer.class);
+            Integer columns = TagD.getTagValue(media, Tag.Columns, Integer.class);
+            ImageParameters h = new ImageParameters(rows, columns, allocated, sample, false);
             // RawImageReader doesn't need to be disposed
             ImageReader reader = initRawImageReader(imageStream = ImageIO.createImageInputStream(media.getFile()), h, 1,
-                0, false, (Integer) media.getTagValue(TagW.PixelRepresentation));
+                0, false, TagD.getTagValue(media, Tag.PixelRepresentation, Integer.class));
 
             RenderedImage buffer = reader.readAsRenderedImage(0, null);
             PlanarImage img = null;
@@ -224,19 +229,29 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
 
     @Override
     public Object getTagValue(TagW tag) {
-        return tags.get(tag);
+        return tag == null ? null : tags.get(tag);
     }
 
+    @Override
     public void setTag(TagW tag, Object value) {
-        if (tag != null) {
-            tags.put(tag, value);
+        DicomMediaUtils.setTag(tags, tag, value);
+    }
+
+    @Override
+    public void setTagNoNull(TagW tag, Object value) {
+        if (value != null) {
+            setTag(tag, value);
         }
     }
 
-    public void setTagNoNull(TagW tag, Object value) {
-        if (tag != null && value != null) {
-            tags.put(tag, value);
-        }
+    @Override
+    public boolean containTagKey(TagW tag) {
+        return tags.containsKey(tag);
+    }
+
+    @Override
+    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
+        return tags.entrySet().iterator();
     }
 
     public void copyTags(TagW[] tagList, MediaElement<?> media, boolean allowNullValue) {

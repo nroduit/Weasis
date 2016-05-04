@@ -244,10 +244,10 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
 
     public boolean addKeyObject(DicomImageElement dicomImage) {
 
-        String studyInstanceUID = (String) dicomImage.getTagValue(TagW.StudyInstanceUID);
-        String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
-        String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
-        String sopClassUID = (String) dicomImage.getTagValue(TagW.SOPClassUID);
+        String studyInstanceUID = TagD.getTagValue(this, Tag.StudyInstanceUID, String.class);
+        String seriesInstanceUID = TagD.getTagValue(this, Tag.SeriesInstanceUID, String.class);
+        String sopInstanceUID = TagD.getTagValue(this, Tag.SOPInstanceUID, String.class);
+        String sopClassUID = TagD.getTagValue(this, Tag.SOPClassUID, String.class);
 
         return addKeyObject(studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
     }
@@ -430,11 +430,10 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public boolean removeKeyObject(DicomImageElement dicomImage) {
-
-        String studyInstanceUID = (String) dicomImage.getTagValue(TagW.StudyInstanceUID);
-        String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
-        String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
-
+        String studyInstanceUID = TagD.getTagValue(this, Tag.StudyInstanceUID, String.class);
+        String seriesInstanceUID = TagD.getTagValue(this, Tag.SeriesInstanceUID, String.class);
+        String sopInstanceUID = TagD.getTagValue(this, Tag.SOPInstanceUID, String.class);
+        
         return removeKeyObject(studyInstanceUID, seriesInstanceUID, sopInstanceUID);
     }
 
@@ -584,22 +583,20 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Filter<DicomImageElement> getSOPInstanceUIDFilter() {
-        Filter<DicomImageElement> filter = new Filter<DicomImageElement>() {
+        return new Filter<DicomImageElement>() {
             @Override
             public boolean passes(DicomImageElement dicom) {
-                if (dicom == null || dicom.getTagValue(TagW.SeriesInstanceUID) == null) {
+                String seriesInstanceUID = TagD.getTagValue(dicom, Tag.SeriesInstanceUID, String.class);
+                if (dicom == null || seriesInstanceUID == null) {
                     return false;
                 }
-                String seriesUID = (String) dicom.getTagValue(TagW.SeriesInstanceUID);
-                String sopInstanceUID = (String) dicom.getTagValue(TagW.SOPInstanceUID);
-
-                Set<String> referencedSOPInstanceUIDSet = getReferencedSOPInstanceUIDSet(seriesUID);
+                String sopInstanceUID = TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class);
+                Set<String> referencedSOPInstanceUIDSet = getReferencedSOPInstanceUIDSet(seriesInstanceUID);
 
                 return referencedSOPInstanceUIDSet == null ? false
                     : referencedSOPInstanceUIDSet.contains(sopInstanceUID);
             }
         };
-        return filter;
     }
 
     @Override

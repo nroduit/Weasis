@@ -1,29 +1,16 @@
 package org.weasis.dicom.codec;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.Code;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
-import org.dcm4che3.io.DicomOutputStream;
-import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FileUtil;
-import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
-import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
-import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 
 public class KOSpecialElement extends AbstractKOSpecialElement {
 
@@ -34,10 +21,10 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
 
     public void toggleKeyObjectReference(DicomImageElement dicomImage) {
 
-        String studyInstanceUID = (String) dicomImage.getTagValue(TagW.StudyInstanceUID);
-        String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
-        String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
-        String sopClassUID = (String) dicomImage.getTagValue(TagW.SOPClassUID);
+        String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
+        String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
+        String sopInstanceUID = TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class);
+        String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
 
         toggleKeyObjectReference(studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
     }
@@ -67,11 +54,11 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public boolean setKeyObjectReference(boolean selectedState, DicomImageElement dicomImage) {
-        String studyInstanceUID = (String) dicomImage.getTagValue(TagW.StudyInstanceUID);
-        String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
-        String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
-        String sopClassUID = (String) dicomImage.getTagValue(TagW.SOPClassUID);
-
+        String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
+        String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
+        String sopInstanceUID = TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class);
+        String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
+        
         return setKeyObjectReference(selectedState, studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
     }
 
@@ -88,18 +75,19 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
 
     public boolean setKeyObjectReference(boolean selectedState, List<DicomImageElement> dicomImageList) {
 
-        Map<String, Set<DicomImageElement>> dicomImageSetMap = new HashMap<String, Set<DicomImageElement>>();
+        Map<String, Set<DicomImageElement>> dicomImageSetMap = new HashMap<>();
 
         for (DicomImageElement dicomImage : dicomImageList) {
-            String studyInstanceUID = (String) dicomImage.getTagValue(TagW.StudyInstanceUID);
-            String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
-            String sopClassUID = (String) dicomImage.getTagValue(TagW.SOPClassUID);
+            String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
+            String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
+            String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
 
             String hashcode = studyInstanceUID + seriesInstanceUID + sopClassUID;
 
             Set<DicomImageElement> dicomImageSet = dicomImageSetMap.get(hashcode);
             if (dicomImageSet == null) {
-                dicomImageSetMap.put(hashcode, dicomImageSet = new HashSet<DicomImageElement>());
+                dicomImageSet = new HashSet<>();
+                dicomImageSetMap.put(hashcode, dicomImageSet);
             }
             dicomImageSet.add(dicomImage);
         }
@@ -110,13 +98,13 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
 
             DicomImageElement firstDicomImage = dicomImageSet.iterator().next();
 
-            String studyInstanceUID = (String) firstDicomImage.getTagValue(TagW.StudyInstanceUID);
-            String seriesInstanceUID = (String) firstDicomImage.getTagValue(TagW.SeriesInstanceUID);
-            String sopClassUID = (String) firstDicomImage.getTagValue(TagW.SOPClassUID);
+            String studyInstanceUID = TagD.getTagValue(firstDicomImage, Tag.StudyInstanceUID, String.class);
+            String seriesInstanceUID = TagD.getTagValue(firstDicomImage, Tag.SeriesInstanceUID, String.class);
+            String sopClassUID = TagD.getTagValue(firstDicomImage, Tag.SOPClassUID, String.class);
 
-            Collection<String> sopInstanceUIDs = new ArrayList<String>(dicomImageSet.size());
+            Collection<String> sopInstanceUIDs = new ArrayList<>(dicomImageSet.size());
             for (DicomImageElement dicomImage : dicomImageSet) {
-                sopInstanceUIDs.add((String) dicomImage.getTagValue(TagW.SOPInstanceUID));
+                sopInstanceUIDs.add(TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class));
             }
 
             hasDataModelChanged |=

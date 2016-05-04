@@ -50,6 +50,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.LocalUtil;
@@ -198,7 +199,7 @@ public final class JIThumbnailList extends JList
 
         toolTips.append(Messages.getString("JIThumbnailList.date")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(TagW.formatDateTime(new Date(((MediaElement) item).getLastModified())));
+        toolTips.append(TagUtil.formatDateTime(new Date(((MediaElement) item).getLastModified())));
         toolTips.append("<br>"); //$NON-NLS-1$
         toolTips.append("</html>"); //$NON-NLS-1$
 
@@ -234,10 +235,10 @@ public final class JIThumbnailList extends JList
                         // DICOM is not readable
                         return null;
                     }
-                    sUID = (String) reader.getTagValue(TagW.SeriesInstanceUID);
-                    gUID = (String) reader.getTagValue(TagW.PatientID);
-                    tname = TagW.PatientName;
-                    tvalue = (String) reader.getTagValue(TagW.PatientName);
+                    sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID"));
+                    gUID = (String) reader.getTagValue(TagW.get("PatientID"));
+                    tname = TagW.get("PatientName");
+                    tvalue = (String) reader.getTagValue(tname);
                 } else {
                     sUID = mediaElement.getFile().getAbsolutePath();
                     gUID = sUID;
@@ -282,10 +283,10 @@ public final class JIThumbnailList extends JList
                             // DICOM is not readable
                             return;
                         }
-                        sUID = (String) reader.getTagValue(TagW.SeriesInstanceUID);
-                        gUID = (String) reader.getTagValue(TagW.PatientID);
-                        tname = TagW.PatientName;
-                        tvalue = (String) reader.getTagValue(TagW.PatientName);
+                        sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID"));
+                        gUID = (String) reader.getTagValue(TagW.get("PatientID"));
+                        tname = TagW.get("PatientName");
+                        tvalue = (String) reader.getTagValue(tname);
                     } else {
                         sUID = oneFile ? mediaElement.getFile().getAbsolutePath()
                             : sUID == null ? UUID.randomUUID().toString() : sUID;
@@ -381,10 +382,10 @@ public final class JIThumbnailList extends JList
                                         MediaElement<?>[] ms = mreader.getMediaElement();
                                         if (ms != null) {
                                             for (MediaElement<?> media : ms) {
-                                                media.setTag(TagW.SeriesInstanceUID,
+                                                media.setTag(TagW.get("SeriesInstanceUID"),
                                                     series.getTagValue(series.getTagID()));
                                                 URI uri = media.getMediaURI();
-                                                media.setTag(TagW.SOPInstanceUID,
+                                                media.setTag(TagW.get("SOPInstanceUID"),
                                                     uri == null ? UUID.randomUUID().toString() : uri.toString());
                                                 series.addMedia(media);
                                             }

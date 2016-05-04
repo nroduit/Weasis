@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configuration of the rules for splitting series in the DICOM Explorer. The "Default" modality configuration will be 
+	applied on all the modalities without configuration (or unknown) -->
+<modalities>
+	<!-- <modality> attributes: name is a mandatory attribute, extend is optional. -->
+	<!-- the "extend" attribute allows to inherit the values of a previous declared modality (must be declared before in the 
+		xml file) -->
+
+	<!-- <splittingTags> contains the list of attributes which allows to split into subseries when the image values are different -->
+
+	<!-- <multiframeSplittingTags> contains the list of attributes which allows to split multiframe file into subseries when the frame values are different -->
+
+	<!-- DICOM Attributes, see http://dicom.nema.org/medical/dicom/current/output/chtml/part06/chapter_6.html -->
+	<!-- When the value of an attribute is different, the new image goes into a new sub-series -->
+	<!-- An attribute can have more conditions when the values are different. -->
+	<!-- Conditions can be grouped by "allOf" (AND) or "anyOf (OR) -->
+	<!-- The new image is split in a new sub-series When all the conditions matches -->
+
+	<!-- Uncomment to override the configuration which is already defined in Weasis source code  -->
+	<!--
+	
+	<modality name="Default">
+		<splittingTags>
+			<ImageType />
+			<SOPClassUID />
+			<ContrastBolusAgent />
+		</splittingTags>
+		<multiframeSplittingTags>
+			<ImageType />
+			<SOPInstanceUID />
+			<FrameType />
+			<FrameAcquisitionNumber />
+			<StackID />
+		</multiframeSplittingTags>	
+	</modality>
+	
+	<modality name="CT" extend="Default">
+		<splittingTags>
+			<ConvolutionKernel />
+			<GantryDetectorTilt />
+			<ImageOrientationPlane type="allOf">
+				<exception tag="ImageType" action="containsIgnoreCase">PROJECTION</p>
+			</ImageOrientationPlane>
+		</splittingTags>
+	</modality>
+	
+	<modality name="PT" extend="Default">
+		<splittingTags>
+			<ConvolutionKernel />
+			<GantryDetectorTilt />
+		</splittingTags>
+	</modality>
+	
+	<modality name="MR" extend="Default">
+		<splittingTags>
+			<ScanningSequence />
+			<SequenceVariant />
+			<ScanOptions />
+			<RepetitionTime />
+			<EchoTime />
+			<InversionTime />
+			<FlipAngle />
+			<ImageOrientationPlane>
+				<conditions type="allOf">
+					<condition tag="ImageType" type="notContainsIgnoreCase">PROJECTION</p>
+				</conditions>
+			</ImageOrientationPlane>
+		</splittingTags>
+	</modality>
+	 -->
+</modalities>

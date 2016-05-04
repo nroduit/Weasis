@@ -7,6 +7,7 @@ import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -31,6 +32,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
@@ -152,7 +154,8 @@ public class MipView extends View2d {
                                         view.setMip(dicoms.get(0));
                                     } else if (dicoms.size() > 1) {
                                         DicomImageElement dcm = dicoms.get(0);
-                                        Series s = new DicomSeries((String) dcm.getTagValue(TagW.SeriesInstanceUID));
+                                        Series s =
+                                            new DicomSeries(TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
                                         s.addAll(dicoms);
                                         ((DcmMediaReader) dcm.getMediaReader()).writeMetaData(s);
                                         DataExplorerModel model =

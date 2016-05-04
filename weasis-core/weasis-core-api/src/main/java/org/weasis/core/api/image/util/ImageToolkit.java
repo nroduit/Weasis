@@ -301,8 +301,8 @@ public class ImageToolkit {
      * @param pixelPadding
      * @return
      */
-    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, float window,
-        float level, boolean pixelPadding) {
+    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, double window,
+        double level, boolean pixelPadding) {
         if (image == null || source == null) {
             return null;
         }
@@ -312,8 +312,8 @@ public class ImageToolkit {
             return null;
         }
         int datatype = sampleModel.getDataType();
-        if (datatype == DataBuffer.TYPE_BYTE && MathUtil.isEqual(window, 255.0f)
-            && (MathUtil.isEqual(level, 127.5f) || MathUtil.isEqual(level, 127.0f))) {
+        if (datatype == DataBuffer.TYPE_BYTE && MathUtil.isEqual(window, 255.0)
+            && (MathUtil.isEqual(level, 127.5) || MathUtil.isEqual(level, 127.0))) {
             return source;
         }
 

@@ -16,6 +16,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
@@ -240,7 +241,7 @@ public class DicomNodeEx extends DcmNode {
             try {
                 DicomNodeEx node = new DicomNodeEx(xmler.getAttributeValue(null, T_DESCRIPTION),
                     xmler.getAttributeValue(null, T_AETITLE), xmler.getAttributeValue(null, T_HOST),
-                    FileUtil.getIntegerTagAttribute(xmler, T_PORT, 104));
+                    TagUtil.getIntegerTagAttribute(xmler, T_PORT, 104));
 
                 node.setType(Type.getType(xmler.getAttributeValue(null, T_TYPE)));
                 if (Type.PRINTER.equals(node.getType())) {

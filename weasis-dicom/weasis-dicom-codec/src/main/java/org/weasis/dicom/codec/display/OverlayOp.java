@@ -16,6 +16,7 @@ import java.util.HashMap;
 
 import javax.media.jai.PlanarImage;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -30,6 +31,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
 public class OverlayOp extends AbstractOp {
@@ -83,8 +85,8 @@ public class OverlayOp extends AbstractOp {
                     try {
                         if (image.getKey() instanceof Integer) {
                             int frame = (Integer) image.getKey();
-                            Integer height = (Integer) image.getTagValue(TagW.Rows);
-                            Integer width = (Integer) image.getTagValue(TagW.Columns);
+                            Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
+                            Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
                             if (height != null && width != null) {
                                 imgOverlay = PlanarImage.wrapRenderedImage(OverlayUtils.getBinaryOverlays(image,
                                     reader.getDicomObject(), frame, width, height, params));

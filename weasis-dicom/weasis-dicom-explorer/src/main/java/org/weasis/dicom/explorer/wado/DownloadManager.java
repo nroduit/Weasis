@@ -25,7 +25,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -49,6 +48,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -59,6 +59,7 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
@@ -69,8 +70,9 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.dicom.codec.DicomInstance;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -384,11 +386,13 @@ public class DownloadManager {
 
     private static void readWadoQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
         throws XMLStreamException {
-        String wadoURL = getTagAttribute(xmler, WadoParameters.TAG_WADO_URL, null);
-        boolean onlySopUID = Boolean.valueOf(getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
-        String additionnalParameters = getTagAttribute(xmler, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
-        String overrideList = getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
-        String webLogin = getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
+        String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_URL, null);
+        boolean onlySopUID =
+            Boolean.valueOf(TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
+        String additionnalParameters =
+            TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
+        String overrideList = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
+        String webLogin = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
         final WadoParameters wadoParameters =
             new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
         int pat = 0;
@@ -400,19 +404,19 @@ public class DownloadManager {
                 case XMLStreamConstants.START_ELEMENT:
                     String key = xmler.getName().getLocalPart();
                     // <Patient> Tag
-                    if (TagW.DICOM_LEVEL.Patient.name().equals(key)) {
+                    if (TagD.Level.PATIENT.getTagName().equals(key)) {
                         patient = readPatient(model, seriesList, xmler, wadoParameters);
                         pat++;
                     } else if (WadoParameters.TAG_HTTP_TAG.equals(key)) {
-                        String httpkey = getTagAttribute(xmler, "key", null); //$NON-NLS-1$
-                        String httpvalue = getTagAttribute(xmler, "value", null); //$NON-NLS-1$
+                        String httpkey = TagUtil.getTagAttribute(xmler, "key", null); //$NON-NLS-1$
+                        String httpvalue = TagUtil.getTagAttribute(xmler, "value", null); //$NON-NLS-1$
                         wadoParameters.addHttpTag(httpkey, httpvalue);
                         // <Message> tag
                     } else if ("Message".equals(key)) { //$NON-NLS-1$
-                        final String title = getTagAttribute(xmler, "title", null); //$NON-NLS-1$
-                        final String message = getTagAttribute(xmler, "description", null); //$NON-NLS-1$
+                        final String title = TagUtil.getTagAttribute(xmler, "title", null); //$NON-NLS-1$
+                        final String message = TagUtil.getTagAttribute(xmler, "description", null); //$NON-NLS-1$
                         if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
-                            String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
+                            String severity = TagUtil.getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
                             final int messageType =
                                 "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE //$NON-NLS-1$
                                     : "INFO" //$NON-NLS-1$
@@ -469,7 +473,7 @@ public class DownloadManager {
             });
         }
         for (LoadSeries loadSeries : seriesList) {
-            String modality = (String) loadSeries.getDicomSeries().getTagValue(TagW.Modality);
+            String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
             boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
             if (!ps) {
                 loadSeries.startDownloadImageReference(wadoParameters);
@@ -516,26 +520,29 @@ public class DownloadManager {
         // PatientID, PatientBirthDate, StudyInstanceUID, SeriesInstanceUID and SOPInstanceUID override
         // the tags located in DICOM object (because original DICOM can contain different values after merging
         // patient or study
+        TagW idTag = TagD.get(Tag.PatientID);
+        TagW issuerIdTag = TagD.get(Tag.IssuerOfPatientID);
+        TagW nameTag = TagD.get(Tag.PatientName);
 
-        String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), DicomMediaIO.NO_VALUE);
-        String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null);
-        String date = getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null);
-        Date birthdate = TagW.getDicomDate(date);
-        String name = DicomMediaUtils
-            .buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(), DicomMediaIO.NO_VALUE));
+        String patientID = TagUtil.getTagAttribute(xmler, idTag.getKeyword(), TagW.NO_VALUE);
+        String issuerOfPatientID = TagUtil.getTagAttribute(xmler, issuerIdTag.getKeyword(), null);
+        String name = TagUtil.getTagAttribute(xmler, nameTag.getKeyword(), TagW.NO_VALUE);
 
         String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name, null);
 
         MediaSeriesGroup patient = model.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
         if (patient == null) {
-            patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
-            patient.setTag(TagW.PatientID, patientID);
-            patient.setTag(TagW.PatientName, name);
+            patient =
+                new MediaSeriesGroupNode(TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.getTagView());
+            patient.setTag(idTag, patientID);
+            patient.setTag(nameTag, name);
+            patient.setTagNoNull(issuerIdTag, issuerOfPatientID);
 
-            patient.setTag(TagW.PatientSex, getTagAttribute(xmler, TagW.PatientSex.getTagName(), "O")); //$NON-NLS-1$
-            patient.setTag(TagW.PatientBirthDate, birthdate);
-            patient.setTagNoNull(TagW.PatientBirthTime,
-                TagW.getDicomTime(getTagAttribute(xmler, TagW.PatientBirthTime.getTagName(), null)));
+            TagW[] tags = TagD.getTagFromIDs(Tag.PatientSex, Tag.PatientBirthDate, Tag.PatientBirthTime);
+            for (TagW tag : tags) {
+                tag.readValue(xmler, patient);
+            }
+
             model.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
             LOGGER.info("Adding new patient: " + patient); //$NON-NLS-1$
         }
@@ -547,12 +554,12 @@ public class DownloadManager {
             switch (eventType) {
                 case XMLStreamConstants.START_ELEMENT:
                     // <Study> Tag
-                    if (TagW.DICOM_LEVEL.Study.name().equals(xmler.getName().getLocalPart())) {
+                    if (TagD.Level.STUDY.getTagName().equals(xmler.getName().getLocalPart())) {
                         readStudy(model, seriesList, xmler, patient, wadoParameters);
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if (TagW.DICOM_LEVEL.Patient.name().equals(xmler.getName().getLocalPart())) {
+                    if (TagD.Level.PATIENT.getTagName().equals(xmler.getName().getLocalPart())) {
                         state = false;
                     }
                     break;
@@ -565,20 +572,15 @@ public class DownloadManager {
 
     private static MediaSeriesGroup readStudy(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler,
         MediaSeriesGroup patient, WadoParameters wadoParameters) throws XMLStreamException {
-        String studyUID = getTagAttribute(xmler, TagW.StudyInstanceUID.getTagName(), ""); //$NON-NLS-1$
+        String studyUID = (String) TagD.getUID(Level.STUDY).getValue(xmler);
         MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
         if (study == null) {
-            study = new MediaSeriesGroupNode(TagW.StudyInstanceUID, studyUID, TagW.StudyDate);
-            study.setTagNoNull(TagW.StudyTime,
-                TagW.getDicomTime(getTagAttribute(xmler, TagW.StudyTime.getTagName(), null)));
-            // Merge date and time, used in display
-            study.setTagNoNull(TagW.StudyDate,
-                TagW.dateTime(TagW.getDicomDate(getTagAttribute(xmler, TagW.StudyDate.getTagName(), null)),
-                    (Date) study.getTagValue(TagW.StudyTime)));
-
-            study.setTagNoNull(TagW.StudyDescription, getTagAttribute(xmler, TagW.StudyDescription.getTagName(), null));
-            study.setTagNoNull(TagW.AccessionNumber, getTagAttribute(xmler, TagW.AccessionNumber.getTagName(), null));
-            study.setTagNoNull(TagW.StudyID, getTagAttribute(xmler, TagW.StudyID.getTagName(), null));
+            study = new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
+            TagW[] tags = TagD.getTagFromIDs(Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.AccessionNumber,
+                Tag.StudyID);
+            for (TagW tag : tags) {
+                tag.readValue(xmler, study);
+            }
 
             model.addHierarchyNode(patient, study);
         }
@@ -590,12 +592,12 @@ public class DownloadManager {
             switch (eventType) {
                 case XMLStreamConstants.START_ELEMENT:
                     // <Series> Tag
-                    if (TagW.DICOM_LEVEL.Series.name().equals(xmler.getName().getLocalPart())) {
+                    if (TagD.Level.SERIES.getTagName().equals(xmler.getName().getLocalPart())) {
                         readSeries(model, seriesList, xmler, patient, study, wadoParameters);
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if (TagW.DICOM_LEVEL.Study.name().equals(xmler.getName().getLocalPart())) {
+                    if (TagD.Level.STUDY.getTagName().equals(xmler.getName().getLocalPart())) {
                         state = false;
                     }
                     break;
@@ -609,29 +611,30 @@ public class DownloadManager {
     private static Series readSeries(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler,
         MediaSeriesGroup patient, MediaSeriesGroup study, WadoParameters wadoParameters) throws XMLStreamException {
 
-        String seriesUID = getTagAttribute(xmler, TagW.SeriesInstanceUID.getTagName(), ""); //$NON-NLS-1$
-
+        TagW seriesTag = TagD.get(Tag.SeriesInstanceUID);
+        String seriesUID = (String) seriesTag.getValue(xmler);
         Series dicomSeries = (Series) model.getHierarchyNode(study, seriesUID);
+
         if (dicomSeries == null) {
             dicomSeries = new DicomSeries(seriesUID);
+            dicomSeries.setTag(seriesTag, seriesUID);
             dicomSeries.setTag(TagW.ExplorerModel, model);
-            dicomSeries.setTag(TagW.SeriesInstanceUID, seriesUID);
-            dicomSeries.setTag(TagW.Modality, getTagAttribute(xmler, TagW.Modality.getTagName(), null));
             dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             dicomSeries.setTag(TagW.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
 
-            dicomSeries.setTagNoNull(TagW.SeriesNumber,
-                FileUtil.getIntegerTagAttribute(xmler, TagW.SeriesNumber.getTagName(), null));
-            dicomSeries.setTagNoNull(TagW.SeriesDescription,
-                getTagAttribute(xmler, TagW.SeriesDescription.getTagName(), null));
-            dicomSeries.setTagNoNull(TagW.ReferringPhysicianName, DicomMediaUtils
-                .buildPersonName(getTagAttribute(xmler, TagW.ReferringPhysicianName.getTagName(), null)));
+            TagW[] tags =
+                TagD.getTagFromIDs(Tag.Modality, Tag.SeriesNumber, Tag.SeriesDescription, Tag.ReferringPhysicianName);
+            for (TagW tag : tags) {
+                tag.readValue(xmler, dicomSeries);
+            }
+
             dicomSeries.setTagNoNull(TagW.WadoTransferSyntaxUID,
-                getTagAttribute(xmler, TagW.WadoTransferSyntaxUID.getTagName(), null));
+                TagUtil.getTagAttribute(xmler, TagW.WadoTransferSyntaxUID.getKeyword(), null));
             dicomSeries.setTagNoNull(TagW.WadoCompressionRate,
-                FileUtil.getIntegerTagAttribute(xmler, TagW.WadoCompressionRate.getTagName(), null));
+                TagUtil.getIntegerTagAttribute(xmler, TagW.WadoCompressionRate.getKeyword(), null));
             dicomSeries.setTagNoNull(TagW.DirectDownloadThumbnail,
-                getTagAttribute(xmler, TagW.DirectDownloadThumbnail.getTagName(), null));
+                TagUtil.getTagAttribute(xmler, TagW.DirectDownloadThumbnail.getKeyword(), null));
+
             model.addHierarchyNode(study, dicomSeries);
         } else {
             WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
@@ -661,24 +664,25 @@ public class DownloadManager {
             switch (eventType) {
                 case XMLStreamConstants.START_ELEMENT:
                     // <Instance> Tag
-                    if (TagW.DICOM_LEVEL.Instance.name().equals(xmler.getName().getLocalPart())) {
-                        String sopInstanceUID = getTagAttribute(xmler, TagW.SOPInstanceUID.getTagName(), null);
+                    if (TagD.Level.INSTANCE.getTagName().equals(xmler.getName().getLocalPart())) {
+                        String sopInstanceUID =
+                            TagUtil.getTagAttribute(xmler, TagD.getKeywordFromTag(Tag.SOPInstanceUID, null), null);
                         if (sopInstanceUID != null) {
                             DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
                             if (containsInstance && dicomInstances.contains(dcmInstance)) {
                                 LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                             } else {
-                                dcmInstance.setInstanceNumber(
-                                    FileUtil.getIntegerTagAttribute(xmler, TagW.InstanceNumber.getTagName(), -1));
+                                dcmInstance.setInstanceNumber(TagUtil.getIntegerTagAttribute(xmler,
+                                    TagD.getKeywordFromTag(Tag.InstanceNumber, null), -1));
                                 dcmInstance.setDirectDownloadFile(
-                                    getTagAttribute(xmler, TagW.DirectDownloadFile.getTagName(), null));
+                                    TagUtil.getTagAttribute(xmler, TagW.DirectDownloadFile.getKeyword(), null));
                                 dicomInstances.add(dcmInstance);
                             }
                         }
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if (TagW.DICOM_LEVEL.Series.name().equals(xmler.getName().getLocalPart())) {
+                    if (TagD.Level.SERIES.getTagName().equals(xmler.getName().getLocalPart())) {
                         state = false;
                     }
                     break;
@@ -694,16 +698,6 @@ public class DownloadManager {
             seriesList.add(loadSeries);
         }
         return dicomSeries;
-    }
-
-    private static String getTagAttribute(XMLStreamReader xmler, String attribute, String defaultValue) {
-        if (attribute != null) {
-            String val = xmler.getAttributeValue(null, attribute);
-            if (val != null) {
-                return val;
-            }
-        }
-        return defaultValue;
     }
 
 }

@@ -521,17 +521,4 @@ public final class FileUtil {
         }
     }
 
-    public static Integer getIntegerTagAttribute(XMLStreamReader xmler, String attribute, Integer defaultValue) {
-        if (attribute != null) {
-            String val = xmler.getAttributeValue(null, attribute);
-            try {
-                if (val != null) {
-                    return Integer.valueOf(val);
-                }
-            } catch (NumberFormatException e) {
-                LOGGER.error("Cannot parse integer {} of {}", val, attribute); //$NON-NLS-1$
-            }
-        }
-        return defaultValue;
-    }
 }
