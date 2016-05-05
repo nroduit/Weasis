@@ -24,6 +24,7 @@ import java.util.TreeMap;
 import javax.media.jai.LookupTableJAI;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.dcm4che3.data.Tag;
@@ -114,7 +115,7 @@ public class PresetWindowLevel {
         return false;
     }
 
-    public static List<PresetWindowLevel> getPresetCollection(DicomImageElement image,TagReadable tagable,
+    public static List<PresetWindowLevel> getPresetCollection(DicomImageElement image, TagReadable tagable,
         boolean pixelPadding) {
         if (image == null || tagable == null) {
             return null;
@@ -155,7 +156,7 @@ public class PresetWindowLevel {
                         explanation = wlExplanationList[i]; // optional attribute
                     }
                 }
-                
+
                 PresetWindowLevel preset =
                     new PresetWindowLevel(explanation + dicomKeyWord, windowList[i], levelList[i], defaultLutShape);
                 // Only set shortcuts for the two first presets
@@ -172,7 +173,7 @@ public class PresetWindowLevel {
         }
 
         LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) tagable.getTagValue(TagW.VOILUTsData);
-        String[] voiLUTsExplanation = (String[])  tagable.getTagValue(TagW.VOILUTsExplanation); // optional attribute
+        String[] voiLUTsExplanation = (String[]) tagable.getTagValue(TagW.VOILUTsExplanation); // optional attribute
 
         if (voiLUTsData != null) {
             String defaultExplanation = Messages.getString("PresetWindowLevel.voi_lut"); //$NON-NLS-1$
@@ -257,7 +258,7 @@ public class PresetWindowLevel {
         return new PresetWindowLevel(newLutShape.toString(), fullDynamicWidth, fullDynamicCenter, newLutShape);
     }
 
-    private static Map<String, List<PresetWindowLevel>> getPresetListByModality() {
+    public static Map<String, List<PresetWindowLevel>> getPresetListByModality() {
 
         Map<String, List<PresetWindowLevel>> presets = new TreeMap<>();
 
@@ -273,42 +274,9 @@ public class PresetWindowLevel {
                 eventType = xmler.next();
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
-                        String key = xmler.getName().getLocalPart();
-                        if ("presets".equals(key)) { //$NON-NLS-1$
+                        if ("presets".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
                             while (xmler.hasNext()) {
-                                eventType = xmler.next();
-                                switch (eventType) {
-                                    case XMLStreamConstants.START_ELEMENT:
-                                        key = xmler.getName().getLocalPart();
-                                        if ("preset".equals(key) && xmler.getAttributeCount() >= 4) { //$NON-NLS-1$
-                                            String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
-                                            try {
-                                                String modality = xmler.getAttributeValue(null, "modality");//$NON-NLS-1$
-                                                double window =
-                                                    Double.parseDouble(xmler.getAttributeValue(null, "window")); //$NON-NLS-1$
-                                                double level = Double.parseDouble(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$
-                                                String shape = xmler.getAttributeValue(null, "shape");//$NON-NLS-1$
-                                                Integer keyCode = TagUtil.getIntegerTagAttribute(xmler, "key", null);//$NON-NLS-1$
-                                                LutShape lutShape = LutShape.getLutShape(shape);
-                                                PresetWindowLevel preset = new PresetWindowLevel(name, window, level,
-                                                    lutShape == null ? LutShape.LINEAR : lutShape);
-                                                if (keyCode != null) {
-                                                    preset.setKeyCode(keyCode);
-                                                }
-                                                List<PresetWindowLevel> presetList = presets.get(modality);
-                                                if (presetList == null) {
-                                                    presets.put(modality,
-                                                        presetList = new ArrayList<>());
-                                                }
-                                                presetList.add(preset);
-                                            } catch (Exception e) {
-                                                LOGGER.error("Preset {} cannot be read from xml file", name); //$NON-NLS-1$
-                                            }
-                                        }
-                                        break;
-                                    default:
-                                        break;
-                                }
+                                readPresetListByModality(xmler, presets);
                             }
                         }
                         break;
@@ -319,11 +287,44 @@ public class PresetWindowLevel {
         }
 
         catch (Exception e) {
-            LOGGER.error("Cannot read presets file! " + e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Cannot read presets file! " + e); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
         }
         return presets;
+    }
+
+    private static void readPresetListByModality(XMLStreamReader xmler, Map<String, List<PresetWindowLevel>> presets)
+        throws XMLStreamException {
+        int eventType = xmler.next();
+        String key;
+        if (eventType == XMLStreamConstants.START_ELEMENT) {
+            key = xmler.getName().getLocalPart();
+            if ("preset".equals(key) && xmler.getAttributeCount() >= 4) { //$NON-NLS-1$
+                String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
+                try {
+                    String modality = xmler.getAttributeValue(null, "modality");//$NON-NLS-1$
+                    double window = Double.parseDouble(xmler.getAttributeValue(null, "window")); //$NON-NLS-1$
+                    double level = Double.parseDouble(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$
+                    String shape = xmler.getAttributeValue(null, "shape");//$NON-NLS-1$
+                    Integer keyCode = TagUtil.getIntegerTagAttribute(xmler, "key", null);//$NON-NLS-1$
+                    LutShape lutShape = LutShape.getLutShape(shape);
+                    PresetWindowLevel preset =
+                        new PresetWindowLevel(name, window, level, lutShape == null ? LutShape.LINEAR : lutShape);
+                    if (keyCode != null) {
+                        preset.setKeyCode(keyCode);
+                    }
+                    List<PresetWindowLevel> presetList = presets.get(modality);
+                    if (presetList == null) {
+                        presetList = new ArrayList<>();
+                        presets.put(modality, presetList);
+                    }
+                    presetList.add(preset);
+                } catch (Exception e) {
+                    LOGGER.error("Preset {} cannot be read from xml file", name, e); //$NON-NLS-1$
+                }
+            }
+        }
     }
 }

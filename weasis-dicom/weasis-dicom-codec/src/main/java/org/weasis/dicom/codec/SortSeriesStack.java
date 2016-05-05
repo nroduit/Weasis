@@ -94,8 +94,8 @@ public final class SortSeriesStack {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
-            Date val1 =  TagD.getTagValue(m1, Tag.ContentTime, Date.class);
-            Date val2 =  TagD.getTagValue(m2, Tag.ContentTime, Date.class);
+            Date val1 = TagD.getTagValue(m1, Tag.ContentTime, Date.class);
+            Date val2 = TagD.getTagValue(m2, Tag.ContentTime, Date.class);
             if (val1 == null || val2 == null) {
                 return 0;
             }
