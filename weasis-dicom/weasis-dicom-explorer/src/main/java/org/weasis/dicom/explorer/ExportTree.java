@@ -13,6 +13,7 @@ package org.weasis.dicom.explorer;
 import java.awt.event.MouseEvent;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.JScrollPane;
@@ -75,24 +76,22 @@ public class ExportTree extends JScrollPane {
         // -- checkingMode is alreadySet inDicomExport
 
         if (checkingPaths != null && checkingPaths.length > 0) {
-            Set<TreePath> seriesPathsSet = new HashSet<>(checkingPaths.length);
             Set<TreePath> studyPathsSet = new HashSet<>();
 
             for (TreePath checkingPath : checkingPaths) {
                 if (checkingPath.getPathCount() == 4) { // 4 stands for Series Level
-                    seriesPathsSet.add(checkingPath);
                     studyPathsSet.add(checkingPath.getParentPath());
                 }
             }
 
-            if (studyPathsSet.isEmpty() == false) {
+            if (!studyPathsSet.isEmpty()) {
                 TreePath[] studyCheckingPaths = studyPathsSet.toArray(new TreePath[studyPathsSet.size()]);
                 checkboxTree.setCheckingPaths(studyCheckingPaths);
             }
 
-            if (seriesPathsSet.isEmpty() == false) {
-                TreePath[] seriesSelectionPaths = seriesPathsSet.toArray(new TreePath[seriesPathsSet.size()]);
-                checkboxTree.setSelectionPaths(seriesSelectionPaths);
+            List<TreePath> selectedPaths = checkTreeModel.getDefaultSelectedPaths();
+            if (!selectedPaths.isEmpty()) {
+                checkboxTree.setSelectionPaths(selectedPaths.toArray(new TreePath[selectedPaths.size()]));
             }
         }
 

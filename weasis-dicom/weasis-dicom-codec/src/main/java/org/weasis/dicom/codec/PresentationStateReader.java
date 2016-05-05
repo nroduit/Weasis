@@ -11,16 +11,17 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public class PresentationStateReader {
+public class PresentationStateReader implements TagReadable {
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
     private final PRSpecialElement prSpecialElement;
     private final Attributes dcmobj;
-    private final HashMap<String, Object> tags = new HashMap<String, Object>();
+    private final HashMap<String, Object> tags = new HashMap<>();
 
     public PresentationStateReader(PRSpecialElement dicom) {
         if (dicom == null) {
@@ -44,10 +45,6 @@ public class PresentationStateReader {
         return dcmobj;
     }
 
-    public HashMap<String, Object> getTags() {
-        return tags;
-    }
-
     public Object getTagValue(String key, Object defaultValue) {
         if (key == null) {
             return defaultValue;
@@ -62,7 +59,7 @@ public class PresentationStateReader {
             if (sops == null || sops.isEmpty()) {
                 return true;
             }
-            String imgSop = (String) img.getTagValue(TagW.SOPInstanceUID);
+            String imgSop = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
             if (imgSop != null) {
                 for (Attributes sop : sops) {
                     if (imgSop.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
@@ -92,8 +89,8 @@ public class PresentationStateReader {
     public void readGrayscaleSoftcopyModule(DicomImageElement img) {
         if (dcmobj != null) {
             List<PresetWindowLevel> presets =
-                PresetWindowLevel.getPresetCollection(img, prSpecialElement.getTags(), true);
-            if (presets != null && presets.size() > 0) {
+                PresetWindowLevel.getPresetCollection(img, prSpecialElement, true);
+            if (presets != null && !presets.isEmpty()) {
                 tags.put(ActionW.PRESET.cmd(), presets);
             }
         }
@@ -118,13 +115,13 @@ public class PresentationStateReader {
                     float[] spacing =
                         DicomMediaUtils.getFloatArrayFromDicomElement(item, Tag.PresentationPixelSpacing, null);
                     if (spacing != null && spacing.length == 2) {
-                        tags.put(TagW.PixelSpacing.getName(), new double[] { spacing[1], spacing[0] });
+                        tags.put(TagD.get(Tag.PixelSpacing).getKeyword(), new double[] { spacing[1], spacing[0] });
                     }
                     if (spacing == null) {
                         int[] aspects =
                             DicomMediaUtils.getIntAyrrayFromDicomElement(item, Tag.PresentationPixelAspectRatio, null);
                         if (aspects != null) {
-                            tags.put(TagW.PixelAspectRatio.getName(), aspects);
+                            tags.put(TagD.get(Tag.PixelAspectRatio).getKeyword(), aspects);
                         }
                     }
 
@@ -185,13 +182,23 @@ public class PresentationStateReader {
                 b >>= 8;
             }
         } else {
-            r = g = b = (pGray >> 8);
+            r = g = b = pGray >> 8;
         }
         r &= 0xFF;
         g &= 0xFF;
         b &= 0xFF;
         int conv = (r << 16) | (g << 8) | b | 0x1000000;
         return new Color(conv);
+    }
+
+    @Override
+    public boolean containTagKey(TagW tag) {
+        return tags.containsKey(tag);
+    }
+
+    @Override
+    public Object getTagValue(TagW tag) {
+        return tag == null ? null : tags.get(tag);
     }
 
 }

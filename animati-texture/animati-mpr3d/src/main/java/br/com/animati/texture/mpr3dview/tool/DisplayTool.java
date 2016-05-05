@@ -130,7 +130,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
                     ImageViewerPlugin<DicomImageElement> container =
                         GUIManager.getInstance().getSelectedView2dContainer();
-                    ArrayList<ViewCanvas<DicomImageElement>> views = null;
+                    List<ViewCanvas<DicomImageElement>> views = null;
                     if (container != null) {
                         if (applyAllViews.isSelected()) {
                             views = container.getImagePanels();
@@ -319,7 +319,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
             if (checked && !minDisp) {
                 ImageViewerPlugin<DicomImageElement> container = GUIManager.getInstance().getSelectedView2dContainer();
-                ArrayList<ViewCanvas<DicomImageElement>> views = null;
+                List<ViewCanvas<DicomImageElement>> views = null;
                 if (container != null) {
                     if (applyAllViews.isSelected()) {
                         views = container.getImagePanels();

@@ -98,6 +98,15 @@ public class StringUtil {
         return null;
     }
 
+    public static String splitCamelCaseString(String s) {
+        StringBuilder builder = new StringBuilder();
+        for (String w : s.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
+            builder.append(w);
+            builder.append(' ');
+        }
+        return builder.toString().trim();
+    }
+
     public static boolean hasLength(CharSequence str) {
         return str != null && str.length() > 0;
     }

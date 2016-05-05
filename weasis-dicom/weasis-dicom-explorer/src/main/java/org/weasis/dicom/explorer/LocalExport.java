@@ -71,6 +71,8 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.FileExtractor;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -348,7 +350,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
 
     private static String getinstanceFileName(MediaElement<?> img) {
-        Integer instance = (Integer) img.getTagValue(TagW.InstanceNumber);
+        Integer instance = TagD.getTagValue(img, Tag.InstanceNumber, Integer.class);
         if (instance != null) {
             String val = instance.toString();
             if (val.length() < 5) {
@@ -363,7 +365,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 return val;
             }
         }
-        return (String) img.getTagValue(TagW.SOPInstanceUID);
+        return TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
     }
 
     private void writeOther(ExplorerTask task, File exportDir, CheckTreeModel model, String format) {
@@ -510,7 +512,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
                     if (node.getUserObject() instanceof DicomImageElement) {
                         DicomImageElement img = (DicomImageElement) node.getUserObject();
-                        String iuid = (String) img.getTagValue(TagW.SOPInstanceUID);
+                        String iuid = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
                         int index = uids.indexOf(iuid);
                         if (index == -1) {
                             uids.add(iuid);
@@ -540,7 +542,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         }
                     } else if (node.getUserObject() instanceof DicomSpecialElement) {
                         DicomSpecialElement dcm = (DicomSpecialElement) node.getUserObject();
-                        String iuid = (String) dcm.getTagValue(TagW.SOPInstanceUID);
+                        String iuid = TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class);
                         String path = buildPath(dcm, keepNames, writeDicomdir, cdCompatible, node);
                         File destinationDir = new File(writeDir, path);
                         destinationDir.mkdirs();
@@ -555,7 +557,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         }
                     } else if (node.getUserObject() instanceof MediaElement<?>) {
                         MediaElement<?> dcm = (MediaElement<?>) node.getUserObject();
-                        String iuid = (String) dcm.getTagValue(TagW.SOPInstanceUID);
+                        String iuid = TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class);
                         if (!keepNames) {
                             iuid = makeFileIDs(iuid);
                         }
@@ -614,11 +616,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 buffer.append("DICOM"); //$NON-NLS-1$
                 buffer.append(File.separator);
             }
-            buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
+            buffer.append(makeFileIDs((String) img.getTagValue(TagD.getUID(Level.PATIENT))));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
+            buffer.append(makeFileIDs((String) img.getTagValue(TagD.getUID(Level.STUDY))));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
+            buffer.append(makeFileIDs((String) img.getTagValue(TagD.getUID(Level.SERIES))));
         }
         return buffer.toString();
     }
@@ -641,14 +643,14 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 }
                 buffer.append('-');
                 // Hash of UID to guaranty the unique behavior of the name.
-                buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
+                buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class)));
             }
         } else {
             buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
+            buffer.append(makeFileIDs((String) img.getTagValue(TagD.get(Tag.StudyInstanceUID))));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
+            buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class)));
         }
         return buffer.toString();
     }
@@ -758,7 +760,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         int w = thumbnail.getWidth();
         int h = thumbnail.getHeight();
 
-        String pmi = (String) image.getTagValue(TagW.PhotometricInterpretation);
+        String pmi = TagD.getTagValue(image, Tag.PhotometricInterpretation, String.class);
         BufferedImage bi = thumbnail;
         if (thumbnail.getColorModel().getColorSpace().getType() != ColorSpace.TYPE_GRAY) {
             bi = convertBI(thumbnail, BufferedImage.TYPE_BYTE_INDEXED);

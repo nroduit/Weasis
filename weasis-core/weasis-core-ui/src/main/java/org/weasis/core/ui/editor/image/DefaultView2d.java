@@ -515,9 +515,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             RenderedImage source = getPreprocessedImage(img);
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
             int width = source == null || img.getRescaleX() != img.getRescaleY()
-                ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.Columns)) : source.getWidth();
+                ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns"))) : source.getWidth();
             int height = source == null || img.getRescaleX() != img.getRescaleY()
-                ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.Rows)) : source.getHeight();
+                ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows"))) : source.getHeight();
             return new Rectangle(0, 0, width, height);
         }
         return new Rectangle(0, 0, 512, 512);
@@ -1113,7 +1113,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 continue;
             }
             if (command.equals(ActionW.WINDOW.cmd()) || command.equals(ActionW.LEVEL.cmd())) {
-                if (manager.setParamValue(WindowOp.OP_NAME, command, ((Integer) entry.getValue()).floatValue())) {
+                if (manager.setParamValue(WindowOp.OP_NAME, command, ((Integer) entry.getValue()).doubleValue())) {
                     imageLayer.updateDisplayOperations();
                 }
             } else if (command.equals(ActionW.ROTATION.cmd())) {

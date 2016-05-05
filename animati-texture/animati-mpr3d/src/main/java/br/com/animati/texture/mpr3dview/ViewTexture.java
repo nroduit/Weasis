@@ -382,7 +382,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                     ImageViewerPlugin<DicomImageElement> container =
                         GUIManager.getInstance().getSelectedView2dContainer();
                     if (container != null) {
-                        ArrayList<ViewCanvas<DicomImageElement>> imagePanels = container.getImagePanels();
+                        List<ViewCanvas<DicomImageElement>> imagePanels = container.getImagePanels();
                         for (ViewCanvas<DicomImageElement> panel : imagePanels) {
                             if (panel != GUIManager.getInstance().getSelectedViewPane()
                                 && panel instanceof ViewTexture) {

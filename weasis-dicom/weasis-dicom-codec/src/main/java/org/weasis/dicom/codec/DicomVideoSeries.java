@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
@@ -30,22 +31,24 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.dicom.codec.TagD.Level;
 
 public class DicomVideoSeries extends Series<DicomVideoElement> implements FilesExtractor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomVideoSeries.class);
-
+    
     private int width = 256;
     private int height = 256;
 
     public DicomVideoSeries(String subseriesInstanceUID) {
-        super(TagW.SubseriesInstanceUID, subseriesInstanceUID, TagW.SubseriesInstanceUID);
+        super(TagW.SubseriesInstanceUID, subseriesInstanceUID, DicomSeries.defaultTagView);
     }
 
     public DicomVideoSeries(DicomSeries dicomSeries) {
-        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID), TagW.SubseriesInstanceUID);
+        super(TagD.getUID(Level.SERIES), dicomSeries.getTagValue(TagW.SubseriesInstanceUID), DicomSeries.defaultTagView);
 
         Iterator<Entry<TagW, Object>> iter = dicomSeries.getTagEntrySetIterator();
         while (iter.hasNext()) {
@@ -60,8 +63,8 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
             DicomVideoElement dcmVideo = (DicomVideoElement) media;
             if (media.getMediaReader() instanceof DicomMediaIO) {
                 DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
-                width = (Integer) dicomImageLoader.getTagValue(TagW.Columns);
-                height = (Integer) dicomImageLoader.getTagValue(TagW.Rows);
+                width = TagD.getTagValue(dicomImageLoader, Tag.Columns, Integer.class); 
+                height = TagD.getTagValue(dicomImageLoader, Tag.Rows, Integer.class);
                 VR.Holder holder = new VR.Holder();
                 Object pixdata = dicomImageLoader.getDicomObject().getValue(Tag.PixelData, holder);
                 if (pixdata instanceof Fragments) {
@@ -105,19 +108,29 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
 
     @Override
     public String getToolTips() {
-        StringBuilder toolTips = new StringBuilder();
-        toolTips.append("<html>"); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagW.PatientName); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagW.Modality); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagW.SeriesNumber); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagW.StudyDescription); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
-        toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$
-        toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(TagW.formatDateTime((Date) getTagValue(TagW.SeriesDate)));
-        toolTips.append("<br>"); //$NON-NLS-1$
+        StringBuilder toolTips = new StringBuilder("<html>"); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagD.get(Tag.PatientName)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagD.get(Tag.Modality)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagD.get(Tag.SeriesNumber)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.date"), TagD.get(Tag.SeriesDate)); //$NON-NLS-1$
+
         toolTips.append(Messages.getString("DicomVideo.video_l")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
+        Integer speed = TagD.getTagValue(this, Tag.CineRate, Integer.class);
+        if (speed == null) {
+            speed = TagD.getTagValue(this, Tag.RecommendedDisplayFrameRate, Integer.class);
+            if (speed == null) {
+                speed = 25;
+            }
+        }
+        Integer frames = TagD.getTagValue(this, Tag.NumberOfFrames, Integer.class);
+        if (frames != null) {
+            toolTips.append(TagUtil.convertSecondsInTime(frames / speed));
+        }
+        toolTips.append("<br>"); //$NON-NLS-1$
+
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
     }

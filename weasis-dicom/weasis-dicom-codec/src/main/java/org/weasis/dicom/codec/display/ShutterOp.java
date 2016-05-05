@@ -35,6 +35,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
+import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.image.MergeImgOp;
 import org.weasis.core.api.image.op.ShutterDescriptor;
 import org.weasis.core.api.image.util.ImageFiler;
@@ -43,6 +44,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
@@ -107,7 +109,7 @@ public class ShutterOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
 
         Boolean shutter = (Boolean) params.get(P_SHOW);
@@ -136,8 +138,8 @@ public class ShutterOp extends AbstractOp {
 
             if (overlays && image != null && image.getKey() instanceof Integer) {
                 int frame = (Integer) image.getKey();
-                Integer height = (Integer) image.getTagValue(TagW.Rows);
-                Integer width = (Integer) image.getTagValue(TagW.Columns);
+                Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
+                Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
                 if (height != null && width != null) {
                     Byte[] color = getShutterColor();
 
@@ -160,7 +162,7 @@ public class ShutterOp extends AbstractOp {
             result = imgOverlay == null ? result : imgOverlay;
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
     private boolean isBlack(Byte[] color) {

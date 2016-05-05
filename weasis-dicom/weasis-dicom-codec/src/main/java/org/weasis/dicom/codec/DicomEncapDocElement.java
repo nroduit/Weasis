@@ -14,8 +14,8 @@ import java.io.File;
 
 import javax.media.jai.PlanarImage;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.TagW;
 
 public class DicomEncapDocElement extends MediaElement<PlanarImage> implements FileExtractor {
     private File document = null;
@@ -33,7 +33,7 @@ public class DicomEncapDocElement extends MediaElement<PlanarImage> implements F
 
     @Override
     public String getMimeType() {
-        String val = (String) getTagValue(TagW.MIMETypeOfEncapsulatedDocument);
+        String val = TagD.getTagValue(this, Tag.MIMETypeOfEncapsulatedDocument, String.class);
         return val == null ? super.getMimeType() : val;
     }
 

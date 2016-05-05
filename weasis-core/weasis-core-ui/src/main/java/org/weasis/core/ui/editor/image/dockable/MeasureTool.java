@@ -401,6 +401,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         updateMeasuredItems(measList);
     }
 
+    @Override
     public void updateMeasuredItems(List<MeasureItem> measList) {
         tableContainer.removeAll();
 

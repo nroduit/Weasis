@@ -423,8 +423,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         OpManager dispOp = view2d.getDisplayOpManager();
         ImageOpNode node = dispOp.getNode(WindowOp.OP_NAME);
         if (node != null) {
-            Float windowValue = (Float) node.getParam(ActionW.WINDOW.cmd());
-            Float levelValue = (Float) node.getParam(ActionW.LEVEL.cmd());
+            Double windowValue = (Double) node.getParam(ActionW.WINDOW.cmd());
+            Double levelValue = (Double) node.getParam(ActionW.LEVEL.cmd());
             if (windowValue != null && levelValue != null) {
                 boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
                 windowAction.setMinMaxValueWithoutTriggerAction(0,
@@ -457,7 +457,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         moveTroughSliceAction.setMinMaxValueWithoutTriggerAction(1,
             series.size((Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
             view2d.getFrameIndex() + 1);
-        Integer speed = (Integer) series.getTagValue(TagW.CineRate);
+        Integer speed = (Integer) series.getTagValue(TagW.get("CineRate"));
         if (speed != null) {
             moveTroughSliceAction.setSpeed(speed);
         }

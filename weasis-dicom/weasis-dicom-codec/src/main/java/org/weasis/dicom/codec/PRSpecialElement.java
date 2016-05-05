@@ -1,6 +1,6 @@
 package org.weasis.dicom.codec;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -10,10 +10,6 @@ public class PRSpecialElement extends DicomSpecialElement {
 
     public PRSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO);
-    }
-
-    public HashMap<TagW, Object> getTags() {
-        return tags;
     }
 
     @Override

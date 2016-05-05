@@ -35,6 +35,7 @@ import javax.media.jai.PlanarImage;
 import javax.swing.Icon;
 import javax.vecmath.Vector3d;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
@@ -53,9 +54,11 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -69,12 +72,12 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.RejectedKOSpecialElement;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.CornerInfoData;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
-import org.weasis.dicom.codec.display.TagView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -175,7 +178,7 @@ public class InfoLayer implements AnnotationsLayer {
         }
         OpManager disOp = view2DPane.getDisplayOpManager();
         ModalityInfoData modality;
-        Modality mod = Modality.getModality((String) view2DPane.getSeries().getTagValue(TagW.Modality));
+        Modality mod = Modality.getModality(TagD.getTagValue(view2DPane.getSeries(), Tag.Modality, String.class));
         modality = ModalityView.getModlatityInfos(mod);
 
         final Rectangle bound = view2DPane.getBounds();
@@ -199,7 +202,7 @@ public class InfoLayer implements AnnotationsLayer {
             float y = midy;
             GraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y,
                 Color.RED);
-            String tsuid = (String) image.getTagValue(TagW.TransferSyntaxUID);
+            String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
             if (StringUtil.hasText(tsuid)) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid; //$NON-NLS-1$
                 y += fontHeight;
@@ -237,8 +240,8 @@ public class InfoLayer implements AnnotationsLayer {
              * Image Management Devices, July 27, 2000).
              */
             drawY -= fontHeight;
-            if ("01".equals(dcm.getTagValue(TagW.LossyImageCompression))) { //$NON-NLS-1$
-                double[] rates = (double[]) dcm.getTagValue(TagW.LossyImageCompressionRatio);
+            if ("01".equals(TagD.getTagValue(dcm, Tag.LossyImageCompression))) { //$NON-NLS-1$
+                double[] rates = TagD.getTagValue(dcm, Tag.LossyImageCompressionRatio, double[].class);
                 StringBuilder buf =
                     new StringBuilder(Messages.getString("InfoLayer.lossy") + StringUtil.COLON_AND_SPACE);//$NON-NLS-1$
                 if (rates != null && rates.length > 0) {
@@ -252,9 +255,9 @@ public class InfoLayer implements AnnotationsLayer {
                         buf.append(']');
                     }
                 } else {
-                    String val = (String) dcm.getTagValue(TagW.DerivationDescription);
+                    String val = TagD.getTagValue(dcm, Tag.DerivationDescription, String.class);
                     if (val != null) {
-                        buf.append(val);
+                        buf.append(StringUtil.getTruncatedString(val, 25, Suffix.THREE_PTS));
                     }
                 }
 
@@ -264,7 +267,8 @@ public class InfoLayer implements AnnotationsLayer {
 
             Object key = dcm.getKey();
             RejectedKOSpecialElement koElement = DicomModel.getRejectionKoSpecialElement(view2DPane.getSeries(),
-                (String) dcm.getTagValue(TagW.SOPInstanceUID), key instanceof Integer ? (Integer) key + 1 : null);
+                TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class),
+                key instanceof Integer ? (Integer) key + 1 : null);
 
             if (koElement != null) {
                 float y = midy;
@@ -274,9 +278,10 @@ public class InfoLayer implements AnnotationsLayer {
             }
         }
 
-        Object prReader = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
-        HashMap<TagW, Object> prTags = (prReader instanceof PresentationStateReader)
-            ? ((PresentationStateReader) prReader).getDicom().getTags() : null;
+        Object val = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
+        PresentationStateReader prReader =
+            (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
+
         if (getDisplayPreferences(PIXEL) && hideMin) {
             StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel")); //$NON-NLS-1$
             sb.append(StringUtil.COLON_AND_SPACE);
@@ -306,10 +311,10 @@ public class InfoLayer implements AnnotationsLayer {
                 if (dcm != null) {
                     boolean pixelPadding =
                         (Boolean) disOp.getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd());
-                    float minModLUT = image.getMinValue(prTags, pixelPadding);
-                    float maxModLUT = image.getMaxValue(prTags, pixelPadding);
-                    float minp = level.floatValue() - window.floatValue() / 2.0f;
-                    float maxp = level.floatValue() + window.floatValue() / 2.0f;
+                    double minModLUT = image.getMinValue(prReader, pixelPadding);
+                    double maxModLUT = image.getMaxValue(prReader, pixelPadding);
+                    double minp = level.doubleValue() - window.doubleValue() / 2.0;
+                    double maxp = level.doubleValue() + window.doubleValue() / 2.0;
                     if (minp > maxModLUT || maxp < minModLUT) {
                         outside = true;
                         sb.append(" - "); //$NON-NLS-1$
@@ -341,7 +346,7 @@ public class InfoLayer implements AnnotationsLayer {
         if (getDisplayPreferences(FRAME) && hideMin) {
             String instance = StringUtil.COLON_AND_SPACE;
             if (dcm != null) {
-                Integer inst = (Integer) dcm.getTagValue(TagW.InstanceNumber);
+                Integer inst = TagD.getTagValue(dcm, Tag.InstanceNumber, Integer.class);
                 if (inst != null) {
                     instance += "[" + inst + "] "; //$NON-NLS-1$ //$NON-NLS-2$
                 }
@@ -374,8 +379,8 @@ public class InfoLayer implements AnnotationsLayer {
             TagView[] infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
-                    if (hideMin || infos[j].containsTag(TagW.PatientName)) {
-                        Object value = null;
+                    if (hideMin || infos[j].containsTag(TagD.get(Tag.PatientName))) {
+                        Object value;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
                                 value = getTagValue(tag, patient, study, series, dcm);
@@ -399,8 +404,8 @@ public class InfoLayer implements AnnotationsLayer {
             infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
-                    if (hideMin || infos[j].containsTag(TagW.SeriesDate)) {
-                        Object value = null;
+                    if (hideMin || infos[j].containsTag(TagD.get(Tag.SeriesDate))) {
+                        Object value;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
                                 value = getTagValue(tag, patient, study, series, dcm);
@@ -408,7 +413,7 @@ public class InfoLayer implements AnnotationsLayer {
                                     String str = tag.getFormattedText(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         GraphicLabel.paintFontOutline(g2, str,
-                                            bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
+                                            bound.width - g2.getFontMetrics().stringWidth(str) - (float) border, drawY);
                                         drawY += fontHeight;
                                     }
                                     break;
@@ -426,7 +431,7 @@ public class InfoLayer implements AnnotationsLayer {
                 infos = corner.getInfos();
                 for (int j = infos.length - 1; j >= 0; j--) {
                     if (infos[j] != null) {
-                        Object value = null;
+                        Object value;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
                                 value = getTagValue(tag, patient, study, series, dcm);
@@ -452,15 +457,15 @@ public class InfoLayer implements AnnotationsLayer {
             // String str = synchLink != null && synchLink ? "linked" : "unlinked"; //$NON-NLS-1$ //$NON-NLS-2$
             // paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER, drawY);
 
-            double[] v = (double[]) dcm.getTagValue(TagW.ImageOrientationPatient);
-            Integer rows = (Integer) dcm.getTagValue(TagW.Rows);
-            Integer columns = (Integer) dcm.getTagValue(TagW.Columns);
+            double[] v = TagD.getTagValue(dcm, Tag.ImageOrientationPatient, double[].class);
+            Integer columns = TagD.getTagValue(dcm, Tag.Columns, Integer.class);
+            Integer rows = TagD.getTagValue(dcm, Tag.Rows, Integer.class);
             StringBuilder orientation = new StringBuilder(mod.name());
             if (rows != null && columns != null) {
                 orientation.append(" (");//$NON-NLS-1$
-                orientation.append(dcm.getTagValue(TagW.Columns));
+                orientation.append(columns);
                 orientation.append("x");//$NON-NLS-1$
-                orientation.append(dcm.getTagValue(TagW.Rows));
+                orientation.append(rows);
                 orientation.append(")");//$NON-NLS-1$
 
             }
@@ -503,7 +508,7 @@ public class InfoLayer implements AnnotationsLayer {
                 rowTop = ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vc.x, vc.y, vc.z);
 
             } else {
-                String[] po = (String[]) dcm.getTagValue(TagW.PatientOrientation);
+                String[] po = TagD.getTagValue(dcm, Tag.PatientOrientation, String[].class);
                 Integer rotationAngle = (Integer) disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
                 if (po != null && po.length == 2 && (rotationAngle == null || rotationAngle == 0)) {
                     // Do not display if there is a transformation
@@ -533,7 +538,7 @@ public class InfoLayer implements AnnotationsLayer {
                 Font oldFont = g2.getFont();
                 Font bigFont = oldFont.deriveFont(oldFont.getSize() + 5.0f);
                 g2.setFont(bigFont);
-                Hashtable<TextAttribute, Object> map = new Hashtable<TextAttribute, Object>(1);
+                Hashtable<TextAttribute, Object> map = new Hashtable<>(1);
                 map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
                 String fistLetter = rowTop.substring(0, 1);
                 GraphicLabel.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
@@ -665,26 +670,32 @@ public class InfoLayer implements AnnotationsLayer {
             g2.setPaint(Color.white);
             Line2D.Float line = new Line2D.Float(x - 10f, y - 1f, x - 1f, y - 1f);
             g2.draw(line);
-            float stepWindow = (Float) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) / separation;
-            float firstlevel = (Float) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()) - stepWindow * 2f;
-            String str = "" + (int) firstlevel; //$NON-NLS-1$
-            GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f, y + midfontHeight);
-            for (int i = 1; i < separation; i++) {
-                float posY = y + i * step;
-                line.setLine(x - 5f, posY, x - 1f, posY);
-                g2.draw(line);
-                str = "" + (int) (firstlevel + i * stepWindow); //$NON-NLS-1$
-                GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
-                    posY + midfontHeight);
-            }
 
-            line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
-            g2.draw(line);
-            str = "" + (int) (firstlevel + 4 * stepWindow); //$NON-NLS-1$
-            GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
-                y + length + midfontHeight);
-            rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
-            g2.draw(rect);
+            Double ww = (Double) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
+            Double wl = (Double) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
+            if (ww != null && wl != null) {
+                int stepWindow = (int) (ww / separation);
+                int firstlevel = (int) (wl - stepWindow * 2.0);
+                String str = Integer.toString(firstlevel); // $NON-NLS-1$
+                GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f,
+                    y + midfontHeight);
+                for (int i = 1; i < separation; i++) {
+                    float posY = y + i * step;
+                    line.setLine(x - 5f, posY, x - 1f, posY);
+                    g2.draw(line);
+                    str = Integer.toString(firstlevel + i * stepWindow); // $NON-NLS-1$
+                    GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
+                        posY + midfontHeight);
+                }
+
+                line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
+                g2.draw(line);
+                str = Integer.toString(firstlevel + 4 * stepWindow); // $NON-NLS-1$
+                GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
+                    y + length + midfontHeight);
+                rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
+                g2.draw(rect);
+            }
 
             for (int k = 0; k < length; k++) {
                 g2.setPaint(new Color(table[0][k] & 0xff, table[1][k] & 0xff, table[2][k] & 0xff));
@@ -710,32 +721,33 @@ public class InfoLayer implements AnnotationsLayer {
         final int maxOutputValue = 255;
 
         OpManager dispOp = view2DPane.getDisplayOpManager();
-        ImageOpNode wlOp = dispOp.getNode(ImageOpNode.NAME);
+        ImageOpNode wlOp = dispOp.getNode(ImageOpNode.Param.NAME);
         if (wlOp == null) {
             return;
         }
 
         boolean pixelPadding = (Boolean) wlOp.getParam(ActionW.IMAGE_PIX_PADDING.cmd());
 
-        final float window = (Float) wlOp.getParam(ActionW.WINDOW.cmd());
-        final float level = (Float) wlOp.getParam(ActionW.LEVEL.cmd());
+        final double window = (Double) wlOp.getParam(ActionW.WINDOW.cmd());
+        final double level = (Double) wlOp.getParam(ActionW.LEVEL.cmd());
 
-        final float lowLevel = Math.round(level - window / 2);
-        final float highLevel = Math.round(level + window / 2);
+        final double lowLevel = Math.round(level - window / 2);
+        final double highLevel = Math.round(level + window / 2);
 
-        Object prReader = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
-        HashMap<TagW, Object> prTags = (prReader instanceof PresentationStateReader)
-            ? ((PresentationStateReader) prReader).getDicom().getTags() : null;
-        int lowInputValue = (int) (image.getMinValue(prTags, pixelPadding) < lowLevel ? lowLevel
-            : image.getMinValue(prTags, pixelPadding));
-        int highInputValue = (int) (image.getMaxValue(prTags, pixelPadding) > highLevel ? highLevel
-            : image.getMaxValue(prTags, pixelPadding));
+        Object val = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
+        PresentationStateReader prReader =
+            (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
+
+        int lowInputValue = (int) (image.getMinValue(prReader, pixelPadding) < lowLevel ? lowLevel
+            : image.getMinValue(prReader, pixelPadding));
+        int highInputValue = (int) (image.getMaxValue(prReader, pixelPadding) > highLevel ? highLevel
+            : image.getMaxValue(prReader, pixelPadding));
 
         final boolean inverseLut = (Boolean) wlOp.getParam(ActionW.INVERT_LUT.cmd());
 
         LutShape lutShape = (LutShape) wlOp.getParam(ActionW.LUT_SHAPE.cmd());
 
-        LookupTableJAI lookup = image.getVOILookup(prTags, window, level, null, null, lutShape, true, pixelPadding);
+        LookupTableJAI lookup = image.getVOILookup(prReader, window, level, null, null, lutShape, true, pixelPadding);
         // Note : when fillLutOutside argument is true lookupTable returned is full range allocated
 
         // System.out.println(lutShape.toString());
@@ -847,9 +859,9 @@ public class InfoLayer implements AnnotationsLayer {
         xAxisMaxOutValueLine.moveTo(xAxisCoordinateSystemMinValue, yAxisCoordinateSystemRange);
         xAxisMaxOutValueLine.lineTo(xAxisCoordinateSystemMaxValue, yAxisCoordinateSystemRange);
 
-        int xLowLevel = Math.round(xAxisRescaleRatio * lowLevel);
-        int xHighLevel = Math.round(xAxisRescaleRatio * highLevel);
-        int xLevel = Math.round(xAxisRescaleRatio * level);
+        int xLowLevel = (int) Math.round(xAxisRescaleRatio * lowLevel);
+        int xHighLevel = (int) Math.round(xAxisRescaleRatio * highLevel);
+        int xLevel = (int) Math.round(xAxisRescaleRatio * level);
 
         final Path2D yAxisOnLowLevelLine = new Path2D.Float();
         if (lowLevel >= lowInputValue) {

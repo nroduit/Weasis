@@ -31,8 +31,9 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
@@ -99,7 +100,7 @@ public class DicomDirLoader {
             });
         }
         for (LoadSeries loadSeries : seriesList) {
-            String modality = (String) loadSeries.getDicomSeries().getTagValue(TagW.Modality);
+            String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
             boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
             if (!ps) {
                 loadSeries.startDownloadImageReference(wadoParameters);
@@ -111,13 +112,14 @@ public class DicomDirLoader {
     private boolean parsePatient(Attributes dcmPatient, DicomDirReader reader) {
         boolean newPatient = false;
         try {
-            String name = DicomMediaUtils.buildPatientName(dcmPatient.getString(Tag.PatientName));
-            String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID),
-                dcmPatient.getString(Tag.IssuerOfPatientID), name, null);
+            String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(
+                dcmPatient.getString(Tag.PatientID, TagW.NO_VALUE), dcmPatient.getString(Tag.IssuerOfPatientID),
+                dcmPatient.getString(Tag.PatientName, TagW.NO_VALUE), null);
 
             MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
             if (patient == null) {
-                patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
+                patient = new MediaSeriesGroupNode(TagD.getUID(Level.PATIENT), patientPseudoUID,
+                    DicomModel.patient.getTagView());
                 DicomMediaUtils.writeMetaData(patient, dcmPatient);
                 dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
                 newPatient = true;
@@ -133,10 +135,10 @@ public class DicomDirLoader {
         Attributes dcmStudy = findFirstChildRecord(dcmPatient, reader);
         while (dcmStudy != null) {
             if (RecordType.STUDY.name().equals(dcmStudy.getString(Tag.DirectoryRecordType))) {
-                String studyUID = dcmStudy.getString(Tag.StudyInstanceUID, DicomMediaIO.NO_VALUE);
+                String studyUID = (String) TagD.getUID(Level.STUDY).getValue(dcmStudy);
                 MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
                 if (study == null) {
-                    study = new MediaSeriesGroupNode(TagW.StudyInstanceUID, studyUID, TagW.StudyDate);
+                    study = new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
                     DicomMediaUtils.writeMetaData(study, dcmStudy);
                     dicomModel.addHierarchyNode(patient, study);
                 }
@@ -151,7 +153,7 @@ public class DicomDirLoader {
         Attributes series = findFirstChildRecord(dcmStudy, reader);
         while (series != null) {
             if (RecordType.SERIES.name().equals(series.getString(Tag.DirectoryRecordType))) {
-                String seriesUID = series.getString(Tag.SeriesInstanceUID, DicomMediaIO.NO_VALUE);
+                String seriesUID = series.getString(Tag.SeriesInstanceUID, TagW.NO_VALUE);
                 Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
                 if (dicomSeries == null) {
                     dicomSeries = new DicomSeries(seriesUID);

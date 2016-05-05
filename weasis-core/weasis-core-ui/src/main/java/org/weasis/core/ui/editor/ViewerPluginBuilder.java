@@ -186,7 +186,7 @@ public class ViewerPluginBuilder {
                 }
             }
             if (systemReader) {
-                return new DefaultMimeIO<File>(file.toURI(), null);
+                return new DefaultMimeIO<>(file.toURI(), null);
             }
         }
         return null;
@@ -217,12 +217,8 @@ public class ViewerPluginBuilder {
         String gUID = groupUID == null ? UUID.randomUUID().toString() : groupUID;
         MediaSeriesGroup group1 = DefaultDataModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, gUID);
         if (group1 == null) {
-            if (groupName == null || groupValue == null) {
-                group1 = new MediaSeriesGroupNode(TagW.Group, gUID);
-            } else {
-                group1 = new MediaSeriesGroupNode(TagW.Group, gUID, groupName);
-                group1.setTag(groupName, groupValue);
-            }
+            group1 = new MediaSeriesGroupNode(TagW.Group, gUID, AbstractFileModel.group.getTagView());
+            group1.setTagNoNull(groupName, groupValue);
             DefaultDataModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, group1);
         }
 
@@ -239,23 +235,24 @@ public class ViewerPluginBuilder {
                 DefaultDataModel.addHierarchyNode(group1, series);
             } else {
                 // Test if SOPInstanceUID already exists
-                if (series instanceof Series && ((Series<?>) series).hasMediaContains(TagW.SOPInstanceUID,
-                    reader.getTagValue(TagW.SOPInstanceUID))) {
+                TagW sopTag = TagW.get("SOPInstanceUID");
+                if (series instanceof Series
+                    && ((Series<?>) series).hasMediaContains(sopTag, reader.getTagValue(sopTag))) {
                     return series;
                 }
-                if (medias != null) {
-                    for (MediaElement<?> media : medias) {
-                        series.addMedia(media);
-                    }
-                }
-            }
-            if (medias != null) {
+
                 for (MediaElement<?> media : medias) {
-                    if (media instanceof ImageElement) {
-                        XmlSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
-                    }
+                    series.addMedia(media);
+                }
+
+            }
+
+            for (MediaElement<?> media : medias) {
+                if (media instanceof ImageElement) {
+                    XmlSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
                 }
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

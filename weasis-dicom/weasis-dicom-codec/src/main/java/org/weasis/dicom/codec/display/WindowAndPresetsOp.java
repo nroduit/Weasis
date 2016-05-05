@@ -11,6 +11,7 @@
 package org.weasis.dicom.codec.display;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -18,7 +19,6 @@ import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -80,14 +80,13 @@ public class WindowAndPresetsOp extends WindowOp {
     private void setPreset(PresetWindowLevel preset, ImageElement img, boolean pixelPadding) {
         boolean p = preset != null;
         PRSpecialElement pr = (PRSpecialElement) getParam(P_PR_ELEMENT);
-        HashMap<TagW, Object> prTags = pr == null ? null : pr.getTags();
         setParam(ActionW.PRESET.cmd(), preset);
         setParam(ActionW.DEFAULT_PRESET.cmd(), true);
 
         setParam(ActionW.WINDOW.cmd(), p ? preset.getWindow() : img.getDefaultWindow(pixelPadding));
         setParam(ActionW.LEVEL.cmd(), p ? preset.getLevel() : img.getDefaultLevel(pixelPadding));
-        setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(prTags, pixelPadding));
-        setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(prTags, pixelPadding));
+        setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pr, pixelPadding));
+        setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(pr, pixelPadding));
         setParam(ActionW.LUT_SHAPE.cmd(), p ? preset.getLutShape() : img.getDefaultShape(pixelPadding));
         // node.setParam(ActionW.IMAGE_PIX_PADDING.cmd(), pixelPadding);
         // node.setParam(ActionW.INVERT_LUT.cmd(), false);

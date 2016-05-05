@@ -26,7 +26,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -45,6 +44,7 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.GraphicUtil;
@@ -255,8 +255,9 @@ public class PRManager {
         DicomImageElement img) {
         if (view != null && series != null && img != null) {
             Object key = img.getKey();
-            List<PRSpecialElement> prList = DicomModel.getPrSpecialElements(series,
-                (String) img.getTagValue(TagW.SOPInstanceUID), key instanceof Integer ? (Integer) key + 1 : null);
+            List<PRSpecialElement> prList =
+                DicomModel.getPrSpecialElements(series, TagD.getTagValue(img, Tag.SOPInstanceUID, String.class),
+                    key instanceof Integer ? (Integer) key + 1 : null);
             if (prList != null && prList.size() > 0) {
                 if (prList.size() > 0) {
 

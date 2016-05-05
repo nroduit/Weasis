@@ -18,7 +18,6 @@ import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -33,6 +32,7 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
+import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
@@ -104,6 +104,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.viewer2d.mip.MipView;
@@ -305,8 +306,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         }
                     } else {
                         if (selectedView2dContainer != null) {
-                            final ArrayList<ViewCanvas<DicomImageElement>> panes =
-                                selectedView2dContainer.getImagePanels();
+                            final List<ViewCanvas<DicomImageElement>> panes = selectedView2dContainer.getImagePanels();
                             for (ViewCanvas<DicomImageElement> p : panes) {
                                 Boolean cutlines = (Boolean) p.getActionValue(ActionW.SYNCH_CROSSLINE.cmd());
                                 if (cutlines != null && cutlines) {
@@ -350,24 +350,26 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         }
                     }
 
-                    Float windowValue = newPreset == null ? windowAction.getValue() : newPreset.getWindow();
-                    Float levelValue = newPreset == null ? levelAction.getValue() : newPreset.getLevel();
+                    Double windowValue = (double) (newPreset == null ? windowAction.getValue() : newPreset.getWindow());
+                    Double levelValue = (double) (newPreset == null ? levelAction.getValue() : newPreset.getLevel());
                     LutShape lutShapeItem =
                         newPreset == null ? (LutShape) lutShapeAction.getSelectedItem() : newPreset.getLutShape();
 
-                    Float levelMin =
-                        (Float) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MIN.cmd());
-                    Float levelMax =
-                        (Float) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MAX.cmd());
-                    Object prReader = view2d.getActionValue(ActionW.PR_STATE.cmd());
-                    HashMap<TagW, Object> prTags = (prReader instanceof PresentationStateReader)
-                        ? ((PresentationStateReader) prReader).getDicom().getTags() : null;
+                    Double levelMin =
+                        (Double) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MIN.cmd());
+                    Double levelMax =
+                        (Double) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MAX.cmd());
+
+                    Object val = view2d.getActionValue(ActionW.PR_STATE.cmd());
+                    PresentationStateReader prReader =
+                        (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
+
                     if (levelMin == null || levelMax == null) {
-                        levelMin = Math.min(levelValue - windowValue / 2.0f, image.getMinValue(prTags, pixelPadding));
-                        levelMax = Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(prTags, pixelPadding));
+                        levelMin = Math.min(levelValue - windowValue / 2.0, image.getMinValue(prReader, pixelPadding));
+                        levelMax = Math.max(levelValue + windowValue / 2.0, image.getMaxValue(prReader, pixelPadding));
                     } else {
-                        levelMin = Math.min(levelMin, image.getMinValue(prTags, pixelPadding));
-                        levelMax = Math.max(levelMax, image.getMaxValue(prTags, pixelPadding));
+                        levelMin = Math.min(levelMin, image.getMinValue(prReader, pixelPadding));
+                        levelMax = Math.max(levelMax, image.getMaxValue(prReader, pixelPadding));
                     }
 
                     // FIX : setting actionInView here without firing a propertyChange avoid another call to
@@ -654,7 +656,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
                 container.updateTileOffset();
                 if ((selectedView.getSeries() instanceof DicomSeries) == false) {
-                    ArrayList<ViewCanvas<DicomImageElement>> panes = selectedView2dContainer.getImagePanels(false);
+                    List<ViewCanvas<DicomImageElement>> panes = selectedView2dContainer.getImagePanels(false);
                     if (panes.size() > 0) {
                         selectedView2dContainer.setSelectedImagePane(panes.get(0));
                         return;
@@ -951,7 +953,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         moveTroughSliceAction.setMinMaxValueWithoutTriggerAction(1,
             series.size((Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
             view2d.getFrameIndex() + 1);
-        Integer speed = (Integer) series.getTagValue(TagW.CineRate);
+        Integer speed = TagD.getTagValue(series, Tag.CineRate, Integer.class);
+        if (speed == null) {
+            speed = TagD.getTagValue(series, Tag.RecommendedDisplayFrameRate, Integer.class);
+        }
         if (speed != null) {
             moveTroughSliceAction.setSpeed(speed);
         }
@@ -1007,13 +1012,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (node != null) {
             PresetWindowLevel preset = (PresetWindowLevel) node.getParam(ActionW.PRESET.cmd());
             boolean defaultPreset = JMVUtils.getNULLtoTrue(node.getParam(ActionW.DEFAULT_PRESET.cmd()));
-            Float windowValue = (Float) node.getParam(ActionW.WINDOW.cmd());
-            Float levelValue = (Float) node.getParam(ActionW.LEVEL.cmd());
+            Double windowValue = (Double) node.getParam(ActionW.WINDOW.cmd());
+            Double levelValue = (Double) node.getParam(ActionW.LEVEL.cmd());
             LutShape lutShapeItem = (LutShape) node.getParam(ActionW.LUT_SHAPE.cmd());
             boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-            Object prReader = view2d.getActionValue(ActionW.PR_STATE.cmd());
-            HashMap<TagW, Object> prTags = (prReader instanceof PresentationStateReader)
-                ? ((PresentationStateReader) prReader).getDicom().getTags() : null;
+            Object val = view2d.getActionValue(ActionW.PR_STATE.cmd());
+            PresentationStateReader prReader =
+                (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
 
             defaultPresetAction.setSelectedWithoutTriggerAction(defaultPreset);
 
@@ -1021,19 +1026,19 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             int minLevel;
             int maxLevel;
             if (windowValue == null) {
-                windowValue = (float) windowAction.getValue();
+                windowValue = (double) windowAction.getValue();
             }
             if (levelValue == null) {
-                levelValue = (float) levelAction.getValue();
+                levelValue = (double) levelAction.getValue();
             }
-            Float levelMin = (Float) node.getParam(ActionW.LEVEL_MIN.cmd());
-            Float levelMax = (Float) node.getParam(ActionW.LEVEL_MAX.cmd());
+            Double levelMin = (Double) node.getParam(ActionW.LEVEL_MIN.cmd());
+            Double levelMax = (Double) node.getParam(ActionW.LEVEL_MAX.cmd());
             if (levelMin == null || levelMax == null) {
-                minLevel = (int) Math.min(levelValue - windowValue / 2.0f, image.getMinValue(prTags, pixelPadding));
-                maxLevel = (int) Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(prTags, pixelPadding));
+                minLevel = (int) Math.min(levelValue - windowValue / 2.0, image.getMinValue(prReader, pixelPadding));
+                maxLevel = (int) Math.max(levelValue + windowValue / 2.0, image.getMaxValue(prReader, pixelPadding));
             } else {
-                minLevel = (int) Math.min(levelMin, image.getMinValue(prTags, pixelPadding));
-                maxLevel = (int) Math.max(levelMax, image.getMaxValue(prTags, pixelPadding));
+                minLevel = (int) Math.min(levelMin, image.getMinValue(prReader, pixelPadding));
+                maxLevel = (int) Math.max(levelMax, image.getMaxValue(prReader, pixelPadding));
             }
             window = (int) Math.max(windowValue, maxLevel - minLevel);
 
@@ -1055,7 +1060,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             if (prReader != null && lutShapeList != null && lutShapeItem != null
                 && !lutShapeList.contains(lutShapeItem)) {
                 // Make a copy of the image list
-                ArrayList<LutShape> newList = new ArrayList<LutShape>(lutShapeList.size() + 1);
+                ArrayList<LutShape> newList = new ArrayList<>(lutShapeList.size() + 1);
                 newList.add(lutShapeItem);
                 newList.addAll(lutShapeList);
                 lutShapeList = newList;
@@ -1098,7 +1103,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 // } else {
                 moveTroughSliceAction.enableAction(true);
                 // }
-                final ArrayList<ViewCanvas<DicomImageElement>> panes = viewerPlugin.getImagePanels();
+                final List<ViewCanvas<DicomImageElement>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
@@ -1110,10 +1115,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             layer.deleteAllGraphic();
                         }
                         MediaSeries<DicomImageElement> s = pane.getSeries();
-                        String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
+                        String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
                         boolean specialView = pane instanceof MipView;
                         if (s != null && fruid != null && !specialView) {
-                            if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
+                            if (fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
                                 if (!ImageOrientation.hasSameOrientation(series, s)) {
                                     pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
                                     propertySupport.addPropertyChangeListener(ActionW.SCROLL_SERIES.cmd(), pane);
@@ -1132,7 +1137,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 } else {
                     // TODO if Pan is activated than rotation is required
                     if (Mode.Stack.equals(synch.getMode())) {
-                        String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
+                        String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
                         DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
                         double[] val = img == null ? null : (double[]) img.getTagValue(TagW.SlicePosition);
 
@@ -1145,7 +1150,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             MediaSeries<DicomImageElement> s = pane.getSeries();
                             boolean specialView = pane instanceof MipView;
                             if (s != null && fruid != null && val != null && !specialView) {
-                                boolean synchByDefault = fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID));
+                                boolean synchByDefault = fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID));
                                 oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
                                 if (synchByDefault) {
                                     if (ImageOrientation.hasSameOrientation(series, s)) {

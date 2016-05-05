@@ -6,24 +6,16 @@
 package br.com.animati.texture.codec;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import javax.swing.SwingWorker;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.image.LutShape;
-import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 
@@ -57,79 +49,9 @@ public final class StaticHelpers {
 
     public static Map<String, List<PresetWindowLevel>> getPresetListByModality() {
         if (presetsByModality == null) {
-            presetsByModality = getPresetListFromFile();
+            presetsByModality = PresetWindowLevel.getPresetListByModality();
         }
         return presetsByModality;
-    }
-
-    private static Map<String, List<PresetWindowLevel>> getPresetListFromFile() {
-
-        Map<String, List<PresetWindowLevel>> presetListByModality = new TreeMap<String, List<PresetWindowLevel>>();
-
-        XMLStreamReader xmler = null;
-        InputStream stream = null;
-        try {
-            XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            stream = new FileInputStream(ResourceUtil.getResource("presets.xml"));
-            xmler = xmlif.createXMLStreamReader(stream);
-
-            int eventType;
-            while (xmler.hasNext()) {
-                eventType = xmler.next();
-                switch (eventType) {
-                    case XMLStreamConstants.START_ELEMENT:
-                        String key = xmler.getName().getLocalPart();
-                        if ("presets".equals(key)) {
-                            while (xmler.hasNext()) {
-                                eventType = xmler.next();
-                                switch (eventType) {
-                                    case XMLStreamConstants.START_ELEMENT:
-                                        key = xmler.getName().getLocalPart();
-                                        if ("preset".equals(key) && xmler.getAttributeCount() >= 4) {
-                                            String name = xmler.getAttributeValue(null, "name");
-                                            try {
-                                                String modality = xmler.getAttributeValue(null, "modality");
-                                                float window =
-                                                    Float.parseFloat(xmler.getAttributeValue(null, "window"));
-                                                float level = Float.parseFloat(xmler.getAttributeValue(null, "level"));
-                                                String shape = xmler.getAttributeValue(null, "shape");
-                                                String keyCode = xmler.getAttributeValue(null, "key");
-                                                LutShape lutShape = LutShape.getLutShape(shape);
-                                                PresetWindowLevel preset = new PresetWindowLevel(name, window, level,
-                                                    lutShape == null ? LutShape.LINEAR : lutShape);
-                                                if (keyCode != null) {
-                                                    preset.setKeyCode(Integer.parseInt(keyCode));
-                                                }
-                                                List<PresetWindowLevel> presetList = presetListByModality.get(modality);
-                                                if (presetList == null) {
-                                                    presetListByModality.put(modality,
-                                                        presetList = new ArrayList<PresetWindowLevel>());
-                                                }
-                                                presetList.add(preset);
-                                            } catch (Exception e) {
-                                                e.printStackTrace();
-                                            }
-                                        }
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        catch (Exception e) {
-            LOGGER.error("Cannot read presets file! " + e.getMessage());
-        } finally {
-            FileUtil.safeClose(xmler);
-            FileUtil.safeClose(stream);
-        }
-        return presetListByModality;
     }
 
     public static List<ColorMask> buildColorMaskList() {

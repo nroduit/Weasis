@@ -18,13 +18,16 @@ import java.util.Map;
 
 import javax.swing.SwingWorker;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 
@@ -109,11 +112,11 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         // HU = Hounsfield Units (CT)
         // US = Unspecified
         // Other values are permitted, but are not defined by the DICOM Standard.
-        String modality = (String) getTagValue(TagW.Modality, 0);
-        pixelValueUnit = (String) getTagValue(TagW.RescaleType, 0);
+        String modality = TagD.getTagValue(this, Tag.Modality, String.class);
+        pixelValueUnit = TagD.getTagValue(this, Tag.RescaleType, String.class);
         if (pixelValueUnit == null) {
             // For some other modalities like PET
-            pixelValueUnit = (String) getTagValue(TagW.Units, 0);
+            pixelValueUnit = TagD.getTagValue(this, Tag.Units, String.class);
         }
         if (pixelValueUnit == null && "CT".equals(modality)) {
             pixelValueUnit = "HU";
@@ -288,20 +291,19 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     }
 
     private List<PresetWindowLevel> buildPresetsList(boolean pixelPadding) {
-        ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
+        ArrayList<PresetWindowLevel> presetList = new ArrayList<>();
 
-        Float[] window = (Float[]) getTagValue(TagW.WindowWidth);
-        Float[] level = (Float[]) getTagValue(TagW.WindowCenter);
+        double[] levelList = TagD.getTagValue(this, Tag.WindowCenter, double[].class);
+        double[] windowList = TagD.getTagValue(this, Tag.WindowWidth, double[].class);
         // optional attributes
-        String[] wlExplanationList = (String[]) getTagValue(TagW.WindowCenterWidthExplanation, 0);
-
+        String[] wlExplanationList = TagD.getTagValue(this, Tag.WindowCenterWidthExplanation, String[].class);
         // Implicitly defined as default function in DICOM standard
         // TODO: expect other cases.
         LutShape defaultLutShape = LutShape.LINEAR;
 
         // Adds Dicom presets
-        if (level != null && window != null) {
-            int wlDefaultCount = (level.length == window.length) ? level.length : 0;
+        if (levelList != null && windowList != null) {
+            int wlDefaultCount = (levelList.length == windowList.length) ? levelList.length : 0;
             String defaultExp = "Default";
 
             int presCount = 1;
@@ -309,16 +311,12 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
                 String name = defaultExp + " " + presCount;
 
                 if (wlExplanationList != null && i < wlExplanationList.length) {
-                    if (wlExplanationList[i] != null && !wlExplanationList[i].equals("")) {
+                    if (StringUtil.hasText(wlExplanationList[i])) {
                         name = wlExplanationList[i]; // optional attribute
                     }
-                }
-
-                if (window[i] == null || level[i] == null) {
-                    textureLogInfo.writeText("Could not load preset: " + name);
                 } else {
                     PresetWindowLevel preset =
-                        new PresetWindowLevel(name + " [Dicom]", window[i], level[i], defaultLutShape);
+                        new PresetWindowLevel(name + " [Dicom]", windowList[i], levelList[i], defaultLutShape);
                     if (presCount == 1) {
                         preset.setKeyCode(KeyEvent.VK_1);
                     } else if (presCount == 2) {
@@ -339,7 +337,8 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
 
         // Arbitrary Presets by Modality
         // TODO: need to exclude 8-bits images from here.
-        List<PresetWindowLevel> modPresets = StaticHelpers.getPresetListByModality().get(getTagValue(TagW.Modality));
+        List<PresetWindowLevel> modPresets =
+            StaticHelpers.getPresetListByModality().get(TagD.getTagValue(this, Tag.Modality));
         if (modPresets != null) {
             presetList.addAll(modPresets);
         }
@@ -347,14 +346,14 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         return presetList;
     }
 
-    public float getFullDynamicWidth(boolean pixelPadding) {
+    public double getFullDynamicWidth(boolean pixelPadding) {
         // TODO: needs to change if we use pixelPadding optional.
         return windowingMaxInValue - windowingMinInValue;
     }
 
-    public float getFullDynamicCenter(boolean pixelPadding) {
+    public double getFullDynamicCenter(boolean pixelPadding) {
         // TODO: needs to change if we use pixelPadding optional.
-        return windowingMinInValue + (windowingMaxInValue - windowingMinInValue) / 2.0f;
+        return windowingMinInValue + (windowingMaxInValue - windowingMinInValue) / 2.0;
     }
 
     /**
@@ -367,14 +366,14 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
      * @return the corrected level to be applied to this series.
      */
     public int getCorrectedValueForLevel(int level) {
-        Float slopeVal = (Float) getTagValue(TagW.RescaleSlope);
+        Double slopeVal = TagD.getTagValue(this, Tag.RescaleSlope, Double.class);
         final double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
 
-        Float interceptVal = (Float) getTagValue(TagW.RescaleIntercept);
+        Double interceptVal = TagD.getTagValue(this, Tag.RescaleIntercept, Double.class);
         if (interceptVal == null) {
-            interceptVal = 0.0F;
+            interceptVal = 0.0;
         }
-        double intercept = 0.0d;
+        double intercept = 0.0;
         if (TextureData.Format.UnsignedShort.equals(getTextureData().getFormat())) {
             intercept = (windowingMinInValue - (interceptVal / slope));
         }
@@ -393,8 +392,8 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
      * @return the corrected window to be applied to this series.
      */
     public int getCorrectedValueForWindow(int window) {
-        Float slopeVal = (Float) getTagValue(TagW.RescaleSlope);
-        final double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
+        Double slopeVal = TagD.getTagValue(this, Tag.RescaleSlope, Double.class);
+        final double slope = slopeVal == null ? 1.0 : slopeVal;
 
         return (int) Math.round(window / slope);
     }

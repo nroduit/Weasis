@@ -171,7 +171,8 @@ public final class FileUtil {
         if (childDirs != null) {
             for (File f : childDirs) {
                 if (f.isDirectory()) {
-                    recursiveDelete(f, deleteRoot);
+                    // deleteRoot used only for the first level, directory is deleted in next line
+                    recursiveDelete(f, false);
                     deleteFile(f);
                 } else {
                     deleteFile(f);
@@ -520,17 +521,4 @@ public final class FileUtil {
         }
     }
 
-    public static Integer getIntegerTagAttribute(XMLStreamReader xmler, String attribute, Integer defaultValue) {
-        if (attribute != null) {
-            String val = xmler.getAttributeValue(null, attribute);
-            try {
-                if (val != null) {
-                    return Integer.valueOf(val);
-                }
-            } catch (NumberFormatException e) {
-                LOGGER.error("Cannot parse integer {} of {}", val, attribute); //$NON-NLS-1$
-            }
-        }
-        return defaultValue;
-    }
 }

@@ -25,6 +25,7 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FileUtil;
 
@@ -71,7 +72,7 @@ public class DicomPrinter {
         }
     }
 
-    public static void loadPrintersSettings(javax.swing.JComboBox printersComboBox) {
+    public static void loadPrintersSettings(javax.swing.JComboBox<DicomPrinter> printersComboBox) {
         final BundleContext context = FrameworkUtil.getBundle(DicomPrinter.class).getBundleContext();
         File prefs = new File(BundlePreferences.getDataFolder(context), "dicomPrinters.xml"); //$NON-NLS-1$
         if (prefs.canRead()) {
@@ -98,7 +99,7 @@ public class DicomPrinter {
                                                         .setDescription(xmler.getAttributeValue(null, "description")); //$NON-NLS-1$
                                                     printer.setAeTitle(xmler.getAttributeValue(null, "aeTitle")); //$NON-NLS-1$
                                                     printer.setHostname(xmler.getAttributeValue(null, "hostname")); //$NON-NLS-1$
-                                                    printer.setPort(FileUtil.getIntegerTagAttribute(xmler, "port", 0)); //$NON-NLS-1$
+                                                    printer.setPort(TagUtil.getIntegerTagAttribute(xmler, "port", 0)); //$NON-NLS-1$
                                                     printer.setColorPrintSupported(Boolean.parseBoolean(
                                                         xmler.getAttributeValue(null, "colorPrintSupported"))); //$NON-NLS-1$
                                                     printersComboBox.addItem(printer);

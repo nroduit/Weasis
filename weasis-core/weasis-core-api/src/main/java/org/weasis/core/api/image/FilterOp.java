@@ -38,7 +38,7 @@ public class FilterOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         KernelData kernel = (KernelData) params.get(P_KERNEL_DATA);
         if (kernel == null) {
@@ -49,7 +49,7 @@ public class FilterOp extends AbstractOp {
             paramBlock.add(kernel.getKernelJAI());
             result = JAI.create("convolve", paramBlock, null); //$NON-NLS-1$
         }
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
 }

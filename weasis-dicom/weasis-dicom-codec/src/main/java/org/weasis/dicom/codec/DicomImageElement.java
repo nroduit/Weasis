@@ -30,10 +30,12 @@ import javax.media.jai.ROI;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.LookupDescriptor;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
@@ -43,6 +45,7 @@ import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.SoftHashMap;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
@@ -85,17 +88,18 @@ public class DicomImageElement extends ImageElement {
         this.pixelSpacingUnit = Unit.PIXEL;
 
         double[] val = null;
-        String modality = (String) mediaIO.getTagValue(TagW.Modality);
+        String modality = TagD.getTagValue(mediaIO, Tag.Modality, String.class);
         if (!"SC".equals(modality) && !"OT".equals(modality)) { //$NON-NLS-1$ //$NON-NLS-2$
             // Physical distance in mm between the center of each pixel (ratio in mm)
-            val = (double[]) mediaIO.getTagValue(TagW.PixelSpacing);
+            val = TagD.getTagValue(mediaIO, Tag.PixelSpacing, double[].class);
             if (val == null || val.length != 2) {
-                val = (double[]) mediaIO.getTagValue(TagW.ImagerPixelSpacing);
+                val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
                 // Follows D. Clunie recommendations
                 pixelSizeCalibrationDescription = val == null ? null : Messages.getString("DicomImageElement.detector"); //$NON-NLS-1$
 
             } else {
-                pixelSizeCalibrationDescription = (String) mediaIO.getTagValue(TagW.PixelSpacingCalibrationDescription);
+                pixelSizeCalibrationDescription =
+                    TagD.getTagValue(mediaIO, Tag.PixelSpacingCalibrationDescription, String.class);
             }
             if (val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
                 /*
@@ -115,10 +119,10 @@ public class DicomImageElement extends ImageElement {
             // HU = Hounsfield Units (CT)
             // US = Unspecified
             // Other values are permitted, but are not defined by the DICOM Standard.
-            pixelValueUnit = (String) getTagValue(TagW.RescaleType);
+            pixelValueUnit =  TagD.getTagValue(this, Tag.RescaleType, String.class);
             if (pixelValueUnit == null) {
                 // For some other modalities like PET
-                pixelValueUnit = (String) getTagValue(TagW.Units);
+                pixelValueUnit = TagD.getTagValue(this, Tag.Units, String.class);
             }
             if (pixelValueUnit == null && "CT".equals(modality)) { //$NON-NLS-1$
                 pixelValueUnit = "HU"; //$NON-NLS-1$
@@ -127,7 +131,7 @@ public class DicomImageElement extends ImageElement {
         }
 
         if (val == null) {
-            int[] aspects = (int[]) mediaIO.getTagValue(TagW.PixelAspectRatio);
+            int[] aspects = TagD.getTagValue(mediaIO, Tag.PixelAspectRatio, int[].class);
             if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
                 /*
                  * Set the Pixel Aspect Ratio to the pixel size of the image to stretch the rendered image (for having
@@ -147,10 +151,10 @@ public class DicomImageElement extends ImageElement {
      *         exists.
      */
     @Override
-    public float getMinValue(Map<TagW, Object> params, boolean pixelPadding) {
+    public double getMinValue(TagReadable tagable, boolean pixelPadding) {
         // Computes min and max as slope can be negative
-        return Math.min(pixel2mLUT(super.getMinValue(params, pixelPadding), params, pixelPadding),
-            pixel2mLUT(super.getMaxValue(params, pixelPadding), params, pixelPadding));
+        return Math.min(pixel2mLUT(super.getMinValue(tagable, pixelPadding), tagable, pixelPadding),
+            pixel2mLUT(super.getMaxValue(tagable, pixelPadding), tagable, pixelPadding));
     }
 
     /**
@@ -158,10 +162,10 @@ public class DicomImageElement extends ImageElement {
      *         exists.
      */
     @Override
-    public float getMaxValue(Map<TagW, Object> params, boolean pixelPadding) {
+    public double getMaxValue(TagReadable tagable, boolean pixelPadding) {
         // Computes min and max as slope can be negative
-        return Math.max(pixel2mLUT(super.getMinValue(params, pixelPadding), params, pixelPadding),
-            pixel2mLUT(super.getMaxValue(params, pixelPadding), params, pixelPadding));
+        return Math.max(pixel2mLUT(super.getMinValue(tagable, pixelPadding), tagable, pixelPadding),
+            pixel2mLUT(super.getMaxValue(tagable, pixelPadding), tagable, pixelPadding));
     }
 
     @Override
@@ -179,18 +183,17 @@ public class DicomImageElement extends ImageElement {
      */
 
     public boolean isPixelRepresentationSigned() {
-        Integer pixelRepresentation = (Integer) getTagValue(TagW.PixelRepresentation);
+        Integer pixelRepresentation = TagD.getTagValue(this, Tag.PixelRepresentation, Integer.class);
         return (pixelRepresentation != null) && (pixelRepresentation != 0);
     }
 
-    public boolean isPhotometricInterpretationInverse(Map<TagW, Object> params) {
-        String prLUTShape = (String) (params == null ? null : params.get(TagW.PresentationLUTShape));
+    public boolean isPhotometricInterpretationInverse(TagReadable tagable) {
+        String prLUTShape = TagD.getTagValue(tagable, Tag.PresentationLUTShape, String.class);
         if (prLUTShape == null) {
-            prLUTShape = (String) getTagValue(TagW.PresentationLUTShape);
+            prLUTShape = TagD.getTagValue(this, Tag.PresentationLUTShape, String.class);
         }
-        boolean inverseLUT = prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1" //$NON-NLS-1$ //$NON-NLS-2$
+        return prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1" //$NON-NLS-1$ //$NON-NLS-2$
             .equalsIgnoreCase(getPhotometricInterpretation());
-        return inverseLUT;
     }
 
     /**
@@ -201,50 +204,55 @@ public class DicomImageElement extends ImageElement {
      *
      * @return
      */
-    public boolean isModalityLutOutSigned(Map<TagW, Object> params, boolean pixelPadding) {
+    public boolean isModalityLutOutSigned(TagReadable tagable, boolean pixelPadding) {
         boolean signed = isPixelRepresentationSigned();
-        return getMinValue(params, pixelPadding) < 0 ? true : signed;
+        return getMinValue(tagable, pixelPadding) < 0 ? true : signed;
     }
 
     public int getBitsStored() {
-        return (Integer) getTagValue(TagW.BitsStored);
+        return TagD.getTagValue(this, Tag.BitsStored, Integer.class);
     }
 
     public int getBitsAllocated() {
-        return (Integer) getTagValue(TagW.BitsAllocated);
+        return TagD.getTagValue(this, Tag.BitsAllocated, Integer.class);
     }
 
-    public float getRescaleIntercept(Map<TagW, Object> params) {
-        Float prIntercept = (Float) (params != null ? params.get(TagW.RescaleIntercept) : null);
-        Float intercept = prIntercept == null ? (Float) getTagValue(TagW.RescaleIntercept) : prIntercept;
-        return (intercept == null) ? 0.0f : intercept.floatValue();
+    public double getRescaleIntercept(TagReadable tagable) {
+        Double prIntercept = TagD.getTagValue(tagable, Tag.RescaleIntercept, Double.class);
+        Double intercept =
+            prIntercept == null ? TagD.getTagValue(this, Tag.RescaleIntercept, Double.class) : prIntercept;
+        return intercept == null ? 0.0 : intercept;
     }
 
-    public float getRescaleSlope(Map<TagW, Object> params) {
-        Float prSlope = (Float) (params != null ? params.get(TagW.RescaleSlope) : null);
-        Float slope = prSlope == null ? (Float) getTagValue(TagW.RescaleSlope) : prSlope;
-        return (slope == null) ? 1.0f : slope.floatValue();
+    public double getRescaleSlope(TagReadable tagable) {
+        Double prSlope = TagD.getTagValue(tagable, Tag.RescaleSlope, Double.class);
+        Double slope = prSlope == null ? TagD.getTagValue(this, Tag.RescaleSlope, Double.class) : prSlope;
+        return slope == null ? 1.0 : slope;
     }
 
-    public float pixel2mLUT(float pixelValue,Map<TagW, Object> params, boolean pixelPadding) {
-        LookupTableJAI lookup = getModalityLookup(params, pixelPadding);
-        if (lookup != null) {
-            if (pixelValue >= lookup.getOffset() && pixelValue < lookup.getOffset() + lookup.getNumEntries()) {
-                return lookup.lookup(0, (int) pixelValue);
+    public int pixel2mLUT(Number pixelValue, TagReadable tagable, boolean pixelPadding) {
+        if (pixelValue != null) {
+            int val = pixelValue.intValue();
+            LookupTableJAI lookup = getModalityLookup(tagable, pixelPadding);
+            if (lookup != null) {
+                if (val >= lookup.getOffset() && val < lookup.getOffset() + lookup.getNumEntries()) {
+                    return lookup.lookup(0, val);
+                }
             }
+            return val;
         }
-        return pixelValue;
+        return 0;
     }
 
-    public int getMinAllocatedValue(Map<TagW, Object> params, boolean pixelPadding) {
-        boolean signed = isModalityLutOutSigned(params, pixelPadding);
+    public int getMinAllocatedValue(TagReadable tagable, boolean pixelPadding) {
+        boolean signed = isModalityLutOutSigned(tagable, pixelPadding);
         int bitsAllocated = getBitsAllocated();
         int maxValue = signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1);
         return (signed ? -(maxValue + 1) : 0);
     }
 
-    public int getMaxAllocatedValue(Map<TagW, Object> params, boolean pixelPadding) {
-        boolean signed = isModalityLutOutSigned(params, pixelPadding);
+    public int getMaxAllocatedValue(TagReadable tagable, boolean pixelPadding) {
+        boolean signed = isModalityLutOutSigned(tagable, pixelPadding);
         int bitsAllocated = getBitsAllocated();
         return signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1);
     }
@@ -261,7 +269,7 @@ public class DicomImageElement extends ImageElement {
      *         meaning is not defined by this Standard.
      */
     public String getPhotometricInterpretation() {
-        return (String) getTagValue(TagW.PhotometricInterpretation);
+        return TagD.getTagValue(this, Tag.PhotometricInterpretation, String.class);
     }
 
     public boolean isPhotometricInterpretationMonochrome() {
@@ -287,28 +295,29 @@ public class DicomImageElement extends ImageElement {
      */
 
     public Integer getPaddingValue() {
-        return (Integer) getTagValue(TagW.PixelPaddingValue);
+        return TagD.getTagValue(this, Tag.PixelPaddingValue, Integer.class);
     }
 
     /**
      * @see getPaddingValue()
      */
     public Integer getPaddingLimit() {
-        return (Integer) getTagValue(TagW.PixelPaddingRangeLimit);
+        return TagD.getTagValue(this, Tag.PixelPaddingRangeLimit, Integer.class);
 
     }
 
-    public LutParameters getLutParameters(Map<TagW, Object> params, boolean pixelPadding, LookupTableJAI mLUTSeq,
+    public LutParameters getLutParameters(TagReadable tagable, boolean pixelPadding, LookupTableJAI mLUTSeq,
         boolean inversePaddingMLUT) {
         Integer paddingValue = getPaddingValue();
 
         boolean isSigned = isPixelRepresentationSigned();
         int bitsStored = getBitsStored();
-        float intercept = getRescaleIntercept(params);
-        float slope = getRescaleSlope(params);
+        double intercept = getRescaleIntercept(tagable);
+        double slope = getRescaleSlope(tagable);
 
         // No need to have a modality lookup table
-        if (bitsStored > 16 || (slope == 1.0f && intercept == 0.0f && paddingValue == null)) {
+        if (bitsStored > 16
+            || (MathUtil.isEqual(slope, 1.0) && MathUtil.isEqualToZero(intercept) && paddingValue == null)) {
             return null;
         }
 
@@ -316,9 +325,9 @@ public class DicomImageElement extends ImageElement {
         boolean outputSigned = false;
         int bitsOutputLut;
         if (mLUTSeq == null) {
-            float minValue = super.getMinValue(params, pixelPadding) * slope + intercept;
-            float maxValue = super.getMaxValue(params, pixelPadding) * slope + intercept;
-            bitsOutputLut = Integer.SIZE - Integer.numberOfLeadingZeros(Math.round(maxValue - minValue));
+            double minValue = super.getMinValue(tagable, pixelPadding) * slope + intercept;
+            double maxValue = super.getMaxValue(tagable, pixelPadding) * slope + intercept;
+            bitsOutputLut = Integer.SIZE - Integer.numberOfLeadingZeros((int) Math.round(maxValue - minValue));
             outputSigned = minValue < 0 ? true : isSigned;
             if (outputSigned && bitsOutputLut <= 8) {
                 // Allows to handle negative values with 8-bit image
@@ -332,8 +341,8 @@ public class DicomImageElement extends ImageElement {
 
     }
 
-    public LookupTableJAI getModalityLookup(Map<TagW, Object> params, boolean pixelPadding) {
-        return getModalityLookup(params, pixelPadding, false);
+    public LookupTableJAI getModalityLookup(TagReadable tagable, boolean pixelPadding) {
+        return getModalityLookup(tagable, pixelPadding, false);
     }
 
     /**
@@ -355,15 +364,14 @@ public class DicomImageElement extends ImageElement {
      * @param inverseLUT
      * @return the modality lookup table
      */
-    protected LookupTableJAI getModalityLookup(Map<TagW, Object> params, boolean pixelPadding,
-        boolean inverseLUTAction) {
+    protected LookupTableJAI getModalityLookup(TagReadable tagable, boolean pixelPadding, boolean inverseLUTAction) {
         Integer paddingValue = getPaddingValue();
-        LookupTableJAI prModLut = (LookupTableJAI) (params != null ? params.get(TagW.ModalityLUTData) : null);
+        LookupTableJAI prModLut = (LookupTableJAI) (tagable != null ? tagable.getTagValue(TagW.ModalityLUTData) : null);
         final LookupTableJAI mLUTSeq = prModLut == null ? (LookupTableJAI) getTagValue(TagW.ModalityLUTData) : prModLut;
         if (mLUTSeq != null) {
             if (!pixelPadding || paddingValue == null) {
-                if (super.getMinValue(params, false) >= mLUTSeq.getOffset()
-                    && super.getMaxValue(params, false) < mLUTSeq.getOffset() + mLUTSeq.getNumEntries()) {
+                if (super.getMinValue(tagable, false) >= mLUTSeq.getOffset()
+                    && super.getMaxValue(tagable, false) < mLUTSeq.getOffset() + mLUTSeq.getNumEntries()) {
                     return mLUTSeq;
                 } else if (prModLut == null) {
                     // Remove MLut as it cannot be used.
@@ -376,11 +384,11 @@ public class DicomImageElement extends ImageElement {
             }
         }
 
-        boolean inverseLut = isPhotometricInterpretationInverse(params);
+        boolean inverseLut = isPhotometricInterpretationInverse(tagable);
         if (pixelPadding) {
             inverseLut ^= inverseLUTAction;
         }
-        LutParameters lutparams = getLutParameters(params, pixelPadding, mLUTSeq, inverseLut);
+        LutParameters lutparams = getLutParameters(tagable, pixelPadding, mLUTSeq, inverseLut);
         // Not required to have a modality lookup table
         if (lutparams == null) {
             return null;
@@ -391,28 +399,26 @@ public class DicomImageElement extends ImageElement {
             return modalityLookup;
         }
 
-        if (modalityLookup == null) {
-            if (mLUTSeq != null) {
-                if (mLUTSeq.getNumBands() == 1) {
-                    if (mLUTSeq.getDataType() == DataBuffer.TYPE_BYTE) {
-                        byte[] data = mLUTSeq.getByteData(0);
-                        if (data != null) {
-                            modalityLookup = new LookupTableJAI(data, mLUTSeq.getOffset(0));
-                        }
-                    } else {
-                        short[] data = mLUTSeq.getShortData(0);
-                        if (data != null) {
-                            modalityLookup = new LookupTableJAI(data, mLUTSeq.getOffset(0),
-                                mLUTSeq.getData() instanceof DataBufferUShort);
-                        }
+        if (mLUTSeq != null) {
+            if (mLUTSeq.getNumBands() == 1) {
+                if (mLUTSeq.getDataType() == DataBuffer.TYPE_BYTE) {
+                    byte[] data = mLUTSeq.getByteData(0);
+                    if (data != null) {
+                        modalityLookup = new LookupTableJAI(data, mLUTSeq.getOffset(0));
+                    }
+                } else {
+                    short[] data = mLUTSeq.getShortData(0);
+                    if (data != null) {
+                        modalityLookup = new LookupTableJAI(data, mLUTSeq.getOffset(0),
+                            mLUTSeq.getData() instanceof DataBufferUShort);
                     }
                 }
-                if (modalityLookup == null) {
-                    modalityLookup = mLUTSeq;
-                }
-            } else {
-                modalityLookup = DicomImageUtils.createRescaleRampLut(lutparams);
             }
+            if (modalityLookup == null) {
+                modalityLookup = mLUTSeq;
+            }
+        } else {
+            modalityLookup = DicomImageUtils.createRescaleRampLut(lutparams);
         }
 
         if (isPhotometricInterpretationMonochrome()) {
@@ -432,8 +438,8 @@ public class DicomImageElement extends ImageElement {
      *
      * @return 8 bits unsigned Lookup Table
      */
-    public LookupTableJAI getVOILookup(HashMap<TagW, Object> params, Float window, Float level, Float minLevel,
-        Float maxLevel, LutShape shape, boolean fillLutOutside, boolean pixelPadding) {
+    public LookupTableJAI getVOILookup(TagReadable tagable, Double window, Double level, Double minLevel,
+        Double maxLevel, LutShape shape, boolean fillLutOutside, boolean pixelPadding) {
 
         if (window == null || level == null || shape == null || minLevel == null || maxLevel == null) {
             return null;
@@ -458,15 +464,15 @@ public class DicomImageElement extends ImageElement {
         int minValue;
         int maxValue;
         if (fillLutOutside) {
-            minValue = getMinAllocatedValue(params, pixelPadding);
-            maxValue = getMaxAllocatedValue(params, pixelPadding);
+            minValue = getMinAllocatedValue(tagable, pixelPadding);
+            maxValue = getMaxAllocatedValue(tagable, pixelPadding);
         } else {
             minValue = minLevel.intValue();
             maxValue = maxLevel.intValue();
         }
 
         return DicomImageUtils.createWindowLevelLut(shape, window, level, minValue, maxValue, 8, false,
-            isPhotometricInterpretationInverse(params));
+            isPhotometricInterpretationInverse(tagable));
     }
 
     /**
@@ -475,12 +481,12 @@ public class DicomImageElement extends ImageElement {
      */
     public PresetWindowLevel getDefaultPreset(boolean pixelPadding) {
         List<PresetWindowLevel> presetList = getPresetList(pixelPadding);
-        return (presetList != null && presetList.size() > 0) ? presetList.get(0) : null;
+        return (presetList != null && !presetList.isEmpty()) ? presetList.get(0) : null;
     }
 
     public List<PresetWindowLevel> getPresetList(boolean pixelPadding) {
         if (windowingPresetCollection == null && isImageAvailable()) {
-            windowingPresetCollection = PresetWindowLevel.getPresetCollection(this, this.tags, pixelPadding);
+            windowingPresetCollection = PresetWindowLevel.getPresetCollection(this, this, pixelPadding);
         }
         return windowingPresetCollection;
     }
@@ -500,7 +506,7 @@ public class DicomImageElement extends ImageElement {
             return lutShapeCollection;
         }
 
-        lutShapeCollection = new LinkedHashSet<LutShape>();
+        lutShapeCollection = new LinkedHashSet<>();
         List<PresetWindowLevel> presetList = getPresetList(pixelPadding);
         if (presetList != null) {
             for (PresetWindowLevel preset : presetList) {
@@ -519,8 +525,8 @@ public class DicomImageElement extends ImageElement {
      * @return Histogram of the image source after modality lookup rescaled
      */
 
-    public Histogram getHistogram(RenderedImage imageSource, HashMap<TagW, Object> params, boolean pixelPadding) {
-        LookupTableJAI lookup = getModalityLookup(params, pixelPadding);
+    public Histogram getHistogram(RenderedImage imageSource, TagReadable tagable, boolean pixelPadding) {
+        LookupTableJAI lookup = getModalityLookup(tagable, pixelPadding);
         if (imageSource == null || lookup == null) {
             return null;
         }
@@ -539,8 +545,8 @@ public class DicomImageElement extends ImageElement {
         pb.add(1); // Sampling
         pb.add(1); // periods
         pb.add(new int[] { getAllocatedOutRangeSize() }); // Num. bins.
-        pb.add(new double[] { getMinAllocatedValue(params, pixelPadding) }); // Min value to be considered.
-        pb.add(new double[] { getMaxAllocatedValue(params, pixelPadding) }); // Max value to be considered.
+        pb.add(new double[] { getMinAllocatedValue(tagable, pixelPadding) }); // Min value to be considered.
+        pb.add(new double[] { getMaxAllocatedValue(tagable, pixelPadding) }); // Max value to be considered.
 
         RenderedOp op = JAI.create("histogram", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
         return (Histogram) op.getProperty("histogram"); //$NON-NLS-1$
@@ -553,9 +559,7 @@ public class DicomImageElement extends ImageElement {
          */
 
         if (img != null && !isImageAvailable()) {
-            // Cannot trust min and max values!
-            // Integer min = (Integer) getTagValue(TagW.SmallestImagePixelValue);
-            // Integer max = (Integer) getTagValue(TagW.LargestImagePixelValue);
+            // Cannot trust SmallestImagePixelValue and LargestImagePixelValue values! So search min and max values
             int bitsStored = getBitsStored();
             int bitsAllocated = getBitsAllocated();
 
@@ -590,7 +594,7 @@ public class DicomImageElement extends ImageElement {
                      *
                      * Overlays in pixel data should be masked before finding min and max.
                      */
-                    setTag(TagW.BitsStored, bitsAllocated);
+                    setTag(TagD.get(Tag.BitsStored), bitsAllocated);
                 }
             }
             /*
@@ -614,8 +618,8 @@ public class DicomImageElement extends ImageElement {
         if (img != null) {
             int datatype = img.getSampleModel().getDataType();
             if (datatype == DataBuffer.TYPE_BYTE) {
-                this.minPixelValue = 0.0f;
-                this.maxPixelValue = 255.0f;
+                this.minPixelValue = 0.0;
+                this.maxPixelValue = 255.0;
             } else {
                 RenderedOp dst = ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, new Double(paddingValueMin),
                     new Double(paddingValueMax), null);
@@ -631,12 +635,12 @@ public class DicomImageElement extends ImageElement {
                     min = Math.min(min, extrema[0][i]);
                     max = Math.max(max, extrema[1][i]);
                 }
-                this.minPixelValue = Double.valueOf(min).floatValue();
-                this.maxPixelValue = Double.valueOf(max).floatValue();
+                this.minPixelValue = min;
+                this.maxPixelValue = max;
                 // Handle special case when min and max are equal, ex. black image
                 // + 1 to max enables to display the correct value
                 if (this.minPixelValue.equals(this.maxPixelValue)) {
-                    this.maxPixelValue += 1.0f;
+                    this.maxPixelValue += 1.0;
                 }
             }
         }
@@ -646,13 +650,13 @@ public class DicomImageElement extends ImageElement {
         return new double[] { pixelSizeX, pixelSizeY };
     }
 
-    public float getFullDynamicWidth(HashMap<TagW, Object> params, boolean pixelPadding) {
-        return getMaxValue(params, pixelPadding) - getMinValue(params, pixelPadding);
+    public double getFullDynamicWidth(TagReadable tagable, boolean pixelPadding) {
+        return getMaxValue(tagable, pixelPadding) - getMinValue(tagable, pixelPadding);
     }
 
-    public float getFullDynamicCenter(HashMap<TagW, Object> params, boolean pixelPadding) {
-        float minValue = getMinValue(params, pixelPadding);
-        float maxValue = getMaxValue(params, pixelPadding);
+    public double getFullDynamicCenter(TagReadable tagable, boolean pixelPadding) {
+        double minValue = getMinValue(tagable, pixelPadding);
+        double maxValue = getMaxValue(tagable, pixelPadding);
         return minValue + (maxValue - minValue) / 2.f;
     }
 
@@ -663,13 +667,13 @@ public class DicomImageElement extends ImageElement {
     }
 
     @Override
-    public float getDefaultWindow(boolean pixelPadding) {
+    public double getDefaultWindow(boolean pixelPadding) {
         PresetWindowLevel defaultPreset = getDefaultPreset(pixelPadding);
         return (defaultPreset != null) ? defaultPreset.getWindow() : super.getDefaultWindow(pixelPadding);
     }
 
     @Override
-    public float getDefaultLevel(boolean pixelPadding) {
+    public double getDefaultLevel(boolean pixelPadding) {
         PresetWindowLevel defaultPreset = getDefaultPreset(pixelPadding);
         return (defaultPreset != null) ? defaultPreset.getLevel() : super.getDefaultLevel(pixelPadding);
 
@@ -700,47 +704,45 @@ public class DicomImageElement extends ImageElement {
             return null;
         }
 
-        Float window = null;
-        Float level = null;
-        Float levelMin = null;
-        Float levelMax = null;
+        Double window = null;
+        Double level = null;
+        Double levelMin = null;
+        Double levelMax = null;
         LutShape lutShape = null;
         Boolean pixelPadding = null;
         Boolean inverseLUT = null;
         Boolean fillLutOutside = null;
         Boolean wlOnColorImage = null;
-        PRSpecialElement pr = null;
         LookupTableJAI prLutData = null;
-        HashMap<TagW, Object> prTags = null;
+        TagReadable prTags = null;
 
         if (params != null) {
-            window = (Float) params.get(ActionW.WINDOW.cmd());
-            level = (Float) params.get(ActionW.LEVEL.cmd());
-            levelMin = (Float) params.get(ActionW.LEVEL_MIN.cmd());
-            levelMax = (Float) params.get(ActionW.LEVEL_MAX.cmd());
+            window = (Double) params.get(ActionW.WINDOW.cmd());
+            level = (Double) params.get(ActionW.LEVEL.cmd());
+            levelMin = (Double) params.get(ActionW.LEVEL_MIN.cmd());
+            levelMax = (Double) params.get(ActionW.LEVEL_MAX.cmd());
             lutShape = (LutShape) params.get(ActionW.LUT_SHAPE.cmd());
             pixelPadding = (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
             inverseLUT = (Boolean) params.get(PseudoColorOp.P_LUT_INVERSE);
             fillLutOutside = (Boolean) params.get(WindowOp.P_FILL_OUTSIDE_LUT);
             wlOnColorImage = (Boolean) params.get(WindowOp.P_APPLY_WL_COLOR);
-            pr = (PRSpecialElement) params.get(WindowAndPresetsOp.P_PR_ELEMENT);
-            if (pr != null) {
-                prLutData = (LookupTableJAI) pr.getTagValue(TagW.PRLUTsData);
-                prTags = pr.getTags();
+            prTags = (TagReadable) params.get(WindowAndPresetsOp.P_PR_ELEMENT);
+            if (prTags != null) {
+                prLutData = (LookupTableJAI) prTags.getTagValue(TagW.PRLUTsData);
             }
 
         }
 
         boolean pixPadding = JMVUtils.getNULLtoTrue(pixelPadding);
         boolean invLUT = JMVUtils.getNULLtoFalse(inverseLUT);
-        float windowValue = (window == null) ? getDefaultWindow(pixPadding) : window;
-        float levelValue = (level == null) ? getDefaultLevel(pixPadding) : level;
+        double windowValue = (window == null) ? getDefaultWindow(pixPadding) : window;
+        double levelValue = (level == null) ? getDefaultLevel(pixPadding) : level;
         LutShape lut = (lutShape == null) ? getDefaultShape(pixPadding) : lutShape;
-        float minLevel;
-        float maxLevel;
+        double minLevel;
+        double maxLevel;
         if (levelMin == null || levelMax == null) {
-            minLevel = Math.min(levelValue - windowValue / 2.0f, getMinValue(prTags, pixPadding));
-            maxLevel = Math.max(levelValue + windowValue / 2.0f, getMaxValue(prTags, pixPadding));
+            minLevel = Math.min(levelValue - windowValue / 2.0, getMinValue(prTags, pixPadding));
+            maxLevel = Math.max(levelValue + windowValue / 2.0, getMaxValue(prTags, pixPadding));
         } else {
             minLevel = Math.min(levelMin, getMinValue(prTags, pixPadding));
             maxLevel = Math.max(levelMax, getMaxValue(prTags, pixPadding));
@@ -795,12 +797,12 @@ public class DicomImageElement extends ImageElement {
                 range = 1.0;
             }
             double slope = 255.0 / range;
-            double y_int = 255.0 - slope * high;
+            double yint = 255.0 - slope * high;
 
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(imageSource);
             pb.add(new double[] { slope });
-            pb.add(new double[] { y_int });
+            pb.add(new double[] { yint });
             RenderedOp rescale = JAI.create("rescale", pb, null); //$NON-NLS-1$
 
             // produce a byte image
@@ -814,17 +816,17 @@ public class DicomImageElement extends ImageElement {
 
     public GeometryOfSlice getDispSliceGeometry() {
         // The geometry is adapted to get square pixel as all the images are displayed with square pixel.
-        double[] imgOr = (double[]) getTagValue(TagW.ImageOrientationPatient);
+        double[] imgOr = TagD.getTagValue(this, Tag.ImageOrientationPatient, double[].class);
         if (imgOr != null && imgOr.length == 6) {
-            double[] pos = (double[]) getTagValue(TagW.ImagePositionPatient);
+            double[] pos = TagD.getTagValue(this, Tag.ImagePositionPatient, double[].class);
             if (pos != null && pos.length == 3) {
-                Double sliceTickness = (Double) getTagValue(TagW.SliceThickness);
+                Double sliceTickness = TagD.getTagValue(this, Tag.SliceThickness, Double.class);
                 if (sliceTickness == null) {
                     sliceTickness = getPixelSize();
                 }
                 double[] spacing = { getPixelSize(), getPixelSize(), sliceTickness };
-                Integer rows = (Integer) getTagValue(TagW.Rows);
-                Integer columns = (Integer) getTagValue(TagW.Columns);
+                Integer rows = TagD.getTagValue(this, Tag.Rows, Integer.class);
+                Integer columns = TagD.getTagValue(this, Tag.Columns, Integer.class);
                 if (rows != null && columns != null && rows > 0 && columns > 0) {
                     // SliceTickness is only use in IntersectVolume
                     // Multiply rows and columns by getZoomScale() to have square pixel image size
@@ -838,18 +840,18 @@ public class DicomImageElement extends ImageElement {
     }
 
     public GeometryOfSlice getSliceGeometry() {
-        double[] imgOr = (double[]) getTagValue(TagW.ImageOrientationPatient);
+        double[] imgOr = TagD.getTagValue(this, Tag.ImageOrientationPatient, double[].class);
         if (imgOr != null && imgOr.length == 6) {
-            double[] pos = (double[]) getTagValue(TagW.ImagePositionPatient);
+            double[] pos = TagD.getTagValue(this, Tag.ImagePositionPatient, double[].class);
             if (pos != null && pos.length == 3) {
-                Double sliceTickness = (Double) getTagValue(TagW.SliceThickness);
+                Double sliceTickness = TagD.getTagValue(this, Tag.SliceThickness, Double.class);
                 if (sliceTickness == null) {
                     sliceTickness = getPixelSize();
                 }
                 double[] pixSize = getDisplayPixelSize();
                 double[] spacing = { pixSize[0], pixSize[1], sliceTickness };
-                Integer rows = (Integer) getTagValue(TagW.Rows);
-                Integer columns = (Integer) getTagValue(TagW.Columns);
+                Integer rows = TagD.getTagValue(this, Tag.Rows, Integer.class);
+                Integer columns = TagD.getTagValue(this, Tag.Columns, Integer.class);
                 if (rows != null && columns != null && rows > 0 && columns > 0) {
                     return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] },
                         new double[] { imgOr[3], imgOr[4], imgOr[5] }, pos, spacing, sliceTickness,

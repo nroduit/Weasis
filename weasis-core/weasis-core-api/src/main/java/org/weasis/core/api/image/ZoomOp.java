@@ -58,7 +58,7 @@ public class ZoomOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         Double zoomFactorX = (Double) params.get(P_RATIO_X);
         Double zoomFactorY = (Double) params.get(P_RATIO_Y);
@@ -77,7 +77,7 @@ public class ZoomOp extends AbstractOp {
             result = JAI.create("scale", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
     public Interpolation getInterpolation() {

@@ -51,7 +51,7 @@ public class MergeImgOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage source2 = (RenderedImage) params.get(INPUT_IMG2);
         RenderedImage result = source;
 
@@ -61,7 +61,7 @@ public class MergeImgOp extends AbstractOp {
             Integer transparency = (Integer) params.get(P_OPACITY);
             result = MergeImgOp.combineTwoImages(source, source2, transparency == null ? 255 : transparency);
         }
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
     public static PlanarImage combineTwoImages(RenderedImage sourceDown, RenderedImage sourceUp, int transparency) {

@@ -21,6 +21,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 
@@ -29,8 +30,9 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
 
     public static final String[] functions = { "get", "close" }; //$NON-NLS-1$ //$NON-NLS-2$
     public static final String NAME = "All Files"; //$NON-NLS-1$
-    public static final TreeModelNode group = new TreeModelNode(1, 0, TagW.Group);
-    public static final TreeModelNode series = new TreeModelNode(2, 0, TagW.SubseriesInstanceUID);
+    public static final TreeModelNode group = new TreeModelNode(1, 0, TagW.Group, new TagView(TagW.Group, TagW.FileName));
+    public static final TreeModelNode series =
+        new TreeModelNode(2, 0, TagW.SubseriesInstanceUID, new TagView(TagW.FileName));
 
     private static final List<TreeModelNode> modelStrucure = new ArrayList<>(5);
 

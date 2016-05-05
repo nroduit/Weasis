@@ -30,19 +30,21 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.TagUtil;
+import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 
 public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements FilesExtractor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomEncapDocSeries.class);
-
+    
     public DicomEncapDocSeries(String subseriesInstanceUID) {
-        super(TagW.SubseriesInstanceUID, subseriesInstanceUID, TagW.SubseriesInstanceUID);
+        super(TagW.SubseriesInstanceUID, subseriesInstanceUID, DicomSeries.defaultTagView);
     }
 
     public DicomEncapDocSeries(DicomSeries dicomSeries) {
-        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID), TagW.SubseriesInstanceUID);
+        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID), DicomSeries.defaultTagView);
 
         Iterator<Entry<TagW, Object>> iter = dicomSeries.getTagEntrySetIterator();
         while (iter.hasNext()) {
@@ -91,17 +93,13 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
 
     @Override
     public String getToolTips() {
-        StringBuilder toolTips = new StringBuilder();
-        toolTips.append("<html>"); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagW.PatientName); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagW.Modality); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagW.SeriesNumber); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagW.StudyDescription); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
-        toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$
-        toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(TagW.formatDateTime((Date) getTagValue(TagW.SeriesDate)));
-        toolTips.append("<br>"); //$NON-NLS-1$
+        StringBuilder toolTips = new StringBuilder("<html>"); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagD.get(Tag.PatientName)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagD.get(Tag.Modality)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagD.get(Tag.SeriesNumber)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.date"), TagD.get(Tag.SeriesDate)); //$NON-NLS-1$
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
     }

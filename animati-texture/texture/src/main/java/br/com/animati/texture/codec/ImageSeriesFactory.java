@@ -29,6 +29,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.vecmath.Vector3d;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
@@ -38,6 +39,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.SortSeriesStack;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 
 import br.com.animati.texturedicom.ImageSeries;
@@ -158,8 +160,8 @@ public class ImageSeriesFactory {
                 changed = true;
             }
 
-            String log1 = "Building texture from series: " + series.getTagValue(TagW.SeriesDescription) + " / "
-                + series.getTagValue(TagW.SeriesInstanceUID) + " / sorded by " + comparator;
+            String log1 = "Building texture from series: " + TagD.getTagValue(series, Tag.SeriesDescription) + " / "
+                + TagD.getTagValue(series, Tag.SeriesInstanceUID) + " / sorded by " + comparator;
             LOGGER.info(log1);
 
             final int dims[] = getDimentions(series);
@@ -187,7 +189,7 @@ public class ImageSeriesFactory {
                 fireProperyChange(this, TEXTURE_REPLACED, imSeries);
             }
         } else {
-            LOGGER.info("Returning from cache: " + imSeries.getTagValue(TagW.SeriesDescription));
+            LOGGER.info("Returning from cache: {}", TagD.getTagValue(imSeries, Tag.SeriesDescription));
 
             if (!imSeries.isAllInVideo() && imSeries.isFactoryDone()) {
                 if (series.getSeriesLoader() == null && (imSeries.getSliceCount() != series.size(null))) {
@@ -277,7 +279,7 @@ public class ImageSeriesFactory {
     }
 
     private static void feedInValues(final DicomImageElement elmt, final TextureDicomSeries imSeries,
-        ArrayList<Float[]> windowValues, ArrayList<Float[]> levelValues) {
+        ArrayList<double[]> windowValues, ArrayList<double[]> levelValues) {
 
         // values of inValues based on DicomImageUtils::setWindowLevelLinearLut
 
@@ -297,19 +299,19 @@ public class ImageSeriesFactory {
             imSeries.windowingMaxInValue = maxInValue;
         }
 
-        Float[] tempListWindow = (Float[]) elmt.getTagValue(TagW.WindowWidth);
-        Float[] tempListLevel = (Float[]) elmt.getTagValue(TagW.WindowCenter);
+        double[] tempListWindow = TagD.getTagValue(elmt, Tag.WindowWidth, double[].class);
+        double[] tempListLevel = TagD.getTagValue(elmt, Tag.WindowCenter, double[].class);
         if (tempListLevel != null && tempListWindow != null) {
             windowValues.add(tempListWindow);
             levelValues.add(tempListLevel);
         }
 
         if (levelValues != null && windowValues != null && !levelValues.isEmpty() && !windowValues.isEmpty()) {
-            Float[] listOfLevelValues = getHigherOccurrenceOfValues(levelValues, levelValues.get(0).length);
-            Float[] listOfWindowValues = getHigherOccurrenceOfValues(windowValues, windowValues.get(0).length);
+            double[] listOfLevelValues = getHigherOccurrenceOfValues(levelValues, levelValues.get(0).length);
+            double[] listOfWindowValues = getHigherOccurrenceOfValues(windowValues, windowValues.get(0).length);
 
-            imSeries.setTag(TagW.WindowWidth, listOfWindowValues);
-            imSeries.setTag(TagW.WindowCenter, listOfLevelValues);
+            imSeries.setTag(TagD.get(Tag.WindowWidth), listOfWindowValues);
+            imSeries.setTag(TagD.get(Tag.WindowCenter), listOfLevelValues);
         }
 
         // Values of RescaleSlope & RescaleIntercept (#2852)
@@ -318,21 +320,21 @@ public class ImageSeriesFactory {
         // and this would make impossible to use the same window/level values
         // for the hole series.
 
-        Float interceptVal = (Float) elmt.getTagValue(TagW.RescaleIntercept);
-        Float actualIntercept = (Float) imSeries.getTagValue(TagW.RescaleIntercept);
+        Double interceptVal = TagD.getTagValue(elmt, Tag.RescaleIntercept, Double.class);
+        Double actualIntercept = TagD.getTagValue(imSeries, Tag.RescaleIntercept, Double.class);
         if (interceptVal != null) {
             if (actualIntercept == null) {
-                imSeries.setTag(TagW.RescaleIntercept, interceptVal);
+                imSeries.setTag(TagD.get(Tag.RescaleIntercept), interceptVal);
             } else if (!interceptVal.equals(actualIntercept)) {
                 sendError(ErrorCode.err500, imSeries);
             }
         }
 
-        Float slopeVal = (Float) elmt.getTagValue(TagW.RescaleSlope);
-        Float actualSlope = (Float) imSeries.getTagValue(TagW.RescaleSlope);
+        Double slopeVal = TagD.getTagValue(elmt, Tag.RescaleSlope, Double.class);
+        Double actualSlope = TagD.getTagValue(imSeries, Tag.RescaleSlope, Double.class);
         if (slopeVal != null) {
             if (actualSlope == null) {
-                imSeries.setTag(TagW.RescaleSlope, slopeVal);
+                imSeries.setTag(TagD.get(Tag.RescaleSlope), slopeVal);
             } else if (!slopeVal.equals(actualSlope)) {
                 sendError(ErrorCode.err500, imSeries);
             }
@@ -414,20 +416,20 @@ public class ImageSeriesFactory {
 
         if (media instanceof ImageElement) {
             ImageElement imgElement = (ImageElement) media;
-            Object tagValue = imgElement.getTagValue(TagW.PixelRepresentation);
-            if (tagValue instanceof Integer && (Integer) tagValue == 1) {
+            Integer tagValue = TagD.getTagValue(imgElement, Tag.PixelRepresentation, Integer.class);
+            if (tagValue != null && tagValue == 1) {
                 return TextureData.Format.SignedShort;
             }
-            tagValue = imgElement.getTagValue(TagW.SamplesPerPixel);
-            if (tagValue instanceof Integer && (Integer) tagValue > 1) {
+            tagValue = TagD.getTagValue(imgElement, Tag.SamplesPerPixel, Integer.class);
+            if (tagValue != null && tagValue > 1) {
                 // Color images has "Samples Per Pixel" equal to 3
-                if ((Integer) tagValue == 3) {
+                if (tagValue == 3) {
                     return TextureData.Format.RGB8;
                 }
                 return null;
             }
-            tagValue = imgElement.getTagValue(TagW.BitsAllocated);
-            if (tagValue instanceof Integer && (Integer) tagValue == 8) {
+            tagValue = TagD.getTagValue(imgElement, Tag.BitsAllocated, Integer.class);
+            if (tagValue != null && tagValue == 8) {
                 return TextureData.Format.Byte;
             }
         }
@@ -538,12 +540,12 @@ public class ImageSeriesFactory {
         return getAverage(keysWithSameOccurrence);
     }
 
-    private static Float[] getHigherOccurrenceOfValues(ArrayList<Float[]> listValues, int size) {
-        Float[] higherOccurrenceValues = new Float[size];
+    private static double[] getHigherOccurrenceOfValues(ArrayList<double[]> listValues, int size) {
+        double[] higherOccurrenceValues = new double[size];
         for (int i = 0; i < size; i++) {
             HashMap<Integer, Integer> mapOfOccurrence = new HashMap<Integer, Integer>();
-            for (Float[] values : listValues) {
-                int value = values[i].intValue();
+            for (double[] values : listValues) {
+                int value = (int) values[i];
                 if (mapOfOccurrence.containsKey(value)) {
                     int cont = mapOfOccurrence.get(value) + 1;
                     mapOfOccurrence.put(value, cont);
@@ -611,7 +613,7 @@ public class ImageSeriesFactory {
     }
 
     private static void updateOrientationTag(TextureDicomSeries seriesToLoad, DicomImageElement elmt) {
-        double[] imOri = (double[]) elmt.getTagValue(TagW.ImageOrientationPatient);
+        double[] imOri = TagD.getTagValue(elmt, Tag.ImageOrientationPatient, double[].class);
         if (imOri != null && imOri.length == 6) {
             double[] serieOri = seriesToLoad.getOriginalSeriesOrientationPatient();
             if (serieOri == null) {
@@ -680,7 +682,6 @@ public class ImageSeriesFactory {
 
                     double[] sp = (double[]) elmt.getTagValue(TagW.SlicePosition);
                     if (sp != null) {
-
                         double pos = (sp[0] + sp[1] + sp[2]);
                         if (place > 0) {
                             double space = pos - lastPos;
@@ -698,7 +699,7 @@ public class ImageSeriesFactory {
                             }
 
                             // Verify pixelSpacing
-                            double[] pixSp = (double[]) elmt.getTagValue(TagW.PixelSpacing);
+                            double[] pixSp = TagD.getTagValue(elmt, Tag.PixelSpacing, double[].class);
                             if (pixSp == null || pixSpacing == null) {
                                 variablePixSpacing = true;
                             } else {
@@ -710,7 +711,7 @@ public class ImageSeriesFactory {
                             }
 
                         } else {
-                            pixSpacing = (double[]) elmt.getTagValue(TagW.PixelSpacing);
+                            pixSpacing = TagD.getTagValue(elmt, Tag.PixelSpacing, double[].class);
                         }
                         lastPos = pos;
                         if (!variablePixSpacing && pixSpacing != null) {
@@ -740,13 +741,15 @@ public class ImageSeriesFactory {
             element.getImage();
         }
 
-        Object tagWidth = seriesToLoad.getTagValue(TagW.WindowWidth);
-        Object tagCenter = seriesToLoad.getTagValue(TagW.WindowCenter);
-        if (tagWidth instanceof ArrayList && tagCenter instanceof ArrayList) {
-            feedInValues(element, seriesToLoad, (ArrayList) tagWidth, (ArrayList) tagCenter);
-        } else {
-            feedInValues(element, seriesToLoad, new ArrayList<Float[]>(), new ArrayList<Float[]>());
+        double[] tagWidth = TagD.getTagValue(seriesToLoad, Tag.WindowWidth, double[].class);
+        double[] tagCenter = TagD.getTagValue(seriesToLoad, Tag.WindowCenter, double[].class);
+        ArrayList<double[]> listWidth = new ArrayList<double[]>();
+        ArrayList<double[]> listCenter = new ArrayList<double[]>();
+        if (tagWidth != null && tagCenter != null) {
+            listWidth.add(tagWidth);
+            listCenter.add(tagCenter);
         }
+        feedInValues(element, seriesToLoad, listWidth, listCenter);
 
         String info = putElementInImageSeries(element, seriesToLoad, place);
 
@@ -813,8 +816,8 @@ public class ImageSeriesFactory {
 
         @Override
         protected Void doInBackground() throws Exception {
-            ArrayList<Float[]> windowValues = new ArrayList<Float[]>();
-            ArrayList<Float[]> levelValues = new ArrayList<Float[]>();
+            ArrayList<double[]> windowValues = new ArrayList<double[]>();
+            ArrayList<double[]> levelValues = new ArrayList<double[]>();
 
             String lastInfo = "";
 
@@ -871,7 +874,7 @@ public class ImageSeriesFactory {
                             }
 
                             // Verify pixelSpacing
-                            double[] pixSp = (double[]) elmt.getTagValue(TagW.PixelSpacing);
+                            double[] pixSp = TagD.getTagValue(elmt, Tag.PixelSpacing, double[].class);
                             if (pixSp == null || pixSpacing == null) {
                                 variablePixSpacing = true;
                             } else {
@@ -883,7 +886,7 @@ public class ImageSeriesFactory {
                             }
 
                         } else {
-                            pixSpacing = (double[]) elmt.getTagValue(TagW.PixelSpacing);
+                            pixSpacing = TagD.getTagValue(elmt, Tag.PixelSpacing, double[].class);
                         }
                         lastPos = pos;
                         if (!variablePixSpacing && pixSpacing != null) {
@@ -895,7 +898,7 @@ public class ImageSeriesFactory {
                     // ///////////////////////////////////////////////////////
 
                     // ImageOrientationPatient //////////////////////////////
-                    double[] imOri = (double[]) elmt.getTagValue(TagW.ImageOrientationPatient);
+                    double[] imOri = TagD.getTagValue(elmt, Tag.ImageOrientationPatient, double[].class);
                     if (imOri != null && imOri.length == 6) {
                         if (place == 0) {
                             seriesToLoad.setOrientationPatient(imOri);
@@ -984,7 +987,7 @@ public class ImageSeriesFactory {
                 Object next = iterator.next();
                 if (next instanceof DicomImageElement) {
                     DicomImageElement element = (DicomImageElement) next;
-                    Integer inst = (Integer) element.getTagValue(TagW.InstanceNumber);
+                    Integer inst = TagD.getTagValue(element, Tag.InstanceNumber, Integer.class);
                     if (inst == null) {
                         throw new IllegalArgumentException(
                             "Cant load images in multiple threads without" + " InstanceNumber information.");

@@ -11,12 +11,13 @@ import java.awt.Rectangle;
 
 import javax.vecmath.Vector3d;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
@@ -25,12 +26,12 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.graphic.GraphicLabel;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.CornerInfoData;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
-import org.weasis.dicom.codec.display.TagView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomModel;
 
@@ -133,7 +134,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                 StringBuffer orientation = new StringBuffer();
                 if (imSeries instanceof TextureDicomSeries) {
                     TextureDicomSeries textureSeries = (TextureDicomSeries) imSeries;
-                    Modality mod = Modality.getModality((String) textureSeries.getTagValue(TagW.Modality));
+                    Modality mod = Modality.getModality(TagD.getTagValue(textureSeries, Tag.Modality, String.class));
                     // ModalityInfoData modality = ModalityPrefView.getModlatityInfos(mod);
 
                     orientation.append(mod.name());
@@ -205,7 +206,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
         }
         if (getDisplayPreferences(FRAME) && !isVolumetricView() && hideMin) {
             String instString = " [ ] ";
-            Object instance = getOwnerContentInstanceNumber();
+            Integer instance = getOwnerContentInstanceNumber();
             if (instance != null) {
                 instString = " [" + instance + "] ";
             }
@@ -221,12 +222,11 @@ public class InfoLayer3d extends AbstractInfoLayer {
         /* Demais informações */
         if (getDisplayPreferences(ANNOTATIONS)) {
             final Series series = (Series) owner.getSeries();
-            ImageElement dcm = null;
 
             DicomModel model = GUIManager.getInstance().getActiveDicomModel();
             MediaSeriesGroup study = model.getParent(series, DicomModel.study);
             MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
-            Modality mod = Modality.getModality((String) series.getTagValue(TagW.Modality));
+            Modality mod = Modality.getModality(TagD.getTagValue(series, Tag.Modality, String.class));
 
             ModalityInfoData modality = ModalityView.getModlatityInfos(mod);
             CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
@@ -236,11 +236,11 @@ public class InfoLayer3d extends AbstractInfoLayer {
             TagView[] infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
-                    if (hideMin || infos[j].containsTag(TagW.PatientName)) {
+                    if (hideMin || infos[j].containsTag(TagD.get(Tag.PatientName))) {
                         Object value = null;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                value = DisplayUtils.getTagValue(tag, patient, study, series, dcm);
+                                value = DisplayUtils.getTagValue(tag, patient, study, series, null);
                                 if (value != null) {
                                     String str = tag.getFormattedText(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
@@ -259,17 +259,17 @@ public class InfoLayer3d extends AbstractInfoLayer {
             infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
-                    if (hideMin || infos[j].containsTag(TagW.SeriesDate)) {
+                    if (hideMin || infos[j].containsTag(TagD.get(Tag.SeriesDate))) {
+                        Object value;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                Object value = DisplayUtils.getTagValue(tag, patient, study, series, dcm);
-
-                                if (tag.getTagName().equals("AcquisitionDate")
-                                    || tag.getTagName().equals("AcquisitionTime")) {
+                                value = DisplayUtils.getTagValue(tag, patient, study, series, null);
+                                if (tag.getKeyword().equals("AcquisitionDate")
+                                    || tag.getKeyword().equals("AcquisitionTime")) {
                                     if (owner instanceof ViewTexture && owner.isShowingAcquisitionAxis()) {
                                         ViewTexture texture = owner;
                                         value = owner.getSeriesObject().getTagValue(tag, texture.getCurrentSlice() - 1);
-                                    } else if (tag.getTagName().equals("AcquisitionTime")) {
+                                    } else if (tag.getKeyword().equals("AcquisitionTime")) {
                                         break;
                                     }
                                 }
@@ -278,10 +278,11 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                     String str = tag.getFormattedText(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         GraphicLabel.paintFontOutline(g2d, str,
-                                            bound.width - g2d.getFontMetrics().stringWidth(str) - border, drawY);
+                                            bound.width - g2d.getFontMetrics().stringWidth(str) - (float) border,
+                                            drawY);
                                         drawY += fontHeight;
-                                        break;
                                     }
+                                    break;
                                 }
                             }
                         }
@@ -298,10 +299,10 @@ public class InfoLayer3d extends AbstractInfoLayer {
                         Object value = null;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                value = DisplayUtils.getTagValue(tag, patient, study, series, dcm);
+                                value = DisplayUtils.getTagValue(tag, patient, study, series, null);
 
-                                if (tag.getTagName().equals("SliceLocation")
-                                    || tag.getTagName().equals("SliceThickness")) {
+                                if (tag.getKeyword().equals("SliceLocation")
+                                    || tag.getKeyword().equals("SliceThickness")) {
                                     if (owner instanceof ViewTexture && owner.isShowingAcquisitionAxis()
                                         && !isVolumetricView()) {
                                         ViewTexture texture = owner;
@@ -386,17 +387,14 @@ public class InfoLayer3d extends AbstractInfoLayer {
 
     @Override
     public String getPixelSizeCalibrationDescription() {
-        Object tagValue = null;
+        String tagValue = null;
         if (owner instanceof ViewTexture) {
             TextureDicomSeries ser = (TextureDicomSeries) owner.getParentImageSeries();
             if (ser != null) {
-                tagValue = ser.getTagValue(TagW.PixelSpacingCalibrationDescription);
+                tagValue = TagD.getTagValue(ser, Tag.PixelSpacingCalibrationDescription, String.class);
             }
         }
-        if (tagValue instanceof String) {
-            return (String) tagValue;
-        }
-        return null;
+        return tagValue;
     }
 
     @Override
@@ -444,7 +442,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
     private float checkAndPaintLossy(Graphics2D g2d, ViewTexture owner, float drawY, float fontHeight) {
         String tsuid = null;
         if (owner instanceof ViewTexture) {
-            String tagVal = (String) owner.getSeriesObject().getTagValue(TagW.TransferSyntaxUID, 0);
+            String tagVal = TagD.getTagValue(owner.getSeriesObject(), Tag.TransferSyntaxUID, String.class);
             tsuid = DisplayUtils.getLossyTransferSyntaxUID(tagVal);
         }
 
@@ -473,15 +471,15 @@ public class InfoLayer3d extends AbstractInfoLayer {
         return false;
     }
 
-    private Object getOwnerContentInstanceNumber() {
+    private Integer getOwnerContentInstanceNumber() {
         if (owner instanceof ViewTexture) {
             ViewTexture vt = owner;
             if (isOwnerContentReadable() && !isVolumetricView() && vt.isShowingAcquisitionAxis()) {
                 int currentSlice = vt.getCurrentSlice() - 1;
-                Object tag =
-                    ((TextureDicomSeries) vt.getParentImageSeries()).getTagValue(TagW.InstanceNumber, currentSlice);
+                Integer tag =
+                    TagD.getTagValue((TextureDicomSeries) vt.getParentImageSeries(), Tag.InstanceNumber, Integer.class);
                 if (tag != null) {
-                    return tag.toString();
+                    return tag == null ? currentSlice : tag;
                 }
             }
         }

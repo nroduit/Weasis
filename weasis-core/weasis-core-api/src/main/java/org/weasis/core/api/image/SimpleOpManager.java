@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.image.ImageOpNode.Param;
 
 public class SimpleOpManager implements OpManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleOpManager.class);
@@ -148,7 +149,7 @@ public class SimpleOpManager implements OpManager {
     public void setFirstNode(RenderedImage imgSource) {
         ImageOpNode node = getFirstNode();
         if (node != null) {
-            node.setParam(ImageOpNode.INPUT_IMG, imgSource);
+            node.setParam(Param.INPUT_IMG, imgSource);
         }
     }
 
@@ -156,7 +157,7 @@ public class SimpleOpManager implements OpManager {
     public RenderedImage getFirstNodeInputImage() {
         ImageOpNode node = getFirstNode();
         if (node != null) {
-            return (RenderedImage) node.getParam(ImageOpNode.INPUT_IMG);
+            return (RenderedImage) node.getParam(Param.INPUT_IMG);
         }
         return null;
     }
@@ -191,7 +192,7 @@ public class SimpleOpManager implements OpManager {
     public RenderedImage getLastNodeOutputImage() {
         ImageOpNode node = getLastNode();
         if (node != null) {
-            return (RenderedImage) node.getParam(ImageOpNode.OUTPUT_IMG);
+            return (RenderedImage) node.getParam(Param.OUTPUT_IMG);
         }
         return null;
     }
@@ -204,13 +205,13 @@ public class SimpleOpManager implements OpManager {
                 ImageOpNode op = operations.get(i);
                 try {
                     if (i > 0) {
-                        op.setParam(ImageOpNode.INPUT_IMG, operations.get(i - 1).getParam(ImageOpNode.OUTPUT_IMG));
+                        op.setParam(Param.INPUT_IMG, operations.get(i - 1).getParam(Param.OUTPUT_IMG));
                     }
                     op.process();
                 } catch (Exception e) {
-                    LOGGER.error("Image {} failed: {}", op.getParam(ImageOpNode.NAME), e.getMessage()); //$NON-NLS-1$
+                    LOGGER.error("Image {} failed: {}", op.getParam(Param.NAME), e); //$NON-NLS-1$
                     // Skip this operation
-                    op.setParam(ImageOpNode.OUTPUT_IMG, op.getParam(ImageOpNode.INPUT_IMG));
+                    op.setParam(Param.OUTPUT_IMG, op.getParam(Param.INPUT_IMG));
                 }
             }
         } else {

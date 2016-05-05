@@ -12,7 +12,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BoundedRangeModel;
@@ -707,7 +706,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                 viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
                 addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
 
-                final ArrayList<ViewCanvas<DicomImageElement>> panes = viewerPlugin.getImagePanels();
+                final List<ViewCanvas<DicomImageElement>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 

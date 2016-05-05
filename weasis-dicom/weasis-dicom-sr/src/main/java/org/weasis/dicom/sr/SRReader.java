@@ -1,84 +1,35 @@
 package org.weasis.dicom.sr;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Code;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.explorer.DicomModel;
 
 public class SRReader {
 
     private final DicomSpecialElement dicomSR;
     private final Attributes dcmItems;
-    private final HashMap<TagW, Object> tags = new HashMap<TagW, Object>();
 
     public SRReader(Series series, DicomSpecialElement dicomSR) {
         if (dicomSR == null) {
             throw new IllegalArgumentException("Dicom parameter cannot be null"); //$NON-NLS-1$
         }
         this.dicomSR = dicomSR;
-        if (dicomSR.getMediaReader() instanceof DicomMediaIO) {
-            DicomMediaIO dicomImageLoader = dicomSR.getMediaReader();
-            dcmItems = dicomImageLoader.getDicomObject();
-            DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
-            if (model instanceof TreeModel) {
-                TreeModel treeModel = (TreeModel) model;
-                MediaSeriesGroup patient = treeModel.getParent(series, model.getTreeModelNodeForNewPlugin());
-                if (patient == null) {
-                    String patientID = dcmItems.getString(Tag.PatientID, DicomMediaIO.NO_VALUE);
-                    tags.put(TagW.PatientID, patientID);
-                    String name = DicomMediaUtils.buildPatientName(dcmItems.getString(Tag.PatientName));
-                    tags.put(TagW.PatientName, name);
-                    Date birthdate = DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.PatientBirthDate, null);
-                    DicomMediaUtils.setTagNoNull(tags, TagW.PatientBirthDate, birthdate);
-                    // Global Identifier for the patient.
-                    tags.put(TagW.PatientPseudoUID, DicomMediaUtils.buildPatientPseudoUID(patientID,
-                        dcmItems.getString(Tag.IssuerOfPatientID), name, null));
-                    tags.put(TagW.PatientSex, DicomMediaUtils.buildPatientSex(dcmItems.getString(Tag.PatientSex)));
-
-                } else {
-                    tags.put(TagW.PatientName, patient.getTagValue(TagW.PatientName));
-                    tags.put(TagW.PatientID, patient.getTagValue(TagW.PatientID));
-                    tags.put(TagW.PatientBirthDate, patient.getTagValue(TagW.PatientBirthDate));
-                    tags.put(TagW.PatientSex, patient.getTagValue(TagW.PatientSex));
-                }
-
-                MediaSeriesGroup study = treeModel.getParent(series, DicomModel.study);
-                if (study == null) {
-                    DicomMediaUtils.setTagNoNull(tags, TagW.StudyID, dcmItems.getString(Tag.StudyID));
-                    DicomMediaUtils.setTagNoNull(tags, TagW.StudyDate,
-                        TagW.dateTime(DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.StudyDate, null),
-                            DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.StudyTime, null)));
-                    DicomMediaUtils.setTagNoNull(tags, TagW.AccessionNumber, dcmItems.getString(Tag.AccessionNumber));
-                    DicomMediaUtils.setTagNoNull(tags, TagW.ReferringPhysicianName,
-                        DicomMediaUtils.buildPersonName(dcmItems.getString(Tag.ReferringPhysicianName)));
-                } else {
-                    tags.put(TagW.StudyDate, study.getTagValue(TagW.StudyDate));
-                    tags.put(TagW.StudyID, study.getTagValue(TagW.StudyID));
-                    tags.put(TagW.AccessionNumber, study.getTagValue(TagW.AccessionNumber));
-                    tags.put(TagW.ReferringPhysicianName, series.getTagValue(TagW.ReferringPhysicianName));
-                }
-            }
-        } else {
-            dcmItems = null;
-        }
+        this.dcmItems = dicomSR.getMediaReader().getDicomObject();
     }
 
     public MediaElement getDicom() {
@@ -87,18 +38,6 @@ public class SRReader {
 
     public Attributes getDcmobj() {
         return dcmItems;
-    }
-
-    public HashMap<TagW, Object> getTags() {
-        return tags;
-    }
-
-    public Object getTagValue(TagW key, Object defaultValue) {
-        if (key == null) {
-            return defaultValue;
-        }
-        Object object = tags.get(key);
-        return object == null ? defaultValue : object;
     }
 
     public SeriesAndInstanceReference getSeriesAndInstanceReference() {
@@ -117,7 +56,7 @@ public class SRReader {
             String instDepName = dcmItems.getString(Tag.InstitutionalDepartmentName);
             String stationName = dcmItems.getString(Tag.StationName);
             Date contentDateTime =
-                TagW.dateTime(DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.ContentDate, null),
+                TagUtil.dateTime(DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.ContentDate, null),
                     DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.ContentTime, null));
             if (instName != null) {
                 html.append(Messages.getString("SRReader.by")); //$NON-NLS-1$
@@ -141,7 +80,7 @@ public class SRReader {
                 if (instName != null || stationName != null) {
                     html.append(", "); //$NON-NLS-1$
                 }
-                html.append(TagW.formatDateTime(contentDateTime));
+                html.append(TagUtil.formatDateTime(contentDateTime));
             }
             if (instName != null || stationName != null || contentDateTime != null) {
                 html.append("<BR>"); //$NON-NLS-1$
@@ -152,34 +91,34 @@ public class SRReader {
             html.append("<tr align=\"left\" valign=\"top\"><td width=\"33%\" >"); //$NON-NLS-1$
             html.append("<font size=\"+1\">Patient</font>"); //$NON-NLS-1$
             html.append("<BR>"); //$NON-NLS-1$
-            writeItem(TagW.PatientName, html);
+            writeItem(Tag.PatientName, html);
             html.append("<BR>"); //$NON-NLS-1$
-            writeItem(TagW.PatientID, html);
+            writeItem(Tag.PatientID, html);
             html.append("<BR>"); //$NON-NLS-1$
-            writeItem(TagW.PatientBirthDate, html);
+            writeItem(Tag.PatientBirthDate, html);
             html.append("<BR>"); //$NON-NLS-1$
-            writeItem(TagW.PatientSex, html);
+            writeItem(Tag.PatientSex, html);
 
             html.append("</td><td width=\"33%\" >"); //$NON-NLS-1$
             html.append("<font size=\"+1\">"); //$NON-NLS-1$
             html.append(Messages.getString("SRReader.study")); //$NON-NLS-1$
             html.append("</font>"); //$NON-NLS-1$
             html.append("<BR>"); //$NON-NLS-1$
-            writeItem(TagW.StudyDate, html);
+            writeStudyDateTime(html);
             html.append("<BR>"); //$NON-NLS-1$
-            writeItem(TagW.StudyID, html);
+            writeItem(Tag.StudyID, html);
             html.append("<BR>"); //$NON-NLS-1$
-            writeItem(TagW.AccessionNumber, html);
+            writeItem(Tag.AccessionNumber, html);
             html.append("<BR>"); //$NON-NLS-1$
-            writeItem(TagW.ReferringPhysicianName, html);
+            writeItem(Tag.ReferringPhysicianName, html);
 
             html.append("</td><td width=\"33%\" >"); //$NON-NLS-1$
             html.append("<font size=\"+1\">"); //$NON-NLS-1$
             html.append(Messages.getString("SRReader.report_status")); //$NON-NLS-1$
             html.append("</font><BR>"); //$NON-NLS-1$
-            writeItem(Messages.getString("SRReader.comp_flag"), Tag.CompletionFlag, html); //$NON-NLS-1$
+            writeItem(Tag.CompletionFlag, html); // $NON-NLS-1$
             html.append("<BR>"); //$NON-NLS-1$
-            writeItem(Messages.getString("SRReader.ver_flag"), Tag.VerificationFlag, html); //$NON-NLS-1$
+            writeItem(Tag.VerificationFlag, html); // $NON-NLS-1$
             html.append("<BR>"); //$NON-NLS-1$
             writeVerifyingObservers(html);
             html.append("</td></tr>"); //$NON-NLS-1$
@@ -221,7 +160,7 @@ public class SRReader {
                 addCodeMeaning(html, c.getConceptCode(), null, null);
             } else if ("PNAME".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
-                convertTextToHTML(html, DicomMediaUtils.buildPersonName(c.getPersonName()));
+                convertTextToHTML(html, TagUtil.buildDicomPersonName(c.getPersonName()));
             } else if ("NUM".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : " = "); //$NON-NLS-1$ //$NON-NLS-2$
                 Attributes val = c.getMeasuredValue();
@@ -420,32 +359,30 @@ public class SRReader {
         }
     }
 
-    private void writeItem(TagW tag, StringBuilder html) {
-        if (tag != null && html != null) {
+    private void writeItem(int tagID, StringBuilder html) {
+        TagW tag = TagD.getNullable(tagID, null);
+        if (tag != null && html != null && dcmItems != null) {
             html.append("<B>"); //$NON-NLS-1$
-            html.append(tag.toString());
+            html.append(tag.getDisplayedName());
             html.append("</B>"); //$NON-NLS-1$
             html.append(StringUtil.COLON_AND_SPACE);
-            Object val = tags.get(tag);
-            if (val == null) {
-                val = dicomSR.getTagValue(tag);
-            }
-            if (val != null) {
-                html.append(TagW.getFormattedText(val, tag.getType(), null));
-            }
+            html.append(tag.getFormattedText(tag.getValue(dcmItems), null));
         }
     }
 
-    private void writeItem(String tagName, int tag, StringBuilder html) {
-        if (tagName != null && html != null && dcmItems != null) {
+    private void writeStudyDateTime(StringBuilder html) {
+        TagW tagDate = TagD.getNullable(Tag.StudyDate, null);
+        if (tagDate != null && html != null && dcmItems != null) {
+            Date date = (Date) tagDate.getValue(dcmItems);
+            TagW tagTime = TagD.getNullable(Tag.StudyTime, null);
+            if (tagTime != null) {
+                date = TagUtil.dateTime(date, (Date) tagTime.getValue(dcmItems));
+            }
             html.append("<B>"); //$NON-NLS-1$
-            html.append(tagName);
+            html.append(tagDate.getDisplayedName());
             html.append("</B>"); //$NON-NLS-1$
             html.append(StringUtil.COLON_AND_SPACE);
-            String val = dcmItems.getString(tag);
-            if (val != null) {
-                html.append(val);
-            }
+            html.append(tagDate.getFormattedText(date, null));
         }
     }
 
@@ -462,9 +399,9 @@ public class SRReader {
                     Date date = v.getDate(Tag.VerificationDateTime);
                     if (date != null) {
                         html.append(" * "); //$NON-NLS-1$
-                        html.append(TagW.formatDateTime(date));
+                        html.append(TagUtil.formatDateTime(date));
                         html.append(" - "); //$NON-NLS-1$
-                        String name = DicomMediaUtils.buildPersonName(v.getString(Tag.VerifyingObserverName));
+                        String name = TagUtil.buildDicomPersonName(v.getString(Tag.VerifyingObserverName));
                         if (name != null) {
                             html.append(name);
                             html.append(", "); //$NON-NLS-1$

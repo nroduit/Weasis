@@ -12,6 +12,7 @@ package org.weasis.dicom.codec;
 
 import java.io.File;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.AudioVideoElement;
 import org.weasis.core.api.media.data.TagW;
@@ -28,9 +29,9 @@ public class DicomVideoElement extends AudioVideoElement  implements FileExtract
     public DicomVideoElement(DicomMediaIO mediaIO, Object key) {
         super(mediaIO, key);
         // Physical distance in mm between the center of each pixel (ratio in mm)
-        double[] val = (double[]) mediaIO.getTagValue(TagW.PixelSpacing);
+        double[] val = TagD.getTagValue(mediaIO, Tag.PixelSpacing, double[].class);
         if (val == null || val.length != 2) {
-            val = (double[]) mediaIO.getTagValue(TagW.ImagerPixelSpacing);
+            val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
         }
         if (val != null) {
             pixelSizeX = val[0];

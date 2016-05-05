@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.display;
 
+import org.weasis.core.api.media.data.TagView;
+
 public class CornerInfoData {
 
     public static final int ELEMENT_NUMBER = 7;

@@ -8,6 +8,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -27,6 +28,7 @@ import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
 import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -94,7 +96,7 @@ public final class KOManager {
         } else {
             if (currentSelectedKO.getMediaReader().isEditableDicom()) {
 
-                String studyInstanceUID = (String) currentImage.getTagValue(TagW.StudyInstanceUID);
+                String studyInstanceUID = TagD.getTagValue(currentImage, Tag.StudyInstanceUID, String.class);
 
                 if (currentSelectedKO.isEmpty()
                     || currentSelectedKO.containsStudyInstanceUIDReference(studyInstanceUID)) {
@@ -213,7 +215,7 @@ public final class KOManager {
         MediaSeries<DicomImageElement> dicomSeries = view2d.getSeries();
         DicomImageElement currentImage = view2d.getImage();
         if (currentImage != null && dicomSeries != null) {
-            String currentStudyInstanceUID = (String) currentImage.getTagValue(TagW.StudyInstanceUID);
+            String currentStudyInstanceUID = TagD.getTagValue(currentImage, Tag.StudyInstanceUID, String.class);
             Collection<KOSpecialElement> koElementsWithReferencedSeriesInstanceUID =
                 DicomModel.getKoSpecialElements(dicomSeries);
 
@@ -398,7 +400,7 @@ public final class KOManager {
             }
 
             DicomSeries dicomSeries = (DicomSeries) view2D.getSeries();
-            String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+            String seriesInstanceUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
             Filter<DicomImageElement> sopInstanceUIDFilter = null;
 
             if (koFilter && selectedKO.containsSeriesInstanceUIDReference(seriesInstanceUID)) {

@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -21,6 +22,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 
+import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
@@ -42,7 +44,6 @@ import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
@@ -66,6 +67,8 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -109,7 +112,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", Messages.getString("MPRContainer.title"), null); //$NON-NLS-1$ //$NON-NLS-2$
 
     static {
-        LinkedHashMap<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
+        Map<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
         constraints.put(new LayoutConstraints(MprView.class.getName(), 0, 0, 0, 1, 2, 0.5, 1.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
         constraints.put(new LayoutConstraints(MprView.class.getName(), 1, 1, 0, 1, 1, 0.5, 0.5,
@@ -294,14 +297,14 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                 } else if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
-                    if (TagW.PatientPseudoUID.equals(group.getTagID())) {
+                    if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
                         }
                     }
                     // Study Group
-                    else if (TagW.StudyInstanceUID.equals(group.getTagID())) {
+                    else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
                             for (MediaSeriesGroup s : model.getChildren(group)) {
@@ -331,18 +334,18 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     }
 
     @Override
-    public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         return View2dFactory.getViewTypeNumber(layout, defaultClass);
     }
 
     @Override
-    public boolean isViewType(Class defaultClass, String type) {
+    public boolean isViewType(Class<?> defaultClass, String type) {
         if (defaultClass != null) {
             try {
-                Class clazz = Class.forName(type);
+                Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Checking view type", e);
             }
         }
         return false;
@@ -361,23 +364,15 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
         try {
             // FIXME use classloader.loadClass or injection
-            Class cl = Class.forName(clazz);
+            Class<?> cl = Class.forName(clazz);
             JComponent component = (JComponent) cl.newInstance();
             if (component instanceof SeriesViewerListener) {
                 eventManager.addSeriesViewerListener((SeriesViewerListener) component);
             }
             return component;
 
-        } catch (InstantiationException e1) {
-            e1.printStackTrace();
-        } catch (IllegalAccessException e1) {
-            e1.printStackTrace();
-        }
-
-        catch (ClassNotFoundException e1) {
-            e1.printStackTrace();
-        } catch (ClassCastException e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }
@@ -471,7 +466,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         if (view != null) {
             view.setSeries(sequence);
 
-            String title = (String) sequence.getTagValue(TagW.PatientName);
+            String title = TagD.getTagValue(sequence, Tag.PatientName, String.class);
             if (title != null) {
                 this.getDockable().setTitleToolTip(title);
                 this.setPluginName(StringUtil.getTruncatedString(title, 25, Suffix.THREE_PTS));
@@ -571,7 +566,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         if (s != null) {
             Object img = s.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
             if (img instanceof DicomImageElement) {
-                double[] v = (double[]) ((DicomImageElement) img).getTagValue(TagW.ImageOrientationPatient);
+                double[] v = TagD.getTagValue((DicomImageElement) img, Tag.ImageOrientationPatient, double[].class);
                 if (v != null && v.length == 6) {
                     String orientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
                         v[1], v[2], v[3], v[4], v[5]);

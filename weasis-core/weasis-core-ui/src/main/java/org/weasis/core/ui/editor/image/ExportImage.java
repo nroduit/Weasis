@@ -60,7 +60,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
             try {
                 operations.addImageOperationAction(op.clone());
             } catch (CloneNotSupportedException e) {
-                LOGGER.error("Cannot clone image operation: {}", op); //$NON-NLS-1$
+                LOGGER.error("Clone image operation", e); //$NON-NLS-1$
             }
         }
         // Copy the current values of image operations
@@ -92,7 +92,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         removeFocusListener(this);
         ToolTipManager.sharedInstance().unregisterComponent(this);
         imageLayer.removeLayerChangeListener(this);
-        // Unregister listener in GraphicsPane;
+        // Unregister listener in GraphicsPane
         setLayerModel(null);
         setViewModel(null);
     }
@@ -150,10 +150,12 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     }
 
     @Override
-    public void handleLayerChanged(ImageLayer layer) {
+    public void handleLayerChanged(ImageLayer<E> layer) {
+        // Do nothing
     }
 
     @Override
     public void enableMouseAndKeyListener(MouseActions mouseActions) {
+        // Do nothing
     }
 }

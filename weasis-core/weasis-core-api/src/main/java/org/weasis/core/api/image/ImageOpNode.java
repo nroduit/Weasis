@@ -13,11 +13,18 @@ package org.weasis.core.api.image;
 import java.util.Map;
 
 public interface ImageOpNode extends Cloneable {
-    String NAME = "op.display.name"; //$NON-NLS-1$
-    String ENABLE = "op.enable"; //$NON-NLS-1$
 
-    String INPUT_IMG = "op.input.img"; //$NON-NLS-1$
-    String OUTPUT_IMG = "op.output.img"; //$NON-NLS-1$
+    public final class Param {
+
+        public static final String NAME = "op.display.name"; //$NON-NLS-1$
+        public static final String ENABLE = "op.enable"; //$NON-NLS-1$
+
+        public static final String INPUT_IMG = "op.input.img"; //$NON-NLS-1$
+        public static final String OUTPUT_IMG = "op.output.img"; //$NON-NLS-1$
+
+        private Param() {
+        }
+    }
 
     void process() throws Exception;
 

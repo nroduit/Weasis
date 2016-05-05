@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.Action;
@@ -27,6 +28,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 
+import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
@@ -49,7 +51,6 @@ import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesComparator;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
@@ -72,6 +73,8 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.LutToolBar;
@@ -129,7 +132,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             new ImageIcon(View3DContainer.class.getResource("/icon/22x22/layout_mpr3.png")));
 
     static {
-        LinkedHashMap<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
+        Map<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
         constraints.put(new LayoutConstraints(ViewTexture.class.getName(), 0, 0, 0, 1, 2, 0.5, 1.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
         constraints.put(new LayoutConstraints(ViewTexture.class.getName(), 1, 1, 0, 1, 1, 0.5, 0.5,
@@ -143,7 +146,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             new ImageIcon(ViewerPlugin.class.getResource("/icon/22x22/layout2x2.png")));
 
     static {
-        LinkedHashMap<LayoutConstraints, Component> constraints = VIEWS_2x2_mpr.getConstraints();
+        Map<LayoutConstraints, Component> constraints = VIEWS_2x2_mpr.getConstraints();
         constraints.put(new LayoutConstraints(ViewTexture.class.getName(), 0, 0, 0, 1, 1, 0.5, 0.5,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
         constraints.put(new LayoutConstraints(ViewTexture.class.getName(), 1, 1, 0, 1, 1, 0.5, 0.5,
@@ -253,7 +256,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             return;
         }
 
-        setPluginName((String) series.getTagValue(TagW.PatientName));
+        setPluginName(TagD.getTagValue(series, Tag.PatientName, String.class));
         setSelected(true);
     }
 
@@ -265,7 +268,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         }
         super.setLayoutModel(layoutModel);
 
-        final LinkedHashMap<LayoutConstraints, Component> elements = getLayoutModel().getConstraints();
+        final Map<LayoutConstraints, Component> elements = getLayoutModel().getConstraints();
         Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
 
         if (series != null) {
@@ -385,12 +388,12 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         } else if (newVal instanceof MediaSeriesGroup) {
             MediaSeriesGroup group = (MediaSeriesGroup) newVal;
             // Patient Group
-            if (TagW.PatientPseudoUID.equals(group.getTagID())) {
+            if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                 if (group.equals(getGroupID())) {
                     close();
                 }
                 // Study Group
-            } else if (TagW.StudyInstanceUID.equals(group.getTagID())) {
+            } else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                 if (event.getSource() instanceof DicomModel) {
                     DicomModel model = (DicomModel) event.getSource();
                     for (MediaSeriesGroup removedSerie : model.getChildren(group)) {
