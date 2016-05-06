@@ -91,7 +91,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     protected void initialize(boolean afirst) {
         if (afirst) {
             Properties pref = SendDicomFactory.EXPORT_PERSISTENCE;
-            DicomNodeEx.loadDicomNodes(comboNode);
+            DicomNodeEx.loadPrefDicomNodes(comboNode);
         }
     }
 

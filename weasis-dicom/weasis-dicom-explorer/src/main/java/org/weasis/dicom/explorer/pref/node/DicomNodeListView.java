@@ -53,7 +53,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         panel.add(label, gbcLabel);
 
         final JComboBox<DicomNodeEx> nodeComboBox = new JComboBox<>();
-        DicomNodeEx.loadDicomNodes(nodeComboBox);
+        DicomNodeEx.loadPrefDicomNodes(nodeComboBox);
         GridBagConstraints gbcComboBox = new GridBagConstraints();
         gbcComboBox.anchor = GridBagConstraints.NORTHWEST;
         gbcComboBox.insets = new Insets(0, 0, 5, 5);
@@ -110,7 +110,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
 
                     if (response == 0) {
                         nodeComboBox.removeItemAt(index);
-                        DicomNodeEx.saveDicomNodes(nodeComboBox);
+                        DicomNodeEx.savePrefDicomNodes(nodeComboBox);
                     }
 
                 }

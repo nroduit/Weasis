@@ -11,12 +11,13 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer.print;
 
+import org.weasis.dicom.explorer.pref.node.DicomNodeEx;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.DotPerInches;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 
 /**
  *
- * @author Marcelo Porto (marcelo@animati.com.br)
+ * @author Marcelo Porto (marcelo@animati.com.br), Nicolas Roduit
  * @version 09/01/2012
  */
 public class DicomPrintOptions {
@@ -36,7 +37,7 @@ public class DicomPrintOptions {
     private Integer minDensity;
     private Integer maxDensity;
     private boolean printInColor = true;
-    private DicomPrinter dicomPrinter;
+    private DicomNodeEx dicomPrinter;
     private DotPerInches dpi;
 
     public Boolean isPrintInColor() {
@@ -159,11 +160,11 @@ public class DicomPrintOptions {
         this.trim = trim;
     }
 
-    public DicomPrinter getDicomPrinter() {
+    public DicomNodeEx getDicomPrinter() {
         return dicomPrinter;
     }
 
-    public void setDicomPrinter(DicomPrinter dicomPrinter) {
+    public void setDicomPrinter(DicomNodeEx dicomPrinter) {
         this.dicomPrinter = dicomPrinter;
     }
 

@@ -6,11 +6,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.text.NumberFormat;
 
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -41,14 +38,21 @@ public class DicomNodeDialog extends JDialog {
     private JButton okButton;
     private JLabel portLabel;
     private JFormattedTextField portTf;
-    private DicomNodeEx dicomNode;
-    private JComboBox<DicomNodeEx> nodesComboBox;
     private JPanel footPanel;
-    private JLabel lblType;
-    private JComboBox<DicomNodeEx.Type> comboBox;
+
+    private DicomNodeEx dicomNode;
+    private final JComboBox<DicomNodeEx> nodesComboBox;
+    private final DicomNodeEx.Type typeNode;
 
     public DicomNodeDialog(Window parent, String title, DicomNodeEx dicomNode, JComboBox<DicomNodeEx> nodeComboBox) {
+        this(parent, title, dicomNode, nodeComboBox, DicomNodeEx.Type.ARCHIVE);
+    }
+
+    public DicomNodeDialog(Window parent, String title, DicomNodeEx dicomNode, JComboBox<DicomNodeEx> nodeComboBox,
+        DicomNodeEx.Type typeNode) {
         super(parent, title, ModalityType.APPLICATION_MODAL);
+        this.typeNode =
+            dicomNode == null ? typeNode == null ? DicomNodeEx.Type.ARCHIVE : typeNode : dicomNode.getType();
         initComponents();
         this.dicomNode = dicomNode;
         this.nodesComboBox = nodeComboBox;
@@ -58,7 +62,6 @@ public class DicomNodeDialog extends JDialog {
             hostnameTf.setText(dicomNode.getHostname());
             portTf.setValue(dicomNode.getPort());
             colorPrintSupportCheckBox.setSelected(dicomNode.isColorPrintSupported());
-            comboBox.setSelectedItem(dicomNode.getType());
         }
         pack();
     }
@@ -75,58 +78,32 @@ public class DicomNodeDialog extends JDialog {
         GridBagLayout gridBagLayout = new GridBagLayout();
         content.setLayout(gridBagLayout);
         descriptionLabel = new JLabel();
-        GridBagConstraints gbc_descriptionLabel = new GridBagConstraints();
-        gbc_descriptionLabel.insets = new Insets(0, 0, 5, 5);
-        gbc_descriptionLabel.gridx = 0;
-        gbc_descriptionLabel.gridy = 0;
-        content.add(descriptionLabel, gbc_descriptionLabel);
+        GridBagConstraints gbcDescriptionLabel = new GridBagConstraints();
+        gbcDescriptionLabel.insets = new Insets(0, 0, 5, 5);
+        gbcDescriptionLabel.gridx = 0;
+        gbcDescriptionLabel.gridy = 0;
+        content.add(descriptionLabel, gbcDescriptionLabel);
 
         descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
         descriptionTf = new JTextField();
-        GridBagConstraints gbc_descriptionTf = new GridBagConstraints();
-        gbc_descriptionTf.insets = new Insets(0, 0, 5, 5);
-        gbc_descriptionTf.gridx = 1;
-        gbc_descriptionTf.gridy = 0;
-        content.add(descriptionTf, gbc_descriptionTf);
+        GridBagConstraints gbcDescriptionTf = new GridBagConstraints();
+        gbcDescriptionTf.insets = new Insets(0, 0, 5, 5);
+        gbcDescriptionTf.gridx = 1;
+        gbcDescriptionTf.gridy = 0;
+        content.add(descriptionTf, gbcDescriptionTf);
         descriptionTf.setColumns(15);
 
-        lblType = new JLabel(Messages.getString("DicomNodeDialog.lblType.text")); //$NON-NLS-1$
-        GridBagConstraints gbcLblType = new GridBagConstraints();
-        gbcLblType.anchor = GridBagConstraints.EAST;
-        gbcLblType.insets = new Insets(0, 0, 5, 5);
-        gbcLblType.gridx = 0;
-        gbcLblType.gridy = 1;
-        content.add(lblType, gbcLblType);
-
-        comboBox = new JComboBox<>(new DefaultComboBoxModel<>(DicomNodeEx.Type.values()));
-        GridBagConstraints gbcComboBox = new GridBagConstraints();
-        gbcComboBox.insets = new Insets(0, 0, 5, 5);
-        gbcComboBox.fill = GridBagConstraints.HORIZONTAL;
-        gbcComboBox.gridx = 1;
-        gbcComboBox.gridy = 1;
-        content.add(comboBox, gbcComboBox);
-
         colorPrintSupportCheckBox = new JCheckBox();
-
-        colorPrintSupportCheckBox.setText(Messages.getString("PrinterDialog.color")); //$NON-NLS-1$
-        GridBagConstraints gbcColorPrintSupportCheckBox = new GridBagConstraints();
-        gbcColorPrintSupportCheckBox.anchor = GridBagConstraints.WEST;
-        gbcColorPrintSupportCheckBox.insets = new Insets(0, 0, 0, 5);
-        gbcColorPrintSupportCheckBox.gridwidth = 2;
-        gbcColorPrintSupportCheckBox.gridx = 0;
-        gbcColorPrintSupportCheckBox.gridy = 4;
-        content.add(colorPrintSupportCheckBox, gbcColorPrintSupportCheckBox);
-        colorPrintSupportCheckBox.setEnabled(false);
-        final ItemListener changeViewListener = new ItemListener() {
-
-            @Override
-            public void itemStateChanged(final ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    colorPrintSupportCheckBox.setEnabled(DicomNodeEx.Type.PRINTER.equals(comboBox.getSelectedItem()));
-                }
-            }
-        };
-        comboBox.addItemListener(changeViewListener);
+        if (typeNode == DicomNodeEx.Type.PRINTER) {
+            colorPrintSupportCheckBox.setText(Messages.getString("PrinterDialog.color")); //$NON-NLS-1$
+            GridBagConstraints gbcColorPrintSupportCheckBox = new GridBagConstraints();
+            gbcColorPrintSupportCheckBox.anchor = GridBagConstraints.WEST;
+            gbcColorPrintSupportCheckBox.insets = new Insets(0, 0, 0, 5);
+            gbcColorPrintSupportCheckBox.gridwidth = 2;
+            gbcColorPrintSupportCheckBox.gridx = 0;
+            gbcColorPrintSupportCheckBox.gridy = 3;
+            content.add(colorPrintSupportCheckBox, gbcColorPrintSupportCheckBox);
+        }
 
         aeTitleLabel = new JLabel();
         aeTitleLabel.setText(Messages.getString("PrinterDialog.aet") + StringUtil.COLON); //$NON-NLS-1$
@@ -134,7 +111,7 @@ public class DicomNodeDialog extends JDialog {
         gbcAeTitleLabel.anchor = GridBagConstraints.SOUTHEAST;
         gbcAeTitleLabel.insets = new Insets(0, 0, 5, 5);
         gbcAeTitleLabel.gridx = 0;
-        gbcAeTitleLabel.gridy = 2;
+        gbcAeTitleLabel.gridy = 1;
         content.add(aeTitleLabel, gbcAeTitleLabel);
         aeTitleTf = new JTextField();
         aeTitleTf.setColumns(15);
@@ -142,7 +119,7 @@ public class DicomNodeDialog extends JDialog {
         gbcAeTitleTf.anchor = GridBagConstraints.WEST;
         gbcAeTitleTf.insets = new Insets(0, 0, 5, 5);
         gbcAeTitleTf.gridx = 1;
-        gbcAeTitleTf.gridy = 2;
+        gbcAeTitleTf.gridy = 1;
         content.add(aeTitleTf, gbcAeTitleTf);
         hostnameLabel = new JLabel();
 
@@ -151,7 +128,7 @@ public class DicomNodeDialog extends JDialog {
         gbcHostnameLabel.anchor = GridBagConstraints.EAST;
         gbcHostnameLabel.insets = new Insets(0, 0, 5, 5);
         gbcHostnameLabel.gridx = 0;
-        gbcHostnameLabel.gridy = 3;
+        gbcHostnameLabel.gridy = 2;
         content.add(hostnameLabel, gbcHostnameLabel);
         hostnameTf = new JTextField();
         hostnameTf.setColumns(15);
@@ -159,7 +136,7 @@ public class DicomNodeDialog extends JDialog {
         gbcHostnameTf.anchor = GridBagConstraints.WEST;
         gbcHostnameTf.insets = new Insets(0, 0, 5, 5);
         gbcHostnameTf.gridx = 1;
-        gbcHostnameTf.gridy = 3;
+        gbcHostnameTf.gridy = 2;
         content.add(hostnameTf, gbcHostnameTf);
         portLabel = new JLabel();
 
@@ -168,7 +145,7 @@ public class DicomNodeDialog extends JDialog {
         gbcPortLabel.anchor = GridBagConstraints.WEST;
         gbcPortLabel.insets = new Insets(0, 0, 5, 5);
         gbcPortLabel.gridx = 2;
-        gbcPortLabel.gridy = 3;
+        gbcPortLabel.gridy = 2;
         content.add(portLabel, gbcPortLabel);
         NumberFormat myFormat = LocalUtil.getNumberInstance();
         myFormat.setMinimumIntegerDigits(0);
@@ -182,7 +159,7 @@ public class DicomNodeDialog extends JDialog {
         gbcPortTf.anchor = GridBagConstraints.WEST;
         gbcPortTf.insets = new Insets(0, 0, 5, 0);
         gbcPortTf.gridx = 3;
-        gbcPortTf.gridy = 3;
+        gbcPortTf.gridy = 2;
         content.add(portTf, gbcPortTf);
 
         this.getContentPane().add(content, BorderLayout.CENTER);
@@ -201,7 +178,7 @@ public class DicomNodeDialog extends JDialog {
         okButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                okButtonActionPerformed(evt);
+                okButtonActionPerformed();
             }
         });
         cancelButton = new JButton();
@@ -211,16 +188,12 @@ public class DicomNodeDialog extends JDialog {
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
+                dispose();
             }
         });
     }
 
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        dispose();
-    }
-
-    private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    private void okButtonActionPerformed() {
         String desc = descriptionTf.getText();
         String aeTitle = aeTitleTf.getText();
         String hostname = hostnameTf.getText();
@@ -244,7 +217,7 @@ public class DicomNodeDialog extends JDialog {
             dicomNode.setPort(port.intValue());
         }
 
-        dicomNode.setType((DicomNodeEx.Type) comboBox.getSelectedItem());
+        dicomNode.setType(typeNode);
         dicomNode.setColorPrintSupported(colorPrintSupportCheckBox.isSelected());
         if (addNode) {
             nodesComboBox.setSelectedItem(dicomNode);
@@ -252,7 +225,7 @@ public class DicomNodeDialog extends JDialog {
             nodesComboBox.repaint();
         }
 
-        DicomNodeEx.saveDicomNodes(nodesComboBox);
+        DicomNodeEx.saveDicomNodes(nodesComboBox, typeNode);
         dispose();
     }
 }

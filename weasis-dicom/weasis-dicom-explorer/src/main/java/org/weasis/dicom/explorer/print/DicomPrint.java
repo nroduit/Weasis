@@ -60,6 +60,7 @@ import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
+import org.weasis.dicom.explorer.pref.node.DicomNodeEx;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.DotPerInches;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 
@@ -276,15 +277,16 @@ public class DicomPrint {
         ApplicationEntity ae = new ApplicationEntity(weasisAet);
         Connection conn = new Connection();
 
-        ApplicationEntity remoteAE = new ApplicationEntity(dicomPrintOptions.getDicomPrinter().getAeTitle());
+        DicomNodeEx node = dicomPrintOptions.getDicomPrinter();
+        ApplicationEntity remoteAE = new ApplicationEntity(node.getAeTitle());
         Connection remoteConn = new Connection();
 
         ae.addConnection(conn);
         ae.setAssociationInitiator(true);
         ae.setAETitle(weasisAet);
 
-        remoteConn.setPort(dicomPrintOptions.getDicomPrinter().getPort());
-        remoteConn.setHostname(dicomPrintOptions.getDicomPrinter().getHostname());
+        remoteConn.setPort(node.getPort());
+        remoteConn.setHostname(node.getHostname());
         remoteConn.setSocketCloseDelay(90);
 
         remoteAE.setAssociationAcceptor(true);

@@ -112,7 +112,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     protected void initialize(boolean afirst) {
         if (afirst) {
             Properties pref = DicomQrFactory.IMPORT_PERSISTENCE;
-            DicomNodeEx.loadDicomNodes(comboNode);
+            DicomNodeEx.loadPrefDicomNodes(comboNode);
         }
     }
 

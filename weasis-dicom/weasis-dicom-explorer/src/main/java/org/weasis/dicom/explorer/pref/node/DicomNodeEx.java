@@ -33,17 +33,23 @@ public class DicomNodeEx extends DcmNode {
     private static final String T_COLOR = "colorPrintSupported";
 
     public enum Type {
-        ARCHIVE("Archive"), PRINTER("Printer");
+        ARCHIVE("Archive", "dicomNodes.xml"), PRINTER("Printer", "dicomPrinters.xml");
 
-        String title;
+        final String title;
+        final String filename;
 
-        Type(String title) {
+        Type(String title, String filename) {
             this.title = title;
+            this.filename = filename;
         }
 
         @Override
         public String toString() {
             return title;
+        }
+
+        public String getFilename() {
+            return filename;
         }
 
         public static Type getType(String name) {
@@ -130,7 +136,7 @@ public class DicomNodeEx extends DcmNode {
     }
 
     public void setType(Type type) {
-        this.type = type;
+        this.type = type == null ? DicomNodeEx.Type.ARCHIVE : type;
     }
 
     public boolean isColorPrintSupported() {
@@ -153,32 +159,38 @@ public class DicomNodeEx extends DcmNode {
         return new DicomNode(aeTitle, hostname, port);
     }
 
-    public static void saveDicomNodes(JComboBox<DicomNodeEx> comboBox) {
+    public static void savePrefDicomNodes(JComboBox<DicomNodeEx> comboBox) {
+        saveDicomNodes(comboBox, Type.ARCHIVE);
+    }
+
+    public static void saveDicomNodes(JComboBox<DicomNodeEx> comboBox, Type type) {
         XMLStreamWriter writer = null;
         XMLOutputFactory factory = XMLOutputFactory.newInstance();
         final BundleContext context = FrameworkUtil.getBundle(DicomNodeEx.class).getBundleContext();
         try {
             writer = factory.createXMLStreamWriter(
-                new FileOutputStream(new File(BundlePreferences.getDataFolder(context), "dicomNodes.xml")), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+                new FileOutputStream(new File(BundlePreferences.getDataFolder(context), type.getFilename())), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
 
             writer.writeStartDocument("UTF-8", "1.0"); //$NON-NLS-1$ //$NON-NLS-2$
             writer.writeStartElement(T_NODES);
             for (int i = 0; i < comboBox.getItemCount(); i++) {
                 DicomNodeEx node = comboBox.getItemAt(i);
-                writer.writeStartElement(T_NODE);
-                writer.writeAttribute(T_DESCRIPTION, node.getDescription());
-                writer.writeAttribute(T_AETITLE, node.getAeTitle());
-                writer.writeAttribute(T_HOST, node.getHostname());
-                writer.writeAttribute(T_PORT, Integer.toString(node.getPort()));
-                writer.writeAttribute(T_TYPE, StringUtil.getEmpty2NullEnum(node.getType()));
-                if (Type.PRINTER.equals(node.getType())) {
-                    writer.writeAttribute(T_COLOR, Boolean.toString(node.isColorPrintSupported()));
-                } else {
-                    writer.writeAttribute(T_TSUID, StringUtil.getEmpty2NullEnum(node.getTsuid()));
-                }
+                if (type == null || type == node.getType()) {
+                    writer.writeStartElement(T_NODE);
+                    writer.writeAttribute(T_DESCRIPTION, node.getDescription());
+                    writer.writeAttribute(T_AETITLE, node.getAeTitle());
+                    writer.writeAttribute(T_HOST, node.getHostname());
+                    writer.writeAttribute(T_PORT, Integer.toString(node.getPort()));
+                    writer.writeAttribute(T_TYPE, StringUtil.getEmpty2NullEnum(node.getType()));
+                    if (Type.PRINTER.equals(node.getType())) {
+                        writer.writeAttribute(T_COLOR, Boolean.toString(node.isColorPrintSupported()));
+                    } else {
+                        writer.writeAttribute(T_TSUID, StringUtil.getEmpty2NullEnum(node.getTsuid()));
+                    }
 
-                // writer.writeAttribute("tlsOptions", StringUtil.getEmpty2NullObject(printer.getTlsOptions()));
-                writer.writeEndElement();
+                    // writer.writeAttribute("tlsOptions", StringUtil.getEmpty2NullObject(printer.getTlsOptions()));
+                    writer.writeEndElement();
+                }
             }
             writer.writeEndElement();
             writer.writeEndDocument();
@@ -190,9 +202,13 @@ public class DicomNodeEx extends DcmNode {
         }
     }
 
-    public static void loadDicomNodes(JComboBox<DicomNodeEx> comboBox) {
+    public static void loadPrefDicomNodes(JComboBox<DicomNodeEx> comboBox) {
+        loadDicomNodes(comboBox, Type.ARCHIVE);
+    }
+
+    public static void loadDicomNodes(JComboBox<DicomNodeEx> comboBox, Type type) {
         final BundleContext context = FrameworkUtil.getBundle(DicomNodeEx.class).getBundleContext();
-        File prefs = new File(BundlePreferences.getDataFolder(context), "dicomNodes.xml"); //$NON-NLS-1$
+        File prefs = new File(BundlePreferences.getDataFolder(context), type.getFilename()); // $NON-NLS-1$
         if (prefs.canRead()) {
             XMLStreamReader xmler = null;
             XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -203,7 +219,7 @@ public class DicomNodeEx extends DcmNode {
                     eventType = xmler.next();
                     switch (eventType) {
                         case XMLStreamConstants.START_ELEMENT:
-                            readDicomNodes(xmler, comboBox);
+                            readDicomNodes(xmler, comboBox, type);
                             break;
                         default:
                             break;
@@ -217,7 +233,7 @@ public class DicomNodeEx extends DcmNode {
         }
     }
 
-    private static void readDicomNodes(XMLStreamReader xmler, JComboBox<DicomNodeEx> comboBox)
+    private static void readDicomNodes(XMLStreamReader xmler, JComboBox<DicomNodeEx> comboBox, Type type)
         throws XMLStreamException {
         String key = xmler.getName().getLocalPart();
         if (T_NODES.equals(key)) {
@@ -225,7 +241,7 @@ public class DicomNodeEx extends DcmNode {
                 int eventType = xmler.next();
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
-                        readDicomNode(xmler, comboBox);
+                        readDicomNode(xmler, comboBox, type);
                         break;
                     default:
                         break;
@@ -234,17 +250,21 @@ public class DicomNodeEx extends DcmNode {
         }
     }
 
-    private static void readDicomNode(XMLStreamReader xmler, JComboBox<DicomNodeEx> comboBox)
+    private static void readDicomNode(XMLStreamReader xmler, JComboBox<DicomNodeEx> comboBox, Type type)
         throws XMLStreamException {
         String key = xmler.getName().getLocalPart();
         if (T_NODE.equals(key)) {
             try {
+                Type t = Type.getType(xmler.getAttributeValue(null, T_TYPE));
+                if (type != null && type != t) {
+                    return;
+                }
                 DicomNodeEx node = new DicomNodeEx(xmler.getAttributeValue(null, T_DESCRIPTION),
                     xmler.getAttributeValue(null, T_AETITLE), xmler.getAttributeValue(null, T_HOST),
                     TagUtil.getIntegerTagAttribute(xmler, T_PORT, 104));
 
-                node.setType(Type.getType(xmler.getAttributeValue(null, T_TYPE)));
-                if (Type.PRINTER.equals(node.getType())) {
+                node.setType(t);
+                if (Type.PRINTER.equals(t)) {
                     node.setColorPrintSupported(Boolean.valueOf(xmler.getAttributeValue(null, T_COLOR)));
                 } else {
                     node.setTsuid(TransferSyntax.getTransferSyntax(xmler.getAttributeValue(null, T_TSUID)));
