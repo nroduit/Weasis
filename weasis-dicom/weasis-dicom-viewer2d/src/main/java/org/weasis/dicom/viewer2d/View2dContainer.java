@@ -340,7 +340,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             public void run() {
                 for (DefaultView2d v : view2ds) {
                     resetMaximizedSelectedImagePane(v);
-                    v.dispose();
+                    v.disposeView();
                 }
             }
         });

@@ -1181,7 +1181,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public void dispose() {
+    public void disposeView() {
         disableMouseAndKeyListener();
         removeFocusListener(this);
         ToolTipManager.sharedInstance().unregisterComponent(this);
@@ -1190,7 +1190,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             closingSeries(series);
             series = null;
         }
-        super.dispose();
+        super.disposeView();
     }
 
     public synchronized void disableMouseAndKeyListener() {

@@ -38,12 +38,13 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
 
     private final DefaultView2d<E> view2d;
     private Graphics2D currentG2d;
+    private double imagePrintingResolution = 1.0;
 
     public ExportImage(DefaultView2d<E> view2d) {
         super(view2d.eventManager, view2d.getLayerModel(), null);
         this.view2d = view2d;
-        // No need to have random pixel iterator
-        this.imageLayer.setBuildIterator(false);
+        // Pixel iterator is necessary for updating label of measurements
+        this.imageLayer.setBuildIterator(true);
         // Remove OpEventListener to avoid reseting some parameters when setting the series
         this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
         setFont(FontTools.getFont8());
@@ -85,13 +86,21 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         setImage(view2d.getImage());
     }
 
+    public double getImagePrintingResolution() {
+        return imagePrintingResolution;
+    }
+
+    public void setImagePrintingResolution(double imagePrintingResolution) {
+        this.imagePrintingResolution = imagePrintingResolution;
+    }
+
     @Override
-    public void dispose() {
+    public void disposeView() {
         disableMouseAndKeyListener();
         removeFocusListener(this);
         ToolTipManager.sharedInstance().unregisterComponent(this);
         imageLayer.removeLayerChangeListener(this);
-        // Unregister listener in GraphicsPane;
+        // Unregister listener in GraphicsPane
         setLayerModel(null);
         setViewModel(null);
     }
@@ -129,8 +138,11 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         for (Graphic graphic : list) {
             graphic.updateLabel(true, this);
         }
-
-        imageLayer.drawImage(g2d);
+        if (g2d.getClass().getName().contains("print")) {
+            imageLayer.drawImageForPrinter(g2d, imagePrintingResolution);
+        } else {
+            imageLayer.drawImage(g2d);
+        }
 
         drawLayers(g2d, affineTransform, inverseTransform);
         g2d.translate(offsetX, offsetY);

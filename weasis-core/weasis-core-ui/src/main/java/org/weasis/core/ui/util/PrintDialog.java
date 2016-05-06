@@ -21,7 +21,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
@@ -35,7 +38,7 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.util.PrintOptions.SCALE;
+import org.weasis.core.ui.util.PrintOptions.Scale;
 
 /**
  *
@@ -53,6 +56,8 @@ public class PrintDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox positionComboBox;
     private javax.swing.JLabel positionLabel;
     private javax.swing.JButton printButton;
+    private JLabel label;
+    private JComboBox comboBoxDPI;
 
     private ImageViewerEventManager eventManager;
     private JCheckBox chckbxSelctedView;
@@ -62,7 +67,7 @@ public class PrintDialog extends javax.swing.JDialog {
     public PrintDialog(Window parent, String title, ImageViewerEventManager eventManager) {
         super(parent, title, ModalityType.APPLICATION_MODAL);
         this.eventManager = eventManager;
-        boolean layout = eventManager.getSelectedView2dContainer().getImagePanels().size() > 1;
+        boolean layout = eventManager.getSelectedView2dContainer().getLayoutModel().getConstraints().size() > 1;
         initComponents(layout);
         imageSizeComboBox();
         setOnlySelectedView(layout);
@@ -82,7 +87,7 @@ public class PrintDialog extends javax.swing.JDialog {
         gbc_imageSizeLabel.gridx = 0;
         gbc_imageSizeLabel.gridy = 0;
         getContentPane().add(imageSizeLabel, gbc_imageSizeLabel);
-        imageSizeComboBox = new javax.swing.JComboBox(SCALE.values());
+        imageSizeComboBox = new javax.swing.JComboBox(Scale.values());
 
         imageSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             @Override
@@ -133,8 +138,27 @@ public class PrintDialog extends javax.swing.JDialog {
         gbc_positionComboBox.gridx = 1;
         gbc_positionComboBox.gridy = 2;
         getContentPane().add(positionComboBox, gbc_positionComboBox);
-        annotationsCheckBox = new javax.swing.JCheckBox();
+        
+        label = new JLabel();
+        label.setText("DPI" + StringUtil.COLON);
+        GridBagConstraints gbcLabel = new GridBagConstraints();
+        gbcLabel.anchor = GridBagConstraints.EAST;
+        gbcLabel.insets = new Insets(0, 15, 10, 5);
+        gbcLabel.gridx = 0;
+        gbcLabel.gridy = 3;
+        getContentPane().add(label, gbcLabel);
 
+        comboBoxDPI = new JComboBox();
+        GridBagConstraints gbcComboBoxDPI = new GridBagConstraints();
+        gbcComboBoxDPI.anchor = GridBagConstraints.NORTHWEST;
+        gbcComboBoxDPI.insets = new Insets(0, 0, 10, 5);
+        gbcComboBoxDPI.gridx = 1;
+        gbcComboBoxDPI.gridy = 3;
+        comboBoxDPI.setModel(new DefaultComboBoxModel(PrintOptions.DotPerInches.values()));
+        comboBoxDPI.setSelectedIndex(1);
+        getContentPane().add(comboBoxDPI, gbcComboBoxDPI);
+
+        annotationsCheckBox = new javax.swing.JCheckBox();
         annotationsCheckBox.setText(Messages.getString("PrintDialog.annotate")); //$NON-NLS-1$
         annotationsCheckBox.setSelected(true);
         GridBagConstraints gbc_annotationsCheckBox = new GridBagConstraints();
@@ -201,7 +225,7 @@ public class PrintDialog extends javax.swing.JDialog {
 
     private void setOnlySelectedView(boolean layout) {
         if (layout) {
-            imageSizeComboBox.setSelectedItem(SCALE.ShrinkToPage);
+            imageSizeComboBox.setSelectedItem(Scale.SHRINK_TO_PAGE);
             imageSizeComboBox();
         }
         imageSizeLabel.setEnabled(!layout);
@@ -209,7 +233,7 @@ public class PrintDialog extends javax.swing.JDialog {
     }
 
     private void imageSizeComboBox() {
-        if (imageSizeComboBox.getSelectedItem() != SCALE.Custom) {
+        if (imageSizeComboBox.getSelectedItem() != Scale.CUSTOM) {
             customImageSizeLabel.setEnabled(false);
             spinner.setEnabled(false);
         } else {
@@ -221,8 +245,9 @@ public class PrintDialog extends javax.swing.JDialog {
     private void printAction() {
         double imageScale = (Integer) spinner.getValue() / 100.0;
         PrintOptions printOptions = new PrintOptions(annotationsCheckBox.isSelected(), imageScale);
-        printOptions.setScale((SCALE) imageSizeComboBox.getSelectedItem());
+        printOptions.setScale((Scale) imageSizeComboBox.getSelectedItem());
         printOptions.setHasAnnotations(annotationsCheckBox.isSelected());
+        printOptions.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
         if (positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center"))) { //$NON-NLS-1$
             printOptions.setCenter(true);
         } else {
@@ -240,7 +265,7 @@ public class PrintDialog extends javax.swing.JDialog {
         }
         doClose();
 
-        if (views.size() > 1 && !chckbxSelctedView.isSelected()) {
+        if (chckbxSelctedView != null && !chckbxSelctedView.isSelected()) {
             // Several views
             ExportLayout<ImageElement> layout = new ExportLayout<ImageElement>(container.getLayoutModel());
             ImagePrint print = new ImagePrint(layout, printOptions);
@@ -252,7 +277,7 @@ public class PrintDialog extends javax.swing.JDialog {
             exportImage.getInfoLayer().setBorder(2);
             ImagePrint print = new ImagePrint(exportImage, printOptions);
             print.print();
-            exportImage.dispose();
+            exportImage.disposeView();
         }
 
     }

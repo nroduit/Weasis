@@ -87,7 +87,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     public void dispose() {
         for (Component c : layoutModel.getConstraints().values()) {
             if (c instanceof ExportImage) {
-                ((ExportImage) c).dispose();
+                ((ExportImage) c).disposeView();
             }
         }
     }

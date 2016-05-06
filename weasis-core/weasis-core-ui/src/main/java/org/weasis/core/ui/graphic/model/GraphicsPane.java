@@ -65,7 +65,7 @@ public class GraphicsPane extends JComponent {
         return inverseTransform;
     }
 
-    public void dispose() {
+    public void disposeView() {
         if (viewModel != null) {
             viewModel.removeViewModelChangeListener(viewModelHandler);
             viewModel = null;

@@ -270,7 +270,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             @Override
             public void run() {
                 for (DefaultView2d v : view2ds) {
-                    v.dispose();
+                    v.disposeView();
                 }
             }
         });

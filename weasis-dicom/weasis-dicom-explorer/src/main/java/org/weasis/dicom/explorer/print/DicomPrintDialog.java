@@ -61,27 +61,6 @@ import org.weasis.dicom.explorer.Messages;
 public class DicomPrintDialog extends JDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrintDialog.class);
 
-    private static final int DPI = 200;
-
-    enum DotPerInches {
-        DPI_150(150), DPI_200(200), DPI_300(300);
-
-        private final int dpi;
-
-        private DotPerInches(int dpi) {
-            this.dpi = dpi;
-        }
-
-        public int getDpi() {
-            return dpi;
-        }
-
-        @Override
-        public String toString() {
-            return String.valueOf(dpi);
-        }
-    }
-
     enum FilmSize {
         IN8X10("8INX10IN", 8, 10), IN8_5X11("8_5INX11IN", 8.5, 11), IN10X12("10INX12IN", 10, 12), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         IN10X14("10INX14IN", //$NON-NLS-1$
@@ -92,7 +71,8 @@ public class DicomPrintDialog extends JDialog {
         CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), //$NON-NLS-1$
         CM24X30("24CMX30CM", convertMM2Inch(240), //$NON-NLS-1$
                         convertMM2Inch(300)),
-        A4("A4", convertMM2Inch(210), convertMM2Inch(297)), A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //$NON-NLS-1$ //$NON-NLS-2$
+        A4("A4", convertMM2Inch(210), convertMM2Inch(297)), //$NON-NLS-1$
+        A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //$NON-NLS-1$
 
         private final String name;
         private final double width;
@@ -109,22 +89,22 @@ public class DicomPrintDialog extends JDialog {
             return name;
         }
 
-        public int getWidth(DotPerInches dpi) {
+        public int getWidth(PrintOptions.DotPerInches dpi) {
             return getLengthFromInch(width, dpi);
         }
 
-        public int getHeight(DotPerInches dpi) {
+        public int getHeight(PrintOptions.DotPerInches dpi) {
             return getLengthFromInch(height, dpi);
         }
 
-        public static int getLengthFromInch(double size, DotPerInches dpi) {
-            DotPerInches dpi2 = dpi == null ? DotPerInches.DPI_200 : dpi;
+        public static int getLengthFromInch(double size, PrintOptions.DotPerInches dpi) {
+            PrintOptions.DotPerInches dpi2 = dpi == null ? PrintOptions.DotPerInches.DPI_300 : dpi;
             double val = size * dpi2.getDpi();
             return (int) (val + 0.5);
         }
 
         public static double convertMM2Inch(int size) {
-            return (size / 25.4);
+            return size / 25.4;
         }
 
     }
@@ -570,7 +550,7 @@ public class DicomPrintDialog extends JDialog {
         gbc_comboBoxDPI.anchor = GridBagConstraints.NORTHWEST;
         gbc_comboBoxDPI.gridx = 4;
         gbc_comboBoxDPI.gridy = 10;
-        comboBoxDPI.setModel(new DefaultComboBoxModel(DotPerInches.values()));
+        comboBoxDPI.setModel(new DefaultComboBoxModel(PrintOptions.DotPerInches.values()));
         comboBoxDPI.setSelectedIndex(1);
         content.add(comboBoxDPI, gbc_comboBoxDPI);
 
@@ -597,7 +577,7 @@ public class DicomPrintDialog extends JDialog {
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                dispose();
+                doClose();
             }
         });
     }
@@ -610,7 +590,7 @@ public class DicomPrintDialog extends JDialog {
         dicomPrintOptions.setNumOfCopies((Integer) numOfCopiesSpinner.getValue());
         dicomPrintOptions.setImageDisplayFormat((String) imageDisplayFormatComboBox.getSelectedItem());
         dicomPrintOptions.setFilmSizeId((FilmSize) filmSizeIdComboBox.getSelectedItem());
-        dicomPrintOptions.setDpi((DotPerInches) comboBoxDPI.getSelectedItem());
+        dicomPrintOptions.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
         dicomPrintOptions.setFilmOrientation((String) filmOrientationComboBox.getSelectedItem());
         dicomPrintOptions.setMagnificationType((String) magnificationTypeComboBox.getSelectedItem());
         dicomPrintOptions.setSmoothingType((String) smoothingTypeComboBox.getSelectedItem());
@@ -695,7 +675,6 @@ public class DicomPrintDialog extends JDialog {
         if (selectedPrinter != null) {
             boolean color = selectedPrinter.isColorPrintSupported();
             colorPrintCheckBox.setSelected(color);
-            colorPrintCheckBox.setEnabled(color);
         }
     }
 }

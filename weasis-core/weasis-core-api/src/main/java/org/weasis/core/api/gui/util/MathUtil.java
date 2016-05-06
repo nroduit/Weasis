@@ -18,13 +18,60 @@ import java.awt.geom.Point2D;
  * @author Nicolas Roduit
  */
 public class MathUtil {
+    public static final double DOUBLE_EPSILON = 1e-6;
+    public static final double FLOAT_EPSILON = 1e-5;
+
+    private MathUtil() {
+    }
+
+    public static long getUnsignedInt(int x) {
+        return x & 0x00000000ffffffffL;
+    }
+
+    public static boolean isEqualToZero(float val) {
+        return Math.copySign(val, 1.0) < FLOAT_EPSILON;
+    }
+
+    public static boolean isDifferentFromZero(float val) {
+        return Math.copySign(val, 1.0) > FLOAT_EPSILON;
+    }
+
+    public static boolean isEqual(float a, float b) {
+        // Math.copySign is similar to Math.abs(x), but with different NaN semantics
+        return Math.copySign(a - b, 1.0) <= FLOAT_EPSILON || (a == b) // infinities equal themselves
+            || (Float.isNaN(a) && Float.isNaN(b));
+    }
+
+    public static boolean isDifferent(float a, float b) {
+        // Math.copySign is similar to Math.abs(x), but with different NaN semantics
+        return Math.copySign(a - b, 1.0) >= FLOAT_EPSILON;
+    }
+
+    public static boolean isEqualToZero(double val) {
+        return Math.copySign(val, 1.0) < DOUBLE_EPSILON;
+    }
+
+    public static boolean isDifferentFromZero(double val) {
+        return Math.copySign(val, 1.0) > DOUBLE_EPSILON;
+    }
+
+    public static boolean isEqual(double a, double b) {
+        // Math.copySign is imilar to Math.abs(x), but with different NaN semantics
+        return Math.copySign(a - b, 1.0) <= DOUBLE_EPSILON || (a == b) // infinities equal themselves
+            || (Double.isNaN(a) && Double.isNaN(b));
+    }
+
+    public static boolean isDifferent(double a, double b) {
+        // Math.copySign is similar to Math.abs(x), but with different NaN semantics
+        return Math.copySign(a - b, 1.0) >= DOUBLE_EPSILON;
+    }
 
     public static double computeDistanceFloat(double x1, double y1, double x2, double y2) {
         return Point2D.distance(x1, y1, x2, y2);
     }
 
-    public static double getOrientation(Point2D P1, Point2D P2) {
-        return (P1 != null && P2 != null) ? getOrientation(P1.getX(), P1.getY(), P2.getX(), P2.getY()) : null;
+    public static double getOrientation(Point2D p1, Point2D p2) {
+        return (p1 != null && p2 != null) ? getOrientation(p1.getX(), p1.getY(), p2.getX(), p2.getY()) : null;
     }
 
     public static double getOrientation(double x1, double y1, double x2, double y2) {
@@ -40,8 +87,8 @@ public class MathUtil {
         return angle;
     }
 
-    public static double getAzimuth(Point2D P1, Point2D P2) {
-        return (P1 != null && P2 != null) ? getAzimuth(P1.getX(), P1.getY(), P2.getX(), P2.getY()) : null;
+    public static double getAzimuth(Point2D p1, Point2D p2) {
+        return (p1 != null && p2 != null) ? getAzimuth(p1.getX(), p1.getY(), p2.getX(), p2.getY()) : null;
     }
 
     public static double getAzimuth(double x1, double y1, double x2, double y2) {
@@ -51,7 +98,7 @@ public class MathUtil {
     }
 
     public static float checkMin0(float val) {
-        return (val < 0) ? 0.0f : val;
+        return (val < 0.0f) ? 0.0f : val;
     }
 
     public static float checkMax(float val, float max) {
@@ -59,22 +106,24 @@ public class MathUtil {
     }
 
     public static float checkMinMax(float val, float min, float max) {
-        if (val < min) {
-            val = min;
+        float res = val;
+        if (res < min) {
+            res = min;
         }
-        if (val > max) {
-            val = max;
+        if (res > max) {
+            res = max;
         }
-        return val;
+        return res;
     }
 
     public static int checkMinMax(int val, int min, int max) {
-        if (val < min) {
-            val = min;
+        int res = val;
+        if (res < min) {
+            res = min;
         }
-        if (val > max) {
-            val = max;
+        if (res > max) {
+            res = max;
         }
-        return val;
+        return res;
     }
 }

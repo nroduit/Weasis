@@ -14,24 +14,44 @@ import org.weasis.core.ui.Messages;
 
 /**
  *
- * @author Marcelo Porto (marcelo@animati.com.br)
+ * @author Marcelo Porto (marcelo@animati.com.br), Nicolas Roduit
  * @version 18/11/2011
  */
 public class PrintOptions {
-    public enum SCALE {
-        ShrinkToPage {
+
+    public enum DotPerInches {
+        DPI_150(150), DPI_300(300), DPI_600(600);
+
+        private final int dpi;
+
+        private DotPerInches(int dpi) {
+            this.dpi = dpi;
+        }
+
+        public int getDpi() {
+            return dpi;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(dpi);
+        }
+    }
+
+    public enum Scale {
+        SHRINK_TO_PAGE {
             @Override
             public String toString() {
                 return Messages.getString("PrintOptions.shrink"); //$NON-NLS-1$
             }
         },
-        FitToPage {
+        FIT_TO_PAGE {
             @Override
             public String toString() {
                 return Messages.getString("PrintOptions.fit"); //$NON-NLS-1$
             }
         },
-        Custom {
+        CUSTOM {
             @Override
             public String toString() {
                 return Messages.getString("PrintOptions.custom"); //$NON-NLS-1$
@@ -43,21 +63,22 @@ public class PrintOptions {
     private double imageScale;
     private boolean center;
     private boolean color;
-    private SCALE scale;
+    private Scale scale;
+    private DotPerInches dpi;
 
     public PrintOptions(Boolean hasAnnotations, double imageScale) {
         this.hasAnnotations = hasAnnotations;
         this.imageScale = imageScale;
         this.center = true;
-        this.scale = SCALE.ShrinkToPage;
+        this.scale = Scale.SHRINK_TO_PAGE;
         this.color = true;
     }
 
-    public SCALE getScale() {
+    public Scale getScale() {
         return scale;
     }
 
-    public void setScale(SCALE scale) {
+    public void setScale(Scale scale) {
         this.scale = scale;
     }
 
@@ -93,4 +114,11 @@ public class PrintOptions {
         this.color = color;
     }
 
+    public DotPerInches getDpi() {
+        return dpi;
+    }
+
+    public void setDpi(DotPerInches dpi) {
+        this.dpi = dpi;
+    }
 }

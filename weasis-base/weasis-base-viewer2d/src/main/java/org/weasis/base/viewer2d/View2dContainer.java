@@ -208,7 +208,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             @Override
             public void run() {
                 for (DefaultView2d v : view2ds) {
-                    v.dispose();
+                    v.disposeView();
                 }
             }
         });
