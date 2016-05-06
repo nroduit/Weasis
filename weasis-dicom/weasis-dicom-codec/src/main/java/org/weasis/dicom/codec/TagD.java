@@ -51,8 +51,6 @@ public class TagD extends TagW {
         readTags();
     }
 
-    // TODO use class for number (Float, Double...) and native type for array (float[], double[])?
-
     protected final VR vr;
     protected final String privateCreatorID;
     protected final boolean retired;
@@ -376,7 +374,7 @@ public class TagD extends TagW {
     }
 
     public static TagW getNullable(int tagID, String privateCreatorID) {
-        String key = getKeywordFromTag(tagID, null);
+        String key = getKeywordFromTag(tagID, privateCreatorID);
         return key == null ? null : tags.get(key);
     }
 
