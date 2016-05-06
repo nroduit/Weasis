@@ -10,18 +10,11 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.plaf.basic.BasicComboPopup;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -52,8 +45,8 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         gbcLabel.gridy = 0;
         panel.add(label, gbcLabel);
 
-        final JComboBox<DicomNodeEx> nodeComboBox = new JComboBox<>();
-        DicomNodeEx.loadPrefDicomNodes(nodeComboBox);
+        final JComboBox<AbstractDicomNode> nodeComboBox = new JComboBox<>();
+        AbstractDicomNode.loadDicomNodes(nodeComboBox, AbstractDicomNode.Type.ARCHIVE);
         GridBagConstraints gbcComboBox = new GridBagConstraints();
         gbcComboBox.anchor = GridBagConstraints.NORTHWEST;
         gbcComboBox.insets = new Insets(0, 0, 5, 5);
@@ -61,7 +54,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         gbcComboBox.gridy = 0;
         panel.add(nodeComboBox, gbcComboBox);
         JMVUtils.setPreferredWidth(nodeComboBox, 185, 185);
-        addTooltipToComboList(nodeComboBox);
+        AbstractDicomNode.addTooltipToComboList(nodeComboBox);
 
         Component horizontalStrut = Box.createHorizontalStrut(20);
         GridBagConstraints gbcHorizontalStrut = new GridBagConstraints();
@@ -101,36 +94,19 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         deleteButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                int index = nodeComboBox.getSelectedIndex();
-                if (index >= 0) {
-                    int response = JOptionPane.showConfirmDialog(null,
-                        String.format("Do you really want to delete \"%s\"?", nodeComboBox.getSelectedItem()),
-                        "DICOM Node", //$NON-NLS-1$
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                    if (response == 0) {
-                        nodeComboBox.removeItemAt(index);
-                        DicomNodeEx.savePrefDicomNodes(nodeComboBox);
-                    }
-
-                }
+                AbstractDicomNode.deleteNodeActionPerformed(nodeComboBox);
             }
         });
         editButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DicomNodeDialog dialog =
-                    new DicomNodeDialog(SwingUtilities.getWindowAncestor((Component) evt.getSource()), "DICOM Node", //$NON-NLS-1$
-                        (DicomNodeEx) nodeComboBox.getSelectedItem(), nodeComboBox);
-                JMVUtils.showCenterScreen(dialog, (Component) evt.getSource());
+                AbstractDicomNode.editNodeActionPerformed(nodeComboBox);
             }
         });
         addNodeButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DicomNodeDialog dialog = new DicomNodeDialog(
-                    SwingUtilities.getWindowAncestor((Component) evt.getSource()), "DICOM Node", null, nodeComboBox); //$NON-NLS-1$
-                JMVUtils.showCenterScreen(dialog, (Component) evt.getSource());
+                AbstractDicomNode.addNodeActionPerformed(nodeComboBox, AbstractDicomNode.Type.ARCHIVE);
             }
         });
 
@@ -161,8 +137,8 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         gbc_label_1.gridy = 0;
         panel1.add(label_1, gbc_label_1);
 
-        final JComboBox<DicomWebNode> comboBoxWeb = new JComboBox<>();
-        DicomWebNode.loadDicomNodes(comboBoxWeb);
+        final JComboBox<AbstractDicomNode> comboBoxWeb = new JComboBox<>();
+        AbstractDicomNode.loadDicomNodes(comboBoxWeb, AbstractDicomNode.Type.WEB);
         GridBagConstraints gbc_comboBox = new GridBagConstraints();
         gbc_comboBox.anchor = GridBagConstraints.NORTHWEST;
         gbc_comboBox.insets = new Insets(0, 0, 5, 5);
@@ -170,7 +146,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         gbc_comboBox.gridy = 0;
         panel1.add(comboBoxWeb, gbc_comboBox);
         JMVUtils.setPreferredWidth(comboBoxWeb, 185, 185);
-        addTooltipToComboList(comboBoxWeb);
+        AbstractDicomNode.addTooltipToComboList(comboBoxWeb);
 
         Component horizontalStrut_1 = Box.createHorizontalStrut(20);
         GridBagConstraints gbc_horizontalStrut_1 = new GridBagConstraints();
@@ -221,36 +197,19 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         deleteBtn1.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                int index = comboBoxWeb.getSelectedIndex();
-                if (index >= 0) {
-                    int response = JOptionPane.showConfirmDialog(null,
-                        String.format("Do you really want to delete \"%s\"?", comboBoxWeb.getSelectedItem()),
-                        "DICOM WEB Node", //$NON-NLS-1$
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                    if (response == 0) {
-                        comboBoxWeb.removeItemAt(index);
-                        DicomWebNode.saveDicomNodes(comboBoxWeb);
-                    }
-                }
+                AbstractDicomNode.deleteNodeActionPerformed(comboBoxWeb);
             }
         });
         editBtn1.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DicomWebNodeDialog dialog = new DicomWebNodeDialog(
-                    SwingUtilities.getWindowAncestor((Component) evt.getSource()), "DICOM WEB Node", //$NON-NLS-1$
-                    (DicomWebNode) comboBoxWeb.getSelectedItem(), comboBoxWeb);
-                JMVUtils.showCenterScreen(dialog, (Component) evt.getSource());
+                AbstractDicomNode.editNodeActionPerformed(comboBoxWeb);
             }
         });
         addBtn1.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DicomWebNodeDialog dialog = new DicomWebNodeDialog(
-                    SwingUtilities.getWindowAncestor((Component) evt.getSource()), "DICOM WEB Node", //$NON-NLS-1$
-                    null, comboBoxWeb);
-                JMVUtils.showCenterScreen(dialog, (Component) evt.getSource());
+                AbstractDicomNode.addNodeActionPerformed(comboBoxWeb, AbstractDicomNode.Type.WEB);
             }
         });
 
@@ -264,26 +223,5 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     @Override
     public void resetoDefaultValues() {
 
-    }
-
-    private static void addTooltipToComboList(final JComboBox<? extends DcmNode> combo) {
-        Object comp = combo.getUI().getAccessibleChild(combo, 0);
-        if (comp instanceof BasicComboPopup) {
-            final BasicComboPopup popup = (BasicComboPopup) comp;
-            popup.getList().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
-                @Override
-                public void valueChanged(ListSelectionEvent e) {
-                    if (!e.getValueIsAdjusting()) {
-                        ListSelectionModel model = (ListSelectionModel) e.getSource();
-                        int first = model.getMinSelectionIndex();
-                        if (first >= 0) {
-                            DcmNode item = combo.getItemAt(first);
-                            ((JComponent) combo.getRenderer()).setToolTipText(item.getToolTips());
-                        }
-                    }
-                }
-            });
-        }
     }
 }

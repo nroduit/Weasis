@@ -72,7 +72,6 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -615,11 +614,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 buffer.append("DICOM"); //$NON-NLS-1$
                 buffer.append(File.separator);
             }
-            buffer.append(makeFileIDs((String) img.getTagValue(TagD.getUID(Level.PATIENT))));
+            buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagD.getUID(Level.STUDY))));
+            buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.StudyInstanceUID, String.class)));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagD.getUID(Level.SERIES))));
+            buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class)));
         }
         return buffer.toString();
     }
@@ -647,7 +646,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else {
             buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagD.get(Tag.StudyInstanceUID))));
+            buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.StudyInstanceUID, String.class)));
             buffer.append(File.separator);
             buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class)));
         }

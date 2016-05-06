@@ -38,6 +38,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
     private final ViewCanvas<E> view2d;
     private Graphics2D currentG2d;
+    private double imagePrintingResolution = 1.0;
 
     public ExportImage(ViewCanvas<E> view2d) {
         super(view2d.getEventManager(), view2d.getLayerModel(), null);
@@ -86,6 +87,14 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         setImage(view2d.getImage());
     }
 
+    public double getImagePrintingResolution() {
+        return imagePrintingResolution;
+    }
+
+    public void setImagePrintingResolution(double imagePrintingResolution) {
+        this.imagePrintingResolution = imagePrintingResolution;
+    }
+
     @Override
     public void disposeView() {
         disableMouseAndKeyListener();
@@ -130,8 +139,11 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         for (Graphic graphic : list) {
             graphic.updateLabel(true, this);
         }
-
-        imageLayer.drawImage(g2d);
+        if (g2d.getClass().getName().contains("print")) {
+            imageLayer.drawImageForPrinter(g2d, imagePrintingResolution);
+        } else {
+            imageLayer.drawImage(g2d);
+        }
 
         drawLayers(g2d, affineTransform, inverseTransform);
         g2d.translate(offsetX, offsetY);

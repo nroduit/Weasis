@@ -79,7 +79,7 @@ public class LoadDicomObjects extends ExplorerTask {
 
         openPlugin = true;
 
-        final ArrayList<SeriesThumbnail> thumbs = new ArrayList<SeriesThumbnail>(dicomObjectsToLoad.length);
+        final ArrayList<SeriesThumbnail> thumbs = new ArrayList<>(dicomObjectsToLoad.length);
 
         for (Attributes dicom : dicomObjectsToLoad) {
             if (isCancelled()) {
@@ -132,7 +132,7 @@ public class LoadDicomObjects extends ExplorerTask {
             dicomModel.addHierarchyNode(patient, study);
         }
 
-        String seriesUID = (String) dicomReader.getTagValue(TagD.getUID(Level.SERIES));
+        String seriesUID = (String) dicomReader.getTagValue(TagD.get(Tag.SeriesInstanceUID));
         Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
         try {
             if (dicomSeries == null) {

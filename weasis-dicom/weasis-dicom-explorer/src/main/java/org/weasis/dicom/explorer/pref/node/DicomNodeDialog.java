@@ -40,19 +40,15 @@ public class DicomNodeDialog extends JDialog {
     private JFormattedTextField portTf;
     private JPanel footPanel;
 
-    private DicomNodeEx dicomNode;
-    private final JComboBox<DicomNodeEx> nodesComboBox;
-    private final DicomNodeEx.Type typeNode;
+    private DefaultDicomNode dicomNode;
+    private final JComboBox<DefaultDicomNode> nodesComboBox;
+    private final DefaultDicomNode.Type typeNode;
 
-    public DicomNodeDialog(Window parent, String title, DicomNodeEx dicomNode, JComboBox<DicomNodeEx> nodeComboBox) {
-        this(parent, title, dicomNode, nodeComboBox, DicomNodeEx.Type.ARCHIVE);
-    }
-
-    public DicomNodeDialog(Window parent, String title, DicomNodeEx dicomNode, JComboBox<DicomNodeEx> nodeComboBox,
-        DicomNodeEx.Type typeNode) {
+    public DicomNodeDialog(Window parent, String title, DefaultDicomNode dicomNode,
+        JComboBox<DefaultDicomNode> nodeComboBox, DefaultDicomNode.Type typeNode) {
         super(parent, title, ModalityType.APPLICATION_MODAL);
         this.typeNode =
-            dicomNode == null ? typeNode == null ? DicomNodeEx.Type.ARCHIVE : typeNode : dicomNode.getType();
+            dicomNode == null ? typeNode == null ? AbstractDicomNode.Type.ARCHIVE : typeNode : dicomNode.getType();
         initComponents();
         this.dicomNode = dicomNode;
         this.nodesComboBox = nodeComboBox;
@@ -61,7 +57,9 @@ public class DicomNodeDialog extends JDialog {
             aeTitleTf.setText(dicomNode.getAeTitle());
             hostnameTf.setText(dicomNode.getHostname());
             portTf.setValue(dicomNode.getPort());
-            colorPrintSupportCheckBox.setSelected(dicomNode.isColorPrintSupported());
+            if (dicomNode instanceof DicomPrintNode) {
+                colorPrintSupportCheckBox.setSelected(((DicomPrintNode) dicomNode).isColorPrintSupported());
+            }
         }
         pack();
     }
@@ -94,7 +92,7 @@ public class DicomNodeDialog extends JDialog {
         descriptionTf.setColumns(15);
 
         colorPrintSupportCheckBox = new JCheckBox();
-        if (typeNode == DicomNodeEx.Type.PRINTER) {
+        if (typeNode == AbstractDicomNode.Type.PRINTER) {
             colorPrintSupportCheckBox.setText(Messages.getString("PrinterDialog.color")); //$NON-NLS-1$
             GridBagConstraints gbcColorPrintSupportCheckBox = new GridBagConstraints();
             gbcColorPrintSupportCheckBox.anchor = GridBagConstraints.WEST;
@@ -208,7 +206,11 @@ public class DicomNodeDialog extends JDialog {
 
         boolean addNode = dicomNode == null;
         if (addNode) {
-            dicomNode = new DicomNodeEx(desc, aeTitle, hostname, port.intValue());
+            if (AbstractDicomNode.Type.PRINTER == typeNode) {
+                dicomNode = new DicomPrintNode(desc, aeTitle, hostname, port.intValue());
+            } else {
+                dicomNode = new DefaultDicomNode(desc, aeTitle, hostname, port.intValue());
+            }
             nodesComboBox.addItem(dicomNode);
         } else {
             dicomNode.setDescription(desc);
@@ -218,14 +220,16 @@ public class DicomNodeDialog extends JDialog {
         }
 
         dicomNode.setType(typeNode);
-        dicomNode.setColorPrintSupported(colorPrintSupportCheckBox.isSelected());
+        if (dicomNode instanceof DicomPrintNode) {
+            ((DicomPrintNode) dicomNode).setColorPrintSupported(colorPrintSupportCheckBox.isSelected());
+        }
         if (addNode) {
             nodesComboBox.setSelectedItem(dicomNode);
         } else {
             nodesComboBox.repaint();
         }
 
-        DicomNodeEx.saveDicomNodes(nodesComboBox, typeNode);
+        AbstractDicomNode.saveDicomNodes(nodesComboBox, typeNode);
         dispose();
     }
 }

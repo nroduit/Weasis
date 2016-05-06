@@ -39,10 +39,9 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
-import org.weasis.core.ui.util.PrintOptions.SCALE;
+import org.weasis.core.ui.util.PrintOptions.Scale;
 
 public class ImagePrint implements Printable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImagePrint.class);
@@ -54,19 +53,19 @@ public class ImagePrint implements Printable {
     public ImagePrint(RenderedImage renderedImage, PrintOptions printOptions) {
         this.printable = renderedImage;
         printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
+        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0) : printOptions;
     }
 
     public ImagePrint(ExportImage<? extends ImageElement> exportImage, PrintOptions printOptions) {
         this.printable = exportImage;
         printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
+        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0) : printOptions;
     }
 
     public ImagePrint(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
         this.printable = layout;
         printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
+        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0) : printOptions;
     }
 
     public void setPrintLocation(Point d) {
@@ -82,18 +81,9 @@ public class ImagePrint implements Printable {
         PrinterJob pj = PrinterJob.getPrinterJob();
         pj.setPrintable(this);
 
-        // PageFormat pf = pj.defaultPage();
-        // Paper paper = pf.getPaper();
-        // pf.setOrientation(PageFormat.PORTRAIT);
-        // paper.setSize(9 * 72, 6 * 72);
-        // paper.setImageableArea(0.5 * 72, 0.5 * 72, 9 * 72, 6 * 72);
-        // pf.setPaper(paper);
-
         // Get page format from the printer
         if (pj.printDialog(aset)) {
             try {
-                // PrinterResolution pr = new PrinterResolution(96, 96, ResolutionSyntax.DPI);
-                // aset.add(pr);
                 pj.print(aset);
             } catch (Exception e) {
                 // check for the annoying 'Printer is not accepting job' error.
@@ -111,11 +101,11 @@ public class ImagePrint implements Printable {
                             pj.print(aset);
                             LOGGER.info("Bypass Printer is not accepting job"); //$NON-NLS-1$
                         } catch (PrinterException ex) {
-                            AuditLog.logError(LOGGER, ex, "Printer exception"); //$NON-NLS-1$
+                            LOGGER.error("Printer exception", ex); //$NON-NLS-1$
                         }
                     }
                 } else {
-                    AuditLog.logError(LOGGER, e, "Print exception"); //$NON-NLS-1$
+                    LOGGER.error("Print exception", e); //$NON-NLS-1$
                 }
             }
         }
@@ -256,6 +246,10 @@ public class ImagePrint implements Printable {
             } else {
                 image.setCenter(originCenter.getX(), originCenter.getY());
             }
+
+            int dpi = printOptions.getDpi() == null ? 300 : printOptions.getDpi().getDpi();
+            double ratioFromDPI = dpi * scaleFactor / 72.0;
+            image.setImagePrintingResolution(ratioFromDPI);
         }
     }
 
@@ -289,6 +283,10 @@ public class ImagePrint implements Printable {
         g2d.translate(x, y);
         boolean wasBuffered = disableDoubleBuffering(image);
         g2d.setClip(image.getBounds());
+
+        int dpi = printOptions.getDpi() == null ? 300 : printOptions.getDpi().getDpi();
+        double ratioFromDPI = dpi * scaleFactor / 72.0;
+        image.setImagePrintingResolution(ratioFromDPI);
         image.draw(g2d);
         restoreDoubleBuffering(image, wasBuffered);
         g2d.translate(-x, -y);
@@ -318,15 +316,15 @@ public class ImagePrint implements Printable {
     private double getScaleFactor(PageFormat f, double imgWidth, double imgHeight) {
         double scaleFactor = 1.0;
         if (f != null) {
-            SCALE scale = printOptions.getScale();
-            if (SCALE.ShrinkToPage.equals(scale)) {
+            Scale scale = printOptions.getScale();
+            if (Scale.SHRINK_TO_PAGE.equals(scale)) {
                 scaleFactor = Math.min(f.getImageableWidth() / imgWidth, f.getImageableHeight() / imgHeight);
                 if (scaleFactor > 1.0) {
                     scaleFactor = 1.0;
                 }
-            } else if (SCALE.FitToPage.equals(scale)) {
+            } else if (Scale.FIT_TO_PAGE.equals(scale)) {
                 scaleFactor = Math.min(f.getImageableWidth() / imgWidth, f.getImageableHeight() / imgHeight);
-            } else if (SCALE.Custom.equals(scale)) {
+            } else if (Scale.CUSTOM.equals(scale)) {
                 scaleFactor = printOptions.getImageScale();
             }
         }

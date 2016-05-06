@@ -60,8 +60,7 @@ import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
-import org.weasis.dicom.explorer.pref.node.DicomNodeEx;
-import org.weasis.dicom.explorer.print.DicomPrintDialog.DotPerInches;
+import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 
 public class DicomPrint {
@@ -154,7 +153,7 @@ public class DicomPrint {
     private BufferedImage initialize(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
         Dimension dimGrid = layout.getLayoutModel().getGridSize();
         FilmSize filmSize = dicomPrintOptions.getFilmSizeId();
-        DotPerInches dpi = dicomPrintOptions.getDpi();
+        PrintOptions.DotPerInches dpi = dicomPrintOptions.getDpi();
 
         int width = filmSize.getWidth(dpi);
         int height = filmSize.getHeight(dpi);
@@ -277,7 +276,7 @@ public class DicomPrint {
         ApplicationEntity ae = new ApplicationEntity(weasisAet);
         Connection conn = new Connection();
 
-        DicomNodeEx node = dicomPrintOptions.getDicomPrinter();
+        DefaultDicomNode node = dicomPrintOptions.getDicomPrinter();
         ApplicationEntity remoteAE = new ApplicationEntity(node.getAeTitle());
         Connection remoteConn = new Connection();
 

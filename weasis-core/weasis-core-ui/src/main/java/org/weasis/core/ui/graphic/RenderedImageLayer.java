@@ -30,6 +30,7 @@ import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.OpEventListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -169,6 +170,47 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         }
         g2d.setClip(clip);
 
+    }
+
+    public void drawImageForPrinter(Graphics2D g2d, double viewScale) {
+        // Get the clipping rectangle
+        if (!visible || displayImage == null) {
+            return;
+        }
+
+        Shape clip = g2d.getClip();
+        if (clip instanceof Rectangle2D) {
+            Rectangle2D rect = new Rectangle2D.Double(displayImage.getMinX(), displayImage.getMinY(),
+                displayImage.getWidth() - 1, displayImage.getHeight() - 1);
+            rect = rect.createIntersection((Rectangle2D) clip);
+            if (rect.isEmpty()) {
+                return;
+            }
+            g2d.setClip(rect);
+        }
+
+        double ratioX = (Double) disOpManager.getParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X);
+        double ratioY = (Double) disOpManager.getParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y);
+
+        double imageResX = viewScale * sourceImage.getRescaleX();
+        double imageResY = viewScale * sourceImage.getRescaleY();
+        // Do not print lower than 72 dpi and not higher of the image resolution
+        imageResX = imageResX < ratioX ? ratioX : imageResX > 1.0 ? 1.0 : imageResX;
+        imageResY = imageResY < ratioY ? ratioY : imageResY > 1.0 ? 1.0 : imageResY;
+
+        disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, imageResX);
+        disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, imageResY);
+
+        RenderedImage img = disOpManager.process();
+
+        disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, ratioX);
+        disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, ratioY);
+
+        ratioX /= imageResX;
+        ratioY /= imageResY;
+        g2d.drawRenderedImage(img, AffineTransform.getScaleInstance(ratioX, ratioY));
+
+        g2d.setClip(clip);
     }
 
     public void dispose() {

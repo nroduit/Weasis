@@ -72,15 +72,34 @@ public class ResourceUtil {
         return null;
     }
 
-    public static File getResource(String filename) {
-        if (!StringUtil.hasText(filename)) {
-            throw new IllegalArgumentException("Empty filename"); //$NON-NLS-1$
-        }
+    private static String getResourcePath() {
         String path = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"); //$NON-NLS-1$
         if (!StringUtil.hasText(path)) {
             throw new IllegalArgumentException("Empty system property: weasis.resources.path"); //$NON-NLS-1$
         }
+        return path;
+    }
 
-        return new File(path, filename); // $NON-NLS-1$
+    public static File getResource(String filename) {
+        if (!StringUtil.hasText(filename)) {
+            throw new IllegalArgumentException("Empty filename"); //$NON-NLS-1$
+        }
+        return new File(getResourcePath(), filename);
+    }
+
+    public static File getResource(String filename, String... subFolderName) {
+        if (!StringUtil.hasText(filename)) {
+            throw new IllegalArgumentException("Empty filename"); //$NON-NLS-1$
+        }
+        String path = getResourcePath();
+        if (subFolderName != null) {
+            StringBuilder buf = new StringBuilder(path);
+            for (String s : subFolderName) {
+                buf.append(File.separator);
+                buf.append(s);
+            }
+            path = buf.toString();
+        }
+        return new File(path, filename);
     }
 }

@@ -15,6 +15,8 @@ import java.io.File;
 import javax.swing.LookAndFeel;
 
 import org.osgi.framework.BundleContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.FileUtil;
 
 /**
@@ -23,6 +25,7 @@ import org.weasis.core.api.util.FileUtil;
  * @author Nicolas Roduit
  */
 public class AppProperties {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppProperties.class);
 
     /**
      * The version of the application (for display)
@@ -70,15 +73,14 @@ public class AppProperties {
         try {
             // Clean temp folder, necessary when the application has crashed.
             FileUtil.deleteDirectoryContents(APP_TEMP_DIR, 3, 0);
-        } catch (Exception e1) {
+        } catch (Exception e) {
+            LOGGER.error("Error cleaning temporary files", e); //$NON-NLS-1$
         }
     }
 
     public static final File FILE_CACHE_DIR = buildAccessibleTempDirectory("cache"); //$NON-NLS-1$
 
     public static final String OPERATING_SYSTEM = System.getProperty("os.name", "unknown").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
-                                                                                                          // $NON-NLS-1$
-                                                                                                          // ;
 
     public static final GhostGlassPane glassPane = new GhostGlassPane();
 
@@ -90,7 +92,7 @@ public class AppProperties {
         if (context == null) {
             return null;
         }
-        return new File(AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$ ;
+        return new File(AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$
     }
 
     public static File buildAccessibleTempDirectory(String... subFolderName) {
@@ -105,7 +107,7 @@ public class AppProperties {
                 file.mkdirs();
                 return file;
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Cannot build directory", e); //$NON-NLS-1$
             }
         }
         return AppProperties.APP_TEMP_DIR;
