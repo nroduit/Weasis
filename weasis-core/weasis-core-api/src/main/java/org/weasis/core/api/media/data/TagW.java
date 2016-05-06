@@ -39,7 +39,7 @@ import org.weasis.core.api.util.StringUtil;
  *
  */
 public class TagW implements Transferable, Serializable {
-    static final Logger LOGGER = LoggerFactory.getLogger(TagW.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TagW.class);
 
     private static final long serialVersionUID = -7914330824854199622L;
     private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
@@ -71,7 +71,7 @@ public class TagW implements Transferable, Serializable {
             return clazz.isAssignableFrom(value.getClass());
         }
 
-    };
+    }
 
     // TODO Non dicom module: PatientID, PatientName, SeriesInstanceUID, SOPInstanceUID
 
@@ -178,7 +178,7 @@ public class TagW implements Transferable, Serializable {
     protected int anonymizationType;
     protected final int vmMin;
     protected final int vmMax;
-    protected final Object defaultValue;
+    protected final transient Object defaultValue;
 
     public TagW(int id, String keyword, String displayedName, TagType type, int vmMin, int vmMax, Object defaultValue) {
         this.id = id;
@@ -467,7 +467,7 @@ public class TagW implements Transferable, Serializable {
             str = value.toString();
         }
 
-        if (StringUtil.hasText(format) && !format.trim().equals("$V")) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (StringUtil.hasText(format) && !"$V".equals(format.trim())) { //$NON-NLS-1$ //$NON-NLS-2$
             return formatValue(str, type, format);
         }
 

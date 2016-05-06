@@ -24,9 +24,9 @@ import javax.swing.JComponent;
 public class GhostGlassPane extends JComponent {
 
     private static final AlphaComposite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
-    private Image dragged = null;
+    private transient Image dragged = null;
     private Point location = null;
-    private Icon draggedIcon = null;
+    private transient Icon draggedIcon = null;
 
     public GhostGlassPane() {
         setBorder(null);
@@ -47,7 +47,7 @@ public class GhostGlassPane extends JComponent {
         int height = dragged == null ? draggedIcon.getIconHeight() + 1 : dragged.getHeight(this) + 1;
 
         if (location == null) {
-            if (this.location == null) {
+            if (oldLocation == null) {
                 repaint();
             } else {
                 repaint(new Rectangle(oldLocation.x, oldLocation.y, width, height));
@@ -67,13 +67,13 @@ public class GhostGlassPane extends JComponent {
         }
 
         Graphics2D g2 = (Graphics2D) g;
-        Composite OldComposite = g2.getComposite();
+        Composite oldComposite = g2.getComposite();
         g2.setComposite(composite);
         if (dragged == null) {
             draggedIcon.paintIcon(this, g2, location.x, location.y);
         } else {
             g2.drawImage(dragged, location.x, location.y, null);
         }
-        g2.setComposite(OldComposite);
+        g2.setComposite(oldComposite);
     }
 }

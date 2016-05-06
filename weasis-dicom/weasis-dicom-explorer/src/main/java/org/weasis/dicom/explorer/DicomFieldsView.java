@@ -244,7 +244,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
         String privateCreator = dcmObj.privateCreatorOf(tag);
         String word = ElementDictionary.keywordOf(tag, privateCreator);
-        if (!JMVUtils.textHasContent(word)) {
+        if (!StringUtil.hasText(word)) {
             word = "PrivateTag"; //$NON-NLS-1$
         }
 

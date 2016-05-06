@@ -25,6 +25,7 @@ import javax.media.jai.iterator.RandomIterFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.OpEventListener;
 import org.weasis.core.api.image.OpManager;
@@ -70,8 +71,8 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         }
         this.identifier = AbstractLayer.IMAGE;
         this.disOpManager = disOpManager;
-        this.listenerList = new ArrayList<ImageLayerChangeListener<E>>();
-        this.opListeners = new ArrayList<OpEventListener>();
+        this.listenerList = new ArrayList<>();
+        this.opListeners = new ArrayList<>();
         this.buildIterator = buildIterator;
         addEventListener(disOpManager);
     }
@@ -309,7 +310,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         if (imageElement != null) {
             double scaleX = imageElement.getRescaleX();
             double scaleY = imageElement.getRescaleY();
-            if (scaleX != scaleY) {
+            if (MathUtil.isDifferent(scaleX, scaleY)) {
                 return AffineTransform.getScaleInstance(1.0 / scaleX, 1.0 / scaleY);
             }
         }

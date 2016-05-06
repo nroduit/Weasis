@@ -24,8 +24,9 @@ public final class TagUtil {
     private static final DateFormat dateTimeFormatter =
         LocalUtil.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 
-    private static final SimpleDateFormat dicomDate = new SimpleDateFormat("yyyyMMdd"); //$NON-NLS-1$
-    private static final SimpleDateFormat dicomTime = new SimpleDateFormat("HHmmss"); //$NON-NLS-1$
+    // To be thread safe the SimpleDateFormat instance is never modified, only use internally.
+    private static final SimpleDateFormat dicomDate = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()); //$NON-NLS-1$
+    private static final SimpleDateFormat dicomTime = new SimpleDateFormat("HHmmss", LocalUtil.getLocaleFormat()); //$NON-NLS-1$
 
     private TagUtil() {
     }
@@ -35,7 +36,7 @@ public final class TagUtil {
             try {
                 return dateTimeFormatter.parse(dateTime);
             } catch (Exception e) {
-                TagW.LOGGER.error("Parse datetime", e);
+                LOGGER.error("Parse datetime", e);
             }
         }
         return null;
@@ -46,7 +47,7 @@ public final class TagUtil {
             try {
                 return dateFormatter.parse(date);
             } catch (Exception e) {
-                TagW.LOGGER.error("Parse date", e);
+                LOGGER.error("Parse date", e);
             }
         }
         return null;
@@ -70,7 +71,7 @@ public final class TagUtil {
                 }
                 return dicomDate.parse(date);
             } catch (Exception e) {
-                TagW.LOGGER.error("Parse DICOM date", e);
+                LOGGER.error("Parse DICOM date", e);
             }
         }
         return null;
@@ -81,7 +82,7 @@ public final class TagUtil {
             try {
                 return dicomTime.parse(dateTime);
             } catch (Exception e) {
-                TagW.LOGGER.error("Parse DICOM datetime", e);
+                LOGGER.error("Parse DICOM datetime", e);
             }
         }
         return null;
