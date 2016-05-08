@@ -680,7 +680,7 @@ public class WeasisWin {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        JMVUtils.OpenInDefaultBrowser(helpContentMenuItem, new URL(helpURL));
+                        JMVUtils.openInDefaultBrowser(helpContentMenuItem, new URL(helpURL));
                     } catch (MalformedURLException e1) {
                         e1.printStackTrace();
                     }
@@ -695,7 +695,7 @@ public class WeasisWin {
             public void actionPerformed(ActionEvent e) {
                 try {
                     URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")); //$NON-NLS-1$
-                    JMVUtils.OpenInDefaultBrowser(webMenuItem, url);
+                    JMVUtils.openInDefaultBrowser(webMenuItem, url);
                 } catch (MalformedURLException e1) {
                     e1.printStackTrace();
                 }
@@ -708,7 +708,7 @@ public class WeasisWin {
             public void actionPerformed(ActionEvent e) {
                 try {
                     URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")); //$NON-NLS-1$
-                    JMVUtils.OpenInDefaultBrowser(websiteMenuItem, url);
+                    JMVUtils.openInDefaultBrowser(websiteMenuItem, url);
                 } catch (MalformedURLException e1) {
                     e1.printStackTrace();
                 }

@@ -48,7 +48,9 @@ import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.ExportDicom;
 import org.weasis.dicom.explorer.ExportTree;
 import org.weasis.dicom.explorer.LocalExport;
-import org.weasis.dicom.explorer.pref.node.DicomNodeEx;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
+import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
+import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.op.CStore;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
@@ -63,7 +65,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     private final ExportTree exportTree;
 
     private JPanel panel;
-    private final JComboBox<DicomNodeEx> comboNode = new JComboBox<>();
+    private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public SendDicomView(DicomModel dicomModel, CheckTreeModel treeModel) {
         super("DICOM Send");
@@ -81,6 +83,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
         final JLabel lblDest = new JLabel("Destination" + StringUtil.COLON);
         panel.add(lblDest);
+        AbstractDicomNode.addTooltipToComboList(comboNode);
         panel.add(comboNode);
 
         add(panel, BorderLayout.NORTH);
@@ -91,7 +94,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     protected void initialize(boolean afirst) {
         if (afirst) {
             Properties pref = SendDicomFactory.EXPORT_PERSISTENCE;
-            DicomNodeEx.loadDicomNodes(comboNode);
+            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.ARCHIVE);
+            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB);
         }
     }
 
@@ -174,19 +178,24 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                 }
             });
 
-            final DicomNodeEx node = (DicomNodeEx) comboNode.getSelectedItem();
-            final DicomState state =
-                CStore.process(new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
-            if (state.getStatus() != Status.Success) {
-                LOGGER.error("Dicom send error: {}", state.getMessage());
-                GuiExecutor.instance().execute(new Runnable() {
+            Object selectedItem = comboNode.getSelectedItem();
+            if (selectedItem instanceof DefaultDicomNode) {
+                final DefaultDicomNode node = (DefaultDicomNode) comboNode.getSelectedItem();
+                final DicomState state =
+                    CStore.process(new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
+                if (state.getStatus() != Status.Success) {
+                    LOGGER.error("Dicom send error: {}", state.getMessage());
+                    GuiExecutor.instance().execute(new Runnable() {
 
-                    @Override
-                    public void run() {
-                        JOptionPane.showOptionDialog(exportTree, state.getMessage(), null, JOptionPane.DEFAULT_OPTION,
-                            JOptionPane.ERROR_MESSAGE, null, null, null);
-                    }
-                });
+                        @Override
+                        public void run() {
+                            JOptionPane.showOptionDialog(exportTree, state.getMessage(), null,
+                                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null);
+                        }
+                    });
+                }
+            } else if (selectedItem instanceof DicomWebNode) {
+                // TODO to implement
             }
         } finally {
             FileUtil.recursiveDelete(exportDir);

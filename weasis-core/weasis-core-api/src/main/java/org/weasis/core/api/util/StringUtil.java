@@ -1,5 +1,8 @@
 package org.weasis.core.api.util;
 
+import java.text.Normalizer;
+import java.util.regex.Pattern;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
@@ -91,6 +94,18 @@ public class StringUtil {
         return 0;
     }
 
+    public static int getInteger(String value, int defaultValue) {
+        int result = defaultValue;
+        if (value != null) {
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                LOGGER.warn("Cannot parse {} to int", value); //$NON-NLS-1$
+            }
+        }
+        return result;
+    }
+
     public static String integer2String(Integer val) {
         if (val != null) {
             return val.toString();
@@ -130,6 +145,18 @@ public class StringUtil {
 
     public static boolean hasText(String str) {
         return hasText((CharSequence) str);
+    }
+    
+    /**
+     * Removing diacritical marks aka accents
+     * 
+     * @param str
+     * @return the input string without accents
+     */
+    public static String deAccent(String str) {
+        String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(nfdNormalizedString).replaceAll("");
     }
 
     public static String getEmpty2NullObject(Object object) {

@@ -23,12 +23,12 @@ import java.util.Set;
 public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
 
     /** The internal HashMap that will hold the SoftReference. */
-    protected final Map<K, SoftReference<V>> hash = new HashMap<>();
+    protected final transient Map<K, SoftReference<V>> hash = new HashMap<>();
 
-    protected final Map<SoftReference<V>, K> reverseLookup = new HashMap<>();
+    protected final transient Map<SoftReference<V>, K> reverseLookup = new HashMap<>();
 
     /** Reference queue for cleared SoftReference objects. */
-    private final ReferenceQueue<V> queue = new ReferenceQueue<>();
+    private final transient ReferenceQueue<V> queue = new ReferenceQueue<>();
 
     @Override
     public V get(Object key) {
@@ -123,7 +123,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable
 
                     @Override
                     public V setValue(V v) {
-                        entry.setValue(new SoftReference<V>(v, queue));
+                        entry.setValue(new SoftReference<>(v, queue));
                         return value;
                     }
                 });

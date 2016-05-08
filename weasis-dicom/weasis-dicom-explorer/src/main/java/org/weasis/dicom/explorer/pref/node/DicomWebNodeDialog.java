@@ -40,7 +40,7 @@ public class DicomWebNodeDialog extends JDialog {
     private JComboBox<DicomWebNode> nodesComboBox;
     private JPanel footPanel;
     private JLabel lblType;
-    private JComboBox<DicomWebNode.Type> comboBox;
+    private JComboBox<DicomWebNode.WebType> comboBox;
 
     public DicomWebNodeDialog(Window parent, String title, DicomWebNode dicomNode,
         JComboBox<DicomWebNode> nodeComboBox) {
@@ -68,20 +68,20 @@ public class DicomWebNodeDialog extends JDialog {
         GridBagLayout gridBagLayout = new GridBagLayout();
         content.setLayout(gridBagLayout);
         descriptionLabel = new JLabel();
-        GridBagConstraints gbc_descriptionLabel = new GridBagConstraints();
-        gbc_descriptionLabel.insets = new Insets(0, 0, 5, 5);
-        gbc_descriptionLabel.gridx = 0;
-        gbc_descriptionLabel.gridy = 0;
-        content.add(descriptionLabel, gbc_descriptionLabel);
+        GridBagConstraints gbcDescriptionLabel = new GridBagConstraints();
+        gbcDescriptionLabel.insets = new Insets(0, 0, 5, 5);
+        gbcDescriptionLabel.gridx = 0;
+        gbcDescriptionLabel.gridy = 0;
+        content.add(descriptionLabel, gbcDescriptionLabel);
 
         descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
         descriptionTf = new JTextField();
-        GridBagConstraints gbc_descriptionTf = new GridBagConstraints();
-        gbc_descriptionTf.anchor = GridBagConstraints.LINE_START;
-        gbc_descriptionTf.insets = new Insets(0, 0, 5, 5);
-        gbc_descriptionTf.gridx = 1;
-        gbc_descriptionTf.gridy = 0;
-        content.add(descriptionTf, gbc_descriptionTf);
+        GridBagConstraints gbcDescriptionTf = new GridBagConstraints();
+        gbcDescriptionTf.anchor = GridBagConstraints.LINE_START;
+        gbcDescriptionTf.insets = new Insets(0, 0, 5, 5);
+        gbcDescriptionTf.gridx = 1;
+        gbcDescriptionTf.gridy = 0;
+        content.add(descriptionTf, gbcDescriptionTf);
         descriptionTf.setColumns(20);
 
         lblType = new JLabel(Messages.getString("DicomNodeDialog.lblType.text") + StringUtil.COLON); //$NON-NLS-1$
@@ -92,7 +92,7 @@ public class DicomWebNodeDialog extends JDialog {
         gbcLblType.gridy = 1;
         content.add(lblType, gbcLblType);
 
-        comboBox = new JComboBox<>(new DefaultComboBoxModel<>(DicomWebNode.Type.values()));
+        comboBox = new JComboBox<>(new DefaultComboBoxModel<>(DicomWebNode.WebType.values()));
         GridBagConstraints gbcComboBox = new GridBagConstraints();
         gbcComboBox.anchor = GridBagConstraints.LINE_START;
         gbcComboBox.insets = new Insets(0, 0, 5, 5);
@@ -137,7 +137,7 @@ public class DicomWebNodeDialog extends JDialog {
         okButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                okButtonActionPerformed(evt);
+                okButtonActionPerformed();
             }
         });
         cancelButton = new JButton();
@@ -147,16 +147,12 @@ public class DicomWebNodeDialog extends JDialog {
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
+                dispose();
             }
         });
     }
 
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        dispose();
-    }
-
-    private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    private void okButtonActionPerformed() {
         String desc = descriptionTf.getText();
         String url = urlTf.getText();
 
@@ -178,7 +174,7 @@ public class DicomWebNodeDialog extends JDialog {
 
         boolean addNode = dicomNode == null;
         if (addNode) {
-            dicomNode = new DicomWebNode(desc, (DicomWebNode.Type) comboBox.getSelectedItem(), validUrl);
+            dicomNode = new DicomWebNode(desc, (DicomWebNode.WebType) comboBox.getSelectedItem(), validUrl);
             nodesComboBox.addItem(dicomNode);
             nodesComboBox.setSelectedItem(dicomNode);
         } else {
@@ -187,7 +183,7 @@ public class DicomWebNodeDialog extends JDialog {
             nodesComboBox.repaint();
         }
 
-        DicomWebNode.saveDicomNodes(nodesComboBox);
+        AbstractDicomNode.saveDicomNodes(nodesComboBox, AbstractDicomNode.Type.WEB);
         dispose();
     }
 }

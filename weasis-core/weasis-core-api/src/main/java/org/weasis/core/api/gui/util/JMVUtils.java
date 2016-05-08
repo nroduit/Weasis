@@ -22,7 +22,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
@@ -64,6 +63,8 @@ import javax.swing.text.StyledDocument;
 import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.util.StringUtil;
 
@@ -73,9 +74,14 @@ import org.weasis.core.api.util.StringUtil;
  * @author Nicolas Roduit
  */
 public class JMVUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JMVUtils.class);
 
     public static final Color TREE_BACKROUND = (Color) javax.swing.UIManager.get("Tree.background"); //$NON-NLS-1$
     public static final Color TREE_SELECTION_BACKROUND = (Color) javax.swing.UIManager.get("Tree.selectionBackground"); //$NON-NLS-1$
+
+    private JMVUtils() {
+        super();
+    }
 
     public static boolean getNULLtoFalse(Object val) {
         return Boolean.TRUE.equals(val);
@@ -110,7 +116,7 @@ public class JMVUtils {
         bound.y = img.tileYToY(img.getMinTileY());
         // Loop over tiles within the clipping region
         for (int ti = img.getMinTileX(), tj = img.getMinTileY(); ti < maxTileIndexX; ti++) {
-            if (bound == null || bound.intersects(img.getTileRect(ti, tj))) {
+            if (bound.intersects(img.getTileRect(ti, tj))) {
                 nbTiles++;
             }
         }
@@ -146,7 +152,7 @@ public class JMVUtils {
             window.setLocation(bound.x + (bound.width - window.getWidth()) / 2,
                 bound.y + (bound.height - window.getHeight()) / 2);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot center the window to the screen", e); //$NON-NLS-1$
         }
         window.setVisible(true);
     }
@@ -231,8 +237,7 @@ public class JMVUtils {
         slider.addChangeListener(listener);
     }
 
-    public static void addCheckAction(final JFormattedTextField textField) {
-        textField.setHorizontalAlignment(SwingConstants.RIGHT);
+    private static void addCheckActionToJFormattedTextField(final JFormattedTextField textField) {
         textField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
         textField.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
 
@@ -241,44 +246,28 @@ public class JMVUtils {
                 try {
                     textField.commitEdit(); // so use it.
                     textField.postActionEvent(); // stop editing //for DefaultCellEditor
-                } catch (java.text.ParseException exc) {
+                } catch (java.text.ParseException pe) {
+                    LOGGER.error("Exception when commit value in {}", textField.getClass().getName(), pe); //$NON-NLS-1$
                 }
                 textField.setValue(textField.getValue());
             }
         });
     }
 
+    public static void addCheckAction(final JFormattedTextField textField) {
+        textField.setHorizontalAlignment(SwingConstants.RIGHT);
+        addCheckActionToJFormattedTextField(textField);
+    }
+
     public static void setNumberModel(JSpinner spin, int val, int min, int max, int delta) {
         spin.setModel(new SpinnerNumberModel(val < min ? min : val > max ? max : val, min, max, delta));
         final JFormattedTextField ftf = ((JSpinner.DefaultEditor) spin.getEditor()).getTextField();
-        ftf.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
-        ftf.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    ftf.commitEdit(); // so use it.
-                } catch (java.text.ParseException exc) {
-                }
-                ftf.setValue(ftf.getValue());
-            }
-        });
+        addCheckActionToJFormattedTextField(ftf);
     }
 
     public static void formatCheckAction(JSpinner spin) {
         final JFormattedTextField ftf = ((JSpinner.DefaultEditor) spin.getEditor()).getTextField();
-        ftf.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
-        ftf.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    ftf.commitEdit(); // so use it.
-                } catch (java.text.ParseException exc) {
-                }
-                ftf.setValue(ftf.getValue());
-            }
-        });
+        addCheckActionToJFormattedTextField(ftf);
     }
 
     public static Number getFormattedValue(JFormattedTextField textField) {
@@ -289,12 +278,14 @@ public class JMVUtils {
                 // to be sure that the value is commit (by default it is when the JFormattedTextField losing the focus)
                 textField.commitEdit();
             } catch (ParseException pe) {
+                LOGGER.error("Exception when commit value in {}", textField.getClass().getName(), pe); //$NON-NLS-1$
             }
         }
         Number val = null;
         try {
             val = (Number) textField.getValue();
-        } catch (Exception ex) {
+        } catch (Exception e) {
+            LOGGER.error("Cannot get number form textField", e); //$NON-NLS-1$
         }
         return val;
     }
@@ -316,7 +307,7 @@ public class JMVUtils {
 
     public static Dimension getSmallIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("CDE/Motif")) { //$NON-NLS-1$
+        if ("CDE/Motif".equalsIgnoreCase(look)) { //$NON-NLS-1$
             return new Dimension(38, 34);
         } else if (look.startsWith("GTK")) { //$NON-NLS-1$
             return new Dimension(28, 28);
@@ -327,9 +318,9 @@ public class JMVUtils {
 
     public static Dimension getBigIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("CDE/Motif")) { //$NON-NLS-1$
+        if ("CDE/Motif".equalsIgnoreCase(look)) { //$NON-NLS-1$
             return new Dimension(46, 42);
-        } else if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) { //$NON-NLS-1$ //$NON-NLS-2$
+        } else if ("Mac OS X Aqua".equalsIgnoreCase(look) || look.startsWith("GTK")) { //$NON-NLS-1$ //$NON-NLS-2$
             return new Dimension(36, 36);
         } else {
             return new Dimension(34, 34);
@@ -338,7 +329,7 @@ public class JMVUtils {
 
     public static Dimension getBigIconToogleButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) { //$NON-NLS-1$ //$NON-NLS-2$
+        if ("Mac OS X Aqua".equalsIgnoreCase(look) || look.startsWith("GTK")) { //$NON-NLS-1$ //$NON-NLS-2$
             return new Dimension(36, 36);
         } else {
             return new Dimension(30, 30);
@@ -351,10 +342,7 @@ public class JMVUtils {
         Style style = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
         Style regular = doc.addStyle("regular", style); //$NON-NLS-1$
         StyleConstants.setFontFamily(def, "SansSerif"); //$NON-NLS-1$
-        if (textColor == null) {
-            textColor = UIManager.getColor("text"); //$NON-NLS-1$
-        }
-        StyleConstants.setForeground(def, textColor);
+        StyleConstants.setForeground(def, textColor == null ? UIManager.getColor("text") : textColor);
         TabStop[] tabs = new TabStop[1];
         tabs[0] = new TabStop(25.0f, TabStop.ALIGN_LEFT, TabStop.LEAD_NONE);
         StyleConstants.setTabSet(def, new TabSet(tabs));
@@ -374,40 +362,11 @@ public class JMVUtils {
         StyleConstants.setItalic(s, true);
     }
 
-    public static String getValueRGBasText(Color color) {
-        if (color == null) {
-            return ""; //$NON-NLS-1$
-        }
-        return "red = " + color.getRed() + ", green = " + color.getGreen() + ", blue = " + color.getBlue(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    }
-
-    public static String getValueRGBasText2(Color color) {
-        if (color == null) {
-            return ""; //$NON-NLS-1$
-        }
-        return color.getRed() + ":" + color.getGreen() + ":" + color.getBlue(); //$NON-NLS-1$ //$NON-NLS-2$
-    }
-
     public static int getMaxLength(Rectangle bounds) {
         if (bounds.width < bounds.height) {
             return bounds.height;
         }
         return bounds.width;
-    }
-
-    public static int getIntValueFromString(String value, int defaultValue) {
-        int result = defaultValue;
-        if (value != null) {
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException ignore) {
-            }
-        }
-        return result;
-    }
-
-    public static boolean textHasContent(String aText) {
-        return (aText != null) && (!aText.trim().equals("")); //$NON-NLS-1$
     }
 
     public static void addTooltipToComboList(final JComboBox combo) {
@@ -431,25 +390,22 @@ public class JMVUtils {
         }
     }
 
-    public static void OpenInDefaultBrowser(Component parent, URL url) {
+    public static void openInDefaultBrowser(Component parent, URL url) {
         if (url != null) {
             if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
                 try {
                     String cmd = String.format("xdg-open %s", url); //$NON-NLS-1$
                     Runtime.getRuntime().exec(cmd);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
+                } catch (IOException e) {
+                    LOGGER.error("Cannot open URL to the system browser", e); //$NON-NLS-1$
                 }
             } else if (Desktop.isDesktopSupported()) {
                 final Desktop desktop = Desktop.getDesktop();
                 if (desktop.isSupported(Desktop.Action.BROWSE)) {
                     try {
                         desktop.browse(url.toURI());
-
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    } catch (URISyntaxException ex2) {
-                        ex2.printStackTrace();
+                    } catch (IOException | URISyntaxException e) {
+                        LOGGER.error("Cannot open URL to the desktop browser", e); //$NON-NLS-1$
                     }
                 }
             } else {
@@ -472,50 +428,10 @@ public class JMVUtils {
                     pane.setToolTipText(null);
                 } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     Component parent = e.getSource() instanceof Component ? (Component) e.getSource() : null;
-                    OpenInDefaultBrowser(parent, e.getURL());
+                    openInDefaultBrowser(parent, e.getURL());
                 }
             }
         };
-    }
-
-    public static Color getComplementaryColor(Color color) {
-        float[] c = new float[3];
-        Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), c);
-        return Color.getHSBColor(c[0] + 0.5F, c[1], c[2]);
-    }
-
-    public static String getResource(String resource, Class<?> c) {
-        URL url = getResourceURL(resource, c);
-        return url != null ? url.toString() : null;
-    }
-
-    public InputStream getResourceAsStream(String name, Class<?> c) {
-        URL url = getResourceURL(name, c);
-        try {
-            return url != null ? url.openStream() : null;
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-    public static URL getResourceURL(String resource, Class<?> c) {
-        URL url = null;
-        if (c != null) {
-            ClassLoader classLoader = c.getClassLoader();
-            if (classLoader != null) {
-                url = classLoader.getResource(resource);
-            }
-        }
-        if (url == null) {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            if (classLoader != null) {
-                url = classLoader.getResource(resource);
-            }
-        }
-        if (url == null) {
-            url = ClassLoader.getSystemResource(resource);
-        }
-        return url;
     }
 
     public static void addItemToMenu(JMenu menu, JMenuItem item) {
@@ -529,4 +445,25 @@ public class JMVUtils {
             menu.add(item);
         }
     }
+
+    public static Color getComplementaryColor(Color color) {
+        float[] c = new float[3];
+        Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), c);
+        return Color.getHSBColor(c[0] + 0.5F, c[1], c[2]);
+    }
+
+    public static String getValueRGBasText(Color color) {
+        if (color == null) {
+            return ""; //$NON-NLS-1$
+        }
+        return "red = " + color.getRed() + ", green = " + color.getGreen() + ", blue = " + color.getBlue(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    }
+
+    public static String getValueRGBasText2(Color color) {
+        if (color == null) {
+            return ""; //$NON-NLS-1$
+        }
+        return color.getRed() + ":" + color.getGreen() + ":" + color.getBlue(); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
 }

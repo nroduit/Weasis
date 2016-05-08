@@ -499,7 +499,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
 
         List<PatientPane> getPatientPaneList() {
-            ArrayList<PatientPane> patientPaneList = new ArrayList<PatientPane>();
+            ArrayList<PatientPane> patientPaneList = new ArrayList<>();
             for (Component c : this.getComponents()) {
                 if (c instanceof PatientPane) {
                     patientPaneList.add((PatientPane) c);
@@ -645,7 +645,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
 
         List<StudyPane> getStudyPaneList() {
-            ArrayList<StudyPane> studyPaneList = new ArrayList<StudyPane>();
+            ArrayList<StudyPane> studyPaneList = new ArrayList<>();
             for (Component c : this.getComponents()) {
                 if (c instanceof StudyPane) {
                     studyPaneList.add((StudyPane) c);
@@ -736,7 +736,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
 
         List<SeriesPane> getSeriesPaneList() {
-            ArrayList<SeriesPane> seriesPaneList = new ArrayList<SeriesPane>();
+            ArrayList<SeriesPane> seriesPaneList = new ArrayList<>();
             for (Component c : this.getComponents()) {
                 if (c instanceof SeriesPane) {
                     seriesPaneList.add((SeriesPane) c);
@@ -1109,7 +1109,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private List<Series> getSplitSeries(Series dcm) {
         MediaSeriesGroup study = model.getParent(dcm, DicomModel.study);
         Object splitNb = dcm.getTagValue(TagW.SplitSeriesNumber);
-        List<Series> list = new ArrayList<Series>();
+        List<Series> list = new ArrayList<>();
         if (splitNb == null || study == null) {
             list.add(dcm);
             return list;
@@ -1141,7 +1141,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         List<SeriesPane> seriesList = study2series.get(study);
         if (seriesList == null) {
-            seriesList = new ArrayList<SeriesPane>();
+            seriesList = new ArrayList<>();
             study2series.put(study, seriesList);
         }
         boolean addSeries = patientContainer.isStudyVisible(study);
@@ -1258,7 +1258,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         boolean addSeries = selectedPatient == patientPane;
         List<StudyPane> studies = patient2study.get(patient);
         if (studies == null) {
-            studies = new ArrayList<StudyPane>();
+            studies = new ArrayList<>();
             patient2study.put(patient, studies);
         }
         Object selectedStudy = modelStudy.getSelectedItem();
@@ -1267,7 +1267,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         List<SeriesPane> seriesList = study2series.get(study);
         if (seriesList == null) {
-            seriesList = new ArrayList<SeriesPane>();
+            seriesList = new ArrayList<>();
             study2series.put(study, seriesList);
         }
 
@@ -1517,7 +1517,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 return thumb;
             }
         };
-        FutureTask<SeriesThumbnail> future = new FutureTask<SeriesThumbnail>(callable);
+        FutureTask<SeriesThumbnail> future = new FutureTask<>(callable);
         GuiExecutor.instance().invokeAndWait(future);
         SeriesThumbnail result = null;
         try {
@@ -1551,7 +1551,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     }
 
                     ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-                        new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
+                        new ArrayList<>(1);
                     list.add(series);
                     ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, dicomModel, props);
                     ViewerPluginBuilder.openSequenceInPlugin(builder);
@@ -1950,14 +1950,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     @Override
     public List<Action> getOpenExportDialogAction() {
-        ArrayList<Action> actions = new ArrayList<Action>(1);
+        ArrayList<Action> actions = new ArrayList<>(1);
         actions.add(exportAction);
         return actions;
     }
 
     @Override
     public List<Action> getOpenImportDialogAction() {
-        ArrayList<Action> actions = new ArrayList<Action>(2);
+        ArrayList<Action> actions = new ArrayList<>(2);
         actions.add(importAction);
         AbstractAction importCDAction =
             new AbstractAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png"))) { //$NON-NLS-1$ //$NON-NLS-2$

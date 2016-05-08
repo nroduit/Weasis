@@ -72,7 +72,6 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -173,8 +172,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else if (EXPORT_FORMAT[1].equals(seltected)) {
             // No option
         } else if (EXPORT_FORMAT[2].equals(seltected)) {
-            final JSlider slider =
-                new JSlider(0, 100, JMVUtils.getIntValueFromString(pref.getProperty(IMG_QUALITY, null), 80));
+            final JSlider slider = new JSlider(0, 100, StringUtil.getInteger(pref.getProperty(IMG_QUALITY, null), 80));
 
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
@@ -371,7 +369,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private void writeOther(ExplorerTask task, File exportDir, CheckTreeModel model, String format) {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         boolean keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
-        int jpegQuality = JMVUtils.getIntValueFromString(pref.getProperty(IMG_QUALITY, null), 80);
+        int jpegQuality = StringUtil.getInteger(pref.getProperty(IMG_QUALITY, null), 80);
         boolean more8bits = Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false")); //$NON-NLS-1$
         boolean writeGraphics = chckbxGraphics.isSelected();
 
@@ -501,7 +499,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             }
 
             synchronized (model) {
-                ArrayList<String> uids = new ArrayList<String>();
+                ArrayList<String> uids = new ArrayList<>();
                 TreePath[] paths = model.getCheckingPaths();
                 TreePath: for (TreePath treePath : paths) {
                     if (task.isCancelled()) {
@@ -616,11 +614,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 buffer.append("DICOM"); //$NON-NLS-1$
                 buffer.append(File.separator);
             }
-            buffer.append(makeFileIDs((String) img.getTagValue(TagD.getUID(Level.PATIENT))));
+            buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagD.getUID(Level.STUDY))));
+            buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.StudyInstanceUID, String.class)));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagD.getUID(Level.SERIES))));
+            buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class)));
         }
         return buffer.toString();
     }
@@ -648,7 +646,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else {
             buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
             buffer.append(File.separator);
-            buffer.append(makeFileIDs((String) img.getTagValue(TagD.get(Tag.StudyInstanceUID))));
+            buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.StudyInstanceUID, String.class)));
             buffer.append(File.separator);
             buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class)));
         }

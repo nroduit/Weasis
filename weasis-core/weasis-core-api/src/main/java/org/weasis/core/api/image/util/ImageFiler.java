@@ -70,7 +70,6 @@ public class ImageFiler extends AbstractBufferHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageFiler.class);
     private static final String TIFF_TAG = "tiff_directory"; //$NON-NLS-1$
 
-    public static final String[] OUTPUT_TYPE = { "Binary", "Gray Levels", "Color" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     public static final int TILESIZE = 512;
     public static final int LIMIT_TO_TILE = 768;
     public static final int SAVE_TILED = 0;
@@ -450,7 +449,9 @@ public class ImageFiler extends AbstractBufferHandler {
             }
 
             if (ImageFiler.writeTIFF(imgCacheFile, img, true, false, false)) {
-                media.setTag(TagW.TiledImagePath, imgCacheFile.getPath());
+                if (imgCacheFile != null) {
+                    media.setTag(TagW.TiledImagePath, imgCacheFile.getPath());
+                }
                 return imgCacheFile;
             }
         }
