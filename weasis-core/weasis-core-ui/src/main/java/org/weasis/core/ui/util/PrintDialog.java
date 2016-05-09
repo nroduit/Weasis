@@ -138,9 +138,9 @@ public class PrintDialog extends javax.swing.JDialog {
         gbc_positionComboBox.gridx = 1;
         gbc_positionComboBox.gridy = 2;
         getContentPane().add(positionComboBox, gbc_positionComboBox);
-        
+
         label = new JLabel();
-        label.setText("DPI" + StringUtil.COLON);
+        label.setText("Image DPI" + StringUtil.COLON);
         GridBagConstraints gbcLabel = new GridBagConstraints();
         gbcLabel.anchor = GridBagConstraints.EAST;
         gbcLabel.insets = new Insets(0, 15, 10, 5);
@@ -166,7 +166,7 @@ public class PrintDialog extends javax.swing.JDialog {
         gbc_annotationsCheckBox.insets = new Insets(0, 15, 10, 0);
         gbc_annotationsCheckBox.gridwidth = 3;
         gbc_annotationsCheckBox.gridx = 0;
-        gbc_annotationsCheckBox.gridy = 3;
+        gbc_annotationsCheckBox.gridy = 4;
         getContentPane().add(annotationsCheckBox, gbc_annotationsCheckBox);
         cancelButton = new javax.swing.JButton();
 
@@ -202,7 +202,7 @@ public class PrintDialog extends javax.swing.JDialog {
             gbc_chckbxNewCheckBox.gridwidth = 3;
             gbc_chckbxNewCheckBox.insets = new Insets(0, 15, 10, 5);
             gbc_chckbxNewCheckBox.gridx = 0;
-            gbc_chckbxNewCheckBox.gridy = 4;
+            gbc_chckbxNewCheckBox.gridy = 5;
             getContentPane().add(chckbxSelctedView, gbc_chckbxNewCheckBox);
         }
 
@@ -211,13 +211,13 @@ public class PrintDialog extends javax.swing.JDialog {
         gbc_printButton.anchor = GridBagConstraints.EAST;
         gbc_printButton.insets = new Insets(25, 0, 15, 5);
         gbc_printButton.gridx = 1;
-        gbc_printButton.gridy = 5;
+        gbc_printButton.gridy = 6;
         getContentPane().add(printButton, gbc_printButton);
         GridBagConstraints gbc_cancelButton = new GridBagConstraints();
         gbc_cancelButton.insets = new Insets(25, 10, 15, 15);
         gbc_cancelButton.anchor = GridBagConstraints.NORTHWEST;
         gbc_cancelButton.gridx = 2;
-        gbc_cancelButton.gridy = 5;
+        gbc_cancelButton.gridy = 6;
         getContentPane().add(cancelButton, gbc_cancelButton);
 
         pack();
