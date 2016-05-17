@@ -14,6 +14,7 @@ package org.weasis.core.ui.util;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.GridBagConstraints;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,16 +34,25 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExportLayout.class);
 
-    protected final JPanel grid;
+    protected final JPanel grid = new JPanel();
     protected GridBagLayoutModel layoutModel;
 
     public ExportLayout(GridBagLayoutModel layoutModel) {
-        grid = new JPanel();
+        initGrid();
+        adaptLayoutModel(layoutModel);
+    }
+
+    public ExportLayout(DefaultView2d<E> viewCanvas) {
+        initGrid();
+        adaptLayoutModel(viewCanvas);
+
+    }
+
+    private void initGrid() {
         // For having a black background with any Look and Feel
         grid.setUI(new PanelUI() {
         });
         setGridBackground(Color.BLACK);
-        adaptLayoutModel(layoutModel);
         add(grid, BorderLayout.CENTER);
     }
 
@@ -54,6 +64,18 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
 
     public GridBagLayoutModel getLayoutModel() {
         return layoutModel;
+    }
+
+    private void adaptLayoutModel(DefaultView2d<E> viewCanvas) {
+        this.layoutModel = new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(1), "exp_tmp", "", null);
+
+        ExportImage<E> export = new ExportImage<E>(viewCanvas);
+        export.getInfoLayer().setBorder(3);
+        LayoutConstraints e = new LayoutConstraints(viewCanvas.getClass().getName(), 0, 0, 0, 1, 1, 1.0, 1.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH);
+        layoutModel.getConstraints().put(e, export);
+        grid.add(export, e);
+        grid.revalidate();
     }
 
     private void adaptLayoutModel(GridBagLayoutModel layoutModel) {

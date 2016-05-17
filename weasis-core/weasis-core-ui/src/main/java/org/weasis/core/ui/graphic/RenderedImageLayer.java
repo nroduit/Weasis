@@ -190,9 +190,9 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
 
         double imageResX = viewScale * sourceImage.getRescaleX();
         double imageResY = viewScale * sourceImage.getRescaleY();
-        // Do not print lower than 72 dpi and not higher of the image resolution
-        imageResX = imageResX < ratioX ? ratioX : imageResX > 1.0 ? 1.0 : imageResX;
-        imageResY = imageResY < ratioY ? ratioY : imageResY > 1.0 ? 1.0 : imageResY;
+        // Do not print lower than 72 dpi (drawRenderedImage can only decrease the size for printer not interpolate)
+        imageResX = imageResX < ratioX ? ratioX : imageResX;
+        imageResY = imageResY < ratioY ? ratioY : imageResY;
 
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, imageResX);
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, imageResY);

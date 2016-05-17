@@ -17,7 +17,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
@@ -43,31 +42,18 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
-import org.weasis.core.ui.util.PrintOptions.Scale;
 
 public class ImagePrint implements Printable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImagePrint.class);
 
     private Point printLoc;
     private PrintOptions printOptions;
-    private Object printable;
-
-    public ImagePrint(RenderedImage renderedImage, PrintOptions printOptions) {
-        this.printable = renderedImage;
-        printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0) : printOptions;
-    }
-
-    public ImagePrint(ExportImage<? extends ImageElement> exportImage, PrintOptions printOptions) {
-        this.printable = exportImage;
-        printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0) : printOptions;
-    }
+    private ExportLayout<? extends ImageElement> layout;
 
     public ImagePrint(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
-        this.printable = layout;
-        printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0) : printOptions;
+        this.layout = layout;
+        this.printLoc = new Point(0, 0);
+        this.printOptions = printOptions == null ? new PrintOptions(true) : printOptions;
     }
 
     public void setPrintLocation(Point d) {
@@ -132,22 +118,11 @@ public class ImagePrint implements Printable {
         if (pageIndex >= 1) {
             return Printable.NO_SUCH_PAGE;
         }
-        Graphics2D g2d = (Graphics2D) g;
-        if (printable instanceof ExportLayout) {
-            printImage(g2d, (ExportLayout) printable, f);
-            return Printable.PAGE_EXISTS;
-        } else if (printable instanceof ExportImage) {
-            printImage(g2d, (ExportImage) printable, f);
-            return Printable.PAGE_EXISTS;
-        } else if (printable instanceof RenderedImage) {
-            printImage(g2d, (RenderedImage) printable, f);
-            return Printable.PAGE_EXISTS;
-        } else {
-            return Printable.NO_SUCH_PAGE;
-        }
+        printImage((Graphics2D) g, f);
+        return Printable.PAGE_EXISTS;
     }
 
-    public void printImage(Graphics2D g2d, ExportLayout<? extends ImageElement> layout, PageFormat f) {
+    public void printImage(Graphics2D g2d, PageFormat f) {
         if ((layout == null) || (g2d == null)) {
             return;
         }
@@ -249,88 +224,9 @@ public class ImagePrint implements Printable {
                 image.setCenter(originCenter.getX(), originCenter.getY());
             }
 
-            int dpi = printOptions.getDpi() == null ? 300 : printOptions.getDpi().getDpi();
+            int dpi = printOptions.getDpi() == null ? 150 : printOptions.getDpi().getDpi();
             double ratioFromDPI = dpi * scaleFactor / 72.0;
             image.setImagePrintingResolution(ratioFromDPI);
         }
     }
-
-    public void printImage(Graphics2D g2d, ExportImage<? extends ImageElement> image, PageFormat f) {
-        if ((image == null) || (g2d == null)) {
-            return;
-        }
-        if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
-            image.getInfoLayer().setVisible(false);
-        }
-        RenderedImage img = image.getSourceImage();
-        double w = img == null ? image.getWidth() : img.getWidth() * image.getImage().getRescaleX();
-        double h = img == null ? image.getHeight() : img.getHeight() * image.getImage().getRescaleY();
-        double scaleFactor = getScaleFactor(f, w, h);
-        // Set the print area in pixel
-        int cw = (int) (w * scaleFactor + 0.5);
-        int ch = (int) (h * scaleFactor + 0.5);
-        image.setSize(cw, ch);
-
-        // Resize in best fit window
-        image.zoom(scaleFactor);
-        image.center();
-
-        double x = printLoc.x;
-        double y = printLoc.y;
-        if (printOptions.isCenter()) {
-            x = f.getImageableX() + (f.getImageableWidth() / 2.0 - w * scaleFactor * 0.5);
-            y = f.getImageableY() + (f.getImageableHeight() / 2.0 - h * scaleFactor * 0.5);
-        }
-        // Set us to the upper left corner
-        g2d.translate(x, y);
-        boolean wasBuffered = disableDoubleBuffering(image);
-        g2d.setClip(image.getBounds());
-
-        int dpi = printOptions.getDpi() == null ? 300 : printOptions.getDpi().getDpi();
-        double ratioFromDPI = dpi * scaleFactor / 72.0;
-        image.setImagePrintingResolution(ratioFromDPI);
-        image.draw(g2d);
-        restoreDoubleBuffering(image, wasBuffered);
-        g2d.translate(-x, -y);
-    }
-
-    public void printImage(Graphics2D g2d, RenderedImage image, PageFormat f) {
-        if ((image == null) || (g2d == null)) {
-            return;
-        }
-        int w = image.getWidth();
-        int h = image.getHeight();
-        double scaleFactor = getScaleFactor(f, w, h);
-        int x = printLoc.x;
-        int y = printLoc.y;
-        if (printOptions.isCenter()) {
-            x = (int) (f.getImageableWidth() / 2.0 - w * scaleFactor * 0.5 + 0.5);
-            y = (int) (f.getImageableHeight() / 2.0 - h * scaleFactor * 0.5 + 0.5);
-        }
-        AffineTransform at = AffineTransform.getScaleInstance(scaleFactor, scaleFactor);
-        at.translate(x, y);
-        // Set us to the upper left corner
-        g2d.translate(f.getImageableX(), f.getImageableY());
-        g2d.drawRenderedImage(image, at);
-        g2d.translate(-f.getImageableX(), -f.getImageableY());
-    }
-
-    private double getScaleFactor(PageFormat f, double imgWidth, double imgHeight) {
-        double scaleFactor = 1.0;
-        if (f != null) {
-            Scale scale = printOptions.getScale();
-            if (Scale.SHRINK_TO_PAGE.equals(scale)) {
-                scaleFactor = Math.min(f.getImageableWidth() / imgWidth, f.getImageableHeight() / imgHeight);
-                if (scaleFactor > 1.0) {
-                    scaleFactor = 1.0;
-                }
-            } else if (Scale.FIT_TO_PAGE.equals(scale)) {
-                scaleFactor = Math.min(f.getImageableWidth() / imgWidth, f.getImageableHeight() / imgHeight);
-            } else if (Scale.CUSTOM.equals(scale)) {
-                scaleFactor = printOptions.getImageScale();
-            }
-        }
-        return scaleFactor;
-    }
-
 }

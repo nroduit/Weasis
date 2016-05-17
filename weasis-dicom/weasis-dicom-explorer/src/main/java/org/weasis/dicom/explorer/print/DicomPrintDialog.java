@@ -19,7 +19,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.swing.Box;
@@ -42,8 +41,6 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.StringUtil;
@@ -98,7 +95,7 @@ public class DicomPrintDialog extends JDialog {
         }
 
         public static int getLengthFromInch(double size, PrintOptions.DotPerInches dpi) {
-            PrintOptions.DotPerInches dpi2 = dpi == null ? PrintOptions.DotPerInches.DPI_300 : dpi;
+            PrintOptions.DotPerInches dpi2 = dpi == null ? PrintOptions.DotPerInches.DPI_150 : dpi;
             double val = size * dpi2.getDpi();
             return (int) (val + 0.5);
         }
@@ -605,7 +602,7 @@ public class DicomPrintDialog extends JDialog {
         dicomPrintOptions.setDicomPrinter((DicomPrinter) printersComboBox.getSelectedItem());
 
         DicomPrint dicomPrint = new DicomPrint(dicomPrintOptions);
-        PrintOptions printOptions = new PrintOptions(printAnnotationsCheckBox.isSelected(), 1.0);
+        PrintOptions printOptions = new PrintOptions(printAnnotationsCheckBox.isSelected());
         printOptions.setColor(dicomPrintOptions.isPrintInColor());
 
         ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
@@ -619,16 +616,13 @@ public class DicomPrintDialog extends JDialog {
         }
         doClose();
 
-        GridBagLayoutModel layoutModel = container.getLayoutModel();
+        ExportLayout<ImageElement> layout;
         if (chckbxSelctedView.isSelected()) {
-            final LinkedHashMap<LayoutConstraints, Component> elements =
-                new LinkedHashMap<LayoutConstraints, Component>(1);
-            layoutModel = new GridBagLayoutModel(elements, "sel_tmp", "", null);
-            DefaultView2d val = eventManager.getSelectedViewPane();
-            elements.put(new LayoutConstraints(val.getClass().getName(), 0, 0, 0, 1, 1, 1.0, 1.0,
-                GridBagConstraints.CENTER, GridBagConstraints.BOTH), val);
+            layout = new ExportLayout<ImageElement>(eventManager.getSelectedViewPane());
+        } else {
+            layout = new ExportLayout<ImageElement>(container.getLayoutModel());
         }
-        ExportLayout<ImageElement> layout = new ExportLayout<ImageElement>(layoutModel);
+
         try {
             dicomPrint.printImage(dicomPrint.printImage(layout, printOptions));
         } catch (Exception ex) {
