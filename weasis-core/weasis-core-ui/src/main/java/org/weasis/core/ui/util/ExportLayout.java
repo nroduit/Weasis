@@ -67,7 +67,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     }
 
     private void adaptLayoutModel(DefaultView2d<E> viewCanvas) {
-        this.layoutModel = new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(1), "exp_tmp", "", null);
+        this.layoutModel = new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(1), "exp_tmp", "", null); //$NON-NLS-1$ //$NON-NLS-2$
 
         ExportImage<E> export = new ExportImage<E>(viewCanvas);
         export.getInfoLayer().setBorder(3);
@@ -82,7 +82,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         final Map<LayoutConstraints, Component> old = layoutModel.getConstraints();
         final LinkedHashMap<LayoutConstraints, Component> elements =
             new LinkedHashMap<LayoutConstraints, Component>(old.size());
-        this.layoutModel = new GridBagLayoutModel(elements, "exp_tmp", "", null);
+        this.layoutModel = new GridBagLayoutModel(elements, "exp_tmp", "", null); //$NON-NLS-1$ //$NON-NLS-2$
         Iterator<LayoutConstraints> enumVal = old.keySet().iterator();
 
         while (enumVal.hasNext()) {

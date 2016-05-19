@@ -88,7 +88,7 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().add(positionComboBox, gbcPositionComboBox);
 
         label = new JLabel();
-        label.setText("Image DPI" + StringUtil.COLON);
+        label.setText(Messages.getString("PrintDialog.dpi") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbcLabel = new GridBagConstraints();
         gbcLabel.anchor = GridBagConstraints.EAST;
         gbcLabel.insets = new Insets(0, 15, 10, 5);

@@ -242,7 +242,7 @@ public class InfoLayer implements AnnotationsLayer {
                 if (rates != null && rates.length > 0) {
                     for (int i = 0; i < rates.length; i++) {
                         if (i > 0) {
-                            buf.append(",");
+                            buf.append(","); //$NON-NLS-1$
                         }
                         buf.append(" ["); //$NON-NLS-1$
                         buf.append((int) rates[i]);
