@@ -10,8 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.ui.util;
 
-import org.weasis.core.ui.Messages;
-
 /**
  *
  * @author Marcelo Porto (marcelo@animati.com.br), Nicolas Roduit
@@ -20,7 +18,7 @@ import org.weasis.core.ui.Messages;
 public class PrintOptions {
 
     public enum DotPerInches {
-        DPI_150(150), DPI_300(300), DPI_600(600);
+        DPI_100(100), DPI_150(150), DPI_200(200), DPI_250(250), DPI_300(300);
 
         private final int dpi;
 
@@ -38,48 +36,15 @@ public class PrintOptions {
         }
     }
 
-    public enum Scale {
-        SHRINK_TO_PAGE {
-            @Override
-            public String toString() {
-                return Messages.getString("PrintOptions.shrink"); //$NON-NLS-1$
-            }
-        },
-        FIT_TO_PAGE {
-            @Override
-            public String toString() {
-                return Messages.getString("PrintOptions.fit"); //$NON-NLS-1$
-            }
-        },
-        CUSTOM {
-            @Override
-            public String toString() {
-                return Messages.getString("PrintOptions.custom"); //$NON-NLS-1$
-            }
-        }
-    }
-
     private Boolean hasAnnotations;
-    private double imageScale;
     private boolean center;
     private boolean color;
-    private Scale scale;
     private DotPerInches dpi;
 
-    public PrintOptions(Boolean hasAnnotations, double imageScale) {
+    public PrintOptions(Boolean hasAnnotations) {
         this.hasAnnotations = hasAnnotations;
-        this.imageScale = imageScale;
         this.center = true;
-        this.scale = Scale.SHRINK_TO_PAGE;
         this.color = true;
-    }
-
-    public Scale getScale() {
-        return scale;
-    }
-
-    public void setScale(Scale scale) {
-        this.scale = scale;
     }
 
     public Boolean getHasAnnotations() {
@@ -88,14 +53,6 @@ public class PrintOptions {
 
     public void setHasAnnotations(Boolean hasAnnotations) {
         this.hasAnnotations = hasAnnotations;
-    }
-
-    public double getImageScale() {
-        return imageScale;
-    }
-
-    public void setImageScale(double imageScale) {
-        this.imageScale = imageScale;
     }
 
     public boolean isCenter() {
