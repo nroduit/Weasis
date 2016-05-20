@@ -30,7 +30,7 @@
 		<felix.gogo.command.version>0.16.0</felix.gogo.command.version>
 
 		<felix.servlet.version>1.0.0</felix.servlet.version>
-		<felix.bundlerepository.version>2.0.6</felix.bundlerepository.version>
+		<felix.bundlerepository.version>2.0.8</felix.bundlerepository.version>
 		<felix.configadmin.version>1.8.8</felix.configadmin.version>
 		<felix.prefs.version>1.0.6</felix.prefs.version>
 		<felix.scr.version>2.0.2</felix.scr.version>
@@ -638,7 +638,7 @@
 					<plugin>
 						<groupId>com.akathist.maven.plugins.launch4j</groupId>
 						<artifactId>launch4j-maven-plugin</artifactId>
-						<version>1.7.8</version>
+						<version>1.7.10</version>
 						<executions>
 							<execution>
 								<id>l4j-clui</id>
