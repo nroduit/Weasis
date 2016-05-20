@@ -70,7 +70,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         positionLabel.setText(Messages.getString("PrintDialog.pos") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbcPositionLabel = new GridBagConstraints();
         gbcPositionLabel.anchor = GridBagConstraints.EAST;
-        gbcPositionLabel.insets = new Insets(0, 15, 10, 5);
+        gbcPositionLabel.insets = new Insets(15, 20, 10, 5);
         gbcPositionLabel.gridx = 0;
         gbcPositionLabel.gridy = 0;
         getContentPane().add(positionLabel, gbcPositionLabel);
@@ -80,16 +80,16 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
             new String[] { Messages.getString("PrintDialog.center"), Messages.getString("PrintDialog.top") })); //$NON-NLS-1$ //$NON-NLS-2$
         GridBagConstraints gbcPositionComboBox = new GridBagConstraints();
         gbcPositionComboBox.anchor = GridBagConstraints.WEST;
-        gbcPositionComboBox.insets = new Insets(0, 0, 10, 5);
+        gbcPositionComboBox.insets = new Insets(15, 0, 10, 5);
         gbcPositionComboBox.gridx = 1;
         gbcPositionComboBox.gridy = 0;
         getContentPane().add(positionComboBox, gbcPositionComboBox);
 
         label = new JLabel();
-        label.setText("Image DPI" + StringUtil.COLON);
+        label.setText(Messages.getString("PrintDialog.dpi") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbcLabel = new GridBagConstraints();
         gbcLabel.anchor = GridBagConstraints.EAST;
-        gbcLabel.insets = new Insets(0, 15, 10, 5);
+        gbcLabel.insets = new Insets(0, 20, 10, 5);
         gbcLabel.gridx = 0;
         gbcLabel.gridy = 1;
         getContentPane().add(label, gbcLabel);
@@ -109,7 +109,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         annotationsCheckBox.setSelected(true);
         GridBagConstraints gbcAnnotationsCheckBox = new GridBagConstraints();
         gbcAnnotationsCheckBox.anchor = GridBagConstraints.WEST;
-        gbcAnnotationsCheckBox.insets = new Insets(0, 15, 10, 0);
+        gbcAnnotationsCheckBox.insets = new Insets(0, 17, 10, 0);
         gbcAnnotationsCheckBox.gridwidth = 3;
         gbcAnnotationsCheckBox.gridx = 0;
         gbcAnnotationsCheckBox.gridy = 2;
