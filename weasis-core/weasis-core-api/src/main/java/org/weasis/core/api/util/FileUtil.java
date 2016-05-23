@@ -25,6 +25,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Deque;
@@ -387,15 +389,10 @@ public final class FileUtil {
         if (source == null || destination == null) {
             return false;
         }
-
-        try (FileInputStream inputStream = new FileInputStream(source);
-                        FileChannel in = inputStream.getChannel();
-                        FileOutputStream outputStream = new FileOutputStream(destination);
-                        FileChannel out = outputStream.getChannel()) {
-
-            in.transferTo(0, in.size(), out);
+        try {
+            Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return true;
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Copy file", e); //$NON-NLS-1$
             return false;
         }

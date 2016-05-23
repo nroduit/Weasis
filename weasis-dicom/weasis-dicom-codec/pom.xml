@@ -60,8 +60,7 @@
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-imageio</artifactId>
-			<version>${dcm4che.version}</version>
-			<!-- <version>${dcm4che.version}-r1</version> -->
+			<version>${dcm4che.version}-r1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
