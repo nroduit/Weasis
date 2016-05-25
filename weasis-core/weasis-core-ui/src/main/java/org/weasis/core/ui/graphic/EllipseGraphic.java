@@ -147,5 +147,17 @@ public class EllipseGraphic extends RectangleGraphic {
         }
         return null;
     }
+    
+    @Override
+    public List<Measurement> getMeasurementList() {
+        List<Measurement> list = new ArrayList<Measurement>();
+        list.add(CENTER_X);
+        list.add(CENTER_Y);
+        list.add(AREA);
+        list.add(PERIMETER);
+        list.add(WIDTH);
+        list.add(HEIGHT);
+        return list;
+    }
 
 }
