@@ -451,7 +451,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     private ImageReader initRawImageReader() {
         long[] frameOffsets = new long[numberOfFrame];
-        frameOffsets[0] = pixeldata.offset;
+        frameOffsets[0] = pixeldata.offset();
         for (int i = 1; i < frameOffsets.length; i++) {
             frameOffsets[i] = frameOffsets[i - 1] + frameLength;
         }
@@ -1080,16 +1080,16 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             length = new int[offsets.length];
             int index = frameIndex < nbFragments - 1 ? frameIndex + 1 : nbFragments - 1;
             BulkData bulkData = (BulkData) pixeldataFragments.get(index);
-            offsets[0] = bulkData.offset;
-            length[0] = bulkData.length;
+            offsets[0] = bulkData.offset();
+            length[0] = bulkData.length();
         } else {
             if (numberOfFrame == 1) {
                 offsets = new long[nbFragments - 1];
                 length = new int[offsets.length];
                 for (int i = 0; i < length.length; i++) {
                     BulkData bulkData = (BulkData) pixeldataFragments.get(i + frameIndex + 1);
-                    offsets[i] = bulkData.offset;
-                    length[i] = bulkData.length;
+                    offsets[i] = bulkData.offset();
+                    length[i] = bulkData.length();
                 }
             } else {
                 // Multi-frames where each frames can have multiple fragments.
@@ -1102,7 +1102,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                         BulkData bulkData = (BulkData) pixeldataFragments.get(i);
                         ImageReaderSpi provider = decompressor.getOriginatingProvider();
                         if (provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
-                            new long[] { bulkData.offset }, new int[] { bulkData.length }))) {
+                            new long[] { bulkData.offset() }, new int[] { bulkData.length() }))) {
                             fragmentsPositions.add(i);
                         }
                     }
@@ -1117,8 +1117,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                     length = new int[offsets.length];
                     for (int i = 0; i < offsets.length; i++) {
                         BulkData bulkData = (BulkData) pixeldataFragments.get(start + i);
-                        offsets[i] = bulkData.offset;
-                        length[i] = bulkData.length;
+                        offsets[i] = bulkData.offset();
+                        length[i] = bulkData.length();
                     }
                 } else {
                     throw new IOException("Cannot match all the fragments to all the frames!");
@@ -1155,7 +1155,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 }
                 return wr;
             }
-            iis.seek(pixeldata.offset + frameIndex * frameLength);
+            iis.seek(pixeldata.offset() + frameIndex * frameLength);
             WritableRaster wr = Raster.createWritableRaster(createSampleModel(dataType, banded), null);
             DataBuffer buf = wr.getDataBuffer();
             if (buf instanceof DataBufferByte) {
