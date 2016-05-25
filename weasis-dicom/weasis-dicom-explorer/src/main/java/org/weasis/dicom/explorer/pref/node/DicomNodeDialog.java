@@ -9,7 +9,6 @@ import java.awt.Window;
 import java.text.NumberFormat;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
@@ -25,12 +24,13 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.print.DicomPrintOptionPane;
 
 public class DicomNodeDialog extends JDialog {
     private JLabel aeTitleLabel;
     private JTextField aeTitleTf;
     private JButton cancelButton;
-    private JCheckBox colorPrintSupportCheckBox;
+    private DicomPrintOptionPane printOptionsPane;
     private JLabel descriptionLabel;
     private JTextField descriptionTf;
     private JLabel hostnameLabel;
@@ -58,7 +58,7 @@ public class DicomNodeDialog extends JDialog {
             hostnameTf.setText(dicomNode.getHostname());
             portTf.setValue(dicomNode.getPort());
             if (dicomNode instanceof DicomPrintNode) {
-                colorPrintSupportCheckBox.setSelected(((DicomPrintNode) dicomNode).isColorPrintSupported());
+                printOptionsPane.applyOptions(((DicomPrintNode) dicomNode).getPrintOptions());
             }
         }
         pack();
@@ -90,18 +90,6 @@ public class DicomNodeDialog extends JDialog {
         gbcDescriptionTf.gridy = 0;
         content.add(descriptionTf, gbcDescriptionTf);
         descriptionTf.setColumns(15);
-
-        colorPrintSupportCheckBox = new JCheckBox();
-        if (typeNode == AbstractDicomNode.Type.PRINTER) {
-            colorPrintSupportCheckBox.setText(Messages.getString("PrinterDialog.color")); //$NON-NLS-1$
-            GridBagConstraints gbcColorPrintSupportCheckBox = new GridBagConstraints();
-            gbcColorPrintSupportCheckBox.anchor = GridBagConstraints.WEST;
-            gbcColorPrintSupportCheckBox.insets = new Insets(0, 0, 0, 5);
-            gbcColorPrintSupportCheckBox.gridwidth = 2;
-            gbcColorPrintSupportCheckBox.gridx = 0;
-            gbcColorPrintSupportCheckBox.gridy = 3;
-            content.add(colorPrintSupportCheckBox, gbcColorPrintSupportCheckBox);
-        }
 
         aeTitleLabel = new JLabel();
         aeTitleLabel.setText(Messages.getString("PrinterDialog.aet") + StringUtil.COLON); //$NON-NLS-1$
@@ -160,7 +148,13 @@ public class DicomNodeDialog extends JDialog {
         gbcPortTf.gridy = 2;
         content.add(portTf, gbcPortTf);
 
-        this.getContentPane().add(content, BorderLayout.CENTER);
+        if (typeNode == AbstractDicomNode.Type.PRINTER) {
+            printOptionsPane = new DicomPrintOptionPane();
+            this.getContentPane().add(content, BorderLayout.NORTH);
+            this.getContentPane().add(printOptionsPane, BorderLayout.CENTER);
+        } else {
+            this.getContentPane().add(content, BorderLayout.CENTER);
+        }
 
         footPanel = new JPanel();
         FlowLayout flowLayout = (FlowLayout) footPanel.getLayout();
@@ -204,6 +198,12 @@ public class DicomNodeDialog extends JDialog {
             return;
         }
 
+        if (aeTitle.length() > 16) {
+            JOptionPane.showMessageDialog(this, "AETitle cannot have more than 16 characters!",
+                Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+            return;
+        }
+
         boolean addNode = dicomNode == null;
         if (addNode) {
             if (AbstractDicomNode.Type.PRINTER == typeNode) {
@@ -221,7 +221,7 @@ public class DicomNodeDialog extends JDialog {
 
         dicomNode.setType(typeNode);
         if (dicomNode instanceof DicomPrintNode) {
-            ((DicomPrintNode) dicomNode).setColorPrintSupported(colorPrintSupportCheckBox.isSelected());
+            printOptionsPane.saveOptions(((DicomPrintNode) dicomNode).getPrintOptions());
         }
         if (addNode) {
             nodesComboBox.setSelectedItem(dicomNode);

@@ -1,6 +1,5 @@
 package org.weasis.dicom.explorer.pref.node;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -13,7 +12,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -122,77 +120,76 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         panel.add(verticalBox, gbc_verticalBox);
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "DICOM WEB Node",
-            TitledBorder.LEADING, TitledBorder.TOP, null, new Color(51, 51, 51)));
+        panel1.setBorder(new TitledBorder(null, "DICOM WEB Node", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(panel1);
         GridBagLayout gblPanel1 = new GridBagLayout();
         panel1.setLayout(gblPanel1);
 
-        JLabel label_1 = new JLabel();
-        label_1.setText("Node:");
-        GridBagConstraints gbc_label_1 = new GridBagConstraints();
-        gbc_label_1.anchor = GridBagConstraints.WEST;
-        gbc_label_1.insets = new Insets(0, 0, 5, 5);
-        gbc_label_1.gridx = 0;
-        gbc_label_1.gridy = 0;
-        panel1.add(label_1, gbc_label_1);
+        JLabel label1 = new JLabel();
+        label1.setText("Node:");
+        GridBagConstraints gbc_label1 = new GridBagConstraints();
+        gbc_label1.anchor = GridBagConstraints.WEST;
+        gbc_label1.insets = new Insets(0, 0, 5, 5);
+        gbc_label1.gridx = 0;
+        gbc_label1.gridy = 0;
+        panel1.add(label1, gbc_label1);
 
         final JComboBox<AbstractDicomNode> comboBoxWeb = new JComboBox<>();
         AbstractDicomNode.loadDicomNodes(comboBoxWeb, AbstractDicomNode.Type.WEB);
-        GridBagConstraints gbc_comboBox = new GridBagConstraints();
-        gbc_comboBox.anchor = GridBagConstraints.NORTHWEST;
-        gbc_comboBox.insets = new Insets(0, 0, 5, 5);
-        gbc_comboBox.gridx = 1;
-        gbc_comboBox.gridy = 0;
-        panel1.add(comboBoxWeb, gbc_comboBox);
+        GridBagConstraints gbccomboBox = new GridBagConstraints();
+        gbccomboBox.anchor = GridBagConstraints.NORTHWEST;
+        gbccomboBox.insets = new Insets(0, 0, 5, 5);
+        gbccomboBox.gridx = 1;
+        gbccomboBox.gridy = 0;
+        panel1.add(comboBoxWeb, gbccomboBox);
         JMVUtils.setPreferredWidth(comboBoxWeb, 185, 185);
         AbstractDicomNode.addTooltipToComboList(comboBoxWeb);
 
-        Component horizontalStrut_1 = Box.createHorizontalStrut(20);
-        GridBagConstraints gbc_horizontalStrut_1 = new GridBagConstraints();
-        gbc_horizontalStrut_1.anchor = GridBagConstraints.WEST;
-        gbc_horizontalStrut_1.insets = new Insets(0, 0, 5, 5);
-        gbc_horizontalStrut_1.gridx = 2;
-        gbc_horizontalStrut_1.gridy = 0;
-        panel1.add(horizontalStrut_1, gbc_horizontalStrut_1);
+        Component horizontalStrut1 = Box.createHorizontalStrut(20);
+        GridBagConstraints gbcHorizontalStrut1 = new GridBagConstraints();
+        gbcHorizontalStrut1.anchor = GridBagConstraints.WEST;
+        gbcHorizontalStrut1.insets = new Insets(0, 0, 5, 5);
+        gbcHorizontalStrut1.gridx = 2;
+        gbcHorizontalStrut1.gridy = 0;
+        panel1.add(horizontalStrut1, gbcHorizontalStrut1);
 
         JButton editBtn1 = new JButton();
         editBtn1.setText("Edit");
-        GridBagConstraints gbc_button = new GridBagConstraints();
-        gbc_button.anchor = GridBagConstraints.NORTHWEST;
-        gbc_button.insets = new Insets(0, 0, 5, 5);
-        gbc_button.gridx = 3;
-        gbc_button.gridy = 0;
-        panel1.add(editBtn1, gbc_button);
+        GridBagConstraints gbcbutton = new GridBagConstraints();
+        gbcbutton.anchor = GridBagConstraints.NORTHWEST;
+        gbcbutton.insets = new Insets(0, 0, 5, 5);
+        gbcbutton.gridx = 3;
+        gbcbutton.gridy = 0;
+        panel1.add(editBtn1, gbcbutton);
 
         JButton deleteBtn1 = new JButton();
         deleteBtn1.setText("Delete");
-        GridBagConstraints gbc_button_1 = new GridBagConstraints();
-        gbc_button_1.anchor = GridBagConstraints.NORTHWEST;
-        gbc_button_1.insets = new Insets(0, 0, 5, 0);
-        gbc_button_1.gridx = 4;
-        gbc_button_1.gridy = 0;
-        panel1.add(deleteBtn1, gbc_button_1);
+        GridBagConstraints gbcButton3 = new GridBagConstraints();
+        gbcButton3.anchor = GridBagConstraints.NORTHWEST;
+        gbcButton3.insets = new Insets(0, 0, 5, 0);
+        gbcButton3.gridx = 4;
+        gbcButton3.gridy = 0;
+        panel1.add(deleteBtn1, gbcButton3);
 
         JButton addBtn1 = new JButton("Add new");
-        GridBagConstraints gbc_button_2 = new GridBagConstraints();
-        gbc_button_2.anchor = GridBagConstraints.NORTHWEST;
-        gbc_button_2.gridwidth = 2;
-        gbc_button_2.insets = new Insets(10, 0, 5, 0);
-        gbc_button_2.gridx = 3;
-        gbc_button_2.gridy = 1;
-        panel1.add(addBtn1, gbc_button_2);
+        GridBagConstraints gbcButton4 = new GridBagConstraints();
+        gbcButton4.anchor = GridBagConstraints.NORTHWEST;
+        gbcButton4.gridwidth = 2;
+        gbcButton4.insets = new Insets(10, 0, 5, 0);
+        gbcButton4.gridx = 3;
+        gbcButton4.gridy = 1;
+        panel1.add(addBtn1, gbcButton4);
 
         Box verticalBox1 = Box.createVerticalBox();
-        GridBagConstraints gbc_verticalBox1 = new GridBagConstraints();
-        gbc_verticalBox1.weighty = 1.0;
-        gbc_verticalBox1.weightx = 1.0;
-        gbc_verticalBox1.insets = new Insets(0, 0, 5, 0);
-        gbc_verticalBox1.fill = GridBagConstraints.BOTH;
-        gbc_verticalBox1.anchor = GridBagConstraints.NORTHWEST;
-        gbc_verticalBox1.gridx = 4;
-        gbc_verticalBox1.gridy = 2;
-        panel1.add(verticalBox1, gbc_verticalBox1);
+        GridBagConstraints gbcVerticalBox1 = new GridBagConstraints();
+        gbcVerticalBox1.weighty = 1.0;
+        gbcVerticalBox1.weightx = 1.0;
+        gbcVerticalBox1.insets = new Insets(0, 0, 5, 0);
+        gbcVerticalBox1.fill = GridBagConstraints.BOTH;
+        gbcVerticalBox1.anchor = GridBagConstraints.NORTHWEST;
+        gbcVerticalBox1.gridx = 4;
+        gbcVerticalBox1.gridy = 2;
+        panel1.add(verticalBox1, gbcVerticalBox1);
 
         deleteBtn1.addActionListener(new java.awt.event.ActionListener() {
             @Override

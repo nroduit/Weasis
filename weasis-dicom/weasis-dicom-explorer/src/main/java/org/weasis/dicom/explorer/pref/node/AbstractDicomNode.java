@@ -43,7 +43,7 @@ public abstract class AbstractDicomNode {
     protected static final String T_TSUID = "tsuid";
 
     public enum Type {
-        ARCHIVE("Archive", "dicomNodes.xml"), PRINTER("Printer", "dicomPrinters.xml"),
+        ARCHIVE("Archive", "dicomNodes.xml"), PRINTER("Printer", "dicomPrinterNodes.xml"),
         WEB("WEB Archive", "dicomWebNodes.xml");
 
         final String title;
@@ -84,6 +84,7 @@ public abstract class AbstractDicomNode {
             throw new IllegalArgumentException("Type cannot be null");
         }
         this.description = description;
+        this.tsuid = TransferSyntax.NONE;
         this.type = type;
         this.local = true;
     }

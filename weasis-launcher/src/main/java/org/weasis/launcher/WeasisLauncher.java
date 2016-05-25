@@ -593,7 +593,7 @@ public class WeasisLauncher {
 
     public static List<StringBuilder> splitCommand(String[] args) {
         int length = args.length;
-        ArrayList<StringBuilder> list = new ArrayList<StringBuilder>(5);
+        ArrayList<StringBuilder> list = new ArrayList<>(5);
         for (int i = 0; i < length; i++) {
             if (args[i].startsWith("$") && args[i].length() > 1) { //$NON-NLS-1$
                 StringBuilder command = new StringBuilder(args[i].substring(1));
@@ -1195,7 +1195,7 @@ public class WeasisLauncher {
     }
 
     public static String getAvailableLookAndFeel(String look) {
-        UIManager.LookAndFeelInfo lafs[] = UIManager.getInstalledLookAndFeels();
+        UIManager.LookAndFeelInfo[] lafs = UIManager.getInstalledLookAndFeels();
         String laf = null;
         if (look != null) {
             for (int i = 0, n = lafs.length; i < n; i++) {

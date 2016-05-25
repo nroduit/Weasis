@@ -164,8 +164,8 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     }
 
     private void printAction() {
-        PrintOptions printOptions = new PrintOptions(annotationsCheckBox.isSelected());
-        printOptions.setHasAnnotations(annotationsCheckBox.isSelected());
+        PrintOptions printOptions = new PrintOptions();
+        printOptions.setShowingAnnotations(annotationsCheckBox.isSelected());
         printOptions.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
         if (positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center"))) { //$NON-NLS-1$
             printOptions.setCenter(true);
