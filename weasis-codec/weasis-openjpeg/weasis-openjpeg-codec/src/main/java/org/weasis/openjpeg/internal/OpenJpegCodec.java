@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
 
 import javax.imageio.ImageReadParam;
@@ -27,7 +26,7 @@ import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.SizeTPointer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.image.jni.FileStreamSegment;
+import org.weasis.image.jni.StreamSegment;
 import org.weasis.image.jni.ImageParameters;
 import org.weasis.image.jni.NativeCodec;
 import org.weasis.image.jni.NativeImage;
@@ -57,7 +56,7 @@ public class OpenJpegCodec implements NativeCodec {
     @Override
     public String readHeader(NativeImage nImage) throws IOException {
         String msg = null;
-        FileStreamSegment seg = nImage.getStreamSegment();
+        StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
             J2kParameters params = (J2kParameters) nImage.getImageParameters();
 
@@ -65,7 +64,7 @@ public class OpenJpegCodec implements NativeCodec {
             Pointer codec = null;
             openjpeg.opj_image image = null;
             try {
-                MappedByteBuffer buffer = seg.getDirectByteBuffer(0);
+                ByteBuffer buffer = seg.getDirectByteBuffer(0);
 
                 SourceData j2kFile = new SourceData();
                 j2kFile.data(buffer);
@@ -127,7 +126,7 @@ public class OpenJpegCodec implements NativeCodec {
     @Override
     public String decompress(NativeImage nImage, ImageReadParam param) throws IOException {
         String msg = null;
-        FileStreamSegment seg = nImage.getStreamSegment();
+        StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
             Pointer l_stream = null;
             Pointer codec = null;

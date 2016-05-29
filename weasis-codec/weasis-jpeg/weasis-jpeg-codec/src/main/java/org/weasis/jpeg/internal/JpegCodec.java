@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
 
 import javax.imageio.ImageReadParam;
@@ -26,7 +25,7 @@ import javax.imageio.stream.ImageOutputStream;
 import org.bytedeco.javacpp.IntPointer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.image.jni.FileStreamSegment;
+import org.weasis.image.jni.StreamSegment;
 import org.weasis.image.jni.ImageParameters;
 import org.weasis.image.jni.NativeCodec;
 import org.weasis.image.jni.NativeImage;
@@ -48,11 +47,11 @@ public class JpegCodec implements NativeCodec {
     @Override
     public String readHeader(NativeImage nImage) throws IOException {
         String msg = null;
-        FileStreamSegment seg = nImage.getStreamSegment();
+        StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
             DecoderIJG decomp = new DJDecompressIJG8Bit();
             try {
-                MappedByteBuffer buffer = seg.getDirectByteBuffer(0);
+                ByteBuffer buffer = seg.getDirectByteBuffer(0);
                 decomp.init(false);
                 RETURN_MSG val = decomp.readHeader(buffer, buffer.limit(), false);
                 if (val != null && val.code() == libijg.OK) {
@@ -76,7 +75,7 @@ public class JpegCodec implements NativeCodec {
     public String decompress(NativeImage nImage, ImageReadParam param) throws IOException {
         // TODO use ImageReadParam
         String msg = null;
-        FileStreamSegment seg = nImage.getStreamSegment();
+        StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
             ImageParameters params = nImage.getImageParameters();
             int bps = params.getBitsPerSample();
@@ -87,7 +86,7 @@ public class JpegCodec implements NativeCodec {
                 : bps > 8 ? new DJDecompressIJG12Bit() : new DJDecompressIJG8Bit();
             try {
                 int segmentFragment = 0;
-                MappedByteBuffer buffer = seg.getDirectByteBuffer(segmentFragment);
+                ByteBuffer buffer = seg.getDirectByteBuffer(segmentFragment);
                 boolean signed = params.isSignedData();
                 // Force to convert YBR to RGB even when jpeg header has an RGB input color model. Not supported for
                 // signed data.
