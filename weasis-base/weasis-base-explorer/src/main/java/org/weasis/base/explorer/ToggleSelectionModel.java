@@ -4,9 +4,9 @@ import java.util.Date;
 
 import javax.swing.DefaultListSelectionModel;
 
+@SuppressWarnings("serial")
 public class ToggleSelectionModel extends DefaultListSelectionModel {
 
-    private static final long serialVersionUID = -2552030094554728144L;
     boolean gestureStarted = false;
     boolean shiftKey = false;
     boolean cntrlKey = false;
@@ -33,7 +33,7 @@ public class ToggleSelectionModel extends DefaultListSelectionModel {
 
     @Override
     public void setValueIsAdjusting(final boolean isAdjusting) {
-        if (isAdjusting == false) {
+        if (!isAdjusting) {
             this.gestureStarted = false;
         }
     }

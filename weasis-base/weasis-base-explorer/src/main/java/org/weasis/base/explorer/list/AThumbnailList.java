@@ -1,4 +1,4 @@
-package org.weasis.base.explorer;
+package org.weasis.base.explorer.list;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -8,13 +8,10 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
-import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragSource;
 import java.awt.dnd.DragSourceDragEvent;
 import java.awt.dnd.DragSourceDropEvent;
 import java.awt.dnd.DragSourceEvent;
-import java.awt.dnd.DragSourceListener;
-import java.awt.dnd.DragSourceMotionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -23,6 +20,7 @@ import java.io.File;
 import java.net.URI;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,13 +34,19 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JList;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.base.explorer.JIThumbnailCache;
+import org.weasis.base.explorer.JIUtility;
+import org.weasis.base.explorer.Messages;
+import org.weasis.base.explorer.ThumbnailRenderer;
+import org.weasis.base.explorer.ToggleSelectionModel;
+import org.weasis.base.explorer.list.impl.JIListModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.media.data.Codec;
@@ -58,10 +62,10 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.util.TitleMenuItem;
 
-public final class JIThumbnailList extends JList
-    implements JIObservable, DragGestureListener, DragSourceListener, DragSourceMotionListener {
+@SuppressWarnings("serial")
+public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E> implements IThumbnailList<E> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AThumbnailList.class);
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
@@ -71,7 +75,6 @@ public final class JIThumbnailList extends JList
     }
 
     private final int editingIndex = -1;
-    private final FileTreeModel model;
     private final ToggleSelectionModel selectionModel;
 
     private boolean changed;
@@ -79,26 +82,14 @@ public final class JIThumbnailList extends JList
     private DragSource dragSource = null;
     private MediaElement<?> lastSelectedDiskObject = null;
 
-    public JIThumbnailList(final FileTreeModel model) {
-        this(model, VERTICAL_WRAP, null);
+    public AThumbnailList() {
+        this(HORIZONTAL_WRAP);
     }
 
-    public JIThumbnailList(final FileTreeModel model, final OrderedFileList dObjList) {
-        this(model, VERTICAL_WRAP, dObjList);
-    }
-
-    public JIThumbnailList(final FileTreeModel model, final int scrollMode, final OrderedFileList dObjList) {
+    public AThumbnailList(final int scrollMode) {
         super();
 
-        boolean useSelection = false;
-        if (dObjList != null) {
-            this.setModel(new JIListModel(this, dObjList));
-            useSelection = true;
-        } else {
-            this.setModel(new JIListModel(this));
-        }
-
-        this.model = model;
+        this.setModel(newModel());
         this.changed = false;
 
         this.selectionModel = new ToggleSelectionModel();
@@ -106,37 +97,79 @@ public final class JIThumbnailList extends JList
 
         setSelectionModel(this.selectionModel);
         // setTransferHandler(new ListTransferHandler());
-        ThumbnailRenderer panel = new ThumbnailRenderer();
+        ThumbnailRenderer<E> panel = new ThumbnailRenderer<>();
         Dimension dim = panel.getPreferredSize();
         setCellRenderer(panel);
         setFixedCellHeight(dim.height);
         setFixedCellWidth(dim.width);
         setVisibleRowCount(-1);
 
-        setLayoutOrientation(HORIZONTAL_WRAP);
-
-        if (useSelection) {
-            // JIExplorer.instance().getContext();
-        }
+        setLayoutOrientation(scrollMode);
 
         setVerifyInputWhenFocusTarget(false);
         JIThumbnailCache.getInstance().invalidate();
     }
 
+    @Override
+    public Component asComponent() {
+        return this;
+    }
+
+    /**
+     * Marks this <tt>Observable</tt> object as having been changed; the <tt>hasChanged</tt> method will now return
+     * <tt>true</tt>.
+     */
+    @Override
+    public synchronized void setChanged() {
+        this.changed = true;
+    }
+
+    /**
+     * Indicates that this object has no longer changed, or that it has already notified all of its observers of its
+     * most recent change, so that the <tt>hasChanged</tt> method will now return <tt>false</tt>. This method is called
+     * automatically by the <code>notifyObservers</code> methods.
+     *
+     * @see java.util.Observable#notifyObservers()
+     * @see java.util.Observable#notifyObservers(java.lang.Object)
+     */
+    @Override
+    public synchronized void clearChanged() {
+        this.changed = false;
+    }
+
+    /**
+     * Tests if this object has changed.
+     *
+     * @return <code>true</code> if and only if the <code>setChanged</code> method has been called more recently than
+     *         the <code>clearChanged</code> method on this object; <code>false</code> otherwise.
+     * @see java.util.Observable#clearChanged()
+     * @see java.util.Observable#setChanged()
+     */
+    @Override
+    public synchronized boolean hasChanged() {
+        return this.changed;
+    }
+
+    @Override
     public void registerListeners() {
+        registerDragListeners();
+        addMouseListener(new PopupTrigger());
+        addKeyListener(new JIThumbnailKeyAdapter());
+    }
+
+    public void registerDragListeners() {
         if (dragSource != null) {
             dragSource.removeDragSourceListener(this);
             dragSource.removeDragSourceMotionListener(this);
         }
-        addMouseListener(new PopupTrigger());
-        addKeyListener(new JIThumbnailKeyAdapter());
         dragSource = DragSource.getDefaultDragSource();
         dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, this);
         dragSource.addDragSourceMotionListener(this);
     }
 
-    public JIListModel getThumbnailListModel() {
-        return (JIListModel) getModel();
+    @Override
+    public IThumbnailModel<E> getThumbnailListModel() {
+        return (IThumbnailModel) getModel();
     }
 
     public Frame getFrame() {
@@ -182,24 +215,23 @@ public final class JIThumbnailList extends JList
             return ""; //$NON-NLS-1$
         }
 
-        final Object item = getModel().getElementAt(index);
-
-        if (item == null || ((MediaElement) item).getName() == null) {
+        final E item = getModel().getElementAt(index);
+        if (item == null || item.getName() == null) {
             return null;
         }
 
         StringBuilder toolTips = new StringBuilder();
         toolTips.append("<html>"); //$NON-NLS-1$
-        toolTips.append(((MediaElement) item).getName());
+        toolTips.append(item.getName());
         toolTips.append("<br>"); //$NON-NLS-1$
         toolTips.append(Messages.getString("JIThumbnailList.size")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(FileUtil.formatSize(((MediaElement) item).getLength()));
+        toolTips.append(FileUtil.formatSize((item.getLength())));
         toolTips.append("<br>"); //$NON-NLS-1$
 
         toolTips.append(Messages.getString("JIThumbnailList.date")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(TagUtil.formatDateTime(new Date(((MediaElement) item).getLastModified())));
+        toolTips.append(TagUtil.formatDateTime(new Date(item.getLastModified())));
         toolTips.append("<br>"); //$NON-NLS-1$
         toolTips.append("</html>"); //$NON-NLS-1$
 
@@ -211,13 +243,13 @@ public final class JIThumbnailList extends JList
         setFixedCellWidth(ICON_DIM.width);
         setLayoutOrientation(HORIZONTAL_WRAP);
 
-        ((JIListModel) getModel()).reload();
+        getThumbnailListModel().reload();
         setVisibleRowCount(-1);
         clearSelection();
         ensureIndexIsVisible(0);
     }
 
-    private MediaSeries buildSeriesFromMediaElement(MediaElement mediaElement) {
+    private MediaSeries buildSeriesFromMediaElement(E mediaElement) {
         if (mediaElement != null) {
             String cfile = getThumbnailListModel().getFileInCache(mediaElement.getFile().getAbsolutePath());
             File file = cfile == null ? mediaElement.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
@@ -253,22 +285,18 @@ public final class JIThumbnailList extends JList
     }
 
     public void openSelection() {
-        Object object = getSelectedValue();
-        if (object instanceof MediaElement) {
-            MediaElement mediaElement = (MediaElement) object;
-            openSelection(new MediaElement[] { mediaElement }, true, true, false);
-        }
+        E object = getSelectedValue();
+        openSelection(Arrays.asList(object), true, true, false);
     }
 
-    public void openSelection(MediaElement<?>[] medias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout,
+    public void openSelection(List<E> selMedias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout,
         boolean inSelView) {
-        if (medias != null) {
-            boolean oneFile = medias.length == 1;
+        if (selMedias != null) {
+            boolean oneFile = selMedias.size() == 1;
             String sUID = null;
-            String gUID = null;
-            ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-                new ArrayList<MediaSeries<? extends MediaElement<?>>>();
-            for (MediaElement<?> mediaElement : medias) {
+            String gUID;
+            ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>();
+            for (E mediaElement : selMedias) {
                 String cfile = getThumbnailListModel().getFileInCache(mediaElement.getFile().getAbsolutePath());
                 File file = cfile == null ? mediaElement.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
                 MediaReader reader = ViewerPluginBuilder.getMedia(file);
@@ -302,7 +330,7 @@ public final class JIThumbnailList extends JList
                     }
                 }
             }
-            if (list.size() > 0) {
+            if (!list.isEmpty()) {
                 Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
                 props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
                 props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
@@ -311,7 +339,7 @@ public final class JIThumbnailList extends JList
                     props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
                 }
 
-                ArrayList<String> mimes = new ArrayList<String>();
+                ArrayList<String> mimes = new ArrayList<>();
                 for (MediaSeries s : list) {
                     String mime = s.getMimeType();
                     if (mime != null && !mimes.contains(mime)) {
@@ -321,8 +349,7 @@ public final class JIThumbnailList extends JList
                 for (String mime : mimes) {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
                     if (plugin != null) {
-                        ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList =
-                            new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+                        ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList = new ArrayList<>();
                         for (MediaSeries s : list) {
                             if (mime.equals(s.getMimeType())) {
                                 seriesList.add(s);
@@ -337,24 +364,23 @@ public final class JIThumbnailList extends JList
         }
     }
 
-    public void openGroup(MediaElement[] medias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout,
+    public void openGroup(List<E> selMedias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout,
         boolean modeLayout, boolean inSelView) {
-        if (medias != null) {
+        if (selMedias != null) {
             String groupUID = null;
 
             if (modeLayout) {
                 groupUID = UUID.randomUUID().toString();
             }
-            Map<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>> plugins =
-                new HashMap<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>>();
-            for (MediaElement m : medias) {
+            Map<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>> plugins = new HashMap<>();
+            for (E m : selMedias) {
                 String mime = m.getMimeType();
                 if (mime != null) {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
                     if (plugin != null) {
                         List<MediaSeries<? extends MediaElement<?>>> list = plugins.get(plugin);
                         if (list == null) {
-                            list = new ArrayList<MediaSeries<? extends MediaElement<?>>>(modeLayout ? 10 : 1);
+                            list = new ArrayList<>(modeLayout ? 10 : 1);
                             plugins.put(plugin, list);
                         }
 
@@ -370,8 +396,8 @@ public final class JIThumbnailList extends JList
                                     list.add(series);
                                 }
                             } else {
-                                MediaSeries<? extends MediaElement<?>> series = null;
-                                if (list.size() == 0) {
+                                MediaSeries<? extends MediaElement<?>> series;
+                                if (list.isEmpty()) {
                                     series = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader);
                                     if (series != null) {
                                         list.add(series);
@@ -416,7 +442,7 @@ public final class JIThumbnailList extends JList
         }
     }
 
-    private boolean isDicomMedia(MediaElement mediaElement) {
+    private static boolean isDicomMedia(MediaElement<?> mediaElement) {
         if (mediaElement != null) {
             String mime = mediaElement.getMimeType();
             if (mime != null) {
@@ -469,7 +495,7 @@ public final class JIThumbnailList extends JList
         }
     }
 
-    public void jiThumbnail_keyPressed(final KeyEvent e) {
+    public void jiThumbnailKeyPressed(final KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_PAGE_DOWN:
                 nextPage(e);
@@ -484,192 +510,34 @@ public final class JIThumbnailList extends JList
         }
     }
 
-    private Action refreshAction() {
+    public Action buildRefreshAction() {
         // TODO set this action in toolbar
         return new AbstractAction(Messages.getString("JIThumbnailList.refresh_list")) { //$NON-NLS-1$
-
             @Override
             public void actionPerformed(final ActionEvent e) {
-                final Thread runner = new Thread() {
-
-                    @Override
-                    public void run() {
-                        Runnable runnable = new Runnable() {
-
-                            @Override
-                            public void run() {
-                                JIThumbnailList.this.getThumbnailListModel().reload();
-                            }
-                        };
-                        SwingUtilities.invokeLater(runnable);
-                    }
-                };
+                final Thread runner = new Thread(() -> AThumbnailList.this.getThumbnailListModel().reload());
                 runner.start();
             }
         };
     }
 
-    @Override
-    public MediaElement[] getSelectedValues() {
-        final Object[] objs = super.getSelectedValues();
-        final MediaElement[] dObjs = new MediaElement[objs.length];
-        int cnt = 0;
-        for (final Object obj : objs) {
-            dObjs[cnt++] = (MediaElement) obj;
-        }
-        return dObjs;
-    }
-
     public int getLastSelectedIndex() {
-        final Object[] objs = super.getSelectedValues();
-        final Object obj = super.getSelectedValue();
-        int cnt = 0;
-        for (final Object o : objs) {
-            if (o.equals(obj)) {
-                return cnt;
-            }
-            cnt++;
-        }
-        return cnt - 1;
+        return super.getSelectedValuesList().indexOf(super.getSelectedValue());
     }
 
-    protected void listValueChanged(final ListSelectionEvent e) {
-        if (this.lastSelectedDiskObject == null) {
-            this.lastSelectedDiskObject = (MediaElement) getModel().getElementAt(e.getLastIndex());
-        }
-        DefaultExplorer.getTreeContext().setSelectedDiskObjects(this.getSelectedValues(), this.lastSelectedDiskObject);
-
+    @Override
+    public void listValueChanged(final ListSelectionEvent e) {
         this.lastSelectedDiskObject = null;
-
         setChanged();
         notifyObservers(JIObservable.SECTION_CHANGED);
         clearChanged();
-    }
-
-    public JPopupMenu buidContexMenu(final MouseEvent e) {
-
-        try {
-
-            MediaElement[] selMedias = getSelectedValues();
-            if (selMedias == null || selMedias.length == 0) {
-                return null;
-            } else {
-                int index = locationToIndex(e.getPoint());
-                if (index >= 0) {
-                    MediaElement selectedMedia = (MediaElement) getModel().getElementAt(index);
-                    if (selectedMedia != null) {
-                        boolean isSelected = false;
-                        for (MediaElement m : selMedias) {
-                            if (m == selectedMedia) {
-                                isSelected = true;
-                                break;
-                            }
-                        }
-                        if (!isSelected) {
-                            selMedias = new MediaElement[] { selectedMedia };
-                            setSelectedValue(selectedMedia, false);
-                        }
-                    }
-                }
-                final MediaElement[] medias = selMedias;
-
-                JPopupMenu popupMenu = new JPopupMenu();
-                TitleMenuItem itemTitle =
-                    new TitleMenuItem(Messages.getString("JIThumbnailList.sel_menu"), popupMenu.getInsets()); //$NON-NLS-1$
-                popupMenu.add(itemTitle);
-                popupMenu.addSeparator();
-
-                if (medias.length == 1) {
-                    JMenuItem menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.open")) { //$NON-NLS-1$
-
-                        @Override
-                        public void actionPerformed(final ActionEvent e) {
-                            openSelection(medias, true, true, false);
-                        }
-                    });
-                    popupMenu.add(menuItem);
-
-                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.open_win")) { //$NON-NLS-1$
-
-                        @Override
-                        public void actionPerformed(final ActionEvent e) {
-                            openSelection(medias, false, true, false);
-                        }
-                    });
-
-                    popupMenu.add(menuItem);
-
-                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.open_sel_win")) { //$NON-NLS-1$
-
-                        @Override
-                        public void actionPerformed(final ActionEvent e) {
-                            openSelection(medias, true, false, true);
-                        }
-                    });
-                    popupMenu.add(menuItem);
-                } else {
-                    JMenu menu = new JMenu(Messages.getString("JIThumbnailList.open_win")); //$NON-NLS-1$
-                    JMenuItem menuItem =
-                        new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.stack_mode")) { //$NON-NLS-1$
-
-                            @Override
-                            public void actionPerformed(final ActionEvent e) {
-                                openGroup(medias, false, true, false, false);
-                            }
-
-                        });
-                    menu.add(menuItem);
-                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.layout_mode")) { //$NON-NLS-1$
-
-                        @Override
-                        public void actionPerformed(final ActionEvent e) {
-                            openGroup(medias, false, true, true, false);
-                        }
-
-                    });
-                    menu.add(menuItem);
-                    popupMenu.add(menu);
-
-                    menu = new JMenu(Messages.getString("JIThumbnailList.add_to_win")); //$NON-NLS-1$
-                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.stack_mode")) { //$NON-NLS-1$
-
-                        @Override
-                        public void actionPerformed(final ActionEvent e) {
-                            openGroup(medias, true, false, false, true);
-                        }
-
-                    });
-                    menu.add(menuItem);
-                    menuItem = new JMenuItem(new AbstractAction(Messages.getString("JIThumbnailList.layout_mode")) { //$NON-NLS-1$
-
-                        @Override
-                        public void actionPerformed(final ActionEvent e) {
-                            openGroup(medias, true, false, true, true);
-                        }
-
-                    });
-                    menu.add(menuItem);
-                    popupMenu.add(menu);
-
-                }
-                return popupMenu;
-
-            }
-        } catch (final Exception exp) {
-        } finally {
-            e.consume();
-        }
-        return null;
-
     }
 
     final class PopupTrigger extends MouseAdapter {
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            if (e.getClickCount() == 2) {
-                openSelection();
-            }
+            mouseClickedEvent(e);
         }
 
         @Override
@@ -685,7 +553,7 @@ public final class JIThumbnailList extends JList
         private void showPopup(final MouseEvent evt) {
             // Context menu
             if (SwingUtilities.isRightMouseButton(evt)) {
-                JPopupMenu popupMenu = JIThumbnailList.this.buidContexMenu(evt);
+                JPopupMenu popupMenu = AThumbnailList.this.buidContexMenu(evt);
                 if (popupMenu != null) {
                     popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                 }
@@ -741,75 +609,25 @@ public final class JIThumbnailList extends JList
 
     }
 
-    /**
-     * Marks this <tt>Observable</tt> object as having been changed; the <tt>hasChanged</tt> method will now return
-     * <tt>true</tt>.
-     */
-    public synchronized void setChanged() {
-        this.changed = true;
-    }
-
-    /**
-     * Indicates that this object has no longer changed, or that it has already notified all of its observers of its
-     * most recent change, so that the <tt>hasChanged</tt> method will now return <tt>false</tt>. This method is called
-     * automatically by the <code>notifyObservers</code> methods.
-     *
-     * @see java.util.Observable#notifyObservers()
-     * @see java.util.Observable#notifyObservers(java.lang.Object)
-     */
-    public synchronized void clearChanged() {
-        this.changed = false;
-    }
-
-    /**
-     * Tests if this object has changed.
-     *
-     * @return <code>true</code> if and only if the <code>setChanged</code> method has been called more recently than
-     *         the <code>clearChanged</code> method on this object; <code>false</code> otherwise.
-     * @see java.util.Observable#clearChanged()
-     * @see java.util.Observable#setChanged()
-     */
-    @Override
-    public synchronized boolean hasChanged() {
-        return this.changed;
-    }
-
     final class JIThumbnailKeyAdapter extends java.awt.event.KeyAdapter {
-
-        /** Creates a new instance of JIThumbnailKeyListener */
-        public JIThumbnailKeyAdapter() {
-        }
 
         /** key event handlers */
         @Override
         public void keyPressed(final KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
-                JIThumbnailList.this.selectionModel.setShiftKey(true);
+                AThumbnailList.this.selectionModel.setShiftKey(true);
             }
             if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-                JIThumbnailList.this.selectionModel.setCntrlKey(true);
+                AThumbnailList.this.selectionModel.setCntrlKey(true);
             }
-            final Thread runner = new Thread() {
-
-                @Override
-                public void run() {
-                    Runnable runnable = new Runnable() {
-
-                        @Override
-                        public void run() {
-                            JIThumbnailList.this.jiThumbnail_keyPressed(e);
-                        }
-                    };
-                    SwingUtilities.invokeLater(runnable);
-                }
-            };
+            final Thread runner = new Thread(() -> AThumbnailList.this.jiThumbnailKeyPressed(e));
             runner.start();
         }
 
         @Override
         public void keyReleased(final KeyEvent e) {
-            JIThumbnailList.this.selectionModel.setShiftKey(false);
-            JIThumbnailList.this.selectionModel.setCntrlKey(false);
+            AThumbnailList.this.selectionModel.setShiftKey(false);
+            AThumbnailList.this.selectionModel.setCntrlKey(false);
         }
     }
 
@@ -818,33 +636,28 @@ public final class JIThumbnailList extends JList
     @Override
     public void dragGestureRecognized(DragGestureEvent dge) {
         Component comp = dge.getComponent();
-        try {
-            if (comp instanceof JIThumbnailList) {
-                int index = getSelectedIndex();
-                MediaElement media = (MediaElement) getSelectedValue();
-                MediaSeries series = buildSeriesFromMediaElement(media);
-                if (series != null) {
-                    GhostGlassPane glassPane = AppProperties.glassPane;
-                    Icon icon = null;
-                    if (media instanceof ImageElement) {
-                        icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) media, this, index);
-                    }
-                    if (icon == null) {
-                        icon = JIUtility.getSystemIcon(media);
-                    }
-                    glassPane.setIcon(icon);
-                    dragPressed = new Point(icon.getIconWidth() / 2, icon.getIconHeight() / 2);
-                    Point p = (Point) dge.getDragOrigin().clone();
-                    SwingUtilities.convertPointToScreen(p, comp);
-                    drawGlassPane(p);
-                    glassPane.setVisible(true);
-                    dge.startDrag(null, series, this);
+        if (comp instanceof AThumbnailList) {
+            int index = getSelectedIndex();
+            E media = getSelectedValue();
+            MediaSeries series = buildSeriesFromMediaElement(media);
+            if (series != null) {
+                GhostGlassPane glassPane = AppProperties.glassPane;
+                Icon icon = null;
+                if (media instanceof ImageElement) {
+                    icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) media, this, index);
                 }
+                if (icon == null) {
+                    icon = JIUtility.getSystemIcon(media);
+                }
+                glassPane.setIcon(icon);
+                dragPressed = new Point(icon.getIconWidth() / 2, icon.getIconHeight() / 2);
+                Point p = (Point) dge.getDragOrigin().clone();
+                SwingUtilities.convertPointToScreen(p, comp);
+                drawGlassPane(p);
+                glassPane.setVisible(true);
+                dge.startDrag(null, series, this);
             }
-            return;
-        } catch (RuntimeException re) {
         }
-
     }
 
     @Override
@@ -888,4 +701,25 @@ public final class JIThumbnailList extends JList
             glassPane.setImagePosition(p);
         }
     }
+
+    public List<E> getSelected(final MouseEvent e) {
+        List<E> selected = getSelectedValuesList();
+        if (!selected.isEmpty()) {
+            int index = locationToIndex(e.getPoint());
+            if (index >= 0) {
+                E selectedMedia = getModel().getElementAt(index);
+                if (selectedMedia != null && !selected.contains(selectedMedia)) {
+                    selected = Arrays.asList(selectedMedia);
+                    setSelectedValue(selectedMedia, false);
+                }
+            }
+        }
+        return selected;
+    }
+
+    public abstract IThumbnailModel<E> newModel();
+
+    public abstract JPopupMenu buidContexMenu(final MouseEvent e);
+
+    public abstract void mouseClickedEvent(MouseEvent e);
 }

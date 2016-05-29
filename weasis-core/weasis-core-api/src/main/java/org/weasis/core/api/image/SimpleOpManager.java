@@ -207,10 +207,14 @@ public class SimpleOpManager implements OpManager {
                     if (i > 0) {
                         op.setParam(Param.INPUT_IMG, operations.get(i - 1).getParam(Param.OUTPUT_IMG));
                     }
-                    op.process();
+                    if (op.isEnabled()) {
+                        op.process();
+                    } else {
+                        // Skip this operation
+                        op.setParam(Param.OUTPUT_IMG, op.getParam(Param.INPUT_IMG));
+                    }
                 } catch (Exception e) {
                     LOGGER.error("Image {} failed: {}", op.getParam(Param.NAME), e); //$NON-NLS-1$
-                    // Skip this operation
                     op.setParam(Param.OUTPUT_IMG, op.getParam(Param.INPUT_IMG));
                 }
             }

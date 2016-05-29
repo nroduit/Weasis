@@ -99,6 +99,10 @@ public class Activator implements BundleActivator, ServiceListener {
                         .getServiceReferences(DataExplorerViewFactory.class, null)) {
                         DataExplorerViewFactory service = bundleContext.getService(serviceReference);
                         if (service != null && !UIManager.EXPLORER_PLUGINS.contains(service)) {
+                            String className = BundleTools.SYSTEM_PREFERENCES.getProperty(service.getClass().getName());
+                            if (StringUtil.hasText(className) && !Boolean.valueOf(className)) {
+                                continue;
+                            }
                             final DataExplorerView explorer = service.createDataExplorerView(null);
                             UIManager.EXPLORER_PLUGINS.add(explorer);
 

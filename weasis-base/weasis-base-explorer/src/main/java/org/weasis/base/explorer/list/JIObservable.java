@@ -1,6 +1,6 @@
-package org.weasis.base.explorer;
+package org.weasis.base.explorer.list;
 
-interface JIObservable {
+public interface JIObservable {
 
     String SECTION_CHANGED = "SECTION_CHANGED"; //$NON-NLS-1$
     String DIRECTORY_SIZE = "DIRECTORY_SIZE"; //$NON-NLS-1$

@@ -13,9 +13,12 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.SubsampleAverageDescriptor;
 import javax.swing.Icon;
 
+import org.weasis.base.explorer.list.IThumbnailList;
+import org.weasis.base.explorer.list.impl.JIListModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.ThreadUtil;
 
@@ -36,9 +39,11 @@ public final class JIThumbnailCache {
 
         this.cachedThumbnails = Collections.synchronizedMap(new LinkedHashMap<String, ThumbnailIcon>(80) {
 
+            private static final long serialVersionUID = 5981678679620794224L;
             private static final int MAX_ENTRIES = 50;
 
             @Override
+            @SuppressWarnings("rawtypes")
             protected boolean removeEldestEntry(final Map.Entry eldest) {
                 return size() > MAX_ENTRIES;
             }
@@ -56,7 +61,7 @@ public final class JIThumbnailCache {
         this.cachedThumbnails.clear();
     }
 
-    public Icon getThumbnailFor(final ImageElement diskObject, final JIThumbnailList list, final int index) {
+    public Icon getThumbnailFor(final ImageElement diskObject, final IThumbnailList aThumbnailList, final int index) {
         try {
 
             final ThumbnailIcon jiIcon = this.cachedThumbnails.get(diskObject.getFile().getPath());
@@ -68,12 +73,12 @@ public final class JIThumbnailCache {
             // log.debug(e);
         }
         if (!diskObject.isLoading()) {
-            loadThumbnail(diskObject, list, index);
+            loadThumbnail(diskObject, aThumbnailList, index);
         }
         return null;
     }
 
-    private void loadThumbnail(final ImageElement diskObject, final JIThumbnailList thumbnailList, final int index) {
+    private void loadThumbnail(final ImageElement diskObject, final IThumbnailList thumbnailList, final int index) {
         if ((index > thumbnailList.getLastVisibleIndex()) || (index < thumbnailList.getFirstVisibleIndex())) {
             return;
         }
@@ -131,6 +136,7 @@ public final class JIThumbnailCache {
 
                             if (ImageFiler.writeTIFF(imgCacheFile, img, true, true, false)) {
                                 // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
+                                diskObject.setTagNoNull(TagW.FilePath, cfile);
                                 diskObject.removeImageFromCache();
                                 thumbnailList.getThumbnailListModel().putFileInCache(cfile, imgCacheFile.getName());
                             } else {

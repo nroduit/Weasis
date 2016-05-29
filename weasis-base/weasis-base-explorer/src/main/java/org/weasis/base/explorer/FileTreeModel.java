@@ -16,6 +16,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 
+@SuppressWarnings("serial")
 public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel {
 
     private final PropertyChangeSupport propertyChange;
@@ -49,13 +50,7 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
         if (SwingUtilities.isEventDispatchThread()) {
             propertyChange.firePropertyChange(event);
         } else {
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    propertyChange.firePropertyChange(event);
-                }
-            });
+            SwingUtilities.invokeLater(() -> propertyChange.firePropertyChange(event));
         }
     }
 
