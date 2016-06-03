@@ -84,21 +84,27 @@ public class DownloadManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadManager.class);
 
+    public static final String SCHEMA =
+        "xmlns=\"http://manifest.service.weasis/v2.5\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"";
     public static final String TAG_XML_ROOT = "manifest"; //$NON-NLS-1$
-    public static final String TAG_PR_ROOT = "presentation"; //$NON-NLS-1$
+    public static final String TAG_ARC_QUERY = "arcQuery";
+    public static final String TAG_ARCHIVE_ID = "arcId";
+    public static final String TAG_BASE_URL = "baseUrl";
+    public static final String TAG_PR_ROOT = "presentations"; //$NON-NLS-1$
+    public static final String TAG_PR = "presentation"; //$NON-NLS-1$
 
     public static final String CONCURRENT_SERIES = "download.concurrent.series"; //$NON-NLS-1$
-    public static final ArrayList<LoadSeries> TASKS = new ArrayList<LoadSeries>();
+    public static final ArrayList<LoadSeries> TASKS = new ArrayList<>();
 
     // Executor without concurrency (only one task is executed at the same time)
     private static final BlockingQueue<Runnable> UNIQUE_QUEUE =
-        new PriorityBlockingQueue<Runnable>(10, new PriorityTaskComparator());
+        new PriorityBlockingQueue<>(10, new PriorityTaskComparator());
     public static final ThreadPoolExecutor UNIQUE_EXECUTOR =
         new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, UNIQUE_QUEUE);
 
     // Executor with simultaneous tasks
     private static final BlockingQueue<Runnable> PRIORITY_QUEUE =
-        new PriorityBlockingQueue<Runnable>(10, new PriorityTaskComparator());
+        new PriorityBlockingQueue<>(10, new PriorityTaskComparator());
     public static final ThreadPoolExecutor CONCURRENT_EXECUTOR = new ThreadPoolExecutor(
         BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
         BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS, PRIORITY_QUEUE);
@@ -228,7 +234,7 @@ public class DownloadManager {
     }
 
     private static void handleAllSeries(LoadSeriesHandler handler) {
-        for (LoadSeries loadSeries : new ArrayList<LoadSeries>(DownloadManager.TASKS)) {
+        for (LoadSeries loadSeries : new ArrayList<>(DownloadManager.TASKS)) {
             handler.handle(loadSeries);
             Thumbnail thumbnail = (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagW.Thumbnail);
             if (thumbnail != null) {
@@ -242,7 +248,7 @@ public class DownloadManager {
     }
 
     public static ArrayList<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) {
-        ArrayList<LoadSeries> seriesList = new ArrayList<LoadSeries>();
+        ArrayList<LoadSeries> seriesList = new ArrayList<>();
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
@@ -299,11 +305,9 @@ public class DownloadManager {
                 validator.validate(xmlFile);
                 LOGGER.info("[Validate with XSD schema] wado_query is valid"); //$NON-NLS-1$
             } catch (SAXException e) {
-                LOGGER.error("[Validate with XSD schema] wado_query is NOT valid"); //$NON-NLS-1$
-                LOGGER.error("Reason: {}", e.getLocalizedMessage()); //$NON-NLS-1$
+                LOGGER.error("[Validate with XSD schema] wado_query is NOT valid", e); //$NON-NLS-1$
             } catch (Exception e) {
-                LOGGER.error("Error when validate XSD schema. Try to update JRE"); //$NON-NLS-1$
-                e.printStackTrace();
+                LOGGER.error("Error when validate XSD schema. Try to update JRE", e); //$NON-NLS-1$
             }
             // Try to read the xml even it is not valid.
             xmler = xmlif.createXMLStreamReader(new FileInputStream(tempFile));
@@ -321,9 +325,10 @@ public class DownloadManager {
                                 switch (eventType) {
                                     case XMLStreamConstants.START_ELEMENT:
                                         key = xmler.getName().getLocalPart();
-                                        if (WadoParameters.TAG_DOCUMENT_ROOT.equals(key)) {
-                                            readWadoQuery(model, seriesList, xmler);
+                                        if (TAG_ARC_QUERY.equals(key)) {
+                                            readArcQuery(model, seriesList, xmler);
                                         } else if (TAG_PR_ROOT.equals(key)) {
+                                            // TODO implement reader of presentation
                                             // GraphicList list = XmlSerializer.readMeasurementGraphics(gpxFile);
                                             // if (list != null) {
                                             // loader.setTag(TagW.MeasurementGraphics, list);
@@ -340,7 +345,7 @@ public class DownloadManager {
                                 }
                             }
                         } else {
-                            // Try to read old manifest: xmlns="http://www.weasis.org/xsd"
+                            // Read old manifest: xmlns="http://www.weasis.org/xsd"
                             if (WadoParameters.TAG_DOCUMENT_ROOT.equals(key)) {
                                 readWadoQuery(model, seriesList, xmler);
                             }
@@ -358,22 +363,17 @@ public class DownloadManager {
 
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
-            GuiExecutor.instance().execute(new Runnable() {
-
-                @Override
-                public void run() {
-
-                    PluginTool explorer = null;
-                    DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                    if (dicomExplorer instanceof PluginTool) {
-                        explorer = (PluginTool) dicomExplorer;
-                    }
-                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
-                    JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, null,
-                        JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
-                    if (layer != null) {
-                        layer.hideUI();
-                    }
+            GuiExecutor.instance().execute(() -> {
+                PluginTool explorer = null;
+                DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+                if (dicomExplorer instanceof PluginTool) {
+                    explorer = (PluginTool) dicomExplorer;
+                }
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
+                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, null,
+                    JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                if (layer != null) {
+                    layer.hideUI();
                 }
             });
 
@@ -384,17 +384,36 @@ public class DownloadManager {
         return seriesList;
     }
 
-    private static void readWadoQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
+    private static void readArcQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
         throws XMLStreamException {
-        String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_URL, null);
+        String wadoURL = TagUtil.getTagAttribute(xmler, TAG_BASE_URL, null);
         boolean onlySopUID =
-            Boolean.valueOf(TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
+            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
         String additionnalParameters =
             TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
         String overrideList = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
         final WadoParameters wadoParameters =
             new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+        readQuery(model, seriesList, xmler, wadoParameters, TAG_ARC_QUERY);
+    }
+
+    private static void readWadoQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
+        throws XMLStreamException {
+        String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_URL, null);
+        boolean onlySopUID =
+            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
+        String additionnalParameters =
+            TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
+        String overrideList = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
+        String webLogin = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
+        final WadoParameters wadoParameters =
+            new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+        readQuery(model, seriesList, xmler, wadoParameters, WadoParameters.TAG_DOCUMENT_ROOT);
+    }
+
+    private static void readQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler,
+        final WadoParameters wadoParameters, String endElement) throws XMLStreamException {
         int pat = 0;
         MediaSeriesGroup patient = null;
         boolean state = true;
@@ -446,7 +465,7 @@ public class DownloadManager {
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if (WadoParameters.TAG_DOCUMENT_ROOT.equals(xmler.getName().getLocalPart())) {
+                    if (endElement.equals(xmler.getName().getLocalPart())) {
                         state = false;
                     }
                     break;
