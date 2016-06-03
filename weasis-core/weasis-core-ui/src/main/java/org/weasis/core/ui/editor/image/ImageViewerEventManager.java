@@ -58,14 +58,14 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     public static final int LEVEL_LARGEST = 4096;
     public static final int LEVEL_DEFAULT = 300;
 
-    protected final ArrayList<SeriesViewerListener> seriesViewerListeners = new ArrayList<SeriesViewerListener>();
+    protected final ArrayList<SeriesViewerListener> seriesViewerListeners = new ArrayList<>();
     protected final MouseActions mouseActions = new MouseActions(null);
     protected final ZoomSetting zoomSetting = new ZoomSetting();
     protected final WProperties options = new WProperties();
     protected ImageViewerPlugin<E> selectedView2dContainer;
     // Manages all PropertyChangeListeners in EDT
     protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
-    protected final HashMap<ActionW, ActionState> actions = new HashMap<ActionW, ActionState>();
+    protected final HashMap<ActionW, ActionState> actions = new HashMap<>();
     protected boolean enabledAction = true;
 
     public ImageViewerEventManager() {

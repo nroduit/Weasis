@@ -26,7 +26,7 @@
 						<Import-Package>com.sun.xml.internal.bind,*</Import-Package>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<!-- add for Xchart: ,com.xeiam.xchart.*,com.xeiam.xchart.internal.markers.*,de.erichseifert.* -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.simpleframework.xml.*,org.jdesktop.jxlayer.*</Export-Package>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*</Export-Package>
 						<!-- Import only classes, will exclude *.RSA and *.SF files to avoid 
 							invalid signature issue. -->
 						<Embed-Dependency>*;scope=compile;inline=org.**|it.**</Embed-Dependency>

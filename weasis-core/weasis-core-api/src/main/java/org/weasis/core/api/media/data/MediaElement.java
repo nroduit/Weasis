@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import org.weasis.core.api.util.FileUtil;
 
@@ -39,8 +40,7 @@ public abstract class MediaElement<E> implements Tagable {
         }
         this.mediaIO = mediaIO;
         this.key = key;
-        Map<TagW, Object> t = mediaIO.getMediaFragmentTags(key);
-        this.tags = t == null ? new HashMap<TagW, Object>() : t;
+        this.tags = Optional.ofNullable(mediaIO.getMediaFragmentTags(key)).orElse(new HashMap<TagW, Object>());
         URI uri = mediaIO.getMediaFragmentURI(key);
         if (uri == null) {
             localFile = false;

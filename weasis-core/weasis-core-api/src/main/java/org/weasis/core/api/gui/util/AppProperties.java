@@ -14,7 +14,9 @@ import java.io.File;
 
 import javax.swing.LookAndFeel;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.FileUtil;
@@ -38,17 +40,17 @@ public class AppProperties {
     /**
      * The name of the application (for display)
      */
-    public static final String WEASIS_NAME = System.getProperty("weasis.name"); //$NON-NLS-1$
+    public static final String WEASIS_NAME = System.getProperty("weasis.name", "Weasis"); //$NON-NLS-1$
     /**
      * The current user of the application (defined either in JNLP by the property "weasis.user" or by the user of the
      * operating system session if the property is null)
      */
-    public static final String WEASIS_USER = System.getProperty("weasis.user"); //$NON-NLS-1$
+    public static final String WEASIS_USER = System.getProperty("weasis.user", "user"); //$NON-NLS-1$
     /**
      * The name of the configuration profile (defined in config-ext.properties). The value is “default” if null. This
      * property allows to have separated preferences (in a new directory).
      */
-    public static final String WEASIS_PROFILE = System.getProperty("weasis.profile"); //$NON-NLS-1$
+    public static final String WEASIS_PROFILE = System.getProperty("weasis.profile", "default"); //$NON-NLS-1$
     /**
      * The directory for writing temporary files
      */
@@ -86,6 +88,14 @@ public class AppProperties {
 
     private AppProperties() {
 
+    }
+
+    public static BundleContext getBundleContext(Class<?> clazz) {
+        if (clazz != null) {
+            Bundle bundle = FrameworkUtil.getBundle(clazz);
+            return bundle == null ? null : bundle.getBundleContext();
+        }
+        return null;
     }
 
     public static File getBundleDataFolder(BundleContext context) {

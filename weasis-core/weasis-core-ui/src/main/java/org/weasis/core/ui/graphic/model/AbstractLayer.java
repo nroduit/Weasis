@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.GraphicLabel;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -32,17 +33,22 @@ import org.weasis.core.ui.util.MouseEventDouble;
  *
  * @author Nicolas Roduit
  */
-public abstract class AbstractLayer implements Comparable, Serializable, Layer {
+public abstract class AbstractLayer implements Comparable<AbstractLayer>, Serializable, Layer {
 
     private static final long serialVersionUID = -6113490831569841167L;
 
-    public static final Identifier IMAGE = new Identifier(20, Messages.getString("AbstractLayer.image")); //$NON-NLS-1$
-    public static final Identifier CROSSLINES = new Identifier(100, Messages.getString("Tools.cross"));//$NON-NLS-1$
-    public static final Identifier ANNOTATION = new Identifier(200, Messages.getString("Tools.Anno"));//$NON-NLS-1$
-    // public static final Identifier DRAW = new Identifier(400, "Graphic Annotation");
-    public static final Identifier MEASURE = new Identifier(500, Messages.getString("Tools.meas"));//$NON-NLS-1$
-    // public static final Identifier OBJECTEXTRACT = new Identifier(600, Messages.getString("Tools.seg"));//$NON-NLS-1$
-    public static final Identifier TEMPDRAGLAYER = new Identifier(1000, Messages.getString("Tools.deco"));//$NON-NLS-1$
+    public static final Identifier IMAGE = new Identifier("image", 20, Messages.getString("AbstractLayer.image"), true); //$NON-NLS-1$
+    public static final Identifier CROSSLINES =
+        new Identifier("crosslines", 100, Messages.getString("Tools.cross"), false);//$NON-NLS-1$
+    public static final Identifier ANNOTATION =
+        new Identifier("annotations", 200, Messages.getString("Tools.Anno"), true);//$NON-NLS-1$
+    // public static final Identifier DRAW = new Identifier("image", 400, "Graphic Annotation", true);
+    public static final Identifier MEASURE =
+        new Identifier("measurements", 500, Messages.getString("Tools.meas"), true);//$NON-NLS-1$
+    // public static final Identifier OBJECTEXTRACT = new Identifier("image", 600,
+    // Messages.getString("Tools.seg"), true);//$NON-NLS-1$
+    public static final Identifier TEMPDRAGLAYER =
+        new Identifier("tmpDragable", 1000, Messages.getString("Tools.deco"), false);//$NON-NLS-1$
 
     protected final PropertyChangeListener pcl;
     protected final transient LayerModel layerModel;
@@ -60,6 +66,10 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
      * @author Nicolas Roduit
      */
     class PropertyChangeHandler implements PropertyChangeListener, Serializable {
+        private static final long serialVersionUID = -9094820911680205527L;
+
+        private PropertyChangeHandler() {
+        }
 
         // This method is called when a property is changed (fired from a graphic)
         @Override
@@ -84,12 +94,6 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                     toBack(graph);
                 }
             }
-
-        }
-
-        private static final long serialVersionUID = -9094820911680205527L;
-
-        private PropertyChangeHandler() {
         }
     }
 
@@ -134,6 +138,16 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             graphics.list.remove(graphic);
             graphics.list.add(graphic);
             repaint(graphic.getRepaintBounds(getAffineTransform()));
+        }
+    }
+
+    public void copyGraphic(Graphic graphic, ViewCanvas<?> canvas) {
+        if (graphics != null) {
+            Graphic graph = graphic.deepCopy();
+            if (graph != null) {
+                graph.updateLabel(true, canvas);
+                addGraphic(graph);
+            }
         }
     }
 
@@ -243,10 +257,43 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     // public abstract void paintSVG(SVGGraphics2D g2);
 
     @Override
-    public int compareTo(Object obj) {
+    public int compareTo(AbstractLayer obj) {
+        if (obj == null) {
+            return 1;
+        }
         int thisVal = this.getLevel();
-        int anotherVal = ((AbstractLayer) obj).getLevel();
-        return (thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1));
+        int anotherVal = obj.getLevel();
+        return thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((identifier == null) ? 0 : identifier.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        AbstractLayer other = (AbstractLayer) obj;
+        if (identifier == null) {
+            if (other.identifier != null) {
+                return false;
+            }
+        } else if (!identifier.equals(other.identifier)) {
+            return false;
+        }
+        return true;
     }
 
     public void repaint(Rectangle rectangle) {
@@ -350,10 +397,18 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     public static class Identifier {
         private final int defaultLevel;
         private final String title;
+        private final String key;
+        private final boolean savable;
 
-        public Identifier(int defaultLevel, String title) {
+        public Identifier(String key, int defaultLevel, String title, boolean savable) {
+            this.key = key;
             this.defaultLevel = defaultLevel;
             this.title = title;
+            this.savable = savable;
+        }
+
+        public String getKey() {
+            return key;
         }
 
         public int getDefaultLevel() {
@@ -364,9 +419,44 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             return title;
         }
 
+        public boolean isSavable() {
+            return savable;
+        }
+
         @Override
         public String toString() {
             return title;
         }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((key == null) ? 0 : key.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Identifier other = (Identifier) obj;
+            if (key == null) {
+                if (other.key != null) {
+                    return false;
+                }
+            } else if (!key.equals(other.key)) {
+                return false;
+            }
+            return true;
+        }
+
     }
 }

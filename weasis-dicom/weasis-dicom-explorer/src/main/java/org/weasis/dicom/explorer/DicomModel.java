@@ -12,13 +12,12 @@ package org.weasis.dicom.explorer;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -59,8 +58,7 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.Base64;
-import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -337,7 +335,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     @Override
     public synchronized List<Codec> getCodecPlugins() {
-        ArrayList<Codec> codecPlugins = new ArrayList<Codec>(1);
+        ArrayList<Codec> codecPlugins = new ArrayList<>(1);
         synchronized (BundleTools.CODEC_PLUGINS) {
             for (Codec codec : BundleTools.CODEC_PLUGINS) {
                 if (codec != null && "Sun java imageio".equals(codec.getCodecName()) == false //$NON-NLS-1$
@@ -745,7 +743,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (group != null && clazz != null && clazz.isAssignableFrom(clazz)) {
             List<DicomSpecialElement> kos = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
             if (kos != null) {
-                List<E> list = new ArrayList<E>();
+                List<E> list = new ArrayList<>();
                 for (DicomSpecialElement el : kos) {
                     if (clazz.isInstance(el)) {
                         list.add((E) el);
@@ -1117,18 +1115,16 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     LOADING_EXECUTOR
                         .execute(new LoadRemoteDicomManifest(args.toArray(new String[args.size()]), DicomModel.this));
                 } else if (opt.isSet("iwado")) { //$NON-NLS-1$
-                    String[] xmlRef = args.toArray(new String[args.size()]);
                     File[] xmlFiles = new File[args.size()];
                     for (int i = 0; i < xmlFiles.length; i++) {
                         try {
                             File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                            if (FileUtil.writeStream(new ByteArrayInputStream(Base64.decode(xmlRef[i])),
-                                new FileOutputStream(tempFile)) == -1) {
+                            if (GzipManager.gzipUncompressToFile(Base64.getDecoder().decode(args.get(i)), tempFile)) {
                                 xmlFiles[i] = tempFile;
                             }
 
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            LOGGER.info("ungzip manifest", e); //$NON-NLS-1$
                         }
                     }
                     LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(xmlFiles, DicomModel.this));

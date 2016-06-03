@@ -70,7 +70,7 @@ public class PRManager {
             SeriesViewerEvent event =
                 new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.ADD_LAYER);
             AbstractLayerModel layerModel = view.getLayerModel();
-            ArrayList<AbstractLayer.Identifier> list = new ArrayList<AbstractLayer.Identifier>();
+            ArrayList<AbstractLayer.Identifier> list = new ArrayList<>();
             for (Layer layer : layers) {
                 list.add(layer.getIdentifier());
                 layerModel.addLayer((AbstractLayer) layer);
@@ -94,7 +94,7 @@ public class PRManager {
             Sequence layerSeqs = dcmobj.getSequence(Tag.GraphicLayerSequence);
 
             if (gams != null && layerSeqs != null) {
-                Map<String, Attributes> glms = new HashMap<String, Attributes>(layerSeqs.size());
+                Map<String, Attributes> glms = new HashMap<>(layerSeqs.size());
                 for (Attributes a : layerSeqs) {
                     glms.put(a.getString(Tag.GraphicLayer), a);
                 }
@@ -123,7 +123,7 @@ public class PRManager {
                     }
                 }
 
-                layers = new ArrayList<Layer>(gams.size());
+                layers = new ArrayList<>(gams.size());
                 for (Attributes gram : gams) {
                     // TODO filter sop
                     Sequence refImgs = gram.getSequence(Tag.ReferencedImageSequence);
@@ -132,8 +132,8 @@ public class PRManager {
                     if (glm == null) {
                         continue;
                     }
-                    Identifier layerId =
-                        new Identifier(310 + glm.getInt(Tag.GraphicLayerOrder, 0), graphicLayerName + " [DICOM]"); //$NON-NLS-1$
+                    Identifier layerId = new Identifier(graphicLayerName, 310 + glm.getInt(Tag.GraphicLayerOrder, 0),
+                        graphicLayerName + " [DICOM]", true); //$NON-NLS-1$
                     DragLayer layer = new DragLayer(view.getLayerModel(), layerId);
                     // TODO should be an option
                     layer.setLocked(true);

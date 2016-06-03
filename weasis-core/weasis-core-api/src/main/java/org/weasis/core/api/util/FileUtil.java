@@ -244,11 +244,7 @@ public final class FileUtil {
         if (file != null && extensions != null) {
             String fileExt = getExtension(file.getName());
             if (StringUtil.hasLength(fileExt)) {
-                for (String ext : extensions) {
-                    if (fileExt.endsWith(ext)) {
-                        return true;
-                    }
-                }
+                return Arrays.asList(extensions).stream().anyMatch(fileExt::endsWith);
             }
         }
         return false;

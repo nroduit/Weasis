@@ -1,6 +1,10 @@
 package org.weasis.core.api.util;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
@@ -41,7 +45,7 @@ public class StringUtil {
         public String toString() {
             return value;
         }
-    };
+    }
 
     private StringUtil() {
     }
@@ -146,7 +150,7 @@ public class StringUtil {
     public static boolean hasText(String str) {
         return hasText((CharSequence) str);
     }
-    
+
     /**
      * Removing diacritical marks aka accents
      * 
@@ -157,6 +161,23 @@ public class StringUtil {
         String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
         Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
         return pattern.matcher(nfdNormalizedString).replaceAll("");
+    }
+
+    /**
+     * @param s
+     * @return the list of words or part with quotes
+     */
+    public static List<String> splitStringExceptQuotes(String s) {
+        if (s == null) {
+            return Collections.emptyList();
+        }
+        List<String> matchList = new ArrayList<>();
+        Pattern patternSpaceExceptQuotes = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'"); //$NON-NLS-1$
+        Matcher regexMatcher = patternSpaceExceptQuotes.matcher(s);
+        while (regexMatcher.find()) {
+            matchList.add(regexMatcher.group());
+        }
+        return matchList;
     }
 
     public static String getEmpty2NullObject(Object object) {

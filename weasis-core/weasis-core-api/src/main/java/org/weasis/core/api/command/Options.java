@@ -18,7 +18,6 @@
  */
 package org.weasis.core.api.command;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,6 +34,49 @@ import org.weasis.core.api.util.StringUtil;
  * Yet another GNU long options parser. This one is configured by parsing its Usage string.
  */
 public class Options implements Option {
+
+    public static final String NL = System.getProperty("line.separator", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
+
+    // Note: need to double \ within ""
+    private static final String REGEX = "(?x)\\s*" + "(?:-([^-]))?" + // 1: short-opt-1 //$NON-NLS-1$ //$NON-NLS-2$
+        "(?:,?\\s*-(\\w))?" + // 2: short-opt-2 //$NON-NLS-1$
+        "(?:,?\\s*--(\\w[\\w-]*)(=\\w+)?)?" + // 3: long-opt-1 and 4:arg-1 //$NON-NLS-1$
+        "(?:,?\\s*--(\\w[\\w-]*))?" + // 5: long-opt-2 //$NON-NLS-1$
+        ".*?(?:\\(default=(.*)\\))?\\s*"; // 6: default //$NON-NLS-1$
+
+    private static final int GROUP_SHORT_OPT_1 = 1;
+    private static final int GROUP_SHORT_OPT_2 = 2;
+    private static final int GROUP_LONG_OPT_1 = 3;
+    private static final int GROUP_ARG_1 = 4;
+    private static final int GROUP_LONG_OPT_2 = 5;
+    private static final int GROUP_DEFAULT = 6;
+
+    private final Pattern parser = Pattern.compile(REGEX);
+    private final Pattern uname = Pattern.compile("^Usage:\\s+(\\w+)"); //$NON-NLS-1$
+
+    private final Map<String, Boolean> unmodifiableOptSet;
+    private final Map<String, Object> unmodifiableOptArg;
+    private final Map<String, Boolean> optSet = new HashMap<>();
+    private final Map<String, Object> optArg = new HashMap<>();
+
+    private final Map<String, String> optName = new HashMap<>();
+    private final Map<String, String> optAlias = new HashMap<>();
+    private final List<Object> xargs = new ArrayList<>();
+    private List<String> args = null;
+
+    private static final String UNKNOWN = "unknown"; //$NON-NLS-1$
+    private String usageName = UNKNOWN;
+    private int usageIndex = 0;
+
+    private final String[] spec;
+    private final String[] gspec;
+    private final String defOpts;
+    private final String[] defArgs;
+    private String error = null;
+
+    private boolean optionsFirst = false;
+    private boolean stopOnBadOption = false;
+
     public static void main(String[] args) {
         final String[] usage = { "test - test Options usage", //$NON-NLS-1$
             "  text before Usage: is displayed when usage() is called and no error has occurred.", //$NON-NLS-1$
@@ -59,7 +101,7 @@ public class Options implements Option {
             return;
         }
 
-        if (opt.args().size() == 0) {
+        if (opt.args().isEmpty()) {
             throw opt.usageError("PATTERN not specified"); //$NON-NLS-1$
         }
 
@@ -70,49 +112,6 @@ public class Options implements Option {
         System.out.println("--directories specified: " + opt.isSet("directories")); //$NON-NLS-1$ //$NON-NLS-2$
         System.out.println("directories=" + opt.get("directories")); //$NON-NLS-1$ //$NON-NLS-2$
     }
-
-    public static final String NL = System.getProperty("line.separator", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    // Note: need to double \ within ""
-    private static final String regex = "(?x)\\s*" + "(?:-([^-]))?" + // 1: short-opt-1 //$NON-NLS-1$ //$NON-NLS-2$
-        "(?:,?\\s*-(\\w))?" + // 2: short-opt-2 //$NON-NLS-1$
-        "(?:,?\\s*--(\\w[\\w-]*)(=\\w+)?)?" + // 3: long-opt-1 and 4:arg-1 //$NON-NLS-1$
-        "(?:,?\\s*--(\\w[\\w-]*))?" + // 5: long-opt-2 //$NON-NLS-1$
-        ".*?(?:\\(default=(.*)\\))?\\s*"; // 6: default //$NON-NLS-1$
-
-    private static final int GROUP_SHORT_OPT_1 = 1;
-    private static final int GROUP_SHORT_OPT_2 = 2;
-    private static final int GROUP_LONG_OPT_1 = 3;
-    private static final int GROUP_ARG_1 = 4;
-    private static final int GROUP_LONG_OPT_2 = 5;
-    private static final int GROUP_DEFAULT = 6;
-
-    private final Pattern parser = Pattern.compile(regex);
-    private final Pattern uname = Pattern.compile("^Usage:\\s+(\\w+)"); //$NON-NLS-1$
-
-    private final Map<String, Boolean> unmodifiableOptSet;
-    private final Map<String, Object> unmodifiableOptArg;
-    private final Map<String, Boolean> optSet = new HashMap<String, Boolean>();
-    private final Map<String, Object> optArg = new HashMap<String, Object>();
-
-    private final Map<String, String> optName = new HashMap<String, String>();
-    private final Map<String, String> optAlias = new HashMap<String, String>();
-    private final List<Object> xargs = new ArrayList<Object>();
-    private List<String> args = null;
-
-    private static final String UNKNOWN = "unknown"; //$NON-NLS-1$
-    private String usageName = UNKNOWN;
-    private int usageIndex = 0;
-
-    private final String[] spec;
-    private final String[] gspec;
-    private final String defOpts;
-    private final String[] defArgs;
-    private PrintStream errStream = System.err;
-    private String error = null;
-
-    private boolean optionsFirst = false;
-    private boolean stopOnBadOption = false;
 
     public static Option compile(String[] optSpec) {
         return new Options(optSpec, null, null);
@@ -163,7 +162,6 @@ public class Options implements Option {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<Object> getObjectList(String name) {
         List<Object> list;
         Object arg = optArg.get(name);
@@ -173,7 +171,7 @@ public class Options implements Option {
         }
 
         if (arg instanceof String) { // default value
-            list = new ArrayList<Object>();
+            list = new ArrayList<>();
             if (StringUtil.hasText((String) arg)) {
                 list.add(arg);
             }
@@ -186,7 +184,7 @@ public class Options implements Option {
 
     @Override
     public List<String> getList(String name) {
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         for (Object o : getObjectList(name)) {
             try {
                 list.add((String) o);
@@ -197,13 +195,12 @@ public class Options implements Option {
         return list;
     }
 
-    @SuppressWarnings("unchecked")
     private void addArg(String name, Object value) {
         List<Object> list;
         Object arg = optArg.get(name);
 
         if (arg instanceof String) { // default value
-            list = new ArrayList<Object>();
+            list = new ArrayList<>();
             optArg.put(name, list);
         } else {
             list = (List<Object>) arg;
@@ -242,7 +239,7 @@ public class Options implements Option {
     @Override
     public List<String> args() {
         if (args == null) {
-            args = new ArrayList<String>();
+            args = new ArrayList<>();
             for (Object arg : xargs) {
                 args.add(arg == null ? "null" : arg.toString()); //$NON-NLS-1$
             }
@@ -265,12 +262,7 @@ public class Options implements Option {
             buf.append(spec[i]);
             buf.append(NL);
         }
-
-        String msg = buf.toString();
-
-        if (errStream != null) {
-            errStream.print(msg);
-        }
+        System.err.print(buf.toString());
     }
 
     /**
@@ -291,14 +283,14 @@ public class Options implements Option {
         if (gspec == null && gopt == null) {
             this.spec = spec;
         } else {
-            ArrayList<String> list = new ArrayList<String>();
+            ArrayList<String> list = new ArrayList<>();
             list.addAll(Arrays.asList(spec));
             list.addAll(Arrays.asList(gspec != null ? gspec : gopt.gspec));
             this.spec = list.toArray(new String[0]);
         }
 
-        Map<String, Boolean> myOptSet = new HashMap<String, Boolean>();
-        Map<String, Object> myOptArg = new HashMap<String, Object>();
+        Map<String, Boolean> myOptSet = new HashMap<>();
+        Map<String, Object> myOptArg = new HashMap<>();
 
         parseSpec(myOptSet, myOptArg);
 
@@ -310,7 +302,7 @@ public class Options implements Option {
             }
 
             for (Entry<String, Object> e : gopt.optArg.entrySet()) {
-                if (!e.getValue().equals("")) { //$NON-NLS-1$
+                if (!"".equals(e.getValue())) { //$NON-NLS-1$
                     myOptArg.put(e.getKey(), e.getValue());
                 }
             }
@@ -413,15 +405,15 @@ public class Options implements Option {
     @Override
     public Option parse(List<? extends Object> argv, boolean skipArg0) {
         reset();
-        List<Object> args = new ArrayList<Object>();
-        args.addAll(Arrays.asList(defArgs));
+        List<Object> arguments = new ArrayList<>();
+        arguments.addAll(Arrays.asList(defArgs));
 
         for (Object arg : argv) {
             if (skipArg0) {
                 skipArg0 = false;
                 usageName = arg.toString();
             } else {
-                args.add(arg);
+                arguments.add(arg);
             }
         }
 
@@ -429,7 +421,7 @@ public class Options implements Option {
         String needOpt = null;
         boolean endOpt = false;
 
-        for (Object oarg : args) {
+        for (Object oarg : arguments) {
             String arg = oarg == null ? "null" : oarg.toString(); //$NON-NLS-1$
 
             if (endOpt) {
@@ -444,13 +436,13 @@ public class Options implements Option {
                 }
                 xargs.add(oarg);
             } else {
-                if (arg.equals("--")) { //$NON-NLS-1$
+                if ("--".equals(arg)) { //$NON-NLS-1$
                     endOpt = true;
                 } else if (arg.startsWith("--")) { //$NON-NLS-1$
                     int eq = arg.indexOf("="); //$NON-NLS-1$
                     String value = (eq == -1) ? null : arg.substring(eq + 1);
-                    String name = arg.substring(2, ((eq == -1) ? arg.length() : eq));
-                    List<String> names = new ArrayList<String>();
+                    String name = arg.substring(2, (eq == -1) ? arg.length() : eq);
+                    List<String> names = new ArrayList<>();
 
                     if (optSet.containsKey(name)) {
                         names.add(name);

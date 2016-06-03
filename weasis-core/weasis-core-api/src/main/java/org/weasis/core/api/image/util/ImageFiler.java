@@ -308,7 +308,7 @@ public class ImageFiler extends AbstractBufferHandler {
         return true;
     }
 
-    private static void writePNG(OutputStream os, RenderedImage source) throws IOException {
+    public static void writePNG(OutputStream os, RenderedImage source) throws IOException {
         PNGEncodeParam param = new PNGEncodeParam.Palette();
         ImageEncoder enc = ImageCodec.createImageEncoder("PNG", os, param); //$NON-NLS-1$
         enc.encode(source);
@@ -318,12 +318,23 @@ public class ImageFiler extends AbstractBufferHandler {
         if (file.exists() && !file.canWrite()) {
             return false;
         }
+
+        try (OutputStream os = new FileOutputStream(file)) {
+            writeJPG(os, source, quality);
+        } catch (OutOfMemoryError | IOException e) {
+            LOGGER.error("", e); //$NON-NLS-1$
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean writeJPG(OutputStream outputStream, RenderedImage source, float quality) {
         ImageWriter writer = null;
         try {
             Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG"); //$NON-NLS-1$
             if (iter.hasNext()) {
                 writer = iter.next();
-                try (ImageOutputStream os = ImageIO.createImageOutputStream(file)) {
+                try (ImageOutputStream os = ImageIO.createImageOutputStream(outputStream)) {
                     writer.setOutput(os);
                     JPEGImageWriteParam iwp = new JPEGImageWriteParam(null);
                     iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);

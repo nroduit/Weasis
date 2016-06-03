@@ -279,7 +279,7 @@ public class DownloadManager {
                 File outFile = File.createTempFile("wado_", "", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                 if (FileUtil.writeStream(urlConnection.getInputStream(), new FileOutputStream(outFile)) == -1) {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
-                        stream = new BufferedInputStream((new GZIPInputStream(new FileInputStream((outFile)))));
+                        stream = new BufferedInputStream(new GZIPInputStream(new FileInputStream(outFile)));
                     } else {
                         stream = new FileInputStream(outFile);
                     }

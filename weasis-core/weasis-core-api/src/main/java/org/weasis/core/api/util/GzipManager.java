@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.core.api.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -32,8 +34,18 @@ public class GzipManager {
     }
 
     public static boolean gzipCompress(InputStream in, String gzipFilename) {
-        try (FileOutputStream inputStream = new FileOutputStream(gzipFilename);
-                        GZIPOutputStream gzipOut = new GZIPOutputStream(inputStream)) {
+        try (FileOutputStream out = new FileOutputStream(gzipFilename)) {
+            return gzipCompress(in, out);
+        } catch (IOException e) {
+            LOGGER.error("Cannot gzip compress", e); //$NON-NLS-1$
+            return false;
+        } finally {
+            FileUtil.safeClose(in);
+        }
+    }
+
+    private static boolean gzipCompress(InputStream in, OutputStream out) throws IOException {
+        try (GZIPOutputStream gzipOut = new GZIPOutputStream(out)) {
             byte[] buf = new byte[1024];
             int offset;
             while ((offset = in.read(buf)) > 0) {
@@ -51,7 +63,7 @@ public class GzipManager {
         }
     }
 
-    private static boolean gzipUncompressToFile(InputStream inputStream, OutputStream out) throws IOException {
+    private static boolean gzipUncompress(InputStream inputStream, OutputStream out) throws IOException {
         try (GZIPInputStream in = new GZIPInputStream(inputStream)) {
             byte[] buf = new byte[1024];
             int offset;
@@ -65,7 +77,7 @@ public class GzipManager {
     public static boolean gzipUncompressToFile(File inputFile, File outFilename) {
         try (FileInputStream inputStream = new FileInputStream(inputFile);
                         FileOutputStream outputStream = new FileOutputStream(outFilename)) {
-            return gzipUncompressToFile(inputStream, outputStream);
+            return gzipUncompress(inputStream, outputStream);
         } catch (IOException e) {
             LOGGER.error(ERROR_CTX, e);
             return false;
@@ -74,11 +86,69 @@ public class GzipManager {
 
     public static boolean gzipUncompressToFile(URL url, File outFilename) {
         try (InputStream input = url.openStream(); FileOutputStream outputStream = new FileOutputStream(outFilename)) {
-            return gzipUncompressToFile(input, outputStream);
+            return gzipUncompress(input, outputStream);
         } catch (IOException e) {
             LOGGER.error(ERROR_CTX, e);
             return false;
         }
     }
 
+    public static byte[] gzipUncompressToByte(byte[] bytes) throws IOException {
+        if (isGzip(bytes)) {
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);) {
+                gzipUncompress(inputStream, outputStream);
+                return outputStream.toByteArray();
+            }
+        } else {
+            return bytes;
+        }
+    }
+
+    public static byte[] gzipCompressToByte(byte[] bytes) throws IOException {
+        return gzipCompressToByte(bytes, 1);
+    }
+
+    /**
+     * @param bytes
+     * @param requiredByteNumber
+     *            for applying gzip. On network the safe value is 1400 (as MTU is 1500)
+     * @return
+     * @throws IOException
+     */
+    public static byte[] gzipCompressToByte(byte[] bytes, int requiredByteNumber) throws IOException {
+        if (bytes.length >= requiredByteNumber) {
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);) {
+                gzipCompress(inputStream, outputStream);
+                return outputStream.toByteArray();
+            }
+        }
+        return bytes;
+    }
+
+    public static boolean isGzip(byte[] bytes) {
+        // Check to see if it's gzip-compressed
+        // GZIP Magic Two-Byte Number: 0x8b1f (35615)
+        if (bytes != null && bytes.length >= 4) {
+            int head = (bytes[0] & 0xff) | ((bytes[1] << 8) & 0xff00);
+            if (GZIPInputStream.GZIP_MAGIC == head) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean gzipUncompressToFile(byte[] bytes, File outFilename) {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+                        FileOutputStream outputStream = new FileOutputStream(outFilename)) {
+            if (isGzip(bytes)) {
+                return gzipUncompress(inputStream, outputStream);
+            }
+            return FileUtil.writeStream(inputStream, outputStream) == -1;
+        } catch (IOException e) {
+            LOGGER.error(ERROR_CTX, e);
+            return false;
+        }
+    }
 }
