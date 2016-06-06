@@ -37,7 +37,7 @@ public class DicomPrintNode extends DefaultDicomNode {
 
     public DicomPrintNode(String description, String aeTitle, String hostname, Integer port,
         DicomPrintOptions printOptions) {
-        super(description, aeTitle, hostname, port);
+        super(description, aeTitle, hostname, port, UsageType.STORAGE);
         this.printOptions = printOptions == null ? new DicomPrintOptions() : printOptions;
     }
 

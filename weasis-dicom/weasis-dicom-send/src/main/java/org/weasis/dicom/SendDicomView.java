@@ -16,8 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
+import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -49,17 +49,19 @@ import org.weasis.dicom.explorer.ExportDicom;
 import org.weasis.dicom.explorer.ExportTree;
 import org.weasis.dicom.explorer.LocalExport;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.op.CStore;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
-import org.weasis.dicom.param.ProgressListener;
 
 public class SendDicomView extends AbstractItemDialogPage implements ExportDicom {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomView.class);
+
+    private static final String LAST_SEL_NODE = "lastSelNode";
 
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
@@ -93,9 +95,18 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     protected void initialize(boolean afirst) {
         if (afirst) {
-            Properties pref = SendDicomFactory.EXPORT_PERSISTENCE;
-            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.ARCHIVE);
-            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB);
+            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
+            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
+            String desc = SendDicomFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
+            if (StringUtil.hasText(desc)) {
+                ComboBoxModel<AbstractDicomNode> model = comboNode.getModel();
+                for (int i = 0; i < model.getSize(); i++) {
+                    if (desc.equals(model.getElementAt(i).getDescription())) {
+                        model.setSelectedItem(model.getElementAt(i));
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -104,7 +115,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     }
 
     public void applyChange() {
-
+        final DefaultDicomNode node = (DefaultDicomNode) comboNode.getSelectedItem();
+        SendDicomFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
     }
 
     protected void updateChanges() {
@@ -158,24 +170,15 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
             final CircularProgressBar progressBar = t.getBar();
             DicomProgress dicomProgress = new DicomProgress();
-            dicomProgress.addProgressListener(new ProgressListener() {
-
-                @Override
-                public void handleProgression(final DicomProgress p) {
-                    if (t.isCancelled()) {
-                        p.cancel();
-                    }
-
-                    GuiExecutor.instance().execute(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            int c = p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
-                            int r = p.getNumberOfRemainingSuboperations();
-                            progressBar.setValue((c * 100) / (c + r));
-                        }
-                    });
+            dicomProgress.addProgressListener(p -> {
+                if (t.isCancelled()) {
+                    p.cancel();
                 }
+                GuiExecutor.instance().execute(() -> {
+                    int c = p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
+                    int r = p.getNumberOfRemainingSuboperations();
+                    progressBar.setValue((c * 100) / (c + r));
+                });
             });
 
             Object selectedItem = comboNode.getSelectedItem();
@@ -185,13 +188,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     CStore.process(new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
                 if (state.getStatus() != Status.Success) {
                     LOGGER.error("Dicom send error: {}", state.getMessage());
-                    GuiExecutor.instance().execute(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            JOptionPane.showOptionDialog(exportTree, state.getMessage(), null,
-                                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null);
-                        }
+                    GuiExecutor.instance().execute(() -> {
+                        JOptionPane.showOptionDialog(exportTree, state.getMessage(), null, JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.ERROR_MESSAGE, null, null, null);
                     });
                 }
             } else if (selectedItem instanceof DicomWebNode) {
@@ -208,7 +207,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         synchronized (model) {
             ArrayList<String> uids = new ArrayList<>();
             TreePath[] paths = model.getCheckingPaths();
-            TreePath: for (TreePath treePath : paths) {
+            for (TreePath treePath : paths) {
                 if (task.isCancelled()) {
                     return;
                 }
@@ -222,7 +221,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                         uids.add(iuid);
                     } else {
                         // Write only once the file for multiframe
-                        continue TreePath;
+                        continue;
                     }
 
                     String path = LocalExport.buildPath(img, false, false, false, node);

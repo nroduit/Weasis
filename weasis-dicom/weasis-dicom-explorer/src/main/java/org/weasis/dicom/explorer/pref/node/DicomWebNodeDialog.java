@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 
 public class DicomWebNodeDialog extends JDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomWebNodeDialog.class);
@@ -51,7 +52,7 @@ public class DicomWebNodeDialog extends JDialog {
         if (dicomNode != null) {
             descriptionTf.setText(dicomNode.getDescription());
             urlTf.setText(dicomNode.getUrl().toString());
-            comboBox.setSelectedItem(dicomNode.getType());
+            comboBox.setSelectedItem(dicomNode.getWebType());
         }
         pack();
     }
@@ -134,27 +135,18 @@ public class DicomWebNodeDialog extends JDialog {
         footPanel.add(okButton);
 
         okButton.setText(Messages.getString("PrinterDialog.ok")); //$NON-NLS-1$
-        okButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                okButtonActionPerformed();
-            }
-        });
+        okButton.addActionListener(e -> okButtonActionPerformed());
         cancelButton = new JButton();
         footPanel.add(cancelButton);
 
         cancelButton.setText(Messages.getString("PrinterDialog.cancel")); //$NON-NLS-1$
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                dispose();
-            }
-        });
+        cancelButton.addActionListener(e -> dispose());
     }
 
     private void okButtonActionPerformed() {
         String desc = descriptionTf.getText();
         String url = urlTf.getText();
+        DicomWebNode.WebType webType = (DicomWebNode.WebType) comboBox.getSelectedItem();
 
         if (!StringUtil.hasText(desc) || !StringUtil.hasText(url)) {
             JOptionPane.showMessageDialog(this, Messages.getString("PrinterDialog.fill_message"), //$NON-NLS-1$
@@ -173,13 +165,17 @@ public class DicomWebNodeDialog extends JDialog {
         }
 
         boolean addNode = dicomNode == null;
+        UsageType usageType = DicomWebNode.getUsageType(webType);
+
         if (addNode) {
-            dicomNode = new DicomWebNode(desc, (DicomWebNode.WebType) comboBox.getSelectedItem(), validUrl);
+            dicomNode = new DicomWebNode(desc, webType, validUrl, usageType);
             nodesComboBox.addItem(dicomNode);
             nodesComboBox.setSelectedItem(dicomNode);
         } else {
             dicomNode.setDescription(desc);
+            dicomNode.setWebType(webType);
             dicomNode.setUrl(validUrl);
+            dicomNode.setUsageType(usageType);
             nodesComboBox.repaint();
         }
 

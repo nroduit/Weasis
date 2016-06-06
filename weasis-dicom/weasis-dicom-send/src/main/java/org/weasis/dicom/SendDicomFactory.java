@@ -26,7 +26,7 @@ public class SendDicomFactory implements DicomExportFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomFactory.class);
 
-    public static final Properties EXPORT_PERSISTENCE = new Properties();
+    static final Properties EXPORT_PERSISTENCE = new Properties();
 
     @Override
     public ExportDicom createDicomExportPage(Hashtable<String, Object> properties) {

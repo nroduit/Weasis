@@ -8,6 +8,7 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.text.NumberFormat;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -24,6 +25,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.print.DicomPrintOptionPane;
 
 public class DicomNodeDialog extends JDialog {
@@ -43,12 +45,13 @@ public class DicomNodeDialog extends JDialog {
     private DefaultDicomNode dicomNode;
     private final JComboBox<DefaultDicomNode> nodesComboBox;
     private final DefaultDicomNode.Type typeNode;
+    private JComboBox<AbstractDicomNode.UsageType> comboBox;
 
     public DicomNodeDialog(Window parent, String title, DefaultDicomNode dicomNode,
         JComboBox<DefaultDicomNode> nodeComboBox, DefaultDicomNode.Type typeNode) {
         super(parent, title, ModalityType.APPLICATION_MODAL);
         this.typeNode =
-            dicomNode == null ? typeNode == null ? AbstractDicomNode.Type.ARCHIVE : typeNode : dicomNode.getType();
+            dicomNode == null ? typeNode == null ? AbstractDicomNode.Type.DICOM : typeNode : dicomNode.getType();
         initComponents();
         this.dicomNode = dicomNode;
         this.nodesComboBox = nodeComboBox;
@@ -59,6 +62,8 @@ public class DicomNodeDialog extends JDialog {
             portTf.setValue(dicomNode.getPort());
             if (dicomNode instanceof DicomPrintNode) {
                 printOptionsPane.applyOptions(((DicomPrintNode) dicomNode).getPrintOptions());
+            } else {
+                comboBox.setSelectedItem(dicomNode.getUsageType());
             }
         }
         pack();
@@ -153,6 +158,21 @@ public class DicomNodeDialog extends JDialog {
             this.getContentPane().add(content, BorderLayout.NORTH);
             this.getContentPane().add(printOptionsPane, BorderLayout.CENTER);
         } else {
+            JLabel lblType = new JLabel("Usage type" + StringUtil.COLON); //$NON-NLS-1$
+            GridBagConstraints gbcLblType = new GridBagConstraints();
+            gbcLblType.anchor = GridBagConstraints.EAST;
+            gbcLblType.insets = new Insets(0, 0, 5, 5);
+            gbcLblType.gridx = 0;
+            gbcLblType.gridy = 3;
+            content.add(lblType, gbcLblType);
+
+            comboBox = new JComboBox<>(new DefaultComboBoxModel<>(AbstractDicomNode.UsageType.values()));
+            GridBagConstraints gbcComboBox = new GridBagConstraints();
+            gbcComboBox.anchor = GridBagConstraints.LINE_START;
+            gbcComboBox.insets = new Insets(0, 0, 5, 5);
+            gbcComboBox.gridx = 1;
+            gbcComboBox.gridy = 3;
+            content.add(comboBox, gbcComboBox);
             this.getContentPane().add(content, BorderLayout.CENTER);
         }
 
@@ -167,22 +187,12 @@ public class DicomNodeDialog extends JDialog {
         footPanel.add(okButton);
 
         okButton.setText(Messages.getString("PrinterDialog.ok")); //$NON-NLS-1$
-        okButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                okButtonActionPerformed();
-            }
-        });
+        okButton.addActionListener(e -> okButtonActionPerformed());
         cancelButton = new JButton();
         footPanel.add(cancelButton);
 
         cancelButton.setText(Messages.getString("PrinterDialog.cancel")); //$NON-NLS-1$
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                dispose();
-            }
-        });
+        cancelButton.addActionListener(e -> dispose());
     }
 
     private void okButtonActionPerformed() {
@@ -204,12 +214,13 @@ public class DicomNodeDialog extends JDialog {
             return;
         }
 
+        UsageType usageType = (UsageType) comboBox.getSelectedItem();
         boolean addNode = dicomNode == null;
         if (addNode) {
             if (AbstractDicomNode.Type.PRINTER == typeNode) {
                 dicomNode = new DicomPrintNode(desc, aeTitle, hostname, port.intValue());
             } else {
-                dicomNode = new DefaultDicomNode(desc, aeTitle, hostname, port.intValue());
+                dicomNode = new DefaultDicomNode(desc, aeTitle, hostname, port.intValue(), usageType);
             }
             nodesComboBox.addItem(dicomNode);
         } else {
@@ -217,9 +228,10 @@ public class DicomNodeDialog extends JDialog {
             dicomNode.setAeTitle(aeTitle);
             dicomNode.setHostname(hostname);
             dicomNode.setPort(port.intValue());
+            dicomNode.setUsageType(usageType);
         }
-
         dicomNode.setType(typeNode);
+
         if (dicomNode instanceof DicomPrintNode) {
             printOptionsPane.saveOptions(((DicomPrintNode) dicomNode).getPrintOptions());
         }

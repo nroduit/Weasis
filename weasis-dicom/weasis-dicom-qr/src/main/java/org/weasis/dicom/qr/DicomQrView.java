@@ -37,6 +37,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ImportDicom;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 
 public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     public class DateLabelFormatter extends AbstractFormatter {
@@ -112,7 +113,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     protected void initialize(boolean afirst) {
         if (afirst) {
             Properties pref = DicomQrFactory.IMPORT_PERSISTENCE;
-            AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.ARCHIVE);
+            AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.RETRIEVE);
         }
     }
 

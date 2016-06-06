@@ -29,7 +29,8 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         JPanel panel = new JPanel();
-        panel.setBorder(new TitledBorder(null, "DICOM Node", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        panel.setBorder(new TitledBorder(null, AbstractDicomNode.Type.DICOM.toString(), TitledBorder.LEADING,
+            TitledBorder.TOP, null, null));
         add(panel);
         GridBagLayout gblPanel = new GridBagLayout();
         panel.setLayout(gblPanel);
@@ -44,7 +45,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         panel.add(label, gbcLabel);
 
         final JComboBox<AbstractDicomNode> nodeComboBox = new JComboBox<>();
-        AbstractDicomNode.loadDicomNodes(nodeComboBox, AbstractDicomNode.Type.ARCHIVE);
+        AbstractDicomNode.loadDicomNodes(nodeComboBox, AbstractDicomNode.Type.DICOM);
         GridBagConstraints gbcComboBox = new GridBagConstraints();
         gbcComboBox.anchor = GridBagConstraints.NORTHWEST;
         gbcComboBox.insets = new Insets(0, 0, 5, 5);
@@ -89,50 +90,37 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         gbcButton.gridy = 1;
         panel.add(addNodeButton, gbcButton);
 
-        deleteButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                AbstractDicomNode.deleteNodeActionPerformed(nodeComboBox);
-            }
-        });
-        editButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                AbstractDicomNode.editNodeActionPerformed(nodeComboBox);
-            }
-        });
-        addNodeButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                AbstractDicomNode.addNodeActionPerformed(nodeComboBox, AbstractDicomNode.Type.ARCHIVE);
-            }
-        });
+        deleteButton.addActionListener(e -> AbstractDicomNode.deleteNodeActionPerformed(nodeComboBox));
+        editButton.addActionListener(e -> AbstractDicomNode.editNodeActionPerformed(nodeComboBox));
+        addNodeButton.addActionListener(
+            e -> AbstractDicomNode.addNodeActionPerformed(nodeComboBox, AbstractDicomNode.Type.DICOM));
 
         Box verticalBox = Box.createVerticalBox();
-        GridBagConstraints gbc_verticalBox = new GridBagConstraints();
-        gbc_verticalBox.weighty = 1.0;
-        gbc_verticalBox.weightx = 1.0;
-        gbc_verticalBox.insets = new Insets(0, 0, 5, 0);
-        gbc_verticalBox.fill = GridBagConstraints.BOTH;
-        gbc_verticalBox.anchor = GridBagConstraints.NORTHWEST;
-        gbc_verticalBox.gridx = 4;
-        gbc_verticalBox.gridy = 2;
-        panel.add(verticalBox, gbc_verticalBox);
+        GridBagConstraints gbcVerticalBox = new GridBagConstraints();
+        gbcVerticalBox.weighty = 1.0;
+        gbcVerticalBox.weightx = 1.0;
+        gbcVerticalBox.insets = new Insets(0, 0, 5, 0);
+        gbcVerticalBox.fill = GridBagConstraints.BOTH;
+        gbcVerticalBox.anchor = GridBagConstraints.NORTHWEST;
+        gbcVerticalBox.gridx = 4;
+        gbcVerticalBox.gridy = 2;
+        panel.add(verticalBox, gbcVerticalBox);
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(null, "DICOM WEB Node", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        panel1.setBorder(new TitledBorder(null, AbstractDicomNode.Type.WEB.toString(), TitledBorder.LEADING,
+            TitledBorder.TOP, null, null));
         add(panel1);
         GridBagLayout gblPanel1 = new GridBagLayout();
         panel1.setLayout(gblPanel1);
 
         JLabel label1 = new JLabel();
         label1.setText("Node:");
-        GridBagConstraints gbc_label1 = new GridBagConstraints();
-        gbc_label1.anchor = GridBagConstraints.WEST;
-        gbc_label1.insets = new Insets(0, 0, 5, 5);
-        gbc_label1.gridx = 0;
-        gbc_label1.gridy = 0;
-        panel1.add(label1, gbc_label1);
+        GridBagConstraints gbcLabel1 = new GridBagConstraints();
+        gbcLabel1.anchor = GridBagConstraints.WEST;
+        gbcLabel1.insets = new Insets(0, 0, 5, 5);
+        gbcLabel1.gridx = 0;
+        gbcLabel1.gridy = 0;
+        panel1.add(label1, gbcLabel1);
 
         final JComboBox<AbstractDicomNode> comboBoxWeb = new JComboBox<>();
         AbstractDicomNode.loadDicomNodes(comboBoxWeb, AbstractDicomNode.Type.WEB);
@@ -191,24 +179,10 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         gbcVerticalBox1.gridy = 2;
         panel1.add(verticalBox1, gbcVerticalBox1);
 
-        deleteBtn1.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                AbstractDicomNode.deleteNodeActionPerformed(comboBoxWeb);
-            }
-        });
-        editBtn1.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                AbstractDicomNode.editNodeActionPerformed(comboBoxWeb);
-            }
-        });
-        addBtn1.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                AbstractDicomNode.addNodeActionPerformed(comboBoxWeb, AbstractDicomNode.Type.WEB);
-            }
-        });
+        deleteBtn1.addActionListener(e -> AbstractDicomNode.deleteNodeActionPerformed(comboBoxWeb));
+        editBtn1.addActionListener(e -> AbstractDicomNode.editNodeActionPerformed(comboBoxWeb));
+        addBtn1
+            .addActionListener(e -> AbstractDicomNode.addNodeActionPerformed(comboBoxWeb, AbstractDicomNode.Type.WEB));
 
     }
 
