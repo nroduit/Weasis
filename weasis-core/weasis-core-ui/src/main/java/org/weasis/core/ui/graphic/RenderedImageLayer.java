@@ -115,7 +115,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
 
     @Override
     public void setImage(E image, OpManager preprocessing) {
-        boolean init = image != null && !image.equals(this.sourceImage);
+        boolean init = (image != null && !image.equals(this.sourceImage)) || (image == null && sourceImage != null);
         this.sourceImage = image;
         this.preprocessing = preprocessing;
         if (preprocessing != null || init) {
