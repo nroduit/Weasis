@@ -20,6 +20,7 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -248,6 +249,16 @@ public final class FileUtil {
             }
         }
         return false;
+    }
+
+    public static int writeFile(URLConnection httpCon, File outFilename) {
+        try (InputStream input = httpCon.getInputStream();
+                        FileOutputStream outputStream = new FileOutputStream(outFilename)) {
+            return writeStream(input, outputStream);
+        } catch (IOException e) {
+            LOGGER.error("Write url into file", e); //$NON-NLS-1$
+            return 0;
+        }
     }
 
     /**

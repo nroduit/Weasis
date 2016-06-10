@@ -80,7 +80,7 @@ public class ProxyDetector {
      * @return a list of found proxies
      */
 
-    private List<Proxy> initProxies() {
+    private static List<Proxy> initProxies() {
 
         final String valuePropertyBefore = System.getProperty(PROXY_PROPERTY);
         System.setProperty(PROXY_PROPERTY, "true"); //$NON-NLS-1$
