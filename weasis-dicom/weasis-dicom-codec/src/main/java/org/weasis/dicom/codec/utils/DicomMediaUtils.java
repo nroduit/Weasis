@@ -1497,8 +1497,7 @@ public class DicomMediaUtils {
                 return;
             }
 
-            if (TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
-                || TagType.PERSON_NAME.equals(type) || TagType.PERIOD.equals(type)) {
+            if (tag.isStringFamilyType()) {
                 if (val instanceof String[]) {
                     dataset.setString(id, dic.vrOf(id), (String[]) val);
                 } else {

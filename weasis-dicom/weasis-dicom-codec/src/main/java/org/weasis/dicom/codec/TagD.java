@@ -95,8 +95,8 @@ public class TagD extends TagW {
 
     private TagD(int tagID, String displayedName, String privateCreatorID, VR vr, int vmMin, int vmMax,
         Object defaultValue) {
-        super(tagID, getKeywordFromTag(tagID, privateCreatorID), displayedName, getTypeFromTag(tagID, vr), vmMin,
-            vmMax, defaultValue);
+        super(tagID, getKeywordFromTag(tagID, privateCreatorID), displayedName, getTypeFromTag(tagID, vr), vmMin, vmMax,
+            defaultValue);
         this.vr = vr;
         this.privateCreatorID = privateCreatorID;
         this.retired = false;
@@ -152,8 +152,7 @@ public class TagD extends TagW {
         if (data instanceof Attributes) {
             Attributes dataset = (Attributes) data;
 
-            if (TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
-                || TagType.PERSON_NAME.equals(type) || TagType.PERIOD.equals(type)) {
+            if (isStringFamilyType()) {
                 value = vmMax > 1 ? DicomMediaUtils.getStringArrayFromDicomElement(dataset, id, privateCreatorID,
                     (String[]) defaultValue) : dataset.getString(privateCreatorID, id, (String) defaultValue);
             } else if (TagType.DATE.equals(type) || TagType.TIME.equals(type) || TagType.DATETIME.equals(type)) {

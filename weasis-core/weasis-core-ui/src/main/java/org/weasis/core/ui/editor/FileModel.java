@@ -54,8 +54,9 @@ public class FileModel extends AbstractFileModel {
         return outFile;
     }
 
+    @Override
     public void get(String[] argv) throws IOException {
-        final String[] usage = { "Load DICOM files remotely or locally", "Usage: image:get [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
+        final String[] usage = { "Load an image remotely or locally", "Usage: image:get [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
             "  -f --file     Open an image from a file", // $NON-NLS-1$
             "  -u --url      Open an image from an URL", "  -? --help        show help" }; // $NON-NLS-1$ //$NON-NLS-2$
 
@@ -82,9 +83,10 @@ public class FileModel extends AbstractFileModel {
 
     }
 
+    @Override
     public void close(String[] argv) throws IOException {
-        final String[] usage = { "Remove DICOM files in Dicom Explorer", //$NON-NLS-1$
-            "Usage: dicom:close [series] [ARGS]", //$NON-NLS-1$
+        final String[] usage = { "Close images", //$NON-NLS-1$
+            "Usage: image:close [series] [ARGS]", //$NON-NLS-1$
             "  -a --all Close all series", //$NON-NLS-1$
             "  -s --series <args>   Close series, [arg] is Series UID", "  -? --help        show help" }; //$NON-NLS-1$ //$NON-NLS-2$
         final Option opt = Options.compile(usage).parse(argv);
