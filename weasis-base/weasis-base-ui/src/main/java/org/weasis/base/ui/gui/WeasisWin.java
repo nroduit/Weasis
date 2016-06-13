@@ -129,7 +129,7 @@ import bibliothek.util.Colors;
 
 public class WeasisWin {
 
-    private static final Logger log = LoggerFactory.getLogger(WeasisWin.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWin.class);
 
     private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
     private static final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
@@ -149,7 +149,7 @@ public class WeasisWin {
 
     private volatile boolean busy = false;
 
-    private final List<Runnable> runOnClose = new ArrayList<Runnable>();
+    private final List<Runnable> runOnClose = new ArrayList<>();
 
     private final Frame frame;
     private final RootPaneContainer rootPaneContainer;
@@ -185,7 +185,7 @@ public class WeasisWin {
             }
         } catch (InstanceNotFoundException ignored) {
         } catch (JMException e) {
-            log.debug("Error while receiving main window", e); //$NON-NLS-1$
+            LOGGER.debug("Error while receiving main window", e); //$NON-NLS-1$
         }
 
         if (container == null || container instanceof JFrame) {
@@ -339,14 +339,13 @@ public class WeasisWin {
 
     HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> getSeriesByEntry(TreeModel treeModel,
         List<MediaSeries<? extends MediaElement<?>>> series, TreeModelNode entry) {
-        HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> map =
-            new HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>>();
+        HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> map = new HashMap<>();
         if (series != null && treeModel != null && entry != null) {
             for (MediaSeries<? extends MediaElement<?>> s : series) {
                 MediaSeriesGroup entry1 = treeModel.getParent(s, entry);
                 List<MediaSeries<? extends MediaElement<?>>> seriesList = map.get(entry1);
                 if (seriesList == null) {
-                    seriesList = new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+                    seriesList = new ArrayList<>();
                 }
                 seriesList.add(s);
                 map.put(entry1, seriesList);
@@ -648,7 +647,7 @@ public class WeasisWin {
         }
         bound = b;
 
-        log.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
+        LOGGER.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
         // setMaximizedBounds(bound);
 
         // Do not apply to JApplet
@@ -660,7 +659,7 @@ public class WeasisWin {
             frame.setExtendedState((frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH
                 ? Frame.NORMAL : Frame.MAXIMIZED_BOTH);
         }
-        log.info("End of loading the GUI..."); //$NON-NLS-1$
+        LOGGER.info("End of loading the GUI..."); //$NON-NLS-1$
     }
 
     private JMenuBar createMenuBar() {
@@ -1034,16 +1033,16 @@ public class WeasisWin {
             Transferable transferable = support.getTransferable();
 
             List<File> files = null;
-            // Not supported on Linux
+            // Not supported by some OS
             if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 try {
                     files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Get dragable files", e);
                 }
                 return dropFiles(files, support.getDropLocation());
             }
-            // When dragging a file or group of files from a Gnome or Kde environment
+            // When dragging a file or group of files
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
             else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
                 try {
@@ -1052,7 +1051,7 @@ public class WeasisWin {
                     String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Get dragable URIs", e);
                 }
                 return dropFiles(files, support.getDropLocation());
             }
@@ -1069,8 +1068,7 @@ public class WeasisWin {
                         if (factory.canReadMimeType(seq.getMimeType())) {
                             DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
                             if (model instanceof TreeModel) {
-                                ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-                                    new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
+                                ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>(1);
                                 list.add(seq);
                                 ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, list, model, null);
                                 openSeriesInViewerPlugin(builder,
@@ -1085,6 +1083,7 @@ public class WeasisWin {
                 }
 
             } catch (Exception e) {
+                LOGGER.error("Open series", e);
                 return false;
             }
             return true;
@@ -1092,15 +1091,15 @@ public class WeasisWin {
 
         private boolean dropFiles(final List<File> files, DropLocation dropLocation) {
             if (files != null) {
-                List<DataExplorerView> explorers = new ArrayList<DataExplorerView>(UIManager.EXPLORER_PLUGINS);
+                List<DataExplorerView> explorers = new ArrayList<>(UIManager.EXPLORER_PLUGINS);
                 for (int i = explorers.size() - 1; i >= 0; i--) {
                     if (!explorers.get(i).canImportFiles()) {
                         explorers.remove(i);
                     }
                 }
 
-                final List<File> dirs = new ArrayList<File>();
-                Map<Codec, List<File>> codecs = new HashMap<Codec, List<File>>();
+                final List<File> dirs = new ArrayList<>();
+                Map<Codec, List<File>> codecs = new HashMap<>();
                 for (File file : files) {
                     if (file.isDirectory()) {
                         dirs.add(file);
@@ -1112,7 +1111,7 @@ public class WeasisWin {
                         if (c != null) {
                             List<File> cFiles = codecs.get(c);
                             if (cFiles == null) {
-                                cFiles = new ArrayList<File>();
+                                cFiles = new ArrayList<>();
                                 codecs.put(c, cFiles);
                             }
                             cFiles.add(file);
@@ -1128,7 +1127,7 @@ public class WeasisWin {
                     Entry<Codec, List<File>> entry = it.next();
                     final List<File> vals = entry.getValue();
 
-                    List<DataExplorerView> exps = new ArrayList<DataExplorerView>();
+                    List<DataExplorerView> exps = new ArrayList<>();
                     for (final DataExplorerView dataExplorerView : explorers) {
                         DataExplorerModel model = dataExplorerView.getDataExplorerModel();
                         if (model != null) {

@@ -11,26 +11,25 @@
 package org.weasis.core.api.media.data;
 
 import java.awt.Color;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 import javax.xml.stream.XMLStreamReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.InfoViewListPanel;
 import org.weasis.core.api.util.StringUtil;
 
 /**
@@ -38,13 +37,15 @@ import org.weasis.core.api.util.StringUtil;
  * tags (DICOM and non DICOM).
  *
  */
-public class TagW implements Transferable, Serializable {
+public class TagW implements Serializable {
     private static final Logger LOGGER = LoggerFactory.getLogger(TagW.class);
 
     private static final long serialVersionUID = -7914330824854199622L;
     private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
-    public static final String NO_VALUE = Messages.getString("TagW.unknown");//$NON-NLS-1$
+
     protected static final Map<String, TagW> tags = Collections.synchronizedMap(new HashMap<String, TagW>());
+
+    public static final String NO_VALUE = Messages.getString("TagW.unknown");//$NON-NLS-1$
 
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
@@ -157,8 +158,6 @@ public class TagW implements Transferable, Serializable {
 
     public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN); //$NON-NLS-1$
 
-    // TODO remove or do it better
-    public static final DataFlavor infoElementDataFlavor;
     static {
         addTag(ImageBitsPerPixel);
         addTag(ImageCache);
@@ -189,17 +188,7 @@ public class TagW implements Transferable, Serializable {
         addTag(PRLUTsExplanation);
         addTag(PRLUTsData);
         addTag(MonoChrome);
-
-        DataFlavor f = null;
-        try {
-            f = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + InfoViewListPanel.class.getName(), //$NON-NLS-1$
-                null, InfoViewListPanel.class.getClassLoader());
-        } catch (Exception e) {
-            LOGGER.error("", e);
-        }
-        infoElementDataFlavor = f;
     }
-    private static final DataFlavor[] flavors = { infoElementDataFlavor };
 
     protected final int id;
     protected final String keyword;
@@ -411,29 +400,6 @@ public class TagW implements Transferable, Serializable {
         this.anonymizationType = anonymizationType;
     }
 
-    @Override
-    public DataFlavor[] getTransferDataFlavors() {
-        return flavors.clone();
-    }
-
-    @Override
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
-        for (int i = 0; i < flavors.length; i++) {
-            if (flavor.equals(flavors[i])) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-        if (flavor.equals(flavors[0])) {
-            return this;
-        }
-        throw new UnsupportedFlavorException(flavor);
-    }
-
     public static String getFormattedText(Object value, TagType type, String format) {
         if (value == null) {
             return ""; //$NON-NLS-1$
@@ -443,15 +409,7 @@ public class TagW implements Transferable, Serializable {
 
         if (TagType.STRING.equals(type)) {
             if (value instanceof String[]) {
-                String[] array = (String[]) value;
-                StringBuilder s = new StringBuilder();
-                for (int i = 0; i < array.length; i++) {
-                    s.append(array[i]);
-                    if (i < array.length - 1) {
-                        s.append("\\"); //$NON-NLS-1$
-                    }
-                }
-                str = s.toString();
+                str = Arrays.asList((String[]) value).stream().collect(Collectors.joining("\\"));
             } else {
                 str = value.toString();
             }
@@ -469,34 +427,12 @@ public class TagW implements Transferable, Serializable {
             str = TagUtil.getDicomPeriod(value.toString());
         } else if (value instanceof float[]) {
             float[] array = (float[]) value;
-            StringBuilder s = new StringBuilder();
-            for (int i = 0; i < array.length; i++) {
-                s.append(array[i]);
-                if (i < array.length - 1) {
-                    s.append(", "); //$NON-NLS-1$
-                }
-            }
-            str = s.toString();
+            str = IntStream.range(0, array.length).mapToObj(i -> String.valueOf(array[i]))
+                .collect(Collectors.joining(", "));
         } else if (value instanceof double[]) {
-            double[] array = (double[]) value;
-            StringBuilder s = new StringBuilder();
-            for (int i = 0; i < array.length; i++) {
-                s.append(array[i]);
-                if (i < array.length - 1) {
-                    s.append(", "); //$NON-NLS-1$
-                }
-            }
-            str = s.toString();
+            str = DoubleStream.of((double[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", "));
         } else if (value instanceof int[]) {
-            int[] array = (int[]) value;
-            StringBuilder s = new StringBuilder();
-            for (int i = 0; i < array.length; i++) {
-                s.append(array[i]);
-                if (i < array.length - 1) {
-                    s.append(", "); //$NON-NLS-1$
-                }
-            }
-            str = s.toString();
+            str = IntStream.of((int[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", "));
         } else {
             str = value.toString();
         }

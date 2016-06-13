@@ -96,9 +96,11 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
                             ObservableEvent.BasicAction.NULL_SELECTION, ViewerPlugin.this, null, null));
                     }
                 } else {
-                    CDockable ld = ((DefaultCommonDockable) prevDockable).getDockable();
-                    if (ld instanceof AbstractCDockable) {
-                        ((AbstractCDockable) ld).toFront();
+                    if (prevDockable instanceof DefaultCommonDockable) {
+                        CDockable ld = ((DefaultCommonDockable) prevDockable).getDockable();
+                        if (ld instanceof AbstractCDockable) {
+                            ((AbstractCDockable) ld).toFront();
+                        }
                     }
                 }
             }
