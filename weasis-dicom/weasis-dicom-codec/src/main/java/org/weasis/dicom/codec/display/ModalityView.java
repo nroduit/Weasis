@@ -10,11 +10,12 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.display;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -36,7 +37,7 @@ import org.weasis.dicom.codec.TagD;
 public class ModalityView {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModalityView.class);
 
-    public static final HashMap<Modality, ModalityInfoData> MODALITY_VIEW_MAP = new HashMap<>();
+    public static final Map<Modality, ModalityInfoData> MODALITY_VIEW_MAP = new HashMap<>();
     public static final ModalityInfoData DEFAULT_MODALITY_VIEW = new ModalityInfoData(Modality.Default, null);
 
     static {
@@ -144,8 +145,12 @@ public class ModalityView {
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
+            File file = ResourceUtil.getResource("attributes-view.xml");
+            if (!file.canRead()) {
+                return;
+            }
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            stream = new FileInputStream(ResourceUtil.getResource("attributes-view.xml")); //$NON-NLS-1$
+            stream = new FileInputStream(file); // $NON-NLS-1$
             xmler = xmlif.createXMLStreamReader(stream);
 
             int eventType;
@@ -155,32 +160,7 @@ public class ModalityView {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
                         if ("modalities".equals(key)) { //$NON-NLS-1$
-                            while (xmler.hasNext()) {
-                                eventType = xmler.next();
-                                switch (eventType) {
-                                    case XMLStreamConstants.START_ELEMENT:
-                                        key = xmler.getName().getLocalPart();
-                                        if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
-                                            String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
-                                            Modality m = getModdality(name);
-                                            if (m != null) {
-                                                try {
-                                                    String extend = xmler.getAttributeValue(null, "extend");//$NON-NLS-1$
-                                                    ModalityInfoData data =
-                                                        new ModalityInfoData(m, getModdality(extend));
-                                                    readModality(data, xmler);
-                                                    MODALITY_VIEW_MAP.put(m, data);
-                                                } catch (Exception e) {
-                                                    LOGGER.error("Modality {} cannot be read from attributes-view.xml", //$NON-NLS-1$
-                                                        name, e);
-                                                }
-                                            }
-                                        }
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
+                            readModalities(xmler);
                         }
                         break;
                     default:
@@ -197,8 +177,35 @@ public class ModalityView {
         }
     }
 
-    private static void readModality(ModalityInfoData data, XMLStreamReader xmler) throws XMLStreamException {
+    private static void readModalities(XMLStreamReader xmler) throws XMLStreamException {
+        while (xmler.hasNext()) {
+            int eventType = xmler.next();
+            switch (eventType) {
+                case XMLStreamConstants.START_ELEMENT:
+                    String key = xmler.getName().getLocalPart();
+                    if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
+                        String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
+                        Modality m = getModdality(name);
+                        if (m != null) {
+                            try {
+                                String extend = xmler.getAttributeValue(null, "extend");//$NON-NLS-1$
+                                ModalityInfoData data = new ModalityInfoData(m, getModdality(extend));
+                                readModality(data, xmler);
+                                MODALITY_VIEW_MAP.put(m, data);
+                            } catch (Exception e) {
+                                LOGGER.error("Modality {} cannot be read from attributes-view.xml", //$NON-NLS-1$
+                                    name, e);
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
 
+    private static void readModality(ModalityInfoData data, XMLStreamReader xmler) throws XMLStreamException {
         int eventType;
         boolean state = true;
         while (xmler.hasNext() && state) {
@@ -238,14 +245,8 @@ public class ModalityView {
             switch (eventType) {
                 case XMLStreamConstants.CHARACTERS:
                     if (index > 0 && index <= 7) {
-                        String name = xmler.getText();
-                        TagView tag = null;
-                        if (StringUtil.hasText(name)) {
-                            tag = getTagView(name, format);
-                        }
-                        disElements[index - 1] = tag;
-                        // Reset current index and format
-                        index = -1;
+                        disElements[index - 1] = getTag(xmler.getText(), format);
+                        index = -1; // Reset current index and format
                         format = null;
                     }
                     break;
@@ -264,5 +265,12 @@ public class ModalityView {
                     break;
             }
         }
+    }
+
+    private static TagView getTag(String name, String format) {
+        if (StringUtil.hasText(name)) {
+            return getTagView(name, format);
+        }
+        return null;
     }
 }

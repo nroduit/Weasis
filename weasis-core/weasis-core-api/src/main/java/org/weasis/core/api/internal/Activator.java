@@ -96,6 +96,9 @@ public class Activator implements BundleActivator, ServiceListener {
         scheduler.setParallelism(nbThread);
         scheduler.setPrefetchParallelism(nbThread - 1);
 
+        // Trick for avoiding 403 error when downloading from some web sites
+        System.setProperty("http.agent",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.75 Safari/535.7");
         // Allows to connect through a proxy initialized by Java Webstart
         ProxyDetector.setProxyFromJavaWebStart();
 

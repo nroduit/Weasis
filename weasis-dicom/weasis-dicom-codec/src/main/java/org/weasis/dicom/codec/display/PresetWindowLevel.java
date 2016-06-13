@@ -12,11 +12,12 @@ package org.weasis.dicom.codec.display;
 
 import java.awt.event.KeyEvent;
 import java.awt.image.DataBuffer;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -265,8 +266,12 @@ public class PresetWindowLevel {
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
+            File file = ResourceUtil.getResource("presets.xml");
+            if (!file.canRead()){
+                return Collections.emptyMap();
+            }
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            stream = new FileInputStream(ResourceUtil.getResource("presets.xml")); //$NON-NLS-1$
+            stream = new FileInputStream(file); //$NON-NLS-1$
             xmler = xmlif.createXMLStreamReader(stream);
 
             int eventType;

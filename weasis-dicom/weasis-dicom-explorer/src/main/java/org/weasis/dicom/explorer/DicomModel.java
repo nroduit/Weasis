@@ -1092,87 +1092,85 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             return;
         }
 
-        GuiExecutor.instance().execute(new Runnable() {
+        GuiExecutor.instance().execute(() -> {
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null, DicomModel.this));
+            getCommand(opt, args);
+        });
+    }
 
-            @Override
-            public void run() {
-
-                firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null, DicomModel.this));
-                // start importing local dicom series list
-                if (opt.isSet("local")) { //$NON-NLS-1$
-                    File[] files = new File[args.size()];
-                    for (int i = 0; i < files.length; i++) {
-                        files[i] = new File(args.get(i));
+    private void getCommand(Option opt, List<String> args) {
+        // start importing local dicom series list
+        if (opt.isSet("local")) { //$NON-NLS-1$
+            File[] files = new File[args.size()];
+            for (int i = 0; i < files.length; i++) {
+                files[i] = new File(args.get(i));
+            }
+            LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
+        } else if (opt.isSet("remote")) { //$NON-NLS-1$
+            LOADING_EXECUTOR.execute(new LoadRemoteDicomURL(args.toArray(new String[args.size()]), DicomModel.this));
+        }
+        // build WADO series list to download
+        else if (opt.isSet("wado")) { //$NON-NLS-1$
+            LOADING_EXECUTOR
+                .execute(new LoadRemoteDicomManifest(args.toArray(new String[args.size()]), DicomModel.this));
+        } else if (opt.isSet("iwado")) { //$NON-NLS-1$
+            File[] xmlFiles = new File[args.size()];
+            for (int i = 0; i < xmlFiles.length; i++) {
+                try {
+                    File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                    if (GzipManager.gzipUncompressToFile(Base64.getDecoder().decode(args.get(i)), tempFile)) {
+                        xmlFiles[i] = tempFile;
                     }
-                    LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
-                } else if (opt.isSet("remote")) { //$NON-NLS-1$
-                    LOADING_EXECUTOR
-                        .execute(new LoadRemoteDicomURL(args.toArray(new String[args.size()]), DicomModel.this));
-                }
-                // build WADO series list to download
-                else if (opt.isSet("wado")) { //$NON-NLS-1$
-                    LOADING_EXECUTOR
-                        .execute(new LoadRemoteDicomManifest(args.toArray(new String[args.size()]), DicomModel.this));
-                } else if (opt.isSet("iwado")) { //$NON-NLS-1$
-                    File[] xmlFiles = new File[args.size()];
-                    for (int i = 0; i < xmlFiles.length; i++) {
-                        try {
-                            File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                            if (GzipManager.gzipUncompressToFile(Base64.getDecoder().decode(args.get(i)), tempFile)) {
-                                xmlFiles[i] = tempFile;
-                            }
 
-                        } catch (Exception e) {
-                            LOGGER.info("ungzip manifest", e); //$NON-NLS-1$
-                        }
-                    }
-                    LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(xmlFiles, DicomModel.this));
-                }
-                // Get DICOM folder (by default DICOM, dicom, IHE_PDI, ihe_pdi) at the same level at the Weasis
-                // executable file
-                else if (opt.isSet("portable")) { //$NON-NLS-1$
-
-                    String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
-                    String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
-
-                    if (prop != null && baseDir != null) {
-                        String[] dirs = prop.split(","); //$NON-NLS-1$
-                        for (int i = 0; i < dirs.length; i++) {
-                            dirs[i] = dirs[i].trim().replaceAll("/", File.separator); //$NON-NLS-1$
-                        }
-                        File[] files = new File[dirs.length];
-                        boolean notCaseSensitive = AppProperties.OPERATING_SYSTEM.startsWith("win");//$NON-NLS-1$
-                        if (notCaseSensitive) {
-                            Arrays.sort(dirs, String.CASE_INSENSITIVE_ORDER);
-                        }
-                        String last = null;
-                        for (int i = 0; i < files.length; i++) {
-                            if (notCaseSensitive && last != null && dirs[i].equalsIgnoreCase(last)) {
-                                last = null;
-                            } else {
-                                last = dirs[i];
-                                files[i] = new File(baseDir, dirs[i]);
-                            }
-                        }
-
-                        List<LoadSeries> loadSeries = null;
-                        File dcmDirFile = new File(baseDir, "DICOMDIR"); //$NON-NLS-1$
-                        if (dcmDirFile.canRead()) {
-                            // Copy images in cache if property weasis.portable.dicom.cache = true (default is true)
-                            DicomDirLoader dirImport = new DicomDirLoader(dcmDirFile, DicomModel.this,
-                                DicomManager.getInstance().isPortableDirCache());
-                            loadSeries = dirImport.readDicomDir();
-                        }
-                        if (loadSeries != null && loadSeries.size() > 0) {
-                            LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, DicomModel.this));
-                        } else {
-                            LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
-                        }
-                    }
+                } catch (Exception e) {
+                    LOGGER.info("ungzip manifest", e); //$NON-NLS-1$
                 }
             }
-        });
+            LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(xmlFiles, DicomModel.this));
+        }
+        // Get DICOM folder (by default DICOM, dicom, IHE_PDI, ihe_pdi) at the same level at the Weasis
+        // executable file
+        else if (opt.isSet("portable")) { //$NON-NLS-1$
+
+            String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
+            String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
+
+            if (prop != null && baseDir != null) {
+                String[] dirs = prop.split(","); //$NON-NLS-1$
+                for (int i = 0; i < dirs.length; i++) {
+                    dirs[i] = dirs[i].trim().replaceAll("/", File.separator); //$NON-NLS-1$
+                }
+                File[] files = new File[dirs.length];
+                boolean notCaseSensitive = AppProperties.OPERATING_SYSTEM.startsWith("win");//$NON-NLS-1$
+                if (notCaseSensitive) {
+                    Arrays.sort(dirs, String.CASE_INSENSITIVE_ORDER);
+                }
+                String last = null;
+                for (int i = 0; i < files.length; i++) {
+                    if (notCaseSensitive && last != null && dirs[i].equalsIgnoreCase(last)) {
+                        last = null;
+                    } else {
+                        last = dirs[i];
+                        files[i] = new File(baseDir, dirs[i]);
+                    }
+                }
+
+                List<LoadSeries> loadSeries = null;
+                File dcmDirFile = new File(baseDir, "DICOMDIR"); //$NON-NLS-1$
+                if (dcmDirFile.canRead()) {
+                    // Copy images in cache if property weasis.portable.dicom.cache = true (default is true)
+                    DicomDirLoader dirImport = new DicomDirLoader(dcmDirFile, DicomModel.this,
+                        DicomManager.getInstance().isPortableDirCache());
+                    loadSeries = dirImport.readDicomDir();
+                }
+                if (loadSeries != null && !loadSeries.isEmpty()) {
+                    LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, DicomModel.this));
+                } else {
+                    LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
+                }
+            }
+        }
     }
 
     public void close(String[] argv) throws IOException {
@@ -1190,58 +1188,56 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             return;
         }
 
-        GuiExecutor.instance().execute(new Runnable() {
+        GuiExecutor.instance().execute(() -> {
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null, DicomModel.this));
+            closeCommand(opt, args);
 
-            @Override
-            public void run() {
-                firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null, DicomModel.this));
-                // start build local dicom series list
-                if (opt.isSet("patient")) { //$NON-NLS-1$
-                    for (String patientUID : args) {
-                        MediaSeriesGroup patientGroup = null;
-                        // In Weasis, Global Identity of the patient is composed of the patientID and the birth date by
-                        // default
-                        // TODO handle preferences choice for patientUID
-                        patientGroup = getHierarchyNode(MediaSeriesGroupNode.rootNode, patientUID);
-                        if (patientGroup == null) {
-                            System.out.println("Cannot find patient: " + patientUID); //$NON-NLS-1$
-                            continue;
-                        } else {
-                            removePatient(patientGroup);
-                        }
+        });
+    }
+
+    private void closeCommand(Option opt, List<String> args) {
+        // start build local dicom series list
+        if (opt.isSet("patient")) { //$NON-NLS-1$
+            for (String patientUID : args) {
+                MediaSeriesGroup patientGroup;
+                // In Weasis, Global Identity of the patient is composed of the patientID and the name by default
+                // TODO handle preferences choice for patientUID, see DicomMediaUtils.buildPatientPseudoUID()
+                patientGroup = getHierarchyNode(MediaSeriesGroupNode.rootNode, patientUID);
+                if (patientGroup == null) {
+                    System.out.println("Cannot find patient: " + patientUID); //$NON-NLS-1$
+                    continue;
+                } else {
+                    removePatient(patientGroup);
+                }
+            }
+        } else if (opt.isSet("all")) { //$NON-NLS-1$
+            for (MediaSeriesGroup patientGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
+                removePatient(patientGroup);
+            }
+        } else if (opt.isSet("study")) { //$NON-NLS-1$
+            for (String studyUID : args) {
+                for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
+                    MediaSeriesGroup stGroup = getHierarchyNode(ptGroup, studyUID);
+                    if (stGroup != null) {
+                        removeStudy(stGroup);
+                        break;
                     }
-                } else if (opt.isSet("all")) { //$NON-NLS-1$
-                    for (MediaSeriesGroup patientGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-                        removePatient(patientGroup);
-                    }
-                } else if (opt.isSet("study")) { //$NON-NLS-1$
-                    for (String studyUID : args) {
-                        for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-                            MediaSeriesGroup stGroup = getHierarchyNode(ptGroup, studyUID);
-                            if (stGroup != null) {
-                                removeStudy(stGroup);
-                                break;
-                            }
-                        }
-                    }
-                } else if (opt.isSet("series")) { //$NON-NLS-1$
-                    for (String seriesUID : args) {
-                        patientLevel: for (MediaSeriesGroup ptGroup : model
-                            .getSuccessors(MediaSeriesGroupNode.rootNode)) {
-                            for (MediaSeriesGroup stGroup : model.getSuccessors(ptGroup)) {
-                                MediaSeriesGroup series = getHierarchyNode(stGroup, seriesUID);
-                                if (series instanceof Series) {
-                                    removeSeries(series);
-                                    break patientLevel;
-                                }
-                            }
+                }
+            }
+        } else if (opt.isSet("series")) { //$NON-NLS-1$
+            for (String seriesUID : args) {
+                patientLevel: for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
+                    for (MediaSeriesGroup stGroup : model.getSuccessors(ptGroup)) {
+                        MediaSeriesGroup series = getHierarchyNode(stGroup, seriesUID);
+                        if (series instanceof Series) {
+                            removeSeries(series);
+                            break patientLevel;
                         }
                     }
                 }
-
             }
-        });
+        }
     }
 
     @Override

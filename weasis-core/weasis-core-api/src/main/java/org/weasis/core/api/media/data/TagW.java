@@ -160,6 +160,36 @@ public class TagW implements Transferable, Serializable {
     // TODO remove or do it better
     public static final DataFlavor infoElementDataFlavor;
     static {
+        addTag(ImageBitsPerPixel);
+        addTag(ImageCache);
+        addTag(ImageDepth);
+        addTag(ImageHeight);
+        addTag(ImageOrientationPlane);
+        addTag(ImageWidth);
+        addTag(SeriesFocused);
+        addTag(SeriesLoading);
+        addTag(SeriesOpen);
+        addTag(SeriesSelected);
+        addTag(SlicePosition);
+        addTag(SuvFactor);
+        addTag(DirectDownloadFile);
+        addTag(DirectDownloadThumbnail);
+        addTag(RootElement);
+        addTag(FileName);
+        addTag(FilePath);
+        addTag(CurrentFolder);
+
+        // DICOM
+        addTag(SubseriesInstanceUID);
+        addTag(VOILUTsExplanation);
+        addTag(VOILUTsData);
+        addTag(ModalityLUTExplanation);
+        addTag(ModalityLUTType);
+        addTag(ModalityLUTData);
+        addTag(PRLUTsExplanation);
+        addTag(PRLUTsData);
+        addTag(MonoChrome);
+
         DataFlavor f = null;
         try {
             f = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + InfoViewListPanel.class.getName(), //$NON-NLS-1$
@@ -335,8 +365,7 @@ public class TagW implements Transferable, Serializable {
         if (data instanceof XMLStreamReader) {
             XMLStreamReader xmler = (XMLStreamReader) data;
 
-            if (TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
-                || TagType.PERSON_NAME.equals(type) || TagType.PERIOD.equals(type)) {
+            if (isStringFamilyType()) {
                 value = vmMax > 1 ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
                     : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
             } else if (TagType.DATE.equals(type) || TagType.TIME.equals(type) || TagType.DATETIME.equals(type)) {
@@ -352,13 +381,18 @@ public class TagW implements Transferable, Serializable {
                 value = vmMax > 1 ? TagUtil.getDoubleArrayTagAttribute(xmler, keyword, (double[]) defaultValue)
                     : TagUtil.getDoubleTagAttribute(xmler, keyword, (Double) defaultValue);
             } else if (TagType.SEQUENCE.equals(type)) {
-                // TODO
+                value = TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
             } else {
                 value = vmMax > 1 ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
                     : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
             }
         }
         return value;
+    }
+
+    public boolean isStringFamilyType() {
+        return TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
+            || TagType.PERSON_NAME.equals(type) || TagType.PERIOD.equals(type) || TagType.SEX.equals(type);
     }
 
     public String getFormattedText(Object value) {

@@ -45,7 +45,7 @@ public class ViewerPluginBuilder {
     public static final String ICON = "plugin.icon"; //$NON-NLS-1$
     public static final String UID = "plugin.uid"; //$NON-NLS-1$
 
-    public static final AbstractFileModel DefaultDataModel = new AbstractFileModel();
+    public static final FileModel DefaultDataModel = new FileModel();
     private final SeriesViewerFactory factory;
     private final List<MediaSeries<? extends MediaElement<?>>> series;
     private final DataExplorerModel model;
@@ -84,7 +84,7 @@ public class ViewerPluginBuilder {
             return;
         }
         ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-            new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
+            new ArrayList<>(1);
         list.add(series);
         openSequenceInPlugin(factory, list, model, compareEntryToBuildNewViewer, removeOldSeries);
     }
@@ -119,7 +119,7 @@ public class ViewerPluginBuilder {
 
     public static void openSequenceInDefaultPlugin(List<MediaSeries<? extends MediaElement<?>>> series,
         DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
-        ArrayList<String> mimes = new ArrayList<String>();
+        ArrayList<String> mimes = new ArrayList<>();
         for (MediaSeries<? extends MediaElement<?>> s : series) {
             String mime = s.getMimeType();
             if (mime != null && !mimes.contains(mime)) {
@@ -130,7 +130,7 @@ public class ViewerPluginBuilder {
             SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
             if (plugin != null) {
                 ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList =
-                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+                    new ArrayList<>();
                 for (MediaSeries<? extends MediaElement<?>> s : series) {
                     if (mime.equals(s.getMimeType())) {
                         seriesList.add(s);
