@@ -58,11 +58,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         // Copy image operations from view2d
         SimpleOpManager operations = imageLayer.getDisplayOpManager();
         for (ImageOpNode op : view2d.getImageLayer().getDisplayOpManager().getOperations()) {
-            try {
-                operations.addImageOperationAction(op.clone());
-            } catch (CloneNotSupportedException e) {
-                LOGGER.error("Clone image operation", e); //$NON-NLS-1$
-            }
+            operations.addImageOperationAction(op.copy());
         }
         // Copy the current values of image operations
         view2d.copyActionWState(actionsInView);

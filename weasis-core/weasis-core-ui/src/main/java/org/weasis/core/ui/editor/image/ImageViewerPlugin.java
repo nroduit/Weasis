@@ -252,12 +252,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
      */
 
     protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
-        this.layoutModel = layoutModel == null ? VIEWS_1x1 : layoutModel;
-        try {
-            this.layoutModel = (GridBagLayoutModel) this.layoutModel.clone();
-        } catch (CloneNotSupportedException e1) {
-            e1.printStackTrace();
-        }
+        this.layoutModel = layoutModel == null ? VIEWS_1x1.copy() : layoutModel.copy();
         grid.removeAll();
         // Keep views containing images
         ArrayList<ViewCanvas<E>> oldViews = new ArrayList<>();
@@ -480,7 +475,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             while (enumVal.hasNext()) {
                 Entry<LayoutConstraints, Component> entry = enumVal.next();
                 if (entry.getValue().equals(defaultView2d)) {
-                    GridBagConstraints c = (GridBagConstraints) entry.getKey().clone();
+                    GridBagConstraints c = entry.getKey().copy();
                     c.weightx = 1.0;
                     c.weighty = 1.0;
                     grid.add(defaultView2d.getJComponent(), c);
@@ -933,7 +928,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 throw new IllegalArgumentException("Arguments cannot be null"); //$NON-NLS-1$
             }
             this.constraints = constraints;
-            this.originalConstraints = (LayoutConstraints) constraints.clone();
+            this.originalConstraints = constraints.copy();
             this.component = component;
             this.originalBound = component.getBounds();
         }

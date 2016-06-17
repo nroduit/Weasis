@@ -47,13 +47,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
             Image2DViewer view2DPane = (Image2DViewer) comp;
             RenderedImage src = view2DPane.getSourceImage();
             if (src != null) {
-                SimpleOpManager opManager;
-                try {
-                    opManager = view2DPane.getImageLayer().getDisplayOpManager().clone();
-                } catch (CloneNotSupportedException e) {
-                    e.printStackTrace();
-                    return null;
-                }
+                SimpleOpManager opManager = view2DPane.getImageLayer().getDisplayOpManager().copy();
                 opManager.removeImageOperationAction(opManager.getNode(ZoomOp.OP_NAME));
                 opManager.setFirstNode(src);
                 disOp = opManager;

@@ -677,7 +677,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     private ComboItemListener newLutAction() {
-        List<ByteLut> luts = new ArrayList<ByteLut>();
+        List<ByteLut> luts = new ArrayList<>();
         luts.add(ByteLut.grayLUT);
         ByteLutCollection.readLutFilesFromResourcesDir(luts, ResourceUtil.getResource("luts"));//$NON-NLS-1$
         // Set default first as the list has been sorted
@@ -1162,12 +1162,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                             // the actions are synchronized
                                             if (oldSynch == null || oldSynch.isOriginal()
                                                 || !oldSynch.getMode().equals(synch.getMode())) {
-                                                oldSynch = synch.clone();
+                                                oldSynch = synch.copy();
                                             }
                                         } else {
                                             if (oldSynch == null || oldSynch.isOriginal()
                                                 || !oldSynch.getMode().equals(synch.getMode())) {
-                                                oldSynch = synch.clone();
+                                                oldSynch = synch.copy();
                                                 for (Entry<String, Boolean> a : oldSynch.getActions().entrySet()) {
                                                     a.setValue(false);
                                                 }
@@ -1179,12 +1179,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                         if (pane instanceof MprView) {
                                             if (oldSynch == null || oldSynch.isOriginal()
                                                 || !oldSynch.getMode().equals(synch.getMode())) {
-                                                oldSynch = synch.clone();
+                                                oldSynch = synch.copy();
                                             }
                                         } else {
                                             if (oldSynch == null || oldSynch.isOriginal()
                                                 || !oldSynch.getMode().equals(synch.getMode())) {
-                                                oldSynch = synch.clone();
+                                                oldSynch = synch.copy();
                                                 for (Entry<String, Boolean> a : oldSynch.getActions().entrySet()) {
                                                     a.setValue(false);
                                                 }
@@ -1210,7 +1210,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             ViewCanvas<DicomImageElement> pane = panes.get(i);
                             oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
-                                oldSynch = synch.clone();
+                                oldSynch = synch.copy();
                             }
                             oldSynch.getActions().put(ActionW.KO_SELECTION.cmd(), true);
                             oldSynch.getActions().put(ActionW.KO_FILTER.cmd(), true);

@@ -55,7 +55,7 @@ public class UriListFlavor {
     }
 
     public static DataFlavor[] getTransferDataFlavors() {
-        return flavors.clone();
+        return Arrays.copyOf(flavors, flavors.length);
     }
 
     public static boolean isDataFlavorSupported(DataFlavor flavor) {

@@ -40,6 +40,15 @@ public class RotationOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public RotationOp(RotationOp op) {
+        super(op);
+    }
+
+    @Override
+    public RotationOp copy() {
+        return new RotationOp(this);
+    }
+
     @Override
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);

@@ -37,6 +37,15 @@ public class FlipOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public FlipOp(FlipOp op) {
+        super(op);
+    }
+
+    @Override
+    public FlipOp copy() {
+        return new FlipOp(this);
+    }
+
     @Override
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);

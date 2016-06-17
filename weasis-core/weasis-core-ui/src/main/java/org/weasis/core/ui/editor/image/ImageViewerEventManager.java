@@ -698,7 +698,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                     boolean hasLink = false;
                     for (int i = 0; i < panes.size(); i++) {
                         boolean synchByDefault = isCompatible(viewPane.getSeries(), panes.get(i).getSeries());
-                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synch.clone() : null);
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synch.copy() : null);
                         if (synchByDefault) {
                             hasLink = true;
                             addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
@@ -706,7 +706,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                     }
                 } else if (Mode.Tile.equals(synch.getMode())) {
                     for (int i = 0; i < panes.size(); i++) {
-                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.clone());
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.copy());
                         addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
                     }
                 }

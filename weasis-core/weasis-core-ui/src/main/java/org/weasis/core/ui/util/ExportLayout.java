@@ -84,7 +84,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         while (enumVal.hasNext()) {
             LayoutConstraints e = enumVal.next();
             Component v = oldMap.get(e);
-            LayoutConstraints constraint = (LayoutConstraints) e.clone();
+            LayoutConstraints constraint = e.copy();
 
             if (v instanceof ViewCanvas) {
                 ExportImage<E> export = new ExportImage<>((ViewCanvas<E>) v);

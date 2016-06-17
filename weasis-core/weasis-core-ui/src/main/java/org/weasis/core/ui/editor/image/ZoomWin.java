@@ -83,14 +83,14 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     private final RenderedImageLayer<E> imageLayer;
     private final MouseHandler mouseHandler;
     private SimpleOpManager freezeOperations;
-    private final HashMap<String, Object> freezeActionsInView = new HashMap<String, Object>();
+    private final HashMap<String, Object> freezeActionsInView = new HashMap<>();
 
     public ZoomWin(DefaultView2d<E> view2d) {
         super(view2d.getLayerModel(), null);
         this.view2d = view2d;
         this.setOpaque(false);
         ImageViewerEventManager<E> manager = view2d.getEventManager();
-        this.imageLayer = new RenderedImageLayer<E>(false);
+        this.imageLayer = new RenderedImageLayer<>(false);
         SimpleOpManager operations = imageLayer.getDisplayOpManager();
         operations.addImageOperationAction(new ZoomOp());
         operations.addImageOperationAction(new RotationOp());
@@ -390,13 +390,10 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             if (ZoomOp.OP_NAME.equals(op.getParam(Param.NAME))) {
                 break;
             }
-            try {
-                ImageOpNode operation = op.clone();
-                freezeOperations.addImageOperationAction(operation);
-            } catch (CloneNotSupportedException e) {
-                e.printStackTrace();
-            }
+            ImageOpNode operation = op.copy();
+            freezeOperations.addImageOperationAction(operation);
         }
+
         freezeOperations.setFirstNode(imageLayer.getSourceRenderedImage());
         freezeOperations.process();
     }

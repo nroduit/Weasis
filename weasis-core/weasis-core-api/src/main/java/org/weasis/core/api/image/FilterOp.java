@@ -36,6 +36,15 @@ public class FilterOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public FilterOp(FilterOp op) {
+        super(op);
+    }
+
+    @Override
+    public FilterOp copy() {
+        return new FilterOp(this);
+    }
+
     @Override
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);

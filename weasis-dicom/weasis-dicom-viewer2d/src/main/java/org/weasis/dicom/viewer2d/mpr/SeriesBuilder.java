@@ -380,7 +380,7 @@ public class SeriesBuilder {
         cpTags.setString(Tag.FrameOfReferenceUID, VR.UI, params.frameOfReferenceUID);
 
         int last = newSeries.length;
-        List<DicomImageElement> dcms = new ArrayList<DicomImageElement>();
+        List<DicomImageElement> dcms = new ArrayList<>();
 
         for (int i = 0; i < newSeries.length; i++) {
             File inFile = newSeries[i].getFile();
@@ -500,7 +500,7 @@ public class SeriesBuilder {
             for (int j = 0; j < tagList3.length; j++) {
                 double[] val = (double[]) img.getTagValue(tagList3[j]);
                 if (val != null) {
-                    img.setTag(tagList3[j], val.clone());
+                    img.setTag(tagList3[j], Arrays.copyOf(val, val.length));
                 }
             }
 

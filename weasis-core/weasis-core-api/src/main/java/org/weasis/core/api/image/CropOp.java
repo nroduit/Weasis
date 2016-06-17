@@ -34,6 +34,15 @@ public class CropOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public CropOp(CropOp op) {
+        super(op);
+    }
+
+    @Override
+    public CropOp copy() {
+        return new CropOp(this);
+    }
+
     @Override
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);

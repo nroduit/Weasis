@@ -51,6 +51,15 @@ public class PseudoColorOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public PseudoColorOp(PseudoColorOp op) {
+        super(op);
+    }
+
+    @Override
+    public PseudoColorOp copy() {
+        return new PseudoColorOp(this);
+    }
+
     @Override
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);

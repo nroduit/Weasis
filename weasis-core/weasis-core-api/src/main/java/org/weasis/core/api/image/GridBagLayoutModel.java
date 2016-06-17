@@ -25,6 +25,8 @@ import javax.xml.parsers.SAXParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.util.Copyable;
+import org.weasis.core.api.util.StringUtil;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -33,7 +35,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * GridBagLayoutModel is the model for the plugin container.
  *
  */
-public class GridBagLayoutModel implements GUIEntry, Cloneable {
+public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GridBagLayoutModel.class);
 
@@ -82,6 +84,18 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
     }
 
+    public GridBagLayoutModel(GridBagLayoutModel layoutModel) {
+        this.title = layoutModel.title;
+        this.id = layoutModel.id;
+        this.icon = layoutModel.icon;
+
+        this.constraints = new LinkedHashMap<>(layoutModel.constraints.size());
+        Iterator<LayoutConstraints> enumVal = layoutModel.constraints.keySet().iterator();
+        while (enumVal.hasNext()) {
+            this.constraints.put(enumVal.next().copy(), null);
+        }
+    }
+
     public String getId() {
         return id;
     }
@@ -109,6 +123,30 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
             }
         }
         return new Dimension(lastx + 1, lasty + 1);
+    }
+
+    @Override
+    public String getDescription() {
+        return null;
+    }
+
+    @Override
+    public Icon getIcon() {
+        return icon;
+    }
+
+    @Override
+    public String getUIName() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    @Override
+    public GridBagLayoutModel copy() {
+        return new GridBagLayoutModel(this);
     }
 
     private final class SAXAdapter extends DefaultHandler {
@@ -200,7 +238,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
 
         private double getDoubleValue(String val) {
-            if (val.trim().equals("")) { //$NON-NLS-1$
+            if (!StringUtil.hasText(val)) { // $NON-NLS-1$
                 return 0.0;
             }
             // handle fraction format
@@ -211,35 +249,5 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
             return Double.parseDouble(val);
         }
 
-    }
-
-    @Override
-    public String getDescription() {
-        return null;
-    }
-
-    @Override
-    public Icon getIcon() {
-        return icon;
-    }
-
-    @Override
-    public String getUIName() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        LinkedHashMap<LayoutConstraints, Component> map =
-            new LinkedHashMap<LayoutConstraints, Component>(constraints.size());
-        Iterator<LayoutConstraints> enumVal = constraints.keySet().iterator();
-        while (enumVal.hasNext()) {
-            map.put((LayoutConstraints) enumVal.next().clone(), null);
-        }
-        return new GridBagLayoutModel(map, id, title, icon);
     }
 }
