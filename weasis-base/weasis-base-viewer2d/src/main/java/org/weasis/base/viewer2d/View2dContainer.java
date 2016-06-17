@@ -67,7 +67,6 @@ import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
 
@@ -102,7 +101,6 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
-    private static WtoolBar statusBar = null;
     private static volatile boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
@@ -116,7 +114,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             INI_COMPONENTS = true;
             // Add standard toolbars
             EventManager evtMg = EventManager.getInstance();
-            TOOLBARS.add(new ViewerToolBar<ImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
+            TOOLBARS.add(new ViewerToolBar<>(evtMg, evtMg.getMouseActions().getActiveButtons(),
                 BundleTools.SYSTEM_PREFERENCES, 10));
             TOOLBARS.add(new MeasureToolBar(evtMg, 11));
             TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
@@ -126,7 +124,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
                 @Override
                 public SliderChangeListener[] getActions() {
-                    ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                    ArrayList<SliderChangeListener> listeners = new ArrayList<>(3);
                     ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
                     if (seqAction instanceof SliderChangeListener) {
                         listeners.add((SliderChangeListener) seqAction);
@@ -324,21 +322,13 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     }
 
     @Override
-    public synchronized WtoolBar getStatusBar() {
-        return statusBar;
-    }
-
-    @Override
     public synchronized List<Toolbar> getToolBar() {
         return TOOLBARS;
     }
 
     @Override
     public List<Action> getExportActions() {
-        if (selectedImagePane != null) {
-            return selectedImagePane.getExportToClipboardAction();
-        }
-        return null;
+        return selectedImagePane == null ? super.getExportActions() : selectedImagePane.getExportToClipboardAction();
     }
 
     @Override
@@ -361,7 +351,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public List<Action> getPrintActions() {
-        ArrayList<Action> actions = new ArrayList<Action>(1);
+        ArrayList<Action> actions = new ArrayList<>(1);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
         AbstractAction printStd =
             new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$

@@ -1,9 +1,7 @@
 package org.weasis.dicom.sr;
 
-import java.util.List;
 import java.util.Map;
 
-import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -99,11 +97,6 @@ public class SRFactory implements SeriesViewerFactory {
     @Override
     public int getLevel() {
         return 25;
-    }
-
-    @Override
-    public List<Action> getOpenActions() {
-        return null;
     }
 
     @Override

@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
@@ -141,7 +142,7 @@ public class WeasisWin {
 
         }
     };
-    private static ViewerPlugin selectedPlugin = null;
+    private static ViewerPlugin<?> selectedPlugin = null;
 
     private static final WeasisWin instance = new WeasisWin();
 
@@ -690,6 +691,7 @@ public class WeasisWin {
 
         final JMenuItem webMenuItem = new JMenuItem(Messages.getString("WeasisWin.shortcuts")); //$NON-NLS-1$
         webMenuItem.addActionListener(new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
@@ -807,70 +809,27 @@ public class WeasisWin {
 
     private static void buildPrintSubMenu(final JMenu printMenu) {
         if (selectedPlugin != null) {
-            List<Action> actions = selectedPlugin.getPrintActions();
-            if (actions != null) {
-                for (Action action : actions) {
-                    JMenuItem item = new JMenuItem(action);
-                    printMenu.add(item);
-                }
-            }
+            fillMenu(printMenu, selectedPlugin.getPrintActions());
         }
     }
 
     private static void buildOpenSubMenu(final JMenu importMenu) {
-        synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
-            List<SeriesViewerFactory> viewers = UIManager.SERIES_VIEWER_FACTORIES;
-            for (final SeriesViewerFactory view : viewers) {
-                List<Action> actions = view.getOpenActions();
-                if (actions != null) {
-                    for (Action action : actions) {
-                        JMenuItem item = new JMenuItem(action);
-                        importMenu.add(item);
-                    }
-                }
-            }
-        }
+        UIManager.SERIES_VIEWER_FACTORIES.forEach(d -> fillMenu(importMenu, d.getOpenActions()));
     }
 
     private static void buildImportSubMenu(final JMenu importMenu) {
-        synchronized (UIManager.EXPLORER_PLUGINS) {
-            List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
-            for (final DataExplorerView dataExplorerView : explorers) {
-                List<Action> actions = dataExplorerView.getOpenImportDialogAction();
-                if (actions != null) {
-                    for (Action action : actions) {
-                        JMenuItem item = new JMenuItem(action);
-                        importMenu.add(item);
-                    }
-                }
-            }
-        }
+        UIManager.EXPLORER_PLUGINS.forEach(d -> fillMenu(importMenu, d.getOpenImportDialogAction()));
     }
 
     private static void buildExportSubMenu(final JMenu exportMenu) {
-
-        synchronized (UIManager.EXPLORER_PLUGINS) {
-            if (selectedPlugin != null) {
-                List<Action> actions = selectedPlugin.getExportActions();
-                if (actions != null) {
-                    for (Action action : actions) {
-                        JMenuItem item = new JMenuItem(action);
-                        exportMenu.add(item);
-                    }
-                }
-            }
-
-            List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
-            for (final DataExplorerView dataExplorerView : explorers) {
-                List<Action> actions = dataExplorerView.getOpenExportDialogAction();
-                if (actions != null) {
-                    for (Action action : actions) {
-                        JMenuItem item = new JMenuItem(action);
-                        exportMenu.add(item);
-                    }
-                }
-            }
+        if (selectedPlugin != null) {
+            fillMenu(exportMenu, selectedPlugin.getExportActions());
         }
+        UIManager.EXPLORER_PLUGINS.forEach(d -> fillMenu(exportMenu, d.getOpenExportDialogAction()));
+    }
+
+    private static void fillMenu(final JMenu menu, List<Action> actions) {
+        Optional.ofNullable(actions).ifPresent(l -> l.forEach(a -> menu.add(new JMenuItem(a))));
     }
 
     private static void buildSelectedPluginMenu(final JMenu selectedPluginMenu) {

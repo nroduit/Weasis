@@ -38,7 +38,6 @@ import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -51,7 +50,6 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.ForcedAcceptPrintService;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -196,13 +194,9 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
         super.close();
         SRFactory.closeSeriesViewer(this);
 
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                if (srview != null) {
-                    srview.dispose();
-                }
+        GuiExecutor.instance().execute(() -> {
+            if (srview != null) {
+                srview.dispose();
             }
         });
     }
@@ -295,23 +289,13 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     @Override
-    public synchronized WtoolBar getStatusBar() {
-        return null;
-    }
-
-    @Override
     public synchronized List<Toolbar> getToolBar() {
         return TOOLBARS;
     }
 
     @Override
-    public List<Action> getExportActions() {
-        return null;
-    }
-
-    @Override
     public List<Action> getPrintActions() {
-        ArrayList<Action> actions = new ArrayList<Action>(1);
+        ArrayList<Action> actions = new ArrayList<>(1);
         final String title = Messages.getString("SRContainer.print_layout"); //$NON-NLS-1$
         AbstractAction printStd =
             new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
@@ -373,11 +357,11 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                                 pj.print(aset);
                                 LOGGER.info("Bypass Printer is not accepting job"); //$NON-NLS-1$
                             } catch (PrinterException ex) {
-                                AuditLog.logError(LOGGER, e, "Printer exception"); //$NON-NLS-1$
+                                LOGGER.error("Printer exception", ex); //$NON-NLS-1$
                             }
                         }
                     } else {
-                        AuditLog.logError(LOGGER, e, "Print exception"); //$NON-NLS-1$
+                        LOGGER.error("Print exception", e); //$NON-NLS-1$
                     }
                 }
             }

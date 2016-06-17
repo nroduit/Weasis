@@ -16,7 +16,6 @@ import java.awt.Component;
 import java.util.List;
 import java.util.UUID;
 
-import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 
@@ -203,10 +202,6 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
         }
         return null;
     }
-
-    public abstract List<Action> getExportActions();
-
-    public abstract List<Action> getPrintActions();
 
     private static class CloseOthersAction extends CButton {
         private CDockable dockable;

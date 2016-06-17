@@ -80,7 +80,6 @@ import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -132,7 +131,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
-    private static WtoolBar statusBar = null;
     private static volatile boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
@@ -155,7 +153,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
-                TOOLBARS.add(new ViewerToolBar<DicomImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
+                TOOLBARS.add(new ViewerToolBar<>(evtMg, evtMg.getMouseActions().getActiveButtons(),
                     BundleTools.SYSTEM_PREFERENCES, 10));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
@@ -200,7 +198,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     @Override
                     public SliderChangeListener[] getActions() {
 
-                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                        ArrayList<SliderChangeListener> listeners = new ArrayList<>(3);
                         ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
                         if (seqAction instanceof SliderChangeListener) {
                             listeners.add((SliderChangeListener) seqAction);
@@ -639,11 +637,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public synchronized WtoolBar getStatusBar() {
-        return statusBar;
-    }
-
-    @Override
     public synchronized List<Toolbar> getToolBar() {
         return TOOLBARS;
     }
@@ -705,7 +698,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 }
             };
             if (actions == null) {
-                actions = new ArrayList<Action>(1);
+                actions = new ArrayList<>(1);
             }
             actions.add(importAll);
         }
@@ -714,7 +707,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public List<Action> getPrintActions() {
-        ArrayList<Action> actions = new ArrayList<Action>(2);
+        ArrayList<Action> actions = new ArrayList<>(2);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
         AbstractAction printStd =
             new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
@@ -722,7 +715,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                    PrintDialog<DicomImageElement> dialog = new PrintDialog<DicomImageElement>(
+                    PrintDialog<DicomImageElement> dialog = new PrintDialog<>(
                         SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
                     ColorLayerUI.showCenterScreen(dialog, layer);
                 }
@@ -736,7 +729,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             @Override
             public void actionPerformed(ActionEvent e) {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                DicomPrintDialog<DicomImageElement> dialog = new DicomPrintDialog<DicomImageElement>(
+                DicomPrintDialog<DicomImageElement> dialog = new DicomPrintDialog<>(
                     SwingUtilities.getWindowAncestor(View2dContainer.this), title2, eventManager);
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }

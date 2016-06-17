@@ -64,7 +64,6 @@ import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -91,7 +90,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     static {
         SYNCH_LIST.add(SynchView.NONE);
 
-        HashMap<String, Boolean> actions = new HashMap<String, Boolean>();
+        HashMap<String, Boolean> actions = new HashMap<>();
         actions.put(ActionW.SCROLL_SERIES.cmd(), true);
         actions.put(ActionW.RESET.cmd(), true);
         actions.put(ActionW.ZOOM.cmd(), true);
@@ -378,23 +377,18 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     }
 
     @Override
-    public synchronized WtoolBar getStatusBar() {
-        return null;
-    }
-
-    @Override
     public synchronized List<Toolbar> getToolBar() {
         return TOOLBARS;
     }
 
     @Override
     public List<Action> getExportActions() {
-        return selectedImagePane == null ? null : selectedImagePane.getExportToClipboardAction();
+        return selectedImagePane == null ? super.getExportActions() : selectedImagePane.getExportToClipboardAction();
     }
 
     @Override
     public List<Action> getPrintActions() {
-        ArrayList<Action> actions = new ArrayList<Action>(1);
+        ArrayList<Action> actions = new ArrayList<>(1);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
         AbstractAction printStd =
             new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
@@ -402,8 +396,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
-                    PrintDialog<DicomImageElement> dialog = new PrintDialog<DicomImageElement>(
-                        SwingUtilities.getWindowAncestor(MPRContainer.this), title, eventManager);
+                    PrintDialog<DicomImageElement> dialog =
+                        new PrintDialog<>(SwingUtilities.getWindowAncestor(MPRContainer.this), title, eventManager);
                     ColorLayerUI.showCenterScreen(dialog, layer);
                 }
             };

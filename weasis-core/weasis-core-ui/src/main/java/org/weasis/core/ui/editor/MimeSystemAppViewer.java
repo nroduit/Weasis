@@ -24,7 +24,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 
 public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement<?>> {
 
@@ -84,11 +83,6 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement<?
 
     @Override
     public List<Toolbar> getToolBar() {
-        return null;
-    }
-
-    @Override
-    public WtoolBar getStatusBar() {
         return null;
     }
 
