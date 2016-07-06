@@ -114,13 +114,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         // Trick to keep progressBar with a final modifier. The progressBar must be instantiated in EDT (required by
         // substance)
         final CircularProgressBar[] bar = new CircularProgressBar[1];
-        GuiExecutor.instance().invokeAndWait(new Runnable() {
-
-            @Override
-            public void run() {
-                bar[0] = new CircularProgressBar(0, sopList.size());
-            }
-        });
+        GuiExecutor.instance().invokeAndWait(() -> bar[0] = new CircularProgressBar(0, sopList.size()));
         this.progressBar = bar[0];
         if (!writeInCache) {
             progressBar.setVisible(false);
