@@ -354,7 +354,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             while (enumVal.hasNext()) {
                 Entry<LayoutConstraints, Component> element = enumVal.next();
 
-                if (element.getValue() == oldView2d) {
+                if (element.getValue() == oldView2d.getJComponent()) {
                     if (selectedImagePane == oldView2d) {
                         selectedImagePane = newView2d;
                     }
