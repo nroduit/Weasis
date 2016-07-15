@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +43,6 @@ import org.weasis.base.explorer.list.IDiskFileList;
 import org.weasis.base.explorer.list.impl.JIThumbnailListPane;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -62,7 +62,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     protected FileTreeModel model;
     protected TreePath clickedPath;
-    protected final JIThumbnailListPane jilist;
+    protected final JIThumbnailListPane<?> jilist;
 
     protected boolean changed;
     private final JTree tree;
@@ -76,7 +76,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         setDockableWidth(400);
 
         this.tree = new JTree(model);
-        this.jilist = new JIThumbnailListPane();
+        this.jilist = new JIThumbnailListPane<>();
         this.changed = false;
 
         this.model = model;
@@ -482,21 +482,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         }
     }
 
-    public void setSelectedDir(final MediaElement dObj) {
-
-        final Thread runner = new Thread() {
-
-            @Override
-            public void run() {
-                SwingUtilities
-                    .invokeLater(() -> Optional.ofNullable(dObj.getFile()).ifPresent(f -> expandPaths(f.toPath())));
-            }
-        };
-        runner.start();
-        runner.setPriority(6);
-        return;
-    }
-
     @Override
     public void dispose() {
         super.closeDockable();
@@ -533,12 +518,12 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     @Override
     public List<Action> getOpenExportDialogAction() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public List<Action> getOpenImportDialogAction() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override

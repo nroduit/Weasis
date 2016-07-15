@@ -27,6 +27,7 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.AbstractUIAction;
 import org.weasis.dicom.codec.DicomCodec;
@@ -64,8 +65,7 @@ public class OpenDicomAction extends AbstractUIAction {
         fileChooser.setFileFilter(filter);
 
         File[] selectedFiles;
-        if (fileChooser
-            .showOpenDialog(EventManager.getInstance().getSelectedView2dContainer()) != JFileChooser.APPROVE_OPTION
+        if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION
             || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
             return;
         } else {

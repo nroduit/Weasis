@@ -13,6 +13,7 @@ package org.weasis.core.api.gui.util;
 import javax.swing.Icon;
 import javax.swing.JRadioButtonMenuItem;
 
+@SuppressWarnings("serial")
 public class RadioMenuItem extends JRadioButtonMenuItem {
 
     private final Object userObject;

@@ -46,7 +46,6 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 
 import com.sun.media.jai.codec.FileSeekableStream;
@@ -226,14 +225,16 @@ public class ImageFiler extends AbstractBufferHandler {
     }
 
     public static RenderedImage getThumbnailInTiff(ImageElement img) {
-        RenderedImage thumbnail = null;
-        if (img != null && img.getFile() != null) {
-            try {
-                String mime = img.getMimeType();
+        return getThumbnailInTiff(img.getFile());
+    }
 
-                if ("image/tiff".equals(mime) || "image/x-tiff".equals(mime)) { //$NON-NLS-1$ //$NON-NLS-2$
-                    ImageDecoder dec =
-                        ImageCodec.createImageDecoder("tiff", new FileSeekableStream(img.getFile()), null); //$NON-NLS-1$
+    public static RenderedImage getThumbnailInTiff(File file) {
+        RenderedImage thumbnail = null;
+        if (file != null) {
+            try {
+                String mimeType = MimeInspector.getMimeType(file);
+                if (mimeType != null && ("image/tiff".equals(mimeType) || "image/x-tiff".equals(mimeType))) { //$NON-NLS-1$ //$NON-NLS-2$
+                    ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
                     int count = dec.getNumPages();
                     if (count == 2) {
                         RenderedImage src2 = dec.decodeAsRenderedImage(1);
@@ -247,28 +248,6 @@ public class ImageFiler extends AbstractBufferHandler {
                 LOGGER.error("Cannot read thumbnail", ex); //$NON-NLS-1$
                 return null;
             }
-        }
-        return thumbnail;
-    }
-
-    public static RenderedImage getThumbnailInTiff(File file) {
-        RenderedImage thumbnail = null;
-        try {
-            String mimeType = MimeInspector.getMimeType(file);
-            if (mimeType != null && ("image/tiff".equals(mimeType) || "image/x-tiff".equals(mimeType))) { //$NON-NLS-1$ //$NON-NLS-2$
-                ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
-                int count = dec.getNumPages();
-                if (count == 2) {
-                    RenderedImage src2 = dec.decodeAsRenderedImage(1);
-                    if (src2.getWidth() <= Thumbnail.MAX_SIZE) {
-                        thumbnail = src2;
-                    }
-                }
-            }
-
-        } catch (IOException ex) {
-            LOGGER.error("Cannot read thumbnail", ex); //$NON-NLS-1$
-            return null;
         }
         return thumbnail;
     }
@@ -456,13 +435,10 @@ public class ImageFiler extends AbstractBufferHandler {
             try {
                 imgCacheFile = File.createTempFile("tiled_", ".tif", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (IOException e) {
-                LOGGER.error("", e); //$NON-NLS-1$
+                LOGGER.error("Creating cache image", e); //$NON-NLS-1$
             }
 
             if (ImageFiler.writeTIFF(imgCacheFile, img, true, false, false)) {
-                if (imgCacheFile != null) {
-                    media.setTag(TagW.TiledImagePath, imgCacheFile.getPath());
-                }
                 return imgCacheFile;
             }
         }

@@ -77,7 +77,8 @@ public abstract class AbstractBufferHandler {
         }
         JFileChooser jfilechooser = getOpenFileChooser();
         File file;
-        if (jfilechooser.showOpenDialog(getParentComponent()) != 0 || (file = jfilechooser.getSelectedFile()) == null) {
+        if (jfilechooser.showOpenDialog(getParentComponent()) != JFileChooser.APPROVE_OPTION
+            || (file = jfilechooser.getSelectedFile()) == null) {
             return false;
         } else {
             return openDocument(file.getPath(), false);

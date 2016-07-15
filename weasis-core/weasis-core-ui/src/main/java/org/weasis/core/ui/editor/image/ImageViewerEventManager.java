@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.SwingPropertyChangeSupport;
@@ -44,8 +45,8 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.model.DefaultViewModel;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
 
 public abstract class ImageViewerEventManager<E extends ImageElement> implements KeyListener {
@@ -72,7 +73,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         super();
     }
 
-    protected void iniAction(ActionState action) {
+    public void setAction(ActionState action) {
         actions.put(action.getActionW(), action);
     }
 
@@ -111,17 +112,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                     }
                 }
 
-                // ActionState synch = getAction(ActionW.SYNCH);
-                // if (media != null && synch instanceof ComboItemListener) {
-                // SynchView synchview = (SynchView) ((ComboItemListener) synch).getSelectedItem();
-                // if (synchview.isActionEnable(ActionW.SCROLL_SERIES)) {
-                // Float val = (Float) media.getTagValue(TagW.SliceLocation);
-                // if (val != null) {
-                // location = val;
-                // }
-                // }
-                // }
-
                 firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
                 if (image != null) {
                     fireSeriesViewerListeners(
@@ -151,35 +141,19 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 @Override
                 public void run() {
                     iniSpeed();
-                    // Create a robot to monitor the paintImageViewerEventManager
-                    // Robot robot = null;
-                    //
-                    // try {
-                    // robot = new java.awt.Robot();
-                    // }
-                    // catch (Exception e) {
-                    // }
 
                     while (cining) {
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                int frameIndex = getValue() + 1;
-                                frameIndex = frameIndex > getMax() ? 0 : frameIndex;
-                                setValue(frameIndex);
-                            }
+                        GuiExecutor.instance().execute(() -> {
+                            int frameIndex = getValue() + 1;
+                            frameIndex = frameIndex > getMax() ? 0 : frameIndex;
+                            setValue(frameIndex);
                         });
-
                         iteration++;
-                        // Wait until the paint is finished
-                        // robot.waitForIdle();
 
                         // adjust the delay time based on the current performance
                         long elapsed = (System.currentTimeMillis() - start) / 1000;
                         if (elapsed > 0) {
                             currentCineRate = (int) (iteration / elapsed);
-                            // System.out.println("fps:" + fps);
 
                             if (currentCineRate < getSpeed()) {
                                 wait--;
@@ -393,20 +367,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
 
-    // protected ComboItemListener getViewModeAction() {
-    // return new ComboItemListener(ActionW.VIEW_MODE, Mode.values()) {
-    //
-    // @Override
-    // public void itemStateChanged(Object object) {
-    // if (object instanceof Mode && selectedView2dContainer != null) {
-    // Mode synchView = (Mode) object;
-    // selectedView2dContainer.setViewingMode(synchView);
-    // updateAllListeners(synchView);
-    // }
-    // }
-    // };
-    // }
-
     protected ComboItemListener newLayoutAction(GridBagLayoutModel[] layouts) {
         if (layouts == null) {
             layouts = new GridBagLayoutModel[0];
@@ -418,7 +378,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 if (object instanceof GridBagLayoutModel && selectedView2dContainer != null) {
                     // change layout
                     clearAllPropertyChangeListeners();
-                    ViewCanvas view = selectedView2dContainer.getSelectedImagePane();
+                    ViewCanvas<E> view = selectedView2dContainer.getSelectedImagePane();
                     selectedView2dContainer.setLayoutModel((GridBagLayoutModel) object);
                     if (!selectedView2dContainer.isContainingView(view)) {
                         view = selectedView2dContainer.getSelectedImagePane();
@@ -434,10 +394,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     protected ComboItemListener newSynchAction(SynchView[] synchViewList) {
-        if (synchViewList == null) {
-            synchViewList = new SynchView[0];
-        }
-        return new ComboItemListener(ActionW.SYNCH, synchViewList) {
+        return new ComboItemListener(ActionW.SYNCH, Optional.ofNullable(synchViewList).orElse(new SynchView[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -461,10 +418,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     protected ComboItemListener newMeasurementAction(Graphic[] graphics) {
-        if (graphics == null) {
-            graphics = new Graphic[0];
-        }
-        return new ComboItemListener(ActionW.DRAW_MEASURE, graphics) {
+        return new ComboItemListener(ActionW.DRAW_MEASURE, Optional.ofNullable(graphics).orElse(new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -489,10 +443,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     protected ComboItemListener newSpatialUnit(Unit[] units) {
-        if (units == null) {
-            units = new Unit[0];
-        }
-        return new ComboItemListener(ActionW.SPATIAL_UNIT, units) {
+        return new ComboItemListener(ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElse(new Unit[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -502,7 +453,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
 
-    public abstract boolean updateComponentsListener(ViewCanvas<E> viewCanvas);
+    public abstract boolean updateComponentsListener(ViewCanvas<E> IViewCanvas);
 
     private static double roundAndCropViewScale(double viewScale, double minViewScale, double maxViewScale) {
         viewScale *= 1000.0;
@@ -607,6 +558,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void nextLeftMouseAction() {
         ImageViewerPlugin<E> view = getSelectedView2dContainer();
         if (view != null) {
@@ -693,8 +645,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                         panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
                     }
                 } else if (Mode.Stack.equals(synch.getMode())) {
-                    // TODO if Pan is activated than rotation is required
-
                     boolean hasLink = false;
                     for (int i = 0; i < panes.size(); i++) {
                         boolean synchByDefault = isCompatible(viewPane.getSeries(), panes.get(i).getSeries());

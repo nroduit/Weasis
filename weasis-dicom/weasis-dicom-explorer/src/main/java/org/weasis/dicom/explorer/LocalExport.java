@@ -77,9 +77,6 @@ import org.weasis.dicom.explorer.internal.Activator;
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalExport.class);
 
-    private static final char[] HEX_DIGIT =
-        { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-
     public static final String LAST_DIR = "lastExportDir";//$NON-NLS-1$
     public static final String INC_DICOMDIR = "exp.include.dicomdir";//$NON-NLS-1$
     public static final String KEEP_INFO_DIR = "exp.keep.dir.name";//$NON-NLS-1$
@@ -404,10 +401,12 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 File destinationFile = new File(destinationDir, instance + ".jpg"); //$NON-NLS-1$
                                 ImageFiler.writeJPG(destinationFile, image, jpegQuality / 100.0f);
                                 if (writeGraphics) {
-                                    XmlSerializer.writeMeasurementGraphics(img, destinationFile);
+                                    // TODO : Change XmlSerializer
+                                    // XmlSerializer.writeMeasurementGraphics(img, destinationFile);
                                 }
                             } else {
-                                LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
+                                LOGGER.error("Cannot export DICOM file to {}: {}", format, //$NON-NLS-1$
+                                    img.getFileCache().getOriginalFile());
                             }
                         }
                         if (EXPORT_FORMAT[3].equals(format)) {
@@ -418,10 +417,12 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 File destinationFile = new File(destinationDir, instance + ".png"); //$NON-NLS-1$
                                 ImageFiler.writePNG(destinationFile, image);
                                 if (writeGraphics) {
-                                    XmlSerializer.writeMeasurementGraphics(img, destinationFile);
+                                    // TODO : Change XmlSerializer
+                                    // XmlSerializer.writeMeasurementGraphics(img, destinationFile);
                                 }
                             } else {
-                                LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
+                                LOGGER.error("Cannot export DICOM file to {}: {}", format, //$NON-NLS-1$
+                                    img.getFileCache().getOriginalFile());
                             }
                         }
                         if (EXPORT_FORMAT[4].equals(format)) {
@@ -432,10 +433,12 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 File destinationFile = new File(destinationDir, instance + ".tif"); //$NON-NLS-1$
                                 ImageFiler.writeTIFF(destinationFile, image, false, false, false);
                                 if (writeGraphics) {
-                                    XmlSerializer.writeMeasurementGraphics(img, destinationFile);
+                                    // TODO: Change XmlSerializer
+                                    // XmlSerializer.writeMeasurementGraphics(img, destinationFile);
                                 }
                             } else {
-                                LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
+                                LOGGER.error("Cannot export DICOM file to {}: {}", format, //$NON-NLS-1$
+                                    img.getFileCache().getOriginalFile());
                             }
                         }
 
@@ -529,14 +532,14 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         File destinationFile = new File(destinationDir, iuid);
                         if (img.saveToFile(destinationFile)) {
                             if (writeGraphics) {
-                                // TODO remove me and use PR
-                                XmlSerializer.writeMeasurementGraphics(img, destinationFile);
+                                XmlSerializer.writePresentation(img, destinationFile);
+                                PrSerializer.writePresentation(img, destinationFile);
                             }
                             if (!writeInDicomDir(writer, img, node, iuid, destinationFile)) {
                                 continue TreePath;
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile()); //$NON-NLS-1$
                         }
                     } else if (node.getUserObject() instanceof DicomSpecialElement) {
                         DicomSpecialElement dcm = (DicomSpecialElement) node.getUserObject();
@@ -659,7 +662,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             DcmMediaReader<?> dicomImageLoader = (DcmMediaReader<?>) img.getMediaReader();
             if (!(img.getMediaReader() instanceof DcmMediaReader)
                 || ((DcmMediaReader<?>) img.getMediaReader()).getDicomObject() == null) {
-                LOGGER.error("Cannot export DICOM file: ", img.getFile()); //$NON-NLS-1$
+                LOGGER.error("Cannot export DICOM file: ", img.getFileCache().getOriginalFile()); //$NON-NLS-1$
                 return false;
             }
             Attributes dataset = dicomImageLoader.getDicomObject();
@@ -722,17 +725,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return true;
     }
 
-    private static String toHex(int val) {
-        char[] ch8 = new char[8];
-        for (int i = 8, k = val; --i >= 0; k >>= 4) {
-            ch8[i] = HEX_DIGIT[k & 0xf];
-        }
-
-        return String.valueOf(ch8);
-    }
-
     public static String makeFileIDs(String uid) {
-        return toHex(uid.hashCode());
+        return StringUtil.integer2String(uid.hashCode());
     }
 
     public static Attributes mkIconItem(DicomImageElement image) {

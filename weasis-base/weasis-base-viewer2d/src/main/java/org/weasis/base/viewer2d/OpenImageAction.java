@@ -24,6 +24,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.AbstractUIAction;
 
@@ -54,9 +55,8 @@ public class OpenImageAction extends AbstractUIAction {
         fileChooser.setMultiSelectionEnabled(true);
         // TODO add format from plugins
         FileFormatFilter.setImageDecodeFilters(fileChooser);
-        File[] selectedFiles = null;
-        if (fileChooser
-            .showOpenDialog(EventManager.getInstance().getSelectedView2dContainer()) != JFileChooser.APPROVE_OPTION
+        File[] selectedFiles;
+        if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION
             || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
             return;
         } else {

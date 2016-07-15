@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.stream.StreamSupport;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -75,9 +76,8 @@ public class TreeNode extends DefaultMutableTreeNode {
                 DirectoryStream.Filter<Path> filter = Files::isDirectory;
 
                 try (DirectoryStream<Path> stream = Files.newDirectoryStream(path, filter)) {
-                    StreamSupport.stream(stream.spliterator(), false).sorted((o1, o2) -> {
-                        return o1.getFileName().compareTo(o2.getFileName());
-                    }).forEachOrdered(p -> add(new TreeNode(p)));
+                    StreamSupport.stream(stream.spliterator(), false).sorted(Comparator.comparing(Path::getFileName))
+                        .forEachOrdered(p -> add(new TreeNode(p)));
                 } catch (IOException e) {
                     LOGGER.error("Building child directories", e);
                 }

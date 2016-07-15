@@ -20,12 +20,11 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
@@ -60,6 +59,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.CalibrationView;
@@ -72,15 +72,10 @@ import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
-import org.weasis.core.ui.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.graphic.BasicGraphic;
-import org.weasis.core.ui.graphic.DragLayer;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.LineGraphic;
-import org.weasis.core.ui.graphic.MeasureDialog;
-import org.weasis.core.ui.graphic.TempLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.DragGraphic;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
@@ -104,11 +99,6 @@ public class View2d extends DefaultView2d<ImageElement> {
         manager.addImageOperationAction(new FlipOp());
 
         infoLayer = new InfoLayer(this);
-        DragLayer layer = new DragLayer(getLayerModel(), AbstractLayer.MEASURE);
-        getLayerModel().addLayer(layer);
-        TempLayer layerTmp = new TempLayer(getLayerModel());
-        getLayerModel().addLayer(layerTmp);
-
         oldSize = new Dimension(0, 0);
     }
 
@@ -186,7 +176,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         // Set the butonMask to 0 of all the actions
         resetMouseAdapter();
 
-        this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+        this.setCursor(GraphicModel.DEFAULT_CURSOR);
 
         addMouseAdapter(actions.getLeft(), InputEvent.BUTTON1_DOWN_MASK); // left mouse button
         if (actions.getMiddle().equals(actions.getLeft())) {
@@ -298,7 +288,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         }
     }
 
-    protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final ArrayList<Graphic> selected) {
+    protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
         if (selected != null) {
 
             JPopupMenu popupMenu = new JPopupMenu();
@@ -309,12 +299,12 @@ public class View2d extends DefaultView2d<ImageElement> {
             boolean graphicComplete = true;
             if (selected.size() == 1) {
                 final Graphic graph = selected.get(0);
-                if (graph instanceof AbstractDragGraphic) {
-                    final AbstractDragGraphic absgraph = (AbstractDragGraphic) graph;
+                if (graph instanceof DragGraphic) {
+                    final DragGraphic absgraph = (DragGraphic) graph;
                     if (!absgraph.isGraphicComplete()) {
                         graphicComplete = false;
                     }
-                    if (absgraph.isVariablePointsNumber()) {
+                    if (absgraph.getVariablePointsNumber()) {
                         if (graphicComplete) {
                             /*
                              * Convert mouse event point to real image coordinate point (without geometric
@@ -342,7 +332,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                                 popupMenu.add(new JSeparator());
                             }
                         } else if (graphicMouseHandler.getDragSequence() != null
-                            && absgraph.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
+                            && Objects.equals(absgraph.getPtsNumber(), Graphic.UNDEFINED)) {
                             final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                             item2.addActionListener(e -> {
                                 MouseEventDouble event =
@@ -359,26 +349,26 @@ public class View2d extends DefaultView2d<ImageElement> {
 
             if (graphicComplete) {
                 JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_selec")); //$NON-NLS-1$
-                menuItem.addActionListener(e -> View2d.this.getLayerModel().deleteSelectedGraphics(true));
+                menuItem
+                    .addActionListener(e -> View2d.this.getGraphicManager().deleteSelectedGraphics(View2d.this, true));
                 popupMenu.add(menuItem);
 
                 menuItem = new JMenuItem(Messages.getString("View2d.cut")); //$NON-NLS-1$
                 menuItem.addActionListener(e -> {
-                    AbstractLayerModel.GraphicClipboard.setGraphics(selected);
-                    View2d.this.getLayerModel().deleteSelectedGraphics(false);
+                    GraphicModel.GRAPHIC_CLIPBOARD.setGraphics(selected);
+                    View2d.this.getGraphicManager().deleteSelectedGraphics(View2d.this, false);
                 });
                 popupMenu.add(menuItem);
                 menuItem = new JMenuItem(Messages.getString("View2d.copy")); //$NON-NLS-1$
-                menuItem.addActionListener(e -> AbstractLayerModel.GraphicClipboard.setGraphics(selected));
+                menuItem.addActionListener(e -> GraphicModel.GRAPHIC_CLIPBOARD.setGraphics(selected));
                 popupMenu.add(menuItem);
                 popupMenu.add(new JSeparator());
             }
 
-            // TODO separate AbstractDragGraphic and ClassGraphic for properties
-            final ArrayList<AbstractDragGraphic> list = new ArrayList<>();
+            final ArrayList<DragGraphic> list = new ArrayList<>();
             for (Graphic graphic : selected) {
-                if (graphic instanceof AbstractDragGraphic) {
-                    list.add((AbstractDragGraphic) graphic);
+                if (graphic instanceof DragGraphic) {
+                    list.add((DragGraphic) graphic);
                 }
             }
 
@@ -472,28 +462,9 @@ public class View2d extends DefaultView2d<ImageElement> {
             count = popupMenu.getComponentCount();
         }
 
-        if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
-
+        if (GraphicModel.GRAPHIC_CLIPBOARD.hasGraphics()) {
             JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
-            menuItem.addActionListener(e -> {
-                List<Graphic> graphs = AbstractLayerModel.GraphicClipboard.getGraphics();
-                if (graphs != null) {
-                    Rectangle2D area = View2d.this.getViewModel().getModelArea();
-                    if (graphs.stream().anyMatch(g -> !g.getBounds(null).intersects(area))) {
-                        int option = JOptionPane.showConfirmDialog(View2d.this,
-                            "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
-                        if (option != JOptionPane.YES_OPTION) {
-                            return;
-                        }
-                    }
-
-                    graphs.stream()
-                        .forEach(g -> Optional.ofNullable(View2d.this.getLayerModel().getLayer(g.getLayerID()))
-                            .ifPresent(l -> l.copyGraphic(g, View2d.this)));
-                    // Repaint all because labels are not drawn
-                    View2d.this.getLayerModel().repaint();
-                }
-            });
+            menuItem.addActionListener(e -> copyGraphicsFromClipboard());
             popupMenu.add(menuItem);
         }
 
@@ -548,7 +519,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             // Context menu
             if ((evt.getModifiersEx() & getButtonMaskEx()) != 0) {
                 JPopupMenu popupMenu = null;
-                final ArrayList<Graphic> selected = new ArrayList<>(View2d.this.getLayerModel().getSelectedGraphics());
+                final List<Graphic> selected = View2d.this.getGraphicManager().getSelectedGraphics();
                 if (!selected.isEmpty()) {
                     popupMenu = View2d.this.buildGraphicContextMenu(evt, selected);
                 } else if (View2d.this.getSourceImage() != null) {

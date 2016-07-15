@@ -598,29 +598,7 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
             }
         };
     }
-
-    @Override
-    public synchronized File getFile() {
-        DicomMediaIO reader = getMediaReader();
-        if (reader != null && reader.isEditableDicom()) {
-            Attributes dcm = reader.getDicomObject();
-            if (dcm != null) {
-                DicomOutputStream out = null;
-                try {
-                    File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
-                    out = new DicomOutputStream(tmpFile);
-                    out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
-                    return tmpFile;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    FileUtil.safeClose(out);
-                }
-            }
-        }
-        return super.getFile();
-    }
-
+    
     public String getDocumentTitle() {
         Attributes dcmItems = getMediaReader().getDicomObject();
         if (dcmItems != null) {

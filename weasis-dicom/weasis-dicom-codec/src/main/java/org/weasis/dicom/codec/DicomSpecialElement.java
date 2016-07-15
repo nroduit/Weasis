@@ -148,18 +148,15 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     @Override
     public boolean saveToFile(File output) {
-        if (file == null) {
+        // When object is in memory, write it
+        if (getMediaReader().isEditableDicom()) {
             Attributes dcm = getMediaReader().getDicomObject();
             if (dcm != null) {
-                DicomOutputStream out = null;
-                try {
-                    out = new DicomOutputStream(output);
+                try (DicomOutputStream out = new DicomOutputStream(output)){
                     out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                     return true;
                 } catch (IOException e) {
                     LOGGER.error("Cannot write dicom ({}): {}", getLabel(), e); //$NON-NLS-1$
-                } finally {
-                    FileUtil.safeClose(out);
                 }
             }
         }
@@ -255,7 +252,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         Collection<DicomSpecialElement> specialElements, String seriesUID) {
 
         if (specialElements == null) {
-            return null;
+            return Collections.emptySet();
         }
 
         SortedSet<KOSpecialElement> koElementSet = null;
@@ -277,14 +274,14 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                 }
             }
         }
-        return koElementSet;
+        return  koElementSet ==null ? Collections.emptySet() : koElementSet;
     }
 
     public static final Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
         Collection<DicomSpecialElement> specialElements, String seriesUID) {
 
         if (specialElements == null) {
-            return null;
+            return Collections.emptySet();
         }
 
         SortedSet<RejectedKOSpecialElement> koElementSet = null;
@@ -306,7 +303,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                 }
             }
         }
-        return koElementSet;
+        return koElementSet ==null ? Collections.emptySet() : koElementSet;
     }
 
     public static final RejectedKOSpecialElement getRejectionKoSpecialElement(
@@ -342,7 +339,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         String seriesUID, String sopUID, Integer frameNumber) {
 
         if (specialElements == null) {
-            return null;
+            return Collections.emptyList();
         }
         List<PRSpecialElement> prList = null;
 
@@ -364,7 +361,6 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         if (prList != null) {
             Collections.sort(prList, ORDER_BY_DATE);
         }
-        return prList;
+        return prList == null ? Collections.emptyList() : prList;
     }
-
 }

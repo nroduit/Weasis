@@ -17,7 +17,9 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -39,6 +41,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -62,6 +65,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     private static final int[] OFFSETS_0_1_2 = { 0, 1, 2 };
 
     protected URI uri;
+    private final FileCache fileCache;
 
     private final HashMap<TagW, Object> tags;
     private final Codec codec;
@@ -69,11 +73,9 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     private Attributes attributes;
 
     public RawImageIO(URI media, Codec codec) {
-        if (media == null) {
-            throw new IllegalArgumentException("media uri is null"); //$NON-NLS-1$
-        }
+        this.uri = Objects.requireNonNull(media);
+        this.fileCache = new FileCache(this);
         this.tags = new HashMap<>();
-        this.uri = media;
         this.codec = codec;
     }
 
@@ -203,13 +205,8 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     }
 
     @Override
-    public HashMap<TagW, Object> getMediaFragmentTags(Object key) {
+    public Map<TagW, Object> getMediaFragmentTags(Object key) {
         return tags;
-    }
-
-    @Override
-    public URI getMediaFragmentURI(Object key) {
-        return uri;
     }
 
     @Override
@@ -343,5 +340,15 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
         DicomMediaUtils.fillAttributes(tags, dcm);
         dcm.addAll(attributes);
         return dcm;
+    }
+
+    @Override
+    public FileCache getFileCache() {
+        return fileCache;
+    }
+
+    @Override
+    public boolean buildFile(File ouptut) {
+        return false;
     }
 }

@@ -248,7 +248,7 @@ public class SRReader {
                 // // DragLayer layer = new DragLayer(view.getLayerModel(), layerId);$
                 // try {
                 // Graphic graphic =
-                // GraphicUtil.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false,
+                // PrGraphicUtil.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false,
                 // null, true);
                 // if (graphic != null) {
                 // imgRef.addGraphic(graphic);

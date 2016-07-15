@@ -31,9 +31,13 @@ import java.awt.geom.RectangularShape;
 import java.awt.image.RenderedImage;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 
 import javax.swing.UIManager;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -52,22 +56,23 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.graphic.ImageLayerChangeListener;
-import org.weasis.core.ui.graphic.RenderedImageLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
-import org.weasis.core.ui.graphic.model.GraphicsPane;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
+import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.pref.ZoomSetting;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class ZoomWin.
  *
  * @author Nicolas Roduit
  */
 public class ZoomWin<E extends ImageElement> extends GraphicsPane implements ImageLayerChangeListener<E> {
+    private static final long serialVersionUID = 3542710545706544620L;
 
-    public enum SYNCH_TYPE {
-        None, ParentImage, ParentParameters
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZoomWin.class);
+
+    public enum SyncType {
+        NONE, PARENT_IMAGE, PARENT_PARAMETERS
     };
 
     private final DefaultView2d<E> view2d;
@@ -86,7 +91,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     private final HashMap<String, Object> freezeActionsInView = new HashMap<>();
 
     public ZoomWin(DefaultView2d<E> view2d) {
-        super(view2d.getLayerModel(), null);
+        super(null);
         this.view2d = view2d;
         this.setOpaque(false);
         ImageViewerEventManager<E> manager = view2d.getEventManager();
@@ -104,7 +109,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
         this.popup = new PopUpMenuOnZoom(this);
         this.popup.setInvoker(this);
-        this.setCursor(AbstractLayerModel.MOVE_CURSOR);
+        this.setCursor(GraphicModel.MOVE_CURSOR);
 
         ZoomSetting z = manager.getZoomSetting();
         OpManager disOp = getDisplayOpManager();
@@ -118,7 +123,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
         actionsInView.put(SYNCH_CMD, z.isLensSynchronize());
         actionsInView.put(ActionW.DRAW.cmd(), z.isLensShowDrawings());
-        actionsInView.put(FREEZE_CMD, SYNCH_TYPE.None);
+        actionsInView.put(FREEZE_CMD, SyncType.NONE);
 
         Color bckColor = UIManager.getColor("Panel.background"); //$NON-NLS-1$
         this.setLensDecoration(z.getLensLineWidth(), z.getLensLineColor(), bckColor, z.isLensRound());
@@ -129,9 +134,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     public void setActionInView(String action, Object value) {
-        if (action != null) {
-            actionsInView.put(action, value);
-        }
+        Optional.ofNullable(action).ifPresent(a -> actionsInView.put(a, value));
     }
 
     private void refreshZoomWin() {
@@ -153,8 +156,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     public void updateImage() {
         imageLayer.setImage(view2d.getImage(), (OpManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
         getViewModel().setModelArea(view2d.getViewModel().getModelArea());
-        SYNCH_TYPE type = (SYNCH_TYPE) actionsInView.get(ZoomWin.FREEZE_CMD);
-        if (SYNCH_TYPE.ParentParameters.equals(type)) {
+        SyncType type = (SyncType) actionsInView.get(ZoomWin.FREEZE_CMD);
+        if (SyncType.PARENT_PARAMETERS.equals(type)) {
             freezeOperations.setFirstNode(imageLayer.getSourceRenderedImage());
             freezeOperations.handleImageOpEvent(
                 new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, view2d.getSeries(), view2d.getImage(), null));
@@ -176,13 +179,13 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     public void centerZoomWin() {
-        int magPosx = ((view2d.getWidth() / 2) - (getWidth() / 2));
-        int magPosy = ((view2d.getHeight() / 2) - (getHeight() / 2));
+        int magPosx = (view2d.getWidth() / 2) - (getWidth() / 2);
+        int magPosy = (view2d.getHeight() / 2) - (getHeight() / 2);
         setLocation(magPosx, magPosy);
     }
 
     public void hideZoom() {
-        if (view2d.getEventManager().getSelectedViewPane() == view2d) {
+        if (Objects.equals(view2d.getEventManager().getSelectedViewPane(), view2d)) {
             ActionState lens = view2d.getEventManager().getAction(ActionW.LENS);
             if (lens instanceof ToggleButtonListener) {
                 ((ToggleButtonListener) lens).setSelected(false);
@@ -229,7 +232,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
-            getLayerModel().draw(g2d, transform, inverseTransform,
+            graphicManager.draw(g2d, transform, inverseTransform,
                 new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
                     modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
         }
@@ -279,7 +282,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
         } catch (NoninvertibleTransformException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
@@ -298,24 +301,6 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         super.setSize(width + borderOffset, height + borderOffset);
     }
 
-    // public void applyPreferences(Preferences prefs) {
-    // if (prefs != null) {
-    // Preferences p = prefs.node(ZoomWin.PREFERENCE_NODE);
-    // showDrawings = p.getBoolean(P_SHOW_DRAWINGS, showDrawings);
-    // synchronize = p.getBoolean(P_ZOOM_SYNCH, synchronize);
-    // round = p.getBoolean(P_ROUND, round);
-    // }
-    // }
-    //
-    // public void savePreferences(Preferences prefs) {
-    // if (prefs != null) {
-    // Preferences p = prefs.node(ZoomWin.PREFERENCE_NODE);
-    // BundlePreferences.putBooleanPreferences(p, P_SHOW_DRAWINGS, showDrawings);
-    // BundlePreferences.putBooleanPreferences(p, P_ZOOM_SYNCH, synchronize);
-    // BundlePreferences.putBooleanPreferences(p, P_ROUND, round);
-    // }
-    // }
-
     private void upateShape(boolean round) {
         if (round) {
             shape = new java.awt.geom.Ellipse2D.Double(getX(), getY(), getWidth(), getHeight());
@@ -333,7 +318,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     @Override
-    public void zoom(double viewScale) {
+    public void zoom(Double viewScale) {
         ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
         E img = imageLayer.getSourceImage();
         if (img != null && node != null) {
@@ -354,8 +339,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     protected RenderedImage getSourceImage() {
-        SYNCH_TYPE type = (SYNCH_TYPE) actionsInView.get(ZoomWin.FREEZE_CMD);
-        if (SYNCH_TYPE.ParentParameters.equals(type) || SYNCH_TYPE.ParentImage.equals(type)) {
+        SyncType type = (SyncType) actionsInView.get(ZoomWin.FREEZE_CMD);
+        if (SyncType.PARENT_PARAMETERS.equals(type) || SyncType.PARENT_IMAGE.equals(type)) {
             return freezeOperations.getLastNodeOutputImage();
         }
 
@@ -367,12 +352,12 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         return view2d.getImageLayer().getDisplayOpManager().getLastNodeOutputImage();
     }
 
-    public void setFreezeImage(SYNCH_TYPE type) {
+    public void setFreezeImage(SyncType type) {
         actionsInView.put(ZoomWin.FREEZE_CMD, type);
-        if (type == null || SYNCH_TYPE.None.equals(type)) {
+        if (Objects.isNull(type) || SyncType.NONE.equals(type)) {
             freezeActionsInView.clear();
             freezeOperations = null;
-            actionsInView.put(ZoomWin.FREEZE_CMD, SYNCH_TYPE.None);
+            actionsInView.put(ZoomWin.FREEZE_CMD, SyncType.NONE);
         } else {
             freezeParentParameters();
         }
@@ -431,7 +416,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                 popup.enableMenuItem();
                 popup.show(mouseevent.getComponent(), mouseevent.getX(), mouseevent.getY());
             } else if (mouseevent.getClickCount() == 2) {
-                ImageViewerEventManager manager = view2d.getEventManager();
+                ImageViewerEventManager<E> manager = view2d.getEventManager();
                 ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
                 if (zoomAction instanceof SliderChangeListener) {
                     ((SliderChangeListener) zoomAction)

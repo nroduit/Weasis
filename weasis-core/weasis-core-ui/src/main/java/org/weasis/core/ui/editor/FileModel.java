@@ -14,9 +14,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.util.FileUtil;
 
 public class FileModel extends AbstractFileModel {
@@ -24,8 +21,6 @@ public class FileModel extends AbstractFileModel {
 
     public static final File IMAGE_CACHE_DIR =
         AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "image"); //$NON-NLS-1$
-
-    public static final String[] functions = { "get", "close" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     public File getFile(String path) {
         File outFile = null;
@@ -81,42 +76,6 @@ public class FileModel extends AbstractFileModel {
             }
         });
 
-    }
-
-    @Override
-    public void close(String[] argv) throws IOException {
-        final String[] usage = { "Close images", //$NON-NLS-1$
-            "Usage: image:close [series] [ARGS]", //$NON-NLS-1$
-            "  -a --all Close all series", //$NON-NLS-1$
-            "  -s --series <args>   Close series, [arg] is Series UID", "  -? --help        show help" }; //$NON-NLS-1$ //$NON-NLS-2$
-        final Option opt = Options.compile(usage).parse(argv);
-        final List<String> args = opt.args();
-
-        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$ //$NON-NLS-2$
-            opt.usage();
-            return;
-        }
-
-        GuiExecutor.instance().execute(() -> {
-            AbstractFileModel dataModel = ViewerPluginBuilder.DefaultDataModel;
-            dataModel.firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.Select, dataModel, null, dataModel));
-            if (opt.isSet("all")) { //$NON-NLS-1$
-                for (MediaSeriesGroup g : dataModel.getChildren(MediaSeriesGroupNode.rootNode)) {
-                    dataModel.removeTopGroup(g);
-                }
-            } else if (opt.isSet("series")) { //$NON-NLS-1$
-                for (String seriesUID : args) {
-                    for (MediaSeriesGroup topGroup : dataModel.getChildren(MediaSeriesGroupNode.rootNode)) {
-                        MediaSeriesGroup s = dataModel.getHierarchyNode(topGroup, seriesUID);
-                        if (s instanceof Series) {
-                            dataModel.removeSeries(s);
-                            break;
-                        }
-                    }
-                }
-            }
-        });
     }
 
 }

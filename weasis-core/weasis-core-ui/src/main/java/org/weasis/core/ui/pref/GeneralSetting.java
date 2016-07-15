@@ -18,8 +18,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
@@ -65,25 +63,28 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private LookInfo oldUILook;
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
     private final JLabel jLabelMLook = new JLabel();
-    private final JComboBox jComboBoxlnf = new JComboBox();
+    private final JComboBox<LookInfo> jComboBoxlnf = new JComboBox<>();
 
-    private final JLabel labelLocale = new JLabel(Messages.getString("GeneralSetting.language") + StringUtil.COLON); //$NON-NLS-1$
-    private final JLocaleLanguage comboBoxLang = new JLocaleLanguage() {
-        @Override
-        protected void handleChange() {
-            comboBoxFormat.refresh();
-        }
-    };
+    private final JTextPane txtpnNote = new JTextPane();
     private final JLabel labelLocale2 =
         new JLabel(Messages.getString("GeneralSetting.language.data") + StringUtil.COLON); //$NON-NLS-1$
+    @SuppressWarnings("serial")
     private final JLocaleFormat comboBoxFormat = new JLocaleFormat() {
         @Override
-        protected void handleChange() {
+        protected void valueHasChanged() {
             txtpnNote.setText(getText());
         }
     };
 
-    private final JTextPane txtpnNote = new JTextPane();
+    private final JLabel labelLocale = new JLabel(Messages.getString("GeneralSetting.language") + StringUtil.COLON); //$NON-NLS-1$
+    @SuppressWarnings("serial")
+    private final JLocaleLanguage comboBoxLang = new JLocaleLanguage() {
+        @Override
+        public void valueHasChanged() {
+            comboBoxFormat.refresh();
+        }
+    };
+
     private final JCheckBox chckbxConfirmClosing =
         new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
 
@@ -91,18 +92,18 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final JCheckBox chckbxFileLog = new JCheckBox(Messages.getString("GeneralSetting.rol_log")); //$NON-NLS-1$
     private final JPanel panel = new JPanel();
     private final JLabel lblLogLevel = new JLabel(Messages.getString("GeneralSetting.log_level") + StringUtil.COLON); //$NON-NLS-1$
-    private final JComboBox comboBoxLogLevel = new JComboBox(LEVEL.values());
+    private final JComboBox<LEVEL> comboBoxLogLevel = new JComboBox<>(LEVEL.values());
     private final Component horizontalStrut = Box.createHorizontalStrut(10);
     private final JLabel labelNumber = new JLabel(Messages.getString("GeneralSetting.log_nb") + StringUtil.COLON); //$NON-NLS-1$
     private final JSpinner spinner = new JSpinner();
     private final JLabel labelSize = new JLabel(Messages.getString("GeneralSetting.log_size") + StringUtil.COLON); //$NON-NLS-1$
-    private final JSpinner spinner_1 = new JSpinner();
-    private final Component horizontalStrut_1 = Box.createHorizontalStrut(10);
-    private final Component horizontalStrut_2 = Box.createHorizontalStrut(10);
-    private final JPanel panel_1 = new JPanel();
+    private final JSpinner spinner1 = new JSpinner();
+    private final Component horizontalStrut1 = Box.createHorizontalStrut(10);
+    private final Component horizontalStrut2 = Box.createHorizontalStrut(10);
+    private final JPanel panel1 = new JPanel();
     private final JLabel lblStacktraceLimit = new JLabel("Stacktrace Limit" + StringUtil.COLON);
-    private final JComboBox comboBoxStackLimit =
-        new JComboBox(new String[] { "", "0", "1", "3", "5", "10", "20", "50", "100" });
+    private final JComboBox<String> comboBoxStackLimit =
+        new JComboBox<>(new String[] { "", "0", "1", "3", "5", "10", "20", "50", "100" });
 
     public GeneralSetting() {
         super(pageName);
@@ -110,7 +111,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
         try {
             JMVUtils.setNumberModel(spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null), 1, 99, 1);
-            JMVUtils.setNumberModel(spinner_1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1); //$NON-NLS-1$
+            JMVUtils.setNumberModel(spinner1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1); //$NON-NLS-1$
             jbInit();
             initialize(true);
         } catch (Exception e) {
@@ -131,65 +132,59 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbcButton.insets = new Insets(7, 5, 5, 15);
         gbcButton.gridx = 2;
         gbcButton.gridy = 0;
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                LookInfo item = (LookInfo) jComboBoxlnf.getSelectedItem();
-                final String finalLafClassName = item.getClassName();
-                Runnable runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Dialog dialog = WinUtil.getParentDialog(GeneralSetting.this);
-                            UIManager.setLookAndFeel(finalLafClassName);
-                            SwingUtilities.updateComponentTreeUI(dialog);
-                        } catch (Exception e) {
-                            LOGGER.error("Can't change look and feel", e); //$NON-NLS-1$
-                        }
-                    }
-                };
-                GuiExecutor.instance().execute(runnable);
-            }
+        button.addActionListener(e -> {
+            LookInfo item = (LookInfo) jComboBoxlnf.getSelectedItem();
+            final String finalLafClassName = item.getClassName();
+            Runnable runnable = () -> {
+                try {
+                    Dialog dialog = WinUtil.getParentDialog(GeneralSetting.this);
+                    UIManager.setLookAndFeel(finalLafClassName);
+                    SwingUtilities.updateComponentTreeUI(dialog);
+                } catch (Exception e1) {
+                    LOGGER.error("Can't change look and feel", e1); //$NON-NLS-1$
+                }
+            };
+            GuiExecutor.instance().execute(runnable);
         });
         add(button, gbcButton);
 
-        GridBagConstraints gbc_label = new GridBagConstraints();
-        gbc_label.insets = new Insets(15, 10, 5, 5);
-        gbc_label.anchor = GridBagConstraints.LINE_END;
-        gbc_label.gridx = 0;
-        gbc_label.gridy = 1;
-        add(labelLocale, gbc_label);
+        GridBagConstraints gbcLabel = new GridBagConstraints();
+        gbcLabel.insets = new Insets(15, 10, 5, 5);
+        gbcLabel.anchor = GridBagConstraints.LINE_END;
+        gbcLabel.gridx = 0;
+        gbcLabel.gridy = 1;
+        add(labelLocale, gbcLabel);
 
-        GridBagConstraints gbc_comboBox = new GridBagConstraints();
-        gbc_comboBox.gridwidth = 3;
-        gbc_comboBox.anchor = GridBagConstraints.WEST;
-        gbc_comboBox.insets = new Insets(15, 0, 5, 0);
-        gbc_comboBox.gridx = 1;
-        gbc_comboBox.gridy = 1;
-        add(comboBoxLang, gbc_comboBox);
+        GridBagConstraints gbcComboBox = new GridBagConstraints();
+        gbcComboBox.gridwidth = 3;
+        gbcComboBox.anchor = GridBagConstraints.WEST;
+        gbcComboBox.insets = new Insets(15, 0, 5, 0);
+        gbcComboBox.gridx = 1;
+        gbcComboBox.gridy = 1;
+        add(comboBoxLang, gbcComboBox);
 
-        GridBagConstraints gbc_label2 = new GridBagConstraints();
-        gbc_label2.insets = new Insets(5, 10, 5, 5);
-        gbc_label2.anchor = GridBagConstraints.LINE_END;
-        gbc_label2.gridx = 0;
-        gbc_label2.gridy = 2;
-        add(labelLocale2, gbc_label2);
+        GridBagConstraints gbcLabel2 = new GridBagConstraints();
+        gbcLabel2.insets = new Insets(5, 10, 5, 5);
+        gbcLabel2.anchor = GridBagConstraints.LINE_END;
+        gbcLabel2.gridx = 0;
+        gbcLabel2.gridy = 2;
+        add(labelLocale2, gbcLabel2);
 
-        GridBagConstraints gbc_comboBox2 = new GridBagConstraints();
-        gbc_comboBox2.gridwidth = 3;
-        gbc_comboBox2.anchor = GridBagConstraints.WEST;
-        gbc_comboBox2.insets = new Insets(5, 0, 5, 0);
-        gbc_comboBox2.gridx = 1;
-        gbc_comboBox2.gridy = 2;
-        add(comboBoxFormat, gbc_comboBox2);
+        GridBagConstraints gbcComboBox2 = new GridBagConstraints();
+        gbcComboBox2.gridwidth = 3;
+        gbcComboBox2.anchor = GridBagConstraints.WEST;
+        gbcComboBox2.insets = new Insets(5, 0, 5, 0);
+        gbcComboBox2.gridx = 1;
+        gbcComboBox2.gridy = 2;
+        add(comboBoxFormat, gbcComboBox2);
 
-        GridBagConstraints gbc_txtpnNote = new GridBagConstraints();
-        gbc_txtpnNote.anchor = GridBagConstraints.WEST;
-        gbc_txtpnNote.gridwidth = 4;
-        gbc_txtpnNote.insets = new Insets(5, 10, 5, 10);
-        gbc_txtpnNote.fill = GridBagConstraints.HORIZONTAL;
-        gbc_txtpnNote.gridx = 0;
-        gbc_txtpnNote.gridy = 3;
+        GridBagConstraints gbcTxtpnNote = new GridBagConstraints();
+        gbcTxtpnNote.anchor = GridBagConstraints.WEST;
+        gbcTxtpnNote.gridwidth = 4;
+        gbcTxtpnNote.insets = new Insets(5, 10, 5, 10);
+        gbcTxtpnNote.fill = GridBagConstraints.HORIZONTAL;
+        gbcTxtpnNote.gridx = 0;
+        gbcTxtpnNote.gridy = 3;
         txtpnNote.setEditable(false);
         txtpnNote.setContentType("text/html"); //$NON-NLS-1$
 
@@ -201,84 +196,76 @@ public class GeneralSetting extends AbstractItemDialogPage {
             + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
         txtpnNote.setEditorKit(kit);
         txtpnNote.setText(getText());
-        add(txtpnNote, gbc_txtpnNote);
+        add(txtpnNote, gbcTxtpnNote);
 
-        GridBagConstraints gbc_chckbxConfirmationMessageWhen = new GridBagConstraints();
-        gbc_chckbxConfirmationMessageWhen.gridwidth = 4;
-        gbc_chckbxConfirmationMessageWhen.anchor = GridBagConstraints.WEST;
-        gbc_chckbxConfirmationMessageWhen.insets = new Insets(10, 10, 5, 0);
-        gbc_chckbxConfirmationMessageWhen.gridx = 0;
-        gbc_chckbxConfirmationMessageWhen.gridy = 4;
-        add(chckbxConfirmClosing, gbc_chckbxConfirmationMessageWhen);
+        GridBagConstraints gbcChckbxConfirmationMessageWhen = new GridBagConstraints();
+        gbcChckbxConfirmationMessageWhen.gridwidth = 4;
+        gbcChckbxConfirmationMessageWhen.anchor = GridBagConstraints.WEST;
+        gbcChckbxConfirmationMessageWhen.insets = new Insets(10, 10, 5, 0);
+        gbcChckbxConfirmationMessageWhen.gridx = 0;
+        gbcChckbxConfirmationMessageWhen.gridy = 4;
+        add(chckbxConfirmClosing, gbcChckbxConfirmationMessageWhen);
 
-        GridBagConstraints gbc_panel = new GridBagConstraints();
-        gbc_panel.anchor = GridBagConstraints.WEST;
-        gbc_panel.gridwidth = 4;
-        gbc_panel.insets = new Insets(5, 5, 0, 10);
-        gbc_panel.fill = GridBagConstraints.HORIZONTAL;
-        gbc_panel.gridx = 0;
-        gbc_panel.gridy = 5;
+        GridBagConstraints gbcPanel = new GridBagConstraints();
+        gbcPanel.anchor = GridBagConstraints.WEST;
+        gbcPanel.gridwidth = 4;
+        gbcPanel.insets = new Insets(5, 5, 0, 10);
+        gbcPanel.fill = GridBagConstraints.HORIZONTAL;
+        gbcPanel.gridx = 0;
+        gbcPanel.gridy = 5;
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEADING);
-        add(panel, gbc_panel);
-        chckbxFileLog.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                checkRolingLog();
-            }
-        });
+        add(panel, gbcPanel);
+        chckbxFileLog.addActionListener(e -> checkRolingLog());
         panel.add(chckbxFileLog);
 
-        panel.add(horizontalStrut_1);
+        panel.add(horizontalStrut1);
 
         panel.add(labelNumber);
 
         panel.add(spinner);
 
-        panel.add(horizontalStrut_2);
+        panel.add(horizontalStrut2);
 
         panel.add(labelSize);
 
-        panel.add(spinner_1);
+        panel.add(spinner1);
         this.add(jLabelMLook, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.LINE_END,
             GridBagConstraints.NONE, new Insets(7, 10, 5, 5), 0, 0));
         this.add(jComboBoxlnf, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(7, 2, 5, 15), 5, -2));
 
-        GridBagConstraints gbc_panel_1 = new GridBagConstraints();
-        gbc_panel_1.gridwidth = 4;
-        gbc_panel_1.insets = new Insets(0, 10, 5, 10);
-        gbc_panel_1.fill = GridBagConstraints.BOTH;
-        gbc_panel_1.gridx = 0;
-        gbc_panel_1.gridy = 6;
-        FlowLayout flowLayout_2 = (FlowLayout) panel_1.getLayout();
-        flowLayout_2.setAlignment(FlowLayout.LEADING);
-        add(panel_1, gbc_panel_1);
-        panel_1.add(lblLogLevel);
+        GridBagConstraints gbcPanel1 = new GridBagConstraints();
+        gbcPanel1.gridwidth = 4;
+        gbcPanel1.insets = new Insets(0, 10, 5, 10);
+        gbcPanel1.fill = GridBagConstraints.BOTH;
+        gbcPanel1.gridx = 0;
+        gbcPanel1.gridy = 6;
+        FlowLayout flowLayout2 = (FlowLayout) panel1.getLayout();
+        flowLayout2.setAlignment(FlowLayout.LEADING);
+        add(panel1, gbcPanel1);
+        panel1.add(lblLogLevel);
 
-        JPanel panel_2 = new JPanel();
-        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
-        flowLayout_1.setHgap(10);
-        flowLayout_1.setAlignment(FlowLayout.RIGHT);
-        flowLayout_1.setVgap(7);
-        GridBagConstraints gbc_panel_2 = new GridBagConstraints();
-        gbc_panel_2.weighty = 1.0;
-        gbc_panel_2.weightx = 1.0;
-        gbc_panel_2.anchor = GridBagConstraints.SOUTHWEST;
-        gbc_panel_2.gridwidth = 4;
-        gbc_panel_2.insets = new Insets(5, 10, 0, 10);
-        gbc_panel_2.fill = GridBagConstraints.HORIZONTAL;
-        gbc_panel_2.gridx = 0;
-        gbc_panel_2.gridy = 7;
-        add(panel_2, gbc_panel_2);
+        JPanel panel2 = new JPanel();
+        FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
+        flowLayout1.setHgap(10);
+        flowLayout1.setAlignment(FlowLayout.RIGHT);
+        flowLayout1.setVgap(7);
+        GridBagConstraints gbcPanel2 = new GridBagConstraints();
+        gbcPanel2.weighty = 1.0;
+        gbcPanel2.weightx = 1.0;
+        gbcPanel2.anchor = GridBagConstraints.SOUTHWEST;
+        gbcPanel2.gridwidth = 4;
+        gbcPanel2.insets = new Insets(5, 10, 0, 10);
+        gbcPanel2.fill = GridBagConstraints.HORIZONTAL;
+        gbcPanel2.gridx = 0;
+        gbcPanel2.gridy = 7;
+        add(panel2, gbcPanel2);
         JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
-        panel_2.add(btnNewButton);
-        btnNewButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetoDefaultValues();
-                initialize(false);
-            }
+        panel2.add(btnNewButton);
+        btnNewButton.addActionListener(e -> {
+            resetoDefaultValues();
+            initialize(false);
         });
 
     }
@@ -293,7 +280,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private void checkRolingLog() {
         boolean rolling = chckbxFileLog.isSelected();
         spinner.setEnabled(rolling);
-        spinner_1.setEnabled(rolling);
+        spinner1.setEnabled(rolling);
     }
 
     private static int getIntPreferences(String key, int defaultvalue, String removedSuffix) {
@@ -318,11 +305,11 @@ public class GeneralSetting extends AbstractItemDialogPage {
     protected void initialize(boolean afirst) {
         WProperties prfs = BundleTools.SYSTEM_PREFERENCES;
         chckbxConfirmClosing.setSelected(prfs.getBooleanProperty(BundleTools.CONFIRM_CLOSE, false));
-        panel_1.add(comboBoxLogLevel);
+        panel1.add(comboBoxLogLevel);
         comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prfs.getProperty(AuditLog.LOG_LEVEL, "INFO")));//$NON-NLS-1$
-        panel_1.add(horizontalStrut);
+        panel1.add(horizontalStrut);
 
-        panel_1.add(lblStacktraceLimit);
+        panel1.add(lblStacktraceLimit);
 
         int limit = getIntPreferences(AuditLog.LOG_STACKTRACE_LIMIT, 3, null);
         if (limit > 0
@@ -330,10 +317,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
             comboBoxStackLimit.addItem(Integer.toString(limit));
         }
         comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");// $NON-NLS-1$
-        panel_1.add(comboBoxStackLimit);
+        panel1.add(comboBoxStackLimit);
         chckbxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, ""))); //$NON-NLS-1$
         spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
-        spinner_1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB")); //$NON-NLS-1$
+        spinner1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB")); //$NON-NLS-1$
         checkRolingLog();
 
         comboBoxLang.selectLocale(prfs.getProperty("locale.lang.code")); //$NON-NLS-1$
@@ -349,7 +336,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         LookInfo oldLaf = null;
         if (className != null) {
             for (int i = 0; i < jComboBoxlnf.getItemCount(); i++) {
-                LookInfo look = (LookInfo) jComboBoxlnf.getItemAt(i);
+                LookInfo look = jComboBoxlnf.getItemAt(i);
                 if (className.equals(look.getClassName())) {
                     oldLaf = look;
                     break;
@@ -368,7 +355,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     }
 
-    public void setList(JComboBox jComboBox, LookAndFeelInfo[] look) {
+    public void setList(JComboBox<LookInfo> jComboBox, LookAndFeelInfo[] look) {
         jComboBox.removeAllItems();
         for (int i = 0; i < look.length; i++) {
             jComboBox.addItem(new LookInfo(look[i].getName(), look[i].getClassName()));
@@ -395,7 +382,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         String fileSize = null;
         if (chckbxFileLog.isSelected()) {
             fileNb = spinner.getValue().toString();
-            fileSize = spinner_1.getValue().toString() + "MB"; //$NON-NLS-1$
+            fileSize = spinner1.getValue().toString() + "MB"; //$NON-NLS-1$
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
         }
@@ -416,20 +403,17 @@ public class GeneralSetting extends AbstractItemDialogPage {
         final String finalLafClassName = oldUILook.getClassName();
         LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
         if (currentLAF != null && !finalLafClassName.equals(currentLAF.getClass().getName())) {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        WinUtil.getParentDialog(GeneralSetting.this).setVisible(false);
+            Runnable runnable = () -> {
+                try {
+                    WinUtil.getParentDialog(GeneralSetting.this).setVisible(false);
 
-                        UIManager.setLookAndFeel(finalLafClassName);
-                        for (Window window : Window.getWindows()) {
-                            SwingUtilities.updateComponentTreeUI(window);
-                        }
-
-                    } catch (Exception e) {
-                        LOGGER.error("Can't change look and feel", e); //$NON-NLS-1$
+                    UIManager.setLookAndFeel(finalLafClassName);
+                    for (Window window : Window.getWindows()) {
+                        SwingUtilities.updateComponentTreeUI(window);
                     }
+
+                } catch (Exception e) {
+                    LOGGER.error("Can't change look and feel", e); //$NON-NLS-1$
                 }
             };
             GuiExecutor.instance().execute(runnable);
@@ -500,7 +484,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     }
 
     public static String getAvailableLookAndFeel(String look) {
-        UIManager.LookAndFeelInfo lafs[] = UIManager.getInstalledLookAndFeels();
+        UIManager.LookAndFeelInfo[] lafs = UIManager.getInstalledLookAndFeels();
         String laf = null;
         if (look != null) {
             for (int i = 0, n = lafs.length; i < n; i++) {
@@ -517,7 +501,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
                 // Try to set Nimbus, concurrent thread issue
                 // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
                 for (int i = 0, n = lafs.length; i < n; i++) {
-                    if (lafs[i].getName().equals("Nimbus")) { //$NON-NLS-1$
+                    if ("Nimbus".equals(lafs[i].getName())) { //$NON-NLS-1$
                         laf = lafs[i].getClassName();
                         break;
                     }

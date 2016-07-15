@@ -78,6 +78,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
                             FileInputStream in = null;
                             FileOutputStream out = null;
                             try {
+                            	// TODO implement decompression in reader
                                 File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                 in = new FileInputStream(dcmVideo.getFile());
                                 out = new FileOutputStream(videoFile);

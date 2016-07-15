@@ -73,8 +73,8 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.model.GraphicsListener;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
@@ -130,31 +130,31 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
      */
 
     private EventManager() {
-        iniAction(moveTroughSliceAction = getMoveTroughSliceAction(10, TIME.minute, 0.1));
-        iniAction(windowAction = newWindowAction());
-        iniAction(levelAction = newLevelAction());
-        iniAction(rotateAction = newRotateAction());
-        iniAction(zoomAction = newZoomAction());
-        iniAction(lensZoomAction = newLensZoomAction());
+        setAction(moveTroughSliceAction = getMoveTroughSliceAction(10, TIME.minute, 0.1));
+        setAction(windowAction = newWindowAction());
+        setAction(levelAction = newLevelAction());
+        setAction(rotateAction = newRotateAction());
+        setAction(zoomAction = newZoomAction());
+        setAction(lensZoomAction = newLensZoomAction());
 
-        iniAction(flipAction = newFlipAction());
-        iniAction(inverseLutAction = newInverseLutAction());
-        iniAction(inverseStackAction = newInverseStackAction());
-        iniAction(showLensAction = newLensAction());
-        iniAction(drawOnceAction = newDrawOnlyOnceAction());
+        setAction(flipAction = newFlipAction());
+        setAction(inverseLutAction = newInverseLutAction());
+        setAction(inverseStackAction = newInverseStackAction());
+        setAction(showLensAction = newLensAction());
+        setAction(drawOnceAction = newDrawOnlyOnceAction());
 
-        iniAction(lutAction = newLutAction());
-        iniAction(filterAction = newFilterAction());
-        iniAction(layoutAction = newLayoutAction(
+        setAction(lutAction = newLutAction());
+        setAction(filterAction = newFilterAction());
+        setAction(layoutAction = newLayoutAction(
             View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST.size()])));
-        iniAction(synchAction =
+        setAction(synchAction =
             newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
-        iniAction(measureAction =
-            newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
-        iniAction(spUnitAction = newSpatialUnit(Unit.values()));
-        iniAction(panAction = newPanAction());
-        iniAction(new BasicActionState(ActionW.RESET));
+        setAction(measureAction = newMeasurementAction(
+            MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
+        setAction(spUnitAction = newSpatialUnit(Unit.values()));
+        setAction(panAction = newPanAction());
+        setAction(new BasicActionState(ActionW.RESET));
 
         final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         Preferences pref = BundlePreferences.getDefaultPreferences(context);
@@ -189,7 +189,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     private ComboItemListener newLutAction() {
-        List<ByteLut> luts = new ArrayList<ByteLut>();
+        List<ByteLut> luts = new ArrayList<>();
         luts.add(ByteLut.grayLUT);
         ByteLutCollection.readLutFilesFromResourcesDir(luts, ResourceUtil.getResource("luts"));//$NON-NLS-1$
         // Set default first as the list has been sorted
@@ -270,25 +270,29 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         } else {
-            if (measureAction.isActionEnabled()) {
-                for (Object obj : measureAction.getAllItem()) {
-                    if (obj instanceof Graphic) {
-                        Graphic g = (Graphic) obj;
-                        if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
-                            ImageViewerPlugin<ImageElement> view = getSelectedView2dContainer();
-                            if (view != null) {
-                                final ViewerToolBar toolBar = view.getViewerToolBar();
-                                if (toolBar != null) {
-                                    String cmd = ActionW.MEASURE.cmd();
-                                    if (!toolBar.isCommandActive(cmd)) {
-                                        mouseActions.setAction(MouseActions.LEFT, cmd);
-                                        view.setMouseActions(mouseActions);
-                                        toolBar.changeButtonState(MouseActions.LEFT, cmd);
+            ActionState measure = getAction(ActionW.DRAW_MEASURE);
+            if (measure instanceof ComboItemListener) {
+                ComboItemListener measureAction = (ComboItemListener) measure;
+                if (measureAction.isActionEnabled()) {
+                    for (Object obj : measureAction.getAllItem()) {
+                        if (obj instanceof Graphic) {
+                            Graphic g = (Graphic) obj;
+                            if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
+                                ImageViewerPlugin<ImageElement> view = getSelectedView2dContainer();
+                                if (view != null) {
+                                    final ViewerToolBar toolBar = view.getViewerToolBar();
+                                    if (toolBar != null) {
+                                        String cmd = ActionW.MEASURE.cmd();
+                                        if (!toolBar.isCommandActive(cmd)) {
+                                            mouseActions.setAction(MouseActions.LEFT, cmd);
+                                            view.setMouseActions(mouseActions);
+                                            toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                                        }
                                     }
                                 }
+                                measureAction.setSelectedItem(obj);
+                                return;
                             }
-                            measureAction.setSelectedItem(obj);
-                            return;
                         }
                     }
                 }
@@ -467,8 +471,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         List<DockableTool> tools = selectedView2dContainer.getToolPanel();
         synchronized (tools) {
             for (DockableTool p : tools) {
-                if (p instanceof GraphicsListener) {
-                    view2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
+                if (p instanceof GraphicSelectionListener) {
+                    view2d.getGraphicManager().addGraphicSelectionListener((GraphicSelectionListener) p);
                 }
             }
         }
@@ -528,13 +532,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             if (menu.isEnabled()) {
                 for (final ResetTools action : ResetTools.values()) {
                     final JMenuItem item = new JMenuItem(action.toString());
-                    item.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            reset(action);
-                        }
-                    });
+                    item.addActionListener(e -> reset(action));
                     menu.add(item);
                     group.add(item);
                 }
@@ -568,40 +566,16 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
             if (rotateAction.isActionEnabled()) {
                 JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotateAction.setValue(0);
-                    }
-                });
+                menuItem.addActionListener(e -> rotateAction.setValue(0));
                 menu.add(menuItem);
                 menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotateAction.setValue((rotateAction.getValue() - 90 + 360) % 360);
-                    }
-                });
+                menuItem.addActionListener(e -> rotateAction.setValue((rotateAction.getValue() - 90 + 360) % 360));
                 menu.add(menuItem);
                 menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotateAction.setValue((rotateAction.getValue() + 90) % 360);
-                    }
-                });
+                menuItem.addActionListener(e -> rotateAction.setValue((rotateAction.getValue() + 90) % 360));
                 menu.add(menuItem);
                 menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotateAction.setValue((rotateAction.getValue() + 180) % 360);
-                    }
-                });
+                menuItem.addActionListener(e -> rotateAction.setValue((rotateAction.getValue() + 180) % 360));
                 menu.add(menuItem);
 
                 menu.add(new JSeparator());

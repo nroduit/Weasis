@@ -1,13 +1,11 @@
 package org.weasis.base.explorer.list;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
@@ -18,32 +16,28 @@ import javax.swing.JList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.JIExplorerContext;
+import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.TreeNode;
-import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 @SuppressWarnings({ "serial" })
-public abstract class AThumbnailModel<E extends MediaElement> extends AbstractListModel<E>
+public abstract class AThumbnailModel<E extends MediaElement<?>> extends AbstractListModel<E>
     implements IThumbnailModel<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AThumbnailModel.class);
-
-    public static final File EXPLORER_CACHE_DIR =
-        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "explorer"); //$NON-NLS-1$
 
     protected JIExplorerContext reloadContext;
     protected boolean loading = false;
 
     protected final JList<E> list;
     protected final DefaultListModel<E> listModel;
-    protected final Map<String, String> cacheFiles;
 
     public AThumbnailModel(final JList<E> list) {
         this.list = list;
         listModel = new DefaultListModel<>();
         list.setModel(listModel);
-        this.cacheFiles = new HashMap<>();
     }
 
     public synchronized boolean loading() {
@@ -53,21 +47,6 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
     @Override
     public synchronized void notifyAsUpdated(final int index) {
         fireContentsChanged(this, index, index);
-    }
-
-    @Override
-    public void putFileInCache(String key, String value) {
-        if (key != null && value != null) {
-            cacheFiles.put(key, value);
-        }
-    }
-
-    @Override
-    public String getFileInCache(String key) {
-        if (key != null) {
-            return cacheFiles.get(key);
-        }
-        return null;
     }
 
     @Override
@@ -104,6 +83,12 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
 
     @Override
     public void clear() {
+        for (int i = 0; i < listModel.size(); i++) {
+            E m = listModel.getElementAt(i);
+            if (m instanceof ImageElement) {
+                JIThumbnailCache.removeInQueue((ImageElement) m);
+            }
+        }
         listModel.clear();
     }
 
@@ -135,24 +120,21 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
         clear();
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(path, filter)) {
-            StreamSupport.stream(stream.spliterator(), false).sorted((o1, o2) -> {
-                return o1.getFileName().compareTo(o2.getFileName());
-            }).forEachOrdered(p -> {
-                MediaReader media = ViewerPluginBuilder.getMedia(p.toFile());
-                if (media != null) {
-                    MediaElement preview = media.getPreview();
-                    // JIThumbnailService.getInstance().getDiskObject(dObj);
-                    if (preview != null) {
-                        addElement((E) preview);
-                    }
-                    if (getSize() == 1) {
-                        this.list.setSelectedIndex(0);
-                    }
-                }
-            });
-        } catch (
+            StreamSupport.stream(stream.spliterator(), false).sorted(Comparator.comparing(Path::getFileName))
+                .forEachOrdered(p -> {
+                    MediaReader media = ViewerPluginBuilder.getMedia(p.toFile());
+                    if (media != null) {
+                        MediaElement preview = media.getPreview();
+                        if (preview instanceof ImageElement) {
+                            addElement((E) preview);
+                        }
 
-        IOException e) {
+                        if (getSize() == 1) {
+                            this.list.setSelectedIndex(0);
+                        }
+                    }
+                });
+        } catch (IOException e) {
             LOGGER.error("Building child directories", e);
         }
     }

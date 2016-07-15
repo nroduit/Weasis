@@ -12,17 +12,14 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.JIExplorerContext;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.util.ThreadUtil;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.model.GraphicModel;
 
 @SuppressWarnings("serial")
-public abstract class AThumbnailListPane<E extends MediaElement> extends JScrollPane implements IThumbnailListPane<E> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AThumbnailListPane.class);
-
+public abstract class AThumbnailListPane<E extends MediaElement<?>> extends JScrollPane
+    implements IThumbnailListPane<E> {
     protected IThumbnailList<E> thumbnailList;
     protected ExecutorService pool;
 
@@ -40,12 +37,12 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
     @Override
     public void loadDirectory(Path dir) {
         JRootPane pane = getRootPane();
-        Optional.ofNullable(pane).ifPresent(p -> p.setCursor(AbstractLayerModel.WAIT_CURSOR));
+        Optional.ofNullable(pane).ifPresent(p -> p.setCursor(GraphicModel.WAIT_CURSOR));
         this.pool.execute(() -> {
             AThumbnailListPane.this.thumbnailList.getThumbnailListModel().setData(dir);
             AThumbnailListPane.this.thumbnailList.setChanged();
             AThumbnailListPane.this.thumbnailList.clearChanged();
-            Optional.ofNullable(pane).ifPresent(p -> p.setCursor(AbstractLayerModel.DEFAULT_CURSOR));
+            Optional.ofNullable(pane).ifPresent(p -> p.setCursor(GraphicModel.DEFAULT_CURSOR));
         });
     }
 

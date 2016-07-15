@@ -94,10 +94,10 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.PanPoint;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.GraphicsListener;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -178,42 +178,42 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
      */
 
     private EventManager() {
-        iniAction(moveTroughSliceAction = getMoveTroughSliceAction(20, TIME.second, 0.1));
-        iniAction(windowAction = newWindowAction());
-        iniAction(levelAction = newLevelAction());
-        iniAction(rotateAction = newRotateAction());
-        iniAction(zoomAction = newZoomAction());
+        setAction(moveTroughSliceAction = getMoveTroughSliceAction(20, TIME.second, 0.1));
+        setAction(windowAction = newWindowAction());
+        setAction(levelAction = newLevelAction());
+        setAction(rotateAction = newRotateAction());
+        setAction(zoomAction = newZoomAction());
 
-        iniAction(flipAction = newFlipAction());
-        iniAction(inverseLutAction = newInverseLutAction());
-        iniAction(inverseStackAction = newInverseStackAction());
-        iniAction(showLensAction = newLensAction());
-        iniAction(lensZoomAction = newLensZoomAction());
+        setAction(flipAction = newFlipAction());
+        setAction(inverseLutAction = newInverseLutAction());
+        setAction(inverseStackAction = newInverseStackAction());
+        setAction(showLensAction = newLensAction());
+        setAction(lensZoomAction = newLensZoomAction());
         // iniAction(imageOverlayAction = newImageOverlayAction());
-        iniAction(drawOnceAction = newDrawOnlyOnceAction());
-        iniAction(defaultPresetAction = newDefaulPresetAction());
+        setAction(drawOnceAction = newDrawOnlyOnceAction());
+        setAction(defaultPresetAction = newDefaulPresetAction());
 
-        iniAction(presetAction = newPresetAction());
-        iniAction(lutShapeAction = newLutShapeAction());
-        iniAction(lutAction = newLutAction());
-        iniAction(filterAction = newFilterAction());
-        iniAction(sortStackAction = newSortStackAction());
-        iniAction(layoutAction = newLayoutAction(
+        setAction(presetAction = newPresetAction());
+        setAction(lutShapeAction = newLutShapeAction());
+        setAction(lutAction = newLutAction());
+        setAction(filterAction = newFilterAction());
+        setAction(sortStackAction = newSortStackAction());
+        setAction(layoutAction = newLayoutAction(
             View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST.size()])));
-        iniAction(synchAction =
+        setAction(synchAction =
             newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
-        iniAction(measureAction =
-            newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
-        iniAction(spUnitAction = newSpatialUnit(Unit.values()));
-        iniAction(panAction = newPanAction());
-        iniAction(crosshairAction = newCrosshairAction());
-        iniAction(new BasicActionState(ActionW.RESET));
-        iniAction(new BasicActionState(ActionW.SHOW_HEADER));
+        setAction(measureAction = newMeasurementAction(
+            MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
+        setAction(spUnitAction = newSpatialUnit(Unit.values()));
+        setAction(panAction = newPanAction());
+        setAction(crosshairAction = newCrosshairAction());
+        setAction(new BasicActionState(ActionW.RESET));
+        setAction(new BasicActionState(ActionW.SHOW_HEADER));
 
-        iniAction(koToggleAction = newKOToggleAction());
-        iniAction(koFilterAction = newKOFilterAction());
-        iniAction(koSelectionAction = newKOSelectionAction());
+        setAction(koToggleAction = newKOToggleAction());
+        setAction(koFilterAction = newKOFilterAction());
+        setAction(koSelectionAction = newKOSelectionAction());
 
         final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         Preferences prefs = BundlePreferences.getDefaultPreferences(context);
@@ -336,10 +336,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         if (isDefaultPresetSelected) {
                             newPreset = image.getDefaultPreset(pixelPadding);
                         } else {
-                            for (PresetWindowLevel preset : newPresetList) {
-                                if (preset.getName().equals(oldPreset.getName())) {
-                                    newPreset = preset;
-                                    break;
+                            if (oldPreset != null) {
+                                for (PresetWindowLevel preset : newPresetList) {
+                                    if (preset.getName().equals(oldPreset.getName())) {
+                                        newPreset = preset;
+                                        break;
+                                    }
                                 }
                             }
                             // set default preset when the old preset is not available any more
@@ -350,8 +352,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         }
                     }
 
-                    Double windowValue = (double) (newPreset == null ? windowAction.getValue() : newPreset.getWindow());
-                    Double levelValue = (double) (newPreset == null ? levelAction.getValue() : newPreset.getLevel());
+                    Double windowValue = newPreset == null ? windowAction.getValue() : newPreset.getWindow();
+                    Double levelValue = newPreset == null ? levelAction.getValue() : newPreset.getLevel();
                     LutShape lutShapeItem =
                         newPreset == null ? (LutShape) lutShapeAction.getSelectedItem() : newPreset.getLutShape();
 
@@ -972,8 +974,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         List<DockableTool> tools = selectedView2dContainer.getToolPanel();
         synchronized (tools) {
             for (DockableTool p : tools) {
-                if (p instanceof GraphicsListener) {
-                    view2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
+                if (p instanceof GraphicSelectionListener) {
+                    view2d.getGraphicManager().addGraphicSelectionListener((GraphicSelectionListener) p);
                 }
             }
         }
@@ -1082,7 +1084,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         if (viewerPlugin != null) {
             ViewCanvas<DicomImageElement> viewPane = viewerPlugin.getSelectedImagePane();
-            // if (viewPane == null || viewPane.getSeries() == null) {
             if (viewPane == null) {
                 return;
             }
@@ -1110,10 +1111,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 if (SynchView.NONE.equals(synchView)) {
                     for (int i = 0; i < panes.size(); i++) {
                         ViewCanvas<DicomImageElement> pane = panes.get(i);
-                        AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
-                        if (layer != null) {
-                            layer.deleteAllGraphic();
-                        }
+                        pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
+
                         MediaSeries<DicomImageElement> s = pane.getSeries();
                         String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
                         boolean specialView = pane instanceof MipView;
@@ -1143,10 +1142,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
                         for (int i = 0; i < panes.size(); i++) {
                             ViewCanvas<DicomImageElement> pane = panes.get(i);
-                            AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
-                            if (layer != null) {
-                                layer.deleteAllGraphic();
-                            }
+                            pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
+
                             MediaSeries<DicomImageElement> s = pane.getSeries();
                             boolean specialView = pane instanceof MipView;
                             if (s != null && fruid != null && val != null && !specialView) {
@@ -1296,13 +1293,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             if (menu.isEnabled()) {
                 for (final ResetTools action : ResetTools.values()) {
                     final JMenuItem item = new JMenuItem(action.toString());
-                    item.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            reset(action);
-                        }
-                    });
+                    item.addActionListener(e -> reset(action));
                     menu.add(item);
                     group.add(item);
                 }
@@ -1360,40 +1351,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
             if (rotateAction.isActionEnabled()) {
                 JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotateAction.setValue(0);
-                    }
-                });
+                menuItem.addActionListener(e -> rotateAction.setValue(0));
                 menu.add(menuItem);
                 menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotateAction.setValue((rotateAction.getValue() - 90 + 360) % 360);
-                    }
-                });
+                menuItem.addActionListener(e -> rotateAction.setValue((rotateAction.getValue() - 90 + 360) % 360));
                 menu.add(menuItem);
                 menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotateAction.setValue((rotateAction.getValue() + 90) % 360);
-                    }
-                });
+                menuItem.addActionListener(e -> rotateAction.setValue((rotateAction.getValue() + 90) % 360));
                 menu.add(menuItem);
                 menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotateAction.setValue((rotateAction.getValue() + 180) % 360);
-                    }
-                });
+                menuItem.addActionListener(e -> rotateAction.setValue((rotateAction.getValue() + 180) % 360));
                 menu.add(menuItem);
 
                 menu.add(new JSeparator());
@@ -1531,7 +1498,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 try {
                     int valx = Integer.parseInt(args.get(0));
                     int valy = Integer.parseInt(args.get(1));
-                    panAction.setPoint(new PanPoint(PanPoint.STATE.Move, valx, valy));
+                    panAction.setPoint(new PanPoint(PanPoint.State.MOVE, valx, valy));
 
                 } catch (Exception e) {
                     e.printStackTrace();

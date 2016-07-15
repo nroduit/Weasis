@@ -11,9 +11,9 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.viewer2d.View2d;
@@ -23,7 +23,7 @@ public class RenderingService extends View2d {
 
     public RenderingService(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
-        infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PRELOADING_BAR, false);
+        infoLayer.setDisplayPreferencesValue(LayerAnnotation.PRELOADING_BAR, false);
 
         // Remove PR and KO buttons
         getViewButtons().clear();

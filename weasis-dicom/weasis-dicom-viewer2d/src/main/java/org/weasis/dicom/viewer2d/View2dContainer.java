@@ -223,7 +223,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImageTool.class), key, true)) {
-                tool = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
+                tool = new ImageTool(ImageTool.BUTTON_NAME); //$NON-NLS-1$
                 TOOLS.add(tool);
             }
 
@@ -257,15 +257,15 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public void setSelectedImagePaneFromFocus(ViewCanvas<DicomImageElement> viewCanvas) {
-        setSelectedImagePane(viewCanvas);
-        if (viewCanvas != null && viewCanvas.getSeries() instanceof DicomSeries) {
-            DicomSeries series = (DicomSeries) viewCanvas.getSeries();
+    public void setSelectedImagePaneFromFocus(ViewCanvas<DicomImageElement> IViewCanvas) {
+        setSelectedImagePane(IViewCanvas);
+        if (IViewCanvas != null && IViewCanvas.getSeries() instanceof DicomSeries) {
+            DicomSeries series = (DicomSeries) IViewCanvas.getSeries();
             DicomSeries.startPreloading(series,
                 series.copyOfMedias(
-                    (Filter<DicomImageElement>) viewCanvas.getActionValue(ActionW.FILTERED_SERIES.cmd()),
-                    viewCanvas.getCurrentSortComparator()),
-                viewCanvas.getFrameIndex());
+                    (Filter<DicomImageElement>) IViewCanvas.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                    IViewCanvas.getCurrentSortComparator()),
+                IViewCanvas.getFrameIndex());
         }
     }
 
@@ -715,8 +715,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                    PrintDialog<DicomImageElement> dialog = new PrintDialog<>(
-                        SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
+                    PrintDialog<DicomImageElement> dialog =
+                        new PrintDialog<>(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
                     ColorLayerUI.showCenterScreen(dialog, layer);
                 }
             };

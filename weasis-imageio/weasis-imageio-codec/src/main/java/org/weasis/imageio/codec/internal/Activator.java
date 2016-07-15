@@ -11,6 +11,8 @@
 package org.weasis.imageio.codec.internal;
 
 import javax.imageio.ImageIO;
+import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.spi.ImageWriterSpi;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -52,16 +54,21 @@ public class Activator implements BundleActivator {
         // and unregister imageio SPI if imageio.jar is also in the jre/lib/ext folder
 
         Class[] jaiCodecs = { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class,
-            CLibJPEGImageReaderSpi.class, CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class,
-            J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class, BMPImageReaderSpi.class, PNMImageReaderSpi.class,
-            RawImageReaderSpi.class, TIFFImageReaderSpi.class, CLibJPEGImageWriterSpi.class,
-            CLibPNGImageWriterSpi.class, J2KImageWriterSpi.class, J2KImageWriterCodecLibSpi.class,
-            WBMPImageWriterSpi.class, BMPImageWriterSpi.class, GIFImageWriterSpi.class, PNMImageWriterSpi.class,
-            RawImageWriterSpi.class, TIFFImageWriterSpi.class };
+            J2KImageReaderSpi.class, J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class, BMPImageReaderSpi.class,
+            PNMImageReaderSpi.class, RawImageReaderSpi.class, TIFFImageReaderSpi.class, J2KImageWriterSpi.class,
+            J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class, GIFImageWriterSpi.class,
+            PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
             ImageioUtil.registerServiceProvider(c);
         }
+
+        // Set priority to these codec which have better performance to the one in JRE
+        ImageioUtil.registerServiceProviderPriority(CLibJPEGImageReaderSpi.class, ImageReaderSpi.class, "jpeg");
+        ImageioUtil.registerServiceProviderPriority(CLibJPEGImageWriterSpi.class, ImageWriterSpi.class, "jpeg");
+        ImageioUtil.registerServiceProviderPriority(CLibPNGImageReaderSpi.class, ImageReaderSpi.class, "png");
+        ImageioUtil.registerServiceProviderPriority(CLibPNGImageWriterSpi.class, ImageWriterSpi.class, "png");
+
         // TODO Should be in properties?
         // Unregister sun native jpeg codec
         // ImageioUtil.unRegisterServiceProvider(registry, CLibJPEGImageReaderSpi.class);

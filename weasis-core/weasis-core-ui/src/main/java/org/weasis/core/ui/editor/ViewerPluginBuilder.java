@@ -34,7 +34,6 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.serialize.XmlSerializer;
 
 public class ViewerPluginBuilder {
     public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer"; //$NON-NLS-1$
@@ -83,8 +82,7 @@ public class ViewerPluginBuilder {
         if (factory == null || series == null || model == null) {
             return;
         }
-        ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-            new ArrayList<>(1);
+        ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>(1);
         list.add(series);
         openSequenceInPlugin(factory, list, model, compareEntryToBuildNewViewer, removeOldSeries);
     }
@@ -129,8 +127,7 @@ public class ViewerPluginBuilder {
         for (String mime : mimes) {
             SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
             if (plugin != null) {
-                ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList =
-                    new ArrayList<>();
+                ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList = new ArrayList<>();
                 for (MediaSeries<? extends MediaElement<?>> s : series) {
                     if (mime.equals(s.getMimeType())) {
                         seriesList.add(s);
@@ -244,12 +241,12 @@ public class ViewerPluginBuilder {
                 for (MediaElement<?> media : medias) {
                     series.addMedia(media);
                 }
-
             }
 
             for (MediaElement<?> media : medias) {
                 if (media instanceof ImageElement) {
-                    XmlSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
+                    // TODO
+                    //XmlSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
                 }
             }
 
@@ -260,4 +257,5 @@ public class ViewerPluginBuilder {
         }
         return series;
     }
+
 }

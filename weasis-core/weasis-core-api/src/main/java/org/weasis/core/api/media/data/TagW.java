@@ -89,11 +89,9 @@ public class TagW implements Serializable {
     public static final TagW Thumbnail =
         new TagW("Thumbnail", Messages.getString("TagElement.thumb"), TagType.THUMBNAIL); //$NON-NLS-1$
     public static final TagW ThumbnailPath = new TagW("ThumbnailPath", TagType.STRING); //$NON-NLS-1$
-    public static final TagW TiledImagePath = new TagW("TiledImagePath", TagType.STRING); //$NON-NLS-1$
     public static final TagW ExplorerModel =
         new TagW("ExplorerModel", Messages.getString("TagElement.exp_model"), TagType.OBJECT); //$NON-NLS-1$
-    public static final TagW MeasurementGraphics =
-        new TagW("MeasurementGraphics", Messages.getString("TagElement.measure_graph"), TagType.LIST); //$NON-NLS-1$
+    public static final TagW PresentationModel = new TagW("PesentationModel", TagType.OBJECT); //$NON-NLS-1$
     public static final TagW SplitSeriesNumber =
         new TagW("SplitSeriesNumber", Messages.getString("TagElement.split_no"), TagType.INTEGER); //$NON-NLS-1$
     public static final TagW SeriesSelected =
@@ -437,7 +435,7 @@ public class TagW implements Serializable {
             str = value.toString();
         }
 
-        if (StringUtil.hasText(format) && !"$V".equals(format.trim())) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (StringUtil.hasText(format) && !"$V".equals(format.trim())) { //$NON-NLS-1$
             return formatValue(str, type, format);
         }
 

@@ -33,7 +33,7 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.graphic.model.GraphicList;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -78,8 +78,8 @@ public class LoadLocalDicom extends ExplorerTask {
         if (file == null || file.length < 1) {
             return;
         }
-        final ArrayList<SeriesThumbnail> thumbs = new ArrayList<SeriesThumbnail>();
-        final ArrayList<File> folders = new ArrayList<File>();
+        final ArrayList<SeriesThumbnail> thumbs = new ArrayList<>();
+        final ArrayList<File> folders = new ArrayList<>();
 
         for (int i = 0; i < file.length; i++) {
             if (isCancelled()) {
@@ -106,9 +106,10 @@ public class LoadLocalDicom extends ExplorerTask {
 
                             File gpxFile = new File(file[i].getPath() + ".xml"); //$NON-NLS-1$
 
-                            GraphicList list = XmlSerializer.readMeasurementGraphics(gpxFile);
+                            // TODO : Change graphicList
+                            GraphicModel list = XmlSerializer.readMeasurementGraphics(gpxFile);
                             if (list != null) {
-                                loader.setTag(TagW.MeasurementGraphics, list);
+                                loader.setTag(TagW.PresentationModel, list);
                             }
                         }
                     }

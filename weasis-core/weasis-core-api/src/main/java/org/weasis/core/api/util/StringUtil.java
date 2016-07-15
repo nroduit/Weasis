@@ -1,5 +1,7 @@
 package org.weasis.core.api.util;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +21,9 @@ public class StringUtil {
 
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
     private static final int[] EMPTY_INT_ARRAY = new int[0];
+
+    public static final char[] HEX_DIGIT =
+        { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
     public enum Suffix {
         NO(""), //$NON-NLS-1$
@@ -178,6 +183,25 @@ public class StringUtil {
             matchList.add(regexMatcher.group());
         }
         return matchList;
+    }
+
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = HEX_DIGIT[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_DIGIT[v & 0x0f];
+        }
+        return new String(hexChars);
+    }
+
+    public static String integerToHex(int val) {
+        return Integer.toHexString(val).toUpperCase();
+    }
+
+    public static String bytesToMD5(byte[] val) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        return bytesToHex(md.digest(val));
     }
 
     public static String getEmpty2NullObject(Object object) {

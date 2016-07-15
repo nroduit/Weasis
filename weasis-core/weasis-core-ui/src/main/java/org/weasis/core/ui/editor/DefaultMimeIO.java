@@ -14,12 +14,15 @@ import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -35,12 +38,11 @@ public class DefaultMimeIO<F extends File> implements MediaReader<F> {
     protected URI uri;
     protected final String mimeType;
     private MediaElement<F> mediaElement = null;
+    private final FileCache fileCache;
 
     public DefaultMimeIO(URI media, String mimeType) {
-        if (media == null) {
-            throw new IllegalArgumentException("mediaElement uri is null"); //$NON-NLS-1$
-        }
-        this.uri = media;
+        this.uri = Objects.requireNonNull(media);
+        this.fileCache = new FileCache(this);
         this.mimeType = mimeType == null ? MimeInspector.UNKNOWN_MIME_TYPE : mimeType;
     }
 
@@ -138,13 +140,8 @@ public class DefaultMimeIO<F extends File> implements MediaReader<F> {
     }
 
     @Override
-    public HashMap<TagW, Object> getMediaFragmentTags(Object key) {
-        return new HashMap<TagW, Object>();
-    }
-
-    @Override
-    public URI getMediaFragmentURI(Object key) {
-        return uri;
+    public Map<TagW, Object> getMediaFragmentTags(Object key) {
+        return new HashMap<>();
     }
 
     @Override
@@ -189,5 +186,15 @@ public class DefaultMimeIO<F extends File> implements MediaReader<F> {
     @Override
     public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public FileCache getFileCache() {
+        return fileCache;
+    }
+
+    @Override
+    public boolean buildFile(File ouptut) {
+        return false;
     }
 }

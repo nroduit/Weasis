@@ -29,7 +29,6 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -53,6 +52,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 
 import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
@@ -60,6 +61,7 @@ import javax.swing.Action;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -78,6 +80,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.image.FilterOp;
@@ -108,17 +111,18 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.graphic.DragSequence;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.PanPoint;
-import org.weasis.core.ui.graphic.PanPoint.STATE;
-import org.weasis.core.ui.graphic.RenderedImageLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
-import org.weasis.core.ui.graphic.model.DefaultViewModel;
-import org.weasis.core.ui.graphic.model.GraphicList;
-import org.weasis.core.ui.graphic.model.GraphicsPane;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.DragGraphic;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.imp.XmlGraphicModel;
+import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
+import org.weasis.core.ui.model.utils.GraphicUtil;
+import org.weasis.core.ui.model.utils.Draggable;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
+import org.weasis.core.ui.model.utils.bean.PanPoint.State;
+import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
@@ -127,11 +131,13 @@ import org.weasis.core.ui.util.TitleMenuItem;
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements ViewCanvas<E> {
+    private static final long serialVersionUID = 4546307243696460899L;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultView2d.class);
 
     public enum ZoomType {
         CURRENT, BEST_FIT, PIXEL_SIZE, REAL
-    };
+    }
 
     static final Shape[] pointer;
 
@@ -147,8 +153,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected final FocusHandler focusHandler = new FocusHandler();
     protected final GraphicMouseHandler<E> graphicMouseHandler;
 
-    private final PanPoint highlightedPosition = new PanPoint(STATE.Center);
-    private final PanPoint startedDragPoint = new PanPoint(STATE.DragStart);
+    private final PanPoint highlightedPosition = new PanPoint(State.CENTER);
+    private final PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);
     private int pointerType = 0;
 
     protected final Color pointerColor1 = Color.black;
@@ -158,33 +164,30 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected final Border lostFocusBorder = new EtchedBorder(BevelBorder.LOWERED, lostFocusColor, lostFocusColor);
 
     protected final RenderedImageLayer<E> imageLayer;
-    protected Panner<?> panner;
+    protected Panner<E> panner;
     protected ZoomWin<E> lens;
     private final List<ViewButton> viewButtons;
     protected ViewButton synchButton;
 
     protected MediaSeries<E> series = null;
-    protected AnnotationsLayer infoLayer;
+    protected LayerAnnotation infoLayer;
     protected int tileOffset;
 
     protected final ImageViewerEventManager<E> eventManager;
 
     public DefaultView2d(ImageViewerEventManager<E> eventManager) {
-        this(eventManager, null, null);
+        this(eventManager, null);
     }
 
-    public DefaultView2d(ImageViewerEventManager<E> eventManager, AbstractLayerModel layerModel, ViewModel viewModel) {
-        super(layerModel, viewModel);
-        if (eventManager == null) {
-            throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
-        }
-        this.eventManager = eventManager;
-        this.viewButtons = new ArrayList<ViewButton>();
+    public DefaultView2d(ImageViewerEventManager<E> eventManager, ViewModel viewModel) {
+        super(viewModel);
+        this.eventManager = Objects.requireNonNull(eventManager);
+        this.viewButtons = new ArrayList<>();
         this.tileOffset = 0;
 
-        imageLayer = new RenderedImageLayer<E>(true);
+        imageLayer = new RenderedImageLayer<>(true);
         initActionWState();
-        graphicMouseHandler = new GraphicMouseHandler<E>(this);
+        graphicMouseHandler = new GraphicMouseHandler<>(this);
 
         setBorder(normalBorder);
         setFocusable(true);
@@ -206,9 +209,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void buildPanner() {
-        if (panner == null) {
-            panner = new Panner(this);
-        }
+        panner = Optional.ofNullable(panner).orElse(new Panner<>(this));
     }
 
     @Override
@@ -262,14 +263,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
                         for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
                             JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a.getKey(), a.getValue());
-                            menuItem.addActionListener(new ActionListener() {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    if (e.getSource() instanceof JCheckBoxMenuItem) {
-                                        JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
-                                        synch.getActions().put(item.getText(), item.isSelected());
-                                    }
+                            menuItem.addActionListener(e -> {
+                                if (e.getSource() instanceof JCheckBoxMenuItem) {
+                                    JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
+                                    synch.getActions().put(item.getText(), item.isSelected());
                                 }
                             });
                             popupMenu.add(menuItem);
@@ -356,14 +353,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return null;
     }
 
-    protected static class BulkDragSequence implements DragSequence {
-        private final List<DragSequence> childDS;
+    protected static class BulkDragSequence implements Draggable {
+        private final List<Draggable> childDS;
 
-        BulkDragSequence(List<AbstractDragGraphic> dragGraphList, MouseEventDouble mouseevent) {
-            childDS = new ArrayList<DragSequence>(dragGraphList.size());
+        BulkDragSequence(List<DragGraphic> dragGraphList, MouseEventDouble mouseEvent) {
+            childDS = new ArrayList<>(dragGraphList.size());
 
-            for (AbstractDragGraphic dragGraph : dragGraphList) {
-                DragSequence dragsequence = dragGraph.createMoveDrag();
+            for (DragGraphic dragGraph : dragGraphList) {
+                Draggable dragsequence = dragGraph.createMoveDrag();
                 if (dragsequence != null) {
                     childDS.add(dragsequence);
                 }
@@ -387,7 +384,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
 
         @Override
-        public boolean completeDrag(MouseEventDouble mouseevent) {
+        public Boolean completeDrag(MouseEventDouble mouseevent) {
             int i = 0;
             for (int j = childDS.size(); i < j; i++) {
                 (childDS.get(i)).completeDrag(mouseevent);
@@ -398,6 +395,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public Panner getPanner() {
         return panner;
     }
@@ -429,7 +427,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
 
         closingSeries(oldsequence);
-        getLayerModel().deleteAllGraphics();
+
         // Preserve show lens property
         Object showLens = actionsInView.get(ActionW.LENS.cmd());
         initActionWState();
@@ -491,7 +489,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public void setFocused(boolean focused) {
+    public void setFocused(Boolean focused) {
         if (series != null) {
             series.setFocused(focused);
         }
@@ -514,9 +512,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (img != null) {
             RenderedImage source = getPreprocessedImage(img);
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
-            int width = source == null || img.getRescaleX() != img.getRescaleY()
+            boolean nosquarePixel = MathUtil.isDifferent(img.getRescaleX(), img.getRescaleY());
+            int width = source == null || nosquarePixel
                 ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns"))) : source.getWidth();
-            int height = source == null || img.getRescaleX() != img.getRescaleY()
+            int height = source == null || nosquarePixel
                 ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows"))) : source.getHeight();
             return new Rectangle(0, 0, width, height);
         }
@@ -537,14 +536,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             imageLayer.setEnableDispOperations(true);
             imageLayer.setImage(null, null);
             imageLayer.setEnableDispOperations(false);
-            getLayerModel().deleteAllGraphics();
+
+            setGraphicManager(new XmlGraphicModel());
             closeLens();
         } else {
             E oldImage = imageLayer.getSourceImage();
             if (img != null && !img.equals(oldImage)) {
                 updateGraphics = true;
                 actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
-                if ((eventManager.getSelectedViewPane() == this)) {
+                if (eventManager.getSelectedViewPane() == this) {
                     ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
                     if (spUnitAction instanceof ComboItemListener) {
                         ((ComboItemListener) spUnitAction)
@@ -604,27 +604,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             imageLayer.setEnableDispOperations(true);
 
             if (updateGraphics) {
+                GraphicModel modelList = (GraphicModel) img.getTagValue(TagW.PresentationModel);
                 // After getting a new image iterator, update the measurements
-                AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
-                if (layer != null) {
-                    synchronized (this) {
-                        // TODO Handle several layers
-                        GraphicList gl = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
-                        if (gl != null) {
-                            // TODO handle graphics without shape, exclude them!
-                            layer.setGraphics(gl);
-                            synchronized (gl.list) {
-                                for (Graphic graphic : gl.list) {
-                                    graphic.updateLabel(true, this);
-                                }
-                            }
-                        } else {
-                            GraphicList graphics = new GraphicList();
-                            img.setTag(TagW.MeasurementGraphics, graphics);
-                            layer.setGraphics(graphics);
-                        }
-                    }
+                if (modelList == null) {
+                    modelList = new XmlGraphicModel(img);
+                    img.setTag(TagW.PresentationModel, modelList);
                 }
+                setGraphicManager(modelList);
             }
 
             if (panner != null) {
@@ -700,7 +686,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public AnnotationsLayer getInfoLayer() {
+    public LayerAnnotation getInfoLayer() {
         return infoLayer;
     }
 
@@ -727,10 +713,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public RenderedImage getSourceImage() {
         E image = getImage();
-        if (image == null) {
-            return null;
-        }
-        return getPreprocessedImage(image);
+        return image == null ? null : getPreprocessedImage(image);
     }
 
     @Override
@@ -740,7 +723,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public final void setCenter(double x, double y) {
+    public final void setCenter(Double x, Double y) {
         int w = getWidth();
         int h = getHeight();
         // Only apply when the panel size is not zero.
@@ -751,14 +734,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     /** Provides panning */
-    public final void setOrigin(double x, double y) {
+    public final void setOrigin(Double x, Double y) {
         getViewModel().setModelOffset(x, y);
-        if (panner != null) {
-            panner.updateImageSize();
-        }
-        if (lens != null) {
-            lens.updateZoom();
-        }
+        Optional.ofNullable(panner).ifPresent(p -> p.updateImageSize());
+        Optional.ofNullable(lens).ifPresent(l -> l.updateZoom());
     }
 
     /** Provides panning */
@@ -769,15 +748,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public final void moveOrigin(PanPoint point) {
         if (point != null) {
-            if (PanPoint.STATE.Center.equals(point.getState())) {
+            if (PanPoint.State.CENTER.equals(point.getState())) {
                 highlightedPosition.setHighlightedPosition(point.isHighlightedPosition());
                 highlightedPosition.setLocation(point);
                 setCenter(point.getX(), point.getY());
-            } else if (PanPoint.STATE.Move.equals(point.getState())) {
+            } else if (PanPoint.State.MOVE.equals(point.getState())) {
                 moveOrigin(point.getX(), point.getY());
-            } else if (PanPoint.STATE.DragStart.equals(point.getState())) {
+            } else if (PanPoint.State.DRAGSTART.equals(point.getState())) {
                 startedDragPoint.setLocation(getViewModel().getModelOffsetX(), getViewModel().getModelOffsetY());
-            } else if (PanPoint.STATE.Dragging.equals(point.getState())) {
+            } else if (PanPoint.State.DRAGGING.equals(point.getState())) {
                 setOrigin(startedDragPoint.getX() + point.getX(), startedDragPoint.getY() + point.getY());
             }
         }
@@ -805,7 +784,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public void setActionsInView(String action, Object value, boolean repaint) {
+    public void setActionsInView(String action, Object value, Boolean repaint) {
         if (action != null) {
             actionsInView.put(action, value);
             if (repaint) {
@@ -815,12 +794,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public void setSelected(boolean selected) {
+    public void setSelected(Boolean selected) {
         setBorder(selected ? focusBorder : normalBorder);
         // Remove the selection of graphics
-        getLayerModel().setSelectedGraphics(null);
+        graphicManager.setSelectedGraphic(null);
         // Throws to the tool listener the current graphic selection.
-        getLayerModel().fireGraphicsSelectionChanged(imageLayer);
+        graphicManager.fireGraphicsSelectionChanged(imageLayer);
 
         if (selected && series != null) {
             AuditLog.LOGGER.info("select:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
@@ -829,7 +808,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public Font getFont() {
-        // required when used getGraphics().getFont() in GraphicLabel
+        // required when used getGraphics().getFont() in DefaultGraphicLabel
         return MeasureTool.viewSetting.getFont();
     }
 
@@ -887,30 +866,31 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
-            getLayerModel().draw(g2d, transform, inverseTransform,
+            graphicManager.draw(g2d, transform, inverseTransform,
                 new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
                     modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
         }
     }
 
     @Override
-    public void zoom(double viewScale) {
-        boolean defSize = viewScale == 0.0;
+    public void zoom(Double viewScale) {
+        boolean defSize = MathUtil.isEqualToZero(viewScale);
         ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        double ratio = viewScale;
         if (defSize) {
             if (ZoomType.BEST_FIT.equals(type)) {
-                viewScale = -getBestFitViewScale();
+                ratio = -getBestFitViewScale();
             } else if (ZoomType.REAL.equals(type)) {
-                viewScale = -getRealWorldViewScale();
+                ratio = -getRealWorldViewScale();
             }
 
-            if (viewScale == 0.0) {
-                viewScale = -adjustViewScale(1.0);
+            if (MathUtil.isEqualToZero(ratio)) {
+                ratio = -adjustViewScale(1.0);
             }
         }
 
-        actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
-        super.zoom(Math.abs(viewScale));
+        actionsInView.put(ActionW.ZOOM.cmd(), ratio);
+        super.zoom(Math.abs(ratio));
         if (defSize) {
             /*
              * If the view has not been repainted once (the width and the height of the view is 0), it will be done
@@ -925,8 +905,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
         E img = getImage();
         if (img != null && node != null) {
-            node.setParam(ZoomOp.P_RATIO_X, viewScale * img.getRescaleX());
-            node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
+            node.setParam(ZoomOp.P_RATIO_X, ratio * img.getRescaleX());
+            node.setParam(ZoomOp.P_RATIO_Y, ratio * img.getRescaleY());
             imageLayer.updateDisplayOperations();
         }
     }
@@ -978,7 +958,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public void setDrawingsVisibility(boolean visible) {
+    public void setDrawingsVisibility(Boolean visible) {
         if ((Boolean) actionsInView.get(ActionW.DRAW.cmd()) != visible) {
             actionsInView.put(ActionW.DRAW.cmd(), visible);
             repaint();
@@ -994,7 +974,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public void changeZoomInterpolation(int interpolation) {
+    public void changeZoomInterpolation(Integer interpolation) {
         Integer val = (Integer) getDisplayOpManager().getParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION);
         boolean update = val == null || val != interpolation;
         if (update) {
@@ -1024,12 +1004,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             SynchEvent synch = (SynchEvent) evt.getNewValue();
             if (synch instanceof SynchCineEvent) {
                 SynchCineEvent value = (SynchCineEvent) synch;
-                AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.CROSSLINES);
-                if (layer != null) {
-                    layer.deleteAllGraphic();
-                }
 
                 E imgElement = getImage();
+                graphicManager.deleteByLayerType(LayerType.CROSSLINES);
+
                 if (value.getView() == this) {
                     if (tileOffset != 0) {
                         // Index could have changed when loading series.
@@ -1087,15 +1065,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             imageLayer.updateDisplayOperations();
         }
 
-        if (lens != null) {
-            if (dispImage != imageLayer.getDisplayImage()) {
-                /*
-                 * Transmit to the lens the command in case the source image has been freeze (for updating rotation and
-                 * flip => will keep consistent display)
-                 */
-                lens.setCommandFromParentView(command, evt.getNewValue());
-                lens.updateZoom();
-            }
+        if (Objects.nonNull(lens) && !Objects.equals(dispImage, imageLayer.getDisplayImage())) {
+            /*
+             * Transmit to the lens the command in case the source image has been freeze (for updating rotation and flip
+             * => will keep consistent display)
+             */
+            lens.setCommandFromParentView(command, evt.getNewValue());
+            lens.updateZoom();
+
         }
     }
 
@@ -1126,11 +1103,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             } else if (command.equals(ActionW.ZOOM.cmd())) {
                 double val = (Double) entry.getValue();
                 // Special Cases: -200.0 => best fit, -100.0 => real world size
-                if (val != -200.0 && val != -100.0) {
+                if (MathUtil.isDifferent(val, -200.0) && MathUtil.isDifferent(val, -100.0)) {
                     zoom(val);
                 } else {
                     Object zoomType = actionsInView.get(ViewCanvas.zoomTypeCmd);
-                    actionsInView.put(ViewCanvas.zoomTypeCmd, val == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
+                    actionsInView.put(ViewCanvas.zoomTypeCmd,
+                        MathUtil.isEqual(val, -100.0) ? ZoomType.REAL : ZoomType.BEST_FIT);
                     zoom(0.0);
                     actionsInView.put(ViewCanvas.zoomTypeCmd, zoomType);
                 }
@@ -1144,7 +1122,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 actionsInView.put(command, showLens);
                 if (showLens) {
                     if (lens == null) {
-                        lens = new ZoomWin<E>(this);
+                        lens = new ZoomWin<>(this);
                     }
                     // resize if to big
                     int maxWidth = getWidth() / 3;
@@ -1192,13 +1170,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
             } else if (command.equals(ActionW.SPATIAL_UNIT.cmd())) {
                 actionsInView.put(command, entry.getValue());
-
                 // TODO update only measure and limit when selected view share graphics
-                List<Graphic> list = this.getLayerModel().getAllGraphics();
-                for (Graphic graphic : list) {
-                    graphic.updateLabel(true, this);
-                }
-
+                graphicManager.updateLabels(Boolean.TRUE, this);
             }
         }
     }
@@ -1326,8 +1299,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public void drawPointer(Graphics2D g, double x, double y) {
-        float dash[] = { 5.0f };
+    public void drawPointer(Graphics2D g, Double x, Double y) {
+        float[] dash = { 5.0f };
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.translate(x, y);
         g.setStroke(new BasicStroke(3.0f));
@@ -1335,7 +1308,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         for (int i = 1; i < pointer.length; i++) {
             g.draw(pointer[i]);
         }
-        g.setStroke(new BasicStroke(1.0F, 0, 0, 5.0f, dash, 0.0f));
+        g.setStroke(new BasicStroke(1.0f, 0, 0, 5.0f, dash, 0.0f));
         g.setPaint(pointerColor2);
         for (int i = 1; i < pointer.length; i++) {
             g.draw(pointer[i]);
@@ -1372,7 +1345,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         @Override
         public void mousePressed(MouseEvent evt) {
             ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
-            if (pane == null) {
+            if (Objects.isNull(pane)) {
                 return;
             }
 
@@ -1401,7 +1374,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Do select the view when pressing on a view button
             if (selectedButton != null) {
-                DefaultView2d.this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+                DefaultView2d.this.setCursor(GraphicModel.DEFAULT_CURSOR);
                 evt.consume();
                 selectedButton.showPopup(evt.getComponent(), evt.getX(), evt.getY());
                 return;
@@ -1425,7 +1398,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
 
-            DefaultView2d.this.setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
+            DefaultView2d.this.setCursor(action == null ? GraphicModel.DEFAULT_CURSOR : action.getCursor());
         }
 
         @Override
@@ -1435,13 +1408,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            DefaultView2d.this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+            DefaultView2d.this.setCursor(GraphicModel.DEFAULT_CURSOR);
         }
     }
 
     @Override
     public List<Action> getExportToClipboardAction() {
-        List<Action> list = new ArrayList<Action>();
+        List<Action> list = new ArrayList<>();
 
         AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
@@ -1513,6 +1486,25 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public List<ViewButton> getViewButtons() {
         return viewButtons;
+    }
+
+    protected void copyGraphicsFromClipboard() {
+        List<Graphic> graphs = GraphicModel.GRAPHIC_CLIPBOARD.getGraphics();
+        if (graphs != null) {
+            Rectangle2D area = getViewModel().getModelArea();
+            if (graphs.stream().anyMatch(g -> !g.getBounds(null).intersects(area))) {
+                int option = JOptionPane.showConfirmDialog(this,
+                    "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
+                if (option != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+
+            graphs.forEach(g -> GraphicUtil.addGraphicToModel(this, g.copy()));
+
+            // Repaint all because labels are not drawn
+            repaint();
+        }
     }
 
 }

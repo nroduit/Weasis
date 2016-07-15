@@ -82,7 +82,6 @@ public class MaskOp extends AbstractOp {
                 result = MergeImgOp.combineTwoImages(source, sourceUP, getAsImage(area, source));
             }
         }
-
         params.put(Param.OUTPUT_IMG, result);
     }
 

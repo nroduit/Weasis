@@ -24,7 +24,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.ZoomWin.SYNCH_TYPE;
+import org.weasis.core.ui.editor.image.ZoomWin.SyncType;
 
 /**
  * The Class PopUpMenuOnZoom.
@@ -89,7 +89,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(SYNCH_TYPE.ParentParameters);
+                zoomWin.setFreezeImage(SyncType.PARENT_PARAMETERS);
             }
         });
         jMenuImage.add(freezParams);
@@ -98,7 +98,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(SYNCH_TYPE.ParentImage);
+                zoomWin.setFreezeImage(SyncType.PARENT_IMAGE);
             }
         });
         jMenuImage.add(freeze);
@@ -148,7 +148,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         jCheckBoxMenutemSychronize.setSelected((Boolean) zoomWin.getActionValue(ZoomWin.SYNCH_CMD));
         jCheckBoxMenuItemDraw.setSelected((Boolean) zoomWin.getActionValue(ActionW.DRAW.cmd()));
         Object type = zoomWin.getActionValue(ZoomWin.FREEZE_CMD);
-        resetFreeze.setEnabled(SYNCH_TYPE.ParentParameters.equals(type) || SYNCH_TYPE.ParentImage.equals(type));
+        resetFreeze.setEnabled(SyncType.PARENT_PARAMETERS.equals(type) || SyncType.PARENT_IMAGE.equals(type));
 
         // Get current zoom magnitude
         boolean noselection = true;

@@ -16,7 +16,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.net.URI;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -46,7 +45,6 @@ import org.weasis.base.explorer.JIUtility;
 import org.weasis.base.explorer.Messages;
 import org.weasis.base.explorer.ThumbnailRenderer;
 import org.weasis.base.explorer.ToggleSelectionModel;
-import org.weasis.base.explorer.list.impl.JIListModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.media.data.Codec;
@@ -66,6 +64,9 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 @SuppressWarnings("serial")
 public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E> implements IThumbnailList<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AThumbnailList.class);
+
+    public static final String SECTION_CHANGED = "SECTION_CHANGED"; //$NON-NLS-1$
+    public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; //$NON-NLS-1$
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
@@ -251,35 +252,31 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
 
     private MediaSeries buildSeriesFromMediaElement(E mediaElement) {
         if (mediaElement != null) {
-            String cfile = getThumbnailListModel().getFileInCache(mediaElement.getFile().getAbsolutePath());
-            File file = cfile == null ? mediaElement.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
-            MediaReader reader = ViewerPluginBuilder.getMedia(file);
-            if (reader != null && file != null) {
+            MediaReader reader = mediaElement.getMediaReader();
 
-                TagW tname;
-                String tvalue;
+            TagW tname;
+            String tvalue;
 
-                Codec codec = reader.getCodec();
-                String sUID;
-                String gUID;
-                if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) { //$NON-NLS-1$
-                    if (reader.getMediaElement() == null) {
-                        // DICOM is not readable
-                        return null;
-                    }
-                    sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID"));
-                    gUID = (String) reader.getTagValue(TagW.get("PatientID"));
-                    tname = TagW.get("PatientName");
-                    tvalue = (String) reader.getTagValue(tname);
-                } else {
-                    sUID = mediaElement.getFile().getAbsolutePath();
-                    gUID = sUID;
-                    tname = TagW.FileName;
-                    tvalue = mediaElement.getFile().getName();
+            Codec codec = reader.getCodec();
+            String sUID;
+            String gUID;
+            if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) { //$NON-NLS-1$
+                if (reader.getMediaElement() == null) {
+                    // DICOM is not readable
+                    return null;
                 }
-
-                return ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
+                sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID"));
+                gUID = (String) reader.getTagValue(TagW.get("PatientID"));
+                tname = TagW.get("PatientName");
+                tvalue = (String) reader.getTagValue(tname);
+            } else {
+                sUID = mediaElement.getMediaURI().toString();
+                gUID = sUID;
+                tname = TagW.FileName;
+                tvalue = mediaElement.getName();
             }
+
+            return ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
         }
         return null;
     }
@@ -297,37 +294,33 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
             String gUID;
             ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>();
             for (E mediaElement : selMedias) {
-                String cfile = getThumbnailListModel().getFileInCache(mediaElement.getFile().getAbsolutePath());
-                File file = cfile == null ? mediaElement.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
-                MediaReader reader = ViewerPluginBuilder.getMedia(file);
-                if (reader != null && file != null) {
 
-                    TagW tname;
-                    String tvalue;
+                MediaReader reader = mediaElement.getMediaReader();
 
-                    Codec codec = reader.getCodec();
-                    if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) { //$NON-NLS-1$
-                        if (reader.getMediaElement() == null) {
-                            // DICOM is not readable
-                            return;
-                        }
-                        sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID"));
-                        gUID = (String) reader.getTagValue(TagW.get("PatientID"));
-                        tname = TagW.get("PatientName");
-                        tvalue = (String) reader.getTagValue(tname);
-                    } else {
-                        sUID = oneFile ? mediaElement.getFile().getAbsolutePath()
-                            : sUID == null ? UUID.randomUUID().toString() : sUID;
-                        gUID = sUID;
-                        tname = TagW.FileName;
-                        tvalue = oneFile ? mediaElement.getFile().getName() : sUID;
+                TagW tname;
+                String tvalue;
+
+                Codec codec = reader.getCodec();
+                if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) { //$NON-NLS-1$
+                    if (reader.getMediaElement() == null) {
+                        // DICOM is not readable
+                        return;
                     }
+                    sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID"));
+                    gUID = (String) reader.getTagValue(TagW.get("PatientID"));
+                    tname = TagW.get("PatientName");
+                    tvalue = (String) reader.getTagValue(tname);
+                } else {
+                    sUID = oneFile ? mediaElement.getMediaURI().toString()
+                        : sUID == null ? UUID.randomUUID().toString() : sUID;
+                    gUID = sUID;
+                    tname = TagW.FileName;
+                    tvalue = oneFile ? mediaElement.getName() : sUID;
+                }
 
-                    MediaSeries s =
-                        ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
-                    if (s != null && !list.contains(s)) {
-                        list.add(s);
-                    }
+                MediaSeries s = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
+                if (s != null && !list.contains(s)) {
+                    list.add(s);
                 }
             }
             if (!list.isEmpty()) {
@@ -385,36 +378,32 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
                         }
 
                         // Get only application readers from files
-                        String cfile = getThumbnailListModel().getFileInCache(m.getFile().getAbsolutePath());
-                        File file = cfile == null ? m.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
-                        MediaReader mreader = ViewerPluginBuilder.getMedia(file, false);
-                        if (mreader != null) {
-                            if (modeLayout) {
-                                MediaSeries<? extends MediaElement<?>> series = ViewerPluginBuilder
-                                    .buildMediaSeriesWithDefaultModel(mreader, groupUID, null, null, null);
+                        MediaReader mreader = m.getMediaReader();
+                        if (modeLayout) {
+                            MediaSeries<? extends MediaElement<?>> series = ViewerPluginBuilder
+                                .buildMediaSeriesWithDefaultModel(mreader, groupUID, null, null, null);
+                            if (series != null) {
+                                list.add(series);
+                            }
+                        } else {
+                            MediaSeries<? extends MediaElement<?>> series;
+                            if (list.isEmpty()) {
+                                series = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader);
                                 if (series != null) {
                                     list.add(series);
                                 }
                             } else {
-                                MediaSeries<? extends MediaElement<?>> series;
-                                if (list.isEmpty()) {
-                                    series = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader);
-                                    if (series != null) {
-                                        list.add(series);
-                                    }
-                                } else {
-                                    series = list.get(0);
-                                    if (series != null) {
-                                        MediaElement<?>[] ms = mreader.getMediaElement();
-                                        if (ms != null) {
-                                            for (MediaElement<?> media : ms) {
-                                                media.setTag(TagW.get("SeriesInstanceUID"),
-                                                    series.getTagValue(series.getTagID()));
-                                                URI uri = media.getMediaURI();
-                                                media.setTag(TagW.get("SOPInstanceUID"),
-                                                    uri == null ? UUID.randomUUID().toString() : uri.toString());
-                                                series.addMedia(media);
-                                            }
+                                series = list.get(0);
+                                if (series != null) {
+                                    MediaElement<?>[] ms = mreader.getMediaElement();
+                                    if (ms != null) {
+                                        for (MediaElement<?> media : ms) {
+                                            media.setTag(TagW.get("SeriesInstanceUID"),
+                                                series.getTagValue(series.getTagID()));
+                                            URI uri = media.getMediaURI();
+                                            media.setTag(TagW.get("SOPInstanceUID"),
+                                                uri == null ? UUID.randomUUID().toString() : uri.toString());
+                                            series.addMedia(media);
                                         }
                                     }
                                 }
@@ -529,7 +518,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
     public void listValueChanged(final ListSelectionEvent e) {
         this.lastSelectedDiskObject = null;
         setChanged();
-        notifyObservers(JIObservable.SECTION_CHANGED);
+        notifyObservers(SECTION_CHANGED);
         clearChanged();
     }
 
@@ -639,7 +628,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
         if (comp instanceof AThumbnailList) {
             int index = getSelectedIndex();
             E media = getSelectedValue();
-            MediaSeries series = buildSeriesFromMediaElement(media);
+            MediaSeries<?> series = buildSeriesFromMediaElement(media);
             if (series != null) {
                 GhostGlassPane glassPane = AppProperties.glassPane;
                 Icon icon = null;

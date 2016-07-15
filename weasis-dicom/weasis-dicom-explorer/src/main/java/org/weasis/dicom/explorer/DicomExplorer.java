@@ -183,21 +183,17 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final JComboBox<?> patientCombobox = new JComboBox<>(modelPatient);
     private final JComboBox<?> studyCombobox = new JComboBox<>(modelStudy);
     protected final PatientContainerPane patientContainer = new PatientContainerPane();
-    private final transient ItemListener patientChangeListener = new ItemListener() {
-
-        @Override
-        public void itemStateChanged(final ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                Object item = modelPatient.getSelectedItem();
-                if (item instanceof MediaSeriesGroupNode) {
-                    MediaSeriesGroupNode patient = (MediaSeriesGroupNode) item;
-                    selectPatient(patient);
-                } else if (item != null) {
-                    selectPatient(null);
-                }
-                patientContainer.revalidate();
-                patientContainer.repaint();
+    private final transient ItemListener patientChangeListener = e -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            Object item = modelPatient.getSelectedItem();
+            if (item instanceof MediaSeriesGroupNode) {
+                MediaSeriesGroupNode patient = (MediaSeriesGroupNode) item;
+                selectPatient(patient);
+            } else if (item != null) {
+                selectPatient(null);
             }
+            patientContainer.revalidate();
+            patientContainer.repaint();
         }
     };
     private final transient ItemListener studyItemListener = new ItemListener() {
@@ -499,7 +495,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
 
         List<PatientPane> getPatientPaneList() {
-            ArrayList<PatientPane> patientPaneList = new ArrayList<>();
+            List<PatientPane> patientPaneList = new ArrayList<>();
             for (Component c : this.getComponents()) {
                 if (c instanceof PatientPane) {
                     patientPaneList.add((PatientPane) c);

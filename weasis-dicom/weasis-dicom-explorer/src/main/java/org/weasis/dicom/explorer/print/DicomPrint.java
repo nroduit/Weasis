@@ -195,7 +195,7 @@ public class DicomPrint {
     }
 
     private void formatImage(ExportImage<? extends ImageElement> image, LayoutConstraints key, Point2D.Double pad) {
-        if (!printOptions.isShowingAnnotations() && image.getInfoLayer().isVisible()) {
+        if (!printOptions.isShowingAnnotations() && image.getInfoLayer().getVisible()) {
             image.getInfoLayer().setVisible(false);
         }
 

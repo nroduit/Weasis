@@ -45,15 +45,11 @@ public final class JIUtility {
     }
 
     public static Icon getSystemIcon(final MediaElement dObj) {
-        if (dObj.getFile().exists()) {
-            return FileSystemView.getFileSystemView().getSystemIcon(dObj.getFile());
-        } else {
-            return FileSystemView.getFileSystemView().getSystemIcon(USER_HOME); // $NON-NLS-1$
-        }
+        return getSystemIcon(dObj.getFileCache().getOriginalFile().get());
     }
 
     public static Icon getSystemIcon(final File f) {
-        if (f.exists()) {
+        if (f != null && f.exists()) {
             return FileSystemView.getFileSystemView().getSystemIcon(f);
         } else {
             return FileSystemView.getFileSystemView().getSystemIcon(USER_HOME); // $NON-NLS-1$

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
@@ -31,15 +32,14 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewButton;
-import org.weasis.core.ui.graphic.AnnotationGraphic;
-import org.weasis.core.ui.graphic.DragLayer;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.InvalidShapeException;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
-import org.weasis.core.ui.graphic.model.Layer;
-import org.weasis.core.ui.graphic.model.LayerModel;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
+import org.weasis.core.ui.model.layer.GraphicLayer;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.layer.imp.DragLayer;
+import org.weasis.core.ui.model.utils.GraphicUtil;
+import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PRSpecialElement;
@@ -47,7 +47,7 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.GraphicUtil;
+import org.weasis.dicom.explorer.PrGraphicUtil;
 
 public class PRManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
@@ -64,32 +64,24 @@ public class PRManager {
         reader.readSpatialTransformationModule();
         reader.readDisplayArea(img);
         reader.readGrayscaleSoftcopyModule(img);
-        ArrayList<Layer> layers = readGraphicAnnotation(view, reader, img);
+        List<String> layers = readGraphicAnnotation(view, reader, img);
         if (layers != null) {
             EventManager eventManager = EventManager.getInstance();
             SeriesViewerEvent event =
                 new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.ADD_LAYER);
-            AbstractLayerModel layerModel = view.getLayerModel();
-            ArrayList<AbstractLayer.Identifier> list = new ArrayList<>();
-            for (Layer layer : layers) {
-                list.add(layer.getIdentifier());
-                layerModel.addLayer((AbstractLayer) layer);
-                event.setShareObject(layer.getIdentifier());
+            for (String uid : layers) {
+                event.setShareObject(uid);
                 eventManager.fireSeriesViewerListeners(event);
             }
-            view.setActionsInView(PRManager.TAG_DICOM_LAYERS, list);
-            view.getLayerModel().SortLayersFromLevel();
+            view.setActionsInView(PRManager.TAG_DICOM_LAYERS, layers);
         }
     }
 
-    private static ArrayList<Layer> readGraphicAnnotation(View2d view, PresentationStateReader reader,
+    private static ArrayList<String> readGraphicAnnotation(View2d view, PresentationStateReader reader,
         DicomImageElement img) {
-        ArrayList<Layer> layers = null;
+        ArrayList<String> layers = null;
         Attributes dcmobj = reader.getDcmobj();
         if (dcmobj != null) {
-            // GraphicAnnotationModule[] gams = GraphicAnnotationModule.toGraphicAnnotationModules(dcmItems);
-            // Map<String, GraphicLayerModule> glms = GraphicLayerModule.toGraphicLayerMap(dcmItems);
-
             Sequence gams = dcmobj.getSequence(Tag.GraphicAnnotationSequence);
             Sequence layerSeqs = dcmobj.getSequence(Tag.GraphicLayerSequence);
 
@@ -123,7 +115,8 @@ public class PRManager {
                     }
                 }
 
-                layers = new ArrayList<>(gams.size());
+                layers = new ArrayList<>();
+
                 for (Attributes gram : gams) {
                     // TODO filter sop
                     Sequence refImgs = gram.getSequence(Tag.ReferencedImageSequence);
@@ -132,12 +125,13 @@ public class PRManager {
                     if (glm == null) {
                         continue;
                     }
-                    Identifier layerId = new Identifier(graphicLayerName, 310 + glm.getInt(Tag.GraphicLayerOrder, 0),
-                        graphicLayerName + " [DICOM]", true); //$NON-NLS-1$
-                    DragLayer layer = new DragLayer(view.getLayerModel(), layerId);
-                    // TODO should be an option
+
+                    GraphicLayer layer = new DragLayer(LayerType.DICOM_PR);
+                    layer.setName(graphicLayerName);
                     layer.setLocked(true);
-                    layers.add(layer);
+                    layer.setLevel(310 + glm.getInt(Tag.GraphicLayerOrder, 0));
+                    layers.add(layer.getUuid());
+
                     Color rgb = PresentationStateReader.getRGBColor(
                         glm.getInt(Tag.GraphicLayerRecommendedDisplayGrayscaleValue, 255),
                         DicomMediaUtils.getFloatArrayFromDicomElement(glm,
@@ -152,12 +146,12 @@ public class PRManager {
                             Graphic graphic;
                             try {
                                 graphic =
-                                    GraphicUtil.buildGraphicFromPR(go, rgb, false, width, height, true, inverse, false);
+                                    PrGraphicUtil.buildGraphic(go, rgb, false, width, height, true, inverse, false);
                                 if (graphic != null) {
-                                    layer.addGraphic(graphic);
+                                    GraphicUtil.addGraphicToModel(view, layer, graphic);
                                 }
                             } catch (InvalidShapeException e) {
-                                LOGGER.error("Cannot create graphic: {}", e.getMessage()); //$NON-NLS-1$
+                                LOGGER.error("Cannot create graphic: " + e.getMessage(), e); //$NON-NLS-1$
                             }
                         }
                     }
@@ -202,25 +196,31 @@ public class PRManager {
                                  */
                                 Double ptBox =
                                     rect == null ? ptAnchor : new Point2D.Double(rect.getCenterX(), rect.getCenterY());
-                                AnnotationGraphic line;
+                                Graphic line;
                                 try {
-                                    line = new AnnotationGraphic(
-                                        GraphicUtil.getBooleanValue(txo, Tag.AnchorPointVisibility) ? ptAnchor : null,
-                                        ptBox, 1.0f, rgb, true);
+                                    List<Point2D.Double> pts = new ArrayList<>(2);
+                                    pts.add(PrGraphicUtil.getBooleanValue(txo, Tag.AnchorPointVisibility) ? ptAnchor
+                                        : null);
+                                    pts.add(ptBox);
+                                    line = new AnnotationGraphic().buildGraphic(pts);
                                     line.setLabel(lines, view);
-                                    layer.addGraphic(line);
+                                    GraphicUtil.addGraphicToModel(view, layer, line);
                                 } catch (InvalidShapeException e) {
-                                    LOGGER.error("Cannot create annotation: {}", e.getMessage()); //$NON-NLS-1$
+                                    LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
                                 }
                             } else if (rect != null) {
-                                AnnotationGraphic g;
+                                Graphic g;
                                 try {
-                                    g = new AnnotationGraphic(null,
-                                        new Point2D.Double(rect.getCenterX(), rect.getCenterY()), 1.0f, rgb, true);
+                                    List<Point2D.Double> pts = new ArrayList<>(2);
+                                    pts.add(null);
+                                    pts.add(new Point2D.Double(rect.getCenterX(), rect.getCenterY()));
+                                    g = new AnnotationGraphic().buildGraphic(pts);
+                                    g.setPaint(rgb);
+                                    g.setLabelVisible(Boolean.TRUE);
                                     g.setLabel(lines, view);
-                                    layer.addGraphic(g);
+                                    GraphicUtil.addGraphicToModel(view, layer, g);
                                 } catch (InvalidShapeException e) {
-                                    LOGGER.error("Cannot create annotation: {}", e.getMessage()); //$NON-NLS-1$
+                                    LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
                                 }
                             }
                         }
@@ -235,18 +235,15 @@ public class PRManager {
 
     /** Indicate if the graphic is to be filled in */
 
-    public static void deleteDicomLayers(ArrayList<AbstractLayer.Identifier> layerIDs, LayerModel layerModel) {
-        if (layerIDs != null && layerModel != null) {
+    public static void deleteDicomLayers(List<String> layerUids, GraphicModel graphicManager) {
+        if (layerUids != null) {
             EventManager eventManager = EventManager.getInstance();
             SeriesViewerEvent event =
                 new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.REMOVE_LAYER);
-            for (Identifier id : layerIDs) {
-                AbstractLayer layer = layerModel.getLayer(id);
-                if (layer != null) {
-                    layerModel.removeLayer(layer);
-                    event.setShareObject(layer.getIdentifier());
-                    eventManager.fireSeriesViewerListeners(event);
-                }
+            for (String uid : layerUids) {
+                graphicManager.getModels().removeIf(m -> Objects.equals(m.getLayer().getUuid(), uid));
+                event.setShareObject(uid);
+                eventManager.fireSeriesViewerListeners(event);
             }
         }
     }
@@ -258,66 +255,61 @@ public class PRManager {
             List<PRSpecialElement> prList =
                 DicomModel.getPrSpecialElements(series, TagD.getTagValue(img, Tag.SOPInstanceUID, String.class),
                     key instanceof Integer ? (Integer) key + 1 : null);
-            if (prList != null && prList.size() > 0) {
-                if (prList.size() > 0) {
-
-                    Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
-                    if (!ActionState.NONE_SERIES.equals(oldPR)) {
-                        int index = prList.indexOf(oldPR);
-                        index = index == -1 ? 0 : index;
-                        // Set the previous selected value, otherwise set the more recent PR by default
-                        view.setPresentationState(prList.get(index));
-                    }
-
-                    int offset = series.size(null) > 1 ? 2 : 1;
-                    final Object[] items = new Object[prList.size() + offset];
-                    items[0] = ActionState.NONE;
-                    if (offset == 2) {
-                        items[1] = ActionState.NONE_SERIES;
-                    }
-                    for (int i = offset; i < items.length; i++) {
-                        items[i] = prList.get(i - offset);
-                    }
-                    ViewButton prButton = new ViewButton(new ShowPopup() {
-
-                        @Override
-                        public void showPopup(Component invoker, int x, int y) {
-                            Object pr = view.getActionValue(ActionW.PR_STATE.cmd());
-                            if (pr == null) {
-                                pr = ActionState.NONE;
-                            }
-                            pr = (pr instanceof PresentationStateReader) ? ((PresentationStateReader) pr).getDicom()
-                                : pr;
-                            JPopupMenu popupMenu = new JPopupMenu();
-                            TitleMenuItem itemTitle =
-                                new TitleMenuItem(ActionW.PR_STATE.getTitle(), popupMenu.getInsets());
-                            popupMenu.add(itemTitle);
-                            popupMenu.addSeparator();
-                            ButtonGroup groupButtons = new ButtonGroup();
-
-                            for (Object dcm : items) {
-                                final RadioMenuItem menuItem = new RadioMenuItem(dcm.toString(), null, dcm, dcm == pr);
-                                menuItem.addActionListener(new ActionListener() {
-
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        if (e.getSource() instanceof RadioMenuItem) {
-                                            RadioMenuItem item = (RadioMenuItem) e.getSource();
-                                            Object val = item.getUserObject();
-                                            view.setPresentationState(val);
-                                        }
-                                    }
-                                });
-                                groupButtons.add(menuItem);
-                                popupMenu.add(menuItem);
-                            }
-                            popupMenu.show(invoker, x, y);
-                        }
-                    }, View2d.PR_ICON);
-
-                    prButton.setVisible(true);
-                    return prButton;
+            if (!prList.isEmpty()) {
+                Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
+                if (!ActionState.NONE_SERIES.equals(oldPR)) {
+                    int index = prList.indexOf(oldPR);
+                    index = index == -1 ? 0 : index;
+                    // Set the previous selected value, otherwise set the more recent PR by default
+                    view.setPresentationState(prList.get(index));
                 }
+
+                int offset = series.size(null) > 1 ? 2 : 1;
+                final Object[] items = new Object[prList.size() + offset];
+                items[0] = ActionState.NONE;
+                if (offset == 2) {
+                    items[1] = ActionState.NONE_SERIES;
+                }
+                for (int i = offset; i < items.length; i++) {
+                    items[i] = prList.get(i - offset);
+                }
+                ViewButton prButton = new ViewButton(new ShowPopup() {
+
+                    @Override
+                    public void showPopup(Component invoker, int x, int y) {
+                        Object pr = view.getActionValue(ActionW.PR_STATE.cmd());
+                        if (pr == null) {
+                            pr = ActionState.NONE;
+                        }
+                        pr = (pr instanceof PresentationStateReader) ? ((PresentationStateReader) pr).getDicom() : pr;
+                        JPopupMenu popupMenu = new JPopupMenu();
+                        TitleMenuItem itemTitle = new TitleMenuItem(ActionW.PR_STATE.getTitle(), popupMenu.getInsets());
+                        popupMenu.add(itemTitle);
+                        popupMenu.addSeparator();
+                        ButtonGroup groupButtons = new ButtonGroup();
+
+                        for (Object dcm : items) {
+                            final RadioMenuItem menuItem = new RadioMenuItem(dcm.toString(), null, dcm, dcm == pr);
+                            menuItem.addActionListener(new ActionListener() {
+
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    if (e.getSource() instanceof RadioMenuItem) {
+                                        RadioMenuItem item = (RadioMenuItem) e.getSource();
+                                        Object val = item.getUserObject();
+                                        view.setPresentationState(val);
+                                    }
+                                }
+                            });
+                            groupButtons.add(menuItem);
+                            popupMenu.add(menuItem);
+                        }
+                        popupMenu.show(invoker, x, y);
+                    }
+                }, View2d.PR_ICON);
+
+                prButton.setVisible(true);
+                return prButton;
             }
         }
         return null;

@@ -24,10 +24,6 @@ public interface IThumbnailModel<E> extends ListModel<E>, Serializable {
 
     boolean isEmpty();
 
-    String getFileInCache(String cfile);
-
-    void putFileInCache(String cfile, String name);
-
     void notifyAsUpdated(int index);
 
     void addElement(final E obj);

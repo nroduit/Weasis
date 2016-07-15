@@ -12,10 +12,12 @@ package org.weasis.core.api.media.data;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.weasis.core.api.util.FileUtil;
@@ -29,28 +31,12 @@ public abstract class MediaElement<E> implements Tagable {
     // Key to identify the media (the URI passed to the Reader can contain several media elements)
     protected final Object key;
 
-    protected boolean localFile;
-    protected String name = ""; //$NON-NLS-1$
-    protected File file;
     private volatile boolean loading = false;
 
     public MediaElement(MediaReader<E> mediaIO, Object key) {
-        if (mediaIO == null) {
-            throw new IllegalArgumentException("mediaIO is null"); //$NON-NLS-1$
-        }
-        this.mediaIO = mediaIO;
+        this.mediaIO = Objects.requireNonNull(mediaIO);
         this.key = key;
         this.tags = Optional.ofNullable(mediaIO.getMediaFragmentTags(key)).orElse(new HashMap<TagW, Object>());
-        URI uri = mediaIO.getMediaFragmentURI(key);
-        if (uri == null) {
-            localFile = false;
-        } else {
-            localFile = uri.toString().startsWith("file:/") ? true : false; //$NON-NLS-1$
-            if (localFile) {
-                file = new File(uri);
-                name = file.getName();
-            }
-        }
     }
 
     public MediaReader<E> getMediaReader() {
@@ -101,22 +87,27 @@ public abstract class MediaElement<E> implements Tagable {
         tags.clear();
     }
 
-    public boolean isLocalFile() {
-        return localFile;
-    }
-
     public abstract void dispose();
 
     public URI getMediaURI() {
-        return mediaIO.getMediaFragmentURI(key);
+        return mediaIO.getUri();
     }
 
+    /**
+     * This file can be the result of a processing like downloading, tiling or uncompressing.
+     * 
+     * @return the final file that has been load by the reader.
+     */
     public File getFile() {
-        return file;
+        return mediaIO.getFileCache().getFinalFile();
+    }
+
+    public FileCache getFileCache() {
+        return mediaIO.getFileCache();
     }
 
     public String getName() {
-        return name;
+        return Paths.get(mediaIO.getUri()).getFileName().toString();
     }
 
     public Object getKey() {
@@ -124,21 +115,18 @@ public abstract class MediaElement<E> implements Tagable {
     }
 
     public boolean saveToFile(File output) {
-        return FileUtil.nioCopyFile(file, output);
+        if (mediaIO.getFileCache().isElementInMemory()) {
+            return mediaIO.buildFile(output);
+        }
+        return FileUtil.nioCopyFile(mediaIO.getFileCache().getFinalFile(), output);
     }
 
     public long getLength() {
-        if (localFile) {
-            return file.length();
-        }
-        return 0L;
+        return mediaIO.getFileCache().getLength();
     }
 
     public long getLastModified() {
-        if (localFile) {
-            return file.lastModified();
-        }
-        return 0L;
+        return mediaIO.getFileCache().getLastModified();
     }
 
     public String getMimeType() {

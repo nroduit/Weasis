@@ -681,7 +681,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             String referencedSeriesInstanceUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
             return DicomSpecialElement.getKoSpecialElements(specialElementList, referencedSeriesInstanceUID);
         }
-        return null;
+        return Collections.emptyList();
     }
 
     public static Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
@@ -693,7 +693,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             String referencedSeriesInstanceUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
             return DicomSpecialElement.getRejectionKoSpecialElements(specialElementList, referencedSeriesInstanceUID);
         }
-        return null;
+        return Collections.emptyList();
     }
 
     public static RejectedKOSpecialElement getRejectionKoSpecialElement(MediaSeries<DicomImageElement> dicomSeries,
@@ -714,29 +714,30 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         // Get all DicomSpecialElement at patient level
         List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
-        if (specialElementList != null) {
+        if (!specialElementList.isEmpty()) {
             String referencedSeriesInstanceUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
             return DicomSpecialElement.getPRSpecialElements(specialElementList, referencedSeriesInstanceUID, sopUID,
                 frameNumber);
         }
-        return null;
+        return Collections.emptyList();
     }
 
     public static List<DicomSpecialElement> getSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {
         if (dicomSeries == null) {
-            return null;
+            return Collections.emptyList();
         }
 
+        List<DicomSpecialElement> list = null;
         DataExplorerModel model = (DataExplorerModel) dicomSeries.getTagValue(TagW.ExplorerModel);
 
         if (model instanceof DicomModel) {
             MediaSeriesGroup patientGroup = ((DicomModel) model).getParent(dicomSeries, DicomModel.patient);
 
             if (patientGroup != null) {
-                return (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+                list = (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
             }
         }
-        return null;
+        return list == null ? Collections.emptyList() : list;
     }
 
     public static <E> List<E> getSpecialElements(MediaSeriesGroup group, Class<E> clazz) {
@@ -752,7 +753,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 return list;
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     public static <E> E getFirstSpecialElement(MediaSeriesGroup group, Class<E> clazz) {

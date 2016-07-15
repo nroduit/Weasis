@@ -1,6 +1,7 @@
 package org.weasis.core.ui.serialize;
 
 import java.awt.geom.Point2D;
+import java.util.Objects;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
@@ -18,6 +19,9 @@ public class PointAdapter {
 
         @Override
         public Pt marshal(Point2D v) throws Exception {
+            if(Objects.isNull(v)) {
+                return null;
+            }
             Pt p = new Pt();
             p.x = v.getX();
             p.y = v.getY();

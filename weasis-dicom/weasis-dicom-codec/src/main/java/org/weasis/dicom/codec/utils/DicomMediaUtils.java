@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -559,9 +561,9 @@ public class DicomMediaUtils {
                 LOGGER.error("Cannot read {} ", TagUtils.toString(tag), e); //$NON-NLS-1$
             }
             if (signed && (result & (1 << (stored - 1))) != 0) {
-                    int andmask = (1 << stored) - 1;
-                    int ormask = ~andmask;
-                    result |= ormask;
+                int andmask = (1 << stored) - 1;
+                int ormask = ~andmask;
+                result |= ormask;
             }
         } else if ((!signed && vr != VR.US) || (signed && vr != VR.SS)) {
             vr = signed ? VR.SS : VR.US;
@@ -669,6 +671,18 @@ public class DicomMediaUtils {
                     tagable.setTag(TagW.SlicePosition, slicePosition);
                 }
             }
+        }
+    }
+
+    public static void buildSeriesReferences(Tagable tagable, Attributes attributes) {
+        Sequence seq = attributes.getSequence(Tag.ReferencedSeriesSequence);
+        if (Objects.nonNull(seq)) {
+            Attributes[] ref = new Attributes[seq.size()];
+            for (int i = 0; i < ref.length; i++) {
+                ref[i] = new Attributes(seq.get(i));
+            }
+
+            tagable.setTagNoNull(TagD.get(Tag.ReferencedSeriesSequence), ref);
         }
     }
 
@@ -1179,6 +1193,25 @@ public class DicomMediaUtils {
                 }
             }
         }
+    }
+
+    public static Attributes createDicomPR(Attributes dicomSourceAttribute, String seriesInstanceUID) {
+
+        final int[] patientStudyAttributes = { Tag.SpecificCharacterSet, Tag.StudyDate, Tag.StudyTime,
+            Tag.StudyDescription, Tag.AccessionNumber, Tag.IssuerOfAccessionNumberSequence, Tag.ReferringPhysicianName,
+            Tag.PatientName, Tag.PatientID, Tag.IssuerOfPatientID, Tag.PatientBirthDate, Tag.PatientSex,
+            Tag.AdditionalPatientHistory, Tag.StudyInstanceUID, Tag.StudyID };
+        Arrays.sort(patientStudyAttributes);
+        Attributes pr = new Attributes(dicomSourceAttribute, patientStudyAttributes);
+
+        // TODO implement other ColorSoftcopyPresentationStateStorageSOPClass...
+        pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorageSOPClass);
+        pr.setString(Tag.SOPInstanceUID, VR.UI, UIDUtils.createUID());
+        pr.setDate(Tag.PresentationCreationDateAndTime, new Date());
+        pr.setString(Tag.Modality, VR.CS, "PR"); //$NON-NLS-1$
+        pr.setString(Tag.SeriesInstanceUID, VR.UI,
+            StringUtil.hasText(seriesInstanceUID) ? seriesInstanceUID : UIDUtils.createUID());
+        return pr;
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

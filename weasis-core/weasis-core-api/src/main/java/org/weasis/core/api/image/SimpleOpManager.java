@@ -196,6 +196,18 @@ public class SimpleOpManager implements OpManager {
         return null;
     }
 
+    /**
+     * Allow to remove the preprocessing cache
+     * 
+     * @param imgSource
+     */
+    public void resetLastNodeOutputImage() {
+        ImageOpNode node = getLastNode();
+        if (node != null) {
+            node.setParam(Param.OUTPUT_IMG, null);
+        }
+    }
+
     @Override
     public RenderedImage process() {
         RenderedImage source = getFirstNodeInputImage();
