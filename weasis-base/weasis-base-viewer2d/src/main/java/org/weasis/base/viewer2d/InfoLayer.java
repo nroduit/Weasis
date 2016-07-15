@@ -19,6 +19,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
@@ -40,13 +41,14 @@ import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
+import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 
 /**
  * The Class InfoLayer.
  *
  * @author Nicolas Roduit
  */
-public class InfoLayer implements LayerAnnotation {
+public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     private static final long serialVersionUID = 1782300490253793711L;
     private final HashMap<String, Boolean> displayPreferences = new HashMap<>();
     private boolean visible = true;
@@ -58,6 +60,7 @@ public class InfoLayer implements LayerAnnotation {
     private final Rectangle preloadingProgressBound;
     private int border = BORDER;
     private boolean showBottomScale = true;
+    private String name;
 
     public InfoLayer(DefaultView2d view2DPane) {
         this.view2DPane = view2DPane;
@@ -105,15 +108,15 @@ public class InfoLayer implements LayerAnnotation {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.error_msg"); //$NON-NLS-1$
             float y = midy;
-            DefaultGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y,
-                Color.RED);
+            DefaultGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
+                y, Color.RED);
             String[] desc = image.getMediaReader().getReaderDescription();
             if (desc != null) {
                 for (String str : desc) {
                     if (StringUtil.hasText(str)) {
                         y += fontHeight;
-                        DefaultGraphicLabel.paintColorFontOutline(g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2, y,
-                            Color.RED);
+                        DefaultGraphicLabel.paintColorFontOutline(g2, str,
+                            midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
                     }
                 }
             }
@@ -396,7 +399,8 @@ public class InfoLayer implements LayerAnnotation {
 
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
-            DefaultGraphicLabel.paintFontOutline(g2d, str + " " + unit[0].getAbbreviation(), (int) posx, (int) (posy - 5)); //$NON-NLS-1$
+            DefaultGraphicLabel.paintFontOutline(g2d, str + " " + unit[0].getAbbreviation(), (int) posx, //$NON-NLS-1$
+                (int) (posy - 5));
         }
 
     }
@@ -482,7 +486,7 @@ public class InfoLayer implements LayerAnnotation {
 
     @Override
     public Integer getLevel() {
-        return 0;
+        return getType().level();
     }
 
     @Override
@@ -542,21 +546,13 @@ public class InfoLayer implements LayerAnnotation {
     }
 
     @Override
-    public int compareTo(Layer o) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public String getUuid() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void setUuid(String uuid) {
-        // TODO Auto-generated method stub
-
+    public int compareTo(Layer obj) {
+        if (obj == null) {
+            return 1;
+        }
+        int thisVal = this.getLevel();
+        int anotherVal = obj.getLevel();
+        return thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1);
     }
 
     @Override
@@ -566,18 +562,16 @@ public class InfoLayer implements LayerAnnotation {
 
     @Override
     public void setType(LayerType type) {
-        // Do nothing
+        // Cannot change this type
     }
 
     @Override
     public void setName(String graphicLayerName) {
-        // TODO Auto-generated method stub
-
+        this.name = graphicLayerName;
     }
 
     @Override
     public String getName() {
-        // TODO Auto-generated method stub
-        return null;
+        return Optional.ofNullable(name).orElse(getType().toString());
     }
 }

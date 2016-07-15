@@ -46,6 +46,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
     public Transferable createTransferable(JComponent comp) {
         // Clear
         disOp = null;
+        // TODO make only one export function with a dialog to choose to disable zoom (real size), add graphics,
         // anonymize and other default remove annotations
         if (comp instanceof Image2DViewer) {
             Image2DViewer<?> view2DPane = (Image2DViewer<?>) comp;

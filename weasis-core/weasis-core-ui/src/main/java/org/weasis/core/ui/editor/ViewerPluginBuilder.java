@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -34,8 +36,11 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.serialize.XmlSerializer;
 
 public class ViewerPluginBuilder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ViewerPluginBuilder.class);
+
     public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer"; //$NON-NLS-1$
     public static final String BEST_DEF_LAYOUT = "best.def.layout"; //$NON-NLS-1$
     public static final String OPEN_IN_SELECTION = "add.in.selected.view"; // For only one image //$NON-NLS-1$
@@ -225,7 +230,6 @@ public class ViewerPluginBuilder {
         }
 
         try {
-
             if (series == null) {
                 series = reader.getMediaSeries();
                 series.setTag(TagW.ExplorerModel, DefaultDataModel);
@@ -245,13 +249,12 @@ public class ViewerPluginBuilder {
 
             for (MediaElement<?> media : medias) {
                 if (media instanceof ImageElement) {
-                    // TODO
-                    //XmlSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
+                    XmlSerializer.readMeasurementGraphics(new File(media.getFile().getPath() + ".xml"));
                 }
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Build series error", e);
         } finally {
             reader.reset();
         }

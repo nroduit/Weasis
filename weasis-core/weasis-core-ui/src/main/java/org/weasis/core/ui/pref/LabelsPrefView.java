@@ -88,7 +88,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         panel.add(lblNewLabel);
         ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.graphicList);
         tools.remove(0);
-        comboBoxTool = new JComboBox<>(tools.toArray(new Graphic[0]));
+        comboBoxTool = new JComboBox<>(tools.stream().toArray(Graphic[]::new));
         comboBoxTool.setMaximumRowCount(12);
         selectTool((Graphic) comboBoxTool.getSelectedItem());
         comboBoxTool.addItemListener(toolsListener);

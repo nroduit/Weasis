@@ -107,7 +107,8 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     private int border = BORDER;
     private double thickLength = 15.0;
     private boolean showBottomScale = true;
-    private final LayerType type = LayerType.ANNOTATION;
+
+    private String name;
 
     public InfoLayer(DefaultView2d<DicomImageElement> view2DPane) {
         this.view2DPane = view2DPane;
@@ -204,14 +205,14 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.msg_not_read"); //$NON-NLS-1$
             float y = midy;
-            DefaultGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y,
-                Color.RED);
+            DefaultGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
+                y, Color.RED);
             String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
             if (StringUtil.hasText(tsuid)) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid; //$NON-NLS-1$
                 y += fontHeight;
-                DefaultGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2, y,
-                    Color.RED);
+                DefaultGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2,
+                    y, Color.RED);
             }
 
             String[] desc = image.getMediaReader().getReaderDescription();
@@ -219,8 +220,8 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 for (String str : desc) {
                     if (StringUtil.hasText(str)) {
                         y += fontHeight;
-                        DefaultGraphicLabel.paintColorFontOutline(g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2, y,
-                            Color.RED);
+                        DefaultGraphicLabel.paintColorFontOutline(g2, str,
+                            midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
                     }
                 }
             }
@@ -276,8 +277,8 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             if (koElement != null) {
                 float y = midy;
                 String message = "Not a valid image: " + koElement.getDocumentTitle();
-                DefaultGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y,
-                    Color.RED);
+                DefaultGraphicLabel.paintColorFontOutline(g2, message,
+                    midx - g2.getFontMetrics().stringWidth(message) / 2, y, Color.RED);
             }
         }
 
@@ -564,8 +565,9 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 g2.setFont(oldFont);
             }
 
-            DefaultGraphicLabel.paintFontOutline(g2, orientation.toString(), border, bound.height - border - 1.5f); // -1.5 for
-                                                                                                             // outline
+            DefaultGraphicLabel.paintFontOutline(g2, orientation.toString(), border, bound.height - border - 1.5f); // -1.5
+                                                                                                                    // for
+            // outline
         } else {
             positions[0] = new Point2D.Float(border, border);
             positions[1] = new Point2D.Float(bound.width - border, border);
@@ -1387,7 +1389,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
     @Override
     public Integer getLevel() {
-        return 0;
+        return getType().level();
     }
 
     @Override
@@ -1475,30 +1477,32 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     }
 
     @Override
-    public int compareTo(Layer o) {
-        // TODO Auto-generated method stub
-        return 0;
+    public int compareTo(Layer obj) {
+        if (obj == null) {
+            return 1;
+        }
+        int thisVal = this.getLevel();
+        int anotherVal = obj.getLevel();
+        return thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1);
     }
 
     @Override
     public LayerType getType() {
-        return type;
+        return LayerType.ANNOTATION;
     }
 
     @Override
     public void setType(LayerType type) {
-        // Do nothing
+        // Cannot change this type
     }
 
     @Override
     public void setName(String graphicLayerName) {
-        // TODO Auto-generated method stub
-
+        this.name = graphicLayerName;
     }
 
     @Override
     public String getName() {
-        // TODO Auto-generated method stub
-        return null;
+        return Optional.ofNullable(name).orElse(getType().toString());
     }
 }

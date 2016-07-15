@@ -14,7 +14,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
-import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.Point2D;
@@ -166,59 +165,5 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     @Override
     public void enableMouseAndKeyListener(MouseActions mouseActions) {
         // Do nothing
-    }
-
-    @Override
-    public void zoom(Double viewScale) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public double viewToModelX(Double viewX) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double viewToModelY(Double viewY) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double viewToModelLength(Double viewLength) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double modelToViewX(Double modelX) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double modelToViewY(Double modelY) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public double modelToViewLength(Double modelLength) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public Point2D getImageCoordinatesFromMouse(Integer x, Integer y) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Point getMouseCoordinatesFromImage(Double x, Double y) {
-        // TODO Auto-generated method stub
-        return null;
     }
 }

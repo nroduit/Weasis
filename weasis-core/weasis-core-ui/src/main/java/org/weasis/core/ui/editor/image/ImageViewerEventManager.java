@@ -453,22 +453,23 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
 
-    public abstract boolean updateComponentsListener(ViewCanvas<E> IViewCanvas);
+    public abstract boolean updateComponentsListener(ViewCanvas<E> viewCanvas);
 
     private static double roundAndCropViewScale(double viewScale, double minViewScale, double maxViewScale) {
-        viewScale *= 1000.0;
-        double v = Math.floor(viewScale);
-        if (viewScale - v >= 0.5) {
+        double ratio = viewScale;
+        ratio *= 1000.0;
+        double v = Math.floor(ratio);
+        if (ratio - v >= 0.5) {
             v += 0.5;
         }
-        viewScale = v / 1000.0;
-        if (viewScale < minViewScale) {
-            viewScale = minViewScale;
+        ratio = v / 1000.0;
+        if (ratio < minViewScale) {
+            ratio = minViewScale;
         }
-        if (viewScale > maxViewScale) {
-            viewScale = maxViewScale;
+        if (ratio > maxViewScale) {
+            ratio = maxViewScale;
         }
-        return viewScale;
+        return ratio;
     }
 
     /** Fire property change event. */
@@ -548,10 +549,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         if (view != null) {
             ViewerToolBar<E> toolBar = view.getViewerToolBar();
             if (toolBar != null) {
-                MouseActions mouseActions = getMouseActions();
-                if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
-                    mouseActions.setAction(MouseActions.LEFT, command);
-                    view.setMouseActions(mouseActions);
+                MouseActions mActions = getMouseActions();
+                if (!command.equals(mActions.getAction(MouseActions.LEFT))) {
+                    mActions.setAction(MouseActions.LEFT, command);
+                    view.setMouseActions(mActions);
                     toolBar.changeButtonState(MouseActions.LEFT, command);
                 }
             }
@@ -645,6 +646,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                         panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
                     }
                 } else if (Mode.Stack.equals(synch.getMode())) {
+                    // TODO if Pan is activated than rotation is required
                     boolean hasLink = false;
                     for (int i = 0; i < panes.size(); i++) {
                         boolean synchByDefault = isCompatible(viewPane.getSeries(), panes.get(i).getSeries());
