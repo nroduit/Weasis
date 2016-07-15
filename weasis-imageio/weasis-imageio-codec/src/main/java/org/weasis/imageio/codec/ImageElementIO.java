@@ -69,6 +69,8 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     public ImageElementIO(URI media, String mimeType, Codec codec) {
         this.uri = Objects.requireNonNull(media);
         this.fileCache = new FileCache(this);
+        // TODO should be set in caller
+        this.fileCache.setRequireTransformation(true);
         if (mimeType == null) {
             this.mimeType = MimeInspector.UNKNOWN_MIME_TYPE;
         } else if ("image/x-ms-bmp".equals(mimeType)) { //$NON-NLS-1$

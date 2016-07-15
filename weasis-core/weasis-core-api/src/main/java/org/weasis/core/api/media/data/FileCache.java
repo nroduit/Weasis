@@ -14,7 +14,7 @@ public class FileCache {
 
     public FileCache(MediaReader<?> reader) {
         this.reader = Objects.requireNonNull(reader);
-        this.requireTransformation = true;
+        this.requireTransformation = false;
     }
 
     public boolean isLocalFile() {

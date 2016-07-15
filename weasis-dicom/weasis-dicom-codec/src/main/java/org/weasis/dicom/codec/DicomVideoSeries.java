@@ -71,7 +71,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
                     Fragments fragments = (Fragments) pixdata;
                     // Should have only 2 fragments: 1) compression marker 2) video stream
                     // One fragment shall contain the whole video stream.
-                    // see http://dicom.nema.org/MEDICAL/Dicom/current/output/chtml/part05/sect_8.2.5.html
+                    // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.5.html
                     for (Object data : fragments) {
                         if (data instanceof BulkData) {
                             BulkData bulkData = (BulkData) data;
