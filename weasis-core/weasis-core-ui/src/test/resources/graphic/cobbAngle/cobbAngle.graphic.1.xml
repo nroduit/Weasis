@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cobbAngle fill="false" showLabel="true" thickness="1.0"
+	uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Angle : 115 deg</label>
+	</label>
+	<pts>
+		<pt x="1770.5" y="1435.0" />
+		<pt x="1765.5" y="1445.0" />
+		<pt x="1611.5" y="1590.0" />
+		<pt x="1575.5" y="1589.0" />
+		<pt x="1637.1255967238944" y="1500.8183122461598" />
+	</pts>
+</cobbAngle>
