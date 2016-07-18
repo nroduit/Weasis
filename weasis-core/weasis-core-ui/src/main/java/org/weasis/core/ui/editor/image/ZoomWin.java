@@ -56,7 +56,6 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.pref.ZoomSetting;
@@ -109,7 +108,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
         this.popup = new PopUpMenuOnZoom(this);
         this.popup.setInvoker(this);
-        this.setCursor(GraphicModel.MOVE_CURSOR);
+        this.setCursor(DefaultView2d.MOVE_CURSOR);
 
         ZoomSetting z = manager.getZoomSetting();
         OpManager disOp = getDisplayOpManager();

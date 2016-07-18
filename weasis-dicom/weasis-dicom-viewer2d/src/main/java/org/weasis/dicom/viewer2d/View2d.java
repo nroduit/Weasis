@@ -100,7 +100,7 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
-import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
@@ -109,7 +109,6 @@ import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineWithGapGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.ui.model.utils.GraphicUtil;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -775,7 +774,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         }
                     }
 
-                    GraphicLayer layer = GraphicUtil.getOrBuildCrosslinesLayer(this);
+                    GraphicLayer layer = AbstractGraphicModel.getOrBuildLayer(this, LayerType.CROSSLINES);
                     // IntersectSlice: display a line representing the center of the slice
                     IntersectSlice slice = new IntersectSlice(sliceGeometry);
                     if (firstImage != null && firstImage != lastImage) {
@@ -830,7 +829,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // Set the butonMask to 0 of all the actions
         resetMouseAdapter();
 
-        this.setCursor(GraphicModel.DEFAULT_CURSOR);
+        this.setCursor(DefaultView2d.DEFAULT_CURSOR);
 
         addMouseAdapter(actions.getLeft(), InputEvent.BUTTON1_DOWN_MASK); // left mouse button
         if (actions.getMiddle().equals(actions.getLeft())) {
@@ -927,7 +926,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         DicomImageElement image = this.getImage();
         if (image != null) {
             graphicManager.deleteByLayerType(LayerType.CROSSLINES);
-            GraphicLayer layer = GraphicUtil.getOrBuildCrosslinesLayer(this);
+            GraphicLayer layer = AbstractGraphicModel.getOrBuildLayer(this, LayerType.CROSSLINES);
             GeometryOfSlice sliceGeometry = image.getDispSliceGeometry();
             if (sliceGeometry != null) {
                 SliceOrientation sliceOrientation = this.getSliceOrientation();
@@ -1143,12 +1142,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
                 menuItem = new JMenuItem(Messages.getString("View2d.cut")); //$NON-NLS-1$
                 menuItem.addActionListener(e -> {
-                    GraphicModel.GRAPHIC_CLIPBOARD.setGraphics(selected);
+                    DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected);
                     View2d.this.getGraphicManager().deleteSelectedGraphics(View2d.this, false);
                 });
                 popupMenu.add(menuItem);
                 menuItem = new JMenuItem(Messages.getString("View2d.copy")); //$NON-NLS-1$
-                menuItem.addActionListener(e -> GraphicModel.GRAPHIC_CLIPBOARD.setGraphics(selected));
+                menuItem.addActionListener(e -> DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected));
                 popupMenu.add(menuItem);
                 popupMenu.add(new JSeparator());
             }
@@ -1251,7 +1250,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             count = popupMenu.getComponentCount();
         }
 
-        if (GraphicModel.GRAPHIC_CLIPBOARD.hasGraphics()) {
+        if (DefaultView2d.GRAPHIC_CLIPBOARD.hasGraphics()) {
             JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
             menuItem.addActionListener(e -> copyGraphicsFromClipboard());
             popupMenu.add(menuItem);

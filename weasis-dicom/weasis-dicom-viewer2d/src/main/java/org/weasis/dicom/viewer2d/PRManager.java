@@ -32,13 +32,13 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewButton;
+import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DragLayer;
-import org.weasis.core.ui.model.utils.GraphicUtil;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -148,7 +148,7 @@ public class PRManager {
                                 graphic =
                                     PrGraphicUtil.buildGraphic(go, rgb, false, width, height, true, inverse, false);
                                 if (graphic != null) {
-                                    GraphicUtil.addGraphicToModel(view, layer, graphic);
+                                    AbstractGraphicModel.addGraphicToModel(view, layer, graphic);
                                 }
                             } catch (InvalidShapeException e) {
                                 LOGGER.error("Cannot create graphic: " + e.getMessage(), e); //$NON-NLS-1$
@@ -204,7 +204,7 @@ public class PRManager {
                                     pts.add(ptBox);
                                     line = new AnnotationGraphic().buildGraphic(pts);
                                     line.setLabel(lines, view);
-                                    GraphicUtil.addGraphicToModel(view, layer, line);
+                                    AbstractGraphicModel.addGraphicToModel(view, layer, line);
                                 } catch (InvalidShapeException e) {
                                     LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
                                 }
@@ -218,7 +218,7 @@ public class PRManager {
                                     g.setPaint(rgb);
                                     g.setLabelVisible(Boolean.TRUE);
                                     g.setLabel(lines, view);
-                                    GraphicUtil.addGraphicToModel(view, layer, g);
+                                    AbstractGraphicModel.addGraphicToModel(view, layer, g);
                                 } catch (InvalidShapeException e) {
                                     LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
                                 }

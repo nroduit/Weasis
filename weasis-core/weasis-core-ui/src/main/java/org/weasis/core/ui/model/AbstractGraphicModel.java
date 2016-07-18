@@ -28,10 +28,13 @@ import javax.xml.bind.annotation.XmlType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.Canvas;
+import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -55,8 +58,8 @@ import org.weasis.core.ui.model.graphic.imp.line.ParallelLineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PerpendicularLineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
-import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
+import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DragLayer;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -212,7 +215,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @Override
     public Optional<GraphicLayer> findLayerByType(LayerType type) {
-        // TODO can be multiple ???
+        Objects.requireNonNull(type);
         return layers.stream().filter(isLayerTypeEquals(type)).findFirst();
     }
 
@@ -520,11 +523,11 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         Rectangle2D bound = area.getBounds2D();
 
         g2d.translate(0.5, 0.5);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialiasingOn);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
         // g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         models.forEach(g -> applyPaint(g, g2d, transform, bound));
         // g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialiasingOff);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
         g2d.translate(-0.5, -0.5);
     }
 
@@ -625,12 +628,55 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         return selectedGraphicsListeners;
     }
 
+    public static Graphic drawFromCurrentGraphic(ViewCanvas canvas) {
+        Objects.requireNonNull(canvas);
+        GraphicModel modelList = canvas.getGraphicManager();
+        Objects.requireNonNull(modelList);
+    
+        Graphic newGraphic =
+            Optional.ofNullable(modelList.getCreateGraphic()).orElse(MeasureToolBar.selectionGraphic);
+        GraphicLayer layer = canvas.getGraphicManager().findLayerByType(newGraphic.getLayerType())
+            .orElse(new DragLayer(newGraphic.getLayerType()));
+    
+        if (!layer.getVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAW.cmd())) {
+            JOptionPane.showMessageDialog(canvas.getJComponent(), Messages.getString("AbstractLayerModel.msg_not_vis"), //$NON-NLS-1$
+                Messages.getString("AbstractLayerModel.draw"), //$NON-NLS-1$
+                JOptionPane.ERROR_MESSAGE);
+            return null;
+        } else {
+            Graphic graph = newGraphic.copy();
+            graph.updateLabel(Boolean.TRUE, canvas);
+            graph.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
+            graph.setLayer(layer);
+            canvas.getGraphicManager().addGraphic(graph);
+            return graph;
+        }
+    }
+
+    public static void addGraphicToModel(ViewCanvas canvas, GraphicLayer layer, Graphic graphic) {
+        GraphicModel gm = canvas.getGraphicManager();
+        graphic.updateLabel(Boolean.TRUE, canvas);
+        graphic.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
+        if (layer == null) {
+            layer =  getOrBuildLayer(canvas, graphic.getLayerType());
+        }
+        graphic.setLayer(layer);
+        gm.addGraphic(graphic);
+    }
+
+    public static void addGraphicToModel(ViewCanvas canvas, Graphic graphic) {
+        AbstractGraphicModel.addGraphicToModel(canvas, null, graphic);
+    }
+
+    public static GraphicLayer getOrBuildLayer(ViewCanvas canvas, LayerType layerType) {
+        return canvas.getGraphicManager().findLayerByType(layerType).orElse(new DragLayer(layerType));
+    }
+
     private static Predicate<GraphicLayer> isLayerTypeEquals(LayerType type) {
         return layer -> Objects.equals(layer.getType(), type);
     }
 
     private static Predicate<Graphic> isModelLayerTypeEquals(LayerType type) {
-        // TODO possible NPE
         return g -> Objects.equals(g.getLayer().getType(), type);
     }
 

@@ -38,7 +38,6 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
-import org.weasis.core.ui.model.utils.GraphicUtil;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 
@@ -273,6 +272,16 @@ public class GraphicsPane extends JComponent implements Canvas {
         return DefaultViewModel.cropViewScale(viewScale, viewModel.getViewScaleMin(), viewModel.getViewScaleMax());
     }
 
+    public static void repaint(Canvas canvas, Rectangle rectangle) {
+        if (rectangle != null) {
+            // Add the offset of the canvas
+            double viewScale = canvas.getViewModel().getViewScale();
+            int x = (int) (rectangle.x - canvas.getViewModel().getModelOffsetX() * viewScale);
+            int y = (int) (rectangle.y - canvas.getViewModel().getModelOffsetY() * viewScale);
+            canvas.getJComponent().repaint(new Rectangle(x, y, rectangle.width, rectangle.height));
+        }
+    }
+
     // /////////////////////////////////////////////////////////////////////////////////////
     // Inner Classes
     /**
@@ -406,7 +415,7 @@ public class GraphicsPane extends JComponent implements Canvas {
 
         public void removeGraphicAndRepaint(Graphic graphic) {
             removeGraphic(graphic);
-            GraphicUtil.repaint(GraphicsPane.this,
+            GraphicsPane.repaint(GraphicsPane.this,
                 graphic.getTransformedBounds(graphic.getShape(), getAffineTransform()));
         }
 
@@ -430,16 +439,16 @@ public class GraphicsPane extends JComponent implements Canvas {
                 if (oldShape == null) {
                     if (shape != null) {
                         Rectangle rect = graphic.getTransformedBounds(shape, transform);
-                        GraphicUtil.repaint(GraphicsPane.this, rect);
+                        GraphicsPane.repaint(GraphicsPane.this, rect);
                     }
                 } else {
                     if (shape == null) {
                         Rectangle rect = graphic.getTransformedBounds(oldShape, transform);
-                        GraphicUtil.repaint(GraphicsPane.this, rect);
+                        GraphicsPane.repaint(GraphicsPane.this, rect);
                     } else {
                         Rectangle rect = rectangleUnion(graphic.getTransformedBounds(oldShape, transform),
                             graphic.getTransformedBounds(shape, transform));
-                        GraphicUtil.repaint(GraphicsPane.this, rect);
+                        GraphicsPane.repaint(GraphicsPane.this, rect);
                     }
                 }
             }
@@ -455,13 +464,13 @@ public class GraphicsPane extends JComponent implements Canvas {
                     if (!newNull) {
                         Rectangle2D rect = graphic.getTransformedBounds(newLabel, transform);
                         GeomUtil.growRectangle(rect, 2);
-                        GraphicUtil.repaint(GraphicsPane.this, rect.getBounds());
+                        GraphicsPane.repaint(GraphicsPane.this, rect.getBounds());
                     }
                 } else {
                     if (newNull) {
                         Rectangle2D rect = graphic.getTransformedBounds(oldLabel, transform);
                         GeomUtil.growRectangle(rect, 2);
-                        GraphicUtil.repaint(GraphicsPane.this, rect.getBounds());
+                        GraphicsPane.repaint(GraphicsPane.this, rect.getBounds());
                     } else {
                         Rectangle2D newRect = graphic.getTransformedBounds(newLabel, transform);
                         GeomUtil.growRectangle(newRect, 2);
@@ -470,7 +479,7 @@ public class GraphicsPane extends JComponent implements Canvas {
                         GeomUtil.growRectangle(oldRect, 2);
 
                         Rectangle rect = rectangleUnion(oldRect.getBounds(), newRect.getBounds());
-                        GraphicUtil.repaint(GraphicsPane.this, rect);
+                        GraphicsPane.repaint(GraphicsPane.this, rect);
                     }
                 }
             }

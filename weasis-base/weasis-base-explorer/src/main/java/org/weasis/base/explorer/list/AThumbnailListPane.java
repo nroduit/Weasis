@@ -15,7 +15,7 @@ import javax.swing.event.ListSelectionEvent;
 import org.weasis.base.explorer.JIExplorerContext;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.util.ThreadUtil;
-import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 @SuppressWarnings("serial")
 public abstract class AThumbnailListPane<E extends MediaElement<?>> extends JScrollPane
@@ -37,12 +37,12 @@ public abstract class AThumbnailListPane<E extends MediaElement<?>> extends JScr
     @Override
     public void loadDirectory(Path dir) {
         JRootPane pane = getRootPane();
-        Optional.ofNullable(pane).ifPresent(p -> p.setCursor(GraphicModel.WAIT_CURSOR));
+        Optional.ofNullable(pane).ifPresent(p -> p.setCursor(DefaultView2d.WAIT_CURSOR));
         this.pool.execute(() -> {
             AThumbnailListPane.this.thumbnailList.getThumbnailListModel().setData(dir);
             AThumbnailListPane.this.thumbnailList.setChanged();
             AThumbnailListPane.this.thumbnailList.clearChanged();
-            Optional.ofNullable(pane).ifPresent(p -> p.setCursor(GraphicModel.DEFAULT_CURSOR));
+            Optional.ofNullable(pane).ifPresent(p -> p.setCursor(DefaultView2d.DEFAULT_CURSOR));
         });
     }
 

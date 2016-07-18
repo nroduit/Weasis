@@ -13,6 +13,7 @@ package org.weasis.core.ui.editor.image;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -59,6 +60,7 @@ import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -111,6 +113,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -118,8 +121,9 @@ import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
-import org.weasis.core.ui.model.utils.GraphicUtil;
 import org.weasis.core.ui.model.utils.Draggable;
+import org.weasis.core.ui.model.utils.GraphicUtil;
+import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
@@ -174,6 +178,24 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected int tileOffset;
 
     protected final ImageViewerEventManager<E> eventManager;
+
+    public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
+
+    public static final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
+
+    public static final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
+
+    public static final Cursor EDIT_CURSOR = DefaultView2d.getCustomCursor("editpoint.png", "Edit Point", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
+
+    public static final Cursor HAND_CURSOR = DefaultView2d.getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
+
+    public static final Cursor WAIT_CURSOR = DefaultView2d.getNewCursor(Cursor.WAIT_CURSOR);
+
+    public static final Cursor CROSS_CURSOR = DefaultView2d.getNewCursor(Cursor.CROSSHAIR_CURSOR);
+
+    public static final Cursor MOVE_CURSOR = DefaultView2d.getNewCursor(Cursor.MOVE_CURSOR);
+
+    public static final Cursor DEFAULT_CURSOR = DefaultView2d.getNewCursor(Cursor.DEFAULT_CURSOR);
 
     public DefaultView2d(ImageViewerEventManager<E> eventManager) {
         this(eventManager, null);
@@ -1374,7 +1396,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Do select the view when pressing on a view button
             if (selectedButton != null) {
-                DefaultView2d.this.setCursor(GraphicModel.DEFAULT_CURSOR);
+                DefaultView2d.this.setCursor(DefaultView2d.DEFAULT_CURSOR);
                 evt.consume();
                 selectedButton.showPopup(evt.getComponent(), evt.getX(), evt.getY());
                 return;
@@ -1398,7 +1420,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
 
-            DefaultView2d.this.setCursor(action == null ? GraphicModel.DEFAULT_CURSOR : action.getCursor());
+            DefaultView2d.this.setCursor(action == null ? DefaultView2d.DEFAULT_CURSOR : action.getCursor());
         }
 
         @Override
@@ -1408,7 +1430,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            DefaultView2d.this.setCursor(GraphicModel.DEFAULT_CURSOR);
+            DefaultView2d.this.setCursor(DefaultView2d.DEFAULT_CURSOR);
         }
     }
 
@@ -1489,7 +1511,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void copyGraphicsFromClipboard() {
-        List<Graphic> graphs = GraphicModel.GRAPHIC_CLIPBOARD.getGraphics();
+        List<Graphic> graphs = DefaultView2d.GRAPHIC_CLIPBOARD.getGraphics();
         if (graphs != null) {
             Rectangle2D area = getViewModel().getModelArea();
             if (graphs.stream().anyMatch(g -> !g.getBounds(null).intersects(area))) {
@@ -1500,11 +1522,24 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
             }
 
-            graphs.forEach(g -> GraphicUtil.addGraphicToModel(this, g.copy()));
+            graphs.forEach(g -> AbstractGraphicModel.addGraphicToModel(this, g.copy()));
 
             // Repaint all because labels are not drawn
             repaint();
         }
+    }
+
+    public static Cursor getNewCursor(int type) {
+        return new Cursor(type);
+    }
+
+    public static Cursor getCustomCursor(String filename, String cursorName, int hotSpotX, int hotSpotY) {
+        Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
+        ImageIcon icon = new ImageIcon(GraphicUtil.class.getResource("/icon/cursor/" + filename)); //$NON-NLS-1$
+        Dimension bestCursorSize = defaultToolkit.getBestCursorSize(icon.getIconWidth(), icon.getIconHeight());
+        Point hotSpot = new Point((hotSpotX * bestCursorSize.width) / icon.getIconWidth(),
+            (hotSpotY * bestCursorSize.height) / icon.getIconHeight());
+        return defaultToolkit.createCustomCursor(icon.getImage(), hotSpot, cursorName);
     }
 
 }

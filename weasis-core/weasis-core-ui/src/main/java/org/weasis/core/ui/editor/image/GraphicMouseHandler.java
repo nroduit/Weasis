@@ -16,11 +16,11 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d.BulkDragSequence;
+import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
-import org.weasis.core.ui.model.utils.GraphicUtil;
 import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -58,7 +58,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             return;
         }
 
-        Cursor newCursor = GraphicModel.DEFAULT_CURSOR;
+        Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
 
         GraphicModel graphicList = vImg.getGraphicManager();
         // Avoid any dragging on selection when Shift Button is Down
@@ -74,13 +74,13 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
                     if (selectedDragGraphList.size() > 1) {
                         ds = new BulkDragSequence(selectedDragGraphList, mouseEvt);
-                        newCursor = GraphicModel.MOVE_CURSOR;
+                        newCursor = DefaultView2d.MOVE_CURSOR;
 
                     } else if (selectedDragGraphList.size() == 1) {
 
                         if (dragGraph.isOnGraphicLabel(mouseEvt)) {
                             ds = dragGraph.createDragLabelSequence();
-                            newCursor = GraphicModel.HAND_CURSOR;
+                            newCursor = DefaultView2d.HAND_CURSOR;
 
                         } else {
                             int handlePtIndex = dragGraph.getHandlePointIndex(mouseEvt);
@@ -88,22 +88,22 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                             if (handlePtIndex >= 0) {
                                 dragGraph.moveMouseOverHandlePoint(handlePtIndex, mouseEvt);
                                 ds = dragGraph.createResizeDrag(handlePtIndex);
-                                newCursor = GraphicModel.EDIT_CURSOR;
+                                newCursor = DefaultView2d.EDIT_CURSOR;
 
                             } else {
                                 ds = dragGraph.createMoveDrag();
-                                newCursor = GraphicModel.MOVE_CURSOR;
+                                newCursor = DefaultView2d.MOVE_CURSOR;
                             }
                         }
                     }
                 } else {
                     if (dragGraph.isOnGraphicLabel(mouseEvt)) {
                         ds = dragGraph.createDragLabelSequence();
-                        newCursor = GraphicModel.HAND_CURSOR;
+                        newCursor = DefaultView2d.HAND_CURSOR;
 
                     } else {
                         ds = dragGraph.createMoveDrag();
-                        newCursor = GraphicModel.MOVE_CURSOR;
+                        newCursor = DefaultView2d.MOVE_CURSOR;
                     }
                     vImg.getGraphicManager().setSelectedGraphic(Arrays.asList(dragGraph));
                 }
@@ -111,7 +111,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         }
 
         if (ds == null) {
-            Graphic graph = GraphicUtil.drawGraphic(vImg);
+            Graphic graph = AbstractGraphicModel.drawFromCurrentGraphic(vImg);
             if (graph instanceof DragGraphic) {
                 ds = ((DragGraphic) graph).createResizeDrag();
                 if (!(graph instanceof SelectGraphic)) {
@@ -119,7 +119,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                 }
             }
         }
-        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(GraphicModel.DEFAULT_CURSOR));
+        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(DefaultView2d.DEFAULT_CURSOR));
 
         if (ds != null) {
             ds.startDrag(mouseEvt);
@@ -209,7 +209,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         // Throws to the tool listener the current graphic selection.
         vImg.getGraphicManager().fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
 
-        Cursor newCursor = GraphicModel.DEFAULT_CURSOR;
+        Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
 
         // Evaluates if mouse is on a dragging position, and changes cursor image consequently
         List<DragGraphic> selectedDragGraphList = vImg.getGraphicManager().getSelectedDragableGraphics();
@@ -222,30 +222,30 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             if (selectedDragGraphList.contains(dragGraph)) {
 
                 if (selectedDragGraphList.size() > 1) {
-                    newCursor = GraphicModel.MOVE_CURSOR;
+                    newCursor = DefaultView2d.MOVE_CURSOR;
 
                 } else if (selectedDragGraphList.size() == 1) {
                     if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                        newCursor = GraphicModel.HAND_CURSOR;
+                        newCursor = DefaultView2d.HAND_CURSOR;
 
                     } else {
                         if (dragGraph.getHandlePointIndex(mouseEvt) >= 0) {
-                            newCursor = GraphicModel.EDIT_CURSOR;
+                            newCursor = DefaultView2d.EDIT_CURSOR;
                         } else {
-                            newCursor = GraphicModel.MOVE_CURSOR;
+                            newCursor = DefaultView2d.MOVE_CURSOR;
                         }
                     }
                 }
             } else {
                 if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                    newCursor = GraphicModel.HAND_CURSOR;
+                    newCursor = DefaultView2d.HAND_CURSOR;
                 } else {
-                    newCursor = GraphicModel.MOVE_CURSOR;
+                    newCursor = DefaultView2d.MOVE_CURSOR;
                 }
             }
         }
 
-        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(GraphicModel.DEFAULT_CURSOR));
+        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(DefaultView2d.DEFAULT_CURSOR));
     }
 
     @Override
@@ -278,7 +278,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             ds.drag(mouseEvt);
         } else {
 
-            Cursor newCursor = GraphicModel.DEFAULT_CURSOR;
+            Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
             GraphicModel graphicList = vImg.getGraphicManager();
 
             if (!mouseEvt.isShiftDown()) {
@@ -294,31 +294,31 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                     if (selectedDragGraphList.contains(dragGraph)) {
 
                         if (selectedDragGraphList.size() > 1) {
-                            newCursor = GraphicModel.MOVE_CURSOR;
+                            newCursor = DefaultView2d.MOVE_CURSOR;
 
                         } else if (selectedDragGraphList.size() == 1) {
 
                             if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                                newCursor = GraphicModel.HAND_CURSOR;
+                                newCursor = DefaultView2d.HAND_CURSOR;
 
                             } else {
                                 if (dragGraph.getHandlePointIndex(mouseEvt) >= 0) {
-                                    newCursor = GraphicModel.EDIT_CURSOR;
+                                    newCursor = DefaultView2d.EDIT_CURSOR;
                                 } else {
-                                    newCursor = GraphicModel.MOVE_CURSOR;
+                                    newCursor = DefaultView2d.MOVE_CURSOR;
                                 }
                             }
                         }
                     } else {
                         if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                            newCursor = GraphicModel.HAND_CURSOR;
+                            newCursor = DefaultView2d.HAND_CURSOR;
                         } else {
-                            newCursor = GraphicModel.MOVE_CURSOR;
+                            newCursor = DefaultView2d.MOVE_CURSOR;
                         }
                     }
                 }
             }
-            vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(GraphicModel.DEFAULT_CURSOR));
+            vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(DefaultView2d.DEFAULT_CURSOR));
         }
     }
 }

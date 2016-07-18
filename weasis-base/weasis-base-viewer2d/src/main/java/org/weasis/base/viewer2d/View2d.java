@@ -72,7 +72,6 @@ import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
-import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
@@ -176,7 +175,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         // Set the butonMask to 0 of all the actions
         resetMouseAdapter();
 
-        this.setCursor(GraphicModel.DEFAULT_CURSOR);
+        this.setCursor(DefaultView2d.DEFAULT_CURSOR);
 
         addMouseAdapter(actions.getLeft(), InputEvent.BUTTON1_DOWN_MASK); // left mouse button
         if (actions.getMiddle().equals(actions.getLeft())) {
@@ -355,12 +354,12 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                 menuItem = new JMenuItem(Messages.getString("View2d.cut")); //$NON-NLS-1$
                 menuItem.addActionListener(e -> {
-                    GraphicModel.GRAPHIC_CLIPBOARD.setGraphics(selected);
+                    DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected);
                     View2d.this.getGraphicManager().deleteSelectedGraphics(View2d.this, false);
                 });
                 popupMenu.add(menuItem);
                 menuItem = new JMenuItem(Messages.getString("View2d.copy")); //$NON-NLS-1$
-                menuItem.addActionListener(e -> GraphicModel.GRAPHIC_CLIPBOARD.setGraphics(selected));
+                menuItem.addActionListener(e -> DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected));
                 popupMenu.add(menuItem);
                 popupMenu.add(new JSeparator());
             }
@@ -462,7 +461,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             count = popupMenu.getComponentCount();
         }
 
-        if (GraphicModel.GRAPHIC_CLIPBOARD.hasGraphics()) {
+        if (DefaultView2d.GRAPHIC_CLIPBOARD.hasGraphics()) {
             JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
             menuItem.addActionListener(e -> copyGraphicsFromClipboard());
             popupMenu.add(menuItem);

@@ -1,9 +1,7 @@
 package org.weasis.core.ui.model;
 
-import java.awt.Cursor;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
@@ -21,25 +19,10 @@ import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
-import org.weasis.core.ui.model.utils.GraphicUtil;
 import org.weasis.core.ui.model.utils.UUIDable;
-import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public interface GraphicModel extends UUIDable {
-    public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
-
-    public static final Cursor DEFAULT_CURSOR = GraphicUtil.getNewCursor(Cursor.DEFAULT_CURSOR);
-    public static final Cursor MOVE_CURSOR = GraphicUtil.getNewCursor(Cursor.MOVE_CURSOR);
-    public static final Cursor CROSS_CURSOR = GraphicUtil.getNewCursor(Cursor.CROSSHAIR_CURSOR);
-    public static final Cursor WAIT_CURSOR = GraphicUtil.getNewCursor(Cursor.WAIT_CURSOR);
-
-    public static final Cursor HAND_CURSOR = GraphicUtil.getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final Cursor EDIT_CURSOR = GraphicUtil.getCustomCursor("editpoint.png", "Edit Point", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
-
-    public static final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
-    public static final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
-
     List<Graphic> getModels();
 
     void setModels(List<Graphic> models);
