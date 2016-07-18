@@ -13,6 +13,7 @@ package org.weasis.imageio.codec;
 import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URI;
 import java.nio.file.Files;
@@ -69,8 +70,6 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     public ImageElementIO(URI media, String mimeType, Codec codec) {
         this.uri = Objects.requireNonNull(media);
         this.fileCache = new FileCache(this);
-        // TODO should be set in caller
-        this.fileCache.setRequireTransformation(true);
         if (mimeType == null) {
             this.mimeType = MimeInspector.UNKNOWN_MIME_TYPE;
         } else if ("image/x-ms-bmp".equals(mimeType)) { //$NON-NLS-1$
@@ -314,7 +313,11 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
                 this.mimeType = "image/tiff";
                 return outFile;
             } else {
-                outFile.delete();
+                try {
+                    Files.deleteIfExists(outFile.toPath());
+                } catch (IOException e) {
+                    LOGGER.error("Deleting temp tiff file", e);
+                }
             }
         }
         return null;

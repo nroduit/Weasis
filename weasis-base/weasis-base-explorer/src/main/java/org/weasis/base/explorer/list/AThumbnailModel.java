@@ -126,6 +126,7 @@ public abstract class AThumbnailModel<E extends MediaElement<?>> extends Abstrac
                     if (media != null) {
                         MediaElement preview = media.getPreview();
                         if (preview instanceof ImageElement) {
+                            preview.getFileCache().setRequireTransformation(true);
                             addElement((E) preview);
                         }
 
