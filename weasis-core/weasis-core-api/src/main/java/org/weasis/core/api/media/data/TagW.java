@@ -274,6 +274,9 @@ public class TagW implements Serializable {
             int vmValue = Array.getLength(value);
             if (vmMax != Integer.MAX_VALUE && vmMax != vmValue) {
                 return false;
+            } else {
+                // Fix in case of array type
+                return type.getClazz().isAssignableFrom((Class<?>) clazz);
             }
         } else {
             clazz = value;
@@ -281,6 +284,8 @@ public class TagW implements Serializable {
 
         return type.isInstanceOf(clazz);
     }
+
+
 
     public static int getValueMultiplicity(Object value) {
         if (value == null) {
