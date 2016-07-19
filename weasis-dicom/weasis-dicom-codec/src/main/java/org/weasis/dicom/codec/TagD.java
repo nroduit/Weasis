@@ -45,7 +45,7 @@ public class TagD extends TagW {
         public String toString() {
             return tag;
         }
-    };
+    }
 
     static {
         readTags();

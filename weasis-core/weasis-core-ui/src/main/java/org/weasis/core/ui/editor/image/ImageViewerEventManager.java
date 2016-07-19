@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.swing.BoundedRangeModel;
@@ -518,6 +519,18 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             return actions.get(action);
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getAction(ActionW action, Class<T> type) {
+        Objects.requireNonNull(action);
+        Objects.requireNonNull(type);
+
+        ActionState val = actions.get(action);
+        if (val == null || type.isAssignableFrom(val.getClass())){
+            return Optional.ofNullable((T) val) ;
+        }
+        throw new IllegalStateException("The class doesn't match to the object!");
     }
 
     public ActionW getActionFromCommand(String command) {
