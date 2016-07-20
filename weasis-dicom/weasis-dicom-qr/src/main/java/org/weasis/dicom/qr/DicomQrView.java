@@ -44,14 +44,14 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
         @Override
         public Object stringToValue(String text) throws ParseException {
-            return LocalUtil.getDateInstance().parseObject(text);
+            return LocalUtil.getDateFormatter().parse(text);
         }
 
         @Override
         public String valueToString(Object value) throws ParseException {
             if (value != null) {
                 Calendar cal = (Calendar) value;
-                return LocalUtil.getDateInstance().format(cal.getTime());
+                return LocalUtil.getDateFormatter().format(cal.toInstant());
             }
             return "";
         }

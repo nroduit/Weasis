@@ -87,28 +87,9 @@ public class LocalUtil {
         return NumberFormat.getPercentInstance(getLocaleFormat());
     }
 
-    public static DateFormat getDateInstance() {
-        return DateFormat.getDateInstance(DateFormat.DEFAULT, getLocaleFormat());
-    }
 
     public static DateFormat getDateInstance(int style) {
         return DateFormat.getDateInstance(style, getLocaleFormat());
-    }
-
-    public static DateFormat getTimeInstance() {
-        return DateFormat.getTimeInstance(DateFormat.DEFAULT, getLocaleFormat());
-    }
-
-    public static DateFormat getTimeInstance(int style) {
-        return DateFormat.getTimeInstance(style, getLocaleFormat());
-    }
-
-    public static DateFormat getDateTimeInstance() {
-        return DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, getLocaleFormat());
-    }
-
-    public static DateFormat getDateTimeInstance(int dateStyle, int timeStyle) {
-        return DateFormat.getDateTimeInstance(dateStyle, timeStyle, getLocaleFormat());
     }
 
     public static DateTimeFormatter getDateFormatter() {

@@ -19,8 +19,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
 import java.io.File;
-import java.text.DateFormat;
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.FormatStyle;
 import java.util.Enumeration;
 
 import javax.swing.Box;
@@ -271,9 +271,12 @@ public class GeneralSetting extends AbstractItemDialogPage {
     }
 
     private String getText() {
+        ZonedDateTime now = ZonedDateTime.now();
         return String.format(Messages.getString("GeneralSetting.txtNote"), //$NON-NLS-1$
-            new Object[] { LocalUtil.getDateInstance(DateFormat.SHORT).format(new Date()),
-                LocalUtil.getDateInstance(DateFormat.MEDIUM).format(new Date()),
+            new Object[] { LocalUtil.getDateTimeFormatter(FormatStyle.SHORT).format(now),
+                LocalUtil.getDateTimeFormatter(FormatStyle.MEDIUM).format(now),
+                LocalUtil.getDateTimeFormatter(FormatStyle.LONG).format(now),
+                LocalUtil.getDateTimeFormatter(FormatStyle.FULL).format(now),
                 LocalUtil.getNumberInstance().format(2543456.3465) });
     }
 
