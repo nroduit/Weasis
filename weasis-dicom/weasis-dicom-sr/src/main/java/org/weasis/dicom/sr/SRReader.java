@@ -80,7 +80,7 @@ public class SRReader {
                 if (instName != null || stationName != null) {
                     html.append(", "); //$NON-NLS-1$
                 }
-                html.append(TagUtil.formatDateTime(contentDateTime));
+                html.append(TagUtil.formatDateTime(TagUtil.toLocalDateTime(contentDateTime)));
             }
             if (instName != null || stationName != null || contentDateTime != null) {
                 html.append("<BR>"); //$NON-NLS-1$
@@ -399,7 +399,7 @@ public class SRReader {
                     Date date = v.getDate(Tag.VerificationDateTime);
                     if (date != null) {
                         html.append(" * "); //$NON-NLS-1$
-                        html.append(TagUtil.formatDateTime(date));
+                        html.append(TagUtil.formatDateTime(TagUtil.toLocalDateTime(date)));
                         html.append(" - "); //$NON-NLS-1$
                         String name = TagUtil.buildDicomPersonName(v.getString(Tag.VerifyingObserverName));
                         if (name != null) {

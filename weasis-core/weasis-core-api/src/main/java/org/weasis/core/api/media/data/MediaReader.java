@@ -36,7 +36,7 @@ public interface MediaReader<E> extends Tagable {
 
     int getMediaElementNumber();
 
-    String getMediaFragmentMimeType(Object key);
+    String getMediaFragmentMimeType();
 
     Map<TagW, Object> getMediaFragmentTags(Object key);
 

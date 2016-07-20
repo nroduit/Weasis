@@ -14,9 +14,12 @@ import java.awt.Color;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import javax.xml.stream.XMLStreamReader;
 
@@ -50,10 +54,11 @@ public class TagW implements Serializable {
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
 
-        STRING(String.class), PERSON_NAME(String.class), TEXT(String.class), URI(String.class), SEQUENCE(Object.class),
-        DATE(Date.class), DATETIME(Date.class), TIME(Date.class), PERIOD(String.class), BOOLEAN(Boolean.class),
-        BYTE_ARRAY(Byte.class), INTEGER(Integer.class), FLOAT(Float.class), DOUBLE(Double.class), COLOR(Color.class),
-        THUMBNAIL(Thumbnail.class), LIST(List.class), OBJECT(Object.class), SEX(String.class);
+        STRING(String.class), TEXT(String.class), URI(String.class), DATE(LocalDate.class), DATETIME(LocalDateTime.class),
+        TIME(LocalTime.class), BOOLEAN(Boolean.class), BYTE_ARRAY(Byte.class), INTEGER(Integer.class), FLOAT(Float.class),
+        DOUBLE(Double.class), COLOR(Color.class), THUMBNAIL(Thumbnail.class), LIST(List.class), OBJECT(Object.class),
+        DICOM_DATE(LocalDate.class), DICOM_DATETIME(LocalDateTime.class), DICOM_TIME(LocalTime.class), DICOM_PERIOD(String.class),
+        DICOM_PERSON_NAME(String.class), DICOM_SEQUENCE(Object.class), DICOM_SEX(String.class);
 
         private final Class<?> clazz;
 
@@ -285,8 +290,6 @@ public class TagW implements Serializable {
         return type.isInstanceOf(clazz);
     }
 
-
-
     public static int getValueMultiplicity(Object value) {
         if (value == null) {
             return 0;
@@ -361,8 +364,8 @@ public class TagW implements Serializable {
                 value = vmMax > 1 ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
                     : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
             } else if (TagType.DATE.equals(type) || TagType.TIME.equals(type) || TagType.DATETIME.equals(type)) {
-                value = vmMax > 1 ? TagUtil.getDatesFromDicomElement(xmler, keyword, type, (Date[]) defaultValue)
-                    : TagUtil.getDateFromDicomElement(xmler, keyword, type, (Date) defaultValue);
+                value = vmMax > 1 ? TagUtil.getDatesFromElement(xmler, keyword, type, (TemporalAccessor[]) defaultValue)
+                    : TagUtil.getDateFromElement(xmler, keyword, type, (TemporalAccessor) defaultValue);
             } else if (TagType.INTEGER.equals(type)) {
                 value = vmMax > 1 ? TagUtil.getIntArrayTagAttribute(xmler, keyword, (int[]) defaultValue)
                     : TagUtil.getIntegerTagAttribute(xmler, keyword, (Integer) defaultValue);
@@ -372,8 +375,6 @@ public class TagW implements Serializable {
             } else if (TagType.DOUBLE.equals(type)) {
                 value = vmMax > 1 ? TagUtil.getDoubleArrayTagAttribute(xmler, keyword, (double[]) defaultValue)
                     : TagUtil.getDoubleTagAttribute(xmler, keyword, (Double) defaultValue);
-            } else if (TagType.SEQUENCE.equals(type)) {
-                value = TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
             } else {
                 value = vmMax > 1 ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
                     : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
@@ -383,8 +384,7 @@ public class TagW implements Serializable {
     }
 
     public boolean isStringFamilyType() {
-        return TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
-            || TagType.PERSON_NAME.equals(type) || TagType.PERIOD.equals(type) || TagType.SEX.equals(type);
+        return TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type);
     }
 
     public String getFormattedText(Object value) {
@@ -416,18 +416,10 @@ public class TagW implements Serializable {
             } else {
                 str = value.toString();
             }
-        } else if (TagType.DATE.equals(type)) {
-            str = TagUtil.formatDate((Date) value);
-        } else if (TagType.TIME.equals(type)) {
-            str = TagUtil.formatTime((Date) value);
-        } else if (TagType.DATETIME.equals(type)) {
-            str = TagUtil.formatDateTime((Date) value);
-        } else if (TagType.PERSON_NAME.equals(type)) {
-            str = TagUtil.buildDicomPersonName(value.toString());
-        } else if (TagType.SEX.equals(type)) {
-            str = TagUtil.buildDicomPatientSex(value.toString());
-        } else if (TagType.PERIOD.equals(type)) {
-            str = TagUtil.getDicomPeriod(value.toString());
+        } else if (value instanceof TemporalAccessor) {
+            str = TagUtil.formatDateTime((TemporalAccessor) value);
+        } else if (value instanceof TemporalAccessor[]) {
+            str = Stream.of((TemporalAccessor[])value).map(TagUtil::formatDateTime).collect(Collectors.joining(", "));
         } else if (value instanceof float[]) {
             float[] array = (float[]) value;
             str = IntStream.range(0, array.length).mapToObj(i -> String.valueOf(array[i]))
@@ -447,7 +439,7 @@ public class TagW implements Serializable {
         return str;
     }
 
-    private static String formatValue(String value, TagType type, String format) {
+    protected static String formatValue(String value, TagType type, String format) {
         String str = value;
         int index = format.indexOf("$V"); //$NON-NLS-1$
         int fmLength = 2;

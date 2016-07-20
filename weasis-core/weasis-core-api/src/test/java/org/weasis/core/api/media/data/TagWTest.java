@@ -90,17 +90,17 @@ public class TagWTest {
         when(TagUtil.getStringArrayTagAttribute(any(XMLStreamReader.class), anyString(), any()))
             .thenReturn(RESPONSE_STRING_ARRAY);
         when(TagUtil.getTagAttribute(any(XMLStreamReader.class), anyString(), any())).thenReturn(RESPONSE_STRING);
-        when(TagUtil.getDatesFromDicomElement(any(XMLStreamReader.class), anyString(), eq(TagType.DATE), any()))
+        when(TagUtil.getDatesFromElement(any(XMLStreamReader.class), anyString(), eq(TagType.DATE), any()))
             .thenReturn(RESPONSE_DATE_ARRAY);
-        when(TagUtil.getDateFromDicomElement(any(XMLStreamReader.class), anyString(), eq(TagType.DATE), any()))
+        when(TagUtil.getDateFromElement(any(XMLStreamReader.class), anyString(), eq(TagType.DATE), any()))
             .thenReturn(RESPONSE_DATE);
-        when(TagUtil.getDatesFromDicomElement(any(XMLStreamReader.class), anyString(), eq(TagType.TIME), any()))
+        when(TagUtil.getDatesFromElement(any(XMLStreamReader.class), anyString(), eq(TagType.TIME), any()))
             .thenReturn(RESPONSE_TIME_ARRAY);
-        when(TagUtil.getDateFromDicomElement(any(XMLStreamReader.class), anyString(), eq(TagType.TIME), any()))
+        when(TagUtil.getDateFromElement(any(XMLStreamReader.class), anyString(), eq(TagType.TIME), any()))
             .thenReturn(RESPONSE_TIME);
-        when(TagUtil.getDatesFromDicomElement(any(XMLStreamReader.class), anyString(), eq(TagType.DATETIME), any()))
+        when(TagUtil.getDatesFromElement(any(XMLStreamReader.class), anyString(), eq(TagType.DATETIME), any()))
             .thenReturn(RESPONSE_DATETIME_ARRAY);
-        when(TagUtil.getDateFromDicomElement(any(XMLStreamReader.class), anyString(), eq(TagType.DATETIME), any()))
+        when(TagUtil.getDateFromElement(any(XMLStreamReader.class), anyString(), eq(TagType.DATETIME), any()))
             .thenReturn(RESPONSE_DATETIME);
         when(TagUtil.getIntArrayTagAttribute(any(XMLStreamReader.class), anyString(), any()))
             .thenReturn(RESPONSE_INTEGER_ARRAY);
@@ -240,13 +240,13 @@ public class TagWTest {
         assertThat(new TagW(KEYWORD_1, TagType.INTEGER).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.LIST).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.OBJECT).isStringFamilyType()).isFalse();
-        assertThat(new TagW(KEYWORD_1, TagType.SEQUENCE).isStringFamilyType()).isFalse();
+        assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEQUENCE).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.THUMBNAIL).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.TIME).isStringFamilyType()).isFalse();
 
-        assertThat(new TagW(KEYWORD_1, TagType.PERIOD).isStringFamilyType()).isTrue();
-        assertThat(new TagW(KEYWORD_1, TagType.PERSON_NAME).isStringFamilyType()).isTrue();
-        assertThat(new TagW(KEYWORD_1, TagType.SEX).isStringFamilyType()).isTrue();
+        assertThat(new TagW(KEYWORD_1, TagType.DICOM_PERIOD).isStringFamilyType()).isTrue();
+        assertThat(new TagW(KEYWORD_1, TagType.DICOM_PERSON_NAME).isStringFamilyType()).isTrue();
+        assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEX).isStringFamilyType()).isTrue();
         assertThat(new TagW(KEYWORD_1, TagType.STRING).isStringFamilyType()).isTrue();
         assertThat(new TagW(KEYWORD_1, TagType.TEXT).isStringFamilyType()).isTrue();
         assertThat(new TagW(KEYWORD_1, TagType.URI).isStringFamilyType()).isTrue();
@@ -265,20 +265,20 @@ public class TagWTest {
         t2 = new TagW(KEYWORD_1, TagType.STRING);
         assertThat(t1.equals(t2)).isFalse();
 
-        t1 = new TagW(ID_1, null, TagType.PERSON_NAME);
-        t2 = new TagW(ID_1, KEYWORD_1, TagType.PERSON_NAME);
+        t1 = new TagW(ID_1, null, TagType.DICOM_PERSON_NAME);
+        t2 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
         assertThat(t1.equals(t2)).isFalse();
 
-        t1 = new TagW(ID_1, KEYWORD_1, TagType.PERSON_NAME);
-        t2 = new TagW(ID_1, KEYWORD_2, TagType.PERSON_NAME);
+        t1 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
+        t2 = new TagW(ID_1, KEYWORD_2, TagType.DICOM_PERSON_NAME);
         assertThat(t1.equals(t2)).isFalse();
 
-        t1 = new TagW(ID_1, KEYWORD_1, TagType.PERSON_NAME);
-        t2 = new TagW(ID_1, KEYWORD_1, TagType.PERSON_NAME);
+        t1 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
+        t2 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
         assertThat(t1.equals(t2)).isTrue();
 
-        t1 = new TagW(ID_1, null, TagType.PERSON_NAME);
-        t2 = new TagW(ID_1, null, TagType.PERSON_NAME);
+        t1 = new TagW(ID_1, null, TagType.DICOM_PERSON_NAME);
+        t2 = new TagW(ID_1, null, TagType.DICOM_PERSON_NAME);
         assertThat(t1.equals(t2)).isTrue();
     }
 
@@ -323,8 +323,8 @@ public class TagWTest {
         assertThat(new TagW(KEYWORD_1, TagType.DOUBLE, VM_MIN_1, VM_MAX_1).getValue(data))
             .isEqualTo(RESPONSE_DOUBLE_ARRAY);
 
-        assertThat(new TagW(KEYWORD_1, TagType.SEQUENCE).getValue(data)).isEqualTo(RESPONSE_STRING);
-        assertThat(new TagW(KEYWORD_1, TagType.SEQUENCE, VM_MIN_1, VM_MAX_1).getValue(data)).isEqualTo(RESPONSE_STRING);
+        assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEQUENCE).getValue(data)).isEqualTo(RESPONSE_STRING);
+        assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEQUENCE, VM_MIN_1, VM_MAX_1).getValue(data)).isEqualTo(RESPONSE_STRING);
 
         assertThat(new TagW(KEYWORD_1, TagType.COLOR).getValue(data)).isEqualTo(RESPONSE_STRING);
         assertThat(new TagW(KEYWORD_1, TagType.COLOR, VM_MIN_1, VM_MAX_1).getValue(data)).isEqualTo(RESPONSE_STRING_ARRAY);
@@ -357,19 +357,19 @@ public class TagWTest {
         
         String personName = "John Doe";
         assertThat(personName).isNotNull();
-        assertThat(TagW.getFormattedText(personName, TagType.PERSON_NAME, null)).isEqualTo(RESPONSE_PERSON_NAME);
+        assertThat(TagW.getFormattedText(personName, TagType.DICOM_PERSON_NAME, null)).isEqualTo(RESPONSE_PERSON_NAME);
         PowerMockito.verifyStatic();
         TagUtil.buildDicomPersonName(eq(personName));
         
         String sex = "M";
         assertThat(sex).isNotNull();
-        assertThat(TagW.getFormattedText(sex, TagType.SEX, null)).isEqualTo(RESPONSE_PERSON_SEX);
+        assertThat(TagW.getFormattedText(sex, TagType.DICOM_SEX, null)).isEqualTo(RESPONSE_PERSON_SEX);
         PowerMockito.verifyStatic();
         TagUtil.buildDicomPatientSex(eq(sex));
         
         String period = "a period";
         assertThat(period).isNotNull();
-        assertThat(TagW.getFormattedText(period, TagType.PERIOD, null)).isEqualTo(RESPONSE_PERIOD);
+        assertThat(TagW.getFormattedText(period, TagType.DICOM_PERIOD, null)).isEqualTo(RESPONSE_PERIOD);
         PowerMockito.verifyStatic();
         TagUtil.getDicomPeriod(eq(period));
         

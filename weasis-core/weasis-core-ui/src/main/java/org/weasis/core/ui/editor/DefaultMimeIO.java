@@ -135,7 +135,7 @@ public class DefaultMimeIO<F extends File> implements MediaReader<F> {
     }
 
     @Override
-    public String getMediaFragmentMimeType(Object key) {
+    public String getMediaFragmentMimeType() {
         return mimeType;
     }
 

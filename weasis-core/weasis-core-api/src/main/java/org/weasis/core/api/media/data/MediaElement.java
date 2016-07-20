@@ -130,7 +130,7 @@ public abstract class MediaElement<E> implements Tagable {
     }
 
     public String getMimeType() {
-        return mediaIO.getMediaFragmentMimeType(key);
+        return mediaIO.getMediaFragmentMimeType();
     }
 
     protected final synchronized boolean setAsLoading() {

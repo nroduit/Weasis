@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -74,6 +73,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.codec.wado.WadoParameters.HttpTag;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -1050,18 +1050,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                         } else {
                             value = patient.getTagValue(tagElement);
                         }
-                        if (value != null) {
-                            TagType type = tagElement.getType();
-                            if (TagType.STRING.equals(type)) {
-                                dataset.setString(tag, dic.vrOf(tag), value.toString());
-                            } else if (TagType.DATE.equals(type) || TagType.TIME.equals(type)) {
-                                dataset.setDate(tag, (Date) value);
-                            } else if (TagType.INTEGER.equals(type)) {
-                                dataset.setInt(tag, dic.vrOf(tag), (Integer) value);
-                            } else if (TagType.FLOAT.equals(type)) {
-                                dataset.setFloat(tag, dic.vrOf(tag), (Float) value);
-                            }
-                        }
+
+                        DicomMediaUtils.fillAttributes(dataset, tagElement, value, dic);
                     }
                 }
                 dos.writeDataset(dataset.createFileMetaInformation(tsuid), dataset);

@@ -953,7 +953,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     @Override
-    public String getMediaFragmentMimeType(Object key) {
+    public String getMediaFragmentMimeType() {
         return mimeType;
     }
 

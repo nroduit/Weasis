@@ -1,10 +1,15 @@
 package org.weasis.dicom.codec.utils;
 
 import java.lang.reflect.Array;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.dcm4che3.data.DatePrecision;
+import org.dcm4che3.util.DateUtils;
 import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -201,38 +206,38 @@ public class SplittingModalityRules {
                 } else {
                     val = value;
                 }
-            } else if (TagType.DATE.equals(tt)) {
+            } else if (TagType.DICOM_DATE.equals(tt)) {
                 if (vm > 1) {
                     String[] ss = toStrings(value);
-                    Date[] is = new Date[ss.length];
+                    LocalDate[] is = new LocalDate[ss.length];
                     for (int i = 0; i < is.length; i++) {
-                        is[i] = TagUtil.getDicomDate(value);
+                        is[i] = TagD.getDicomDate(value);
                     }
                     val = is;
                 } else {
-                    val = TagUtil.getDicomDate(value);
+                    val = TagD.getDicomDate(value);
                 }
-            } else if (TagType.TIME.equals(tt)) {
+            } else if (TagType.DICOM_TIME.equals(tt)) {
                 if (vm > 1) {
                     String[] ss = toStrings(value);
-                    Date[] is = new Date[ss.length];
+                    LocalTime[] is = new LocalTime[ss.length];
                     for (int i = 0; i < is.length; i++) {
-                        is[i] = TagUtil.getDicomTime(value);
+                        is[i] = TagD.getDicomTime(value);
                     }
                     val = is;
                 } else {
-                    val = TagUtil.getDicomTime(value);
+                    val = TagD.getDicomTime(value);
                 }
-            } else if (TagType.DATETIME.equals(tt)) {
+            } else if (TagType.DICOM_DATETIME.equals(tt)) {
                 if (vm > 1) {
                     String[] ss = toStrings(value);
-                    Date[] is = new Date[ss.length];
+                    LocalDateTime[] is = new LocalDateTime[ss.length];
                     for (int i = 0; i < is.length; i++) {
-                        is[i] = TagUtil.dateTime(TagUtil.getDicomDate(value), TagUtil.getDicomTime(value));
+                        is[i] = TagD.getDicomDateTime(null, value);
                     }
                     val = is;
                 } else {
-                    val = TagUtil.dateTime(TagUtil.getDicomDate(value), TagUtil.getDicomTime(value));
+                    val = TagD.getDicomDateTime(null, value);
                 }
             } else if (TagType.INTEGER.equals(tt)) {
                 if (vm > 1) {
@@ -270,7 +275,7 @@ public class SplittingModalityRules {
                 } else {
                     val = StringUtils.parseDS(value);
                 }
-            } else if (TagType.SEQUENCE.equals(tt)) {
+            } else if (TagType.DICOM_SEQUENCE.equals(tt)) {
                 val = value;
             } else {
                 val = value.getBytes();

@@ -12,10 +12,10 @@ package org.weasis.dicom.codec;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.SeriesComparator;
-import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
@@ -61,8 +60,8 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                 // SeriesDate stands for "Date the Series started" and is optional parameter, don't use this to compare
                 // and prefer "Content Date And Time" Tags (date and time the document content creation started)
 
-                Date date1 = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, m1);
-                Date date2 = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, m2);
+                LocalDateTime date1 = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, m1);
+                LocalDateTime date2 = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, m2);
 
                 if (date1 == null || date2 == null) {
                     // SeriesDate and time
@@ -320,7 +319,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                 if (isSopuidInReferencedSeriesSequence(koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID,
                     frameNumber)) {
                     if (koList == null) {
-                        koList = new ArrayList<RejectedKOSpecialElement>();
+                        koList = new ArrayList<>();
                     }
                     koList.add(koElement);
                 }

@@ -18,10 +18,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URI;
 import java.text.NumberFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -232,7 +232,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
 
         toolTips.append(Messages.getString("JIThumbnailList.date")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(TagUtil.formatDateTime(new Date(item.getLastModified())));
+        toolTips.append(TagUtil.formatDateTime(Instant.ofEpochMilli(item.getLastModified())));
         toolTips.append("<br>"); //$NON-NLS-1$
         toolTips.append("</html>"); //$NON-NLS-1$
 

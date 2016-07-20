@@ -15,13 +15,13 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 import java.text.Collator;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -138,8 +138,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             if (o1 instanceof MediaSeriesGroup && o2 instanceof MediaSeriesGroup) {
                 MediaSeriesGroup st1 = (MediaSeriesGroup) o1;
                 MediaSeriesGroup st2 = (MediaSeriesGroup) o2;
-                Date date1 = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, st1);
-                Date date2 = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, st2);
+                LocalDateTime date1 = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, st1);
+                LocalDateTime date2 = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, st2);
                 // LOGGER.debug("date1: {} date2: {}", date1, date2);
                 int c = -1;
                 if (date1 != null && date2 != null) {
@@ -216,8 +216,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
 
                 if (c == 0 || (val1 == null && val2 == null)) {
-                    Date date1 = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, st1);
-                    Date date2 = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, st2);
+                    LocalDateTime date1 = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, st1);
+                    LocalDateTime date2 = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, st2);
                     if (date1 != null && date2 != null) {
                         // Chronological order.
                         c = date1.compareTo(date2);

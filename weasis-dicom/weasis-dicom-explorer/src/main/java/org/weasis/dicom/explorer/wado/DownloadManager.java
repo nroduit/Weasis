@@ -547,7 +547,7 @@ public class DownloadManager {
         String issuerOfPatientID = TagUtil.getTagAttribute(xmler, issuerIdTag.getKeyword(), null);
         String name = TagUtil.getTagAttribute(xmler, nameTag.getKeyword(), TagW.NO_VALUE);
 
-        String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name, null);
+        String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name);
 
         MediaSeriesGroup patient = model.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
         if (patient == null) {

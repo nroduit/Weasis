@@ -228,7 +228,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public String getMediaFragmentMimeType(Object key) {
+    public String getMediaFragmentMimeType() {
         return mimeType;
     }
 

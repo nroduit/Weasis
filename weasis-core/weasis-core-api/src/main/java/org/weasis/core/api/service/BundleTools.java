@@ -50,7 +50,9 @@ public class BundleTools {
 
     static {
         StringBuilder bufDir = new StringBuilder(AppProperties.WEASIS_PATH);
-        bufDir.append(File.separator);
+        if (!AppProperties.WEASIS_PATH.endsWith(File.separator)) {
+            bufDir.append(File.separator);
+        }
         bufDir.append("preferences"); //$NON-NLS-1$
         bufDir.append(File.separator);
         bufDir.append(AppProperties.WEASIS_USER);

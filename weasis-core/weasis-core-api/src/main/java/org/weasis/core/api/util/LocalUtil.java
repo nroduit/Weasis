@@ -2,12 +2,19 @@ package org.weasis.core.api.util;
 
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Locale;
 
 import org.weasis.core.api.service.BundleTools;
 
 public class LocalUtil {
     private static final String FORMAT_CODE = "locale.format.code"; //$NON-NLS-1$
+
+    private static final DateTimeFormatter defaultDateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
+    private static final DateTimeFormatter defaultTimeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM);
+    private static final DateTimeFormatter defaultDateTimeFormatter =
+        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM);
 
     private static Locale localeFormat = null;
 
@@ -102,5 +109,29 @@ public class LocalUtil {
 
     public static DateFormat getDateTimeInstance(int dateStyle, int timeStyle) {
         return DateFormat.getDateTimeInstance(dateStyle, timeStyle, getLocaleFormat());
+    }
+
+    public static DateTimeFormatter getDateFormatter() {
+        return defaultDateFormatter.withLocale(getLocaleFormat());
+    }
+
+    public static DateTimeFormatter getDateFormatter(FormatStyle style) {
+        return DateTimeFormatter.ofLocalizedDate(style).withLocale(getLocaleFormat());
+    }
+
+    public static DateTimeFormatter getTimeFormatter() {
+        return defaultTimeFormatter.withLocale(getLocaleFormat());
+    }
+
+    public static DateTimeFormatter getTimeFormatter(FormatStyle style) {
+        return DateTimeFormatter.ofLocalizedTime(style).withLocale(getLocaleFormat());
+    }
+
+    public static DateTimeFormatter getDateTimeFormatter() {
+        return defaultDateTimeFormatter.withLocale(getLocaleFormat());
+    }
+
+    public static DateTimeFormatter getDateTimeFormatter(FormatStyle style) {
+        return DateTimeFormatter.ofLocalizedDateTime(style).withLocale(getLocaleFormat());
     }
 }
