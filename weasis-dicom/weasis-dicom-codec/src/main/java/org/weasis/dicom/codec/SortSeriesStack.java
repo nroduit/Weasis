@@ -10,7 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.util.Date;
+import java.time.LocalTime;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.SeriesComparator;
@@ -77,8 +77,8 @@ public final class SortSeriesStack {
 
             @Override
             public int compare(DicomImageElement m1, DicomImageElement m2) {
-                Date val1 = TagD.getTagValue(m1, Tag.AcquisitionTime, Date.class);
-                Date val2 = TagD.getTagValue(m2, Tag.AcquisitionTime, Date.class);
+                LocalTime val1 = TagD.getTagValue(m1, Tag.AcquisitionTime, LocalTime.class);
+                LocalTime val2 = TagD.getTagValue(m2, Tag.AcquisitionTime, LocalTime.class);
                 if (val1 == null || val2 == null) {
                     return 0;
                 }
@@ -94,8 +94,8 @@ public final class SortSeriesStack {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
-            Date val1 = TagD.getTagValue(m1, Tag.ContentTime, Date.class);
-            Date val2 = TagD.getTagValue(m2, Tag.ContentTime, Date.class);
+            LocalTime val1 = TagD.getTagValue(m1, Tag.ContentTime, LocalTime.class);
+            LocalTime val2 = TagD.getTagValue(m2, Tag.ContentTime, LocalTime.class);
             if (val1 == null || val2 == null) {
                 return 0;
             }

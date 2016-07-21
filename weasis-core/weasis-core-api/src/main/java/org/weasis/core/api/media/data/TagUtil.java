@@ -112,8 +112,10 @@ public final class TagUtil {
             return LocalUtil.getDateFormatter().format(date);
         } else if (date instanceof LocalTime) {
             return LocalUtil.getTimeFormatter().format(date);
-        } else if (date instanceof LocalDateTime || date instanceof Instant) {
+        } else if (date instanceof LocalDateTime) {
             return LocalUtil.getDateTimeFormatter().format(date);
+        } else if (date instanceof Instant) {
+            return LocalUtil.getDateTimeFormatter().format(((Instant) date).atZone(ZoneId.systemDefault()));
         }
         return ""; //$NON-NLS-1$
     }

@@ -1,22 +1,14 @@
 package org.weasis.dicom.codec.utils;
 
 import java.lang.reflect.Array;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import org.dcm4che3.data.DatePrecision;
-import org.dcm4che3.util.DateUtils;
-import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TagD;
@@ -196,97 +188,9 @@ public class SplittingModalityRules {
             if (!StringUtil.hasText(value)) {
                 return null;
             }
-
-            Object val;
-            int vm = tag.getValueMultiplicity();
-            TagType tt = tag.getType();
-            if (tag.isStringFamilyType()) {
-                if (vm > 1) {
-                    val = toStrings(value);
-                } else {
-                    val = value;
-                }
-            } else if (TagType.DICOM_DATE.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    LocalDate[] is = new LocalDate[ss.length];
-                    for (int i = 0; i < is.length; i++) {
-                        is[i] = TagD.getDicomDate(value);
-                    }
-                    val = is;
-                } else {
-                    val = TagD.getDicomDate(value);
-                }
-            } else if (TagType.DICOM_TIME.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    LocalTime[] is = new LocalTime[ss.length];
-                    for (int i = 0; i < is.length; i++) {
-                        is[i] = TagD.getDicomTime(value);
-                    }
-                    val = is;
-                } else {
-                    val = TagD.getDicomTime(value);
-                }
-            } else if (TagType.DICOM_DATETIME.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    LocalDateTime[] is = new LocalDateTime[ss.length];
-                    for (int i = 0; i < is.length; i++) {
-                        is[i] = TagD.getDicomDateTime(null, value);
-                    }
-                    val = is;
-                } else {
-                    val = TagD.getDicomDateTime(null, value);
-                }
-            } else if (TagType.INTEGER.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    int[] ds = new int[ss.length];
-                    for (int i = 0; i < ds.length; i++) {
-                        String s = ss[i];
-                        ds[i] = (s != null && !s.isEmpty()) ? StringUtils.parseIS(s) : 0;
-                    }
-                    val = ds;
-                } else {
-                    val = StringUtils.parseIS(value);
-                }
-            } else if (TagType.FLOAT.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    float[] ds = new float[ss.length];
-                    for (int i = 0; i < ds.length; i++) {
-                        String s = ss[i];
-                        ds[i] = (s != null && !s.isEmpty()) ? (float) StringUtils.parseDS(s) : Float.NaN;
-                    }
-                    val = ds;
-                } else {
-                    val = (float) StringUtils.parseDS(value);
-                }
-            } else if (TagType.DOUBLE.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    double[] ds = new double[ss.length];
-                    for (int i = 0; i < ds.length; i++) {
-                        String s = ss[i];
-                        ds[i] = (s != null && !s.isEmpty()) ? StringUtils.parseDS(s) : Double.NaN;
-                    }
-                    val = ds;
-                } else {
-                    val = StringUtils.parseDS(value);
-                }
-            } else if (TagType.DICOM_SEQUENCE.equals(tt)) {
-                val = value;
-            } else {
-                val = value.getBytes();
-            }
-
-            return val;
+            return tag.getValue(value);
         }
 
-        private static String[] toStrings(String val) {
-            return StringUtils.split(val, '\\');
-        }
 
         @Override
         public boolean match(MediaElement<?> media) {
