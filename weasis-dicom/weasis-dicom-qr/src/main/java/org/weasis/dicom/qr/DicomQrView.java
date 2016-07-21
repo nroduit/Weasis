@@ -15,24 +15,17 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.text.ParseException;
-import java.util.Calendar;
 import java.util.Properties;
 
 import javax.swing.Box;
 import javax.swing.JComboBox;
-import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
-import org.jdatepicker.impl.JDatePanelImpl;
-import org.jdatepicker.impl.JDatePickerImpl;
-import org.jdatepicker.impl.UtilDateModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ImportDicom;
@@ -40,22 +33,6 @@ import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 
 public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
-    public class DateLabelFormatter extends AbstractFormatter {
-
-        @Override
-        public Object stringToValue(String text) throws ParseException {
-            return LocalUtil.getDateFormatter().parse(text);
-        }
-
-        @Override
-        public String valueToString(Object value) throws ParseException {
-            if (value != null) {
-                Calendar cal = (Calendar) value;
-                return LocalUtil.getDateFormatter().format(cal.toInstant());
-            }
-            return "";
-        }
-    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomQrView.class);
 
@@ -103,10 +80,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         gbc_checkBoxCompression.insets = new Insets(0, 0, 5, 5);
         gbc_checkBoxCompression.gridx = 0;
         gbc_checkBoxCompression.gridy = 1;
-        UtilDateModel model = new UtilDateModel();
-        JDatePanelImpl datePanel = new JDatePanelImpl(model, new Properties());
-        JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-        panel.add(datePicker, gbc_checkBoxCompression);
+      //  panel.add(datePicker, gbc_checkBoxCompression);
 
     }
 

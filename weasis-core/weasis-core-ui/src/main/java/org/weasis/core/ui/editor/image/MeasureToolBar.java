@@ -68,10 +68,10 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     private static final long serialVersionUID = -6672565963157176685L;
 
     public static final SelectGraphic selectionGraphic = new SelectGraphic();
-    public static final LayerType LAYER_TYPE = LayerType.MEASURE;
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
     public static final List<Graphic> graphicList = new ArrayList<>();
+    public static final List<Graphic> drawGraphicList = new ArrayList<>();
 
     static {
         selectionGraphic.setLayerType(LayerType.TEMPDRAGLAYER);
@@ -118,12 +118,36 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         if (p.getBooleanProperty("weasis.measure.pixelinfo", true)) { //$NON-NLS-1$
             graphicList.add(new PixelInfoGraphic());
         }
-        if (p.getBooleanProperty("weasis.measure.textGrahic", true)) { //$NON-NLS-1$
+        graphicList.stream().filter(g -> Objects.isNull(g.getLayerType())).forEach(g -> g.setLayerType(LayerType.MEASURE));
+        
+        
+        if (p.getBooleanProperty("weasis.draw.selection", true)) { //$NON-NLS-1$
+            drawGraphicList.add(selectionGraphic);
+        }
+        if (p.getBooleanProperty("weasis.draw.line", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new LineGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.polyline", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new PolylineGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.rectangle", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new RectangleGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.ellipse", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new EllipseGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.threeptcircle", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new ThreePointsCircleGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.polygon", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new PolygonGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.textGrahic", true)) { //$NON-NLS-1$
             Graphic graphic = new AnnotationGraphic();
             graphic.setLayerType(LayerType.ANNOTATION_INFO);
-            graphicList.add(graphic);
+            drawGraphicList.add(graphic);
         }
-        graphicList.stream().filter(g -> Objects.isNull(g.getLayerType())).forEach(g -> g.setLayerType(LAYER_TYPE));
+        drawGraphicList.stream().filter(g -> Objects.isNull(g.getLayerType())).forEach(g -> g.setLayerType(LayerType.DRAW));
     }
 
     protected final JButton jButtondelete = new JButton();

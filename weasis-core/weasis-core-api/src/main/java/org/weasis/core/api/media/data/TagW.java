@@ -54,10 +54,11 @@ public class TagW implements Serializable {
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
 
-        STRING(String.class), TEXT(String.class), URI(String.class), DATE(LocalDate.class), DATETIME(LocalDateTime.class),
-        TIME(LocalTime.class), BOOLEAN(Boolean.class), BYTE_ARRAY(Byte.class), INTEGER(Integer.class), FLOAT(Float.class),
-        DOUBLE(Double.class), COLOR(Color.class), THUMBNAIL(Thumbnail.class), LIST(List.class), OBJECT(Object.class),
-        DICOM_DATE(LocalDate.class), DICOM_DATETIME(LocalDateTime.class), DICOM_TIME(LocalTime.class), DICOM_PERIOD(String.class),
+        STRING(String.class), TEXT(String.class), URI(String.class), DATE(LocalDate.class),
+        DATETIME(LocalDateTime.class), TIME(LocalTime.class), BOOLEAN(Boolean.class), BYTE_ARRAY(Byte.class),
+        INTEGER(Integer.class), FLOAT(Float.class), DOUBLE(Double.class), COLOR(Color.class),
+        THUMBNAIL(Thumbnail.class), LIST(List.class), OBJECT(Object.class), DICOM_DATE(LocalDate.class),
+        DICOM_DATETIME(LocalDateTime.class), DICOM_TIME(LocalTime.class), DICOM_PERIOD(String.class),
         DICOM_PERSON_NAME(String.class), DICOM_SEQUENCE(Object.class), DICOM_SEX(String.class);
 
         private final Class<?> clazz;
@@ -388,12 +389,9 @@ public class TagW implements Serializable {
     }
 
     public String getFormattedText(Object value) {
-        return getFormattedText(value, type, null);
+        return getFormattedText(value, null);
     }
 
-    public String getFormattedText(Object value, String format) {
-        return getFormattedText(value, type, format);
-    }
 
     public synchronized int getAnonymizationType() {
         return anonymizationType;
@@ -403,23 +401,21 @@ public class TagW implements Serializable {
         this.anonymizationType = anonymizationType;
     }
 
-    public static String getFormattedText(Object value, TagType type, String format) {
+    public static String getFormattedText(Object value, String format) {
         if (value == null) {
             return ""; //$NON-NLS-1$
         }
 
         String str;
 
-        if (TagType.STRING.equals(type)) {
-            if (value instanceof String[]) {
-                str = Arrays.asList((String[]) value).stream().collect(Collectors.joining("\\"));
-            } else {
-                str = value.toString();
-            }
+        if (value instanceof String) {
+            str = (String) value;
+        } else if (value instanceof String[]) {
+            str = Arrays.asList((String[]) value).stream().collect(Collectors.joining("\\"));
         } else if (value instanceof TemporalAccessor) {
             str = TagUtil.formatDateTime((TemporalAccessor) value);
         } else if (value instanceof TemporalAccessor[]) {
-            str = Stream.of((TemporalAccessor[])value).map(TagUtil::formatDateTime).collect(Collectors.joining(", "));
+            str = Stream.of((TemporalAccessor[]) value).map(TagUtil::formatDateTime).collect(Collectors.joining(", "));
         } else if (value instanceof float[]) {
             float[] array = (float[]) value;
             str = IntStream.range(0, array.length).mapToObj(i -> String.valueOf(array[i]))
@@ -433,13 +429,13 @@ public class TagW implements Serializable {
         }
 
         if (StringUtil.hasText(format) && !"$V".equals(format.trim())) { //$NON-NLS-1$
-            return formatValue(str, type, format);
+            return formatValue(str, value instanceof Float || value instanceof Double, format);
         }
 
         return str;
     }
 
-    protected static String formatValue(String value, TagType type, String format) {
+    protected static String formatValue(String value, boolean decimal, String format) {
         String str = value;
         int index = format.indexOf("$V"); //$NON-NLS-1$
         int fmLength = 2;
@@ -448,8 +444,7 @@ public class TagW implements Serializable {
             // If the value ($V) is followed by ':' that means a number formatter is used
             if (suffix && format.charAt(index + fmLength) == ':') {
                 fmLength++;
-                if (format.charAt(index + fmLength) == 'f' && TagType.FLOAT.equals(type)
-                    || TagType.DOUBLE.equals(type)) {
+                if (format.charAt(index + fmLength) == 'f' && decimal) {
                     fmLength++;
                     String pattern = getPattern(index + fmLength, format);
                     if (pattern != null) {
