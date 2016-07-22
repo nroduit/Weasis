@@ -11,12 +11,14 @@
 package org.weasis.core.ui.model.graphic.imp;
 
 import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.weasis.core.ui.model.graphic.AbstractGraphic;
+import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -26,21 +28,29 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlRootElement(name = "nonEditable")
 public class NonEditableGraphic extends AbstractGraphic {
     private static final long serialVersionUID = -6063521725986473663L;
-    public static final Integer POINTS_NUMBER = 0;
-    
-    public NonEditableGraphic() {
-        super(POINTS_NUMBER);
+    private Stroke stroke;
+
+    public NonEditableGraphic(Shape path) {
+        this(path, null);
     }
 
-    // TODO should be removed
-    public NonEditableGraphic(Shape path) {
-        this();
+    public NonEditableGraphic(Shape path, Stroke stroke) {
+        super(0);
+        this.stroke = stroke;
         setShape(path, null);
         updateLabel(null, null);
     }
 
     public NonEditableGraphic(NonEditableGraphic graphic) {
         super(graphic);
+    }
+
+    @Override
+    protected void initCopy(Graphic graphic) {
+        super.initCopy(graphic);
+        if (graphic instanceof NonEditableGraphic) {
+            this.stroke = ((NonEditableGraphic) graphic).stroke;
+        }
     }
 
     @Override
@@ -81,4 +91,19 @@ public class NonEditableGraphic extends AbstractGraphic {
         return new Area();
     }
 
+    public Stroke getStroke() {
+        return stroke;
+    }
+
+    public void setStroke(Stroke stroke) {
+        this.stroke = stroke;
+    }
+    
+    @Override
+    public Stroke getStroke(Float lineThickness) {
+        if(stroke != null){
+            return stroke;
+        }
+        return super.getDashStroke(lineThickness);
+    }
 }

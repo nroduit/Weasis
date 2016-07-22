@@ -256,7 +256,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             for (Graphic g : models) {
                 if (g.getLayer().getType().equals(type)) {
                     g.removeAllPropertyChangeListener();
-                    g.setLayer(null);
                 }
             }
             models.removeIf(isModelLayerTypeEquals(type));

@@ -349,6 +349,12 @@ public class TagD extends TagW {
             || TagType.DICOM_SEX.equals(type);
     }
 
+    public static TagW get(String keyword) {
+        // Overrides static method in TagW only to force the method readTags() if not initialized
+        return tags.get(keyword);
+    }
+
+    
     public static String getKeywordFromTag(int tagID, String privateCreatorID) {
         return ElementDictionary.getElementDictionary(privateCreatorID).keywordOf(tagID);
     }

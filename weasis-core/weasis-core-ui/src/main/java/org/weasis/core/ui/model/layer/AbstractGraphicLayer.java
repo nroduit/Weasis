@@ -20,9 +20,9 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
     public AbstractGraphicLayer(LayerType type) {
         this.type = Objects.requireNonNull(type);
 
-        this.level = type.level();
-        this.visible = type.visible();
-        this.locked = type.locked();
+        this.level = type.getLevel();
+        this.visible = type.getVisible();
+        this.locked = type.getLocked();
     }
 
     @XmlAttribute

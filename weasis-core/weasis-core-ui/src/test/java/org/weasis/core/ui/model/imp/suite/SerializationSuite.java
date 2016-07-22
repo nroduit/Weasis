@@ -174,7 +174,7 @@ public class SerializationSuite extends ModelListHelper {
         Graphic angleGraphic = AngleToolGraphicTest.COMPLETE_OBJECT.copy();
         Graphic cobbAngleGraphic = CobbAngleToolGraphicTest.COMPLETE_OBJECT.copy();
         
-        pixelInfoGraphic.setLayerType(LayerType.ANNOTATION_INFO);
+        pixelInfoGraphic.setLayerType(LayerType.ANNOTATION);
         lineGraphic.setLayerType(LayerType.MEASURE);
         rectangleGraphic.setLayerType(LayerType.MEASURE);
         

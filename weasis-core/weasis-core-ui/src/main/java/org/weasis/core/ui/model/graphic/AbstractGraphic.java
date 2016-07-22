@@ -258,6 +258,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public void setLayer(GraphicLayer layer) {
+        Objects.requireNonNull(layer, "Null is not allowed");
         this.layer = layer;
     }
 

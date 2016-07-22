@@ -486,7 +486,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
     @Override
     public Integer getLevel() {
-        return getType().level();
+        return getType().getLevel();
     }
 
     @Override
@@ -557,7 +557,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
     @Override
     public LayerType getType() {
-        return LayerType.ANNOTATION;
+        return LayerType.IMAGE_ANNOTATION;
     }
 
     @Override

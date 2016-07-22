@@ -26,7 +26,7 @@ public class DragLayer extends AbstractGraphicLayer {
     private static final long serialVersionUID = 8576601524359423997L;
 
     public DragLayer() {
-        super(LayerType.TEMPDRAGLAYER);
+        super(LayerType.TEMP_DRAW);
     }
 
     public DragLayer(LayerType type) {

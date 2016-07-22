@@ -74,7 +74,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final List<Graphic> drawGraphicList = new ArrayList<>();
 
     static {
-        selectionGraphic.setLayerType(LayerType.TEMPDRAGLAYER);
+        selectionGraphic.setLayerType(LayerType.TEMP_DRAW);
         WProperties p = BundleTools.SYSTEM_PREFERENCES;
         if (p.getBooleanProperty("weasis.measure.selection", true)) { //$NON-NLS-1$
             graphicList.add(selectionGraphic);
@@ -144,7 +144,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         }
         if (p.getBooleanProperty("weasis.draw.textGrahic", true)) { //$NON-NLS-1$
             Graphic graphic = new AnnotationGraphic();
-            graphic.setLayerType(LayerType.ANNOTATION_INFO);
+            graphic.setLayerType(LayerType.ANNOTATION);
             drawGraphicList.add(graphic);
         }
         drawGraphicList.stream().filter(g -> Objects.isNull(g.getLayerType())).forEach(g -> g.setLayerType(LayerType.DRAW));
