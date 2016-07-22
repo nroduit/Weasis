@@ -132,7 +132,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
         setAction(
-            newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
+            newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
         setAction(newSpatialUnit(Unit.values()));
         setAction(newPanAction());
         setAction(new BasicActionState(ActionW.RESET));

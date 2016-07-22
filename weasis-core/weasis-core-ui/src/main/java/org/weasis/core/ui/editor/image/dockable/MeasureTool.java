@@ -255,14 +255,14 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
         ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
         if (spUnitAction instanceof ComboItemListener) {
-            final JPanel panel_4 = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
+            final JPanel panel4 = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
             final JLabel lutLabel = new JLabel();
             lutLabel.setText(Messages.getString("MeasureTool.unit") + StringUtil.COLON); //$NON-NLS-1$
-            panel_4.add(lutLabel);
+            panel4.add(lutLabel);
             final JComboBox unitComboBox = ((ComboItemListener) spUnitAction).createCombo(120);
             unitComboBox.setSelectedItem(Unit.PIXEL);
-            panel_4.add(unitComboBox);
-            transform.add(panel_4);
+            panel4.add(unitComboBox);
+            transform.add(panel4);
         }
 
         transform.add(Box.createVerticalStrut(5));
@@ -285,7 +285,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
     private void updateMeasureProperties(final ViewSetting setting) {
         if (setting != null) {
-            MeasureToolBar.graphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
+            MeasureToolBar.measureGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
         }
     }
 

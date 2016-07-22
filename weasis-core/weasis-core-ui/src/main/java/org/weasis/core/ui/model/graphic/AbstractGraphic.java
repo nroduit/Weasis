@@ -62,6 +62,8 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     private static final long serialVersionUID = -8152071576417041112L;
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGraphic.class);
+    
+    protected static final String NULL_MSG = "Null is not allowed";
 
     protected Integer pointNumber;
     protected List<Point2D.Double> pts;
@@ -123,6 +125,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public void setPointNumber(Integer pointNumber) {
+        Objects.requireNonNull(pointNumber, NULL_MSG);
         this.pointNumber = pointNumber;
     }
 
@@ -162,6 +165,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public void setVariablePointsNumber(Boolean variablePointsNumber) {
+        Objects.requireNonNull(variablePointsNumber, NULL_MSG);
         this.variablePointsNumber = variablePointsNumber;
     }
 
@@ -258,7 +262,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public void setLayer(GraphicLayer layer) {
-        Objects.requireNonNull(layer, "Null is not allowed");
+        Objects.requireNonNull(layer, NULL_MSG);
         this.layer = layer;
     }
 
@@ -890,6 +894,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public void setLayerType(LayerType layerType) {
+        Objects.requireNonNull(layerType, NULL_MSG);
         this.layerType = layerType;
     }
 

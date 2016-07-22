@@ -170,12 +170,11 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     @Override
     public void removeGraphic(Graphic graphic) {
         if (graphic != null) {
-            GraphicLayer layer = graphic.getLayer();
+            LOGGER.trace("romoving graphic({})", graphic);
             models.remove(graphic);
             graphic.removeAllPropertyChangeListener();
-            graphic.setLayer(null);
-            LOGGER.trace("romove graphic({})", graphic);
 
+            GraphicLayer layer = graphic.getLayer();
             if (layer != null) {
                 boolean layerExist = false;
                 synchronized (models) {

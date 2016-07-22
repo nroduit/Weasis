@@ -202,6 +202,6 @@ public class LabelPrefView extends AbstractItemDialogPage {
         viewSetting.setFontSize(size);
         viewSetting.setFontType(style);
 
-        MeasureToolBar.graphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
+        MeasureToolBar.measureGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
     }
 }

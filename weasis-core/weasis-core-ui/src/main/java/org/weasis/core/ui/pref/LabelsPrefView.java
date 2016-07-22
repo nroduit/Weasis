@@ -86,7 +86,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
         JLabel lblNewLabel = new JLabel(Messages.getString("LabelsPrefView.geometricshape") + StringUtil.COLON); //$NON-NLS-1$
         panel.add(lblNewLabel);
-        ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.graphicList);
+        ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.measureGraphicList);
         tools.remove(0);
         comboBoxTool = new JComboBox<>(tools.stream().toArray(Graphic[]::new));
         comboBoxTool.setMaximumRowCount(12);
@@ -145,7 +145,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        MeasureToolBar.graphicList.forEach(g -> {
+        MeasureToolBar.measureGraphicList.forEach(g -> {
             List<Measurement> list = g.getMeasurementList();
             Optional.ofNullable(list).ifPresent(l -> l.forEach(m -> m.resetToGraphicLabelValue()));
         });

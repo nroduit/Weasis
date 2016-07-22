@@ -81,8 +81,8 @@ public class ViewSetting {
             }
 
             // Forget the Selection Graphic
-            for (int i = 1; i < MeasureToolBar.graphicList.size(); i++) {
-                Graphic graph = MeasureToolBar.graphicList.get(i);
+            for (int i = 1; i < MeasureToolBar.measureGraphicList.size(); i++) {
+                Graphic graph = MeasureToolBar.measureGraphicList.get(i);
                 List<Measurement> list = graph.getMeasurementList();
                 if (list != null && !list.isEmpty()) {
                     Preferences gpref = p.node(graph.getClass().getSimpleName());
@@ -180,8 +180,8 @@ public class ViewSetting {
             BundlePreferences.putStringPreferences(stats, "label", buffer.toString()); //$NON-NLS-1$
 
             // Forget the Selection Graphic
-            for (int i = 1; i < MeasureToolBar.graphicList.size(); i++) {
-                Graphic graph = MeasureToolBar.graphicList.get(i);
+            for (int i = 1; i < MeasureToolBar.measureGraphicList.size(); i++) {
+                Graphic graph = MeasureToolBar.measureGraphicList.get(i);
                 List<Measurement> list = graph.getMeasurementList();
                 if (list != null && !list.isEmpty()) {
                     Preferences gpref = p.node(graph.getClass().getSimpleName());

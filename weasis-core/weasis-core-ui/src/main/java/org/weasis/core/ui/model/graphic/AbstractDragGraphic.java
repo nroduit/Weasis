@@ -53,7 +53,7 @@ public abstract class AbstractDragGraphic extends AbstractGraphic implements Dra
 
     @Override
     public Boolean getResizingOrMoving() {
-        return resizingOrMoving;
+        return Optional.ofNullable(resizingOrMoving).orElse(Boolean.FALSE) ;
     }
 
     @Override

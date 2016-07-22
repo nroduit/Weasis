@@ -2,6 +2,7 @@ package org.weasis.core.ui.model.graphic.imp;
 
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
+import java.util.Optional;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -18,13 +19,11 @@ public class PointGraphic extends AbstractGraphic {
     private static final long serialVersionUID = 3485484151733273261L;
 
     static final Integer DEFAULT_POINT_SIZE = 1;
-    
-    public static final Integer POINTS_NUMBER = 1;
 
-    private Integer pointSize = DEFAULT_POINT_SIZE;;
+    private Integer pointSize = DEFAULT_POINT_SIZE;
 
     public PointGraphic() {
-        super(POINTS_NUMBER);
+        super(1);
     }
 
     public PointGraphic(PointGraphic pointGaphic) {
@@ -76,6 +75,6 @@ public class PointGraphic extends AbstractGraphic {
     }
 
     public void setPointSize(Integer pointSize) {
-        this.pointSize = pointSize;
+        this.pointSize = Optional.ofNullable(pointSize).orElse(DEFAULT_POINT_SIZE);
     }
 }
