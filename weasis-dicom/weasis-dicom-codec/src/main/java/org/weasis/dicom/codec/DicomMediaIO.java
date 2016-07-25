@@ -210,11 +210,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         tagManager.addTag(Tag.DiffusionBValue, Level.INSTANCE);
         tagManager.addTag(Tag.MIMETypeOfEncapsulatedDocument, Level.INSTANCE);
         tagManager.addTag(Tag.PixelDataProviderURL, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
 
         // TODO init with a profile
         DicomMediaUtils.enableAnonymizationProfile(true);

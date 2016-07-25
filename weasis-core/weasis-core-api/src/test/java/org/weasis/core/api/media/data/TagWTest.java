@@ -11,14 +11,15 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Locale;
 
 import javax.xml.stream.XMLStreamReader;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -27,7 +28,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.LocalUtil;
 
-@Ignore
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ TagUtil.class, LocalUtil.class })
 public class TagWTest {
@@ -56,14 +56,14 @@ public class TagWTest {
     public static final String[] RESPONSE_STRING_ARRAY = { "Lorem", "ipsum", "dolor" };
     public static final String RESPONSE_STRING = "Lorem Ipsum Dolor sit amet";
 
-    public static final Date[] RESPONSE_DATE_ARRAY = { mock(Date.class), mock(Date.class) };
-    public static final Date RESPONSE_DATE = mock(Date.class);
+    public static final LocalDate[] RESPONSE_DATE_ARRAY = { mock(LocalDate.class), mock(LocalDate.class) };
+    public static final LocalDate RESPONSE_DATE = mock(LocalDate.class);
 
-    public static final Date[] RESPONSE_TIME_ARRAY = { mock(Date.class), mock(Date.class), mock(Date.class) };
-    public static final Date RESPONSE_TIME = mock(Date.class);
+    public static final LocalTime[] RESPONSE_TIME_ARRAY = { mock(LocalTime.class), mock(LocalTime.class), mock(LocalTime.class) };
+    public static final LocalTime RESPONSE_TIME = mock(LocalTime.class);
 
-    public static final Date[] RESPONSE_DATETIME_ARRAY = { mock(Date.class) };
-    public static final Date RESPONSE_DATETIME = mock(Date.class);
+    public static final LocalDateTime[] RESPONSE_DATETIME_ARRAY = { mock(LocalDateTime.class) };
+    public static final LocalDateTime RESPONSE_DATETIME = mock(LocalDateTime.class);
 
     public static final int[] RESPONSE_INTEGER_ARRAY = { mock(Integer.class), mock(Integer.class) };
     public static final int RESPONSE_INTEGER = mock(Integer.class);
@@ -115,12 +115,12 @@ public class TagWTest {
             .thenReturn(RESPONSE_DOUBLE_ARRAY);
         when(TagUtil.getDoubleTagAttribute(any(XMLStreamReader.class), anyString(), any())).thenReturn(RESPONSE_DOUBLE);
         
-        when(TagUtil.formatDate(any(Date.class))).thenReturn(DATE_STRING);
-        when(TagUtil.formatTime(any(Date.class))).thenReturn(TIME_STRING);
-        when(TagUtil.formatDateTime(any(Date.class))).thenReturn(DATETIME_STRING);
-        when(TagUtil.buildDicomPersonName(anyString())).thenReturn(RESPONSE_PERSON_NAME);
-        when(TagUtil.buildDicomPatientSex(anyString())).thenReturn(RESPONSE_PERSON_SEX);
-        when(TagUtil.getDicomPeriod(anyString())).thenReturn(RESPONSE_PERIOD);
+        when(TagUtil.formatDateTime(any(LocalDate.class))).thenReturn(DATE_STRING);
+        when(TagUtil.formatDateTime(any(LocalTime.class))).thenReturn(TIME_STRING);
+        when(TagUtil.formatDateTime(any(LocalDateTime.class))).thenReturn(DATETIME_STRING);
+     //   when(TagUtil.buildDicomPersonName(anyString())).thenReturn(RESPONSE_PERSON_NAME);
+     //   when(TagUtil.buildDicomPatientSex(anyString())).thenReturn(RESPONSE_PERSON_SEX);
+     //   when(TagUtil.getDicomPeriod(anyString())).thenReturn(RESPONSE_PERIOD);
     }
 
     @Test
@@ -242,13 +242,13 @@ public class TagWTest {
         assertThat(new TagW(KEYWORD_1, TagType.INTEGER).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.LIST).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.OBJECT).isStringFamilyType()).isFalse();
-        assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEQUENCE).isStringFamilyType()).isFalse();
+ //       assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEQUENCE).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.THUMBNAIL).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.TIME).isStringFamilyType()).isFalse();
 
-        assertThat(new TagW(KEYWORD_1, TagType.DICOM_PERIOD).isStringFamilyType()).isTrue();
-        assertThat(new TagW(KEYWORD_1, TagType.DICOM_PERSON_NAME).isStringFamilyType()).isTrue();
-        assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEX).isStringFamilyType()).isTrue();
+//        assertThat(new TagW(KEYWORD_1, TagType.DICOM_PERIOD).isStringFamilyType()).isTrue();
+//        assertThat(new TagW(KEYWORD_1, TagType.DICOM_PERSON_NAME).isStringFamilyType()).isTrue();
+//        assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEX).isStringFamilyType()).isTrue();
         assertThat(new TagW(KEYWORD_1, TagType.STRING).isStringFamilyType()).isTrue();
         assertThat(new TagW(KEYWORD_1, TagType.TEXT).isStringFamilyType()).isTrue();
         assertThat(new TagW(KEYWORD_1, TagType.URI).isStringFamilyType()).isTrue();
@@ -267,21 +267,21 @@ public class TagWTest {
         t2 = new TagW(KEYWORD_1, TagType.STRING);
         assertThat(t1.equals(t2)).isFalse();
 
-        t1 = new TagW(ID_1, null, TagType.DICOM_PERSON_NAME);
-        t2 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
-        assertThat(t1.equals(t2)).isFalse();
-
-        t1 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
-        t2 = new TagW(ID_1, KEYWORD_2, TagType.DICOM_PERSON_NAME);
-        assertThat(t1.equals(t2)).isFalse();
-
-        t1 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
-        t2 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
-        assertThat(t1.equals(t2)).isTrue();
-
-        t1 = new TagW(ID_1, null, TagType.DICOM_PERSON_NAME);
-        t2 = new TagW(ID_1, null, TagType.DICOM_PERSON_NAME);
-        assertThat(t1.equals(t2)).isTrue();
+//        t1 = new TagW(ID_1, null, TagType.DICOM_PERSON_NAME);
+//        t2 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
+//        assertThat(t1.equals(t2)).isFalse();
+//
+//        t1 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
+//        t2 = new TagW(ID_1, KEYWORD_2, TagType.DICOM_PERSON_NAME);
+//        assertThat(t1.equals(t2)).isFalse();
+//
+//        t1 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
+//        t2 = new TagW(ID_1, KEYWORD_1, TagType.DICOM_PERSON_NAME);
+//        assertThat(t1.equals(t2)).isTrue();
+//
+//        t1 = new TagW(ID_1, null, TagType.DICOM_PERSON_NAME);
+//        t2 = new TagW(ID_1, null, TagType.DICOM_PERSON_NAME);
+//        assertThat(t1.equals(t2)).isTrue();
     }
 
     @Test
@@ -325,8 +325,8 @@ public class TagWTest {
         assertThat(new TagW(KEYWORD_1, TagType.DOUBLE, VM_MIN_1, VM_MAX_1).getValue(data))
             .isEqualTo(RESPONSE_DOUBLE_ARRAY);
 
-        assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEQUENCE).getValue(data)).isEqualTo(RESPONSE_STRING);
-        assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEQUENCE, VM_MIN_1, VM_MAX_1).getValue(data)).isEqualTo(RESPONSE_STRING);
+    //    assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEQUENCE).getValue(data)).isEqualTo(RESPONSE_STRING);
+    //    assertThat(new TagW(KEYWORD_1, TagType.DICOM_SEQUENCE, VM_MIN_1, VM_MAX_1).getValue(data)).isEqualTo(RESPONSE_STRING);
 
         assertThat(new TagW(KEYWORD_1, TagType.COLOR).getValue(data)).isEqualTo(RESPONSE_STRING);
         assertThat(new TagW(KEYWORD_1, TagType.COLOR, VM_MIN_1, VM_MAX_1).getValue(data)).isEqualTo(RESPONSE_STRING_ARRAY);
@@ -339,41 +339,41 @@ public class TagWTest {
         assertThat(TagW.getFormattedText(STRING_VALUE_1,  null)).isEqualTo(STRING_VALUE_1);
         assertThat(TagW.getFormattedText(RESPONSE_STRING_ARRAY,  null)).isEqualTo("Lorem\\ipsum\\dolor");
                        
-        Date date = mock(Date.class);
+        LocalDate date = mock(LocalDate.class);
         assertThat(date).isNotNull();
         assertThat(TagW.getFormattedText(date,  null)).isEqualTo(DATE_STRING);
         PowerMockito.verifyStatic();
-        TagUtil.formatDate(eq(date));
+        TagUtil.formatDateTime(eq(date));
         
-        Date time = mock(Date.class);
+        LocalTime time = mock(LocalTime.class);
         assertThat(time).isNotNull();
         assertThat(TagW.getFormattedText(time,  null)).isEqualTo(TIME_STRING);
         PowerMockito.verifyStatic();
-        TagUtil.formatTime(eq(time));
+        TagUtil.formatDateTime(eq(time));
         
-        Date datetime = mock(Date.class);
+        LocalDateTime datetime = mock(LocalDateTime.class);
         assertThat(datetime).isNotNull();
         assertThat(TagW.getFormattedText(datetime,  null)).isEqualTo(DATETIME_STRING);
         PowerMockito.verifyStatic();
         TagUtil.formatDateTime(eq(datetime));
         
-        String personName = "John Doe";
-        assertThat(personName).isNotNull();
-        assertThat(TagW.getFormattedText(personName,  null)).isEqualTo(RESPONSE_PERSON_NAME);
-        PowerMockito.verifyStatic();
-        TagUtil.buildDicomPersonName(eq(personName));
-        
-        String sex = "M";
-        assertThat(sex).isNotNull();
-        assertThat(TagW.getFormattedText(sex,  null)).isEqualTo(RESPONSE_PERSON_SEX);
-        PowerMockito.verifyStatic();
-        TagUtil.buildDicomPatientSex(eq(sex));
-        
-        String period = "a period";
-        assertThat(period).isNotNull();
-        assertThat(TagW.getFormattedText(period,  null)).isEqualTo(RESPONSE_PERIOD);
-        PowerMockito.verifyStatic();
-        TagUtil.getDicomPeriod(eq(period));
+//        String personName = "John Doe";
+//        assertThat(personName).isNotNull();
+//        assertThat(TagW.getFormattedText(personName,  null)).isEqualTo(RESPONSE_PERSON_NAME);
+//        PowerMockito.verifyStatic();
+//        TagUtil.buildDicomPersonName(eq(personName));
+//        
+//        String sex = "M";
+//        assertThat(sex).isNotNull();
+//        assertThat(TagW.getFormattedText(sex,  null)).isEqualTo(RESPONSE_PERSON_SEX);
+//        PowerMockito.verifyStatic();
+//        TagUtil.buildDicomPatientSex(eq(sex));
+//        
+//        String period = "a period";
+//        assertThat(period).isNotNull();
+//        assertThat(TagW.getFormattedText(period,  null)).isEqualTo(RESPONSE_PERIOD);
+//        PowerMockito.verifyStatic();
+//        TagUtil.getDicomPeriod(eq(period));
         
         float[] floatValues = { 1.23f, 4.56f, 7.89f };
         assertThat(TagW.getFormattedText(floatValues,  null)).isEqualTo("1.23, 4.56, 7.89");
@@ -384,7 +384,7 @@ public class TagWTest {
         int[] intValues = { 1234, 567, 890 };
         assertThat(TagW.getFormattedText(intValues,  null)).isEqualTo("1234, 567, 890");
         
-        assertThat(TagW.getFormattedText(Boolean.TRUE, , null)).isEqualTo("true");
+        assertThat(TagW.getFormattedText(Boolean.TRUE, null)).isEqualTo("true");
     }
     
     @Test
