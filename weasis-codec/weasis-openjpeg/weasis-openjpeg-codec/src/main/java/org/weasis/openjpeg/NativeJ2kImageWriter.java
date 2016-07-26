@@ -53,7 +53,7 @@ final class NativeJ2kImageWriter extends NativeImageWriter {
             throw new IllegalStateException("output == null");
         }
 
-        OutputStreamAdapter stream = null;
+        OutputStreamAdapter stream;
         if (output instanceof ImageOutputStream) {
             stream = new OutputStreamAdapter((ImageOutputStream) output);
         } else {
@@ -82,8 +82,8 @@ final class NativeJ2kImageWriter extends NativeImageWriter {
                 throw new IIOException("Native JPEG encoding error: " + error);
             }
             encoder.dispose();
-        } catch (Throwable t) {
-            throw new IIOException("Native JPEG encoding error", t);
+        } catch (Exception e) {
+            throw new IIOException("Native JPEG encoding error", e);
         }
     }
 

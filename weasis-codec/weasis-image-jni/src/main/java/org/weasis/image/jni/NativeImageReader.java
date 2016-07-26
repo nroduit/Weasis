@@ -53,14 +53,14 @@ public abstract class NativeImageReader extends ImageReader {
     protected long highMark = Long.MIN_VALUE;
 
     // Indicating the stream positions of the start of each image. Entries are added as needed.
-    protected final ArrayList<Long> imageStartPosition = new ArrayList<Long>();
+    protected final ArrayList<Long> imageStartPosition = new ArrayList<>();
 
     // The number of images in the stream, if known, otherwise -1.
     private int numImages = -1;
 
     protected HashMap<Integer, ArrayList<ImageTypeSpecifier>> imageTypes =
-        new HashMap<Integer, ArrayList<ImageTypeSpecifier>>();
-    protected HashMap<Integer, NativeImage> nativeImages = new HashMap<Integer, NativeImage>();
+        new HashMap<>();
+    protected HashMap<Integer, NativeImage> nativeImages = new HashMap<>();
 
     /**
      * Creates a <code>ImageTypeSpecifier</code> from the <code>ImageParameters</code>. The default sample model is
@@ -518,7 +518,7 @@ public abstract class NativeImageReader extends ImageReader {
         WritableRaster raster = Raster.createWritableRaster(sm, db, param.getDestinationOffset());
 
         long stop = System.currentTimeMillis();
-        LOGGER.debug("Building BufferedImage time: {} ms", (stop - start)); //$NON-NLS-1$
+        LOGGER.debug("Building BufferedImage time: {} ms", stop - start); //$NON-NLS-1$
         return new BufferedImage(type.getColorModel(), raster, false, null);
     }
 
@@ -533,7 +533,7 @@ public abstract class NativeImageReader extends ImageReader {
             if (imageTypes.containsKey(key)) {
                 types = imageTypes.get(key);
             } else {
-                types = new ArrayList<ImageTypeSpecifier>();
+                types = new ArrayList<>();
                 ImageParameters info = getInfoImage(imageIndex, null);
                 types.add(createImageType(info, null, null, null, null, null));
                 imageTypes.put(key, types);

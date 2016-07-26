@@ -90,24 +90,6 @@ public class openjpeg {
 
         private native void allocate();
 
-        /** @see Pointer#position(int) */
-        @Override
-        public opj_image_comp position(int position) {
-            return super.position(position);
-        }
-
-        /** @see Pointer#limit(int) */
-        @Override
-        public opj_image_comp limit(int limit) {
-            return super.limit(limit);
-        }
-
-        /** @see Pointer#capacity(int) */
-        @Override
-        public opj_image_comp capacity(int capacity) {
-            return super.capacity(capacity);
-        }
-
         /** XRsiz: horizontal separation of a sample of ith component with respect to the reference grid */
         @Cast("unsigned int")
         public native int dx();

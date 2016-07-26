@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -908,7 +909,8 @@ public class DicomMediaUtils {
                 String modlality = TagD.getTagValue(tagable, Tag.Modality, String.class);
                 if ("XA".equals(modlality) || "XRF".equals(modlality)) { //$NON-NLS-1$ //$NON-NLS-2$
                     // See PS 3.4 N.2.1.2.
-                    String pixRel = TagD.getTagValue(tagable, Tag.PixelIntensityRelationship, String.class);
+                    String pixRel = mLutItems.getParent() == null ? null
+                        : mLutItems.getParent().getString(Tag.PixelIntensityRelationship);
                     if (pixRel != null && ("LOG".equalsIgnoreCase(pixRel) || "DISP".equalsIgnoreCase(pixRel))) { //$NON-NLS-1$ //$NON-NLS-2$
                         canApplyMLUT = false;
                         LOGGER.debug(
