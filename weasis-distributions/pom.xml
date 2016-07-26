@@ -394,6 +394,23 @@
 									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+
+								<!-- ===================================== -->
+								<!-- Weasis Acquisition bundles -->
+								<!-- ===================================== -->
+								<artifactItem>
+									<groupId>org.weasis.acquire</groupId>
+									<artifactId>weasis-acquire-explorer</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.acquire</groupId>
+									<artifactId>weasis-acquire-editor</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+
 							</artifactItems>
 						</configuration>
 					</execution>

@@ -337,8 +337,13 @@ public class WeasisLauncher {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
         registerAdditionalShutdownHook();
 
-        System.out.println("\nWeasis Starting..."); //$NON-NLS-1$
-        System.out.println("========================\n"); //$NON-NLS-1$
+        System.out.println("            "); //$NON-NLS-1$
+        System.out.println("              _      __             _   "); //$NON-NLS-1$
+        System.out.println("Starting...  | | /| / /__ ___ ____ (_)__"); //$NON-NLS-1$
+        System.out.println("             | |/ |/ / -_) _ `(_-</ (_-<"); //$NON-NLS-1$
+        System.out.println("             |__/|__/\\__/\\_,_/___/_/___/"); //$NON-NLS-1$
+        System.out.println(""); //$NON-NLS-1$
+
         int exitStatus = 0;
         // Create host activator;
         m_activator = new HostActivator();
@@ -710,10 +715,16 @@ public class WeasisLauncher {
         // Read the properties file
         Properties props = null;
         if (propURI != null) {
+            System.out.println(EXTENDED_PROPERTIES_PROP + ": " + propURI);
             props = readProperties(propURI, null);
         }
+        else {
+            System.err.println("No config.properties path found, Weasis cannot start!");
+        }
+        
         propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
         if (propURI != null) {
+            System.out.println(EXTENDED_PROPERTIES_PROP + ": " + propURI);
             // Extended properties, add or override existing properties
             props = readProperties(propURI, props);
         }

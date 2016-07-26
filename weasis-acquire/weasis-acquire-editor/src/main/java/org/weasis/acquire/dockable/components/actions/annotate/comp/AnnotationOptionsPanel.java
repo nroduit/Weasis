@@ -1,0 +1,150 @@
+package org.weasis.acquire.dockable.components.actions.annotate.comp;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.event.ActionListener;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeListener;
+
+import org.weasis.base.viewer2d.EventManager;
+import org.weasis.core.api.gui.util.ActionState;
+import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.pref.ViewSetting;
+
+@SuppressWarnings("serial")
+public class AnnotationOptionsPanel extends JPanel {
+    public static final ViewSetting viewSetting = new ViewSetting();
+
+    private final EventManager eventManager = EventManager.getInstance();
+
+    private final JPanel lineStylePanel;
+    private final JPanel drawOncePanel;
+    private final JPanel unitPanel;
+
+    private final Border border = BorderFactory.createEmptyBorder(5, 10, 5, 10);
+    private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
+
+    public static final Font TITLE_FONT = FontTools.getFont12Bold();
+    public static final Color TITLE_COLOR = Color.GRAY;
+
+    public AnnotationOptionsPanel() {
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Options",
+            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
+
+        lineStylePanel = createLineStylePanel();
+        drawOncePanel = createDrawOnePanel();
+        unitPanel = createUnitPanel();
+
+        add(lineStylePanel);
+        add(unitPanel);
+        add(drawOncePanel);
+    }
+
+    private JPanel createLineStylePanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 0));
+        panel.setBorder(border);
+
+        JLabel label = new JLabel(Messages.getString("MeasureToolBar.line") + StringUtil.COLON); //$NON-NLS-1$
+        panel.add(label);
+
+        JButton button = new JButton(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
+        button.setBackground(viewSetting.getLineColor());
+        button.addActionListener(pickColorAction);
+        panel.add(button);
+
+        JSpinner spinner = new JSpinner();
+        JMVUtils.setNumberModel(spinner, viewSetting.getLineWidth(), 1, 8, 1);
+        spinner.addChangeListener(changeLineWidth);
+        panel.add(spinner);
+
+        return panel;
+    }
+
+    private JPanel createDrawOnePanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        panel.setBorder(border);
+
+        ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
+        if (drawOnceAction instanceof ToggleButtonListener) {
+            JCheckBox checkDraw =
+                ((ToggleButtonListener) drawOnceAction).createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
+            checkDraw.setSelected(viewSetting.isDrawOnlyOnce());
+            checkDraw.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panel.add(checkDraw);
+        }
+        return panel;
+    }
+
+    private JPanel createUnitPanel() {
+        final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
+        
+        ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+        if (spUnitAction instanceof ComboItemListener) {
+            JLabel label = new JLabel(Messages.getString("MeasureTool.unit") + StringUtil.COLON); //$NON-NLS-1$
+            panel.add(label);
+            @SuppressWarnings("unchecked")
+            JComboBox<Unit> unitComboBox = ((ComboItemListener) spUnitAction).createCombo(120);
+            unitComboBox.setSelectedItem(Unit.PIXEL);
+            panel.add(unitComboBox);
+        }
+        return panel;
+    }
+
+    private void updateMeasureProperties(final ViewSetting setting) {
+        if (setting != null) {
+            for (Graphic graphic : MeasureToolBar.measureGraphicList) {
+                MeasureToolBar.applyDefaultSetting(setting, graphic);
+            }
+        }
+    }
+
+    public JPanel getLineStylePanel() {
+        return lineStylePanel;
+    }
+
+    private ActionListener pickColorAction = e -> {
+        JButton button = (JButton) e.getSource();
+        Color newColor = JColorChooser.showDialog(SwingUtilities.getWindowAncestor(AnnotationOptionsPanel.this),
+            Messages.getString("MeasureTool.pick_color"), //$NON-NLS-1$
+            button.getBackground());
+        if (newColor != null) {
+            button.setBackground(newColor);
+            viewSetting.setLineColor(newColor);
+            updateMeasureProperties(viewSetting);
+        }
+    };
+
+    private ChangeListener changeLineWidth = e -> {
+        Object val = ((JSpinner) e.getSource()).getValue();
+        if (val instanceof Integer) {
+            viewSetting.setLineWidth((Integer) val);
+            updateMeasureProperties(viewSetting);
+        }
+    };
+}
