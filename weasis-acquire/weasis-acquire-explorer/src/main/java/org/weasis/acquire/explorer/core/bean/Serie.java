@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.media.data.TagUtil;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
 
 public class Serie extends AbstractTagable implements Comparable<Serie> {
@@ -44,8 +44,8 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     private void init() {
         // Default Modality if not overridden
-        TagW modality = TagD.get(Tag.Modality);
-        tags.put(modality, "XC");
+        tags.put(TagD.get(Tag.Modality), "XC");
+        tags.put(TagD.get(Tag.SeriesInstanceUID), UIDUtils.createUID());
     }
 
     public Type getType() {

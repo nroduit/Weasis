@@ -147,8 +147,8 @@ public class AcquirePublishDialog extends JDialog {
                 imgInfo.getPostProcessOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, ratio);
             }
         }
-        // publishPanel.publish(toPublish);
-        publishPanel.publishForTest(toPublish);
+        publishPanel.publish(toPublish);
+        // publishPanel.publishForTest(toPublish);
         clearAndHide();
     }
 

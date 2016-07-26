@@ -25,6 +25,7 @@ public class GlobalHelper extends MockHelper {
     protected static String patientBirthDateValue = "19850216";
     protected static String patientSexValue = "M";
     protected static String studyDateValue = "20160603";
+    protected static String studyInstanceUIDValue = "2.25.35.13108031698769009477890994130583367923";
     protected static String modalityValue = "Lorem ipsum";
     
     @Mock
@@ -45,6 +46,8 @@ public class GlobalHelper extends MockHelper {
     @Mock
     protected static TagW studyDateW;
     @Mock
+    protected static TagW studyInstanceUIDW;
+    @Mock
     protected static TagW modalityW;
 
     @Mock
@@ -59,6 +62,8 @@ public class GlobalHelper extends MockHelper {
     protected static NodeList patientSexNodeList;
     @Mock
     protected static NodeList studyDateNodeList;
+    @Mock
+    protected static NodeList studyInstanceUIDNodeList;
     @Mock
     protected static NodeList modalityNodeList;
 
@@ -75,6 +80,8 @@ public class GlobalHelper extends MockHelper {
     @Mock
     protected static Node studyDateNode;
     @Mock
+    protected static Node studyInstanceUIDNode;
+    @Mock
     protected static Node modalityNode;
 
     protected enum GlobalTag {
@@ -84,6 +91,7 @@ public class GlobalHelper extends MockHelper {
         patientBirthDate(Tag.PatientBirthDate, patientBirthDateW, patientBirthDateNodeList, patientBirthDateNode, TagType.DATE, patientBirthDateValue), 
         patientSex(Tag.PatientSex, patientSexW, patientSexNodeList, patientSexNode, TagType.DICOM_SEX, patientSexValue), 
         studyDate(Tag.StudyDate, studyDateW, studyDateNodeList, studyDateNode, TagType.DATE, studyDateValue), 
+        studyinstanceUID(Tag.StudyInstanceUID, studyInstanceUIDW, studyInstanceUIDNodeList, studyInstanceUIDNode, TagType.STRING, studyInstanceUIDValue), 
         modality(Tag.Modality, modalityW, modalityNodeList, modalityNode, TagType.STRING, modalityValue);
         
         public int tagId;

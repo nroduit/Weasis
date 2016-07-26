@@ -227,6 +227,5 @@ public class Dicomizer {
             System.arraycopy(buffer, 0, tmp, 0, headerLength);
             buffer = tmp;
         }
-
     }
 }

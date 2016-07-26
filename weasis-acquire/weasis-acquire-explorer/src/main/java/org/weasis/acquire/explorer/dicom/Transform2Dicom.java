@@ -2,6 +2,7 @@ package org.weasis.acquire.explorer.dicom;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -12,6 +13,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +49,8 @@ public final class Transform2Dicom {
             File exportDirImage =
                 FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "img"));
             try {
+                buildStudySeriesDate(collection);
+
                 for (AcquireImageInfo imageInfo : collection) {
                     ImageElement img = imageInfo.getImage();
                     TagW tagUid = TagD.getUID(Level.INSTANCE);
@@ -133,11 +137,41 @@ public final class Transform2Dicom {
             final DicomState state = CStore.process(new DicomNode(weasisAet), destination, files, dicomProgress);
             if (state.getStatus() != Status.Success) {
                 LOGGER.error("Dicom send error: {}", state.getMessage());
-                GuiExecutor.instance().execute(() -> JOptionPane.showOptionDialog(null, String.format("Dicom send error: %s", state.getMessage()),
-                    null, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null));
+                GuiExecutor.instance()
+                    .execute(() -> JOptionPane.showOptionDialog(null,
+                        String.format("Dicom send error: %s", state.getMessage()), null, JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.ERROR_MESSAGE, null, null, null));
             }
         } finally {
             FileUtil.recursiveDelete(exportDir);
+        }
+    }
+
+    private static void buildStudySeriesDate(Collection<AcquireImageInfo> collection) {
+        TagW seriesDate = TagD.get(Tag.SeriesDate);
+        TagW seriesTime = TagD.get(Tag.SeriesTime);
+        TagW studyDate = TagD.get(Tag.StudyDate);
+        TagW studyTime = TagD.get(Tag.StudyTime);
+
+        for (AcquireImageInfo imageInfo : collection) {
+            ImageElement img = imageInfo.getImage();
+            LocalDateTime date = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, img);
+            if (date == null) {
+                continue;
+            }
+            
+            LocalDateTime minSeries = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, imageInfo.getSerie());
+            if (minSeries == null || date.isBefore(minSeries)) {
+                imageInfo.getSerie().setTag(seriesDate, date.toLocalDate());
+                imageInfo.getSerie().setTag(seriesTime, date.toLocalTime());
+            }
+
+
+            LocalDateTime minStudy = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, AcquireManager.GLOBAL);
+            if (minStudy == null || date.isBefore(minStudy)) {
+                AcquireManager.GLOBAL.setTag(studyDate, date.toLocalDate());
+                AcquireManager.GLOBAL.setTag(studyTime, date.toLocalTime());
+            }
         }
     }
 }

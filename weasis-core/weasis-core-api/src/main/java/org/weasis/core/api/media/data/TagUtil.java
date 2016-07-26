@@ -29,7 +29,15 @@ public final class TagUtil {
     public static Date toLocalDate(TemporalAccessor temporal) {
         if (temporal != null) {
             try {
-                return Date.from(Instant.from(temporal));
+                TemporalAccessor t = temporal;
+                if (temporal instanceof LocalDate) {
+                    t = ((LocalDate) temporal).atStartOfDay(ZoneId.systemDefault());
+                } else if (temporal instanceof LocalTime) {
+                    t = ((LocalTime) temporal).atDate(LocalDate.ofEpochDay(0)).atZone(ZoneId.systemDefault());
+                } else if (temporal instanceof LocalDateTime) {
+                    t = ((LocalDateTime) temporal).atZone(ZoneId.systemDefault());
+                }
+                return Date.from(Instant.from(t));
             } catch (Exception e) {
                 LOGGER.error("Date conversion", e);
             }
@@ -39,15 +47,11 @@ public final class TagUtil {
 
     public static Date[] toLocalDates(Object array) {
         if (array != null && array.getClass().isArray()) {
-            try {
-                Date[] dates = new Date[Array.getLength(array)];
-                for (int i = 0; i < dates.length; i++) {
-                    dates[i] = Date.from(Instant.from((TemporalAccessor) Array.get(array, i)));
-                }
-                return dates;
-            } catch (Exception e) {
-                LOGGER.error("Date conversion", e);
+            Date[] dates = new Date[Array.getLength(array)];
+            for (int i = 0; i < dates.length; i++) {
+                dates[i] = toLocalDate((TemporalAccessor) Array.get(array, i));
             }
+            return dates;
         }
         return null;
     }

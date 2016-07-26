@@ -672,8 +672,11 @@ public class TagD extends TagW {
     public static LocalDateTime dateTime(int dateID, int timeID, TagReadable tagable) {
         LocalDate date = TagD.getTagValue(tagable, dateID, LocalDate.class);
         LocalTime time = TagD.getTagValue(tagable, timeID, LocalTime.class);
-        if (date == null || time == null) {
+        if (date == null) {
             return null;
+        }
+        if (time == null) {
+            return date.atStartOfDay();
         }
         return LocalDateTime.of(date, time);
     }

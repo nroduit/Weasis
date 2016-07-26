@@ -296,6 +296,8 @@ public class WeasisLauncher {
             }
         }
 
+        System.out.println();
+        System.out.println("***** Starting Configuration *****"); //$NON-NLS-1$
         // Read configuration properties.
         Properties serverProp = WeasisLauncher.loadConfigProperties();
         // If no configuration properties were found, then create
@@ -869,8 +871,6 @@ public class WeasisLauncher {
     }
 
     public static WeasisLoader loadProperties(Properties s_prop) {
-        System.out.println();
-        System.out.println("***** Starting Configuration *****"); //$NON-NLS-1$
         System.out.println("Operating system: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
 
         String dir = new File(s_prop.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
@@ -1125,7 +1125,7 @@ public class WeasisLauncher {
             }
         } catch (Exception e) {
             cacheDir = null;
-            System.err.println(e.getMessage());
+            System.err.println(e.getMessage() + "\n");
         }
         if (cacheDir == null) {
             if (portable != null) {

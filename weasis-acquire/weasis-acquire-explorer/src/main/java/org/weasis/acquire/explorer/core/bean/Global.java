@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.util.UIDUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -14,6 +15,7 @@ import org.weasis.dicom.codec.TagD;
 public class Global extends AbstractTagable {
 
     public void init(Document xml) {
+        tags.put(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
         Optional.of(xml).map(o -> o.getDocumentElement()).ifPresent(init);
     }
 
