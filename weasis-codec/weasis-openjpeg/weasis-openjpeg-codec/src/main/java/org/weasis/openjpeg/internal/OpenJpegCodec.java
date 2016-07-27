@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
 
 import javax.imageio.ImageReadParam;
@@ -27,10 +26,10 @@ import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.SizeTPointer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.image.jni.FileStreamSegment;
 import org.weasis.image.jni.ImageParameters;
 import org.weasis.image.jni.NativeCodec;
 import org.weasis.image.jni.NativeImage;
+import org.weasis.image.jni.StreamSegment;
 import org.weasis.openjpeg.J2kParameters;
 import org.weasis.openjpeg.NativeJ2kImage;
 import org.weasis.openjpeg.cpp.openjpeg;
@@ -47,6 +46,10 @@ public class OpenJpegCodec implements NativeCodec {
     public static final int J2K_CFMT = 0;
     public static final int JP2_CFMT = 1;
     public static final int JPT_CFMT = 2;
+    
+    static final info_handler infoHandler = new info_handler();
+    static final warning_handler warningHandler = new warning_handler();
+    static final error_handler errorHandler = new error_handler();
 
     /** 1 mega of buffersize by default */
     public static final long OPJ_J2K_STREAM_CHUNK_SIZE = 0x100000;
@@ -57,7 +60,7 @@ public class OpenJpegCodec implements NativeCodec {
     @Override
     public String readHeader(NativeImage nImage) throws IOException {
         String msg = null;
-        FileStreamSegment seg = nImage.getStreamSegment();
+        StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
             J2kParameters params = (J2kParameters) nImage.getImageParameters();
 
@@ -65,7 +68,7 @@ public class OpenJpegCodec implements NativeCodec {
             Pointer codec = null;
             openjpeg.opj_image image = null;
             try {
-                MappedByteBuffer buffer = seg.getDirectByteBuffer(0);
+                ByteBuffer buffer = seg.getDirectByteBuffer(0);
 
                 SourceData j2kFile = new SourceData();
                 j2kFile.data(buffer);
@@ -84,9 +87,9 @@ public class OpenJpegCodec implements NativeCodec {
                 }
 
                 /* catch events using our callbacks and give a local context */
-                openjpeg.opj_set_info_handler(codec, new info_handler(), null);
-                openjpeg.opj_set_warning_handler(codec, new warning_handler(), null);
-                openjpeg.opj_set_error_handler(codec, new error_handler(), null);
+                openjpeg.opj_set_info_handler(codec, infoHandler, null);
+                openjpeg.opj_set_warning_handler(codec,  warningHandler, null);
+                openjpeg.opj_set_error_handler(codec,  errorHandler, null);
 
                 /* setup the decoder decoding parameters using user parameters */
                 /* Read the main header of the codestream and if necessary the JP2 boxes */
@@ -127,7 +130,7 @@ public class OpenJpegCodec implements NativeCodec {
     @Override
     public String decompress(NativeImage nImage, ImageReadParam param) throws IOException {
         String msg = null;
-        FileStreamSegment seg = nImage.getStreamSegment();
+        StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
             Pointer l_stream = null;
             Pointer codec = null;
@@ -157,9 +160,9 @@ public class OpenJpegCodec implements NativeCodec {
                 }
 
                 /* catch events using our callbacks and give a local context */
-                openjpeg.opj_set_info_handler(codec, new info_handler(), null);
-                openjpeg.opj_set_warning_handler(codec, new warning_handler(), null);
-                openjpeg.opj_set_error_handler(codec, new error_handler(), null);
+                openjpeg.opj_set_info_handler(codec, infoHandler, null);
+                openjpeg.opj_set_warning_handler(codec, warningHandler, null);
+                openjpeg.opj_set_error_handler(codec,  errorHandler, null);
 
                 /* setup the decoder decoding parameters using user parameters */
                 /* Read the main header of the codestream and if necessary the JP2 boxes */

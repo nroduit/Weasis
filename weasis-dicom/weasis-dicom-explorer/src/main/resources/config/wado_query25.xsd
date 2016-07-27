@@ -3,6 +3,8 @@
 	xmlns="http://www.weasis.org/xsd/2.5" targetNamespace="http://www.weasis.org/xsd/2.5"
 	elementFormDefault="qualified">
 
+	<xs:include schemaLocation="presentations.xsd"/>
+
 	<!-- DICOM VALUE REPRESENTATIONS -->
 
 	<!-- IS (Integer String) Restriction: leading and/or trailing spaces are 
@@ -100,14 +102,17 @@
 		</xsd:restriction>
 	</xsd:simpleType>
 
-	<!-- DESCRIPTION OF WADO_QUERY XML DOCUMENT -->
+	<!-- DESCRIPTION OF MANIFEST XML DOCUMENT -->
 	<xsd:element name="manifest" type="manifest" />
 	<xsd:complexType name="manifest">
 		<xsd:sequence>
-			<xsd:element name="wado_query" type="WADOQuery" minOccurs="0" maxOccurs="unbounded" />
+			<xsd:element name="arcQuery" type="ArcQuery" minOccurs="0"
+				maxOccurs="unbounded" />
+			<xsd:element name="presentations" type="presentations"
+				minOccurs="0" maxOccurs="1" />
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:complexType name="WADOQuery">
+	<xsd:complexType name="ArcQuery">
 		<xsd:sequence>
 			<xsd:element name="httpTag" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
@@ -126,8 +131,8 @@
 			<xsd:element name="Patient" type="Patient" minOccurs="0"
 				maxOccurs="unbounded" />
 		</xsd:sequence>
-		<xsd:attribute name="id" type="xsd:string" use="required" />
-		<xsd:attribute name="wadoURL" type="xsd:anyURI" use="required" />
+		<xsd:attribute name="arcId" type="xsd:string" use="required" />
+		<xsd:attribute name="baseUrl" type="xsd:anyURI" use="required" />
 		<xsd:attribute name="webLogin" type="xsd:string" />
 		<xsd:attribute name="requireOnlySOPInstanceUID" type="xsd:boolean" />
 		<xsd:attribute name="additionnalParameters" type="xsd:string" />

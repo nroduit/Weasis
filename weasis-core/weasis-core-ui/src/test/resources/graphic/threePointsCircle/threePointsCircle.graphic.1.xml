@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<threePointsCircle fill="true" showLabel="true"
+	thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Area : 36'795.9 pix</label>
+		<label>Mean 1 : 112.2</label>
+		<label>Mean 2 : 91.5</label>
+		<label>Mean 3 : 82</label>
+	</label>
+	<pts>
+		<pt x="1293.5" y="1023.0" />
+		<pt x="1461.5" y="1156.0" />
+		<pt x="1494.5" y="1090.0" />
+	</pts>
+</threePointsCircle>

@@ -18,11 +18,16 @@ import javax.media.jai.PlanarImage;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
+    private static final long serialVersionUID = 7716040872158831560L;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImageTransferHandler.class);
 
     private static final DataFlavor flavors[] = { DataFlavor.imageFlavor };
     private SimpleOpManager disOp;
@@ -44,16 +49,10 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
         // TODO make only one export function with a dialog to choose to disable zoom (real size), add graphics,
         // anonymize and other default remove annotations
         if (comp instanceof Image2DViewer) {
-            Image2DViewer view2DPane = (Image2DViewer) comp;
+            Image2DViewer<?> view2DPane = (Image2DViewer<?>) comp;
             RenderedImage src = view2DPane.getSourceImage();
             if (src != null) {
-                SimpleOpManager opManager;
-                try {
-                    opManager = view2DPane.getImageLayer().getDisplayOpManager().clone();
-                } catch (CloneNotSupportedException e) {
-                    e.printStackTrace();
-                    return null;
-                }
+                SimpleOpManager opManager = view2DPane.getImageLayer().getDisplayOpManager().copy();
                 opManager.removeImageOperationAction(opManager.getNode(ZoomOp.OP_NAME));
                 opManager.setFirstNode(src);
                 disOp = opManager;
@@ -68,7 +67,6 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
         return false;
     }
 
-    // Transferable
     @Override
     public Object getTransferData(DataFlavor flavor) {
         if (isDataFlavorSupported(flavor)) {

@@ -74,10 +74,10 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.util.RotatedIcon;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -175,7 +175,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
                 ViewCanvas<?> sel = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
                 if (sel != null) {
-                    anonymize = sel.getInfoLayer().getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
+                    anonymize = sel.getInfoLayer().getDisplayPreferences(LayerAnnotation.ANONYM_ANNOTATIONS);
                 }
             }
             changeDicomInfo(currentSeries, currentMedia);

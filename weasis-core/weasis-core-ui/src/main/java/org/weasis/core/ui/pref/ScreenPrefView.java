@@ -122,15 +122,12 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             p.add(new JLabel(buf.toString()));
 
             JButton realZoomButton = new JButton(Messages.getString("ScreenPrefView.sp_calib")); //$NON-NLS-1$
-            realZoomButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final CalibDialog dialog = new CalibDialog(WinUtil.getParentFrame((Component) e.getSource()), title,
-                        ModalityType.APPLICATION_MODAL, monitor);
-                    dialog.setBounds(monitor.getFullscreenBounds());
-                    dialog.setVisible(true);
+            realZoomButton.addActionListener(e -> {
+                final CalibDialog dialog = new CalibDialog(WinUtil.getParentFrame((Component) e.getSource()), title,
+                    ModalityType.APPLICATION_MODAL, monitor);
+                dialog.setBounds(monitor.getFullscreenBounds());
+                dialog.setVisible(true);
 
-                }
             });
             realZoomButton.setToolTipText(Messages.getString("ScreenPrefView.calib_real")); //$NON-NLS-1$
             p.add(realZoomButton);
@@ -230,11 +227,11 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
         private final Cross cross;
         private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField(LocalUtil.getIntegerInstance());
-        private final JComboBox jComboBoxType =
-            new JComboBox(new String[] { Messages.getString("ScreenPrefView.horiz_line"), //$NON-NLS-1$
+        private final JComboBox<String> jComboBoxType =
+            new JComboBox<>(new String[] { Messages.getString("ScreenPrefView.horiz_line"), //$NON-NLS-1$
                 Messages.getString("ScreenPrefView.vertical_line"), Messages.getString("ScreenPrefView.screen_size") }); //$NON-NLS-1$ //$NON-NLS-2$
-        private final JComboBox jComboBoxUnit =
-            new JComboBox(new Unit[] { Unit.MILLIMETER, Unit.CENTIMETER, Unit.MILLIINCH, Unit.INCH });
+        private final JComboBox<Unit> jComboBoxUnit =
+            new JComboBox<>(new Unit[] { Unit.MILLIMETER, Unit.CENTIMETER, Unit.MILLIINCH, Unit.INCH });
 
         public CalibDialog(Window parentWindow, String title, ModalityType applicationModal, Monitor monitor) {
             super(parentWindow, title, applicationModal, monitor.getGraphicsConfiguration());
@@ -255,14 +252,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             inputPanel.add(jComboBoxUnit);
             inputPanel.add(Box.createHorizontalStrut(15));
             JButton apply = new JButton(Messages.getString("ScreenPrefView.apply")); //$NON-NLS-1$
-            apply.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    computeScaleFactor();
-                }
-
-            });
+            apply.addActionListener(e -> computeScaleFactor());
             inputPanel.add(apply);
 
             content.add(cross, BorderLayout.CENTER);

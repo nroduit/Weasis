@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
+import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.image.ImageOpNode.Param;
@@ -69,6 +70,14 @@ public class ShutterOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public ShutterOp(ShutterOp op) {
+        super(op);
+    }
+
+    @Override
+    public ShutterOp copy() {
+        return new ShutterOp(this);
+    }
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();

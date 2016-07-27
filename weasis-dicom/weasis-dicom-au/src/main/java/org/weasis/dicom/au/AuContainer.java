@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
@@ -33,7 +32,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -254,23 +252,8 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     @Override
-    public synchronized WtoolBar getStatusBar() {
-        return null;
-    }
-
-    @Override
     public synchronized List<Toolbar> getToolBar() {
         return TOOLBARS;
-    }
-
-    @Override
-    public List<Action> getExportActions() {
-        return null;
-    }
-
-    @Override
-    public List<Action> getPrintActions() {
-        return null;
     }
 
     public Series<?> getSeries() {

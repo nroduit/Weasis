@@ -16,11 +16,13 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 
+import org.weasis.base.explorer.list.IThumbnailList;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.util.FontTools;
 
-public class ThumbnailRenderer extends JPanel implements ListCellRenderer {
+@SuppressWarnings("serial")
+public class ThumbnailRenderer<E extends MediaElement<?>> extends JPanel implements ListCellRenderer<E> {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER); //$NON-NLS-1$
@@ -46,97 +48,71 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer {
     }
 
     @Override
-    public Component getListCellRendererComponent(final JList list, final Object value, final int index,
-        final boolean isSelected, final boolean cellHasFocus) {
-
-        if (value instanceof MediaElement) {
-            final MediaElement diskObject = (MediaElement) value;
-            Icon icon = null;
-            if (value instanceof ImageElement) {
-                icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) diskObject, (JIThumbnailList) list,
-                    index);
-            }
-            this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(diskObject) : icon);
-            this.descriptionLabel.setText(diskObject.getName());
-            setBackground(isSelected ? list.getSelectionBackground() : back);
-            return this;
+    public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected,
+        boolean cellHasFocus) {
+        Icon icon = null;
+        if (value instanceof ImageElement) {
+            icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) value, (IThumbnailList) list, index);
         }
-
-        return null;
+        this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(value) : icon);
+        this.descriptionLabel.setText(value.getName());
+        setBackground(isSelected ? list.getSelectionBackground() : back);
+        return this;
     }
 
     @Override
     public void repaint(final long tm, final int x, final int y, final int width, final int height) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     public void repaint(final Rectangle r) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     protected void firePropertyChange(final String propertyName, final Object oldValue, final Object newValue) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     public void firePropertyChange(final String propertyName, final byte oldValue, final byte newValue) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     public void firePropertyChange(final String propertyName, final char oldValue, final char newValue) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     public void firePropertyChange(final String propertyName, final short oldValue, final short newValue) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     public void firePropertyChange(final String propertyName, final int oldValue, final int newValue) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     public void firePropertyChange(final String propertyName, final long oldValue, final long newValue) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     public void firePropertyChange(final String propertyName, final float oldValue, final float newValue) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     public void firePropertyChange(final String propertyName, final double oldValue, final double newValue) {
+        // Overridden for performance reasons
     }
 
-    /**
-     * Overridden for performance reasons. See the <a href="#override">Implementation Note</a> for more information.
-     */
     @Override
     public void firePropertyChange(final String propertyName, final boolean oldValue, final boolean newValue) {
+        // Overridden for performance reasons
     }
 
 }

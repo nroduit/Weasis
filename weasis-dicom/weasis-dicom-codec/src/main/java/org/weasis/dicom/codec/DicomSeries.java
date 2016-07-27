@@ -294,7 +294,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                         }
                     }
                     long stop = System.currentTimeMillis();
-                    LOGGER.debug("Reading time: {} ms of image: {}", (stop - start), img.getMediaURI()); //$NON-NLS-1$
+                    LOGGER.debug("Reading time: {} ms of image: {}", (stop - start), img); //$NON-NLS-1$
                     if (model != null) {
                         model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
                             new SeriesEvent(SeriesEvent.Action.loadImageInMemory, series, img)));

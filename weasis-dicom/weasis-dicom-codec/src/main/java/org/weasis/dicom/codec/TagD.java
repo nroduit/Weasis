@@ -1,10 +1,27 @@
 package org.weasis.dicom.codec;
 
+import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoField.HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
+import static java.time.temporal.ChronoField.YEAR;
+
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TimeZone;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -12,9 +29,12 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.DatePrecision;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
+import org.dcm4che3.util.DateUtils;
+import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -27,6 +47,12 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class TagD extends TagW {
     private static final Logger LOGGER = LoggerFactory.getLogger(TagD.class);
+
+    static final DateTimeFormatter DICOM_DATE = new DateTimeFormatterBuilder().appendValue(YEAR, 4)
+        .appendValue(MONTH_OF_YEAR, 2).appendValue(DAY_OF_MONTH, 2).toFormatter();
+    static final DateTimeFormatter DICOM_TIME = new DateTimeFormatterBuilder().appendValue(HOUR_OF_DAY, 2)
+        .optionalStart().appendValue(MINUTE_OF_HOUR, 2).optionalStart().appendValue(SECOND_OF_MINUTE, 2)
+        .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true).toFormatter();
 
     public enum Level {
         PATIENT("Patient"), STUDY("Study"), SERIES("Series"), INSTANCE("Instance"), FRAME("Frame");
@@ -45,7 +71,7 @@ public class TagD extends TagW {
         public String toString() {
             return tag;
         }
-    };
+    }
 
     static {
         readTags();
@@ -95,8 +121,8 @@ public class TagD extends TagW {
 
     private TagD(int tagID, String displayedName, String privateCreatorID, VR vr, int vmMin, int vmMax,
         Object defaultValue) {
-        super(tagID, getKeywordFromTag(tagID, privateCreatorID), displayedName, getTypeFromTag(tagID, vr), vmMin,
-            vmMax, defaultValue);
+        super(tagID, getKeywordFromTag(tagID, privateCreatorID), displayedName, getTypeFromTag(tagID, vr), vmMin, vmMax,
+            defaultValue);
         this.vr = vr;
         this.privateCreatorID = privateCreatorID;
         this.retired = false;
@@ -150,41 +176,185 @@ public class TagD extends TagW {
     public Object getValue(Object data) {
         Object value;
         if (data instanceof Attributes) {
-            Attributes dataset = (Attributes) data;
-
-            if (TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
-                || TagType.PERSON_NAME.equals(type) || TagType.PERIOD.equals(type)) {
-                value = vmMax > 1 ? DicomMediaUtils.getStringArrayFromDicomElement(dataset, id, privateCreatorID,
-                    (String[]) defaultValue) : dataset.getString(privateCreatorID, id, (String) defaultValue);
-            } else if (TagType.DATE.equals(type) || TagType.TIME.equals(type) || TagType.DATETIME.equals(type)) {
-                value = vmMax > 1
-                    ? DicomMediaUtils.getDatesFromDicomElement(dataset, id, privateCreatorID, (Date[]) defaultValue)
-                    : dataset.getDate(privateCreatorID, id, vr, (Date) defaultValue);
-            } else if (TagType.INTEGER.equals(type)) {
-                value = vmMax > 1
-                    ? DicomMediaUtils.getIntArrayFromDicomElement(dataset, id, privateCreatorID, (int[]) defaultValue)
-                    : DicomMediaUtils.getIntegerFromDicomElement(dataset, id, privateCreatorID, (Integer) defaultValue);
-            } else if (TagType.FLOAT.equals(type)) {
-                value = vmMax > 1
-                    ? DicomMediaUtils.getFloatArrayFromDicomElement(dataset, id, privateCreatorID,
-                        (float[]) defaultValue)
-                    : DicomMediaUtils.getFloatFromDicomElement(dataset, id, privateCreatorID, (Float) defaultValue);
-            } else if (TagType.DOUBLE.equals(type)) {
-                value = vmMax > 1
-                    ? DicomMediaUtils.getDoubleArrayFromDicomElement(dataset, id, privateCreatorID,
-                        (double[]) defaultValue)
-                    : DicomMediaUtils.getDoubleFromDicomElement(dataset, id, privateCreatorID, (Double) defaultValue);
-            } else if (TagType.SEQUENCE.equals(type)) {
-                value = dataset.getSequence(privateCreatorID, id);
-            } else {
-                value = dataset.getSafeBytes(privateCreatorID, id);
-            }
+            value = readValue((Attributes) data);
+        } else if (data instanceof XMLStreamReader) {
+            value = readValue((XMLStreamReader) data);
+        } else if (data instanceof String) {
+            value = readValue((String) data);
         } else {
             value = super.getValue(data);
         }
         return value;
     }
+    
+    private Object readValue(Attributes dataset) {
+        Object value;
+        if (isStringFamilyType()) {
+            value = vmMax > 1 ? DicomMediaUtils.getStringArrayFromDicomElement(dataset, id, privateCreatorID,
+                (String[]) defaultValue) : dataset.getString(privateCreatorID, id, (String) defaultValue);
+        } else if (TagType.DICOM_DATE.equals(type) || TagType.DICOM_TIME.equals(type)
+            || TagType.DICOM_DATETIME.equals(type)) {
+            value = vmMax > 1
+                ? DicomMediaUtils.getDatesFromDicomElement(type, dataset, id, privateCreatorID,
+                    (TemporalAccessor[]) defaultValue)
+                : DicomMediaUtils.getDateFromDicomElement(type, dataset, id, privateCreatorID,
+                    (TemporalAccessor) defaultValue);
+        } else if (TagType.INTEGER.equals(type)) {
+            value = vmMax > 1
+                ? DicomMediaUtils.getIntArrayFromDicomElement(dataset, id, privateCreatorID, (int[]) defaultValue)
+                : DicomMediaUtils.getIntegerFromDicomElement(dataset, id, privateCreatorID, (Integer) defaultValue);
+        } else if (TagType.FLOAT.equals(type)) {
+            value = vmMax > 1
+                ? DicomMediaUtils.getFloatArrayFromDicomElement(dataset, id, privateCreatorID,
+                    (float[]) defaultValue)
+                : DicomMediaUtils.getFloatFromDicomElement(dataset, id, privateCreatorID, (Float) defaultValue);
+        } else if (TagType.DOUBLE.equals(type)) {
+            value = vmMax > 1
+                ? DicomMediaUtils.getDoubleArrayFromDicomElement(dataset, id, privateCreatorID,
+                    (double[]) defaultValue)
+                : DicomMediaUtils.getDoubleFromDicomElement(dataset, id, privateCreatorID, (Double) defaultValue);
+        } else if (TagType.DICOM_SEQUENCE.equals(type)) {
+            value = dataset.getSequence(privateCreatorID, id);
+        } else {
+            value = dataset.getSafeBytes(privateCreatorID, id);
+        }
+        return value;
+    }
+    
+    private Object readValue(XMLStreamReader xmler) {
+        Object value;
+        if (isStringFamilyType()) {
+            value = vmMax > 1 ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
+                : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
+        } else if (TagType.DICOM_DATE.equals(type) || TagType.DICOM_TIME.equals(type)
+            || TagType.DICOM_DATETIME.equals(type)) {
+            value = vmMax > 1 ? TagUtil.getDatesFromElement(xmler, keyword, type, (TemporalAccessor[]) defaultValue)
+                : TagUtil.getDateFromElement(xmler, keyword, type, (TemporalAccessor) defaultValue);
+        } else if (TagType.INTEGER.equals(type)) {
+            value = vmMax > 1 ? TagUtil.getIntArrayTagAttribute(xmler, keyword, (int[]) defaultValue)
+                : TagUtil.getIntegerTagAttribute(xmler, keyword, (Integer) defaultValue);
+        } else if (TagType.FLOAT.equals(type)) {
+            value = vmMax > 1 ? TagUtil.getFloatArrayTagAttribute(xmler, keyword, (float[]) defaultValue)
+                : TagUtil.getFloatTagAttribute(xmler, keyword, (Float) defaultValue);
+        } else if (TagType.DOUBLE.equals(type)) {
+            value = vmMax > 1 ? TagUtil.getDoubleArrayTagAttribute(xmler, keyword, (double[]) defaultValue)
+                : TagUtil.getDoubleTagAttribute(xmler, keyword, (Double) defaultValue);
+        } else if (TagType.DICOM_SEQUENCE.equals(type)) {
+            value = TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
+        } else {
+            value = vmMax > 1 ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
+                : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
+        }
+        return value;
+    }
+    
+    private Object readValue(String data) {
+        if (!StringUtil.hasText(data)) {
+            return null;
+        }
 
+        Object value;
+        if (isStringFamilyType()) {
+            if (vmMax > 1) {
+                value = toStrings(data);
+            } else {
+                value = data;
+            }
+        } else if (TagType.DICOM_DATE.equals(type)) {
+            if (vmMax > 1) {
+                String[] ss = toStrings(data);
+                LocalDate[] is = new LocalDate[ss.length];
+                for (int i = 0; i < is.length; i++) {
+                    is[i] = TagD.getDicomDate(data);
+                }
+                value = is;
+            } else {
+                value = TagD.getDicomDate(data);
+            }
+        } else if (TagType.DICOM_TIME.equals(type)) {
+            if (vmMax > 1) {
+                String[] ss = toStrings(data);
+                LocalTime[] is = new LocalTime[ss.length];
+                for (int i = 0; i < is.length; i++) {
+                    is[i] = TagD.getDicomTime(data);
+                }
+                value = is;
+            } else {
+                value = TagD.getDicomTime(data);
+            }
+        } else if (TagType.DICOM_DATETIME.equals(type)) {
+            if (vmMax > 1) {
+                String[] ss = toStrings(data);
+                LocalDateTime[] is = new LocalDateTime[ss.length];
+                for (int i = 0; i < is.length; i++) {
+                    is[i] = TagD.getDicomDateTime(null, data);
+                }
+                value = is;
+            } else {
+                value = TagD.getDicomDateTime(null, data);
+            }
+        } else if (TagType.INTEGER.equals(type)) {
+            if (vmMax > 1) {
+                String[] ss = toStrings(data);
+                int[] ds = new int[ss.length];
+                for (int i = 0; i < ds.length; i++) {
+                    String s = ss[i];
+                    ds[i] = (s != null && !s.isEmpty()) ? StringUtils.parseIS(s) : 0;
+                }
+                value = ds;
+            } else {
+                value = StringUtils.parseIS(data);
+            }
+        } else if (TagType.FLOAT.equals(type)) {
+            if (vmMax > 1) {
+                String[] ss = toStrings(data);
+                float[] ds = new float[ss.length];
+                for (int i = 0; i < ds.length; i++) {
+                    String s = ss[i];
+                    ds[i] = (s != null && !s.isEmpty()) ? (float) StringUtils.parseDS(s) : Float.NaN;
+                }
+                value = ds;
+            } else {
+                value = (float) StringUtils.parseDS(data);
+            }
+        } else if (TagType.DOUBLE.equals(type)) {
+            if (vmMax > 1) {
+                String[] ss = toStrings(data);
+                double[] ds = new double[ss.length];
+                for (int i = 0; i < ds.length; i++) {
+                    String s = ss[i];
+                    ds[i] = (s != null && !s.isEmpty()) ? StringUtils.parseDS(s) : Double.NaN;
+                }
+                value = ds;
+            } else {
+                value = StringUtils.parseDS(data);
+            }
+        } else if (TagType.DICOM_SEQUENCE.equals(type)) {
+            value = data;
+        } else {
+            value = data.getBytes();
+        }
+
+        return value;
+    }
+
+    private static String[] toStrings(String val) {
+        return StringUtils.split(val, '\\');
+    }
+
+    @Override
+    public boolean isStringFamilyType() {
+        return TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
+            || TagType.DICOM_PERSON_NAME.equals(type) || TagType.DICOM_PERIOD.equals(type)
+            || TagType.DICOM_SEX.equals(type);
+    }
+
+    public static TagW get(String keyword) {
+        // Overrides static method in TagW only to force the method readTags() if not initialized
+        return tags.get(keyword);
+    }
+
+    
     public static String getKeywordFromTag(int tagID, String privateCreatorID) {
         return ElementDictionary.getElementDictionary(privateCreatorID).keywordOf(tagID);
     }
@@ -195,28 +365,28 @@ public class TagD extends TagW {
                 return TagType.INTEGER;
             } else if (vr.isTemporalType()) {
                 if (VR.DA.equals(vr)) {
-                    return TagType.DATE;
+                    return TagType.DICOM_DATE;
                 } else if (VR.TM.equals(vr)) {
-                    return TagType.TIME;
+                    return TagType.DICOM_TIME;
                 }
-                return TagType.DATETIME;
+                return TagType.DICOM_DATETIME;
             } else if (vr.isStringType()) {
                 if (VR.DS.equals(vr)) {
                     return TagType.DOUBLE;
                 } else if (VR.PN.equals(vr)) {
-                    return TagType.PERSON_NAME;
+                    return TagType.DICOM_PERSON_NAME;
                 } else if (VR.UR.equals(vr)) {
                     return TagType.URI;
                 } else if (VR.AS.equals(vr)) {
-                    return TagType.PERIOD;
+                    return TagType.DICOM_PERIOD;
                 } else if (Tag.PatientSex == tagID) {
-                    return TagType.SEX;
+                    return TagType.DICOM_SEX;
                 } else if (VR.LT.equals(vr) || VR.ST.equals(vr) || VR.UT.equals(vr)) {
                     return TagType.TEXT;
                 }
                 return TagType.STRING;
             } else if (VR.SQ.equals(vr)) {
-                return TagType.SEQUENCE;
+                return TagType.DICOM_SEQUENCE;
             } else {
                 return TagType.BYTE_ARRAY;
             }
@@ -326,8 +496,11 @@ public class TagD extends TagW {
                             }
                         }
                     } else {
-                        LOGGER.error("Missing attribute: {} {} {} {}", //$NON-NLS-1$
-                            new Object[] { tag, keyword, vr, vm }); // $NON-NLS-1$
+                        // Exclude delimitation tags
+                        if (tag == null || !tag.startsWith("FFFEE0")) {
+                            LOGGER.error("Missing attribute: {} {} {} {}", //$NON-NLS-1$
+                                new Object[] { tag, keyword, vr, vm }); // $NON-NLS-1$
+                        }
                     }
 
                     break;
@@ -434,9 +607,91 @@ public class TagD extends TagW {
         return TagW.UnknownTag;
     }
 
-    public static Date dateTime(int dateID, int timeID, TagReadable tagable) {
-        Date date = TagD.getTagValue(tagable, dateID, Date.class);
-        Date time = TagD.getTagValue(tagable, timeID, Date.class);
-        return TagUtil.dateTime(date, time);
+    public static LocalDate getDicomDate(String date) {
+        if (Objects.nonNull(date)) {
+            try {
+                if (date.length() > 8) {
+                    StringBuilder buf = new StringBuilder(8);
+                    // Try to fix old format yyyy.mm.dd (prior DICOM3.0)
+                    date.chars().filter(Character::isDigit).forEachOrdered(i -> buf.append((char) i));
+                    return LocalDate.parse(buf.toString().trim(), DICOM_DATE);
+                }
+                return LocalDate.parse(date, DICOM_DATE);
+            } catch (Exception e) {
+                LOGGER.error("Parse DICOM date", e);
+            }
+        }
+        return null;
+    }
+
+    public static LocalTime getDicomTime(String time) {
+        if (Objects.nonNull(time)) {
+            try {
+                return LocalTime.parse(time.trim(), DICOM_TIME);
+            } catch (Exception e) {
+                try {
+                    StringBuilder buf = new StringBuilder(8);
+                    // Try to fix old format HH:MM:SS.frac (prior DICOM3.0)
+                    time.chars().filter(i -> !(':' == (char) i)).forEachOrdered(i -> buf.append((char) i));
+                    return LocalTime.parse(buf.toString().trim(), DICOM_TIME);
+                } catch (Exception e1) {
+                    LOGGER.error("Parse DICOM time", e1);
+                }
+            }
+        }
+        return null;
+    }
+
+    public static LocalDateTime getDicomDateTime(TimeZone tz, String value) {
+        return getDicomDateTime(tz, value, false);
+    }
+
+    public static LocalDateTime getDicomDateTime(TimeZone tz, String value, boolean ceil) {
+        if (Objects.nonNull(value)) {
+            try {
+                Date date = DateUtils.parseDT(tz, value, ceil, new DatePrecision());
+                return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+            } catch (Exception e) {
+                LOGGER.error("Parse DICOM dateTime", e);
+            }
+        }
+        return null;
+    }
+
+    public static LocalDateTime dateTime(long dateTimeID, Attributes attributes) {
+        if (attributes == null) {
+            return null;
+        }
+        Date date = attributes.getDate(dateTimeID);
+        if (date == null) {
+            return null;
+        }
+        return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+    }
+    
+    public static LocalDateTime dateTime(int dateID, int timeID, TagReadable tagable) {
+        LocalDate date = TagD.getTagValue(tagable, dateID, LocalDate.class);
+        LocalTime time = TagD.getTagValue(tagable, timeID, LocalTime.class);
+        if (date == null) {
+            return null;
+        }
+        if (time == null) {
+            return date.atStartOfDay();
+        }
+        return LocalDateTime.of(date, time);
+    }
+
+    public static String formatDicomDate(LocalDate date) {
+        if (date != null) {
+            return DICOM_DATE.format(date);
+        }
+        return ""; //$NON-NLS-1$
+    }
+
+    public static String formatDicomTime(LocalTime time) {
+        if (time != null) {
+            return DICOM_TIME.format(time);
+        }
+        return ""; //$NON-NLS-1$
     }
 }

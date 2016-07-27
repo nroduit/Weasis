@@ -217,6 +217,11 @@ public class DicomImageElement extends ImageElement {
         return TagD.getTagValue(this, Tag.BitsAllocated, Integer.class);
     }
 
+    @Override
+    public String toString() {
+        return TagD.getTagValue(this, Tag.SOPInstanceUID, String.class);
+    }
+
     public double getRescaleIntercept(TagReadable tagable) {
         Double prIntercept = TagD.getTagValue(tagable, Tag.RescaleIntercept, Double.class);
         Double intercept =
@@ -248,7 +253,7 @@ public class DicomImageElement extends ImageElement {
         boolean signed = isModalityLutOutSigned(tagable, pixelPadding);
         int bitsAllocated = getBitsAllocated();
         int maxValue = signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1);
-        return (signed ? -(maxValue + 1) : 0);
+        return signed ? -(maxValue + 1) : 0;
     }
 
     public int getMaxAllocatedValue(TagReadable tagable, boolean pixelPadding) {
@@ -276,8 +281,9 @@ public class DicomImageElement extends ImageElement {
         String photometricInterpretation = getPhotometricInterpretation();
 
         return (photometricInterpretation != null && //
-            ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) || "MONOCHROME2" //$NON-NLS-1$ //$NON-NLS-2$
-                .equalsIgnoreCase(photometricInterpretation)));
+            ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) //$NON-NLS-1$
+                || "MONOCHROME2" //$NON-NLS-1$
+                    .equalsIgnoreCase(photometricInterpretation)));
     }
 
     /**

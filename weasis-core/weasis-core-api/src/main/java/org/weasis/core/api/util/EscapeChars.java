@@ -133,7 +133,7 @@ public final class EscapeChars {
             } else if (c == '\"') {
                 result.append("&quot;"); //$NON-NLS-1$
             } else if (c == '\'') {
-                result.append("&#039;"); //$NON-NLS-1$
+                result.append("&apos;"); //$NON-NLS-1$
             } else if (c == '&') {
                 result.append(AMPERSAND);
             }

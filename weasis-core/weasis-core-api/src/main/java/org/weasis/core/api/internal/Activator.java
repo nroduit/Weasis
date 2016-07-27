@@ -20,7 +20,6 @@ import javax.media.jai.JAI;
 import javax.media.jai.OperationRegistry;
 import javax.media.jai.RecyclingTileFactory;
 import javax.media.jai.TileScheduler;
-import javax.media.jai.util.ImagingListener;
 
 import org.apache.felix.prefs.BackingStore;
 import org.osgi.framework.BundleActivator;
@@ -70,13 +69,9 @@ public class Activator implements BundleActivator, ServiceListener {
         JAI jai = JAIUtil.getJAI();
         OperationRegistry or = jai.getOperationRegistry();
 
-        jai.setImagingListener(new ImagingListener() {
-
-            @Override
-            public boolean errorOccurred(String message, Throwable thrown, Object where, boolean isRetryable) {
-                LOGGER.error("JAI Error in {}: {}", where, message, thrown); //$NON-NLS-1$
-                return false;
-            }
+        jai.setImagingListener((String message, Throwable thrown, Object where, boolean isRetryable) -> {
+            LOGGER.error("JAI Error in {}: {}", where, message, thrown); //$NON-NLS-1$
+            return false;
         });
         JAIUtil.registerOp(or, new FormatBinaryDescriptor());
         JAIUtil.registerOp(or, new NotBinaryDescriptor());
@@ -101,6 +96,9 @@ public class Activator implements BundleActivator, ServiceListener {
         scheduler.setParallelism(nbThread);
         scheduler.setPrefetchParallelism(nbThread - 1);
 
+        // Trick for avoiding 403 error when downloading from some web sites
+        System.setProperty("http.agent",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.75 Safari/535.7");
         // Allows to connect through a proxy initialized by Java Webstart
         ProxyDetector.setProxyFromJavaWebStart();
 
@@ -123,7 +121,6 @@ public class Activator implements BundleActivator, ServiceListener {
 
         // TODO manage when several identical MimeType, register the default one
         if (event.getType() == ServiceEvent.REGISTERED) {
-
             if (!BundleTools.CODEC_PLUGINS.contains(codec)) {
                 BundleTools.CODEC_PLUGINS.add(codec);
                 LOGGER.info("Register Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$

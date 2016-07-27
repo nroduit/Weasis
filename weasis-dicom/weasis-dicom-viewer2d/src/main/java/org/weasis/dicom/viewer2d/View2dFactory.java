@@ -67,7 +67,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return ""; //$NON-NLS-1$
+        return NAME;
     }
 
     @Override
@@ -164,7 +164,7 @@ public class View2dFactory implements SeriesViewerFactory {
     public List<Action> getOpenActions() {
         DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
         if (dicomView == null) {
-            ArrayList<Action> actions = new ArrayList<Action>(1);
+            ArrayList<Action> actions = new ArrayList<>(1);
             actions.add(OpenDicomAction.getInstance());
             return actions;
         }

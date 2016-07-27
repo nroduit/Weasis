@@ -20,20 +20,17 @@ public abstract class AbstractOp implements ImageOpNode {
     protected HashMap<String, Object> params;
 
     public AbstractOp() {
-        params = new HashMap<String, Object>();
+        params = new HashMap<>();
+    }
+
+    public AbstractOp(AbstractOp op) {
+        params = new HashMap<>(op.params);
+        clearIOCache();
     }
 
     @Override
     public void clearParams() {
         params.clear();
-    }
-
-    @Override
-    public AbstractOp clone() throws CloneNotSupportedException {
-        AbstractOp obj = (AbstractOp) super.clone();
-        obj.params = new HashMap<String, Object>(params);
-        obj.clearIOCache();
-        return obj;
     }
 
     @Override

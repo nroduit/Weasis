@@ -2,10 +2,10 @@ package org.weasis.dicom.explorer;
 
 import java.io.File;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -176,7 +176,7 @@ public class CheckTreeModel {
                             buf.append("<img src=\""); //$NON-NLS-1$
                             buf.append(url.toString());
                             buf.append("\"><br>"); //$NON-NLS-1$
-                            Date date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
+                            LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
                             if (date != null) {
                                 buf.append(TagUtil.formatDateTime(date));
                             }

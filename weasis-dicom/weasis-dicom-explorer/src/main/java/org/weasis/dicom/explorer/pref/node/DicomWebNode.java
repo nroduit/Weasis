@@ -31,23 +31,14 @@ public class DicomWebNode extends AbstractDicomNode {
         public String toString() {
             return title;
         }
-
-        public static WebType getWebType(String name) {
-            try {
-                return WebType.valueOf(name);
-            } catch (Exception e) {
-                // DO nothing
-            }
-            return WADO;
-        }
     }
 
     // For WADO, WADO-RS and STOW
     private URL url;
     private WebType webType;
 
-    public DicomWebNode(String description, WebType webType, URL url) {
-        super(description, Type.WEB);
+    public DicomWebNode(String description, WebType webType, URL url, UsageType usageType) {
+        super(description, Type.WEB, usageType);
         this.url = url;
         this.webType = webType;
     }
@@ -88,9 +79,15 @@ public class DicomWebNode extends AbstractDicomNode {
         writer.writeAttribute(T_WEB_TYPE, StringUtil.getEmpty2NullEnum(webType));
     }
 
+    public static UsageType getUsageType(WebType webType) {
+        return DicomWebNode.WebType.STOWRS.equals(webType) ? UsageType.STORAGE : UsageType.RETRIEVE;
+    }
+
     public static DicomWebNode buildDicomWebNode(XMLStreamReader xmler) throws MalformedURLException {
-        DicomWebNode node = new DicomWebNode(xmler.getAttributeValue(null, T_DESCRIPTION),
-            WebType.getWebType(xmler.getAttributeValue(null, T_TYPE)), new URL(xmler.getAttributeValue(null, T_URL)));
+        WebType webType = WebType.valueOf(xmler.getAttributeValue(null, T_WEB_TYPE));
+
+        DicomWebNode node = new DicomWebNode(xmler.getAttributeValue(null, T_DESCRIPTION), webType,
+            new URL(xmler.getAttributeValue(null, T_URL)), getUsageType(webType));
         node.setTsuid(TransferSyntax.getTransferSyntax(xmler.getAttributeValue(null, T_TSUID)));
         return node;
     }

@@ -33,6 +33,15 @@ public class WindowOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public WindowOp(WindowOp op) {
+        super(op);
+    }
+
+    @Override
+    public WindowOp copy() {
+        return new WindowOp(this);
+    }
+
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();

@@ -25,8 +25,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
@@ -38,9 +36,8 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
  *
  * @author Marcelo Porto (marcelo@animati.com.br)
  */
+@SuppressWarnings("serial")
 public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(PrintDialog.class);
 
     private javax.swing.JCheckBox annotationsCheckBox;
     private javax.swing.JButton cancelButton;
@@ -118,22 +115,12 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
 
         cancelButton.setText(Messages.getString("PrintDialog.cancel")); //$NON-NLS-1$
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                doClose();
-            }
-        });
+        cancelButton.addActionListener(e -> dispose());
 
         printButton = new javax.swing.JButton();
 
         printButton.setText(Messages.getString("PrintDialog.print")); //$NON-NLS-1$
-        printButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                printAction();
-            }
-        });
+        printButton.addActionListener(e-> printAction());
 
         if (layout) {
             chckbxSelectedView = new JCheckBox(Messages.getString("PrintDialog.selected_view")); //$NON-NLS-1$
@@ -164,8 +151,8 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     }
 
     private void printAction() {
-        PrintOptions printOptions = new PrintOptions(annotationsCheckBox.isSelected());
-        printOptions.setHasAnnotations(annotationsCheckBox.isSelected());
+        PrintOptions printOptions = new PrintOptions();
+        printOptions.setShowingAnnotations(annotationsCheckBox.isSelected());
         printOptions.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
         if (positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center"))) { //$NON-NLS-1$
             printOptions.setCenter(true);
@@ -179,19 +166,10 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         if (views.isEmpty()) {
             JOptionPane.showMessageDialog(this, Messages.getString("PrintDialog.no_print"), null, //$NON-NLS-1$
                 JOptionPane.ERROR_MESSAGE);
-            doClose();
+            dispose();
             return;
         }
-
-        // if (container.getLayoutModel().getConstraints().size() != views.size()) {
-        // int res = JOptionPane.showConfirmDialog(this,
-        // "This layout is partially printable. Do you want to continue?", null, JOptionPane.YES_NO_OPTION);
-        // if (res == JOptionPane.NO_OPTION) {
-        // doClose();
-        // return;
-        // }
-        // }
-        doClose();
+        dispose();
 
         ExportLayout<I> layout;
         if (chckbxSelectedView != null && !chckbxSelectedView.isSelected()) {
@@ -206,10 +184,6 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         print.print();
         layout.dispose();
 
-    }
-
-    private void doClose() {
-        dispose();
     }
 
 }

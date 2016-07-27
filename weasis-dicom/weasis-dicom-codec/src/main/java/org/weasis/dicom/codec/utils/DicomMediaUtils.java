@@ -18,6 +18,10 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -28,6 +32,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -52,10 +58,10 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagReadable;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Tagable;
-import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
@@ -144,7 +150,7 @@ public class DicomMediaUtils {
                 countValues++;
             } else {
                 if (missingTagList == null) {
-                    missingTagList = new ArrayList<String>(requiredTags.length);
+                    missingTagList = new ArrayList<>(requiredTags.length);
                 }
                 missingTagList.add(TagUtils.toString(tag));
             }
@@ -559,9 +565,9 @@ public class DicomMediaUtils {
                 LOGGER.error("Cannot read {} ", TagUtils.toString(tag), e); //$NON-NLS-1$
             }
             if (signed && (result & (1 << (stored - 1))) != 0) {
-                    int andmask = (1 << stored) - 1;
-                    int ormask = ~andmask;
-                    result |= ormask;
+                int andmask = (1 << stored) - 1;
+                int ormask = ~andmask;
+                result |= ormask;
             }
         } else if ((!signed && vr != VR.US) || (signed && vr != VR.SS)) {
             vr = signed ? VR.SS : VR.US;
@@ -580,11 +586,10 @@ public class DicomMediaUtils {
         String issuerOfPatientID = TagD.getTagValue(tagable, Tag.IssuerOfPatientID, String.class);
         String patientName = TagD.getTagValue(tagable, Tag.PatientName, String.class);
 
-        return buildPatientPseudoUID(patientID, issuerOfPatientID, patientName, null);
+        return buildPatientPseudoUID(patientID, issuerOfPatientID, patientName);
     }
 
-    public static String buildPatientPseudoUID(String patientID, String issuerOfPatientID, String patientName,
-        Date birthdate) {
+    public static String buildPatientPseudoUID(String patientID, String issuerOfPatientID, String patientName) {
         /*
          * IHE RAD TF-­‐2: 4.16.4.2.2.5.3
          *
@@ -601,9 +606,6 @@ public class DicomMediaUtils {
         if (StringUtil.hasText(issuerOfPatientID)) {
             // patientID + issuerOfPatientID => should be unique globally
             buffer.append(issuerOfPatientID);
-        }
-        if (birthdate != null) {
-            buffer.append(TagUtil.formatDicomDate(birthdate));
         }
         if (patientName != null) {
             buffer.append(patientName.toUpperCase());
@@ -669,6 +671,18 @@ public class DicomMediaUtils {
                     tagable.setTag(TagW.SlicePosition, slicePosition);
                 }
             }
+        }
+    }
+
+    public static void buildSeriesReferences(Tagable tagable, Attributes attributes) {
+        Sequence seq = attributes.getSequence(Tag.ReferencedSeriesSequence);
+        if (Objects.nonNull(seq)) {
+            Attributes[] ref = new Attributes[seq.size()];
+            for (int i = 0; i < ref.length; i++) {
+                ref[i] = new Attributes(seq.get(i));
+            }
+
+            tagable.setTagNoNull(TagD.get(Tag.ReferencedSeriesSequence), ref);
         }
     }
 
@@ -895,7 +909,8 @@ public class DicomMediaUtils {
                 String modlality = TagD.getTagValue(tagable, Tag.Modality, String.class);
                 if ("XA".equals(modlality) || "XRF".equals(modlality)) { //$NON-NLS-1$ //$NON-NLS-2$
                     // See PS 3.4 N.2.1.2.
-                    String pixRel = TagD.getTagValue(tagable, Tag.PixelIntensityRelationship, String.class);
+                    String pixRel = mLutItems.getParent() == null ? null
+                        : mLutItems.getParent().getString(Tag.PixelIntensityRelationship);
                     if (pixRel != null && ("LOG".equalsIgnoreCase(pixRel) || "DISP".equalsIgnoreCase(pixRel))) { //$NON-NLS-1$ //$NON-NLS-2$
                         canApplyMLUT = false;
                         LOGGER.debug(
@@ -1181,6 +1196,25 @@ public class DicomMediaUtils {
         }
     }
 
+    public static Attributes createDicomPR(Attributes dicomSourceAttribute, String seriesInstanceUID) {
+
+        final int[] patientStudyAttributes = { Tag.SpecificCharacterSet, Tag.StudyDate, Tag.StudyTime,
+            Tag.StudyDescription, Tag.AccessionNumber, Tag.IssuerOfAccessionNumberSequence, Tag.ReferringPhysicianName,
+            Tag.PatientName, Tag.PatientID, Tag.IssuerOfPatientID, Tag.PatientBirthDate, Tag.PatientSex,
+            Tag.AdditionalPatientHistory, Tag.StudyInstanceUID, Tag.StudyID };
+        Arrays.sort(patientStudyAttributes);
+        Attributes pr = new Attributes(dicomSourceAttribute, patientStudyAttributes);
+
+        // TODO implement other ColorSoftcopyPresentationStateStorageSOPClass...
+        pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorageSOPClass);
+        pr.setString(Tag.SOPInstanceUID, VR.UI, UIDUtils.createUID());
+        pr.setDate(Tag.PresentationCreationDateAndTime, new Date());
+        pr.setString(Tag.Modality, VR.CS, "PR"); //$NON-NLS-1$
+        pr.setString(Tag.SeriesInstanceUID, VR.UI,
+            StringUtil.hasText(seriesInstanceUID) ? seriesInstanceUID : UIDUtils.createUID());
+        return pr;
+    }
+
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -1224,14 +1258,12 @@ public class DicomMediaUtils {
          */
 
         Map<String, KeyObjectSelectionCode> codeByValue = getKeyObjectSelectionMappingResources();
-        Map<String, Set<KeyObjectSelectionCode>> resourcesByContextID =
-            new HashMap<String, Set<KeyObjectSelectionCode>>();
+        Map<String, Set<KeyObjectSelectionCode>> resourcesByContextID = new HashMap<>();
 
         for (KeyObjectSelectionCode code : codeByValue.values()) {
             Set<KeyObjectSelectionCode> resourceSet = resourcesByContextID.get(code.contextGroupID);
             if (resourceSet == null) {
-                resourcesByContextID.put(code.contextGroupID,
-                    resourceSet = new TreeSet<DicomMediaUtils.KeyObjectSelectionCode>());
+                resourcesByContextID.put(code.contextGroupID, resourceSet = new TreeSet<>());
             }
             resourceSet.add(code);
         }
@@ -1341,7 +1373,7 @@ public class DicomMediaUtils {
 
     static Map<String, KeyObjectSelectionCode> getKeyObjectSelectionMappingResources() {
 
-        Map<String, KeyObjectSelectionCode> codeByValue = new HashMap<String, DicomMediaUtils.KeyObjectSelectionCode>();
+        Map<String, KeyObjectSelectionCode> codeByValue = new HashMap<>();
 
         XMLStreamReader xmler = null;
         InputStream stream = null;
@@ -1464,6 +1496,98 @@ public class DicomMediaUtils {
 
     }
 
+    public static TemporalAccessor getDateFromDicomElement(TagType type, Attributes dicom, int tag,
+        String privateCreatorID, TemporalAccessor defaultValue) {
+        if (dicom == null || !dicom.containsValue(tag)) {
+            return defaultValue;
+        }
+        Date date = dicom.getDate(privateCreatorID, tag);
+        if (date == null) {
+            return defaultValue;
+        }
+        if (TagType.DICOM_DATE == type) {
+            return TagUtil.toLocalDate(date);
+        } else if (TagType.DICOM_TIME == type) {
+            return TagUtil.toLocalTime(date);
+        }
+        return TagUtil.toLocalDateTime(date);
+    }
+
+    public static TemporalAccessor[] getDatesFromDicomElement(TagType type, Attributes dicom, int tag,
+        String privateCreatorID, TemporalAccessor[] defaultValue) {
+        if (dicom == null || !dicom.containsValue(tag)) {
+            return defaultValue;
+        }
+        Date[] dates = dicom.getDates(privateCreatorID, tag);
+        if (dates == null || dates.length == 0) {
+            return defaultValue;
+        }
+
+        TemporalAccessor[] vals;
+        if (TagType.DICOM_DATE == type) {
+            vals = new LocalDate[dates.length];
+            for (int i = 0; i < vals.length; i++) {
+                vals[i] = TagUtil.toLocalDate(dates[i]);
+            }
+        } else if (TagType.DICOM_TIME == type) {
+            vals = new LocalTime[dates.length];
+            for (int i = 0; i < vals.length; i++) {
+                vals[i] = TagUtil.toLocalTime(dates[i]);
+            }
+        }
+
+        vals = new LocalDateTime[dates.length];
+        for (int i = 0; i < vals.length; i++) {
+            vals[i] = TagUtil.toLocalDateTime(dates[i]);
+        }
+
+        return vals;
+    }
+
+    public static TemporalAccessor getDateFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,
+        TemporalAccessor defaultValue) {
+        if (attribute != null) {
+            String val = xmler.getAttributeValue(null, attribute);
+            if (val != null) {
+                if (TagType.DICOM_TIME.equals(type)) {
+                    return TagD.getDicomTime(val);
+                } else if (TagType.DICOM_DATETIME.equals(type)) {
+                    return TagD.getDicomDateTime(null, val);
+                } else {
+                    return TagD.getDicomDate(val);
+                }
+            }
+        }
+        return defaultValue;
+    }
+
+    public static TemporalAccessor[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,
+        TemporalAccessor[] defaultValue) {
+        return getDatesFromDicomElement(xmler, attribute, type, defaultValue, "\\");
+    }
+
+    public static TemporalAccessor[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,
+        TemporalAccessor[] defaultValue, String separator) {
+        if (attribute != null) {
+            String val = xmler.getAttributeValue(null, attribute);
+            if (val != null) {
+                String[] strs = val.split(separator);
+                TemporalAccessor[] vals = new TemporalAccessor[strs.length];
+                for (int i = 0; i < strs.length; i++) {
+                    if (TagType.TIME.equals(type)) {
+                        vals[i] = TagD.getDicomTime(strs[i]);
+                    } else if (TagType.DATETIME.equals(type)) {
+                        vals[i] = TagD.getDicomDateTime(null, strs[i]);
+                    } else {
+                        vals[i] = TagD.getDicomDate(strs[i]);
+                    }
+                }
+                return vals;
+            }
+        }
+        return defaultValue;
+    }
+
     public static void fillAttributes(Map<TagW, Object> tags, Attributes dataset) {
 
         if (tags != null && dataset != null) {
@@ -1497,18 +1621,18 @@ public class DicomMediaUtils {
                 return;
             }
 
-            if (TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
-                || TagType.PERSON_NAME.equals(type) || TagType.PERIOD.equals(type)) {
+            if (tag.isStringFamilyType()) {
                 if (val instanceof String[]) {
                     dataset.setString(id, dic.vrOf(id), (String[]) val);
                 } else {
                     dataset.setString(id, dic.vrOf(id), val.toString());
                 }
-            } else if (TagType.DATE.equals(type) || TagType.TIME.equals(type) || TagType.DATETIME.equals(type)) {
-                if (val instanceof Date) {
-                    dataset.setDate(id, dic.vrOf(id), (Date) val);
-                } else if (val instanceof Date[]) {
-                    dataset.setDate(id, dic.vrOf(id), (Date[]) val);
+            } else if (TagType.DICOM_DATE.equals(type) || TagType.DICOM_TIME.equals(type)
+                || TagType.DICOM_DATETIME.equals(type)) {
+                if (val instanceof TemporalAccessor) {
+                    dataset.setDate(id, dic.vrOf(id), TagUtil.toLocalDate((TemporalAccessor) val));
+                } else if (val.getClass().isArray()) {
+                    dataset.setDate(id, dic.vrOf(id), TagUtil.toLocalDates(val));
                 }
             } else if (TagType.INTEGER.equals(type)) {
                 if (val instanceof Integer) {
@@ -1528,7 +1652,7 @@ public class DicomMediaUtils {
                 } else if (val instanceof double[]) {
                     dataset.setDouble(id, dic.vrOf(id), (double[]) val);
                 }
-            } else if (TagType.SEQUENCE.equals(type) && val instanceof Attributes[]) {
+            } else if (TagType.DICOM_SEQUENCE.equals(type) && val instanceof Attributes[]) {
                 Attributes[] sIn = (Attributes[]) val;
                 Sequence sOut = dataset.newSequence(id, sIn.length);
                 for (Attributes attributes : sIn) {

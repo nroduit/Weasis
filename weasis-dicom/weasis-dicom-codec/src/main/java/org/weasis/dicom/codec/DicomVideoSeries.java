@@ -71,18 +71,19 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
                     Fragments fragments = (Fragments) pixdata;
                     // Should have only 2 fragments: 1) compression marker 2) video stream
                     // One fragment shall contain the whole video stream.
-                    // see http://dicom.nema.org/MEDICAL/Dicom/current/output/chtml/part05/sect_8.2.5.html
+                    // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.5.html
                     for (Object data : fragments) {
                         if (data instanceof BulkData) {
                             BulkData bulkData = (BulkData) data;
                             FileInputStream in = null;
                             FileOutputStream out = null;
                             try {
+                            	// TODO implement decompression in reader
                                 File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                 in = new FileInputStream(dcmVideo.getFile());
                                 out = new FileOutputStream(videoFile);
-                                StreamUtils.skipFully(in, bulkData.offset);
-                                StreamUtils.copy(in, out, bulkData.length);
+                                StreamUtils.skipFully(in, bulkData.offset());
+                                StreamUtils.copy(in, out, bulkData.length());
                                 dcmVideo.setVideoFile(videoFile);
                                 this.add(dcmVideo);
                             } catch (Exception e) {

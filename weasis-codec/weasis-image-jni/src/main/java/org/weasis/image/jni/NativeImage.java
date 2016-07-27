@@ -18,7 +18,6 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.nio.channels.FileChannel;
 
 import javax.imageio.stream.FileImageOutputStream;
 import javax.imageio.stream.ImageOutputStream;
@@ -26,7 +25,7 @@ import javax.imageio.stream.ImageOutputStream;
 public abstract class NativeImage {
 
     // Descriptor of file fragment corresponding to an image
-    private FileStreamSegment streamSegment;
+    private StreamSegment streamSegment;
     private String filepath;
     protected ImageParameters imageParameters;
 
@@ -40,7 +39,7 @@ public abstract class NativeImage {
         setFilepath(filepath);
     }
 
-    public NativeImage(FileStreamSegment streamSegment) {
+    public NativeImage(StreamSegment streamSegment) {
         setStreamSegment(streamSegment);
     }
 
@@ -56,11 +55,11 @@ public abstract class NativeImage {
         this.filepath = filepath;
     }
 
-    public FileStreamSegment getStreamSegment() {
+    public StreamSegment getStreamSegment() {
         return streamSegment;
     }
 
-    public void setStreamSegment(FileStreamSegment streamSegment) {
+    public void setStreamSegment(StreamSegment streamSegment) {
         this.streamSegment = streamSegment;
     }
 
@@ -110,18 +109,14 @@ public abstract class NativeImage {
         return (ByteBuffer) outputBuffer;
     }
 
-    public static FileChannel getFileOuputStream(ImageOutputStream ouputStream) {
-        if (ouputStream instanceof FileImageOutputStream) {
-            RandomAccessFile raf = FileStreamSegment.getRandomAccessFile((FileImageOutputStream) ouputStream);
-            return raf.getChannel();
-        }
-        return null;
-    }
-
     public static void writeByteBuffer(ImageOutputStream ouputStream, ByteBuffer outBuf, int bytesWritten)
         throws IOException {
-        FileChannel fout = getFileOuputStream(ouputStream);
-        if (fout == null) {
+
+        if (ouputStream instanceof FileImageOutputStream) {
+            try (RandomAccessFile raf = FileStreamSegment.getRandomAccessFile((FileImageOutputStream) ouputStream)) {
+                raf.getChannel().write(outBuf);
+            }
+        } else {
             if (outBuf.hasArray()) {
                 ouputStream.write(outBuf.array(), 0, bytesWritten);
             } else {
@@ -133,9 +128,6 @@ public abstract class NativeImage {
                     }
                 }
             }
-        } else {
-            fout.write(outBuf);
         }
-
     }
 }

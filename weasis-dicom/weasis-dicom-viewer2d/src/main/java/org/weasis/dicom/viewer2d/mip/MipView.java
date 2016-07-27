@@ -68,10 +68,9 @@ public class MipView extends View2d {
         // Propagate the preset
         OpManager disOp = getDisplayOpManager();
         disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
-        // disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), null);
     }
 
-    public void initMIPSeries(ViewCanvas selView) {
+    public void initMIPSeries(ViewCanvas<?> selView) {
         if (selView != null) {
             actionsInView.put(ActionW.SORTSTACK.cmd(), selView.getActionValue(ActionW.SORTSTACK.cmd()));
             actionsInView.put(ActionW.INVERSESTACK.cmd(), selView.getActionValue(ActionW.INVERSESTACK.cmd()));

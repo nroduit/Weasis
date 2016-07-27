@@ -10,8 +10,6 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.basic.BasicComboPopup;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
@@ -40,11 +38,12 @@ public abstract class AbstractDicomNode {
 
     protected static final String T_DESCRIPTION = "description";
     protected static final String T_TYPE = "type";
+    protected static final String T_USAGE_TYPE = "usageType";
     protected static final String T_TSUID = "tsuid";
 
     public enum Type {
-        ARCHIVE("Archive", "dicomNodes.xml"), PRINTER("Printer", "dicomPrinters.xml"),
-        WEB("WEB Archive", "dicomWebNodes.xml");
+        DICOM("DICOM Node", "dicomNodes.xml"), PRINTER("DICOM Printer", "dicomPrinterNodes.xml"),
+        WEB("WEB Node", "dicomWebNodes.xml");
 
         final String title;
         final String filename;
@@ -62,14 +61,20 @@ public abstract class AbstractDicomNode {
         public String getFilename() {
             return filename;
         }
+    }
 
-        public static Type getType(String name) {
-            try {
-                return Type.valueOf(name);
-            } catch (Exception e) {
-                // DO nothing
-            }
-            return ARCHIVE;
+    public enum UsageType {
+        STORAGE("Storage"), RETRIEVE("Retrieve"), BOTH("Both");
+
+        final String title;
+
+        UsageType(String title) {
+            this.title = title;
+        }
+
+        @Override
+        public String toString() {
+            return title;
         }
     }
 
@@ -77,14 +82,17 @@ public abstract class AbstractDicomNode {
     private TransferSyntax tsuid;
 
     private Type type;
+    private UsageType usageType;
     private boolean local;
 
-    public AbstractDicomNode(String description, Type type) {
+    public AbstractDicomNode(String description, Type type, UsageType usageType) {
         if (type == null) {
             throw new IllegalArgumentException("Type cannot be null");
         }
         this.description = description;
+        this.tsuid = TransferSyntax.NONE;
         this.type = type;
+        this.usageType = usageType;
         this.local = true;
     }
 
@@ -118,7 +126,15 @@ public abstract class AbstractDicomNode {
     }
 
     public void setType(Type type) {
-        this.type = type == null ? Type.ARCHIVE : type;
+        this.type = type == null ? Type.DICOM : type;
+    }
+
+    public UsageType getUsageType() {
+        return usageType;
+    }
+
+    public void setUsageType(UsageType usageType) {
+        this.usageType = usageType;
     }
 
     public boolean isLocal() {
@@ -132,16 +148,22 @@ public abstract class AbstractDicomNode {
     public void saveDicomNode(XMLStreamWriter writer) throws XMLStreamException {
         writer.writeAttribute(T_DESCRIPTION, description);
         writer.writeAttribute(T_TYPE, StringUtil.getEmpty2NullEnum(type));
+        writer.writeAttribute(T_USAGE_TYPE, StringUtil.getEmpty2NullEnum(usageType));
         writer.writeAttribute(T_TSUID, StringUtil.getEmpty2NullEnum(tsuid));
     }
 
     public static void loadDicomNodes(JComboBox<AbstractDicomNode> comboBox, Type type) {
+        loadDicomNodes(comboBox, type, UsageType.BOTH);
+    }
+
+    public static void loadDicomNodes(JComboBox<AbstractDicomNode> comboBox, Type type, UsageType usage) {
         // Load nodes from ressources
-        loadDicomNodes(comboBox, ResourceUtil.getResource(type.getFilename()), type, false);
+        loadDicomNodes(comboBox, ResourceUtil.getResource(type.getFilename()), type, false, usage);
 
         // Load nodes from local data
         final BundleContext context = FrameworkUtil.getBundle(AbstractDicomNode.class).getBundleContext();
-        loadDicomNodes(comboBox, new File(BundlePreferences.getDataFolder(context), type.getFilename()), type, true);
+        loadDicomNodes(comboBox, new File(BundlePreferences.getDataFolder(context), type.getFilename()), type, true,
+            usage);
     }
 
     public static void saveDicomNodes(JComboBox<? extends AbstractDicomNode> comboBox, Type type) {
@@ -172,7 +194,8 @@ public abstract class AbstractDicomNode {
         }
     }
 
-    private static void loadDicomNodes(JComboBox<AbstractDicomNode> comboBox, File prefs, Type type, boolean local) {
+    private static void loadDicomNodes(JComboBox<AbstractDicomNode> comboBox, File prefs, Type type, boolean local,
+        UsageType usage) {
         if (prefs.canRead()) {
             XMLStreamReader xmler = null;
             XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -183,7 +206,7 @@ public abstract class AbstractDicomNode {
                     eventType = xmler.next();
                     switch (eventType) {
                         case XMLStreamConstants.START_ELEMENT:
-                            readDicomNodes(xmler, comboBox, type, local);
+                            readDicomNodes(xmler, comboBox, type, local, usage);
                             break;
                         default:
                             break;
@@ -198,14 +221,14 @@ public abstract class AbstractDicomNode {
     }
 
     private static void readDicomNodes(XMLStreamReader xmler, JComboBox<AbstractDicomNode> comboBox, Type type,
-        boolean local) throws XMLStreamException {
+        boolean local, UsageType usage) throws XMLStreamException {
         String key = xmler.getName().getLocalPart();
         if (T_NODES.equals(key)) {
             while (xmler.hasNext()) {
                 int eventType = xmler.next();
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
-                        readDicomNode(xmler, comboBox, type, local);
+                        readDicomNode(xmler, comboBox, type, local, usage);
                         break;
                     default:
                         break;
@@ -215,13 +238,20 @@ public abstract class AbstractDicomNode {
     }
 
     private static void readDicomNode(XMLStreamReader xmler, JComboBox<AbstractDicomNode> comboBox, Type type,
-        boolean local) throws XMLStreamException {
+        boolean local, UsageType usage) throws XMLStreamException {
         String key = xmler.getName().getLocalPart();
         if (T_NODE.equals(key)) {
             try {
-                Type t = Type.getType(xmler.getAttributeValue(null, T_TYPE));
-                if (type != null && type != t) {
+                Type t = Type.valueOf(xmler.getAttributeValue(null, T_TYPE));
+                if (type != t) {
                     return;
+                }
+
+                if (usage != UsageType.BOTH) {
+                    UsageType u = UsageType.valueOf(xmler.getAttributeValue(null, T_USAGE_TYPE));
+                    if (u != UsageType.BOTH && u != usage) {
+                        return;
+                    }
                 }
 
                 AbstractDicomNode node;
@@ -245,12 +275,12 @@ public abstract class AbstractDicomNode {
 
     public static void addNodeActionPerformed(JComboBox<? extends AbstractDicomNode> comboBox, Type type) {
         JDialog dialog;
-        if (AbstractDicomNode.Type.WEB == type) {
-            dialog = new DicomWebNodeDialog(SwingUtilities.getWindowAncestor(comboBox), "DICOM Node", //$NON-NLS-1$
-                null, (JComboBox<DicomWebNode>) comboBox);
+        if (Type.WEB == type) {
+            dialog = new DicomWebNodeDialog(SwingUtilities.getWindowAncestor(comboBox), Type.WEB.toString(), null,
+                (JComboBox<DicomWebNode>) comboBox);
         } else {
-            dialog = new DicomNodeDialog(SwingUtilities.getWindowAncestor(comboBox), "DICOM Node", //$NON-NLS-1$
-                null, (JComboBox<DefaultDicomNode>) comboBox, type);
+            dialog = new DicomNodeDialog(SwingUtilities.getWindowAncestor(comboBox), Type.DICOM.toString(), null,
+                (JComboBox<DefaultDicomNode>) comboBox, type);
         }
         JMVUtils.showCenterScreen(dialog, comboBox);
     }
@@ -261,11 +291,11 @@ public abstract class AbstractDicomNode {
             if (node.isLocal()) {
                 Type type = node.getType();
                 JDialog dialog;
-                if (AbstractDicomNode.Type.WEB == type) {
-                    dialog = new DicomWebNodeDialog(SwingUtilities.getWindowAncestor(comboBox), "DICOM Node", //$NON-NLS-1$
+                if (Type.WEB == type) {
+                    dialog = new DicomWebNodeDialog(SwingUtilities.getWindowAncestor(comboBox), Type.WEB.toString(),
                         (DicomWebNode) node, (JComboBox<DicomWebNode>) comboBox);
                 } else {
-                    dialog = new DicomNodeDialog(SwingUtilities.getWindowAncestor(comboBox), "DICOM Node", //$NON-NLS-1$
+                    dialog = new DicomNodeDialog(SwingUtilities.getWindowAncestor(comboBox), Type.DICOM.toString(),
                         (DefaultDicomNode) node, (JComboBox<DefaultDicomNode>) comboBox, type);
                 }
                 JMVUtils.showCenterScreen(dialog, comboBox);
@@ -282,7 +312,7 @@ public abstract class AbstractDicomNode {
             AbstractDicomNode node = comboBox.getItemAt(index);
             if (node.isLocal()) {
                 int response = JOptionPane.showConfirmDialog(comboBox,
-                    String.format("Do you really want to delete \"%s\"?", node), "DICOM Node", //$NON-NLS-2$
+                    String.format("Do you really want to delete \"%s\"?", node), Type.DICOM.toString(), // $NON-NLS-2$
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (response == 0) {
@@ -300,17 +330,13 @@ public abstract class AbstractDicomNode {
         Object comp = combo.getUI().getAccessibleChild(combo, 0);
         if (comp instanceof BasicComboPopup) {
             final BasicComboPopup popup = (BasicComboPopup) comp;
-            popup.getList().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
-                @Override
-                public void valueChanged(ListSelectionEvent e) {
-                    if (!e.getValueIsAdjusting()) {
-                        ListSelectionModel model = (ListSelectionModel) e.getSource();
-                        int first = model.getMinSelectionIndex();
-                        if (first >= 0) {
-                            AbstractDicomNode item = combo.getItemAt(first);
-                            ((JComponent) combo.getRenderer()).setToolTipText(item.getToolTips());
-                        }
+            popup.getList().getSelectionModel().addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting()) {
+                    ListSelectionModel model = (ListSelectionModel) e.getSource();
+                    int first = model.getMinSelectionIndex();
+                    if (first >= 0) {
+                        AbstractDicomNode item = combo.getItemAt(first);
+                        ((JComponent) combo.getRenderer()).setToolTipText(item.getToolTips());
                     }
                 }
             });

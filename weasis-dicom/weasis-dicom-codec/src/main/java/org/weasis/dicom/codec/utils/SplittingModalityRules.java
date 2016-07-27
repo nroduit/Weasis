@@ -2,18 +2,13 @@ package org.weasis.dicom.codec.utils;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import org.dcm4che3.data.DatePrecision;
-import org.dcm4che3.data.SpecificCharacterSet;
-import org.dcm4che3.data.Tag;
-import org.dcm4che3.util.StringUtils;
-import org.easymock.internal.matchers.InstanceOf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.TagUtil;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TagD;
@@ -21,6 +16,8 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
 
 public class SplittingModalityRules {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SplittingModalityRules.class);
+
     private final Modality modality;
     private final List<Rule> singleFrameTags;
     private final List<Rule> multiFrameTags;
@@ -35,9 +32,9 @@ public class SplittingModalityRules {
         this.modality = modality;
         this.extendRules = extendRules;
         this.singleFrameTags =
-            extendRules == null ? new ArrayList<Rule>() : new ArrayList<>(extendRules.getSingleFrameRules());
+            extendRules == null ? new ArrayList<>() : new ArrayList<>(extendRules.getSingleFrameRules());
         this.multiFrameTags =
-            extendRules == null ? new ArrayList<Rule>() : new ArrayList<>(extendRules.getMultiFrameRules());
+            extendRules == null ? new ArrayList<>() : new ArrayList<>(extendRules.getMultiFrameRules());
     }
 
     public Modality getModality() {
@@ -117,7 +114,7 @@ public class SplittingModalityRules {
         public enum Type {
             equals, notEquals, equalsIgnoreCase, notEqualsIgnoreCase, contains, notContains, containsIgnoreCase,
             notContainsIgnoreCase
-        };
+        }
 
         protected boolean not;
 
@@ -156,8 +153,9 @@ public class SplittingModalityRules {
         @Override
         public boolean match(MediaElement<?> media) {
             for (Condition child : childs) {
-                if (!child.match(media))
+                if (!child.match(media)) {
                     return not;
+                }
             }
             return !not;
         }
@@ -167,8 +165,9 @@ public class SplittingModalityRules {
         @Override
         public boolean match(MediaElement<?> media) {
             for (Condition child : childs) {
-                if (child.match(media))
+                if (child.match(media)) {
                     return !not;
+                }
             }
             return not;
         }
@@ -189,116 +188,34 @@ public class SplittingModalityRules {
             if (!StringUtil.hasText(value)) {
                 return null;
             }
-
-            Object val;
-            int vm = tag.getValueMultiplicity();
-            TagType tt = tag.getType();
-            if (TagType.STRING.equals(tt) || TagType.TEXT.equals(tt) || TagType.URI.equals(tt)
-                || TagType.PERSON_NAME.equals(tt) || TagType.PERIOD.equals(tt)) {
-                if (vm > 1) {
-                    val = toStrings(value);
-                    ;
-                } else {
-                    val = value;
-                }
-            } else if (TagType.DATE.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    Date[] is = new Date[ss.length];
-                    for (int i = 0; i < is.length; i++) {
-                        is[i] = TagUtil.getDicomDate(value);
-                    }
-                    val = is;
-                } else {
-                    val = TagUtil.getDicomDate(value);
-                }
-            } else if (TagType.TIME.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    Date[] is = new Date[ss.length];
-                    for (int i = 0; i < is.length; i++) {
-                        is[i] = TagUtil.getDicomTime(value);
-                    }
-                    val = is;
-                } else {
-                    val = TagUtil.getDicomTime(value);
-                }
-            } else if (TagType.DATETIME.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    Date[] is = new Date[ss.length];
-                    for (int i = 0; i < is.length; i++) {
-                        is[i] = TagUtil.dateTime(TagUtil.getDicomDate(value), TagUtil.getDicomTime(value));
-                    }
-                    val = is;
-                } else {
-                    val = TagUtil.dateTime(TagUtil.getDicomDate(value), TagUtil.getDicomTime(value));
-                }
-            } else if (TagType.INTEGER.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    int[] ds = new int[ss.length];
-                    for (int i = 0; i < ds.length; i++) {
-                        String s = ss[i];
-                        ds[i] = (s != null && !s.isEmpty()) ? StringUtils.parseIS(s) : 0;
-                    }
-                    val = ds;
-                } else {
-                    val = StringUtils.parseIS(value);
-                }
-            } else if (TagType.FLOAT.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    float[] ds = new float[ss.length];
-                    for (int i = 0; i < ds.length; i++) {
-                        String s = ss[i];
-                        ds[i] = (s != null && !s.isEmpty()) ? (float) StringUtils.parseDS(s) : Float.NaN;
-                    }
-                    val = ds;
-                } else {
-                    val = (float) StringUtils.parseDS(value);
-                }
-            } else if (TagType.DOUBLE.equals(tt)) {
-                if (vm > 1) {
-                    String[] ss = toStrings(value);
-                    double[] ds = new double[ss.length];
-                    for (int i = 0; i < ds.length; i++) {
-                        String s = ss[i];
-                        ds[i] = (s != null && !s.isEmpty()) ? StringUtils.parseDS(s) : Double.NaN;
-                    }
-                    val = ds;
-                } else {
-                    val = StringUtils.parseDS(value);
-                }
-            } else if (TagType.SEQUENCE.equals(tt)) {
-                val = value;
-            } else {
-                val = value.getBytes();
-            }
-
-            return val;
+            return tag.getValue(value);
         }
 
-        private String[] toStrings(String val) {
-            return StringUtils.split(val, '\\');
-        }
 
         @Override
         public boolean match(MediaElement<?> media) {
             Object value = media.getTagValue(tag);
 
-            if (Condition.Type.equals.equals(type)) {
+            if (Type.equals.equals(type)) {
                 return TagUtil.isEquals(value, object);
-            } else if (Condition.Type.notEquals.equals(type)) {
+            } else if (Type.notEquals.equals(type)) {
                 return !TagUtil.isEquals(value, object);
+            } else if (Type.equalsIgnoreCase.equals(type)) {
+                return TagUtil.isEquals(value, object, true);
+            } else if (Type.notEqualsIgnoreCase.equals(type)) {
+                return !TagUtil.isEquals(value, object, true);
             }
 
-            String str = object == null ? null : object.toString();
+            String str = null;
+            if (object != null) {
+                if (object.getClass().isArray() && Array.getLength(object) > 0) {
+                    str = Array.get(object, 0).toString();
+                } else {
+                    str = object.toString();
+                }
+            }
+
             switch (type) {
-                case equalsIgnoreCase:
-                    return TagUtil.isEquals(value, object, true);
-                case notEqualsIgnoreCase:
-                    return !TagUtil.isEquals(value, object, true);
                 case contains:
                     return TagUtil.isContaining(value, str, false);
                 case notContains:

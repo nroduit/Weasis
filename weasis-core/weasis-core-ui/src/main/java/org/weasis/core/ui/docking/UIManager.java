@@ -10,13 +10,14 @@
  ******************************************************************************/
 package org.weasis.core.ui.docking;
 
+import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -56,6 +57,13 @@ public class UIManager {
     public static final CWorkingArea MAIN_AREA = DOCKING_CONTROL.createWorkingArea("mainArea"); //$NON-NLS-1$
 
     // public static final CContentArea WEST_AREA = DOCKING_CONTROL.createContentArea("westArea");
+
+    private UIManager() {
+    }
+
+    public static Window getApplicationWindow() {
+        return WinUtil.getParentWindow(UIManager.BASE_AREA);
+    }
 
     public static DataExplorerView getExplorerplugin(String name) {
         if (name != null) {
@@ -126,7 +134,7 @@ public class UIManager {
 
     public static List<SeriesViewerFactory> getViewerFactoryList(String[] mimeTypeList) {
         if (mimeTypeList != null && mimeTypeList.length > 0) {
-            List<SeriesViewerFactory> plugins = new ArrayList<SeriesViewerFactory>();
+            List<SeriesViewerFactory> plugins = new ArrayList<>();
             synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
                 for (final SeriesViewerFactory viewerFactory : UIManager.SERIES_VIEWER_FACTORIES) {
                     if (viewerFactory != null) {
@@ -139,21 +147,15 @@ public class UIManager {
                 }
             }
 
-            Collections.sort(plugins, new Comparator<SeriesViewerFactory>() {
-
-                @Override
-                public int compare(SeriesViewerFactory s1, SeriesViewerFactory s2) {
-                    return (s1.getLevel() < s2.getLevel() ? -1 : (s1.getLevel() == s2.getLevel() ? 0 : 1));
-                }
-            });
-
+            Collections.sort(plugins,
+                (s1, s2) -> (s1.getLevel() < s2.getLevel() ? -1 : (s1.getLevel() == s2.getLevel() ? 0 : 1)));
             return plugins;
         }
         return null;
     }
 
     public static void closeSeriesViewerType(Class<? extends SeriesViewer<?>> clazz) {
-        final List<SeriesViewer<?>> pluginsToRemove = new ArrayList<SeriesViewer<?>>();
+        final List<SeriesViewer<?>> pluginsToRemove = new ArrayList<>();
         synchronized (UIManager.VIEWER_PLUGINS) {
             for (final SeriesViewer<?> plugin : UIManager.VIEWER_PLUGINS) {
                 if (clazz.isInstance(plugin)) {

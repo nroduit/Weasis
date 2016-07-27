@@ -43,6 +43,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
      * Logger for this class
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageElement.class);
+
     /*
      * Imageio issue with native library in multi-thread environment (to avoid JVM crash let only one simultaneous
      * thread) (https://java.net/jira/browse/JAI_IMAGEIO_CORE-126)
@@ -317,6 +318,11 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return getImage(manager, true);
     }
 
+    @Override
+    public String toString() {
+        return getMediaURI().toString();
+    }
+
     public synchronized PlanarImage getImage(OpManager manager, boolean findMinMax) {
         PlanarImage cacheImage;
         try {
@@ -329,12 +335,13 @@ public class ImageElement extends MediaElement<PlanarImage> {
              * Appends when loading a big image without tiling, the memory left is not enough for the renderedop (like
              * Extrema)
              */
-            LOGGER.warn("Out of MemoryError: {}", getMediaURI()); //$NON-NLS-1$
+            LOGGER.warn("Out of MemoryError: {}", this, e1); //$NON-NLS-1$
             mCache.expungeStaleEntries();
             System.gc();
             try {
                 Thread.sleep(100);
             } catch (InterruptedException et) {
+                // Do nothing
             }
             cacheImage = startImageLoading();
             if (findMinMax) {
@@ -362,7 +369,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
     private PlanarImage startImageLoading() throws OutOfMemoryError {
         PlanarImage cacheImage;
         if ((cacheImage = mCache.get(this)) == null && readable && setAsLoading()) {
-            LOGGER.debug("Asking for reading image: {}", this.getMediaURI()); //$NON-NLS-1$
+            LOGGER.debug("Asking for reading image: {}", this); //$NON-NLS-1$
             Load ref = new Load();
             Future<PlanarImage> future = IMAGE_LOADER.submit(ref);
             PlanarImage img = null;
@@ -380,7 +387,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
                     throw (OutOfMemoryError) e.getCause();
                 } else {
                     readable = false;
-                    LOGGER.error("Cannot read pixel data!: {}", getMediaURI(), e); //$NON-NLS-1$
+                    LOGGER.error("Cannot read pixel data!: {}", this, e); //$NON-NLS-1$
                 }
             }
             if (img != null) {

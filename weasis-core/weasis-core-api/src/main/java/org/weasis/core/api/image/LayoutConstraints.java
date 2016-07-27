@@ -13,7 +13,10 @@ package org.weasis.core.api.image;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
-public class LayoutConstraints extends GridBagConstraints implements Comparable<LayoutConstraints> {
+import org.weasis.core.api.util.Copyable;
+
+public class LayoutConstraints extends GridBagConstraints
+    implements Comparable<LayoutConstraints>, Copyable<LayoutConstraints> {
 
     public static final int SPACE = 3;
     private String type;
@@ -27,6 +30,13 @@ public class LayoutConstraints extends GridBagConstraints implements Comparable<
         this.layoutID = layoutID;
     }
 
+    public LayoutConstraints(LayoutConstraints lc) {
+        super(lc.gridx, lc.gridy, lc.gridwidth, lc.gridheight, lc.weightx, lc.weighty, lc.anchor, lc.fill,
+            new Insets(lc.insets.top, lc.insets.left, lc.insets.bottom, lc.insets.right), lc.ipadx, lc.ipady);
+        this.type = lc.type;
+        this.layoutID = lc.layoutID;
+    }
+
     public String getType() {
         return type;
     }
@@ -38,6 +48,11 @@ public class LayoutConstraints extends GridBagConstraints implements Comparable<
     @Override
     public int compareTo(LayoutConstraints o) {
         return layoutID < o.layoutID ? -1 : (layoutID == o.layoutID ? 0 : 1);
+    }
+
+    @Override
+    public LayoutConstraints copy() {
+        return new LayoutConstraints(this);
     }
 
 }

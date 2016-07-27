@@ -24,10 +24,6 @@ public class MathUtil {
     private MathUtil() {
     }
 
-    public static long getUnsignedInt(int x) {
-        return x & 0x00000000ffffffffL;
-    }
-
     public static boolean isEqualToZero(float val) {
         return Math.copySign(val, 1.0) < FLOAT_EPSILON;
     }

@@ -18,6 +18,7 @@ package org.weasis.core.api.gui.model;
  *
  * @see ViewModelChangeEvent
  */
+@FunctionalInterface
 public interface ViewModelChangeListener {
 
     void handleViewModelChanged(ViewModel viewModel);

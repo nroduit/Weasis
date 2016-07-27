@@ -3,7 +3,7 @@ package org.weasis.dicom.sr;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.dicom.codec.macro.SOPInstanceReference;
 
 public class SRImageReference {
@@ -19,7 +19,7 @@ public class SRImageReference {
     public void addGraphic(Graphic g) {
         if (g != null) {
             if (graphics == null) {
-                graphics = new ArrayList<Graphic>();
+                graphics = new ArrayList<>();
             }
             graphics.add(g);
         }

@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -37,6 +39,8 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.serialize.XmlSerializer;
 
 public class ViewerPluginBuilder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ViewerPluginBuilder.class);
+
     public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer"; //$NON-NLS-1$
     public static final String BEST_DEF_LAYOUT = "best.def.layout"; //$NON-NLS-1$
     public static final String OPEN_IN_SELECTION = "add.in.selected.view"; // For only one image //$NON-NLS-1$
@@ -45,7 +49,7 @@ public class ViewerPluginBuilder {
     public static final String ICON = "plugin.icon"; //$NON-NLS-1$
     public static final String UID = "plugin.uid"; //$NON-NLS-1$
 
-    public static final AbstractFileModel DefaultDataModel = new AbstractFileModel();
+    public static final FileModel DefaultDataModel = new FileModel();
     private final SeriesViewerFactory factory;
     private final List<MediaSeries<? extends MediaElement<?>>> series;
     private final DataExplorerModel model;
@@ -83,8 +87,7 @@ public class ViewerPluginBuilder {
         if (factory == null || series == null || model == null) {
             return;
         }
-        ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-            new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
+        ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>(1);
         list.add(series);
         openSequenceInPlugin(factory, list, model, compareEntryToBuildNewViewer, removeOldSeries);
     }
@@ -119,7 +122,7 @@ public class ViewerPluginBuilder {
 
     public static void openSequenceInDefaultPlugin(List<MediaSeries<? extends MediaElement<?>>> series,
         DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
-        ArrayList<String> mimes = new ArrayList<String>();
+        ArrayList<String> mimes = new ArrayList<>();
         for (MediaSeries<? extends MediaElement<?>> s : series) {
             String mime = s.getMimeType();
             if (mime != null && !mimes.contains(mime)) {
@@ -129,8 +132,7 @@ public class ViewerPluginBuilder {
         for (String mime : mimes) {
             SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
             if (plugin != null) {
-                ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList =
-                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+                ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList = new ArrayList<>();
                 for (MediaSeries<? extends MediaElement<?>> s : series) {
                     if (mime.equals(s.getMimeType())) {
                         seriesList.add(s);
@@ -228,7 +230,6 @@ public class ViewerPluginBuilder {
         }
 
         try {
-
             if (series == null) {
                 series = reader.getMediaSeries();
                 series.setTag(TagW.ExplorerModel, DefaultDataModel);
@@ -244,20 +245,20 @@ public class ViewerPluginBuilder {
                 for (MediaElement<?> media : medias) {
                     series.addMedia(media);
                 }
-
             }
 
             for (MediaElement<?> media : medias) {
                 if (media instanceof ImageElement) {
-                    XmlSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
+                    XmlSerializer.readMeasurementGraphics(new File(media.getFile().getPath() + ".xml"));
                 }
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Build series error", e);
         } finally {
             reader.reset();
         }
         return series;
     }
+
 }

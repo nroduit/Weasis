@@ -1,6 +1,7 @@
 package org.weasis.dicom.sr;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalAccessor;
 import java.util.Map;
 
 import org.dcm4che3.data.Attributes;
@@ -17,7 +18,6 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class SRReader {
 
@@ -55,9 +55,7 @@ public class SRReader {
             String instName = dcmItems.getString(Tag.InstitutionName);
             String instDepName = dcmItems.getString(Tag.InstitutionalDepartmentName);
             String stationName = dcmItems.getString(Tag.StationName);
-            Date contentDateTime =
-                TagUtil.dateTime(DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.ContentDate, null),
-                    DicomMediaUtils.getDateFromDicomElement(dcmItems, Tag.ContentTime, null));
+            LocalDateTime contentDateTime = TagD.dateTime(Tag.ContentDateAndTime, dcmItems);
             if (instName != null) {
                 html.append(Messages.getString("SRReader.by")); //$NON-NLS-1$
                 html.append(" "); //$NON-NLS-1$
@@ -248,7 +246,7 @@ public class SRReader {
                 // // DragLayer layer = new DragLayer(view.getLayerModel(), layerId);$
                 // try {
                 // Graphic graphic =
-                // GraphicUtil.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false,
+                // PrGraphicUtil.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false,
                 // null, true);
                 // if (graphic != null) {
                 // imgRef.addGraphic(graphic);
@@ -373,16 +371,14 @@ public class SRReader {
     private void writeStudyDateTime(StringBuilder html) {
         TagW tagDate = TagD.getNullable(Tag.StudyDate, null);
         if (tagDate != null && html != null && dcmItems != null) {
-            Date date = (Date) tagDate.getValue(dcmItems);
-            TagW tagTime = TagD.getNullable(Tag.StudyTime, null);
-            if (tagTime != null) {
-                date = TagUtil.dateTime(date, (Date) tagTime.getValue(dcmItems));
+            LocalDateTime date = TagD.dateTime(Tag.StudyDateAndTime, dcmItems);
+            if (date != null) {
+                html.append("<B>"); //$NON-NLS-1$
+                html.append(tagDate.getDisplayedName());
+                html.append("</B>"); //$NON-NLS-1$
+                html.append(StringUtil.COLON_AND_SPACE);
+                html.append(TagUtil.formatDateTime(date));
             }
-            html.append("<B>"); //$NON-NLS-1$
-            html.append(tagDate.getDisplayedName());
-            html.append("</B>"); //$NON-NLS-1$
-            html.append(StringUtil.COLON_AND_SPACE);
-            html.append(tagDate.getFormattedText(date, null));
         }
     }
 
@@ -396,7 +392,7 @@ public class SRReader {
                 html.append(StringUtil.COLON);
                 html.append("<BR>"); //$NON-NLS-1$
                 for (Attributes v : seq) {
-                    Date date = v.getDate(Tag.VerificationDateTime);
+                    TemporalAccessor date =  (TemporalAccessor) TagD.get(Tag.VerificationDateTime).getValue(v);
                     if (date != null) {
                         html.append(" * "); //$NON-NLS-1$
                         html.append(TagUtil.formatDateTime(date));

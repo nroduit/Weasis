@@ -47,6 +47,15 @@ public class MaskOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public MaskOp(MaskOp op) {
+        super(op);
+    }
+
+    @Override
+    public MaskOp copy() {
+        return new MaskOp(this);
+    }
+
     @Override
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
@@ -73,7 +82,6 @@ public class MaskOp extends AbstractOp {
                 result = MergeImgOp.combineTwoImages(source, sourceUP, getAsImage(area, source));
             }
         }
-
         params.put(Param.OUTPUT_IMG, result);
     }
 

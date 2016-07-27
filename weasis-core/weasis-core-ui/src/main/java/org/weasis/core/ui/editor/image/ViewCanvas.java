@@ -19,9 +19,9 @@ import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.ui.graphic.ImageLayerChangeListener;
-import org.weasis.core.ui.graphic.PanPoint;
-import org.weasis.core.ui.graphic.model.Canvas;
+import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
 
 public interface ViewCanvas<E extends ImageElement>
     extends Canvas, Image2DViewer<E>, PropertyChangeListener, FocusListener, ImageLayerChangeListener<E>, KeyListener {
@@ -44,17 +44,17 @@ public interface ViewCanvas<E extends ImageElement>
 
     PixelInfo getPixelInfo(Point p);
 
-    Panner getPanner();
+    Panner<E> getPanner();
 
     void setSeries(MediaSeries<E> series);
 
     void setSeries(MediaSeries<E> newSeries, E selectedMedia);
 
-    void setFocused(boolean focused);
+    void setFocused(Boolean focused);
 
     double getRealWorldViewScale();
 
-    AnnotationsLayer getInfoLayer();
+    LayerAnnotation getInfoLayer();
 
     int getTileOffset();
 
@@ -62,7 +62,7 @@ public interface ViewCanvas<E extends ImageElement>
 
     void center();
 
-    void setCenter(double x, double y);
+    void setCenter(Double x, Double y);
 
     void moveOrigin(PanPoint point);
 
@@ -70,19 +70,19 @@ public interface ViewCanvas<E extends ImageElement>
 
     void setActionsInView(String action, Object value);
 
-    void setActionsInView(String action, Object value, boolean repaint);
+    void setActionsInView(String action, Object value, Boolean repaint);
 
-    void setSelected(boolean selected);
+    void setSelected(Boolean selected);
 
     Font getFont();
 
     Font getLayerFont();
 
-    void setDrawingsVisibility(boolean visible);
+    void setDrawingsVisibility(Boolean visible);
 
     Object getLensActionValue(String action);
 
-    void changeZoomInterpolation(int interpolation);
+    void changeZoomInterpolation(Integer interpolation);
 
     OpManager getDisplayOpManager();
 
@@ -102,7 +102,7 @@ public interface ViewCanvas<E extends ImageElement>
 
     Point2D getHighlightedPosition();
 
-    void drawPointer(Graphics2D g, double x, double y);
+    void drawPointer(Graphics2D g, Double x, Double y);
 
     List<Action> getExportToClipboardAction();
 

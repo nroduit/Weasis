@@ -14,6 +14,7 @@
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+		<dcm4che.version>dcm4chee-arc-light-5.2.1</dcm4che.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -44,32 +45,32 @@
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-core</artifactId>
-			<version>dcm4chee-arc-light-5.1.0</version>
+			<version>${dcm4che.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-dict</artifactId>
-			<version>dcm4chee-arc-light-5.1.0</version>
+			<version>${dcm4che.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-image</artifactId>
-			<version>dcm4chee-arc-light-5.1.0</version>
+			<version>${dcm4che.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-imageio</artifactId>
-			<version>dcm4chee-arc-light-5.1.0-r1</version>
+			<version>${dcm4che.version}-r1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-imageio-rle</artifactId>
-			<version>dcm4chee-arc-light-5.1.0</version>
+			<version>${dcm4che.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-net</artifactId>
-			<version>dcm4chee-arc-light-5.1.0</version>
+			<version>${dcm4che.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis</groupId>

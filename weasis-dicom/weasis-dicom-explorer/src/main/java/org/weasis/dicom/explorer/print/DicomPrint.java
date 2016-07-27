@@ -60,12 +60,13 @@ import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
-import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
+import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 
 public class DicomPrint {
 
-    private DicomPrintOptions dicomPrintOptions;
+    private final DicomPrintNode dcmNode;
+    private final DicomPrintOptions printOptions;
     private int interpolation;
     private double placeholderX;
     private double placeholderY;
@@ -75,21 +76,25 @@ public class DicomPrint {
     private double[] lastwy;
     private double wx;
 
-    public DicomPrint(DicomPrintOptions dicomPrintOptions) {
-        this.dicomPrintOptions = dicomPrintOptions;
+    public DicomPrint(DicomPrintNode dicomPrintNode, DicomPrintOptions printOptions) {
+        if (dicomPrintNode == null) {
+            throw new IllegalArgumentException();
+        }
+        this.dcmNode = dicomPrintNode;
+        this.printOptions = printOptions == null ? dicomPrintNode.getPrintOptions() : printOptions;
     }
 
-    public BufferedImage printImage(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
+    public BufferedImage printImage(ExportLayout<? extends ImageElement> layout) {
         if (layout == null) {
             return null;
         }
 
-        BufferedImage bufferedImage = initialize(layout, printOptions);
+        BufferedImage bufferedImage = initialize(layout);
         Graphics2D g2d = (Graphics2D) bufferedImage.getGraphics();
 
         if (g2d != null) {
-            Color borderColor = "WHITE".equals(dicomPrintOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
-            Color background = "WHITE".equals(dicomPrintOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
+            Color borderColor = "WHITE".equals(printOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
+            Color background = "WHITE".equals(printOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
             g2d.setBackground(background);
             if (!Color.BLACK.equals(background)) {
                 // Change background color
@@ -107,7 +112,7 @@ public class DicomPrint {
 
                 if (value instanceof ExportImage) {
                     image = (ExportImage) value;
-                    formatImage(image, printOptions, key, pad);
+                    formatImage(image, key, pad);
                 }
 
                 if (key.gridx == 0) {
@@ -150,21 +155,21 @@ public class DicomPrint {
         return bufferedImage;
     }
 
-    private BufferedImage initialize(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
+    private BufferedImage initialize(ExportLayout<? extends ImageElement> layout) {
         Dimension dimGrid = layout.getLayoutModel().getGridSize();
-        FilmSize filmSize = dicomPrintOptions.getFilmSizeId();
-        PrintOptions.DotPerInches dpi = dicomPrintOptions.getDpi();
+        FilmSize filmSize = printOptions.getFilmSizeId();
+        PrintOptions.DotPerInches dpi = printOptions.getDpi();
 
         int width = filmSize.getWidth(dpi);
         int height = filmSize.getHeight(dpi);
 
-        if ("LANDSCAPE".equals(dicomPrintOptions.getFilmOrientation())) { //$NON-NLS-1$
+        if ("LANDSCAPE".equals(printOptions.getFilmOrientation())) { //$NON-NLS-1$
             int tmp = width;
             width = height;
             height = tmp;
         }
 
-        String mType = dicomPrintOptions.getMagnificationType();
+        String mType = printOptions.getMagnificationType();
         interpolation = 1;
 
         if ("REPLICATE".equals(mType)) { //$NON-NLS-1$
@@ -182,16 +187,15 @@ public class DicomPrint {
         lastwy = new double[dimGrid.width];
         wx = 0.0;
 
-        if (printOptions.isColor()) {
+        if (printOptions.isColorPrint()) {
             return createRGBBufferedImage(width, height);
         } else {
             return createGrayBufferedImage(width, height);
         }
     }
 
-    private void formatImage(ExportImage<? extends ImageElement> image, PrintOptions printOptions,
-        LayoutConstraints key, Point2D.Double pad) {
-        if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
+    private void formatImage(ExportImage<? extends ImageElement> image, LayoutConstraints key, Point2D.Double pad) {
+        if (!printOptions.isShowingAnnotations() && image.getInfoLayer().getVisible()) {
             image.getInfoLayer().setVisible(false);
         }
 
@@ -261,12 +265,12 @@ public class DicomPrint {
         Attributes filmBoxAttrs = new Attributes();
         Attributes imageBoxAttrs = new Attributes();
         Attributes dicomImage = new Attributes();
-        final String printManagementSOPClass = dicomPrintOptions.isPrintInColor()
-            ? UID.BasicColorPrintManagementMetaSOPClass : UID.BasicGrayscalePrintManagementMetaSOPClass;
+        final String printManagementSOPClass = printOptions.isColorPrint() ? UID.BasicColorPrintManagementMetaSOPClass
+            : UID.BasicGrayscalePrintManagementMetaSOPClass;
         final String imageBoxSOPClass =
-            dicomPrintOptions.isPrintInColor() ? UID.BasicColorImageBoxSOPClass : UID.BasicGrayscaleImageBoxSOPClass;
+            printOptions.isColorPrint() ? UID.BasicColorImageBoxSOPClass : UID.BasicGrayscaleImageBoxSOPClass;
 
-        storeRasterInDicom(image, dicomImage, dicomPrintOptions.isPrintInColor());
+        storeRasterInDicom(image, dicomImage, printOptions.isColorPrint());
 
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
@@ -276,16 +280,15 @@ public class DicomPrint {
         ApplicationEntity ae = new ApplicationEntity(weasisAet);
         Connection conn = new Connection();
 
-        DefaultDicomNode node = dicomPrintOptions.getDicomPrinter();
-        ApplicationEntity remoteAE = new ApplicationEntity(node.getAeTitle());
+        ApplicationEntity remoteAE = new ApplicationEntity(dcmNode.getAeTitle());
         Connection remoteConn = new Connection();
 
         ae.addConnection(conn);
         ae.setAssociationInitiator(true);
         ae.setAETitle(weasisAet);
 
-        remoteConn.setPort(node.getPort());
-        remoteConn.setHostname(node.getHostname());
+        remoteConn.setPort(dcmNode.getPort());
+        remoteConn.setHostname(dcmNode.getHostname());
         remoteConn.setSocketCloseDelay(90);
 
         remoteAE.setAssociationAcceptor(true);
@@ -297,23 +300,23 @@ public class DicomPrint {
         device.setExecutor(Executors.newSingleThreadExecutor());
         device.setScheduledExecutor(Executors.newSingleThreadScheduledExecutor());
 
-        filmSessionAttrs.setInt(Tag.NumberOfCopies, VR.IS, dicomPrintOptions.getNumOfCopies());
-        filmSessionAttrs.setString(Tag.PrintPriority, VR.CS, dicomPrintOptions.getPriority());
-        filmSessionAttrs.setString(Tag.MediumType, VR.CS, dicomPrintOptions.getMediumType());
-        filmSessionAttrs.setString(Tag.FilmDestination, VR.CS, dicomPrintOptions.getFilmDestination());
-        filmBoxAttrs.setString(Tag.FilmSizeID, VR.CS, dicomPrintOptions.getFilmSizeId().toString());
-        filmBoxAttrs.setString(Tag.FilmOrientation, VR.CS, dicomPrintOptions.getFilmOrientation());
-        filmBoxAttrs.setString(Tag.MagnificationType, VR.CS, dicomPrintOptions.getMagnificationType());
-        filmBoxAttrs.setString(Tag.SmoothingType, VR.CS, dicomPrintOptions.getSmoothingType());
-        filmBoxAttrs.setString(Tag.Trim, VR.CS, dicomPrintOptions.getTrim());
-        filmBoxAttrs.setString(Tag.BorderDensity, VR.CS, dicomPrintOptions.getBorderDensity());
-        filmBoxAttrs.setInt(Tag.MinDensity, VR.US, dicomPrintOptions.getMinDensity());
-        filmBoxAttrs.setInt(Tag.MaxDensity, VR.US, dicomPrintOptions.getMaxDensity());
-        filmBoxAttrs.setString(Tag.ImageDisplayFormat, VR.ST, dicomPrintOptions.getImageDisplayFormat());
+        filmSessionAttrs.setInt(Tag.NumberOfCopies, VR.IS, printOptions.getNumOfCopies());
+        filmSessionAttrs.setString(Tag.PrintPriority, VR.CS, printOptions.getPriority());
+        filmSessionAttrs.setString(Tag.MediumType, VR.CS, printOptions.getMediumType());
+        filmSessionAttrs.setString(Tag.FilmDestination, VR.CS, printOptions.getFilmDestination());
+        filmBoxAttrs.setString(Tag.FilmSizeID, VR.CS, printOptions.getFilmSizeId().toString());
+        filmBoxAttrs.setString(Tag.FilmOrientation, VR.CS, printOptions.getFilmOrientation());
+        filmBoxAttrs.setString(Tag.MagnificationType, VR.CS, printOptions.getMagnificationType());
+        filmBoxAttrs.setString(Tag.SmoothingType, VR.CS, printOptions.getSmoothingType());
+        filmBoxAttrs.setString(Tag.Trim, VR.CS, printOptions.getTrim());
+        filmBoxAttrs.setString(Tag.BorderDensity, VR.CS, printOptions.getBorderDensity());
+        filmBoxAttrs.setInt(Tag.MinDensity, VR.US, printOptions.getMinDensity());
+        filmBoxAttrs.setInt(Tag.MaxDensity, VR.US, printOptions.getMaxDensity());
+        filmBoxAttrs.setString(Tag.ImageDisplayFormat, VR.ST, printOptions.getImageDisplayFormat());
         imageBoxAttrs.setInt(Tag.ImageBoxPosition, VR.US, 1);
 
         Sequence seq = imageBoxAttrs.ensureSequence(
-            dicomPrintOptions.isPrintInColor() ? Tag.BasicColorImageSequence : Tag.BasicGrayscaleImageSequence, 1);
+            printOptions.isColorPrint() ? Tag.BasicColorImageSequence : Tag.BasicGrayscaleImageSequence, 1);
         seq.add(dicomImage);
         final String filmSessionUID = UIDUtils.createUID();
         final String filmBoxUID = UIDUtils.createUID();

@@ -20,12 +20,12 @@ import javax.imageio.stream.ImageInputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.image.jni.FileStreamSegment;
 import org.weasis.image.jni.ImageParameters;
 import org.weasis.image.jni.InputStreamAdapter;
 import org.weasis.image.jni.NativeCodec;
 import org.weasis.image.jni.NativeImage;
 import org.weasis.image.jni.NativeImageReader;
+import org.weasis.image.jni.StreamSegment;
 import org.weasis.openjpeg.internal.OpenJpegCodec;
 
 import com.sun.media.imageioimpl.common.SignedDataImageParam;
@@ -63,7 +63,7 @@ class NativeJ2kImageReader extends NativeImageReader {
                 mlImage.getImageParameters().setSignedData(((SignedDataImageParam) param).isSignedData());
             }
 
-            FileStreamSegment.adaptParametersFromStream(iis, mlImage);
+            StreamSegment.adaptParametersFromStream(iis, mlImage);
 
             long start = System.currentTimeMillis();
             String error = decoder.decompress(mlImage, param);
@@ -72,15 +72,15 @@ class NativeJ2kImageReader extends NativeImageReader {
             }
 
             long stop = System.currentTimeMillis();
-            LOGGER.debug("Reading image time (native J2K codec): {} ms", (stop - start)); //$NON-NLS-1$
+            LOGGER.debug("Reading image time (native J2K codec): {} ms", stop - start); //$NON-NLS-1$
 
             decoder.dispose();
 
-        } catch (Throwable t) {
+        } catch (Exception e) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("Native J2K codec error", t); //$NON-NLS-1$
+                LOGGER.error("Native J2K codec error", e); //$NON-NLS-1$
             }
-            throw new IIOException("Native J2K codec error", t);
+            throw new IIOException("Native J2K codec error", e);
         }
 
         LOGGER.debug("Parameters => {}", mlImage.getImageParameters().toString());
@@ -89,19 +89,17 @@ class NativeJ2kImageReader extends NativeImageReader {
 
     @Override
     protected boolean skipImage(int index) throws IOException {
-        boolean retval = false;
-
         if (input == null) {
             throw new IllegalStateException("input cannot be null");
         }
-        InputStream stream = null;
+        InputStream stream;
         if (input instanceof ImageInputStream) {
             stream = new InputStreamAdapter((ImageInputStream) input);
         } else {
             throw new IllegalArgumentException("input is not an ImageInputStream!");
         }
         // FIXME skip stream!
-        retval = nativeDecode(stream, null, index) != null;
+        boolean retval = nativeDecode(stream, null, index) != null;
 
         if (retval) {
             long pos = ((ImageInputStream) input).getStreamPosition();
@@ -161,11 +159,6 @@ class NativeJ2kImageReader extends NativeImageReader {
 
     public boolean getAbortRequest() {
         return abortRequested();
-    }
-
-    @Override
-    protected void resetLocal() {
-        super.resetLocal();
     }
 
 }

@@ -1,6 +1,12 @@
 package org.weasis.core.api.util;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
@@ -15,6 +21,9 @@ public class StringUtil {
 
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
     private static final int[] EMPTY_INT_ARRAY = new int[0];
+
+    public static final char[] HEX_DIGIT =
+        { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
     public enum Suffix {
         NO(""), //$NON-NLS-1$
@@ -41,7 +50,7 @@ public class StringUtil {
         public String toString() {
             return value;
         }
-    };
+    }
 
     private StringUtil() {
     }
@@ -146,7 +155,7 @@ public class StringUtil {
     public static boolean hasText(String str) {
         return hasText((CharSequence) str);
     }
-    
+
     /**
      * Removing diacritical marks aka accents
      * 
@@ -157,6 +166,42 @@ public class StringUtil {
         String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
         Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
         return pattern.matcher(nfdNormalizedString).replaceAll("");
+    }
+
+    /**
+     * @param s
+     * @return the list of words or part with quotes
+     */
+    public static List<String> splitStringExceptQuotes(String s) {
+        if (s == null) {
+            return Collections.emptyList();
+        }
+        List<String> matchList = new ArrayList<>();
+        Pattern patternSpaceExceptQuotes = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'"); //$NON-NLS-1$
+        Matcher regexMatcher = patternSpaceExceptQuotes.matcher(s);
+        while (regexMatcher.find()) {
+            matchList.add(regexMatcher.group());
+        }
+        return matchList;
+    }
+
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = HEX_DIGIT[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_DIGIT[v & 0x0f];
+        }
+        return new String(hexChars);
+    }
+
+    public static String integerToHex(int val) {
+        return Integer.toHexString(val).toUpperCase();
+    }
+
+    public static String bytesToMD5(byte[] val) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        return bytesToHex(md.digest(val));
     }
 
     public static String getEmpty2NullObject(Object object) {

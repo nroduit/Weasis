@@ -10,6 +10,6 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.weasis.openjpeg</groupId>
 	<artifactId>weasis-openjpeg-parent</artifactId>
-	<name>Parent of OpneJPEG Library</name>
+	<name>Parent of OpenJPEG Library</name>
 	<packaging>pom</packaging>
 </project>

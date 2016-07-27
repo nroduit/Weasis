@@ -56,6 +56,15 @@ public class ZoomOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public ZoomOp(ZoomOp op) {
+        super(op);
+    }
+
+    @Override
+    public ZoomOp copy() {
+        return new ZoomOp(this);
+    }
+
     @Override
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);

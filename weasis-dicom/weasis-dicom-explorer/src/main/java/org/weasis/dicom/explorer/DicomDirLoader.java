@@ -112,9 +112,9 @@ public class DicomDirLoader {
     private boolean parsePatient(Attributes dcmPatient, DicomDirReader reader) {
         boolean newPatient = false;
         try {
-            String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(
-                dcmPatient.getString(Tag.PatientID, TagW.NO_VALUE), dcmPatient.getString(Tag.IssuerOfPatientID),
-                dcmPatient.getString(Tag.PatientName, TagW.NO_VALUE), null);
+            String patientPseudoUID =
+                DicomMediaUtils.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID, TagW.NO_VALUE),
+                    dcmPatient.getString(Tag.IssuerOfPatientID), dcmPatient.getString(Tag.PatientName, TagW.NO_VALUE));
 
             MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
             if (patient == null) {

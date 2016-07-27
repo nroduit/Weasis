@@ -11,79 +11,54 @@
 package org.weasis.core.ui.util;
 
 import java.awt.datatransfer.DataFlavor;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.Reader;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class UriListFlavor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UriListFlavor.class);
 
-    public static DataFlavor uriListFlavor;
+    public static final DataFlavor uriListFlavor = createConstant("text/uri-list;class=java.lang.String", null);
 
-    static {
-        try {
-            uriListFlavor = new DataFlavor("text/uri-list;class=java.lang.String"); //$NON-NLS-1$
-        } catch (ClassNotFoundException e) {
-            // do nothing
-        }
+    private static final DataFlavor[] flavors = new DataFlavor[] { DataFlavor.javaFileListFlavor, uriListFlavor };
+
+    private UriListFlavor() {
     }
 
-    public static DataFlavor[] FLAVORS = new DataFlavor[] { DataFlavor.javaFileListFlavor, uriListFlavor };
-
-    public static List<File> getFileList(Reader reader) {
-        if (reader == null) {
+    private static DataFlavor createConstant(String mt, String prn) {
+        try {
+            return new DataFlavor(mt, prn, UriListFlavor.class.getClassLoader()); // $NON-NLS-1$
+        } catch (Exception e) {
+            LOGGER.error("Build uri flavor", e);
             return null;
         }
-        List<File> list = new java.util.ArrayList<File>();
-        BufferedReader br = new BufferedReader(reader);
-        String uriStr;
-        try {
-            while ((uriStr = br.readLine()) != null) {
-                if (uriStr.startsWith("#")) { //$NON-NLS-1$
-                    // the line is a comment (as per the RFC 2483)
-                    continue;
-                }
-                try {
-                    list.add(new File(new URI(uriStr)));
-                } catch (URISyntaxException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
     }
 
     public static List<File> textURIListToFileList(String uriList) {
-        List<File> list = new java.util.ArrayList<File>();
+        List<File> list = new java.util.ArrayList<>();
         for (java.util.StringTokenizer st = new java.util.StringTokenizer(uriList, "\r\n"); st.hasMoreTokens();) { //$NON-NLS-1$
             String s = st.nextToken();
-            if (s.startsWith("#")) { //$NON-NLS-1$
-                // the line is a comment (as per the RFC 2483)
-                continue;
-            }
-            try {
-                list.add(new File(new URI(s)));
-            } catch (Exception e) {
+            // Check if the line is a comment (as per the RFC 2483)
+            if (!s.startsWith("#")) { //$NON-NLS-1$
+                try {
+                    list.add(new File(new URI(s)));
+                } catch (Exception e) {
+                    LOGGER.error("Build file from URI", e);
+                }
             }
         }
         return list;
     }
 
     public static DataFlavor[] getTransferDataFlavors() {
-        return FLAVORS.clone();
+        return Arrays.copyOf(flavors, flavors.length);
     }
 
     public static boolean isDataFlavorSupported(DataFlavor flavor) {
-        for (int i = 0; i < FLAVORS.length; i++) {
-            if (flavor.equals(FLAVORS[i])) {
-                return true;
-            }
-        }
-        return false;
+        return Arrays.asList(flavors).stream().anyMatch(flavor::equals);
     }
 }

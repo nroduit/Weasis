@@ -20,7 +20,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -61,7 +60,7 @@ public class ImageTool extends PluginTool {
     private final JScrollPane rootPane = new JScrollPane();
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
-    public ImageTool(String pluginName, Icon icon) {
+    public ImageTool(String pluginName) {
         super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 20);
         dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
         setDockableWidth(290);

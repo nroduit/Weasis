@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.media.data;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Map;
 
@@ -20,6 +21,8 @@ public interface MediaReader<E> extends Tagable {
     void reset();
 
     URI getUri();
+
+    FileCache getFileCache();
 
     MediaElement<?>[] getMediaElement();
 
@@ -33,9 +36,7 @@ public interface MediaReader<E> extends Tagable {
 
     int getMediaElementNumber();
 
-    URI getMediaFragmentURI(Object key);
-
-    String getMediaFragmentMimeType(Object key);
+    String getMediaFragmentMimeType();
 
     Map<TagW, Object> getMediaFragmentTags(Object key);
 
@@ -49,4 +50,6 @@ public interface MediaReader<E> extends Tagable {
     Object getTagValue(TagW tag);
 
     void replaceURI(URI uri);
+
+    boolean buildFile(File ouptut);
 }

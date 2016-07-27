@@ -20,11 +20,14 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Deque;
@@ -242,14 +245,20 @@ public final class FileUtil {
         if (file != null && extensions != null) {
             String fileExt = getExtension(file.getName());
             if (StringUtil.hasLength(fileExt)) {
-                for (String ext : extensions) {
-                    if (fileExt.endsWith(ext)) {
-                        return true;
-                    }
-                }
+                return Arrays.asList(extensions).stream().anyMatch(fileExt::endsWith);
             }
         }
         return false;
+    }
+
+    public static int writeFile(URLConnection httpCon, File outFilename) {
+        try (InputStream input = httpCon.getInputStream();
+                        FileOutputStream outputStream = new FileOutputStream(outFilename)) {
+            return writeStream(input, outputStream);
+        } catch (IOException e) {
+            LOGGER.error("Write url into file", e); //$NON-NLS-1$
+            return 0;
+        }
     }
 
     /**
@@ -387,15 +396,10 @@ public final class FileUtil {
         if (source == null || destination == null) {
             return false;
         }
-
-        try (FileInputStream inputStream = new FileInputStream(source);
-                        FileChannel in = inputStream.getChannel();
-                        FileOutputStream outputStream = new FileOutputStream(destination);
-                        FileChannel out = outputStream.getChannel()) {
-
-            in.transferTo(0, in.size(), out);
+        try {
+            Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return true;
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Copy file", e); //$NON-NLS-1$
             return false;
         }

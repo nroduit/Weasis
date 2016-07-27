@@ -12,7 +12,9 @@ package org.weasis.core.api.image;
 
 import java.util.Map;
 
-public interface ImageOpNode extends Cloneable {
+import org.weasis.core.api.util.Copyable;
+
+public interface ImageOpNode extends Copyable<ImageOpNode> {
 
     public final class Param {
 
@@ -27,8 +29,6 @@ public interface ImageOpNode extends Cloneable {
     }
 
     void process() throws Exception;
-
-    ImageOpNode clone() throws CloneNotSupportedException;
 
     boolean isEnabled();
 

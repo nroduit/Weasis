@@ -22,11 +22,11 @@ import javax.imageio.stream.ImageInputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.image.jni.FileStreamSegment;
 import org.weasis.image.jni.InputStreamAdapter;
 import org.weasis.image.jni.NativeCodec;
 import org.weasis.image.jni.NativeImage;
 import org.weasis.image.jni.NativeImageReader;
+import org.weasis.image.jni.StreamSegment;
 import org.weasis.jpeg.internal.JpegCodec;
 
 import com.sun.media.imageioimpl.common.SignedDataImageParam;
@@ -68,7 +68,7 @@ class NativeJPEGImageReader extends NativeImageReader {
                 mlImage.getImageParameters().setSignedData(((SignedDataImageParam) param).isSignedData());
             }
 
-            FileStreamSegment.adaptParametersFromStream(iis, mlImage);
+            StreamSegment.adaptParametersFromStream(iis, mlImage);
 
             long start = System.currentTimeMillis();
             String error = decoder.decompress(mlImage, param);

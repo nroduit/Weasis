@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
@@ -129,7 +130,7 @@ import bibliothek.util.Colors;
 
 public class WeasisWin {
 
-    private static final Logger log = LoggerFactory.getLogger(WeasisWin.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWin.class);
 
     private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
     private static final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
@@ -141,7 +142,7 @@ public class WeasisWin {
 
         }
     };
-    private static ViewerPlugin selectedPlugin = null;
+    private static ViewerPlugin<?> selectedPlugin = null;
 
     private static final WeasisWin instance = new WeasisWin();
 
@@ -149,7 +150,7 @@ public class WeasisWin {
 
     private volatile boolean busy = false;
 
-    private final List<Runnable> runOnClose = new ArrayList<Runnable>();
+    private final List<Runnable> runOnClose = new ArrayList<>();
 
     private final Frame frame;
     private final RootPaneContainer rootPaneContainer;
@@ -185,7 +186,7 @@ public class WeasisWin {
             }
         } catch (InstanceNotFoundException ignored) {
         } catch (JMException e) {
-            log.debug("Error while receiving main window", e); //$NON-NLS-1$
+            LOGGER.debug("Error while receiving main window", e); //$NON-NLS-1$
         }
 
         if (container == null || container instanceof JFrame) {
@@ -266,12 +267,7 @@ public class WeasisWin {
     }
 
     public void destroyOnClose(final CControl control) {
-        runOnClose(new Runnable() {
-            @Override
-            public void run() {
-                control.destroy();
-            }
-        });
+        runOnClose(() -> control.destroy());
     }
 
     public void createMainPanel() throws Exception {
@@ -339,15 +335,12 @@ public class WeasisWin {
 
     HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> getSeriesByEntry(TreeModel treeModel,
         List<MediaSeries<? extends MediaElement<?>>> series, TreeModelNode entry) {
-        HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> map =
-            new HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>>();
+        HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> map = new HashMap<>();
         if (series != null && treeModel != null && entry != null) {
             for (MediaSeries<? extends MediaElement<?>> s : series) {
                 MediaSeriesGroup entry1 = treeModel.getParent(s, entry);
-                List<MediaSeries<? extends MediaElement<?>>> seriesList = map.get(entry1);
-                if (seriesList == null) {
-                    seriesList = new ArrayList<MediaSeries<? extends MediaElement<?>>>();
-                }
+                List<MediaSeries<? extends MediaElement<?>>> seriesList =
+                    Optional.ofNullable(map.get(entry1)).orElse(new ArrayList<>());
                 seriesList.add(s);
                 map.put(entry1, seriesList);
             }
@@ -537,15 +530,11 @@ public class WeasisWin {
                 dock.setLocation(CLocation.external(screenBound.x, screenBound.y, screenBound.width - 150,
                     screenBound.height - 150));
                 plugin.showDockable();
-                GuiExecutor.instance().execute(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (dock.isVisible()) {
-                            UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
-                            dock.setExtendedMode(ExtendedMode.MAXIMIZED);
-                            UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
-                        }
+                GuiExecutor.instance().execute(() -> {
+                    if (dock.isVisible()) {
+                        UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+                        dock.setExtendedMode(ExtendedMode.MAXIMIZED);
+                        UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
                     }
                 });
             } else {
@@ -648,7 +637,7 @@ public class WeasisWin {
         }
         bound = b;
 
-        log.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
+        LOGGER.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
         // setMaximizedBounds(bound);
 
         // Do not apply to JApplet
@@ -660,7 +649,7 @@ public class WeasisWin {
             frame.setExtendedState((frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH
                 ? Frame.NORMAL : Frame.MAXIMIZED_BOTH);
         }
-        log.info("End of loading the GUI..."); //$NON-NLS-1$
+        LOGGER.info("End of loading the GUI..."); //$NON-NLS-1$
     }
 
     private JMenuBar createMenuBar() {
@@ -690,41 +679,32 @@ public class WeasisWin {
         }
 
         final JMenuItem webMenuItem = new JMenuItem(Messages.getString("WeasisWin.shortcuts")); //$NON-NLS-1$
-        webMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")); //$NON-NLS-1$
-                    JMVUtils.openInDefaultBrowser(webMenuItem, url);
-                } catch (MalformedURLException e1) {
-                    e1.printStackTrace();
-                }
+        webMenuItem.addActionListener(e -> {
+            try {
+                URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")); //$NON-NLS-1$
+                JMVUtils.openInDefaultBrowser(webMenuItem, url);
+            } catch (MalformedURLException e1) {
+                e1.printStackTrace();
             }
         });
         helpMenuItem.add(webMenuItem);
+
         final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online")); //$NON-NLS-1$
-        websiteMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")); //$NON-NLS-1$
-                    JMVUtils.openInDefaultBrowser(websiteMenuItem, url);
-                } catch (MalformedURLException e1) {
-                    e1.printStackTrace();
-                }
+        websiteMenuItem.addActionListener(e -> {
+            try {
+                URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")); //$NON-NLS-1$
+                JMVUtils.openInDefaultBrowser(websiteMenuItem, url);
+            } catch (MalformedURLException e1) {
+                e1.printStackTrace();
             }
         });
         helpMenuItem.add(websiteMenuItem);
         final JMenuItem aboutMenuItem =
             new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME)); //$NON-NLS-1$
-        aboutMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
-                WeasisAboutBox about = new WeasisAboutBox();
-                ColorLayerUI.showCenterScreen(about, layer);
-            }
+        aboutMenuItem.addActionListener(e -> {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
+            WeasisAboutBox about = new WeasisAboutBox();
+            ColorLayerUI.showCenterScreen(about, layer);
         });
         helpMenuItem.add(aboutMenuItem);
         menuBar.add(helpMenuItem);
@@ -757,17 +737,13 @@ public class WeasisWin {
             for (final DockableTool t : tools) {
                 if (!Insertable.Type.EMPTY.equals(t.getType())) {
                     JCheckBoxMenuItem item = new JCheckBoxMenuItem(t.getComponentName(), t.isComponentEnabled());
-                    item.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            if (e.getSource() instanceof JCheckBoxMenuItem) {
-                                t.setComponentEnabled(((JCheckBoxMenuItem) e.getSource()).isSelected());
-                                if (t.isComponentEnabled()) {
-                                    t.showDockable();
-                                } else {
-                                    t.closeDockable();
-                                }
+                    item.addActionListener(e -> {
+                        if (e.getSource() instanceof JCheckBoxMenuItem) {
+                            t.setComponentEnabled(((JCheckBoxMenuItem) e.getSource()).isSelected());
+                            if (t.isComponentEnabled()) {
+                                t.showDockable();
+                            } else {
+                                t.closeDockable();
                             }
                         }
                     });
@@ -785,17 +761,13 @@ public class WeasisWin {
                     final DockableTool t = (DockableTool) dataExplorerView;
                     if (!Insertable.Type.EMPTY.equals(t.getType())) {
                         JCheckBoxMenuItem item = new JCheckBoxMenuItem(t.getComponentName(), t.isComponentEnabled());
-                        item.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                if (e.getSource() instanceof JCheckBoxMenuItem) {
-                                    t.setComponentEnabled(((JCheckBoxMenuItem) e.getSource()).isSelected());
-                                    if (t.isComponentEnabled()) {
-                                        t.showDockable();
-                                    } else {
-                                        t.closeDockable();
-                                    }
+                        item.addActionListener(e -> {
+                            if (e.getSource() instanceof JCheckBoxMenuItem) {
+                                t.setComponentEnabled(((JCheckBoxMenuItem) e.getSource()).isSelected());
+                                if (t.isComponentEnabled()) {
+                                    t.showDockable();
+                                } else {
+                                    t.closeDockable();
                                 }
                             }
                         });
@@ -808,70 +780,27 @@ public class WeasisWin {
 
     private static void buildPrintSubMenu(final JMenu printMenu) {
         if (selectedPlugin != null) {
-            List<Action> actions = selectedPlugin.getPrintActions();
-            if (actions != null) {
-                for (Action action : actions) {
-                    JMenuItem item = new JMenuItem(action);
-                    printMenu.add(item);
-                }
-            }
+            fillMenu(printMenu, selectedPlugin.getPrintActions());
         }
     }
 
     private static void buildOpenSubMenu(final JMenu importMenu) {
-        synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
-            List<SeriesViewerFactory> viewers = UIManager.SERIES_VIEWER_FACTORIES;
-            for (final SeriesViewerFactory view : viewers) {
-                List<Action> actions = view.getOpenActions();
-                if (actions != null) {
-                    for (Action action : actions) {
-                        JMenuItem item = new JMenuItem(action);
-                        importMenu.add(item);
-                    }
-                }
-            }
-        }
+        UIManager.SERIES_VIEWER_FACTORIES.forEach(d -> fillMenu(importMenu, d.getOpenActions()));
     }
 
     private static void buildImportSubMenu(final JMenu importMenu) {
-        synchronized (UIManager.EXPLORER_PLUGINS) {
-            List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
-            for (final DataExplorerView dataExplorerView : explorers) {
-                List<Action> actions = dataExplorerView.getOpenImportDialogAction();
-                if (actions != null) {
-                    for (Action action : actions) {
-                        JMenuItem item = new JMenuItem(action);
-                        importMenu.add(item);
-                    }
-                }
-            }
-        }
+        UIManager.EXPLORER_PLUGINS.forEach(d -> fillMenu(importMenu, d.getOpenImportDialogAction()));
     }
 
     private static void buildExportSubMenu(final JMenu exportMenu) {
-
-        synchronized (UIManager.EXPLORER_PLUGINS) {
-            if (selectedPlugin != null) {
-                List<Action> actions = selectedPlugin.getExportActions();
-                if (actions != null) {
-                    for (Action action : actions) {
-                        JMenuItem item = new JMenuItem(action);
-                        exportMenu.add(item);
-                    }
-                }
-            }
-
-            List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
-            for (final DataExplorerView dataExplorerView : explorers) {
-                List<Action> actions = dataExplorerView.getOpenExportDialogAction();
-                if (actions != null) {
-                    for (Action action : actions) {
-                        JMenuItem item = new JMenuItem(action);
-                        exportMenu.add(item);
-                    }
-                }
-            }
+        if (selectedPlugin != null) {
+            fillMenu(exportMenu, selectedPlugin.getExportActions());
         }
+        UIManager.EXPLORER_PLUGINS.forEach(d -> fillMenu(exportMenu, d.getOpenExportDialogAction()));
+    }
+
+    private static void fillMenu(final JMenu menu, List<Action> actions) {
+        Optional.ofNullable(actions).ifPresent(l -> l.forEach(a -> menu.add(new JMenuItem(a))));
     }
 
     private static void buildSelectedPluginMenu(final JMenu selectedPluginMenu) {
@@ -1034,16 +963,16 @@ public class WeasisWin {
             Transferable transferable = support.getTransferable();
 
             List<File> files = null;
-            // Not supported on Linux
+            // Not supported by some OS
             if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 try {
                     files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Get dragable files", e);
                 }
                 return dropFiles(files, support.getDropLocation());
             }
-            // When dragging a file or group of files from a Gnome or Kde environment
+            // When dragging a file or group of files
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
             else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
                 try {
@@ -1052,7 +981,7 @@ public class WeasisWin {
                     String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Get dragable URIs", e);
                 }
                 return dropFiles(files, support.getDropLocation());
             }
@@ -1069,8 +998,7 @@ public class WeasisWin {
                         if (factory.canReadMimeType(seq.getMimeType())) {
                             DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
                             if (model instanceof TreeModel) {
-                                ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-                                    new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
+                                ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>(1);
                                 list.add(seq);
                                 ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, list, model, null);
                                 openSeriesInViewerPlugin(builder,
@@ -1085,6 +1013,7 @@ public class WeasisWin {
                 }
 
             } catch (Exception e) {
+                LOGGER.error("Open series", e);
                 return false;
             }
             return true;
@@ -1092,15 +1021,15 @@ public class WeasisWin {
 
         private boolean dropFiles(final List<File> files, DropLocation dropLocation) {
             if (files != null) {
-                List<DataExplorerView> explorers = new ArrayList<DataExplorerView>(UIManager.EXPLORER_PLUGINS);
+                List<DataExplorerView> explorers = new ArrayList<>(UIManager.EXPLORER_PLUGINS);
                 for (int i = explorers.size() - 1; i >= 0; i--) {
                     if (!explorers.get(i).canImportFiles()) {
                         explorers.remove(i);
                     }
                 }
 
-                final List<File> dirs = new ArrayList<File>();
-                Map<Codec, List<File>> codecs = new HashMap<Codec, List<File>>();
+                final List<File> dirs = new ArrayList<>();
+                Map<Codec, List<File>> codecs = new HashMap<>();
                 for (File file : files) {
                     if (file.isDirectory()) {
                         dirs.add(file);
@@ -1112,7 +1041,7 @@ public class WeasisWin {
                         if (c != null) {
                             List<File> cFiles = codecs.get(c);
                             if (cFiles == null) {
-                                cFiles = new ArrayList<File>();
+                                cFiles = new ArrayList<>();
                                 codecs.put(c, cFiles);
                             }
                             cFiles.add(file);
@@ -1128,7 +1057,7 @@ public class WeasisWin {
                     Entry<Codec, List<File>> entry = it.next();
                     final List<File> vals = entry.getValue();
 
-                    List<DataExplorerView> exps = new ArrayList<DataExplorerView>();
+                    List<DataExplorerView> exps = new ArrayList<>();
                     for (final DataExplorerView dataExplorerView : explorers) {
                         DataExplorerModel model = dataExplorerView.getDataExplorerModel();
                         if (model != null) {
@@ -1168,13 +1097,8 @@ public class WeasisWin {
 
                 for (final DataExplorerView dataExplorerView : exps) {
                     JMenuItem item = new JMenuItem(dataExplorerView.getUIName(), dataExplorerView.getIcon());
-                    item.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            dataExplorerView.importFiles(vals.toArray(new File[vals.size()]), true);
-                        }
-                    });
+                    item.addActionListener(
+                        e -> dataExplorerView.importFiles(vals.toArray(new File[vals.size()]), true));
                     popup.add(item);
                 }
 

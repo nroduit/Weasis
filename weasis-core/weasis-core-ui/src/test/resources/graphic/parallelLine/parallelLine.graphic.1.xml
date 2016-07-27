@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<parallelLine fill="false" showLabel="true" thickness="2.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="00ffff" />
+	<label>
+		<label>Distance : 61.4 pix</label>
+	</label>
+	<pts>
+		<pt x="1861.5" y="1567.0" />
+		<pt x="1672.5" y="1358.0" />
+		<pt x="1874.3815487619577" y="1489.6972788255084" />
+		<pt x="1698.33622905672" y="1295.0228247599282" />
+		<pt x="1767.0" y="1462.5" />
+		<pt x="1786.358888909339" y="1392.3600517927184" />
+	</pts>
+</parallelLine>

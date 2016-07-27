@@ -28,6 +28,7 @@ import org.weasis.jpeg.internal.DecoderIJG;
  */
 @Platform(include = { "libcparam.h", "libeijg8.h", "jpeglib8.h", "libijg8.h", "libijg12.h", "libijg16.h",
     "interface.h" })
+//     "charls.h" }) // new lib 2.0, charls.h instead of interface.h
 // , @Platform(value = "windows", define = "CHARLS_STATIC 0x01"),
 public class libijg {
     static {

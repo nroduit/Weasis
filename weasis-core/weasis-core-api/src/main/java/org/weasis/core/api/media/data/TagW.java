@@ -11,26 +11,29 @@
 package org.weasis.core.api.media.data;
 
 import java.awt.Color;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAccessor;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import javax.xml.stream.XMLStreamReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.InfoViewListPanel;
 import org.weasis.core.api.util.StringUtil;
 
 /**
@@ -38,21 +41,25 @@ import org.weasis.core.api.util.StringUtil;
  * tags (DICOM and non DICOM).
  *
  */
-public class TagW implements Transferable, Serializable {
+public class TagW implements Serializable {
     private static final Logger LOGGER = LoggerFactory.getLogger(TagW.class);
 
     private static final long serialVersionUID = -7914330824854199622L;
     private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
-    public static final String NO_VALUE = Messages.getString("TagW.unknown");//$NON-NLS-1$
+
     protected static final Map<String, TagW> tags = Collections.synchronizedMap(new HashMap<String, TagW>());
+
+    public static final String NO_VALUE = Messages.getString("TagW.unknown");//$NON-NLS-1$
 
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
 
-        STRING(String.class), PERSON_NAME(String.class), TEXT(String.class), URI(String.class), SEQUENCE(Object.class),
-        DATE(Date.class), DATETIME(Date.class), TIME(Date.class), PERIOD(String.class), BOOLEAN(Boolean.class),
-        BYTE_ARRAY(Byte.class), INTEGER(Integer.class), FLOAT(Float.class), DOUBLE(Double.class), COLOR(Color.class),
-        THUMBNAIL(Thumbnail.class), LIST(List.class), OBJECT(Object.class), SEX(String.class);
+        STRING(String.class), TEXT(String.class), URI(String.class), DATE(LocalDate.class),
+        DATETIME(LocalDateTime.class), TIME(LocalTime.class), BOOLEAN(Boolean.class), BYTE_ARRAY(Byte.class),
+        INTEGER(Integer.class), FLOAT(Float.class), DOUBLE(Double.class), COLOR(Color.class),
+        THUMBNAIL(Thumbnail.class), LIST(List.class), OBJECT(Object.class), DICOM_DATE(LocalDate.class),
+        DICOM_DATETIME(LocalDateTime.class), DICOM_TIME(LocalTime.class), DICOM_PERIOD(String.class),
+        DICOM_PERSON_NAME(String.class), DICOM_SEQUENCE(Object.class), DICOM_SEX(String.class);
 
         private final Class<?> clazz;
 
@@ -88,11 +95,9 @@ public class TagW implements Transferable, Serializable {
     public static final TagW Thumbnail =
         new TagW("Thumbnail", Messages.getString("TagElement.thumb"), TagType.THUMBNAIL); //$NON-NLS-1$
     public static final TagW ThumbnailPath = new TagW("ThumbnailPath", TagType.STRING); //$NON-NLS-1$
-    public static final TagW TiledImagePath = new TagW("TiledImagePath", TagType.STRING); //$NON-NLS-1$
     public static final TagW ExplorerModel =
         new TagW("ExplorerModel", Messages.getString("TagElement.exp_model"), TagType.OBJECT); //$NON-NLS-1$
-    public static final TagW MeasurementGraphics =
-        new TagW("MeasurementGraphics", Messages.getString("TagElement.measure_graph"), TagType.LIST); //$NON-NLS-1$
+    public static final TagW PresentationModel = new TagW("PesentationModel", TagType.OBJECT); //$NON-NLS-1$
     public static final TagW SplitSeriesNumber =
         new TagW("SplitSeriesNumber", Messages.getString("TagElement.split_no"), TagType.INTEGER); //$NON-NLS-1$
     public static final TagW SeriesSelected =
@@ -157,19 +162,37 @@ public class TagW implements Transferable, Serializable {
 
     public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN); //$NON-NLS-1$
 
-    // TODO remove or do it better
-    public static final DataFlavor infoElementDataFlavor;
     static {
-        DataFlavor f = null;
-        try {
-            f = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + InfoViewListPanel.class.getName(), //$NON-NLS-1$
-                null, InfoViewListPanel.class.getClassLoader());
-        } catch (Exception e) {
-            LOGGER.error("", e);
-        }
-        infoElementDataFlavor = f;
+        addTag(ImageBitsPerPixel);
+        addTag(ImageCache);
+        addTag(ImageDepth);
+        addTag(ImageHeight);
+        addTag(ImageOrientationPlane);
+        addTag(ImageWidth);
+        addTag(SeriesFocused);
+        addTag(SeriesLoading);
+        addTag(SeriesOpen);
+        addTag(SeriesSelected);
+        addTag(SlicePosition);
+        addTag(SuvFactor);
+        addTag(DirectDownloadFile);
+        addTag(DirectDownloadThumbnail);
+        addTag(RootElement);
+        addTag(FileName);
+        addTag(FilePath);
+        addTag(CurrentFolder);
+
+        // DICOM
+        addTag(SubseriesInstanceUID);
+        addTag(VOILUTsExplanation);
+        addTag(VOILUTsData);
+        addTag(ModalityLUTExplanation);
+        addTag(ModalityLUTType);
+        addTag(ModalityLUTData);
+        addTag(PRLUTsExplanation);
+        addTag(PRLUTsData);
+        addTag(MonoChrome);
     }
-    private static final DataFlavor[] flavors = { infoElementDataFlavor };
 
     protected final int id;
     protected final String keyword;
@@ -257,6 +280,9 @@ public class TagW implements Transferable, Serializable {
             int vmValue = Array.getLength(value);
             if (vmMax != Integer.MAX_VALUE && vmMax != vmValue) {
                 return false;
+            } else {
+                // Fix in case of array type
+                return type.getClazz().isAssignableFrom((Class<?>) clazz);
             }
         } else {
             clazz = value;
@@ -335,13 +361,12 @@ public class TagW implements Transferable, Serializable {
         if (data instanceof XMLStreamReader) {
             XMLStreamReader xmler = (XMLStreamReader) data;
 
-            if (TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
-                || TagType.PERSON_NAME.equals(type) || TagType.PERIOD.equals(type)) {
+            if (isStringFamilyType()) {
                 value = vmMax > 1 ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
                     : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
             } else if (TagType.DATE.equals(type) || TagType.TIME.equals(type) || TagType.DATETIME.equals(type)) {
-                value = vmMax > 1 ? TagUtil.getDatesFromDicomElement(xmler, keyword, type, (Date[]) defaultValue)
-                    : TagUtil.getDateFromDicomElement(xmler, keyword, type, (Date) defaultValue);
+                value = vmMax > 1 ? TagUtil.getDatesFromElement(xmler, keyword, type, (TemporalAccessor[]) defaultValue)
+                    : TagUtil.getDateFromElement(xmler, keyword, type, (TemporalAccessor) defaultValue);
             } else if (TagType.INTEGER.equals(type)) {
                 value = vmMax > 1 ? TagUtil.getIntArrayTagAttribute(xmler, keyword, (int[]) defaultValue)
                     : TagUtil.getIntegerTagAttribute(xmler, keyword, (Integer) defaultValue);
@@ -351,8 +376,6 @@ public class TagW implements Transferable, Serializable {
             } else if (TagType.DOUBLE.equals(type)) {
                 value = vmMax > 1 ? TagUtil.getDoubleArrayTagAttribute(xmler, keyword, (double[]) defaultValue)
                     : TagUtil.getDoubleTagAttribute(xmler, keyword, (Double) defaultValue);
-            } else if (TagType.SEQUENCE.equals(type)) {
-                // TODO
             } else {
                 value = vmMax > 1 ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
                     : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
@@ -361,13 +384,14 @@ public class TagW implements Transferable, Serializable {
         return value;
     }
 
-    public String getFormattedText(Object value) {
-        return getFormattedText(value, type, null);
+    public boolean isStringFamilyType() {
+        return TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type);
     }
 
-    public String getFormattedText(Object value, String format) {
-        return getFormattedText(value, type, format);
+    public String getFormattedText(Object value) {
+        return getFormattedText(value, null);
     }
+
 
     public synchronized int getAnonymizationType() {
         return anonymizationType;
@@ -377,104 +401,41 @@ public class TagW implements Transferable, Serializable {
         this.anonymizationType = anonymizationType;
     }
 
-    @Override
-    public DataFlavor[] getTransferDataFlavors() {
-        return flavors.clone();
-    }
-
-    @Override
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
-        for (int i = 0; i < flavors.length; i++) {
-            if (flavor.equals(flavors[i])) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-        if (flavor.equals(flavors[0])) {
-            return this;
-        }
-        throw new UnsupportedFlavorException(flavor);
-    }
-
-    public static String getFormattedText(Object value, TagType type, String format) {
+    public static String getFormattedText(Object value, String format) {
         if (value == null) {
             return ""; //$NON-NLS-1$
         }
 
         String str;
 
-        if (TagType.STRING.equals(type)) {
-            if (value instanceof String[]) {
-                String[] array = (String[]) value;
-                StringBuilder s = new StringBuilder();
-                for (int i = 0; i < array.length; i++) {
-                    s.append(array[i]);
-                    if (i < array.length - 1) {
-                        s.append("\\"); //$NON-NLS-1$
-                    }
-                }
-                str = s.toString();
-            } else {
-                str = value.toString();
-            }
-        } else if (TagType.DATE.equals(type)) {
-            str = TagUtil.formatDate((Date) value);
-        } else if (TagType.TIME.equals(type)) {
-            str = TagUtil.formatTime((Date) value);
-        } else if (TagType.DATETIME.equals(type)) {
-            str = TagUtil.formatDateTime((Date) value);
-        } else if (TagType.PERSON_NAME.equals(type)) {
-            str = TagUtil.buildDicomPersonName(value.toString());
-        } else if (TagType.SEX.equals(type)) {
-            str = TagUtil.buildDicomPatientSex(value.toString());
-        } else if (TagType.PERIOD.equals(type)) {
-            str = TagUtil.getDicomPeriod(value.toString());
+        if (value instanceof String) {
+            str = (String) value;
+        } else if (value instanceof String[]) {
+            str = Arrays.asList((String[]) value).stream().collect(Collectors.joining("\\"));
+        } else if (value instanceof TemporalAccessor) {
+            str = TagUtil.formatDateTime((TemporalAccessor) value);
+        } else if (value instanceof TemporalAccessor[]) {
+            str = Stream.of((TemporalAccessor[]) value).map(TagUtil::formatDateTime).collect(Collectors.joining(", "));
         } else if (value instanceof float[]) {
             float[] array = (float[]) value;
-            StringBuilder s = new StringBuilder();
-            for (int i = 0; i < array.length; i++) {
-                s.append(array[i]);
-                if (i < array.length - 1) {
-                    s.append(", "); //$NON-NLS-1$
-                }
-            }
-            str = s.toString();
+            str = IntStream.range(0, array.length).mapToObj(i -> String.valueOf(array[i]))
+                .collect(Collectors.joining(", "));
         } else if (value instanceof double[]) {
-            double[] array = (double[]) value;
-            StringBuilder s = new StringBuilder();
-            for (int i = 0; i < array.length; i++) {
-                s.append(array[i]);
-                if (i < array.length - 1) {
-                    s.append(", "); //$NON-NLS-1$
-                }
-            }
-            str = s.toString();
+            str = DoubleStream.of((double[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", "));
         } else if (value instanceof int[]) {
-            int[] array = (int[]) value;
-            StringBuilder s = new StringBuilder();
-            for (int i = 0; i < array.length; i++) {
-                s.append(array[i]);
-                if (i < array.length - 1) {
-                    s.append(", "); //$NON-NLS-1$
-                }
-            }
-            str = s.toString();
+            str = IntStream.of((int[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", "));
         } else {
             str = value.toString();
         }
 
-        if (StringUtil.hasText(format) && !"$V".equals(format.trim())) { //$NON-NLS-1$ //$NON-NLS-2$
-            return formatValue(str, type, format);
+        if (StringUtil.hasText(format) && !"$V".equals(format.trim())) { //$NON-NLS-1$
+            return formatValue(str, value instanceof Float || value instanceof Double, format);
         }
 
         return str;
     }
 
-    private static String formatValue(String value, TagType type, String format) {
+    protected static String formatValue(String value, boolean decimal, String format) {
         String str = value;
         int index = format.indexOf("$V"); //$NON-NLS-1$
         int fmLength = 2;
@@ -483,8 +444,7 @@ public class TagW implements Transferable, Serializable {
             // If the value ($V) is followed by ':' that means a number formatter is used
             if (suffix && format.charAt(index + fmLength) == ':') {
                 fmLength++;
-                if (format.charAt(index + fmLength) == 'f' && TagType.FLOAT.equals(type)
-                    || TagType.DOUBLE.equals(type)) {
+                if (format.charAt(index + fmLength) == 'f' && decimal) {
                     fmLength++;
                     String pattern = getPattern(index + fmLength, format);
                     if (pattern != null) {

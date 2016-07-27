@@ -24,10 +24,9 @@ import com.sun.media.imageioimpl.common.ImageUtil;
 
 public class NativeJPEGImageReaderSpi extends ImageReaderSpi {
 
-    public static final String[] NAMES =
-        { "jpeg", "JPEG", "jpg", "JPG", "jfif", "JFIF", "jpeg-lossless", "JPEG-LOSSLESS" };
-    public static final String[] SUFFIXES = { "jpeg", "jpg", "jfif" };
-    public static final String[] MIMES = { "image/jpeg" };
+    static final String[] NAMES = { "jpeg", "JPEG", "jpg", "JPG", "jfif", "JFIF", "jpeg-lossless", "JPEG-LOSSLESS" };
+    static final String[] SUFFIXES = { "jpeg", "jpg", "jfif" };
+    static final String[] MIMES = { "image/jpeg" };
 
     private boolean registered = false;
 

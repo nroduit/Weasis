@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -85,15 +86,20 @@ public class LoadDicomObjects extends ExplorerTask {
             if (isCancelled()) {
                 return;
             }
-            DicomMediaIO loader = new DicomMediaIO(dicom);
 
-            if (loader.isReadableDicom()) {
-                // Issue: must handle adding image to viewer and building thumbnail (middle image)
-                SeriesThumbnail t = buildDicomStructure(loader);
-                if (t != null) {
-                    thumbs.add(t);
+            try {
+                DicomMediaIO loader = new DicomMediaIO(dicom);
+                if (loader.isReadableDicom()) {
+                    // Issue: must handle adding image to viewer and building thumbnail (middle image)
+                    SeriesThumbnail t = buildDicomStructure(loader);
+                    if (t != null) {
+                        thumbs.add(t);
+                    }
                 }
+            } catch (URISyntaxException e) {
+                LOGGER.debug("", e);
             }
+
         }
 
         for (final SeriesThumbnail t : thumbs) {

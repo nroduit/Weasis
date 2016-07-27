@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -32,5 +33,7 @@ public interface SeriesViewerFactory extends GUIEntry {
 
     boolean canExternalizeSeries();
 
-    List<Action> getOpenActions();
+    default List<Action> getOpenActions() {
+        return Collections.emptyList();
+    }
 }

@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.media.data;
 
+@FunctionalInterface
 public interface MediaFilter {
 
     boolean accept(MediaSeriesGroup node);

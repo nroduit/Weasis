@@ -1,8 +1,12 @@
 package org.weasis.core.api.media.data;
 
 import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -19,87 +23,72 @@ import org.weasis.core.api.util.StringUtil;
 public final class TagUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(TagUtil.class);
 
-    private static final DateFormat dateFormatter = LocalUtil.getDateInstance(DateFormat.MEDIUM);
-    private static final DateFormat timeFormatter = new SimpleDateFormat("HH:mm:ss.SSSSSS"); //$NON-NLS-1$
-    private static final DateFormat dateTimeFormatter =
-        LocalUtil.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
-
-    // To be thread safe the SimpleDateFormat instance is never modified, only use internally.
-    private static final SimpleDateFormat dicomDate = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()); //$NON-NLS-1$
-    private static final SimpleDateFormat dicomTime = new SimpleDateFormat("HHmmss", LocalUtil.getLocaleFormat()); //$NON-NLS-1$
-
     private TagUtil() {
     }
 
-    public static Date getDateTime(String dateTime) {
-        if (dateTime != null) {
+    public static Date toLocalDate(TemporalAccessor temporal) {
+        if (temporal != null) {
             try {
-                return dateTimeFormatter.parse(dateTime);
-            } catch (Exception e) {
-                LOGGER.error("Parse datetime", e);
-            }
-        }
-        return null;
-    }
-
-    public static Date getDate(String date) {
-        if (date != null) {
-            try {
-                return dateFormatter.parse(date);
-            } catch (Exception e) {
-                LOGGER.error("Parse date", e);
-            }
-        }
-        return null;
-    }
-
-    public static Date getDicomDate(String date) {
-        if (date != null) {
-            try {
-                if (date.length() > 8) {
-                    char c = date.charAt(4);
-                    if (!Character.isDigit(date.charAt(4))) {
-                        // Format yyyy.mm.dd (prior DICOM3.0)
-                        StringBuilder buf = new StringBuilder(10);
-                        buf.append("yyyy"); //$NON-NLS-1$
-                        buf.append(c);
-                        buf.append("MM"); //$NON-NLS-1$
-                        buf.append(c);
-                        buf.append("dd"); //$NON-NLS-1$
-                        return new SimpleDateFormat(buf.toString()).parse(date);
-                    }
+                TemporalAccessor t = temporal;
+                if (temporal instanceof LocalDate) {
+                    t = ((LocalDate) temporal).atStartOfDay(ZoneId.systemDefault());
+                } else if (temporal instanceof LocalTime) {
+                    t = ((LocalTime) temporal).atDate(LocalDate.ofEpochDay(0)).atZone(ZoneId.systemDefault());
+                } else if (temporal instanceof LocalDateTime) {
+                    t = ((LocalDateTime) temporal).atZone(ZoneId.systemDefault());
                 }
-                return dicomDate.parse(date);
+                return Date.from(Instant.from(t));
             } catch (Exception e) {
-                LOGGER.error("Parse DICOM date", e);
+                LOGGER.error("Date conversion", e);
             }
         }
         return null;
     }
 
-    public static Date getDicomTime(String dateTime) {
-        if (dateTime != null) {
+    public static Date[] toLocalDates(Object array) {
+        if (array != null && array.getClass().isArray()) {
+            Date[] dates = new Date[Array.getLength(array)];
+            for (int i = 0; i < dates.length; i++) {
+                dates[i] = toLocalDate((TemporalAccessor) Array.get(array, i));
+            }
+            return dates;
+        }
+        return null;
+    }
+
+    public static LocalDate toLocalDate(Date date) {
+        if (date != null) {
             try {
-                return dicomTime.parse(dateTime);
+                LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+                return datetime.toLocalDate();
             } catch (Exception e) {
-                LOGGER.error("Parse DICOM datetime", e);
+                LOGGER.error("Date conversion", e);
             }
         }
         return null;
     }
 
-    public static String formatDicomDate(Date date) {
+    public static LocalTime toLocalTime(Date date) {
         if (date != null) {
-            return dicomDate.format(date);
+            try {
+                LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+                return datetime.toLocalTime();
+            } catch (Exception e) {
+                LOGGER.error("Time conversion", e);
+            }
         }
-        return ""; //$NON-NLS-1$
+        return null;
     }
 
-    public static String formatDicomTime(Date date) {
+    public static LocalDateTime toLocalDateTime(Date date) {
         if (date != null) {
-            return dicomTime.format(date);
+            try {
+                return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+            } catch (Exception e) {
+                LOGGER.error("DateTime conversion", e);
+            }
         }
-        return ""; //$NON-NLS-1$
+        return null;
     }
 
     public static Date dateTime(Date date, Date time) {
@@ -122,38 +111,15 @@ public final class TagUtil {
         return calendarA.getTime();
     }
 
-    public static Date getOnlyDate(Date date) {
-        if (date == null) {
-            return null;
-        }
-        Calendar calendarA = Calendar.getInstance();
-        calendarA.setTime(date);
-
-        calendarA.set(Calendar.HOUR_OF_DAY, 0);
-        calendarA.set(Calendar.MINUTE, 0);
-        calendarA.set(Calendar.SECOND, 0);
-        calendarA.set(Calendar.MILLISECOND, 0);
-
-        return calendarA.getTime();
-    }
-
-    public static String formatDate(Date date) {
-        if (date != null) {
-            return dateFormatter.format(date);
-        }
-        return ""; //$NON-NLS-1$
-    }
-
-    public static String formatTime(Date date) {
-        if (date != null) {
-            return timeFormatter.format(date);
-        }
-        return ""; //$NON-NLS-1$
-    }
-
-    public static String formatDateTime(Date date) {
-        if (date != null) {
-            return dateTimeFormatter.format(date);
+    public static String formatDateTime(TemporalAccessor date) {
+        if (date instanceof LocalDate) {
+            return LocalUtil.getDateFormatter().format(date);
+        } else if (date instanceof LocalTime) {
+            return LocalUtil.getTimeFormatter().format(date);
+        } else if (date instanceof LocalDateTime) {
+            return LocalUtil.getDateTimeFormatter().format(date);
+        } else if (date instanceof Instant) {
+            return LocalUtil.getDateTimeFormatter().format(((Instant) date).atZone(ZoneId.systemDefault()));
         }
         return ""; //$NON-NLS-1$
     }
@@ -191,6 +157,20 @@ public final class TagUtil {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
                 return val.split(separator);
+            }
+        }
+        return defaultValue;
+    }
+
+    public static Boolean getBooleanTagAttribute(XMLStreamReader xmler, String attribute, Boolean defaultValue) {
+        if (attribute != null) {
+            String val = xmler.getAttributeValue(null, attribute);
+            try {
+                if (val != null) {
+                    return Boolean.valueOf(val);
+                }
+            } catch (NumberFormatException e) {
+                LOGGER.error("Cannot parse boolean {} of {}", val, attribute); //$NON-NLS-1$
             }
         }
         return defaultValue;
@@ -298,47 +278,50 @@ public final class TagUtil {
         return defaultValue;
     }
 
-    public static Date getDateFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,
-        Date defaultValue) {
-        return getDateFromDicomElement(xmler, attribute, type, defaultValue, "\\");
-    }
-
-    public static Date getDateFromDicomElement(XMLStreamReader xmler, String attribute, TagType type, Date defaultValue,
-        String separator) {
+    public static TemporalAccessor getDateFromElement(XMLStreamReader xmler, String attribute, TagType type,
+        TemporalAccessor defaultValue) {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                if (TagType.TIME.equals(type)) {
-                    return getDicomTime(val);
-                } else if (TagType.DATETIME.equals(type)) {
-                    return TagUtil.dateTime(getDicomDate(val), getDicomTime(val));
-                } else {
-                    return getDicomDate(val);
+                try {
+                    if (TagType.TIME.equals(type)) {
+                        return LocalTime.parse(val);
+                    } else if (TagType.DATETIME.equals(type)) {
+                        return LocalDateTime.parse(val);
+                    } else {
+                        return LocalDate.parse(val);
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Parse date", e);
                 }
             }
         }
         return defaultValue;
     }
 
-    public static Date[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,
-        Date[] defaultValue) {
-        return getDatesFromDicomElement(xmler, attribute, type, defaultValue, "\\");
+    public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
+        TemporalAccessor[] defaultValue) {
+        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\");
     }
 
-    public static Date[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,
-        Date[] defaultValue, String separator) {
+    public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
+        TemporalAccessor[] defaultValue, String separator) {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
                 String[] strs = val.split(separator);
-                Date[] vals = new Date[strs.length];
+                TemporalAccessor[] vals = new TemporalAccessor[strs.length];
                 for (int i = 0; i < strs.length; i++) {
-                    if (TagType.TIME.equals(type)) {
-                        vals[i] = getDicomTime(strs[i]);
-                    } else if (TagType.DATETIME.equals(type)) {
-                        vals[i] = TagUtil.dateTime(getDicomTime(strs[i]), getDicomTime(strs[i]));
-                    } else {
-                        vals[i] = getDicomTime(strs[i]);
+                    try {
+                        if (TagType.TIME.equals(type)) {
+                            vals[i] = LocalTime.parse(strs[i]);
+                        } else if (TagType.DATETIME.equals(type)) {
+                            vals[i] = LocalDateTime.parse(strs[i]);
+                        } else {
+                            vals[i] = LocalDate.parse(strs[i]);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Parse date", e);
                     }
                 }
                 return vals;

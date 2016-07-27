@@ -49,6 +49,15 @@ public class MergeImgOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public MergeImgOp(MergeImgOp op) {
+        super(op);
+    }
+
+    @Override
+    public MergeImgOp copy() {
+        return new MergeImgOp(this);
+    }
+
     @Override
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);

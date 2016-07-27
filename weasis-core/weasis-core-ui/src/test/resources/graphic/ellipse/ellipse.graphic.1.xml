@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ellipse fill="false" showLabel="true" thickness="1.0"
+	uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Area : 225'636.3 pix</label>
+		<label>Mean 1 : 91.3</label>
+		<label>Mean 2 : 83</label>
+		<label>Mean 3 : 52.8</label>
+	</label>
+	<pts>
+		<pt x="1395.5" y="1210.0" />
+		<pt x="2094.5" y="1621.0" />
+		<pt x="2094.5" y="1210.0" />
+		<pt x="1395.5" y="1621.0" />
+		<pt x="1745.0" y="1210.0" />
+		<pt x="1745.0" y="1621.0" />
+		<pt x="2094.5" y="1415.5" />
+		<pt x="1395.5" y="1415.5" />
+	</pts>
+</ellipse>

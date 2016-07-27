@@ -37,6 +37,15 @@ public class AutoLevelsOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public AutoLevelsOp(AutoLevelsOp op) {
+        super(op);
+    }
+
+    @Override
+    public AutoLevelsOp copy() {
+        return new AutoLevelsOp(this);
+    }
+
     @Override
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
@@ -80,4 +89,5 @@ public class AutoLevelsOp extends AbstractOp {
 
         params.put(Param.OUTPUT_IMG, result);
     }
+
 }

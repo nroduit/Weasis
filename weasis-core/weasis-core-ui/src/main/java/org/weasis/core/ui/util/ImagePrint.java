@@ -51,7 +51,7 @@ public class ImagePrint implements Printable {
     public ImagePrint(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
         this.layout = layout;
         this.printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(true) : printOptions;
+        this.printOptions = printOptions == null ? new PrintOptions() : printOptions;
     }
 
     public void setPrintLocation(Point d) {
@@ -178,7 +178,7 @@ public class ImagePrint implements Printable {
 
     private void formatImage(ExportImage<? extends ImageElement> image, LayoutConstraints key,
         Point2D.Double placeholder, Point2D.Double pad) {
-        if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
+        if (!printOptions.isShowingAnnotations() && image.getInfoLayer().getVisible()) {
             image.getInfoLayer().setVisible(false);
         }
 

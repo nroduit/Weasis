@@ -1,10 +1,12 @@
 package org.weasis.core.ui.editor.image;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.Copyable;
 
-public class SynchData implements Cloneable {
+public class SynchData implements Copyable<SynchData> {
 
     public enum Mode {
         None, Stack, Tile
@@ -24,6 +26,13 @@ public class SynchData implements Cloneable {
         this.original = true;
     }
 
+    public SynchData(SynchData synchData) {
+        Objects.requireNonNull(synchData);
+        this.actions = new HashMap<>(synchData.actions);
+        this.mode = synchData.mode;
+        this.original = synchData.original;
+    }
+
     public HashMap<String, Boolean> getActions() {
         return actions;
     }
@@ -37,8 +46,8 @@ public class SynchData implements Cloneable {
     }
 
     @Override
-    public SynchData clone() {
-        return new SynchData(mode, new HashMap<String, Boolean>(actions));
+    public SynchData copy() {
+        return new SynchData(this);
     }
 
     public boolean isOriginal() {

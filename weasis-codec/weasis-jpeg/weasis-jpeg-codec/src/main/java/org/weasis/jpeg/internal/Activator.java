@@ -25,8 +25,7 @@ public class Activator implements BundleActivator {
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
         // Should give the priority to other jpeg codecs
-        ImageioUtil.registerServiceProviderPriority(NativeJPEGImageReaderSpi.class, ImageReaderSpi.class,
-            NativeJPEGImageReaderSpi.NAMES[0]);
+        ImageioUtil.registerServiceProviderPriority(NativeJPEGImageReaderSpi.class, ImageReaderSpi.class, "jpeg");
         ImageioUtil.registerServiceProvider(NativeJLSImageReaderSpi.class);
         ImageioUtil.registerServiceProvider(NativeJLSImageWriterSpi.class);
 

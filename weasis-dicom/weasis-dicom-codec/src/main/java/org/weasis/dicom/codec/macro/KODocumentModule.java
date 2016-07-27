@@ -24,12 +24,11 @@ public class KODocumentModule extends Module {
     }
 
     public Date getContentDateTime() {
-        return dcmItems.getDate(Tag.ContentDate, Tag.ContentTime);
+        return dcmItems.getDate(Tag.ContentDateAndTime);
     }
 
     public void setContentDateTime(Date d) {
-        dcmItems.setDate(Tag.ContentDate, VR.DA, d);
-        dcmItems.setDate(Tag.ContentTime, VR.TM, d);
+        dcmItems.setDate(Tag.ContentDateAndTime, d);
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////

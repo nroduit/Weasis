@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
 
 import javax.imageio.ImageReadParam;
@@ -23,7 +22,7 @@ import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
 import org.bytedeco.javacpp.SizeTPointer;
-import org.weasis.image.jni.FileStreamSegment;
+import org.weasis.image.jni.StreamSegment;
 import org.weasis.image.jni.ImageParameters;
 import org.weasis.image.jni.NativeCodec;
 import org.weasis.image.jni.NativeImage;
@@ -40,12 +39,12 @@ public class CharlsCodec implements NativeCodec {
     @Override
     public String readHeader(NativeImage nImage) throws IOException {
         int ret = 0;
-        FileStreamSegment seg = nImage.getStreamSegment();
+        StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
             org.weasis.jpeg.cpp.libijg.JlsParameters p = new org.weasis.jpeg.cpp.libijg.JlsParameters();
             ByteStreamInfo input = null;
             try {
-                MappedByteBuffer buffer = seg.getDirectByteBuffer(0);
+                ByteBuffer buffer = seg.getDirectByteBuffer(0);
                 SizeTPointer size = new SizeTPointer(1);
                 size.put(buffer.limit());
                 input = libijg.FromByteArray(buffer, size);
@@ -69,7 +68,7 @@ public class CharlsCodec implements NativeCodec {
     public String decompress(NativeImage nImage, ImageReadParam param) throws IOException {
         // TODO use ImageReadParam
         int ret = 0;
-        FileStreamSegment seg = nImage.getStreamSegment();
+        StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
             org.weasis.jpeg.cpp.libijg.JlsParameters p = new org.weasis.jpeg.cpp.libijg.JlsParameters();
             ByteStreamInfo input = null;

@@ -25,8 +25,8 @@ public class DefaultDicomNode extends AbstractDicomNode {
     protected int port;
     protected TlsOptions tlsOptions;
 
-    public DefaultDicomNode(String description, String aeTitle, String hostname, Integer port) {
-        super(description, Type.ARCHIVE);
+    public DefaultDicomNode(String description, String aeTitle, String hostname, Integer port, UsageType usageType) {
+        super(description, Type.DICOM, usageType);
         this.hostname = hostname;
         setAeTitle(aeTitle);
         setPort(port);
@@ -107,7 +107,8 @@ public class DefaultDicomNode extends AbstractDicomNode {
     public static DefaultDicomNode buildDicomNodeEx(XMLStreamReader xmler) {
         DefaultDicomNode node =
             new DefaultDicomNode(xmler.getAttributeValue(null, T_DESCRIPTION), xmler.getAttributeValue(null, T_AETITLE),
-                xmler.getAttributeValue(null, T_HOST), TagUtil.getIntegerTagAttribute(xmler, T_PORT, 104));
+                xmler.getAttributeValue(null, T_HOST), TagUtil.getIntegerTagAttribute(xmler, T_PORT, 104),
+                UsageType.valueOf(xmler.getAttributeValue(null, T_USAGE_TYPE)));
         node.setTsuid(TransferSyntax.getTransferSyntax(xmler.getAttributeValue(null, T_TSUID)));
 
         // TODO add tls

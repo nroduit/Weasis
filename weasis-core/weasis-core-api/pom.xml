@@ -14,6 +14,7 @@
 	<properties>
 		<bundle.namespace>org.weasis.core.api</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+		<powermock.version>1.6.5</powermock.version>
 	</properties>
 	<build>
 		<plugins>
@@ -45,6 +46,26 @@
 					<artifactId>org.osgi.compendium</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		
+		<!-- FOR TESTS -->
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.4.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito2</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

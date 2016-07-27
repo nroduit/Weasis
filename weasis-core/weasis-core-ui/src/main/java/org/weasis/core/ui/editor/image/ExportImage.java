@@ -18,7 +18,6 @@ import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.List;
 
 import javax.swing.ToolTipManager;
 
@@ -31,9 +30,11 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.model.layer.LayerAnnotation;
 
 public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
+    private static final long serialVersionUID = 1149562889654679335L;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ExportImage.class);
 
     private final ViewCanvas<E> view2d;
@@ -41,7 +42,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     private double imagePrintingResolution = 1.0;
 
     public ExportImage(ViewCanvas<E> view2d) {
-        super(view2d.getEventManager(), view2d.getLayerModel(), null);
+        super(view2d.getEventManager(), null);
         this.view2d = view2d;
         // Pixel iterator is necessary for updating label of measurements
         this.imageLayer.setBuildIterator(true);
@@ -49,20 +50,16 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
         setFont(FontTools.getFont8());
         this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
-        infoLayer.setVisible(view2d.getInfoLayer().isVisible());
+        infoLayer.setVisible(view2d.getInfoLayer().getVisible());
         infoLayer.setShowBottomScale(false);
         // For exporting view, remove Pixel value, Preloading bar, Key Object
-        infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PIXEL, false);
-        infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PRELOADING_BAR, false);
+        infoLayer.setDisplayPreferencesValue(LayerAnnotation.PIXEL, false);
+        infoLayer.setDisplayPreferencesValue(LayerAnnotation.PRELOADING_BAR, false);
 
         // Copy image operations from view2d
         SimpleOpManager operations = imageLayer.getDisplayOpManager();
         for (ImageOpNode op : view2d.getImageLayer().getDisplayOpManager().getOperations()) {
-            try {
-                operations.addImageOperationAction(op.clone());
-            } catch (CloneNotSupportedException e) {
-                LOGGER.error("Clone image operation", e); //$NON-NLS-1$
-            }
+            operations.addImageOperationAction(op.copy());
         }
         // Copy the current values of image operations
         view2d.copyActionWState(actionsInView);
@@ -102,7 +99,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         ToolTipManager.sharedInstance().unregisterComponent(this);
         imageLayer.removeLayerChangeListener(this);
         // Unregister listener in GraphicsPane
-        setLayerModel(null);
+        graphicManager.removeChangeListener(layerModelHandler);
+        graphicManager.removeGraphicChangeHandler(graphicsChangeHandler);
         setViewModel(null);
     }
 
@@ -135,10 +133,9 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         g2d.setFont(getLayerFont());
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         // Set label box size and spaces between items
-        List<Graphic> list = getLayerModel().getAllGraphics();
-        for (Graphic graphic : list) {
-            graphic.updateLabel(true, this);
-        }
+
+        graphicManager.updateLabels(Boolean.TRUE, this);
+
         if (g2d.getClass().getName().contains("print")) {
             imageLayer.drawImageForPrinter(g2d, imagePrintingResolution);
         } else {
@@ -153,11 +150,10 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
+
         // Reset label box size and spaces between items
-        list = view2d.getLayerModel().getAllGraphics();
-        for (Graphic graphic : list) {
-            graphic.updateLabel(true, view2d);
-        }
+        graphicManager.updateLabels(Boolean.TRUE, view2d);
+
         currentG2d = null;
     }
 

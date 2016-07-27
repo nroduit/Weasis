@@ -21,7 +21,7 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     enum MEDIA_POSITION {
         FIRST, MIDDLE, LAST, RANDOM
-    };
+    }
 
     List<E> getSortedMedias(Comparator<E> comparator);
 

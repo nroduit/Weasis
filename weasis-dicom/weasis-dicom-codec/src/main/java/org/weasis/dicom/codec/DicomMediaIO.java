@@ -34,6 +34,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,6 +42,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -60,6 +63,7 @@ import javax.media.jai.operator.NullDescriptor;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
+import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
@@ -73,6 +77,7 @@ import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
 import org.dcm4che3.io.DicomInputStream;
+import org.dcm4che3.io.DicomOutputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +88,7 @@ import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -165,10 +171,13 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         tagManager.addTag(Tag.NumberOfFrames, Level.SERIES);
         tagManager.addTag(Tag.SeriesDate, Level.SERIES);
         tagManager.addTag(Tag.SeriesTime, Level.SERIES);
-        tagManager.addTag(Tag.PerformedProcedureStepStartDate, Level.SERIES); // not required
-        tagManager.addTag(Tag.PerformedProcedureStepStartTime, Level.SERIES); // not required
+        tagManager.addTag(Tag.PerformedProcedureStepStartDate, Level.SERIES); // not
+                                                                              // required
+        tagManager.addTag(Tag.PerformedProcedureStepStartTime, Level.SERIES); // not
+                                                                              // required
         // Should be in image
-        // C.7.6.5 Cine Module http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.5.html
+        // C.7.6.5 Cine Module
+        // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.5.html
         tagManager.addTag(Tag.PreferredPlaybackSequencing, Level.SERIES);
         tagManager.addTag(Tag.CineRate, Level.SERIES);
         tagManager.addTag(Tag.RecommendedDisplayFrameRate, Level.SERIES);
@@ -201,11 +210,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         tagManager.addTag(Tag.DiffusionBValue, Level.INSTANCE);
         tagManager.addTag(Tag.MIMETypeOfEncapsulatedDocument, Level.INSTANCE);
         tagManager.addTag(Tag.PixelDataProviderURL, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
-        tagManager.addTag(Tag.PatientID, Level.INSTANCE);
 
         // TODO init with a profile
         DicomMediaUtils.enableAnonymizationProfile(true);
@@ -312,41 +316,44 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     private volatile boolean readingHeader = false;
     private volatile boolean readingImage = false;
 
+    private final FileCache fileCache;
+
     public DicomMediaIO(URI uri) {
         super(DicomCodec.DicomImageReaderSpi);
-        this.uri = uri;
-        numberOfFrame = 0;
+        this.uri = Objects.requireNonNull(uri);
+        this.numberOfFrame = 0;
         this.tags = new HashMap<>();
-        mimeType = MIMETYPE;
+        this.mimeType = MIMETYPE;
+        this.fileCache = new FileCache(this);
     }
 
     public DicomMediaIO(File source) {
-        this(source.toURI());
+        this(Objects.requireNonNull(source).toURI());
     }
 
-    public DicomMediaIO(URL url) throws URISyntaxException {
-        this(url.toURI());
+    public DicomMediaIO(Path path) throws URISyntaxException {
+        this(Objects.requireNonNull(path).toUri());
     }
 
-    public DicomMediaIO(Attributes dcmItems) {
-        this((URI) null);
-        if (dcmItems == null) {
-            throw new IllegalArgumentException();
-        }
-        this.dcmMetadata = new DicomMetaData(null, dcmItems);
+    public DicomMediaIO(Attributes dcmItems) throws URISyntaxException {
+        this(new URI("data:" + Objects.requireNonNull(dcmItems).getString(Tag.SOPInstanceUID)));
+        this.dcmMetadata = new DicomMetaData(null, Objects.requireNonNull(dcmItems));
     }
 
     @Override
     public synchronized void replaceURI(URI uri) {
-        if (uri != null && !uri.equals(this.uri)) {
+        if (!Objects.equals(this.uri, Objects.requireNonNull(uri))) {
             this.uri = uri;
             reset();
         }
-
     }
 
+    /**
+     * 
+     * @return true when the DICOM Object has no source file (only in memory)
+     */
     public boolean isEditableDicom() {
-        return (dcmMetadata != null && uri == null);
+        return dcmMetadata != null && "data".equals(uri.getScheme());
     }
 
     public boolean isReadableDicom() {
@@ -354,7 +361,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             // Return true only to display the error message in the view
             return true;
         }
-        if (uri == null && dcmMetadata == null) {
+        if ("data".equals(uri.getScheme()) && dcmMetadata == null) {
             return false;
         }
 
@@ -451,7 +458,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     private ImageReader initRawImageReader() {
         long[] frameOffsets = new long[numberOfFrame];
-        frameOffsets[0] = pixeldata.offset;
+        frameOffsets[0] = pixeldata.offset();
         for (int i = 1; i < frameOffsets.length; i++) {
             frameOffsets[i] = frameOffsets[i - 1] + frameLength;
         }
@@ -471,7 +478,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 width = Math.min(width, ImageFiler.TILESIZE);
                 height = Math.min(height, ImageFiler.TILESIZE);
             }
-            smodel = pmi.createSampleModel(dataType, width, height, TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), banded);
+            smodel = pmi.createSampleModel(dataType, width, height,
+                TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), banded);
         }
         RawImageInputStream riis =
             new RawImageInputStream(iis, new ImageTypeSpecifier(cmodel, smodel), frameOffsets, imageDimensions);
@@ -596,7 +604,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         boolean ko = SERIES_KO_MIMETYPE.equals(mimeType);
         if (pr) {
             // Set the series list for applying the PR
-            TagD.get(Tag.ReferencedSeriesSequence).readValue(header, this);
+            DicomMediaUtils.buildSeriesReferences(this, header);
             DicomMediaUtils.readPRLUTsModule(header, this);
             setTagNoNull(TagW.HasOverlay, DicomMediaUtils.hasOverlay(header));
         }
@@ -679,8 +687,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 Tag.PixelPaddingRangeLimit, pixelRepresentation != 0, bitsStored));
 
             /*
-             * * @see <a
-             * href="http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.html#sect_C.7.6.1.1.5">C
+             * * @see <a href=
+             * "http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.html#sect_C.7.6.1.1.5" >C
              * .7.6.1.1.5 Lossy Image Compression</a>
              */
             setTagNoNull(TagD.get(Tag.LossyImageCompression),
@@ -743,12 +751,35 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     @Override
+    public FileCache getFileCache() {
+        return fileCache;
+    }
+
+    @Override
+    public boolean buildFile(File output) {
+        // When object is in memory, write it
+        if (isEditableDicom()) {
+            Attributes dcm = getDicomObject();
+            if (dcm != null) {
+                try (DicomOutputStream out = new DicomOutputStream(output)) {
+                    out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
+                    return true;
+                } catch (IOException e) {
+                    LOGGER.error("Cannot write dicom file", e); //$NON-NLS-1$
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
     public PlanarImage getMediaFragment(MediaElement<PlanarImage> media) throws Exception {
         if (media != null && media.getKey() instanceof Integer && isReadableDicom()) {
             int frame = (Integer) media.getKey();
             if (frame >= 0 && frame < numberOfFrame && hasPixel) {
                 // read as tiled rendered image
-                LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", frame, TagD.getTagValue(this, Tag.SOPInstanceUID)); //$NON-NLS-1$
+                LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", //$NON-NLS-1$
+                    frame, TagD.getTagValue(this, Tag.SOPInstanceUID));
                 RenderedImage buffer = null;
                 // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
                 // if (jpipReader == null) {
@@ -762,19 +793,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 // buffer = jpipReader.readAsRenderedImage(frame, null);
                 // }
                 // } else {
-                String path = (String) media.getTagValue(TagW.TiledImagePath);
-                if (StringUtil.hasText(path)) {
-                    buffer = ImageFiler.readTiledCacheImage(new File(path));
-                }
-                if (buffer == null) {
-                    buffer = readAsRenderedImage(frame, null);
 
-                    // File file = ImageFiler.cacheTiledImage(getValidImage(buffer), media);
-                    // if (file != null) {
-                    // System.gc();
-                    // buffer = ImageFiler.readTiledCacheImage(file);
-                    // }
-                }
+                // if (buffer == null) {
+                buffer = readAsRenderedImage(frame, null);
                 // }
                 return getValidImage(buffer, media);
             }
@@ -927,7 +948,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     @Override
-    public String getMediaFragmentMimeType(Object key) {
+    public String getMediaFragmentMimeType() {
         return mimeType;
     }
 
@@ -945,11 +966,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             }
         }
         return tags;
-    }
-
-    @Override
-    public URI getMediaFragmentURI(Object key) {
-        return uri;
     }
 
     @Override
@@ -998,13 +1014,13 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     @Override
     public int getHeight(int frameIndex) throws IOException {
         checkIndex(frameIndex);
-        return  TagD.getTagValue(this, Tag.Rows, Integer.class);
+        return TagD.getTagValue(this, Tag.Rows, Integer.class);
     }
 
     @Override
     public int getWidth(int frameIndex) throws IOException {
         checkIndex(frameIndex);
-        return  TagD.getTagValue(this, Tag.Columns, Integer.class);
+        return TagD.getTagValue(this, Tag.Columns, Integer.class);
     }
 
     @Override
@@ -1072,24 +1088,24 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
     private SegmentedInputImageStream buildSegmentedImageInputStream(int frameIndex) throws IOException {
         int nbFragments = pixeldataFragments.size();
-        long[] offsets = null;
-        int[] length = null;
+        long[] offsets;
+        int[] length;
         if (numberOfFrame >= nbFragments - 1) {
             // nbFrames > nbFragments should never happen
             offsets = new long[1];
             length = new int[offsets.length];
             int index = frameIndex < nbFragments - 1 ? frameIndex + 1 : nbFragments - 1;
             BulkData bulkData = (BulkData) pixeldataFragments.get(index);
-            offsets[0] = bulkData.offset;
-            length[0] = bulkData.length;
+            offsets[0] = bulkData.offset();
+            length[0] = bulkData.length();
         } else {
             if (numberOfFrame == 1) {
                 offsets = new long[nbFragments - 1];
                 length = new int[offsets.length];
                 for (int i = 0; i < length.length; i++) {
                     BulkData bulkData = (BulkData) pixeldataFragments.get(i + frameIndex + 1);
-                    offsets[i] = bulkData.offset;
-                    length[i] = bulkData.length;
+                    offsets[i] = bulkData.offset();
+                    length[i] = bulkData.length();
                 }
             } else {
                 // Multi-frames where each frames can have multiple fragments.
@@ -1102,7 +1118,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                         BulkData bulkData = (BulkData) pixeldataFragments.get(i);
                         ImageReaderSpi provider = decompressor.getOriginatingProvider();
                         if (provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
-                            new long[] { bulkData.offset }, new int[] { bulkData.length }))) {
+                            new long[] { bulkData.offset() }, new int[] { bulkData.length() }))) {
                             fragmentsPositions.add(i);
                         }
                     }
@@ -1117,8 +1133,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                     length = new int[offsets.length];
                     for (int i = 0; i < offsets.length; i++) {
                         BulkData bulkData = (BulkData) pixeldataFragments.get(start + i);
-                        offsets[i] = bulkData.offset;
-                        length[i] = bulkData.length;
+                        offsets[i] = bulkData.offset();
+                        length[i] = bulkData.length();
                     }
                 } else {
                     throw new IOException("Cannot match all the fragments to all the frames!");
@@ -1155,7 +1171,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 }
                 return wr;
             }
-            iis.seek(pixeldata.offset + frameIndex * frameLength);
+            iis.seek(pixeldata.offset() + frameIndex * frameLength);
             WritableRaster wr = Raster.createWritableRaster(createSampleModel(dataType, banded), null);
             DataBuffer buf = wr.getDataBuffer();
             if (buf instanceof DataBufferByte) {
@@ -1291,44 +1307,22 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             return validateSignedShortDataBuffer(bi);
         } finally {
             /*
-             * "false" will close the stream of the tiled image. The problem is that readAsRenderedImage() do not read
+             * "readingImage = false" will close the stream of the tiled image. The problem is that readAsRenderedImage() do not read
              * data immediately: RenderedImage delays the image reading
              */
-
-            // readingImage = false;
         }
     }
 
     public RenderedImage validateSignedShortDataBuffer(RenderedImage source) {
         /*
          * Issue in ComponentColorModel when signed short DataBuffer, only 16 bits is supported see
-         * http://java.sun.com/javase/6/docs/api/java/awt/image/ComponentColorModel.html Instances of
+         * http://java.sun.com/javase/6/docs/api/java/awt/image/ ComponentColorModel.html Instances of
          * ComponentColorModel created with transfer types DataBuffer.TYPE_SHORT, DataBuffer.TYPE_FLOAT, and
          * DataBuffer.TYPE_DOUBLE use all the bits of all sample values. Thus all color/alpha components have 16 bits
          * when using DataBuffer.TYPE_SHORT, 32 bits when using DataBuffer.TYPE_FLOAT, and 64 bits when using
          * DataBuffer.TYPE_DOUBLE. When the ComponentColorModel(ColorSpace, int[], boolean, boolean, int, int) form of
          * constructor is used with one of these transfer types, the bits array argument is ignored.
          */
-
-        // Bits Allocated = 16 (Bits alloués )
-        // Bits Stored = 12 (Bits enregistrés )
-        // High Bit = 11 (Bit le plus significatif)
-        // |<------------------ pixel ----------------->|
-        // ______________ ______________ ______________ ______________
-        // |XXXXXXXXXXXXXX| | | |
-        // |______________|______________|______________|______________|
-        // 15 12 11 8 7 4 3 0
-        //
-        // ---------------------------
-        //
-        // Bits Allocated = 16
-        // Bits Stored = 12
-        // High Bit = 15
-        // |<------------------ pixel ----------------->|
-        // ______________ ______________ ______________ ______________
-        // | | | |XXXXXXXXXXXXXX|
-        // |______________|______________|______________|______________|
-        // 15 12 11 8 7 4 3 0
 
         // TODO test with all decoders (works with raw decoder)
         if (source != null && dataType == DataBuffer.TYPE_SHORT
@@ -1479,15 +1473,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
 
         try {
             readingHeader = true;
-            if (iis == null && uri != null) {
-                ImageInputStream imageStream;
-                if (uri.toString().startsWith("file:/")) { //$NON-NLS-1$
-                    imageStream = ImageIO.createImageInputStream(new File(uri));
-                } else {
-                    // TODO test if url stream is closed on reset !
-                    imageStream = ImageIO.createImageInputStream(uri.toURL().openStream());
+            if (iis == null) {
+                Optional<File> file = fileCache.getOriginalFile();
+                if (file.isPresent()) {
+                    setInput(ImageIO.createImageInputStream(new File(uri)), false, false);
                 }
-                setInput(imageStream, false, false);
             }
 
             if (iis == null) {
@@ -1505,7 +1495,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             dis = new DicomInputStream(new ImageInputStreamAdapter(iis));
             dis.setIncludeBulkData(IncludeBulkData.URI);
             dis.setBulkDataDescriptor(DicomCodec.BULKDATA_DESCRIPTOR);
-            dis.setURI(uri.toString()); // avoid a copy of pixeldata into temporary file
+            dis.setURI(uri.toString()); // avoid a copy of pixeldata into
+                                        // temporary file
             Attributes fmi = dis.readFileMetaInformation();
             Attributes ds = dis.readDataset(-1, -1);
             if (fmi == null) {

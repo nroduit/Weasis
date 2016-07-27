@@ -13,9 +13,9 @@ package org.weasis.core.api.image;
 import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +36,27 @@ public class SimpleOpManager implements OpManager {
     private String name;
 
     public SimpleOpManager() {
-        this(null);
+        this(IMAGE_OP_NAME);
     }
 
     public SimpleOpManager(String name) {
         this.operations = new ArrayList<>();
         this.nodes = new HashMap<>();
         setName(name);
+    }
+
+    public SimpleOpManager(SimpleOpManager som) {
+        this.operations = new ArrayList<>();
+        this.nodes = new HashMap<>();
+        setName(som.name);
+
+        som.nodes.entrySet().forEach(el -> {
+            Optional.ofNullable(el.getValue()).ifPresent(n -> {
+                ImageOpNode node = n.copy();
+                operations.add(node);
+                nodes.put(el.getKey(), node);
+            });
+        });
     }
 
     public synchronized String getName() {
@@ -107,21 +121,6 @@ public class SimpleOpManager implements OpManager {
                 }
             }
         }
-    }
-
-    @Override
-    public SimpleOpManager clone() throws CloneNotSupportedException {
-        SimpleOpManager obj = new SimpleOpManager();
-        for (Iterator<Entry<String, ImageOpNode>> iter = nodes.entrySet().iterator(); iter.hasNext();) {
-            Entry<String, ImageOpNode> el = iter.next();
-            ImageOpNode node = el.getValue();
-            if (node != null) {
-                ImageOpNode n = node.clone();
-                obj.operations.add(n);
-                obj.nodes.put(el.getKey(), n);
-            }
-        }
-        return obj;
     }
 
     @Override
@@ -197,6 +196,18 @@ public class SimpleOpManager implements OpManager {
         return null;
     }
 
+    /**
+     * Allow to remove the preprocessing cache
+     * 
+     * @param imgSource
+     */
+    public void resetLastNodeOutputImage() {
+        ImageOpNode node = getLastNode();
+        if (node != null) {
+            node.setParam(Param.OUTPUT_IMG, null);
+        }
+    }
+
     @Override
     public RenderedImage process() {
         RenderedImage source = getFirstNodeInputImage();
@@ -207,10 +218,14 @@ public class SimpleOpManager implements OpManager {
                     if (i > 0) {
                         op.setParam(Param.INPUT_IMG, operations.get(i - 1).getParam(Param.OUTPUT_IMG));
                     }
-                    op.process();
+                    if (op.isEnabled()) {
+                        op.process();
+                    } else {
+                        // Skip this operation
+                        op.setParam(Param.OUTPUT_IMG, op.getParam(Param.INPUT_IMG));
+                    }
                 } catch (Exception e) {
                     LOGGER.error("Image {} failed: {}", op.getParam(Param.NAME), e); //$NON-NLS-1$
-                    // Skip this operation
                     op.setParam(Param.OUTPUT_IMG, op.getParam(Param.INPUT_IMG));
                 }
             }
@@ -258,6 +273,11 @@ public class SimpleOpManager implements OpManager {
         for (ImageOpNode node : operations) {
             node.handleImageOpEvent(event);
         }
+    }
+
+    @Override
+    public SimpleOpManager copy() {
+        return new SimpleOpManager(this);
     }
 
 }

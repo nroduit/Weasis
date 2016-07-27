@@ -14,14 +14,14 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.Collator;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Locale;
 
 import javax.swing.JComboBox;
 
 import org.weasis.core.api.util.LocalUtil;
 
-public class JLocaleFormat extends JComboBox implements ItemListener {
+@SuppressWarnings("serial")
+public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener {
 
     public JLocaleFormat() {
         super();
@@ -35,13 +35,7 @@ public class JLocaleFormat extends JComboBox implements ItemListener {
         Locale defaultLocale = Locale.getDefault();
         // Allow to sort correctly string in each language
         final Collator collator = Collator.getInstance(defaultLocale);
-        Arrays.sort(locales, new Comparator<Locale>() {
-
-            @Override
-            public int compare(Locale l1, Locale l2) {
-                return collator.compare(l1.getDisplayName(), l2.getDisplayName());
-            }
-        });
+        Arrays.sort(locales, (l1, l2) -> collator.compare(l1.getDisplayName(), l2.getDisplayName()));
 
         JLocale dloc = null;
         for (int i = 0; i < locales.length; i++) {
@@ -64,7 +58,7 @@ public class JLocaleFormat extends JComboBox implements ItemListener {
         }
 
         for (int i = 0; i < getItemCount(); i++) {
-            Locale l = ((JLocale) getItemAt(i)).getLocale();
+            Locale l = getItemAt(i).getLocale();
             if (l.equals(sLoc)) {
                 setSelectedIndex(i);
                 break;
@@ -79,12 +73,12 @@ public class JLocaleFormat extends JComboBox implements ItemListener {
             if (item instanceof JLocale) {
                 Locale locale = ((JLocale) item).getLocale();
                 LocalUtil.setLocaleFormat(locale.equals(Locale.getDefault()) ? null : locale);
-                handleChange();
+                valueHasChanged();
             }
         }
     }
 
-    protected void handleChange() {
+    protected void valueHasChanged() {
     }
 
     public void refresh() {
@@ -92,7 +86,7 @@ public class JLocaleFormat extends JComboBox implements ItemListener {
         removeAllItems();
         sortLocales();
         selectLocale();
-        handleChange();
+        valueHasChanged();
         addItemListener(this);
     }
 }

@@ -1,17 +1,14 @@
 package org.weasis.dicom.codec;
 
-import java.util.Date;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
-import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
-import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class TagSeq extends TagD {
+
+    private static final long serialVersionUID = -7782852222112967568L;
 
     public TagSeq(int tagID, String keyword, String displayedName, String privateCreatorID, VR vr, int vmMin, int vmMax,
         Object defaultValue, boolean retired) {
@@ -38,10 +35,9 @@ public class TagSeq extends TagD {
                         tag.readValue(dataset, tagabale);
                     }
                 }
-
             }
         }
-    };
+    }
 
     public static class MacroSeqData {
         private final Attributes attributes;

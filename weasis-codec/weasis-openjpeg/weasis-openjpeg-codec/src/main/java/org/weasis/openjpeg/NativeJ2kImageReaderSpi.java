@@ -24,11 +24,9 @@ import com.sun.media.imageioimpl.common.ImageUtil;
 
 public class NativeJ2kImageReaderSpi extends ImageReaderSpi {
 
-    public static final String[] SUFFIXES = { "jp2", "jp2k", "j2k", "j2c" };
-
-    public static final String[] NAMES = { "JP2KSimpleBox", "jpeg2000", "jpeg 2000", "JPEG 2000", "JPEG2000" };
-
-    public static final String[] MIMES = { "image/jp2", "image/jp2k", "image/j2k", "image/j2c" };
+    static final String[] SUFFIXES = { "jp2", "jp2k", "j2k", "j2c" };
+    static final String[] NAMES = { "JP2KSimpleBox", "jpeg2000", "jpeg 2000", "JPEG 2000", "JPEG2000" };
+    static final String[] MIMES = { "image/jp2", "image/jp2k", "image/j2k", "image/j2c" };
 
     private boolean registered = false;
 

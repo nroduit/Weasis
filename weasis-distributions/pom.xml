@@ -29,7 +29,7 @@
 		<felix.gogo.command.version>0.16.0</felix.gogo.command.version>
 
 		<felix.servlet.version>1.0.0</felix.servlet.version>
-		<felix.bundlerepository.version>2.0.6</felix.bundlerepository.version>
+		<felix.bundlerepository.version>2.0.8</felix.bundlerepository.version>
 		<felix.configadmin.version>1.8.8</felix.configadmin.version>
 		<felix.prefs.version>1.0.6</felix.prefs.version>
 		<felix.scr.version>2.0.2</felix.scr.version>
@@ -42,8 +42,8 @@
 		<jai.version>1.1.4-b07</jai.version>
 		<jai.native.version>1.1.4-b03</jai.native.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
-		<weasis.jpeg.native.version>1.0.3-6b</weasis.jpeg.native.version>
-		<weasis.openjpeg.native.version>2.1.5</weasis.openjpeg.native.version>
+		<weasis.jpeg.native.version>1.0.5-6b</weasis.jpeg.native.version>
+		<weasis.openjpeg.native.version>2.1.7</weasis.openjpeg.native.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 
@@ -447,6 +447,23 @@
 									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+
+								<!-- ===================================== -->
+								<!-- Weasis Acquisition bundles -->
+								<!-- ===================================== -->
+								<artifactItem>
+									<groupId>org.weasis.acquire</groupId>
+									<artifactId>weasis-acquire-explorer</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.acquire</groupId>
+									<artifactId>weasis-acquire-editor</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+
 							</artifactItems>
 						</configuration>
 					</execution>
@@ -576,6 +593,16 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<dependencies>
+		<dependency>
+			<!-- http://www.tuckey.org/urlrewrite/ -->
+			<groupId>org.tuckey</groupId>
+			<artifactId>urlrewritefilter</artifactId>
+			<version>4.0.3</version>
+		</dependency>
+	</dependencies>
+
 	<profiles>
 		<profile>
 			<id>pack200</id>
@@ -686,7 +713,7 @@
 					<plugin>
 						<groupId>com.akathist.maven.plugins.launch4j</groupId>
 						<artifactId>launch4j-maven-plugin</artifactId>
-						<version>1.7.8</version>
+						<version>1.7.10</version>
 						<executions>
 							<execution>
 								<id>l4j-clui</id>

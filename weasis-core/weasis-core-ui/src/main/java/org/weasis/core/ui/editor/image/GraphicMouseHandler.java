@@ -5,7 +5,9 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -14,16 +16,17 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d.BulkDragSequence;
-import org.weasis.core.ui.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.graphic.DragSequence;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.SelectGraphic;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.model.AbstractGraphicModel;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.DragGraphic;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
+import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdapter {
     private ViewCanvas<E> vImg;
-    private DragSequence ds;
+    private Draggable ds;
 
     public GraphicMouseHandler(ViewCanvas<E> vImg) {
         if (vImg == null) {
@@ -32,7 +35,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         this.vImg = vImg;
     }
 
-    public DragSequence getDragSequence() {
+    public Draggable getDragSequence() {
         return ds;
     }
 
@@ -55,29 +58,29 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             return;
         }
 
-        Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
-        AbstractLayerModel layerModel = vImg.getLayerModel();
+        Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
 
+        GraphicModel graphicList = vImg.getGraphicManager();
         // Avoid any dragging on selection when Shift Button is Down
         if (!mouseEvt.isShiftDown()) {
             // Evaluates if mouse is on a dragging position, creates a DragSequence and changes cursor consequently
-            Graphic firstGraphicIntersecting = layerModel.getFirstGraphicIntersecting(mouseEvt);
+            Optional<Graphic> firstGraphicIntersecting = graphicList.getFirstGraphicIntersecting(mouseEvt);
 
-            if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
-                AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
-                List<AbstractDragGraphic> selectedDragGraphList = layerModel.getSelectedDragableGraphics();
+            if (firstGraphicIntersecting.isPresent() && firstGraphicIntersecting.get() instanceof DragGraphic) {
+                DragGraphic dragGraph = (DragGraphic) firstGraphicIntersecting.get();
+                List<DragGraphic> selectedDragGraphList = graphicList.getSelectedDragableGraphics();
 
-                if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
+                if (selectedDragGraphList.contains(dragGraph)) {
 
-                    if ((selectedDragGraphList.size() > 1)) {
+                    if (selectedDragGraphList.size() > 1) {
                         ds = new BulkDragSequence(selectedDragGraphList, mouseEvt);
-                        newCursor = AbstractLayerModel.MOVE_CURSOR;
+                        newCursor = DefaultView2d.MOVE_CURSOR;
 
                     } else if (selectedDragGraphList.size() == 1) {
 
                         if (dragGraph.isOnGraphicLabel(mouseEvt)) {
                             ds = dragGraph.createDragLabelSequence();
-                            newCursor = AbstractLayerModel.HAND_CURSOR;
+                            newCursor = DefaultView2d.HAND_CURSOR;
 
                         } else {
                             int handlePtIndex = dragGraph.getHandlePointIndex(mouseEvt);
@@ -85,52 +88,47 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                             if (handlePtIndex >= 0) {
                                 dragGraph.moveMouseOverHandlePoint(handlePtIndex, mouseEvt);
                                 ds = dragGraph.createResizeDrag(handlePtIndex);
-                                newCursor = AbstractLayerModel.EDIT_CURSOR;
+                                newCursor = DefaultView2d.EDIT_CURSOR;
 
                             } else {
                                 ds = dragGraph.createMoveDrag();
-                                newCursor = AbstractLayerModel.MOVE_CURSOR;
+                                newCursor = DefaultView2d.MOVE_CURSOR;
                             }
                         }
                     }
                 } else {
                     if (dragGraph.isOnGraphicLabel(mouseEvt)) {
                         ds = dragGraph.createDragLabelSequence();
-                        newCursor = AbstractLayerModel.HAND_CURSOR;
+                        newCursor = DefaultView2d.HAND_CURSOR;
 
                     } else {
                         ds = dragGraph.createMoveDrag();
-                        newCursor = AbstractLayerModel.MOVE_CURSOR;
+                        newCursor = DefaultView2d.MOVE_CURSOR;
                     }
-                    layerModel.setSelectedGraphic(dragGraph);
+                    vImg.getGraphicManager().setSelectedGraphic(Arrays.asList(dragGraph));
                 }
             }
         }
 
         if (ds == null) {
-            AbstractDragGraphic dragGraph = layerModel.createDragGraphic(mouseEvt);
-
-            if (dragGraph != null) {
-                ds = dragGraph.createResizeDrag();
-                if (dragGraph instanceof SelectGraphic) {
-                    layerModel.setSelectGraphic((SelectGraphic) dragGraph);
-                } else {
-                    layerModel.setSelectedGraphic(dragGraph);
+            Graphic graph = AbstractGraphicModel.drawFromCurrentGraphic(vImg);
+            if (graph instanceof DragGraphic) {
+                ds = ((DragGraphic) graph).createResizeDrag();
+                if (!(graph instanceof SelectGraphic)) {
+                    vImg.getGraphicManager().setSelectedGraphic(Arrays.asList(graph));
                 }
             }
         }
-
-        layerModel.setCursor(newCursor);
+        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(DefaultView2d.DEFAULT_CURSOR));
 
         if (ds != null) {
             ds.startDrag(mouseEvt);
         } else {
-            layerModel.setSelectedGraphics(null);
+            vImg.getGraphicManager().setSelectedGraphic(null);
         }
 
         // Throws to the tool listener the current graphic selection.
-        layerModel.fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
-
+        vImg.getGraphicManager().fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
     }
 
     @Override
@@ -153,52 +151,46 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         MouseEventDouble mouseEvt = new MouseEventDouble(e);
         mouseEvt.setImageCoordinates(vImg.getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
-        AbstractLayerModel layerModel = vImg.getLayerModel();
-        SelectGraphic selectGraphic = layerModel.getSelectGraphic();
-
-        if (selectGraphic != null) {
-
+        Optional<SelectGraphic> selection = vImg.getGraphicManager().getSelectGraphic();
+        if (selection.isPresent()) {
+            Graphic selectGraphic = selection.get();
             AffineTransform transform = DefaultView2d.getAffineTransform(mouseEvt);
             Rectangle selectionRect = selectGraphic.getBounds(transform);
 
             // Little size rectangle in selection click is interpreted as a single clic
             boolean isSelectionSingleClic =
-                (selectionRect == null || (selectionRect.width < 5 && selectionRect.height < 5));
+                selectionRect == null || (selectionRect.width < 5 && selectionRect.height < 5);
 
-            List<Graphic> newSelectedGraphList = null;
-
-            if (!isSelectionSingleClic) {
-                newSelectedGraphList = layerModel.getSelectedAllGraphicsIntersecting(selectionRect, transform);
+            final List<Graphic> newSelectedGraphList = new ArrayList<>();
+            if (isSelectionSingleClic) {
+                vImg.getGraphicManager().getFirstGraphicIntersecting(mouseEvt)
+                    .ifPresent(newSelectedGraphList::add);
             } else {
-                Graphic selectedGraph = layerModel.getFirstGraphicIntersecting(mouseEvt);
-                if (selectedGraph != null) {
-                    newSelectedGraphList = new ArrayList<Graphic>(1);
-                    newSelectedGraphList.add(selectedGraph);
-                }
+                newSelectedGraphList
+                    .addAll(vImg.getGraphicManager().getSelectedAllGraphicsIntersecting(selectionRect, transform));
             }
 
             // Add all graphics inside selection rectangle at any level in layers instead in the case of single
             // click where top level first graphic found is removed from list if already selected
             if (mouseEvt.isShiftDown()) {
-                List<Graphic> selectedGraphList = new ArrayList<Graphic>(layerModel.getSelectedGraphics());
+                List<Graphic> selectedGraphList = vImg.getGraphicManager().getSelectedGraphics();
 
                 if (!selectedGraphList.isEmpty()) {
-                    if (newSelectedGraphList == null) {
-                        newSelectedGraphList = new ArrayList<Graphic>(selectedGraphList);
+                    if (newSelectedGraphList.isEmpty()) {
+                        newSelectedGraphList.addAll(selectedGraphList);
                     } else {
-                        for (Graphic graphic : selectedGraphList) {
-                            if (!newSelectedGraphList.contains(graphic)) {
-                                newSelectedGraphList.add(graphic);
+                        selectedGraphList.forEach(g -> {
+                            if (!newSelectedGraphList.contains(g)) {
+                                newSelectedGraphList.add(g);
                             } else if (isSelectionSingleClic) {
-                                newSelectedGraphList.remove(graphic);
+                                newSelectedGraphList.remove(g);
                             }
-                        }
+                        });
                     }
                 }
             }
 
-            layerModel.setSelectedGraphics(newSelectedGraphList);
-            layerModel.setSelectGraphic(null);
+            vImg.getGraphicManager().setSelectedGraphic(newSelectedGraphList);
         }
 
         if (ds.completeDrag(mouseEvt)) {
@@ -215,47 +207,45 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         }
 
         // Throws to the tool listener the current graphic selection.
-        layerModel.fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
+        vImg.getGraphicManager().fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
 
-        Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
+        Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
 
-        // TODO below is the same code as this is in mouseMoved, can be a function instead
         // Evaluates if mouse is on a dragging position, and changes cursor image consequently
-        List<AbstractDragGraphic> selectedDragGraphList = layerModel.getSelectedDragableGraphics();
-        Graphic firstGraphicIntersecting = layerModel.getFirstGraphicIntersecting(mouseEvt);
+        List<DragGraphic> selectedDragGraphList = vImg.getGraphicManager().getSelectedDragableGraphics();
+        Optional<Graphic> firstGraphicIntersecting =
+            vImg.getGraphicManager().getFirstGraphicIntersecting(mouseEvt);
 
-        if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
-            AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
+        if (firstGraphicIntersecting.isPresent() && firstGraphicIntersecting.get() instanceof DragGraphic) {
+            DragGraphic dragGraph = (DragGraphic) firstGraphicIntersecting.get();
 
-            if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
+            if (selectedDragGraphList.contains(dragGraph)) {
 
-                if ((selectedDragGraphList.size() > 1)) {
-                    newCursor = AbstractLayerModel.MOVE_CURSOR;
+                if (selectedDragGraphList.size() > 1) {
+                    newCursor = DefaultView2d.MOVE_CURSOR;
 
                 } else if (selectedDragGraphList.size() == 1) {
-
                     if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                        newCursor = AbstractLayerModel.HAND_CURSOR;
+                        newCursor = DefaultView2d.HAND_CURSOR;
 
                     } else {
                         if (dragGraph.getHandlePointIndex(mouseEvt) >= 0) {
-                            newCursor = AbstractLayerModel.EDIT_CURSOR;
+                            newCursor = DefaultView2d.EDIT_CURSOR;
                         } else {
-                            newCursor = AbstractLayerModel.MOVE_CURSOR;
+                            newCursor = DefaultView2d.MOVE_CURSOR;
                         }
                     }
                 }
             } else {
                 if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                    newCursor = AbstractLayerModel.HAND_CURSOR;
+                    newCursor = DefaultView2d.HAND_CURSOR;
                 } else {
-                    newCursor = AbstractLayerModel.MOVE_CURSOR;
+                    newCursor = DefaultView2d.MOVE_CURSOR;
                 }
             }
         }
 
-        layerModel.setCursor(newCursor);
-
+        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(DefaultView2d.DEFAULT_CURSOR));
     }
 
     @Override
@@ -288,45 +278,47 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             ds.drag(mouseEvt);
         } else {
 
-            Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
-            AbstractLayerModel layerModel = vImg.getLayerModel();
+            Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
+            GraphicModel graphicList = vImg.getGraphicManager();
 
             if (!mouseEvt.isShiftDown()) {
                 // Evaluates if mouse is on a dragging position, and changes cursor image consequently
-                Graphic firstGraphicIntersecting = layerModel.getFirstGraphicIntersecting(mouseEvt);
+                Optional<Graphic> firstGraphicIntersecting = graphicList.getFirstGraphicIntersecting(mouseEvt);
 
-                if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
-                    AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
-                    List<AbstractDragGraphic> selectedDragGraphList = layerModel.getSelectedDragableGraphics();
+                if (firstGraphicIntersecting.isPresent()
+                    && firstGraphicIntersecting.get() instanceof DragGraphic) {
+                    DragGraphic dragGraph = (DragGraphic) firstGraphicIntersecting.get();
+                    List<DragGraphic> selectedDragGraphList =
+                        vImg.getGraphicManager().getSelectedDragableGraphics();
 
-                    if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
+                    if (selectedDragGraphList.contains(dragGraph)) {
 
-                        if ((selectedDragGraphList.size() > 1)) {
-                            newCursor = AbstractLayerModel.MOVE_CURSOR;
+                        if (selectedDragGraphList.size() > 1) {
+                            newCursor = DefaultView2d.MOVE_CURSOR;
 
                         } else if (selectedDragGraphList.size() == 1) {
 
                             if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                                newCursor = AbstractLayerModel.HAND_CURSOR;
+                                newCursor = DefaultView2d.HAND_CURSOR;
 
                             } else {
                                 if (dragGraph.getHandlePointIndex(mouseEvt) >= 0) {
-                                    newCursor = AbstractLayerModel.EDIT_CURSOR;
+                                    newCursor = DefaultView2d.EDIT_CURSOR;
                                 } else {
-                                    newCursor = AbstractLayerModel.MOVE_CURSOR;
+                                    newCursor = DefaultView2d.MOVE_CURSOR;
                                 }
                             }
                         }
                     } else {
                         if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                            newCursor = AbstractLayerModel.HAND_CURSOR;
+                            newCursor = DefaultView2d.HAND_CURSOR;
                         } else {
-                            newCursor = AbstractLayerModel.MOVE_CURSOR;
+                            newCursor = DefaultView2d.MOVE_CURSOR;
                         }
                     }
                 }
             }
-            layerModel.setCursor(newCursor);
+            vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(DefaultView2d.DEFAULT_CURSOR));
         }
     }
 }
