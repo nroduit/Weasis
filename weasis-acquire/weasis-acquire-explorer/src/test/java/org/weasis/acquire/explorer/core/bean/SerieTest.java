@@ -43,7 +43,7 @@ public class SerieTest {
     @Test
     public void testToString() {
         assertThat(s1.toString()).isEqualTo("Other");
-        assertThat(s2.toString()).isEqualTo("12 mai 2016 14:25:00");
+        assertThat(s2.toString()).isEqualTo(LocalUtil.getDateTimeFormatter().format(today));
         assertThat(s3.toString()).isEqualTo("test serie 3");
     }
 
