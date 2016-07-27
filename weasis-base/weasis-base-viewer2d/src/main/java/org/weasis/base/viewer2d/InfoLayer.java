@@ -78,7 +78,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     }
 
     @Override
-    public boolean isShowBottomScale() {
+    public Boolean isShowBottomScale() {
         return showBottomScale;
     }
 

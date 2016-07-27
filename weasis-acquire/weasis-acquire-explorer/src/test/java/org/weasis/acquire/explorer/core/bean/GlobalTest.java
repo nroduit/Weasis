@@ -10,6 +10,7 @@ import java.util.Locale;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.data.MapEntry;
+import org.dcm4che3.data.Tag;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -76,7 +77,8 @@ public class GlobalTest extends GlobalHelper {
         global.init(xml);
 
         // Tests
-   //     assertThat(global.getTagEntrySet()).containsExactlyInAnyOrder(entry(GlobalTag.studyinstanceUID));
+        assertThat(global.containTagKey(TagD.get(Tag.StudyInstanceUID))).isTrue();
+        assertThat(global.getTagValue(TagD.get(Tag.StudyInstanceUID))).isNotNull();
     }
 
     @Ignore
