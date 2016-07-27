@@ -16,8 +16,12 @@ public enum LayerType {
     TEMP_DRAW(60, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE),
 
     ACQUIRE(70, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE),
+    
+    BLOB(80, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE),
+    
+    POINTS(90, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE),
 
-    DICOM_PR(80, Boolean.TRUE, Boolean.TRUE, Boolean.FALSE);
+    DICOM_PR(100, Boolean.TRUE, Boolean.TRUE, Boolean.FALSE);
 
     private final Integer level;
     private final Boolean visible;
