@@ -53,7 +53,7 @@ public interface LayerAnnotation extends Layer {
 
     LayerAnnotation getLayerCopy(DefaultView2d<?> view2DPane);
 
-    boolean isShowBottomScale();
+    Boolean isShowBottomScale();
 
     void setShowBottomScale(Boolean showBottomScale);
 
