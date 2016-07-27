@@ -637,9 +637,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         double viewScale = getViewModel().getViewScale();
         affineTransform.setToScale(viewScale, viewScale);
 
-        OpManager dispOp = getDisplayOpManager();
-        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
-        Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
+        Boolean flip = (Boolean) getActionValue(ActionW.FLIP.cmd());
+        Integer rotationAngle = (int) Math.toDegrees(getRotationOffset());
+        if (rotationAngle < 0) {
+            rotationAngle = (rotationAngle + 360) % 360;
+        }
 
         if (rotationAngle != null && rotationAngle > 0) {
             if (flip != null && flip) {
