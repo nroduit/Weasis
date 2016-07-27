@@ -33,6 +33,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
@@ -68,10 +69,13 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -79,11 +83,12 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
-import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.CalibrationView;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.core.ui.editor.image.GraphicMouseHandler;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -99,18 +104,16 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.graphic.BasicGraphic;
-import org.weasis.core.ui.graphic.DragLayer;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.LineGraphic;
-import org.weasis.core.ui.graphic.MeasureDialog;
-import org.weasis.core.ui.graphic.PanPoint;
-import org.weasis.core.ui.graphic.PanPoint.STATE;
-import org.weasis.core.ui.graphic.TempLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
-import org.weasis.core.ui.graphic.model.DefaultViewModel;
+import org.weasis.core.ui.model.AbstractGraphicModel;
+import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
+import org.weasis.core.ui.model.graphic.DragGraphic;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
+import org.weasis.core.ui.model.imp.XmlGraphicModel;
+import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
+import org.weasis.core.ui.model.utils.bean.PanPoint.State;
+import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -126,7 +129,6 @@ import br.com.animati.texture.codec.TextureDicomSeries;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
 import br.com.animati.texture.mpr3dview.api.CanvasTexure;
 import br.com.animati.texture.mpr3dview.api.DisplayUtils;
-import br.com.animati.texture.mpr3dview.api.GraphicsModel;
 import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
 import br.com.animati.texture.mpr3dview.api.TextureMeasurableLayer;
 import br.com.animati.texture.mpr3dview.internal.Activator;
@@ -162,7 +164,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
 
-    private final PanPoint highlightedPosition = new PanPoint(STATE.Center);
+    private final PanPoint highlightedPosition = new PanPoint(State.CENTER);
     private int pointerType = 0;
 
     protected final Color pointerColor1 = Color.black;
@@ -174,7 +176,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     protected final FocusHandler focusHandler = new FocusHandler();
     private final GraphicMouseHandler graphicMouseHandler = new GraphicMouseHandler(this);
 
-    private AnnotationsLayer infoLayer;
+    private LayerAnnotation infoLayer;
     public static boolean computePixelStats = true;
 
     protected final TextureMeasurableLayer measurableLayer;
@@ -195,26 +197,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         this.eventManager = eventManager;
 
         measurableLayer = new TextureMeasurableLayer(this);
-
         infoLayer = new InfoLayer3d(this);
-
-        DragLayer layer = new DragLayer(getLayerModel(), AbstractLayer.CROSSLINES);
-        layer.setLocked(true);
-        getLayerModel().addLayer(layer);
-        layer = new DragLayer(getLayerModel(), AbstractLayer.MEASURE) {
-            @Override
-            protected AffineTransform getAffineTransform() {
-                return graphsLayer.getAffineTransform();
-            }
-        };
-        getLayerModel().addLayer(layer);
-        TempLayer layerTmp = new TempLayer(getLayerModel()) {
-            @Override
-            protected AffineTransform getAffineTransform() {
-                return graphsLayer.getAffineTransform();
-            }
-        };
-        getLayerModel().addLayer(layerTmp);
 
         initActionWState();
 
@@ -275,7 +258,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             Font defaultFont = getFont();
             g2d.setFont(defaultFont);
 
-            drawLayers(g2d, graphsLayer.getAffineTransform(), graphsLayer.getInverseTransform());
+            drawLayers(g2d, getAffineTransform(), getInverseTransform());
 
             g2d.translate(offsetX, offsetY);
 
@@ -300,10 +283,9 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             draw = (Boolean) actionValue;
         }
         if (hasContent() && draw) {
-            Rectangle2D clip = new Rectangle2D.Double(
-                graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetX()),
-                graphsLayer.modelToViewLength(graphsLayer.getViewModel().getModelOffsetY()), getWidth(), getHeight());
-            getLayerModel().draw(g2d, transform, inverseTransform, clip);
+            Rectangle2D clip = new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
+                modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight());
+            getGraphicManager().draw(g2d, transform, inverseTransform, clip);
 
             if (Activator.showModelArea) {
                 Stroke oldStr = g2d.getStroke();
@@ -311,7 +293,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
                 g2d.setStroke(new BasicStroke(2));
                 g2d.setColor(Color.white);
-                g2d.draw(graphsLayer.getAffineTransform().createTransformedShape(getViewModel().getModelArea()));
+                g2d.draw(getAffineTransform().createTransformedShape(getViewModel().getModelArea()));
 
                 g2d.setColor(oldColor);
                 g2d.setStroke(oldStr);
@@ -401,8 +383,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             if ("rotation".equals(propertyName)) {
                 measurableLayer.setDirty(true);
 
-                String old = GraphicsModel.getRotationDesc((Quat4d) evt.getOldValue());
-                String current = GraphicsModel.getRotationDesc((Quat4d) evt.getNewValue());
+                String old = getRotationDesc((Quat4d) evt.getOldValue());
+                String current = getRotationDesc((Quat4d) evt.getNewValue());
 
                 if (old != null && !old.equals(current)) {
                     handleGraphicsLayer(-1);
@@ -418,6 +400,16 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             }
         }
     }
+    
+    public static String getRotationDesc(Quat4d rotation) {
+        StringBuilder desc = new StringBuilder();
+        desc.append(DecFormater.twoDecimal(rotation.w));
+        desc.append('_').append(DecFormater.twoDecimal(rotation.x));
+        desc.append('_').append(DecFormater.twoDecimal(rotation.y));
+        desc.append('_').append(DecFormater.twoDecimal(rotation.z));
+        return desc.toString();
+    }
+
 
     private void propertyChange(final SynchEvent synch) {
         SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
@@ -501,7 +493,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 actionsInView.put(command, val);
 
                 // TODO update only measure and limit when selected view share graphics
-                List<Graphic> list = this.getLayerModel().getAllGraphics();
+                List<Graphic> list = this.getGraphicManager().getAllGraphics();
                 for (Graphic graphic : list) {
                     graphic.updateLabel(true, this);
                 }
@@ -510,7 +502,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                     actionsInView.put(ActionWA.MIP_OPTION.cmd(), val);
                     mipOption = (TextureImageCanvas.MipOption) val;
                     measurableLayer.setDirty(true);
-                    graphsLayer.updateAllLabels(ViewTexture.this);
+                    updateAllLabels(ViewTexture.this);
                     repaint();
                 }
             } else if (command.equals(ActionWA.MIP_DEPTH.cmd())) {
@@ -518,7 +510,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                     actionsInView.put(ActionWA.MIP_DEPTH.cmd(), val);
                     mipDepth = (Integer) val / (double) getTotalSlices();
                     measurableLayer.setDirty(true);
-                    graphsLayer.updateAllLabels(ViewTexture.this);
+                    updateAllLabels(ViewTexture.this);
                     repaint();
                 }
             } else if (command.equals(ActionWA.VOLUM_QUALITY.cmd())) {
@@ -607,7 +599,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
      *            True if view is to be repainted.
      */
     @Override
-    public void setActionsInView(final String action, final Object value, final boolean repaint) {
+    public void setActionsInView(final String action, final Object value, final Boolean repaint) {
 
         actionsInView.put(action, value);
 
@@ -641,12 +633,37 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     private void updateAffineTransform() {
-        Boolean flip = (Boolean) getActionValue(ActionW.FLIP.cmd());
-        Integer rotationAngle = (int) Math.toDegrees(getRotationOffset());
-        if (rotationAngle < 0) {
-            rotationAngle = (rotationAngle + 360) % 360;
+        Rectangle2D modelArea = getViewModel().getModelArea();
+        double viewScale = getViewModel().getViewScale();
+        affineTransform.setToScale(viewScale, viewScale);
+
+        OpManager dispOp = getDisplayOpManager();
+        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
+
+        if (rotationAngle != null && rotationAngle > 0) {
+            if (flip != null && flip) {
+                rotationAngle = 360 - rotationAngle;
+            }
+            affineTransform.rotate(Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0,
+                modelArea.getHeight() / 2.0);
         }
-        graphsLayer.updateAffineTransform(rotationAngle, flip);
+        if (flip != null && flip) {
+            // Using only one allows to enable or disable flip with the rotation action
+            affineTransform.scale(-1.0, 1.0);
+            affineTransform.translate(-modelArea.getWidth(), 0.0);
+        }
+        Point offset = (Point) actionsInView.get("layer.offset");
+        if (offset != null) {
+            // TODO not consistent with image coordinates after crop
+            affineTransform.translate(-offset.getX(), -offset.getY());
+        }
+
+        try {
+            inverseTransform.setTransform(affineTransform.createInverse());
+        } catch (NoninvertibleTransformException e) {
+            e.printStackTrace();
+        }
 
         measurableLayer.setDirty(true);
     }
@@ -724,11 +741,10 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         if (un != null) {
             Rectangle modelArea = new Rectangle(0, 0, un.width, un.height);
 
-            Rectangle2D area = graphsLayer.getViewModel().getModelArea();
+            Rectangle2D area = getViewModel().getModelArea();
             if (modelArea != null && !modelArea.equals(area)) {
-                ((DefaultViewModel) graphsLayer.getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
-                    modelArea.height);
-                graphsLayer.getViewModel().setModelArea(modelArea);
+                ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
+                getViewModel().setModelArea(modelArea);
             }
         }
     }
@@ -962,14 +978,14 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             setActionsInView(ActionWA.MIP_OPTION.cmd(), TextureImageCanvas.MipOption.None, true);
             mipOption = TextureImageCanvas.MipOption.None;
             measurableLayer.setDirty(true);
-            graphsLayer.updateAllLabels(ViewTexture.this);
+            updateAllLabels(ViewTexture.this);
         }
         // Mip Depth
         if (cmd == null || ActionWA.MIP_DEPTH.cmd().equals(cmd)) {
             setActionsInView(ActionWA.MIP_DEPTH.cmd(), 5, true);
             mipDepth = 5 / (double) getTotalSlices();
             measurableLayer.setDirty(true);
-            graphsLayer.updateAllLabels(this);
+            updateAllLabels(this);
         }
 
         // ControlAxes
@@ -1150,7 +1166,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         // Set the butonMask to 0 of all the actions
         resetMouseAdapter();
 
-        this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+        this.setCursor(DefaultView2d.DEFAULT_CURSOR);
 
         addMouseAdapter(actions.getLeft(), InputEvent.BUTTON1_DOWN_MASK); // left mouse button
         if (actions.getMiddle().equals(actions.getLeft())) {
@@ -1319,13 +1335,13 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     @Override
-    public AnnotationsLayer getInfoLayer() {
+    public LayerAnnotation getInfoLayer() {
         return infoLayer;
     }
 
     private void handleGraphicsLayer(int old) {
         if (old != getCurrentSlice()) {
-            graphsLayer.removeGraphics();
+            setGraphicManager(new XmlGraphicModel());
         }
     }
 
@@ -1424,7 +1440,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     @Override
-    public void setFocused(boolean focused) {
+    public void setFocused(Boolean focused) {
         MediaSeries series = getSeries();
         if (series != null) {
             series.setFocused(focused);
@@ -1502,18 +1518,18 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void center() {
-        setCenter(0, 0);
+        setCenter(0.0, 0.0);
     }
 
     @Override
-    public void setCenter(double x, double y) {
+    public void setCenter(Double x, Double y) {
         setImageOffset(new Vector2d(x, y));
     }
 
     @Override
     public void moveOrigin(PanPoint point) {
         if (point != null) {
-            if (PanPoint.STATE.Dragging.equals(point.getState())) {
+            if (PanPoint.State.DRAGGING.equals(point.getState())) {
                 moveImageOffset((int) point.getX(), (int) point.getY());
             }
         }
@@ -1533,17 +1549,17 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     @Override
-    public void setSelected(boolean selected) {
+    public void setSelected(Boolean selected) {
         setBorder(selected ? focusBorder : normalBorder);
         // Remove the selection of graphics
-        getLayerModel().setSelectedGraphics(null);
+        getGraphicManager().setSelectedGraphic(null);
 
         // Throws to the tool listener the current graphic selection.
-        getLayerModel().fireGraphicsSelectionChanged(getMeasurableLayer());
+        getGraphicManager().fireGraphicsSelectionChanged(getMeasurableLayer());
     }
 
     @Override
-    public void setDrawingsVisibility(boolean visible) {
+    public void setDrawingsVisibility(Boolean visible) {
         if ((Boolean) actionsInView.get(ActionW.DRAW.cmd()) != visible) {
             actionsInView.put(ActionW.DRAW.cmd(), visible);
             repaint();
@@ -1557,7 +1573,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     @Override
-    public void changeZoomInterpolation(int interpolation) {
+    public void changeZoomInterpolation(Integer interpolation) {
         // TODO Auto-generated method stub
 
     }
@@ -1594,7 +1610,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     @Override
-    public void drawPointer(Graphics2D g, double x, double y) {
+    public void drawPointer(Graphics2D g, Double x, Double y) {
         float dash[] = { 5.0f };
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.translate(x, y);
@@ -1671,7 +1687,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     @Override
-    public void zoom(double viewScale) {
+    public void zoom(Double viewScale) {
         boolean defSize = viewScale == 0.0;
         ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
         if (defSize) {
@@ -1768,7 +1784,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                     if (!absgraph.isGraphicComplete()) {
                         graphicComplete = false;
                     }
-                    if (absgraph.isVariablePointsNumber()) {
+                    if (absgraph.getVariablePointsNumber()) {
                         if (graphicComplete) {
                             /*
                              * Convert mouse event point to real image coordinate point (without geometric
@@ -1806,7 +1822,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                                 popupMenu.add(new JSeparator());
                             }
                         } else if (graphicMouseHandler.getDragSequence() != null
-                            && absgraph.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
+                            && absgraph.getPtsNumber() == AbstractDragGraphic.UNDEFINED) {
                             final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                             item2.addActionListener(new ActionListener() {
 
@@ -1830,7 +1846,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        ViewTexture.this.getLayerModel().deleteSelectedGraphics(true);
+                        ViewTexture.this.getGraphicManager().deleteSelectedGraphics(ViewTexture.this, true);
                     }
                 });
                 popupMenu.add(menuItem);
@@ -1840,8 +1856,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        AbstractLayerModel.GraphicClipboard.setGraphics(selected);
-                        ViewTexture.this.getLayerModel().deleteSelectedGraphics(false);
+                        DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected);
+                        ViewTexture.this.getGraphicManager().deleteSelectedGraphics(ViewTexture.this, false);
                     }
                 });
                 popupMenu.add(menuItem);
@@ -1850,17 +1866,17 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                        DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected);
                     }
                 });
                 popupMenu.add(menuItem);
                 popupMenu.add(new JSeparator());
             }
             // TODO separate AbstractDragGraphic and ClassGraphic for properties
-            final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
+            final ArrayList<DragGraphic> list = new ArrayList<>();
             for (Graphic graphic : selected) {
-                if (graphic instanceof AbstractDragGraphic) {
-                    list.add((AbstractDragGraphic) graphic);
+                if (graphic instanceof DragGraphic) {
+                    list.add((DragGraphic) graphic);
                 }
             }
 
@@ -1976,38 +1992,27 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             count = popupMenu.getComponentCount();
         }
 
-        if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
+        if (DefaultView2d.GRAPHIC_CLIPBOARD.getGraphics() != null) {
             JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
             menuItem.addActionListener(new ActionListener() {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    List<Graphic> graphs = AbstractLayerModel.GraphicClipboard.getGraphics();
+                    List<Graphic> graphs = DefaultView2d.GRAPHIC_CLIPBOARD.getGraphics();
                     if (graphs != null) {
                         Rectangle2D area = ViewTexture.this.getViewModel().getModelArea();
-                        for (Graphic g : graphs) {
-                            if (!g.getBounds(null).intersects(area)) {
-                                int option = JOptionPane.showConfirmDialog(ViewTexture.this,
-                                    "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
-                                if (option == JOptionPane.YES_OPTION) {
-                                    break;
-                                } else {
-                                    return;
-                                }
+                        if (graphs.stream().anyMatch(g -> !g.getBounds(null).intersects(area))) {
+                            int option = JOptionPane.showConfirmDialog(ViewTexture.this,
+                                "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
+                            if (option != JOptionPane.YES_OPTION) {
+                                return;
                             }
                         }
-                        for (Graphic g : graphs) {
-                            AbstractLayer layer = ViewTexture.this.getLayerModel().getLayer(g.getLayerID());
-                            if (layer != null) {
-                                Graphic graph = g.deepCopy();
-                                if (graph != null) {
-                                    graph.updateLabel(true, ViewTexture.this);
-                                    layer.addGraphic(graph);
-                                }
-                            }
-                        }
+
+                        graphs.forEach(g -> AbstractGraphicModel.addGraphicToModel(ViewTexture.this, g.copy()));
+
                         // Repaint all because labels are not drawn
-                        ViewTexture.this.getLayerModel().repaint();
+                        ViewTexture.this.repaint();
                     }
                 }
             });
@@ -2066,7 +2071,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             if ((evt.getModifiersEx() & getButtonMaskEx()) != 0) {
                 JPopupMenu popupMenu = null;
                 final ArrayList<Graphic> selected =
-                    new ArrayList<Graphic>(ViewTexture.this.getLayerModel().getSelectedGraphics());
+                    new ArrayList<>(ViewTexture.this.getGraphicManager().getSelectedGraphics());
                 if (selected.size() > 0) {
                     popupMenu = ViewTexture.this.buildGraphicContextMenu(evt, selected);
                 } else if (ViewTexture.this.getSeries() != null) {
@@ -2121,7 +2126,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
 
-            ViewTexture.this.setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
+            ViewTexture.this.setCursor(action == null ? DefaultView2d.DEFAULT_CURSOR : action.getCursor());
         }
 
         @Override
@@ -2131,7 +2136,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            ViewTexture.this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+            ViewTexture.this.setCursor(DefaultView2d.DEFAULT_CURSOR);
         }
     }
 

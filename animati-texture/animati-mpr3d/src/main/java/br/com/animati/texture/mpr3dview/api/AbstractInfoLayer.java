@@ -26,9 +26,10 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.editor.image.AnnotationsLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
+import org.weasis.core.ui.model.layer.Layer;
+import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 
 import br.com.animati.texture.mpr3dview.internal.Messages;
 
@@ -40,7 +41,7 @@ import br.com.animati.texture.mpr3dview.internal.Messages;
  * @author Gabriela Bauermann (gabriela@animati.com.br)
  * @version 2013, 21 sep
  */
-public abstract class AbstractInfoLayer implements AnnotationsLayer {
+public abstract class AbstractInfoLayer extends DefaultUUID  implements LayerAnnotation {
 
     private static final int BORDER = 10;
     protected int border = BORDER;
@@ -59,67 +60,90 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
     public static final String MODALITY = Messages.getString("AbstractInfoLayer.modality");
 
     /** Display preference implementation. */
-    protected final Map<String, Boolean> displayPreferences = new HashMap<String, Boolean>();
+    protected final Map<String, Boolean> displayPreferences = new HashMap<>();
 
     protected Color highlightColor = new Color(255, 153, 153);
-    protected boolean visible = true;
-    protected AbstractLayer.Identifier identifier = AbstractLayer.ANNOTATION;
+    protected Boolean visible = Boolean.TRUE;
+
+    
+    @Override
+    public int compareTo(Layer obj) {
+        if (obj == null) {
+            return 1;
+        }
+        int thisVal = this.getLevel();
+        int anotherVal = obj.getLevel();
+        return thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1);
+    }
 
     @Override
-    public int getBorder() {
+    public LayerType getType() {
+        return LayerType.IMAGE_ANNOTATION;
+    }
+
+    @Override
+    public void setType(LayerType type) {
+        // Cannot change this type
+    }
+
+    @Override
+    public void setName(String graphicLayerName) {
+     // Cannot change the name
+    }
+
+    @Override
+    public String getName() {
+        return getType().toString();
+    }
+    
+    @Override
+    public Integer getBorder() {
         return border;
     }
 
     @Override
-    public void setBorder(int textBorder) {
+    public void setBorder(Integer textBorder) {
         border = textBorder;
     }
 
     @Override
-    public void setVisible(boolean flag) {
-        visible = flag;
-    }
-
-    @Override
-    public boolean isVisible() {
+    public Boolean getVisible() {
         return visible;
     }
 
     @Override
-    public void setLevel(int i) {
-        /* We dont use level */ }
-
-    @Override
-    public int getLevel() {
-        return 0;
+    public void setVisible(Boolean visible) {
+        this.visible = visible;
     }
 
     @Override
-    public Identifier getIdentifier() {
-        return identifier;
+    public Integer getLevel() {
+        return getType().getLevel();
     }
 
     @Override
-    public boolean isShowBottomScale() {
+    public void setLevel(Integer i) {
+        // Do Nothing
+    }
+
+    @Override
+    public Boolean isShowBottomScale() {
         return displayPreferences.get(SCALE_BOTTOM);
     }
 
     @Override
-    public void setShowBottomScale(boolean showBottomScale) {
+    public void setShowBottomScale(Boolean showBottomScale) {
         displayPreferences.put(SCALE_BOTTOM, showBottomScale);
     }
 
     @Override
-    public boolean getDisplayPreferences(String item) {
+    public Boolean getDisplayPreferences(String item) {
         Boolean val = displayPreferences.get(item);
-        if (val == null) {
-            val = false;
-        }
-        return val;
+        return val == null ? false : val;
     }
 
     @Override
-    public boolean setDisplayPreferencesValue(String displayItem, boolean selected) {
+    public Boolean setDisplayPreferencesValue(String displayItem, Boolean selected) {
         boolean selectedBefore = getDisplayPreferences(displayItem);
         displayPreferences.put(displayItem, selected);
         return selected != selectedBefore;
@@ -210,7 +234,7 @@ public abstract class AbstractInfoLayer implements AnnotationsLayer {
             Font oldFont = g2d.getFont();
             Font bigFont = oldFont.deriveFont(Font.BOLD, oldFont.getSize() + 1.0f);
             g2d.setFont(bigFont);
-            Hashtable<TextAttribute, Object> map = new Hashtable<TextAttribute, Object>(1);
+            Hashtable<TextAttribute, Object> map = new Hashtable<>(1);
             map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
             String fistLetter = leftTopRiBot[1].substring(0, 1);
             int shiftx = g2d.getFontMetrics().stringWidth(fistLetter);

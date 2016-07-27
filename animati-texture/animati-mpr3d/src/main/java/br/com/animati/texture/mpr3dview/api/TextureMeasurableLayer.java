@@ -28,7 +28,7 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.Graphic;
 
 import br.com.animati.texture.mpr3dview.ViewTexture;
 import br.com.animati.texture.mpr3dview.internal.Activator;
@@ -126,7 +126,7 @@ public class TextureMeasurableLayer implements MeasurableLayer {
             if (bufferedDirty) {
                 startRendering(false);
             } else {
-                List<Graphic> list = owner.getLayerModel().getAllGraphics();
+                List<Graphic> list = owner.getGraphicManager().getAllGraphics();
                 if (bufferedImage != null) {
                     showOnFrame(deepCopy(bufferedImage), getShapeTransform(), list);
                 }
@@ -234,7 +234,7 @@ public class TextureMeasurableLayer implements MeasurableLayer {
         GuiExecutor.instance().execute(new Runnable() {
             @Override
             public void run() {
-                List<Graphic> list = owner.getLayerModel().getAllGraphics();
+                List<Graphic> list = owner.getGraphicManager().getAllGraphics();
                 for (Graphic graphic : list) {
                     graphic.updateLabel(true, owner);
                 }

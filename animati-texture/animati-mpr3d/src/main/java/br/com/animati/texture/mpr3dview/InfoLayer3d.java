@@ -21,10 +21,10 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
-import org.weasis.core.ui.graphic.GraphicLabel;
+import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.CornerDisplay;
@@ -152,7 +152,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                     }
                 }
 
-                GraphicLabel.paintFontOutline(g2d, orientation.toString(), border, drawY);
+                DefaultGraphicLabel.paintFontOutline(g2d, orientation.toString(), border, drawY);
                 drawY -= fontHeight;
             }
         }
@@ -170,7 +170,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                 sb.append(pixelInfo.getPixelPositionText());
             }
             String strPixel = sb.toString();
-            GraphicLabel.paintFontOutline(g2d, strPixel, border, drawY - 1);
+            DefaultGraphicLabel.paintFontOutline(g2d, strPixel, border, drawY - 1);
             drawY -= fontHeight + 2;
             pixelInfoBound.setBounds(border - 2, (int) drawY + 3,
                 g2d.getFontMetrics(owner.getLayerFont()).stringWidth(strPixel) + 4, (int) fontHeight + 2);
@@ -178,7 +178,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
 
         /* WINDOW_LEVEL */
         if (getDisplayPreferences(WINDOW_LEVEL) && hideMin) {
-            GraphicLabel.paintFontOutline(g2d,
+            DefaultGraphicLabel.paintFontOutline(g2d,
                 Messages.getString("InfoLayer3d.WL") + " " + owner.windowingWindow + " / " + owner.windowingLevel,
                 border, drawY);
             drawY -= fontHeight;
@@ -188,7 +188,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
         if (getDisplayPreferences(ZOOM) && hideMin) {
             double dispZoom = getOwnerZoomFactor();
             if (dispZoom > 0) {
-                GraphicLabel.paintFontOutline(g2d, Messages.getString("InfoLayer3d.zoom") + " "
+                DefaultGraphicLabel.paintFontOutline(g2d, Messages.getString("InfoLayer3d.zoom") + " "
                     + DecFormater.twoDecimal(dispZoom * 100) + " " + Messages.getString("InfoLayer3d.percent_symb"),
                     border, drawY);
                 drawY -= fontHeight;
@@ -198,7 +198,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
         if (getDisplayPreferences(ROTATION) && hideMin) {
             Integer rotation = (Integer) owner.getActionValue(ActionW.ROTATION.cmd());
             if (rotation != null) {
-                GraphicLabel.paintFontOutline(g2d, Messages.getString("InfoLayer.angle") + " "
+                DefaultGraphicLabel.paintFontOutline(g2d, Messages.getString("InfoLayer.angle") + " "
                     + DecFormater.oneDecimal(rotation) + " " + Messages.getString("InfoLayer.angle_symb"), border,
                     drawY);
                 drawY -= fontHeight;
@@ -213,7 +213,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
             Integer index = getOwnerContentFrameIndex();
             Integer size = getOwnerSeriesSize();
             if (index != null && size != null) {
-                GraphicLabel.paintFontOutline(g2d,
+                DefaultGraphicLabel.paintFontOutline(g2d,
                     Messages.getString("InfoLayer.frame") + instString + (index + 1) + " / " + size, border, drawY);
                 drawY -= fontHeight;
             }
@@ -244,7 +244,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                 if (value != null) {
                                     String str = tag.getFormattedText(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        GraphicLabel.paintFontOutline(g2d, str, border, drawY);
+                                        DefaultGraphicLabel.paintFontOutline(g2d, str, border, drawY);
                                         drawY += fontHeight;
                                     }
                                     break;
@@ -277,7 +277,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                 if (value != null) {
                                     String str = tag.getFormattedText(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        GraphicLabel.paintFontOutline(g2d, str,
+                                        DefaultGraphicLabel.paintFontOutline(g2d, str,
                                             bound.width - g2d.getFontMetrics().stringWidth(str) - (float) border,
                                             drawY);
                                         drawY += fontHeight;
@@ -314,7 +314,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                 if (value != null) {
                                     String str = tag.getFormattedText(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        GraphicLabel.paintFontOutline(g2d, str,
+                                        DefaultGraphicLabel.paintFontOutline(g2d, str,
                                             bound.width - g2d.getFontMetrics().stringWidth(str) - border, drawY);
                                         drawY -= fontHeight;
                                         break;
@@ -418,7 +418,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
     }
 
     @Override
-    public AnnotationsLayer getLayerCopy(DefaultView2d view2DPane) {
+    public LayerAnnotation getLayerCopy(DefaultView2d view2DPane) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -431,7 +431,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
             if (!textureSeries.isSliceSpacingRegular()) {
                 if (isVolumetricView() || !owner.isShowingAcquisitionAxis()) {
                     String message = Messages.getString("InfoLayer3d.SliceSpacingWarning");
-                    GraphicLabel.paintColorFontOutline(g2d, message, border, drawY, Color.red);
+                    DefaultGraphicLabel.paintColorFontOutline(g2d, message, border, drawY, Color.red);
                     drawY -= fontHeight;
                 }
             }
@@ -447,7 +447,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
         }
 
         if (tsuid != null) {
-            GraphicLabel.paintColorFontOutline(g2d, Messages.getString("InfoLayer.lossy") + " " + tsuid, border, drawY,
+            DefaultGraphicLabel.paintColorFontOutline(g2d, Messages.getString("InfoLayer.lossy") + " " + tsuid, border, drawY,
                 Color.RED);
             drawY -= fontHeight;
         }

@@ -4,14 +4,23 @@
  */
 package br.com.animati.texture.mpr3dview.api;
 
-import java.awt.Dimension;
+import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import javax.swing.JComponent;
 import javax.vecmath.Point2i;
@@ -21,10 +30,17 @@ import javax.vecmath.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.model.ViewModel;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
-import org.weasis.core.ui.graphic.model.Canvas;
-import org.weasis.core.ui.graphic.model.DefaultViewModel;
-import org.weasis.core.ui.graphic.model.MainLayerModel;
+import org.weasis.core.api.gui.model.ViewModelChangeListener;
+import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.ui.editor.image.Canvas;
+import org.weasis.core.ui.editor.image.GraphicsPane;
+import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.imp.XmlGraphicModel;
+import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
+import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
+import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
@@ -39,14 +55,30 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     /** Class logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(CanvasTexure.class);
 
-    protected final GraphicsModel graphsLayer;
-    protected final HashMap<String, Object> actionsInView = new HashMap<String, Object>();
+    protected GraphicModel graphicManager;
+    protected ViewModel viewModel;
+    protected final LayerModelHandler layerModelHandler;
+    protected final ViewModelHandler viewModelHandler;
+
     protected final DrawingsKeyListeners drawingsKeyListeners = new DrawingsKeyListeners();
+    protected final HashMap<String, Object> actionsInView = new HashMap<>();
+    protected final AffineTransform affineTransform = new AffineTransform();
+    protected final AffineTransform inverseTransform = new AffineTransform();
+
+    protected final PropertyChangeListener graphicsChangeHandler = new PropertyChangeHandler();
 
     public CanvasTexure(ImageSeries parentImageSeries) {
         super(parentImageSeries);
 
-        graphsLayer = new GraphicsModel(new MainLayerModel(this), new TextureViewModel());
+        this.layerModelHandler = new LayerModelHandler();
+
+        this.graphicManager = new XmlGraphicModel();
+        this.graphicManager.addChangeListener(layerModelHandler);
+
+        this.viewModelHandler = new ViewModelHandler();
+
+        this.viewModel = new TextureViewModel();
+        this.viewModel.addViewModelChangeListener(viewModelHandler);
     }
 
     @Override
@@ -56,48 +88,64 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
 
     @Override
     public AffineTransform getAffineTransform() {
-        return graphsLayer.getAffineTransform();
+        return affineTransform;
     }
 
     @Override
     public AffineTransform getInverseTransform() {
-        return graphsLayer.getInverseTransform();
+        return inverseTransform;
     }
 
     @Override
     public void disposeView() {
-        graphsLayer.dispose();
+        Optional.ofNullable(viewModel).ifPresent(model -> model.removeViewModelChangeListener(viewModelHandler));
+        // Unregister listener
+        graphicManager.removeChangeListener(layerModelHandler);
+        graphicManager.removeGraphicChangeHandler(graphicsChangeHandler);
         super.dispose();
     }
 
     @Override
     public ViewModel getViewModel() {
-        return graphsLayer.getViewModel();
+        return viewModel;
     }
 
     @Override
     public void setViewModel(ViewModel viewModel) {
-        ViewModel viewModelOld = getViewModel();
-        if (viewModelOld != getViewModel()) {
-            graphsLayer.setViewModel(viewModel);
-            firePropertyChange("viewModel", viewModelOld, getViewModel());
+        ViewModel viewModelOld = this.viewModel;
+        if (viewModelOld != viewModel) {
+            if (viewModelOld != null) {
+                viewModelOld.removeViewModelChangeListener(viewModelHandler);
+            }
+            this.viewModel = viewModel;
+            if (this.viewModel != null) {
+                this.viewModel.addViewModelChangeListener(viewModelHandler);
+            }
+            firePropertyChange("viewModel", viewModelOld, this.viewModel); //$NON-NLS-1$
         }
     }
 
     @Override
-    public AbstractLayerModel getLayerModel() {
-        return graphsLayer.getLayerModel();
+    public GraphicModel getGraphicManager() {
+        return graphicManager;
     }
 
     @Override
-    public void setLayerModel(AbstractLayerModel layerModel) {
-        AbstractLayerModel old = getLayerModel();
-        if (old != getLayerModel()) {
-            graphsLayer.setLayerModel(layerModel);
-            firePropertyChange("layerModelModel", old, getLayerModel());
+    public void setGraphicManager(GraphicModel graphicManager) {
+        Objects.requireNonNull(graphicManager);
+        GraphicModel graphicManagerOld = this.graphicManager;
+        if (!Objects.equals(graphicManager, graphicManagerOld)) {
+            graphicManagerOld.removeChangeListener(layerModelHandler);
+            graphicManagerOld.removeGraphicChangeHandler(graphicsChangeHandler);
+            this.graphicManager = graphicManager;
+            this.graphicManager.addGraphicChangeHandler(graphicsChangeHandler);
+            if (this instanceof ViewCanvas) {
+                this.graphicManager.updateLabels(Boolean.TRUE, (ViewCanvas) this);
+            }
+            this.graphicManager.addChangeListener(layerModelHandler);
+            firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager);
         }
     }
-
     @Override
     public Object getActionValue(String action) {
         if (action == null) {
@@ -110,51 +158,67 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     public HashMap<String, Object> getActionsInView() {
         return actionsInView;
     }
+    
 
     @Override
-    public void zoom(double viewScale) {
+    public PropertyChangeListener getGraphicsChangeHandler() {
+        return graphicsChangeHandler;
+    }
+
+    @Override
+    public void zoom(Double viewScale) {
         setZoom(viewScale, true); // true for repait texture.
     }
 
     @Override
     public double getBestFitViewScale() {
-        return graphsLayer.getBestFitViewScale(new Dimension(getWidth(), getHeight()));
+        final double viewportWidth = getWidth() - 1;
+        final double viewportHeight = getHeight() - 1;
+        final Rectangle2D modelArea = viewModel.getModelArea();
+        double min = Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight());
+        return cropViewScale(min);
+    }
+
+    private double cropViewScale(double viewScale) {
+        return DefaultViewModel.cropViewScale(viewScale, viewModel.getViewScaleMin(), viewModel.getViewScaleMax());
     }
 
     @Override
-    public double viewToModelX(double viewX) {
-        return graphsLayer.modelToViewX(viewX);
+    public double viewToModelX(Double viewX) {
+        return viewModel.getModelOffsetX() + viewToModelLength(viewX);
     }
 
     @Override
-    public double viewToModelY(double viewY) {
-        return graphsLayer.modelToViewY(viewY);
+    public double viewToModelY(Double viewY) {
+        return viewModel.getModelOffsetY() + viewToModelLength(viewY);
     }
 
     @Override
-    public double viewToModelLength(double viewLength) {
-        return graphsLayer.viewToModelLength(viewLength);
+    public double viewToModelLength(Double viewLength) {
+        return viewLength / viewModel.getViewScale();
     }
 
     @Override
-    public double modelToViewX(double modelX) {
-        return graphsLayer.modelToViewX(modelX);
+    public double modelToViewX(Double modelX) {
+        return modelToViewLength(modelX - viewModel.getModelOffsetX());
     }
 
     @Override
-    public double modelToViewY(double modelY) {
-        return graphsLayer.modelToViewY(modelY);
+    public double modelToViewY(Double modelY) {
+        return modelToViewLength(modelY - viewModel.getModelOffsetY());
     }
 
     @Override
-    public double modelToViewLength(double modelLength) {
-        return graphsLayer.modelToViewLength(modelLength);
+    public double modelToViewLength(Double modelLength) {
+        return modelLength * viewModel.getViewScale();
     }
-
     @Override
-    public Point2D getImageCoordinatesFromMouse(int x, int y) {
-        // not realy ImageCoordenates... see: Wikipage 'Coordinate Systems'
-        return graphsLayer.getImageCoordinatesFromMouse(x, y);
+    public Point2D getImageCoordinatesFromMouse(Integer x, Integer y) {
+        double viewScale = getViewModel().getViewScale();
+        Point2D p2 = new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale,
+            y + getViewModel().getModelOffsetY() * viewScale);
+        inverseTransform.transform(p2, p2);
+        return p2;
     }
 
     public Point3d getOriginalSystemCoordinatesFromMouse(int x, int y) {
@@ -165,9 +229,23 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     }
 
     @Override
-    public Point getMouseCoordinatesFromImage(double x, double y) {
+    public Point getMouseCoordinatesFromImage(Double x, Double y) {
         // not realy ImageCoordenates... see: Wikipage 'Coordinate Systems'
-        return graphsLayer.getMouseCoordinatesFromImage(x, y);
+        Point2D p2 = new Point2D.Double(x, y);
+        affineTransform.transform(p2, p2);
+        double viewScale = getViewModel().getViewScale();
+        return new Point((int) Math.floor(p2.getX() - getViewModel().getModelOffsetX() * viewScale + 0.5),
+            (int) Math.floor(p2.getY() - getViewModel().getModelOffsetY() * viewScale + 0.5));
+    }
+    
+    /**
+     * Updates all labels on viewer.
+     * 
+     * @param source
+     *            The viewer object.
+     */
+    public void updateAllLabels(final Component source) {
+        // TODO
     }
 
     /**
@@ -257,16 +335,30 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
         }
     }
 
+    private class LayerModelHandler implements GraphicModelChangeListener {
+        @Override
+        public void handleModelChanged(GraphicModel modelList) {
+            repaint();
+        }
+    }
+
+    private class ViewModelHandler implements ViewModelChangeListener {
+        @Override
+        public void handleViewModelChanged(ViewModel viewModel) {
+            repaint();
+        }
+    }
+
     private class DrawingsKeyListeners implements KeyListener {
 
         @Override
         public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-                getLayerModel().deleteSelectedGraphics(false);
+                graphicManager.deleteSelectedGraphics(CanvasTexure.this, false);
             } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_D) {
-                getLayerModel().setSelectedGraphics(null);
+                graphicManager.setSelectedGraphic(null);
             } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_A) {
-                getLayerModel().setSelectedGraphics(getLayerModel().getAllGraphics());
+                graphicManager.setSelectedAllGraphics();
             }
         }
 
@@ -276,6 +368,136 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
 
         @Override
         public void keyTyped(KeyEvent e) {
+        }
+    }
+
+    class PropertyChangeHandler implements PropertyChangeListener, Serializable {
+        private static final long serialVersionUID = -9094820911680205527L;
+
+        private PropertyChangeHandler() {
+        }
+
+        // This method is called when a property is changed (fired from a graphic)
+        @Override
+        public void propertyChange(PropertyChangeEvent propertychangeevent) {
+            Object obj = propertychangeevent.getSource();
+            String s = propertychangeevent.getPropertyName();
+            if (obj instanceof Graphic) {
+                Graphic graph = (Graphic) obj;
+                if ("bounds".equals(s)) { //$NON-NLS-1$
+                    graphicBoundsChanged(graph, (Shape) propertychangeevent.getOldValue(),
+                        (Shape) propertychangeevent.getNewValue(), getAffineTransform());
+                } else if ("graphicLabel".equals(s)) { //$NON-NLS-1$
+                    labelBoundsChanged(graph, (DefaultGraphicLabel) propertychangeevent.getOldValue(),
+                        (DefaultGraphicLabel) propertychangeevent.getNewValue(), getAffineTransform());
+                } else if ("remove".equals(s)) { //$NON-NLS-1$
+                    removeGraphic(graph);
+                } else if ("remove.repaint".equals(s)) { //$NON-NLS-1$
+                    removeGraphicAndRepaint(graph);
+                } else if ("toFront".equals(s)) { //$NON-NLS-1$
+                    toFront(graph);
+                } else if ("toBack".equals(s)) { //$NON-NLS-1$
+                    toBack(graph);
+                }
+            }
+        }
+
+        public void toFront(Graphic graphic) {
+            List<Graphic> list = graphicManager.getModels();
+            synchronized (list) {
+                for (int i = 0; i < list.size(); i++) {
+                    if (list.get(i).equals(graphic)) {
+                        Collections.rotate(list.subList(i, list.size()), -1);
+                        break;
+                    }
+                }
+            }
+            repaint();
+
+        }
+
+        public void toBack(Graphic graphic) {
+            List<Graphic> list = graphicManager.getModels();
+            synchronized (list) {
+                for (int i = 0; i < list.size(); i++) {
+                    if (list.get(i).equals(graphic)) {
+                        Collections.rotate(list.subList(0, i + 1), 1);
+                        break;
+                    }
+                }
+            }
+            repaint();
+        }
+
+        public void removeGraphicAndRepaint(Graphic graphic) {
+            removeGraphic(graphic);
+            GraphicsPane.repaint(CanvasTexure.this,
+                graphic.getTransformedBounds(graphic.getShape(), getAffineTransform()));
+        }
+
+        public void removeGraphic(Graphic graphic) {
+            if (graphicManager != null) {
+                graphicManager.removeGraphic(graphic);
+            }
+            graphic.removePropertyChangeListener(graphicsChangeHandler);
+        }
+
+        protected Rectangle rectangleUnion(Rectangle rectangle, Rectangle rectangle1) {
+            if (rectangle == null) {
+                return rectangle1;
+            }
+            return rectangle1 == null ? rectangle : rectangle.union(rectangle1);
+        }
+
+        protected void graphicBoundsChanged(Graphic graphic, Shape oldShape, Shape shape, AffineTransform transform) {
+            if (graphic != null) {
+                if (oldShape == null) {
+                    if (shape != null) {
+                        Rectangle rect = graphic.getTransformedBounds(shape, transform);
+                        GraphicsPane.repaint(CanvasTexure.this, rect);
+                    }
+                } else {
+                    if (shape == null) {
+                        Rectangle rect = graphic.getTransformedBounds(oldShape, transform);
+                        GraphicsPane.repaint(CanvasTexure.this, rect);
+                    } else {
+                        Rectangle rect = rectangleUnion(graphic.getTransformedBounds(oldShape, transform),
+                            graphic.getTransformedBounds(shape, transform));
+                        GraphicsPane.repaint(CanvasTexure.this, rect);
+                    }
+                }
+            }
+        }
+
+        protected void labelBoundsChanged(Graphic graphic, DefaultGraphicLabel oldLabel, DefaultGraphicLabel newLabel,
+            AffineTransform transform) {
+
+            if (graphic != null) {
+                boolean oldNull = oldLabel == null || oldLabel.getLabels() == null;
+                boolean newNull = newLabel == null || newLabel.getLabels() == null;
+                if (oldNull) {
+                    if (!newNull) {
+                        Rectangle2D rect = graphic.getTransformedBounds(newLabel, transform);
+                        GeomUtil.growRectangle(rect, 2);
+                        GraphicsPane.repaint(CanvasTexure.this, rect.getBounds());
+                    }
+                } else {
+                    if (newNull) {
+                        Rectangle2D rect = graphic.getTransformedBounds(oldLabel, transform);
+                        GeomUtil.growRectangle(rect, 2);
+                        GraphicsPane.repaint(CanvasTexure.this, rect.getBounds());
+                    } else {
+                        Rectangle2D newRect = graphic.getTransformedBounds(newLabel, transform);
+                        GeomUtil.growRectangle(newRect, 2);
+
+                        Rectangle2D oldRect = graphic.getTransformedBounds(oldLabel, transform);
+                        GeomUtil.growRectangle(oldRect, 2);
+
+                        Rectangle rect = rectangleUnion(oldRect.getBounds(), newRect.getBounds());
+                        GraphicsPane.repaint(CanvasTexure.this, rect);
+                    }
+                }
+            }
         }
     }
 

@@ -61,10 +61,10 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.PanPoint;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.GraphicsListener;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
@@ -127,41 +127,41 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
     private final CrosshairListener crosshairAction;
 
     private GUIManager() {
-        iniAction(moveTroughSliceAction = newScrollSeries());
-        iniAction(volumeQuality = newVolumeQuality());
-        iniAction(windowAction = newWindowAction());
-        iniAction(levelAction = newLevelAction());
-        iniAction(rotateAction = newRotateAction());
-        iniAction(zoomAction = newZoomAction());
-        iniAction(mipDepthAction = newMipDepth());
+        setAction(moveTroughSliceAction = newScrollSeries());
+        setAction(volumeQuality = newVolumeQuality());
+        setAction(windowAction = newWindowAction());
+        setAction(levelAction = newLevelAction());
+        setAction(rotateAction = newRotateAction());
+        setAction(zoomAction = newZoomAction());
+        setAction(mipDepthAction = newMipDepth());
 
-        iniAction(flipAction = newFlipAction());
-        iniAction(inverseLutAction = newInverseLutAction());
-        iniAction(inverseStackAction = newInverseStackAction());
-        iniAction(drawOnceAction = newDrawOnlyOnceAction());
-        iniAction(smoothing = newSmoothing());
-        iniAction(volumeSlicing = newVolumeSlicing());
-        iniAction(volumeLighting = newVolumeLighting());
+        setAction(flipAction = newFlipAction());
+        setAction(inverseLutAction = newInverseLutAction());
+        setAction(inverseStackAction = newInverseStackAction());
+        setAction(drawOnceAction = newDrawOnlyOnceAction());
+        setAction(smoothing = newSmoothing());
+        setAction(volumeSlicing = newVolumeSlicing());
+        setAction(volumeLighting = newVolumeLighting());
 
-        iniAction(presetAction = newPresetAction());
-        // iniAction(lutShapeAction = newLutShapeAction());
-        iniAction(lutAction = newLutAction());
-        iniAction(filterAction = newFilterAction());
-        iniAction(sortStackAction = newSortStackAction());
-        iniAction(layoutAction = newLayoutAction(
+        setAction(presetAction = newPresetAction());
+        // setAction(lutShapeAction = newLutShapeAction());
+        setAction(lutAction = newLutAction());
+        setAction(filterAction = newFilterAction());
+        setAction(sortStackAction = newSortStackAction());
+        setAction(layoutAction = newLayoutAction(
             View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST.size()])));
-        iniAction(synchAction =
+        setAction(synchAction =
             newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
-        iniAction(measureAction =
-            newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
-        iniAction(spUnitAction = newSpatialUnit(Unit.values()));
-        iniAction(mipOptionAction = newMipOption());
+        setAction(measureAction =
+            newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
+        setAction(spUnitAction = newSpatialUnit(Unit.values()));
+        setAction(mipOptionAction = newMipOption());
 
-        iniAction(panAction = buildPanAction());
-        iniAction(crosshairAction = newCrosshairAction());
-        iniAction(new BasicActionState(ActionW.RESET));
-        iniAction(new BasicActionState(ActionW.SHOW_HEADER));
+        setAction(panAction = buildPanAction());
+        setAction(crosshairAction = newCrosshairAction());
+        setAction(new BasicActionState(ActionW.RESET));
+        setAction(new BasicActionState(ActionW.SHOW_HEADER));
 
         final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         Preferences prefs = BundlePreferences.getDefaultPreferences(context);
@@ -200,7 +200,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                     if (panner != null) {
                         if (pickPoint != null && panner.getViewModel() != null) {
                             Point pt = e.getPoint();
-                            setPoint(new PanPoint(PanPoint.STATE.Dragging, pt.x - pickPoint.x, pt.y - pickPoint.y));
+                            setPoint(new PanPoint(PanPoint.State.DRAGGING, pt.x - pickPoint.x, pt.y - pickPoint.y));
                             pickPoint = pt;
                             panner.addPointerType(ViewCanvas.CENTER_POINTER);
                         }
@@ -628,8 +628,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         List<DockableTool> tools = selectedView2dContainer.getToolPanel();
         synchronized (tools) {
             for (DockableTool p : tools) {
-                if (p instanceof GraphicsListener) {
-                    view2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
+                if (p instanceof GraphicSelectionListener) {
+                    view2d.getGraphicManager().addGraphicSelectionListener((GraphicSelectionListener) p);
                 }
             }
         }
@@ -714,10 +714,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                     && ((ViewTexture) viewPane).getViewType() == ViewType.VOLUME3D)) {
                     for (int i = 0; i < panes.size(); i++) {
                         ViewCanvas<DicomImageElement> pane = panes.get(i);
-                        AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
-                        if (layer != null) {
-                            layer.deleteAllGraphic();
-                        }
+                        pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
+                        
                         oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
                         if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                             oldSynch = synch;
@@ -730,15 +728,13 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                     if (Mode.Stack.equals(synch.getMode())) {
                         for (int i = 0; i < panes.size(); i++) {
                             ViewCanvas<DicomImageElement> pane = panes.get(i);
-                            AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
-                            if (layer != null) {
-                                layer.deleteAllGraphic();
-                            }
+                            pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
+                            
                             MediaSeries<DicomImageElement> s = pane.getSeries();
                             if (s != null) {
                                 oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
                                 if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
-                                    oldSynch = synch.clone();
+                                    oldSynch = synch.copy();
                                 }
                                 if (pane instanceof ViewTexture
                                     && ((ViewTexture) pane).getViewType() != ViewType.VOLUME3D) {
