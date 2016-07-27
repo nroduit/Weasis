@@ -50,11 +50,10 @@ public class GraphicsPane extends JComponent implements Canvas {
     private static final long serialVersionUID = -7830146632397526267L;
 
     protected GraphicModel graphicManager;
-
-    private ViewModel viewModel;
-
+    protected ViewModel viewModel;
     protected final LayerModelHandler layerModelHandler;
     protected final ViewModelHandler viewModelHandler;
+    
     protected final DrawingsKeyListeners drawingsKeyListeners = new DrawingsKeyListeners();
     protected final HashMap<String, Object> actionsInView = new HashMap<>();
     protected final AffineTransform affineTransform = new AffineTransform();
@@ -115,10 +114,8 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     @Override
     public void disposeView() {
-        Optional.ofNullable(viewModel).ifPresent(model -> {
-            model.removeViewModelChangeListener(viewModelHandler);
-            model = null;
-        });
+        Optional.ofNullable(viewModel).ifPresent(model -> 
+            model.removeViewModelChangeListener(viewModelHandler));
         // Unregister listener
         graphicManager.removeChangeListener(layerModelHandler);
         graphicManager.removeGraphicChangeHandler(graphicsChangeHandler);

@@ -153,6 +153,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
+    
+    public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
+
+    public static final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
+    public static final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
+
+    public static final Cursor EDIT_CURSOR = DefaultView2d.getCustomCursor("editpoint.png", "Edit Point", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final Cursor HAND_CURSOR = DefaultView2d.getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final Cursor WAIT_CURSOR = DefaultView2d.getNewCursor(Cursor.WAIT_CURSOR);
+    public static final Cursor CROSS_CURSOR = DefaultView2d.getNewCursor(Cursor.CROSSHAIR_CURSOR);
+    public static final Cursor MOVE_CURSOR = DefaultView2d.getNewCursor(Cursor.MOVE_CURSOR);
+    public static final Cursor DEFAULT_CURSOR = DefaultView2d.getNewCursor(Cursor.DEFAULT_CURSOR);
 
     protected final FocusHandler focusHandler = new FocusHandler();
     protected final GraphicMouseHandler<E> graphicMouseHandler;
@@ -179,23 +191,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected final ImageViewerEventManager<E> eventManager;
 
-    public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
-
-    public static final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
-
-    public static final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
-
-    public static final Cursor EDIT_CURSOR = DefaultView2d.getCustomCursor("editpoint.png", "Edit Point", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
-
-    public static final Cursor HAND_CURSOR = DefaultView2d.getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
-
-    public static final Cursor WAIT_CURSOR = DefaultView2d.getNewCursor(Cursor.WAIT_CURSOR);
-
-    public static final Cursor CROSS_CURSOR = DefaultView2d.getNewCursor(Cursor.CROSSHAIR_CURSOR);
-
-    public static final Cursor MOVE_CURSOR = DefaultView2d.getNewCursor(Cursor.MOVE_CURSOR);
-
-    public static final Cursor DEFAULT_CURSOR = DefaultView2d.getNewCursor(Cursor.DEFAULT_CURSOR);
 
     public DefaultView2d(ImageViewerEventManager<E> eventManager) {
         this(eventManager, null);

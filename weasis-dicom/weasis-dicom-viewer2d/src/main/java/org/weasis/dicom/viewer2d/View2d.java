@@ -709,20 +709,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
     }
 
-    private void updatePrButtonState(DicomImageElement img, boolean newImg) {
-        if (img == null || newImg) {
+    private synchronized void  updatePrButtonState(DicomImageElement img, boolean newImg) {
+        if (img == null) {
             // Remove old PR button
-            for (int i = getViewButtons().size() - 1; i >= 0; i--) {
-                ViewButton vb = getViewButtons().get(i);
-                if (vb != null && (vb.getIcon() == View2d.PR_ICON)) {
-                    getViewButtons().remove(i);
-                }
-            }
+            getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
         }
         if (newImg) {
             Object oldPR = getActionValue(ActionW.PR_STATE.cmd());
             ViewButton prButton = PRManager.buildPrSelection(this, series, img);
             if (prButton != null) {
+                getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
                 getViewButtons().add(prButton);
             } else if (oldPR != null) {
                 setPresentationState(null);

@@ -91,7 +91,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         return basicState.getActionW().getTitle();
     }
 
-    protected ViewCanvas<? extends ImageElement> getIViewCanvas(InputEvent e) {
+    protected ViewCanvas<? extends ImageElement> getViewCanvas(InputEvent e) {
         Object source = e.getSource();
         if (source instanceof ViewCanvas) {
             return (ViewCanvas<?>) source;
@@ -103,7 +103,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     public void mousePressed(MouseEvent e) {
         int buttonMask = getButtonMaskEx();
         if ((e.getModifiersEx() & buttonMask) != 0) {
-            ViewCanvas<?> panner = getIViewCanvas(e);
+            ViewCanvas<?> panner = getViewCanvas(e);
             if (panner != null) {
                 pickPoint = e.getPoint();
                 if (panner.getViewModel() != null) {
@@ -119,7 +119,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     public void mouseDragged(MouseEvent e) {
         int buttonMask = getButtonMaskEx();
         if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
-            ViewCanvas<?> panner = getIViewCanvas(e);
+            ViewCanvas<?> panner = getViewCanvas(e);
             if (panner != null) {
                 if (pickPoint != null && panner.getViewModel() != null) {
                     double scale = panner.getViewModel().getViewScale();
@@ -135,7 +135,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     public void mouseReleased(MouseEvent e) {
         int buttonMask = getButtonMask();
         if (!e.isConsumed() && (e.getModifiers() & buttonMask) != 0) {
-            ViewCanvas<?> panner = getIViewCanvas(e);
+            ViewCanvas<?> panner = getViewCanvas(e);
             if (panner != null) {
                 panner.resetPointerType(ViewCanvas.CENTER_POINTER);
                 panner.getJComponent().repaint();
