@@ -14,6 +14,7 @@ import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.NonEditableGraphic;
 import org.weasis.core.ui.model.graphic.imp.PointGraphic;
@@ -21,6 +22,7 @@ import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class PrGraphicUtil {
@@ -31,8 +33,8 @@ public class PrGraphicUtil {
     public static final String CIRCLE = "CIRCLE"; //$NON-NLS-1$
     public static final String ELLIPSE = "ELLIPSE"; //$NON-NLS-1$
 
-    public static Graphic buildGraphic(Attributes go, Color color, boolean labelVisible, double width,
-        double height, boolean canBeEdited, AffineTransform inverse, boolean dcmSR) throws InvalidShapeException {
+    public static Graphic buildGraphic(Attributes go, Color color, boolean labelVisible, double width, double height,
+        boolean canBeEdited, AffineTransform inverse, boolean dcmSR) throws InvalidShapeException {
         /*
          * For DICOM SR
          *
@@ -51,6 +53,18 @@ public class PrGraphicUtil {
         boolean isDisp = dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits)); //$NON-NLS-1$
 
         String type = go.getString(Tag.GraphicType);
+        Integer groupID = DicomMediaUtils.getIntegerFromDicomElement(go, Tag.GraphicGroupID, null);
+        boolean filled = getBooleanValue(go, Tag.GraphicFilled);
+        Attributes style = go.getNestedDataset(Tag.LineStyleSequence);
+        Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
+        Boolean dashed = style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern)); //$NON-NLS-1$
+        if (style != null) {
+            float[] rgb = CIELab.convertToFloatLab(style.getInts(Tag.PatternOnColorCIELabValue));
+            if (rgb != null) {
+                color = PresentationStateReader.getRGBColor(255, rgb, (int[]) null);
+            }
+        }
+
         Graphic shape = null;
         float[] points = DicomMediaUtils.getFloatArrayFromDicomElement(go, Tag.GraphicData, null);
         if (isDisp && inverse != null) {
@@ -78,13 +92,10 @@ public class PrGraphicUtil {
                         // Closed when the first point is the same as the last point
                         if (handlePointList.get(0).equals(handlePointList.get(size - 1))) {
                             shape = new PolygonGraphic().buildGraphic(handlePointList);
-                            shape.setPaint(color);
-                            shape.setLabelVisible(labelVisible);
-                            shape.setFilled(getBooleanValue(go, Tag.GraphicFilled));
+                            setProperties(shape, thickness, color, labelVisible, filled, groupID);
                         } else {
                             shape = new PolylineGraphic().buildGraphic(handlePointList);
-                            shape.setPaint(color);
-                            shape.setLabelVisible(labelVisible);
+                            setProperties(shape, thickness, color, labelVisible, Boolean.FALSE, groupID);
                         }
                     } else {
                         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
@@ -101,9 +112,7 @@ public class PrGraphicUtil {
                             path.closePath();
                         }
                         shape = new NonEditableGraphic(path);
-                        shape.setPaint(color);
-                        shape.setLabelVisible(labelVisible);
-                        shape.setFilled(getBooleanValue(go, Tag.GraphicFilled));
+                        setProperties(shape, thickness, color, labelVisible, filled, groupID);
                     }
                 }
             }
@@ -134,14 +143,10 @@ public class PrGraphicUtil {
                 // Only ellipse without rotation can be edited
                 if (canBeEdited && Objects.equals(rotation, 0)) {
                     shape = new EllipseGraphic().buildGraphic(((Ellipse2D) ellipse).getFrame());
-                    shape.setPaint(color);
-                    shape.setLabelVisible(labelVisible);
-                    shape.setFilled(getBooleanValue(go, Tag.GraphicFilled));
+                    setProperties(shape, thickness, color, labelVisible, filled, groupID);
                 } else {
                     shape = new NonEditableGraphic(ellipse);
-                    shape.setPaint(color);
-                    shape.setLabelVisible(labelVisible);
-                    shape.setFilled(getBooleanValue(go, Tag.GraphicFilled));
+                    setProperties(shape, thickness, color, labelVisible, filled, groupID);
                 }
             }
         } else if (CIRCLE.equalsIgnoreCase(type)) {
@@ -153,16 +158,10 @@ public class PrGraphicUtil {
                 ellipse.setFrameFromCenter(x, y, x + dist, y + dist);
                 if (canBeEdited) {
                     shape = new EllipseGraphic().buildGraphic(ellipse.getFrame());
-                    shape.setLineThickness(1.0f);
-                    shape.setPaint(color);
-                    shape.setLabelVisible(labelVisible);
-                    shape.setFilled(getBooleanValue(go, Tag.GraphicFilled));
+                    setProperties(shape, thickness, color, labelVisible, filled, groupID);
                 } else {
                     shape = new NonEditableGraphic(ellipse);
-                    shape.setLineThickness(1.0f);
-                    shape.setPaint(color);
-                    shape.setLabelVisible(labelVisible);
-                    shape.setFilled(getBooleanValue(go, Tag.GraphicFilled));
+                    setProperties(shape, thickness, color, labelVisible, filled, groupID);
                 }
             }
         } else if (POINT.equalsIgnoreCase(type)) {
@@ -174,16 +173,12 @@ public class PrGraphicUtil {
                 if (canBeEdited) {
                     shape = new PointGraphic().buildGraphic(Arrays.asList(new Point2D.Double(x, y)));
                     ((PointGraphic) shape).setPointSize(pointSize);
-                    shape.setPaint(color);
-                    shape.setLabelVisible(labelVisible);
-                    shape.setFilled(Boolean.TRUE);
+                    setProperties(shape, thickness, color, labelVisible, Boolean.TRUE, groupID);
                 } else {
                     Ellipse2D ellipse =
                         new Ellipse2D.Double(x - pointSize / 2.0f, y - pointSize / 2.0f, pointSize, pointSize);
                     shape = new NonEditableGraphic(ellipse);
-                    shape.setPaint(color);
-                    shape.setLabelVisible(labelVisible);
-                    shape.setFilled(Boolean.TRUE);
+                    setProperties(shape, thickness, color, labelVisible, Boolean.TRUE, groupID);
                 }
             }
         } else if ("MULTIPOINT".equalsIgnoreCase(type)) { //$NON-NLS-1$
@@ -200,10 +195,7 @@ public class PrGraphicUtil {
                     path.append(ellipse, false);
                 }
                 shape = new NonEditableGraphic(path);
-                shape.setLineThickness(1.0f);
-                shape.setPaint(color);
-                shape.setLabelVisible(labelVisible);
-                shape.setFilled(Boolean.TRUE);
+                setProperties(shape, thickness, color, labelVisible, Boolean.TRUE, groupID);
             }
         } else if (INTERPOLATED.equalsIgnoreCase(type)) {
             if (points != null && points.length >= 2) {
@@ -233,10 +225,7 @@ public class PrGraphicUtil {
                         ly = y;
                     }
                     shape = new NonEditableGraphic(path);
-                    shape.setLineThickness(1.0f);
-                    shape.setPaint(color);
-                    shape.setLabelVisible(labelVisible);
-                    shape.setFilled(getBooleanValue(go, Tag.GraphicFilled));
+                    setProperties(shape, thickness, color, labelVisible, filled, groupID);
                 }
             }
         }
@@ -245,6 +234,15 @@ public class PrGraphicUtil {
 
     public static boolean getBooleanValue(Attributes dcmobj, int tag) {
         return "Y".equalsIgnoreCase(dcmobj.getString(tag)); //$NON-NLS-1$
+    }
+
+    private static void setProperties(Graphic shape, Float thickness, Color color, Boolean labelVisible,
+        Boolean filled, Integer classID) {
+        shape.setLineThickness(thickness);
+        shape.setPaint(color);
+        shape.setLabelVisible(labelVisible);
+        shape.setClassID(classID);
+        shape.setFilled(filled);
     }
 
     private static double euclideanDistance(float[] points, int p1, int p2, boolean isDisp, double width,
@@ -256,5 +254,96 @@ public class PrGraphicUtil {
             dy *= height;
         }
         return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    public static Graphic buildCompoundGraphic(Attributes go, Color color, boolean labelVisible, double width,
+        double height, AffineTransform inverse) throws InvalidShapeException {
+        /*
+         *
+         * Graphic Type: MULTILINE, INFINITELINE, CUTLINE, RANGELINE, RULER, AXIS, CROSSHAIR, ARROW, RECTANGLE and
+         * ELLIPSE
+         *
+         * Coordinates are DISPLAY or PIXEL
+         */
+        boolean isDisp = "DISPLAY".equalsIgnoreCase(go.getString(Tag.CompoundGraphicUnits)); //$NON-NLS-1$
+
+        String type = go.getString(Tag.CompoundGraphicType);
+        String id = go.getString(Tag.CompoundGraphicInstanceID);
+        Integer groupID = DicomMediaUtils.getIntegerFromDicomElement(go, Tag.GraphicGroupID, null);
+        boolean filled = getBooleanValue(go, Tag.GraphicFilled);
+        Attributes style = go.getNestedDataset(Tag.LineStyleSequence);
+        Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
+        Boolean dashed = style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern)); //$NON-NLS-1$
+        if (style != null) {
+            float[] rgb = CIELab.convertToFloatLab(style.getInts(Tag.PatternOnColorCIELabValue));
+            if (rgb != null) {
+                color = PresentationStateReader.getRGBColor(255, rgb, (int[]) null);
+            }
+        }
+
+        Graphic shape = null;
+        float[] points = DicomMediaUtils.getFloatArrayFromDicomElement(go, Tag.GraphicData, null);
+        if (isDisp && inverse != null) {
+            float[] dstpoints = new float[points.length];
+            inverse.transform(points, 0, dstpoints, 0, points.length / 2);
+            points = dstpoints;
+        }
+        if (POLYLINE.equalsIgnoreCase(type)) {
+            if (points != null) {
+                int size = points.length / 2;
+                if (size >= 2) {
+                    Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
+                    double x = isDisp ? points[0] * width : points[0];
+                    double y = isDisp ? points[1] * height : points[1];
+                    path.moveTo(x, y);
+                    for (int i = 1; i < size; i++) {
+                        x = isDisp ? points[i * 2] * width : points[i * 2];
+                        y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
+                        path.lineTo(x, y);
+                    }
+                    shape = new NonEditableGraphic(path);
+                    setProperties(shape, thickness, color, labelVisible, filled, groupID);
+                }
+            }
+        } else if (ELLIPSE.equalsIgnoreCase(type)) {
+            if (points != null && points.length == 8) {
+                double majorX1 = isDisp ? points[0] * width : points[0];
+                double majorY1 = isDisp ? points[1] * height : points[1];
+                double majorX2 = isDisp ? points[2] * width : points[2];
+                double majorY2 = isDisp ? points[3] * height : points[3];
+                double cx = (majorX1 + majorX2) / 2;
+                double cy = (majorY1 + majorY2) / 2;
+                double rx = euclideanDistance(points, 0, 2, isDisp, width, height) / 2;
+                double ry = euclideanDistance(points, 4, 6, isDisp, width, height) / 2;
+                double rotation;
+                if (MathUtil.isEqual(majorX1, majorX2)) {
+                    rotation = Math.PI / 2;
+                } else if (MathUtil.isEqual(majorY1, majorY2)) {
+                    rotation = 0;
+                } else {
+                    rotation = Math.atan2(majorY2 - cy, majorX2 - cx);
+                }
+                Shape ellipse = new Ellipse2D.Double();
+                ((Ellipse2D) ellipse).setFrameFromCenter(cx, cy, cx + rx, cy + ry);
+                if (MathUtil.isDifferentFromZero(rotation)) {
+                    AffineTransform rotate = AffineTransform.getRotateInstance(rotation, cx, cy);
+                    ellipse = rotate.createTransformedShape(ellipse);
+                }
+                shape = new NonEditableGraphic(ellipse);
+                setProperties(shape, thickness, color, labelVisible, filled, groupID);
+            }
+        } else if (POINT.equalsIgnoreCase(type)) {
+            if (points != null && points.length == 2) {
+                double x = isDisp ? points[0] * width : points[0];
+                double y = isDisp ? points[1] * height : points[1];
+                int pointSize = 3;
+
+                Ellipse2D ellipse =
+                    new Ellipse2D.Double(x - pointSize / 2.0f, y - pointSize / 2.0f, pointSize, pointSize);
+                shape = new NonEditableGraphic(ellipse);
+                setProperties(shape, thickness, color, labelVisible, Boolean.TRUE, groupID);
+            }
+        } 
+        return shape;
     }
 }

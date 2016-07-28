@@ -14,6 +14,8 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
+import java.util.Objects;
+import java.util.Optional;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -56,6 +58,14 @@ public class NonEditableGraphic extends AbstractGraphic {
     @Override
     public NonEditableGraphic copy() {
         return new NonEditableGraphic(this);
+    }
+
+    @Override
+    public void setFilled(Boolean filled) {
+        if (!Objects.equals(this.filled, filled)) {
+            this.filled = Optional.ofNullable(filled).orElse(DEFAULT_FILLED);
+            fireDrawingChanged();
+        }
     }
 
     @Override

@@ -199,8 +199,9 @@ public class PRManager {
                                 Graphic line;
                                 try {
                                     List<Point2D.Double> pts = new ArrayList<>(2);
+                                    // TODO add anchor visibility
                                     pts.add(PrGraphicUtil.getBooleanValue(txo, Tag.AnchorPointVisibility) ? ptAnchor
-                                        : null);
+                                        : ptAnchor);
                                     pts.add(ptBox);
                                     line = new AnnotationGraphic().buildGraphic(pts);
                                     line.setLabel(lines, view);
