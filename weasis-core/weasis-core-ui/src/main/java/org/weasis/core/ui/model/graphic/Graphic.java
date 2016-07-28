@@ -231,4 +231,8 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
     Graphic buildGraphic(List<Point2D.Double> pts) throws InvalidShapeException;
 
     void setLayerType(LayerType layerType);
+
+    void setClassID(Integer classID);
+
+    Integer getClassID();
 }

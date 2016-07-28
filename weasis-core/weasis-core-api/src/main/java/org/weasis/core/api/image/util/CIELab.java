@@ -100,4 +100,15 @@ public class CIELab extends ColorSpace {
         ret[2] = lab[2] / 257.0f - 128;
         return ret;
     }
+
+    public static int[] convertToDicomLab(float[] lab) {
+        if (lab == null || lab.length != 3) {
+            return null;
+        }
+        int[] ret = new int[3];
+        ret[0] = (int) (lab[0] * 655.35f);
+        ret[1] = (int) ((lab[1] + 128f) * 257.0f);
+        ret[2] = (int) ((lab[2] + 128f) * 257.0f);
+        return ret;
+    }
 }

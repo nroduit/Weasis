@@ -339,11 +339,12 @@ public class WeasisLauncher {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
         registerAdditionalShutdownHook();
 
-        System.out.println("            "); //$NON-NLS-1$
-        System.out.println("              _      __             _   "); //$NON-NLS-1$
-        System.out.println("Starting...  | | /| / /__ ___ ____ (_)__"); //$NON-NLS-1$
-        System.out.println("             | |/ |/ / -_) _ `(_-</ (_-<"); //$NON-NLS-1$
-        System.out.println("             |__/|__/\\__/\\_,_/___/_/___/"); //$NON-NLS-1$
+        System.out.println(""); //$NON-NLS-1$
+        System.out.println("Starting..."); //$NON-NLS-1$
+        System.out.println(""); //$NON-NLS-1$
+        System.out.println("| | /| / /__ ___ ____ (_)__"); //$NON-NLS-1$
+        System.out.println("| |/ |/ / -_) _ `(_-</ (_-<"); //$NON-NLS-1$
+        System.out.println("|__/|__/\\__/\\_,_/___/_/___/"); //$NON-NLS-1$
         System.out.println(""); //$NON-NLS-1$
 
         int exitStatus = 0;

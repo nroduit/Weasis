@@ -232,13 +232,15 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 } else if (drawings.equals(parent)) {
                     if (selObject instanceof DefaultMutableTreeNode) {
                         LayerType layerType = (LayerType) ((DefaultMutableTreeNode) selObject).getUserObject();
-                        for (ViewCanvas<DicomImageElement> v : views) {
-                            v.getGraphicManager().findLayerByType(layerType).ifPresent(l -> {
-                                if (!Objects.equals(l.getVisible(), selected)) {
-                                    l.setVisible(selected);
-                                    v.getJComponent().repaint();
-                                }
-                            });
+                        if (layerType != null) {
+                            for (ViewCanvas<DicomImageElement> v : views) {
+                                v.getGraphicManager().findLayerByType(layerType).ifPresent(l -> {
+                                    if (!Objects.equals(l.getVisible(), selected)) {
+                                        l.setVisible(selected);
+                                        v.getJComponent().repaint();
+                                    }
+                                });
+                            }
                         }
                     }
                 }

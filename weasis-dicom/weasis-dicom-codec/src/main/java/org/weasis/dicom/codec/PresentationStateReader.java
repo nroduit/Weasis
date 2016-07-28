@@ -88,8 +88,7 @@ public class PresentationStateReader implements TagReadable {
 
     public void readGrayscaleSoftcopyModule(DicomImageElement img) {
         if (dcmobj != null) {
-            List<PresetWindowLevel> presets =
-                PresetWindowLevel.getPresetCollection(img, prSpecialElement, true);
+            List<PresetWindowLevel> presets = PresetWindowLevel.getPresetCollection(img, prSpecialElement, true);
             if (presets != null && !presets.isEmpty()) {
                 tags.put(ActionW.PRESET.cmd(), presets);
             }
@@ -189,6 +188,15 @@ public class PresentationStateReader implements TagReadable {
         b &= 0xFF;
         int conv = (r << 16) | (g << 8) | b | 0x1000000;
         return new Color(conv);
+    }
+
+    public static float[] ColorToLAB(Color color) {
+        float[] rgb = new float[3];
+        rgb[0] = color.getRed() / 255.f;
+        rgb[1] = color.getGreen() / 255.f;
+        rgb[2] = color.getBlue() / 255.f;
+
+        return LAB.fromRGB(rgb);
     }
 
     @Override

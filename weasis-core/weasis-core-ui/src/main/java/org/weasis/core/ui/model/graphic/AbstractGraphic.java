@@ -227,10 +227,12 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     }
 
     @XmlAttribute(name = "classId")
+    @Override
     public Integer getClassID() {
         return classID;
     }
 
+    @Override
     public void setClassID(Integer classID) {
         this.classID = classID;
     }

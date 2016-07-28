@@ -1,10 +1,12 @@
 package org.weasis.dicom.explorer;
 
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,12 +19,20 @@ import org.dcm4che3.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicArea;
+import org.weasis.core.ui.model.graphic.imp.PointGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
@@ -60,8 +70,7 @@ public class PrSerializer {
         try {
             attributes.setString(Tag.StationName, VR.SH, InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOGGER.error("Cannot get host name: ", e);
         }
         attributes.setString(Tag.SoftwareVersions, VR.LO, AppProperties.WEASIS_VERSION);
         attributes.setString(Tag.SeriesDescription, VR.LO, label);
@@ -117,8 +126,7 @@ public class PrSerializer {
             .collect(Collectors.toList());
     }
 
-    private static double[] getGraphicsPoints(Graphic graphic) {
-        List<java.awt.geom.Point2D.Double> pts = graphic.getPts();
+    private static double[] getGraphicsPoints(List<Point2D.Double> pts) {
         double[] list = new double[pts.size() * 2];
         for (int i = 0; i < pts.size(); i++) {
             Point2D.Double p = pts.get(i);
@@ -129,9 +137,60 @@ public class PrSerializer {
     }
 
     private static void buildDicomGraphic(Graphic graphic, Attributes dcm) {
-        dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
-        dcm.setInt(Tag.NumberOfGraphicPoints, VR.US, graphic.getPts().size());
-        dcm.setDouble(Tag.GraphicData, VR.FL, getGraphicsPoints(graphic));
+
+        List<Point2D.Double> pts;
+
+        if (graphic instanceof RectangleGraphic) {
+            boolean ellipse = graphic instanceof EllipseGraphic;
+            dcm.setString(Tag.GraphicType, VR.CS, ellipse ? PrGraphicUtil.ELLIPSE : PrGraphicUtil.POLYLINE);
+            RectangleGraphic rg = (RectangleGraphic) graphic;
+
+            if (ellipse) {
+                Point2D.Double wPt = rg.getHandlePoint(RectangleGraphic.eHandlePoint.W.getIndex());
+                Point2D.Double ePt = rg.getHandlePoint(RectangleGraphic.eHandlePoint.E.getIndex());
+                Point2D.Double nPt = rg.getHandlePoint(RectangleGraphic.eHandlePoint.N.getIndex());
+                Point2D.Double sPt = rg.getHandlePoint(RectangleGraphic.eHandlePoint.S.getIndex());
+                pts = wPt.distance(ePt) > nPt.distance(sPt) ? Arrays.asList(wPt, ePt, nPt, sPt)
+                    : Arrays.asList(nPt, sPt, wPt, ePt);
+            } else {
+                pts = Arrays.asList(rg.getHandlePoint(RectangleGraphic.eHandlePoint.NW.getIndex()),
+                    rg.getHandlePoint(RectangleGraphic.eHandlePoint.NE.getIndex()),
+                    rg.getHandlePoint(RectangleGraphic.eHandlePoint.SE.getIndex()),
+                    rg.getHandlePoint(RectangleGraphic.eHandlePoint.SW.getIndex()),
+                    rg.getHandlePoint(RectangleGraphic.eHandlePoint.NW.getIndex()));
+            }
+        } else if (graphic instanceof ThreePointsCircleGraphic) {
+            dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.CIRCLE);
+            Point2D.Double centerPt = GeomUtil.getCircleCenter(graphic.getPts());
+            pts = Arrays.asList(centerPt, graphic.getPts().get(0));
+        } else if (graphic instanceof PointGraphic) {
+            dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POINT);
+            Point2D.Double centerPt = GeomUtil.getCircleCenter(graphic.getPts());
+            pts = Arrays.asList(centerPt, graphic.getPts().get(0));
+        } else {
+            dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
+            pts = graphic.getPts();
+            if (graphic instanceof GraphicArea) {
+                pts.add(pts.get(0));
+            }
+        }
+
+        dcm.setDouble(Tag.GraphicData, VR.FL, getGraphicsPoints(pts));
+        dcm.setInt(Tag.NumberOfGraphicPoints, VR.US, pts.size());
+        dcm.setString(Tag.GraphicFilled, VR.CS, graphic.getFilled() ? "Y" : "N");
+
+        Sequence style = dcm.newSequence(Tag.LineStyleSequence, 1);
+        Attributes styles = new Attributes();
+        styles.setFloat(Tag.LineThickness, VR.FL, graphic.getLineThickness());
+
+        if (graphic.getColorPaint() instanceof Color) {
+            Color color = (Color) graphic.getColorPaint();
+            float[] rgb = PresentationStateReader.ColorToLAB(color);
+            if (rgb != null) {
+                styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, CIELab.convertToDicomLab(rgb));
+            }
+        }
+        style.add(styles);
     }
 
     private static boolean saveToFile(File output, Attributes dcm) {

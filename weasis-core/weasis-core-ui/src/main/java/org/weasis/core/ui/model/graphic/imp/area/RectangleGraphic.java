@@ -259,7 +259,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         setHandlePoint(eHandlePoint.W.index, new Point2D.Double(x, y + h / 2));
     }
 
-    protected static enum eHandlePoint {
+    public static enum eHandlePoint {
         NONE(-1), NW(0), SE(1), NE(2), SW(3), N(4), S(5), E(6), W(7);
         // 0 and 1 must be diagonal point of rectangle
 
@@ -267,6 +267,10 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
         eHandlePoint(int index) {
             this.index = index;
+        }
+
+        public int getIndex() {
+            return index;
         }
 
         static final Map<Integer, eHandlePoint> map = new HashMap<>(eHandlePoint.values().length);
