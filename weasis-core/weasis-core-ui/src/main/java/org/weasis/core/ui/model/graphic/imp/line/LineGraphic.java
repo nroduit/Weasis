@@ -7,7 +7,6 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -85,14 +84,16 @@ public class LineGraphic extends AbstractDragGraphic {
 
     @Override
     protected void prepareShape() throws InvalidShapeException {
-        Optional.ofNullable(ptA).orElseThrow(() -> new InvalidShapeException("First point of line is null!"));
-        Optional.ofNullable(ptB).orElseThrow(() -> new InvalidShapeException("End point of line is null!"));
-
-        setHandlePointList(ptA, ptB);
         if (!isShapeValid()) {
             throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
         }
         buildShape(null);
+    }
+    
+    @Override
+    public boolean isShapeValid() {
+        updateTool();
+        return super.isShapeValid();
     }
 
     public Point2D.Double getPtA() {

@@ -28,7 +28,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
     public static final Integer DEFAULT_GAP_SIZE = 0;
 
     protected Integer gapSize = DEFAULT_GAP_SIZE;
-    
+
     // Let AB be a simple a line segment
     protected Point2D.Double ptA;
     protected Point2D.Double ptB;
@@ -36,7 +36,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
 
     // estimate if line segment is valid or not
     protected Boolean lineABvalid;
-    
+
     public LineWithGapGraphic() {
         super(POINTS_NUMBER);
     }
@@ -53,19 +53,21 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
     @Override
     protected void initCopy(Graphic graphic) {
         super.initCopy(graphic);
-        this.gapSize = ((LineWithGapGraphic)graphic).gapSize;
+        this.gapSize = ((LineWithGapGraphic) graphic).gapSize;
     }
+
     @Override
     protected void prepareShape() throws InvalidShapeException {
-        Optional.ofNullable(ptA).orElseThrow(() -> new InvalidShapeException("First point of line is null!"));
-        Optional.ofNullable(ptB).orElseThrow(() -> new InvalidShapeException("End point of line is null!"));
-
-        setHandlePointList(ptA, ptB);
-
         if (!isShapeValid()) {
             throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
         }
         buildShape(null);
+    }
+    
+    @Override
+    public boolean isShapeValid() {
+        updateTool();
+        return super.isShapeValid();
     }
 
     @XmlElement(name = "centerGap", required = false)
