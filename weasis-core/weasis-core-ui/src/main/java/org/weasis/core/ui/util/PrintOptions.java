@@ -10,12 +10,17 @@
  ******************************************************************************/
 package org.weasis.core.ui.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.StringUtil;
+
 /**
  *
  * @author Marcelo Porto (marcelo@animati.com.br), Nicolas Roduit
  * @version 18/11/2011
  */
 public class PrintOptions {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PrintOptions.class);
 
     public enum DotPerInches {
         DPI_100(100), DPI_150(150), DPI_200(200), DPI_250(250), DPI_300(300);
@@ -34,25 +39,37 @@ public class PrintOptions {
         public String toString() {
             return String.valueOf(dpi);
         }
+
+        public static DotPerInches getInstance(String val, DotPerInches defaultValue) {
+            if (StringUtil.hasText(val)) {
+                try {
+                    return DotPerInches.valueOf(val);
+                } catch (Exception e) {
+                    LOGGER.error("Cannot find DotPerInches: {}", val, e);
+                }
+            }
+            return defaultValue;
+        }
     }
 
-    private Boolean hasAnnotations;
+    private boolean showingAnnotations;
     private boolean center;
-    private boolean color;
+    private boolean colorPrint;
     private DotPerInches dpi;
 
-    public PrintOptions(Boolean hasAnnotations) {
-        this.hasAnnotations = hasAnnotations;
+    public PrintOptions() {
+        this.showingAnnotations = true;
         this.center = true;
-        this.color = true;
+        this.colorPrint = true;
+        this.dpi = DotPerInches.DPI_150;
     }
 
-    public Boolean getHasAnnotations() {
-        return hasAnnotations;
+    public boolean isShowingAnnotations() {
+        return showingAnnotations;
     }
 
-    public void setHasAnnotations(Boolean hasAnnotations) {
-        this.hasAnnotations = hasAnnotations;
+    public void setShowingAnnotations(boolean showingAnnotations) {
+        this.showingAnnotations = showingAnnotations;
     }
 
     public boolean isCenter() {
@@ -63,12 +80,12 @@ public class PrintOptions {
         this.center = center;
     }
 
-    public boolean isColor() {
-        return color;
+    public boolean isColorPrint() {
+        return colorPrint;
     }
 
-    public void setColor(boolean color) {
-        this.color = color;
+    public void setColorPrint(boolean colorPrint) {
+        this.colorPrint = colorPrint;
     }
 
     public DotPerInches getDpi() {
@@ -76,6 +93,6 @@ public class PrintOptions {
     }
 
     public void setDpi(DotPerInches dpi) {
-        this.dpi = dpi;
+        this.dpi = dpi == null ? DotPerInches.DPI_150 : dpi;
     }
 }

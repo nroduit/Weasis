@@ -34,9 +34,6 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
     public Panner(DefaultView2d<E> view) {
         super((File) null, 156);
         this.view = view;
-        // this.canvas = imageFrame.getImageCanvas();
-        // this.imageSource = MergeImgOp.formatIfBinary(imageFrame.getSource());
-
         setForeground(JMVUtils.TREE_SELECTION_BACKROUND);
         slider = new Rectangle(0, 0, 0, 0);
         panArea = new Rectangle(0, 0, 0, 0);
@@ -45,8 +42,6 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
     @Override
     protected void init(MediaElement<?> media, boolean keepMediaCache) {
         super.init(media, keepMediaCache);
-
-        // setBorder(outMouseOverBorder);
     }
 
     @Override
@@ -142,7 +137,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
 
     public void moveToOrigin() {
         if (view != null) {
-            view.setOrigin(0, 0);
+            view.setOrigin(0d, 0d);
         }
     }
 

@@ -15,7 +15,9 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.image.PaletteColorModel;
 import org.weasis.core.api.image.LutShape;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.dicom.codec.TagD;
 
 /**
  *
@@ -75,33 +77,32 @@ public class DicomImageUtils {
      * @return a LookupTableJAI for data between minValue and maxValue according to all given parameters <br>
      */
 
-    public static LookupTableJAI createWindowLevelLut(LutShape lutShape, float window, float level, int minValue,
+    public static LookupTableJAI createWindowLevelLut(LutShape lutShape, double window, double level, int minValue,
         int maxValue, int bitsStored, boolean isSigned, boolean inverse) {
 
         if (lutShape == null) {
             return null;
         }
 
-        bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
-        window = (window < 1f) ? 1f : window;
+        int bStored = bitsStored > 16 ? 16 : (bitsStored < 1) ? 1 : bitsStored;
+        double win = window < 1.0 ? 1.0 : window;
 
-        // TODO - use bitsAllocated as a parameter instead of extrapolated one
-        int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
+        int bitsAllocated = (bStored <= 8) ? 8 : 16;
         int outRangeSize = (1 << bitsAllocated) - 1;
-        float maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
-        float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
+        int maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
+        int minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
-        float minInValue = Math.min(maxValue, minValue);
-        float maxInValue = Math.max(maxValue, minValue);
+        int minInValue = Math.min(maxValue, minValue);
+        int maxInValue = Math.max(maxValue, minValue);
 
-        int numEntries = (int) (maxInValue - minInValue + 1);
-        Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
+        int numEntries = maxInValue - minInValue + 1;
+        Object outLut = bStored <= 8 ? new byte[numEntries] : new short[numEntries];
 
         if (lutShape.getFunctionType() != null) {
 
             switch (lutShape.getFunctionType()) {
                 case LINEAR:
-                    setWindowLevelLinearLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+                    setWindowLevelLinearLut(win, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
 
                     // TODO - do this test below
                     // setWindowLevelLinearLutLegacy(window, level, minInValue, outLut, minOutValue, maxOutValue,
@@ -111,24 +112,23 @@ public class DicomImageUtils {
                     // compareDataLuts(outLut, outLut2);
                     break;
                 case SIGMOID:
-                    setWindowLevelSigmoidLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+                    setWindowLevelSigmoidLut(win, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
                     break;
                 case SIGMOID_NORM:
-                    setWindowLevelSigmoidLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse,
-                        true);
+                    setWindowLevelSigmoidLut(win, level, minInValue, outLut, minOutValue, maxOutValue, inverse, true);
                     break;
                 case LOG:
-                    setWindowLevelLogarithmicLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+                    setWindowLevelLogarithmicLut(win, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
                     break;
                 case LOG_INV:
-                    setWindowLevelExponentialLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+                    setWindowLevelExponentialLut(win, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
                     break;
 
                 default:
                     return null;
             }
         } else {
-            setWindowLevelSequenceLut(window, level, lutShape.getLookup(), minInValue, maxInValue, outLut, minOutValue,
+            setWindowLevelSequenceLut(win, level, lutShape.getLookup(), minInValue, maxInValue, outLut, minOutValue,
                 maxOutValue, inverse);
         }
 
@@ -146,14 +146,14 @@ public class DicomImageUtils {
             params.isOutputSigned(), params.getBitsOutput());
     }
 
-    public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int bitsStored, boolean isSigned,
+    public static LookupTableJAI createRescaleRampLut(double intercept, double slope, int bitsStored, boolean isSigned,
         boolean outputSigned, int bitsOutput) {
 
         return createRescaleRampLut(intercept, slope, Integer.MIN_VALUE, Integer.MAX_VALUE, bitsStored, isSigned, false,
             outputSigned, bitsOutput);
     }
 
-    public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int minValue, int maxValue,
+    public static LookupTableJAI createRescaleRampLut(double intercept, double slope, int minValue, int maxValue,
         int bitsStored, boolean isSigned, boolean inverse, boolean outputSigned, int bitsOutput) {
 
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
@@ -179,7 +179,7 @@ public class DicomImageUtils {
         Object outLut = (bitsOutLut == 8) ? new byte[numEntries] : new short[numEntries];
 
         for (int i = 0; i < numEntries; i++) {
-            int value = Math.round((i + minInValue) * slope + intercept);
+            int value = (int) Math.round((i + minInValue) * slope + intercept);
 
             value = ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
             value = (inverse ? (maxOutValue + minOutValue - value) : value);
@@ -274,14 +274,14 @@ public class DicomImageUtils {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static void setWindowLevelLinearLutLegacy(float window, float level, float minInValue, Object outLut,
-        float minOutValue, float maxOutValue, boolean inverse) {
+    private static void setWindowLevelLinearLutLegacy(double window, double level, int minInValue, Object outLut,
+        int minOutValue, int maxOutValue, boolean inverse) {
 
         /**
          * Pseudo code defined in Dicom Standard 2011 - PS 3.3 § C.11.2 VOI LUT Module
          */
-        float lowLevel = (level - 0.5f) - (window - 1f) / 2f;
-        float highLevel = (level - 0.5f) + (window - 1f) / 2f;
+        double lowLevel = (level - 0.5) - (window - 1.0) / 2.0;
+        double highLevel = (level - 0.5) + (window - 1.0) / 2.0;
 
         for (int i = 0; i < Array.getLength(outLut); i++) {
             int value;
@@ -291,9 +291,8 @@ public class DicomImageUtils {
             } else if ((i + minInValue) > highLevel) {
                 value = (int) maxOutValue;
             } else {
-                value =
-                    (int) ((((i + minInValue) - (level - 0.5f)) / (window - 1f) + 0.5f) * (maxOutValue - minOutValue)
-                        + minOutValue);
+                value = (int) ((((i + minInValue) - (level - 0.5)) / (window - 1.0) + 0.5) * (maxOutValue - minOutValue)
+                    + minOutValue);
             }
 
             value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
@@ -309,11 +308,11 @@ public class DicomImageUtils {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static void setWindowLevelLinearLut(float window, float level, float minInValue, Object outLut,
-        float minOutValue, float maxOutValue, boolean inverse) {
+    private static void setWindowLevelLinearLut(double window, double level, int minInValue, Object outLut,
+        int minOutValue, int maxOutValue, boolean inverse) {
 
-        float slope = (maxOutValue - minOutValue) / window;
-        float intercept = maxOutValue - slope * (level + (window / 2f));
+        double slope = (maxOutValue - minOutValue) / window;
+        double intercept = maxOutValue - slope * (level + (window / 2.0));
 
         for (int i = 0; i < Array.getLength(outLut); i++) {
             int value = (int) ((i + minInValue) * slope + intercept);
@@ -330,14 +329,14 @@ public class DicomImageUtils {
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    private static void setWindowLevelSigmoidLut(float width, float center, float minInValue, Object outLut,
-        float minOutValue, float maxOutValue, boolean inverse) {
+    private static void setWindowLevelSigmoidLut(double width, double center, int minInValue, Object outLut,
+        int minOutValue, int maxOutValue, boolean inverse) {
 
         setWindowLevelSigmoidLut(width, center, minInValue, outLut, minOutValue, maxOutValue, inverse, false);
     }
 
-    private static void setWindowLevelSigmoidLut(float width, float center, float minInValue, Object outLut,
-        float minOutValue, float maxOutValue, boolean inverse, boolean normalize) {
+    private static void setWindowLevelSigmoidLut(double width, double center, int minInValue, Object outLut,
+        int minOutValue, int maxOutValue, boolean inverse, boolean normalize) {
 
         double nFactor = -20d; // factor defined by default in Dicom standard ( -20*2/10 = -4 )
         double outRange = maxOutValue - minOutValue;
@@ -375,14 +374,14 @@ public class DicomImageUtils {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static void setWindowLevelExponentialLut(float width, float center, float minInValue, Object outLut,
-        float minOutValue, float maxOutValue, boolean inverse) {
+    private static void setWindowLevelExponentialLut(double width, double center, int minInValue, Object outLut,
+        int minOutValue, int maxOutValue, boolean inverse) {
 
         setWindowLevelExponentialLut(width, center, minInValue, outLut, minOutValue, maxOutValue, inverse, true);
     }
 
-    private static void setWindowLevelExponentialLut(float width, float center, float minInValue, Object outLut,
-        float minOutValue, float maxOutValue, boolean inverse, boolean normalize) {
+    private static void setWindowLevelExponentialLut(double width, double center, int minInValue, Object outLut,
+        int minOutValue, int maxOutValue, boolean inverse, boolean normalize) {
 
         double nFactor = 20d;
         double outRange = maxOutValue - minOutValue;
@@ -421,19 +420,21 @@ public class DicomImageUtils {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static void setWindowLevelLogarithmicLut(float width, float center, float minInValue, Object outLut,
-        float minOutValue, float maxOutValue, boolean inverse) {
+    private static void setWindowLevelLogarithmicLut(double width, double center, int minInValue, Object outLut,
+        int minOutValue, int maxOutValue, boolean inverse) {
 
         setWindowLevelLogarithmicLut(width, center, minInValue, outLut, minOutValue, maxOutValue, inverse, true);
     }
 
-    private static void setWindowLevelLogarithmicLut(float width, float center, float minInValue, Object outLut,
-        float minOutValue, float maxOutValue, boolean inverse, boolean normalize) {
+    private static void setWindowLevelLogarithmicLut(double width, double center, int minInValue, Object outLut,
+        int minOutValue, int maxOutValue, boolean inverse, boolean normalize) {
 
         double nFactor = 20d;
         double outRange = maxOutValue - minOutValue;
 
-        double minValue = 0, maxValue = 0, outRescaleRatio = 1;
+        double minValue = 0;
+        double  maxValue = 0;
+        double outRescaleRatio = 1;
 
         if (normalize) {
             double lowLevel = center - width / 2d;
@@ -492,8 +493,8 @@ public class DicomImageUtils {
      * @return a normalized LookupTableJAI based upon given lutSequence <br>
      */
 
-    private static void setWindowLevelSequenceLut(float width, float center, LookupTableJAI lookupSequence,
-        float minInValue, float maxInValue, Object outLut, float minOutValue, float maxOutValue, boolean inverse) {
+    private static void setWindowLevelSequenceLut(double width, double center, LookupTableJAI lookupSequence,
+        int minInValue, int maxInValue, Object outLut, int minOutValue, int maxOutValue, boolean inverse) {
 
         final Object inLutDataArray = getLutDataArray(lookupSequence);
 
@@ -505,17 +506,10 @@ public class DicomImageUtils {
         final int lutDataValueMask = (inLutDataArray instanceof byte[] ? 0x000000FF
             : (inLutDataArray instanceof short[] ? 0x0000FFFF : 0xFFFFFFFF));
 
-        float lowLevel = center - width / 2f;
-        float highLevel = center + width / 2f;
+        double lowLevel = center - width / 2.0;
+        double highLevel = center + width / 2.0;
 
         int maxInLutIndex = Array.getLength(inLutDataArray) - 1;
-
-        // Assuming lookupSequence is continuous, values at both ends should reflect maxima and minima
-        // This assumption avoid computing min/max by scaning the full table
-        // int minLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, 0);
-        // int maxLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, lookupRangeSize);
-        // int lookupValueRange = Math.abs(maxLookupValue - minLookupValue);
-
         int minLookupValue = Integer.MAX_VALUE;
         int maxLookupValue = Integer.MIN_VALUE;
         for (int i = 0; i < Array.getLength(inLutDataArray); i++) {
@@ -529,12 +523,12 @@ public class DicomImageUtils {
         }
         int lookupValueRange = Math.abs(maxLookupValue - minLookupValue);
 
-        float widthRescaleRatio = maxInLutIndex / width;
-        float outRescaleRatio = (maxOutValue - minOutValue) / lookupValueRange;
+        double widthRescaleRatio = maxInLutIndex / width;
+        double outRescaleRatio = (maxOutValue - minOutValue) / (double) lookupValueRange;
 
         for (int i = 0; i < Array.getLength(outLut); i++) {
             int value;
-            float inValueRescaled;
+            double inValueRescaled;
 
             if ((i + minInValue) <= lowLevel) {
                 inValueRescaled = 0;
@@ -551,11 +545,11 @@ public class DicomImageUtils {
             int valueUp = lutDataValueMask & Array.getInt(inLutDataArray, inValueRoundUp);
 
             // Linear Interpolation of the output value with respect to the rescaled ratio
-            value = (inValueRoundUp == inValueRoundDown) ? valueDown : //
+            value = (int) ((inValueRoundUp == inValueRoundDown) ? valueDown : //
                 Math.round(valueDown + (inValueRescaled - inValueRoundDown) * (valueUp - valueDown)
-                    / (inValueRoundUp - inValueRoundDown));
+                    / (inValueRoundUp - inValueRoundDown)));
 
-            value = Math.round(value * outRescaleRatio);
+            value = (int) Math.round(value * outRescaleRatio);
             // }
 
             value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
@@ -689,19 +683,19 @@ public class DicomImageUtils {
         return ImageIO.getImageReadersByFormatName("JPEG-LS").hasNext(); //$NON-NLS-1$
     }
 
-    public static float pixel2rescale(HashMap<TagW, Object> tagList, float pixelValue) {
-        if (tagList != null) {
-            LookupTableJAI lookup = (LookupTableJAI) tagList.get(TagW.ModalityLUTData);
+    public static double pixel2rescale(TagReadable tagable, double pixelValue) {
+        if (tagable != null) {
+            LookupTableJAI lookup = (LookupTableJAI) tagable.getTagValue(TagW.ModalityLUTData);
             if (lookup != null) {
                 if (pixelValue >= lookup.getOffset() && pixelValue <= lookup.getOffset() + lookup.getNumEntries() - 1) {
                     return lookup.lookup(0, (int) pixelValue);
                 }
             } else {
                 // value = pixelValue * rescale slope + intercept value
-                Float slope = (Float) tagList.get(TagW.RescaleSlope);
-                Float intercept = (Float) tagList.get(TagW.RescaleIntercept);
+                Double slope = TagD.getTagValue(tagable, Tag.RescaleSlope, Double.class);
+                Double intercept = TagD.getTagValue(tagable, Tag.RescaleIntercept, Double.class);
                 if (slope != null || intercept != null) {
-                    return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+                    return pixelValue * (slope == null ? 1.0 : slope) + (intercept == null ? 0.0 : intercept);
                 }
             }
         }

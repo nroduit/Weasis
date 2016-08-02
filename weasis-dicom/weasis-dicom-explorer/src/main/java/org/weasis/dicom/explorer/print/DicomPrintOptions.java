@@ -19,32 +19,60 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
  * @author Marcelo Porto (marcelo@animati.com.br), Nicolas Roduit
  * @version 09/01/2012
  */
-public class DicomPrintOptions {
+public class DicomPrintOptions extends PrintOptions {
+    public static final String DEF_MEDIUM_TYPE = "BLUE FILM"; //$NON-NLS-1$
+    public static final String DEF_PRIORITY = "LOW"; //$NON-NLS-1$
+    public static final String DEF_FILM_DEST = "MAGAZINE"; //$NON-NLS-1$
+    public static final int DEF_NUM_COPIES = 1;
+    public static final boolean DEF_COLOR = false;
+    public static final String DEF_FILM_ORIENTATION = "PORTRAIT"; //$NON-NLS-1$
+    public static final String DEF_IMG_DISP_FORMAT = "STANDARD\\1,1"; //$NON-NLS-1$
+    public static final FilmSize DEF_FILM_SIZE = FilmSize.IN8X10;
+    public static final String DEF_MAGNIFICATION_TYPE = "CUBIC"; //$NON-NLS-1$
+    public static final String DEF_SMOOTHING_TYPE = "MEDIUM"; //$NON-NLS-1$
+    public static final String DEF_BORDER_DENSITY = "WHITE"; //$NON-NLS-1$
+    public static final String DEF_TRIM = "NO"; //$NON-NLS-1$
+    public static final String DEF_EMPTY_DENSITY = "BLACK"; //$NON-NLS-1$
+    public static final boolean DEF_SHOW_ANNOTATIONS = true;
+    public static final boolean DEF_PRINT_SEL_VIEW = false;
+    public static final PrintOptions.DotPerInches DEF_DPI = PrintOptions.DotPerInches.DPI_150;
 
     private String mediumType;
     private String priority;
     private String filmDestination;
-    private String imageDisplayFormat;
-    private FilmSize filmSizeId;
+    private int numOfCopies;
     private String filmOrientation;
+    private FilmSize filmSizeId;
+    private String imageDisplayFormat;
     private String magnificationType;
     private String smoothingType;
     private String borderDensity;
-    private String emptyDensity;
     private String trim;
-    private Integer numOfCopies;
-    private Integer minDensity;
-    private Integer maxDensity;
-    private boolean printInColor = true;
-    private DicomPrinter dicomPrinter;
-    private PrintOptions.DotPerInches dpi;
+    private String emptyDensity;
+    private int minDensity;
+    private int maxDensity;
+    private boolean printOnlySelectedView;
 
-    public Boolean isPrintInColor() {
-        return printInColor;
-    }
-
-    public void setPrintInColor(boolean printInColor) {
-        this.printInColor = printInColor;
+    public DicomPrintOptions() {
+        super();
+        this.mediumType = DEF_MEDIUM_TYPE;
+        this.priority = DEF_PRIORITY;
+        this.filmDestination = DEF_FILM_DEST;
+        this.numOfCopies = DEF_NUM_COPIES;
+        setColorPrint(DEF_COLOR);
+        this.filmOrientation = DEF_FILM_ORIENTATION;
+        this.filmSizeId = DEF_FILM_SIZE;
+        this.imageDisplayFormat = DEF_IMG_DISP_FORMAT;
+        this.magnificationType = DEF_MAGNIFICATION_TYPE;
+        this.smoothingType = DEF_SMOOTHING_TYPE;
+        this.borderDensity = DEF_BORDER_DENSITY;
+        this.trim = DEF_TRIM;
+        this.emptyDensity = DEF_EMPTY_DENSITY;
+        this.minDensity = 0;
+        this.maxDensity = 255;
+        setShowingAnnotations(DEF_SHOW_ANNOTATIONS);
+        this.printOnlySelectedView = DEF_PRINT_SEL_VIEW;
+        setDpi(DEF_DPI);
     }
 
     public String getBorderDensity() {
@@ -84,7 +112,7 @@ public class DicomPrintOptions {
     }
 
     public void setFilmSizeId(FilmSize filmSize) {
-        this.filmSizeId = filmSize;
+        this.filmSizeId = filmSize == null ? DEF_FILM_SIZE : filmSize;
     }
 
     public String getImageDisplayFormat() {
@@ -103,11 +131,11 @@ public class DicomPrintOptions {
         this.magnificationType = magnificationType;
     }
 
-    public Integer getMaxDensity() {
+    public int getMaxDensity() {
         return maxDensity;
     }
 
-    public void setMaxDensity(Integer maxDensity) {
+    public void setMaxDensity(int maxDensity) {
         this.maxDensity = maxDensity;
     }
 
@@ -119,19 +147,19 @@ public class DicomPrintOptions {
         this.mediumType = mediumType;
     }
 
-    public Integer getMinDensity() {
+    public int getMinDensity() {
         return minDensity;
     }
 
-    public void setMinDensity(Integer minDensity) {
+    public void setMinDensity(int minDensity) {
         this.minDensity = minDensity;
     }
 
-    public Integer getNumOfCopies() {
+    public int getNumOfCopies() {
         return numOfCopies;
     }
 
-    public void setNumOfCopies(Integer numOfCopies) {
+    public void setNumOfCopies(int numOfCopies) {
         this.numOfCopies = numOfCopies;
     }
 
@@ -159,20 +187,12 @@ public class DicomPrintOptions {
         this.trim = trim;
     }
 
-    public DicomPrinter getDicomPrinter() {
-        return dicomPrinter;
+    public boolean isPrintOnlySelectedView() {
+        return printOnlySelectedView;
     }
 
-    public void setDicomPrinter(DicomPrinter dicomPrinter) {
-        this.dicomPrinter = dicomPrinter;
-    }
-
-    public PrintOptions.DotPerInches getDpi() {
-        return dpi;
-    }
-
-    public void setDpi(PrintOptions.DotPerInches dpi) {
-        this.dpi = dpi;
+    public void setPrintOnlySelectedView(boolean printOnlySelectedView) {
+        this.printOnlySelectedView = printOnlySelectedView;
     }
 
 }

@@ -30,6 +30,8 @@ import javax.swing.SwingUtilities;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.dockable.DisplayTool;
 import org.weasis.base.viewer2d.dockable.ImageTool;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -57,6 +59,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -64,9 +67,10 @@ import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
 
@@ -97,7 +101,6 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
-    private static WtoolBar statusBar = null;
     private static volatile boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
@@ -109,53 +112,88 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         setSynchView(SynchView.DEFAULT_STACK);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
+
             // Add standard toolbars
-            EventManager evtMg = EventManager.getInstance();
-            TOOLBARS.add(new ViewerToolBar<ImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
-                BundleTools.SYSTEM_PREFERENCES, 10));
-            TOOLBARS.add(new MeasureToolBar(evtMg, 11));
-            TOOLBARS.add(new ZoomToolBar(evtMg, 20));
-            TOOLBARS.add(new RotationToolBar(evtMg, 30));
-
-            PluginTool tool = new MiniTool(MiniTool.BUTTON_NAME) {
-
-                @Override
-                public SliderChangeListener[] getActions() {
-                    ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                    if (seqAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) seqAction);
-                    }
-                    ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                    if (zoomAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) zoomAction);
-                    }
-                    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                    if (rotateAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) rotateAction);
-                    }
-                    return listeners.toArray(new SliderChangeListener[listeners.size()]);
-                }
-            };
-            TOOLS.add(tool);
-
-            tool = new ImageTool(Messages.getString("View2dContainer.img_tool"), null); //$NON-NLS-1$
-            TOOLS.add(tool);
-
-            tool = new DisplayTool(Messages.getString("View2dContainer.display")); //$NON-NLS-1$
-            TOOLS.add(tool);
-            eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
-
-            tool = new MeasureTool(eventManager);
-            TOOLS.add(tool);
-
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            EventManager evtMg = EventManager.getInstance();
+
+            String bundleName = context.getBundle().getSymbolicName();
+            String componentName = InsertableUtil.getCName(this.getClass());
+            String key = "enable"; //$NON-NLS-1$
+
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
+                TOOLBARS.add(new ViewerToolBar<>(evtMg, evtMg.getMouseActions().getActiveButtons(),
+                    BundleTools.SYSTEM_PREFERENCES, 10));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(MeasureToolBar.class), key, true)) {
+                TOOLBARS.add(new MeasureToolBar(evtMg, 11));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ZoomToolBar.class), key, true)) {
+                TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(RotationToolBar.class), key, true)) {
+                TOOLBARS.add(new RotationToolBar(evtMg, 30));
+            }
+
+            PluginTool tool = null;
+
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(MiniTool.class), key, true)) {
+                tool = new MiniTool(MiniTool.BUTTON_NAME) {
+
+                    @Override
+                    public SliderChangeListener[] getActions() {
+
+                        ArrayList<SliderChangeListener> listeners = new ArrayList<>(3);
+                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                        if (seqAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) seqAction);
+                        }
+                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                        if (zoomAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) zoomAction);
+                        }
+                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                        if (rotateAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) rotateAction);
+                        }
+                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                    }
+                };
+
+                TOOLS.add(tool);
+            }
+
+            
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ImageTool.class), key, true)) {
+                tool = new ImageTool(ImageTool.BUTTON_NAME); //$NON-NLS-1$
+                TOOLS.add(tool);
+            }
+
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(DisplayTool.class), key, true)) {
+                tool = new DisplayTool(DisplayTool.BUTTON_NAME);
+                TOOLS.add(tool);
+                eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
+            }
+
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(MeasureTool.class), key, true)) {
+                tool = new MeasureTool(eventManager);
+                TOOLS.add(tool);
+            }
+
+            InsertableUtil.sortInsertable(TOOLS);
+
             Preferences prefs = BundlePreferences.getDefaultPreferences(context);
             if (prefs != null) {
-                String className = this.getClass().getSimpleName().toLowerCase();
-                String bundleName = context.getBundle().getSymbolicName();
-                InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, className, Type.TOOLBAR);
-                InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, className, Type.TOOL);
+                InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, componentName, Type.TOOLBAR);
+                InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, componentName, Type.TOOL);
             }
         }
     }
@@ -207,7 +245,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
             @Override
             public void run() {
-                for (DefaultView2d v : view2ds) {
+                for (ViewCanvas v : view2ds) {
                     v.disposeView();
                 }
             }
@@ -231,7 +269,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     if (SeriesEvent.Action.AddImage.equals(action2)) {
                         if (source instanceof Series) {
                             Series series = (Series) source;
-                            DefaultView2d view2DPane = eventManager.getSelectedViewPane();
+                            ViewCanvas view2DPane = eventManager.getSelectedViewPane();
                             ImageElement img = view2DPane.getImage();
                             if (img != null && view2DPane.getSeries() == series) {
                                 ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
@@ -258,9 +296,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     } else if (SeriesEvent.Action.loadImageInMemory.equals(action2)) {
                         if (source instanceof Series) {
                             Series s = (Series) source;
-                            for (DefaultView2d<ImageElement> v : view2ds) {
+                            for (ViewCanvas<ImageElement> v : view2ds) {
                                 if (s == v.getSeries()) {
-                                    v.repaint(v.getInfoLayer().getPreloadingProgressBound());
+                                    v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
                                 }
                             }
                         }
@@ -269,7 +307,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             } else if (ObservableEvent.BasicAction.Remove.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
-                    for (DefaultView2d<ImageElement> v : view2ds) {
+                    for (ViewCanvas<ImageElement> v : view2ds) {
                         MediaSeries<ImageElement> s = v.getSeries();
                         if (series.equals(s)) {
                             v.setSeries(null);
@@ -279,7 +317,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             } else if (ObservableEvent.BasicAction.Replace.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
-                    for (DefaultView2d<ImageElement> v : view2ds) {
+                    for (ViewCanvas<ImageElement> v : view2ds) {
                         MediaSeries<ImageElement> s = v.getSeries();
                         if (series.equals(s)) {
                             // Set to null to be sure that all parameters from the view are apply again to the Series
@@ -305,30 +343,17 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         }
         try {
             // FIXME use classloader.loadClass or injection
-            Class cl = Class.forName(clazz);
+            Class<?> cl = Class.forName(clazz);
             JComponent component = (JComponent) cl.newInstance();
             if (component instanceof SeriesViewerListener) {
                 eventManager.addSeriesViewerListener((SeriesViewerListener) component);
             }
             return component;
 
-        } catch (InstantiationException e1) {
-            e1.printStackTrace();
-        } catch (IllegalAccessException e1) {
-            e1.printStackTrace();
-        }
-
-        catch (ClassNotFoundException e1) {
-            e1.printStackTrace();
-        } catch (ClassCastException e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
-    }
-
-    @Override
-    public synchronized WtoolBar getStatusBar() {
-        return statusBar;
     }
 
     @Override
@@ -338,25 +363,22 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public List<Action> getExportActions() {
-        if (selectedImagePane != null) {
-            return selectedImagePane.getExportToClipboardAction();
-        }
-        return null;
+        return selectedImagePane == null ? super.getExportActions() : selectedImagePane.getExportToClipboardAction();
     }
 
     @Override
-    public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         return ViewerFactory.getViewTypeNumber(layout, defaultClass);
     }
 
     @Override
-    public boolean isViewType(Class defaultClass, String type) {
+    public boolean isViewType(Class<?> defaultClass, String type) {
         if (defaultClass != null) {
             try {
-                Class clazz = Class.forName(type);
+                Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Checking view type", e);
             }
         }
         return false;
@@ -364,7 +386,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public List<Action> getPrintActions() {
-        ArrayList<Action> actions = new ArrayList<Action>(1);
+        ArrayList<Action> actions = new ArrayList<>(1);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
         AbstractAction printStd =
             new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$

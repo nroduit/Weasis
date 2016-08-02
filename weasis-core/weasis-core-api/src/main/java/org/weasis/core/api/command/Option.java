@@ -50,7 +50,7 @@ public interface Option {
      * parse arguments.
      *
      * @see {@link #parse(List, boolean)
-     * 
+     *
      */
     Option parse(List<? extends Object> argv);
 
@@ -58,7 +58,7 @@ public interface Option {
      * parse arguments.
      *
      * @see {@link #parse(List, boolean)
-     * 
+     *
      */
     Option parse(Object[] argv, boolean skipArg0);
 
@@ -66,7 +66,7 @@ public interface Option {
      * parse arguments.
      *
      * @see {@link #parse(List, boolean)
-     * 
+     *
      */
     Option parse(Object[] argv);
 

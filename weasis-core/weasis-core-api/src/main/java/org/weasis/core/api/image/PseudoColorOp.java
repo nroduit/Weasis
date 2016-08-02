@@ -51,9 +51,18 @@ public class PseudoColorOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public PseudoColorOp(PseudoColorOp op) {
+        super(op);
+    }
+
+    @Override
+    public PseudoColorOp copy() {
+        return new PseudoColorOp(this);
+    }
+
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         ByteLut lutTable = (ByteLut) params.get(P_LUT);
 
@@ -77,7 +86,7 @@ public class PseudoColorOp extends AbstractOp {
             }
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
     public static BufferedImage getLUT(byte[][] lut) {

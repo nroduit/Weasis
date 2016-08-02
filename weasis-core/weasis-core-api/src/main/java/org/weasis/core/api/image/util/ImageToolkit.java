@@ -29,6 +29,7 @@ import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedOp;
 
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.media.data.ImageElement;
 
 /**
@@ -36,8 +37,10 @@ import org.weasis.core.api.media.data.ImageElement;
  *
  */
 public class ImageToolkit {
-
     public static final RenderingHints NOCACHE_HINT = new RenderingHints(JAI.KEY_TILE_CACHE, null);
+
+    private ImageToolkit() {
+    }
 
     /**
      * Load an image.
@@ -46,10 +49,6 @@ public class ImageToolkit {
      */
     public static RenderedOp loadImage(File file) {
         return JAI.create("LoadImage", file); //$NON-NLS-1$
-    }
-
-    private static RenderedImage getFileloadOp(RenderedImage image) {
-        return getImageOp(image, "LoadImage"); //$NON-NLS-1$
     }
 
     public static RenderedImage getImageOp(RenderedImage image, String opName) {
@@ -84,7 +83,7 @@ public class ImageToolkit {
         int height = img.getHeight();
         WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
         boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
-        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        Hashtable<String, Object> properties = new Hashtable<>();
         String[] keys = img.getPropertyNames();
         if (keys != null) {
             for (int i = 0; i < keys.length; i++) {
@@ -213,18 +212,19 @@ public class ImageToolkit {
         int width = image.getWidth();
         int height = image.getHeight();
 
+        RenderedOp resImage = image;
         if (width > toWidth || height > toHeight) {
-            image = cropImage(image, Math.min(width, toWidth), Math.min(height, toHeight));
+            resImage = cropImage(resImage, Math.min(width, toWidth), Math.min(height, toHeight));
         }
 
         if (width < toWidth || height < toHeight) {
             int w = Math.max((toWidth - width) / 2, 0);
             int h = Math.max((toHeight - height) / 2, 0);
 
-            image = borderImage(image, w, w, h, h, color);
+            resImage = borderImage(resImage, w, w, h, h, color);
         }
 
-        return image;
+        return resImage;
     }
 
     /**
@@ -283,7 +283,7 @@ public class ImageToolkit {
         params.add(top); // top pad
         params.add(btm); // bottom pad
 
-        double fill[] = { color };
+        double[] fill = { color };
         params.add(new BorderExtenderConstant(fill));// type
         params.add(color); // fill color
 
@@ -301,8 +301,8 @@ public class ImageToolkit {
      * @param pixelPadding
      * @return
      */
-    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, float window,
-        float level, boolean pixelPadding) {
+    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, double window,
+        double level, boolean pixelPadding) {
         if (image == null || source == null) {
             return null;
         }
@@ -312,15 +312,16 @@ public class ImageToolkit {
             return null;
         }
         int datatype = sampleModel.getDataType();
-        if (datatype == DataBuffer.TYPE_BYTE && window == 255.0f && (level == 127.5f || level == 127.0f)) {
+        if (datatype == DataBuffer.TYPE_BYTE && MathUtil.isEqual(window, 255.0)
+            && (MathUtil.isEqual(level, 127.5) || MathUtil.isEqual(level, 127.0))) {
             return source;
         }
 
         // Get pixel values of Min and Max (values must not be rescaled rescaled, works only for ImageElement not for
         // DicomImageElement class)
-        int minValue = (int) image.getMinValue(pixelPadding);
-        int maxValue = (int) image.getMaxValue(pixelPadding);
-        int tableLength = (maxValue - minValue + 1);
+        int minValue = (int) image.getMinValue(null, pixelPadding);
+        int maxValue = (int) image.getMaxValue(null, pixelPadding);
+        int tableLength = maxValue - minValue + 1;
 
         double low = level - window / 2.0;
         double high = level + window / 2.0;
@@ -331,13 +332,13 @@ public class ImageToolkit {
         }
 
         double slope = 255.0 / range;
-        double y_int = 255.0 - slope * high;
+        double yInt = 255.0 - slope * high;
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
             byte[][] lut = new byte[1][tableLength];
 
             for (int i = 0; i < tableLength; i++) {
-                int value = (int) (slope * (i + minValue) + y_int);
+                int value = (int) (slope * (i + minValue) + yInt);
 
                 if (value > 255) {
                     value = 255;
@@ -359,7 +360,7 @@ public class ImageToolkit {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(source);
             pb.add(new double[] { slope });
-            pb.add(new double[] { y_int });
+            pb.add(new double[] { yInt });
             result = JAI.create("rescale", pb, null); //$NON-NLS-1$
 
             // produce a byte image

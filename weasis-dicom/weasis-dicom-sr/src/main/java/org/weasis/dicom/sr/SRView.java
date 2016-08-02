@@ -35,6 +35,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.media.data.MediaElement;
@@ -55,7 +56,9 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
-import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -197,7 +200,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     private void openRelatedSeries(String reference) {
         SRImageReference imgRef = map.get(reference);
         if (imgRef != null) {
-            ImageSOPInstanceReference ref = imgRef.getImageSOPInstanceReference();
+            SOPInstanceReference ref = imgRef.getSopInstanceReference();
             if (ref != null) {
                 DataExplorerView dicomView = org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
                 DicomModel model = null;
@@ -217,9 +220,9 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                         if (keyReferences != null) {
                             // TODO Handle multiframe and select the current frame or SOPInstanceUID
                             // int[] frames = ref.getReferencedFrameNumber();
-                            keyReferences.addKeyObject((String) s.getTagValue(TagW.StudyInstanceUID),
-                                (String) s.getTagValue(TagW.SeriesInstanceUID), ref.getReferencedSOPInstanceUID(),
-                                ref.getReferencedSOPClassUID());
+                            keyReferences.addKeyObject(TagD.getTagValue(s, Tag.StudyInstanceUID, String.class),
+                                TagD.getTagValue(s, Tag.SeriesInstanceUID, String.class),
+                                ref.getReferencedSOPInstanceUID(), ref.getReferencedSOPClassUID());
                             SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
                             if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                                 String uid = UUID.randomUUID().toString();
@@ -261,17 +264,15 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 }
             }
 
-            if (series == null) {
-                Collection<MediaSeriesGroup> studyList = model.getChildren(patient);
-                synchronized (model) {
-                    for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
-                        MediaSeriesGroup st = it.next();
-                        if (st != study) {
-                            series = findSOPInstanceReference(model, st, sopUID);
-                        }
-                        if (series != null) {
-                            return series;
-                        }
+            Collection<MediaSeriesGroup> studyList = model.getChildren(patient);
+            synchronized (model) {
+                for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
+                    MediaSeriesGroup st = it.next();
+                    if (st != study) {
+                        series = findSOPInstanceReference(model, st, sopUID);
+                    }
+                    if (series != null) {
+                        return series;
                     }
                 }
             }
@@ -301,13 +302,14 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
 
     private Series<?> findSOPInstanceReference(DicomModel model, MediaSeriesGroup study, String sopUID) {
         if (model != null && study != null) {
+            TagW sopTag = TagD.getUID(Level.INSTANCE);
             Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
             synchronized (model) {
                 for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                     MediaSeriesGroup seq = it.next();
                     if (seq instanceof Series) {
                         Series<?> s = (Series<?>) seq;
-                        if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
+                        if (s.hasMediaContains(sopTag, sopUID)) {
                             return s;
                         }
                     }

@@ -16,20 +16,23 @@ import java.util.HashMap;
 
 import javax.media.jai.PlanarImage;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
+import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
+import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.image.MergeImgOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
 public class OverlayOp extends AbstractOp {
@@ -45,28 +48,35 @@ public class OverlayOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public OverlayOp(OverlayOp op) {
+        super(op);
+    }
+
+    @Override
+    public OverlayOp copy() {
+        return new OverlayOp(this);
+    }
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();
         if (OpEvent.ImageChange.equals(type) || OpEvent.ResetDisplay.equals(type)) {
-            ImageElement img = event.getImage();
-            boolean noMedia = img == null;
-            setParam(P_IMAGE_ELEMENT, noMedia ? null : img);
             setParam(P_PR_ELEMENT, null);
+            setParam(P_IMAGE_ELEMENT, event.getImage());
         } else if (OpEvent.ApplyPR.equals(type)) {
             HashMap<String, Object> p = event.getParams();
             if (p != null) {
-                Object pr = p.get(ActionW.PR_STATE.cmd());
+                Object prReader = p.get(ActionW.PR_STATE.cmd());
+                PRSpecialElement pr = (prReader instanceof PresentationStateReader)
+                    ? ((PresentationStateReader) prReader).getDicom() : null;
+                setParam(P_PR_ELEMENT, pr);
                 setParam(P_IMAGE_ELEMENT, event.getImage());
-                setParam(P_PR_ELEMENT,
-                    pr instanceof PresentationStateReader ? ((PresentationStateReader) pr).getDicom() : null);
             }
         }
     }
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         Boolean overlay = (Boolean) params.get(P_SHOW);
 
@@ -74,38 +84,31 @@ public class OverlayOp extends AbstractOp {
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
         } else if (overlay) {
             RenderedImage imgOverlay = null;
-
             ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
+
             if (image != null) {
                 boolean overlays = JMVUtils.getNULLtoFalse(image.getTagValue(TagW.HasOverlay));
-                if (!overlays) {
-                    Object pr = params.get(P_PR_ELEMENT);
-                    if (pr instanceof PRSpecialElement) {
-                        overlays =
-                            DicomMediaUtils.hasOverlay(((PRSpecialElement) pr).getMediaReader().getDicomObject());
-                    }
-                }
+
                 if (overlays && image.getMediaReader() instanceof DicomMediaIO) {
                     DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();
                     try {
                         if (image.getKey() instanceof Integer) {
                             int frame = (Integer) image.getKey();
-                            Integer height = (Integer) reader.getTagValue(TagW.Rows);
-                            Integer width = (Integer) reader.getTagValue(TagW.Columns);
+                            Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
+                            Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
                             if (height != null && width != null) {
-                                imgOverlay = PlanarImage.wrapRenderedImage(
-                                    OverlayUtils.getOverlays(image, reader, frame, width, height, params));
+                                imgOverlay = PlanarImage.wrapRenderedImage(OverlayUtils.getBinaryOverlays(image,
+                                    reader.getDicomObject(), frame, width, height, params));
                             }
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LOGGER.error("Applying overlays: {}", e.getMessage()); //$NON-NLS-1$
                     }
                 }
             }
             result = imgOverlay == null ? source : MergeImgOp.combineTwoImages(source, imgOverlay, 255);
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
-
 }

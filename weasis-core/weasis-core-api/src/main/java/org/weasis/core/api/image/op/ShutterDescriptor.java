@@ -27,15 +27,15 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
      */
     private static final String[][] resources = { { "GlobalName", "Shutter" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "LocalName", "Shutter" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "Shutter" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Description", "Apply an shutter to the image" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Description", "Apply an shutter to the image" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String[] paramNames = { "roi", "color" }; //$NON-NLS-1$ //$NON-NLS-2$
     private static final Class[] paramClasses = { ROIShape.class, Byte[].class };

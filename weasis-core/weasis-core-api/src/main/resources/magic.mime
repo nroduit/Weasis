@@ -440,6 +440,9 @@
 # GIF
 0	string		GIF		image/gif
 
+# JPEG-LS images
+0	belong		0xffd8fff7		image/jpeg-ls
+
 # JPEG images
 0	beshort		0xffd8		image/jpeg
 

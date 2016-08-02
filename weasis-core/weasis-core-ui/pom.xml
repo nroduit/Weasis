@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-core-parent</artifactId>
 		<groupId>org.weasis.core</groupId>
-		<version>2.0.7-SNAPSHOT</version>
+		<version>2.5.0-SNAPSHOT</version>
 		<relativePath>../weasis-core-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -14,6 +14,7 @@
 	<properties>
 		<bundle.namespace>org.weasis.core.ui</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+		<powermock.version>1.6.5</powermock.version>
 	</properties>
 	<build>
 		<plugins>
@@ -22,11 +23,11 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<!-- xpp3 lib is not required if stax is available -->
-						<Import-Package>!org.xmlpull.*,*</Import-Package>
+						<!-- Force to import jaxb binding classes -->
+						<Import-Package>com.sun.xml.internal.bind,*</Import-Package>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<!-- add for Xchart: ,com.xeiam.xchart.*,com.xeiam.xchart.internal.markers.*,de.erichseifert.* -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.simpleframework.xml.*,org.jdesktop.jxlayer.*</Export-Package>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*</Export-Package>
 						<!-- Import only classes, will exclude *.RSA and *.SF files to avoid 
 							invalid signature issue. -->
 						<Embed-Dependency>*;scope=compile;inline=org.**|it.**</Embed-Dependency>
@@ -39,25 +40,8 @@
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-api</artifactId>
-			<version>2.0.7-SNAPSHOT</version>
+			<version>2.5.0-SNAPSHOT</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.simpleframework</groupId>
-			<artifactId>simple-xml</artifactId>
-			<version>2.7</version>
-			<exclusions>
-				<!-- Stax is not required as there is an implementation in Java 6. xpp3 
-					lib is not required if stax is available -->
-				<exclusion>
-					<artifactId>stax</artifactId>
-					<groupId>stax</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>xpp3</artifactId>
-					<groupId>xpp3</groupId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>it.cnr.imaa.essi</groupId>
@@ -69,10 +53,41 @@
 			<artifactId>jxlayer</artifactId>
 			<version>3.0.4</version>
 		</dependency>
-<!-- 		<dependency> -->
-<!-- 			<groupId>com.xeiam.xchart</groupId> -->
-<!-- 			<artifactId>xchart</artifactId> -->
-<!-- 			<version>2.4.1</version> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>com.github.lgooddatepicker</groupId>
+			<artifactId>LGoodDatePicker</artifactId>
+			<version>7.6.3</version>
+		</dependency>
+		<!-- <dependency> -->
+		<!-- <groupId>com.xeiam.xchart</groupId> -->
+		<!-- <artifactId>xchart</artifactId> -->
+		<!-- <version>2.4.1</version> -->
+		<!-- </dependency> -->
+
+		<!-- FOR TESTS -->
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.4.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito2</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.bean-matchers</groupId>
+			<artifactId>bean-matchers</artifactId>
+			<version>0.9</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>

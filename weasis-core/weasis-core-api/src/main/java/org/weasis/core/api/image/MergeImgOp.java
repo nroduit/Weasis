@@ -25,11 +25,6 @@ import org.weasis.core.api.image.util.ImageFiler;
 
 import com.sun.media.jai.util.ImageUtil;
 
-/**
- * This operation should
- *
- * @version $Rev$ $Date$
- */
 public class MergeImgOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(MergeImgOp.class);
 
@@ -54,9 +49,18 @@ public class MergeImgOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public MergeImgOp(MergeImgOp op) {
+        super(op);
+    }
+
+    @Override
+    public MergeImgOp copy() {
+        return new MergeImgOp(this);
+    }
+
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage source2 = (RenderedImage) params.get(INPUT_IMG2);
         RenderedImage result = source;
 
@@ -66,7 +70,7 @@ public class MergeImgOp extends AbstractOp {
             Integer transparency = (Integer) params.get(P_OPACITY);
             result = MergeImgOp.combineTwoImages(source, source2, transparency == null ? 255 : transparency);
         }
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
     public static PlanarImage combineTwoImages(RenderedImage sourceDown, RenderedImage sourceUp, int transparency) {

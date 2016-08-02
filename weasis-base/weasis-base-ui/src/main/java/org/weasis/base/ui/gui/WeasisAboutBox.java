@@ -16,6 +16,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -42,7 +43,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.SimpleTableModel;
 
-public class WeasisAboutBox extends JDialog implements java.awt.event.ActionListener {
+public class WeasisAboutBox extends JDialog implements ActionListener {
 
     private final JPanel jpanelRoot = new JPanel();
     private final JPanel jPanelClose = new JPanel();
@@ -71,7 +72,8 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
             String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true); //$NON-NLS-1$
         try {
             sysTable = new JTable(new SimpleTableModel(
-                new String[] { Messages.getString("WeasisAboutBox.prop"), Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$ //$NON-NLS-2$
+                new String[] { Messages.getString("WeasisAboutBox.prop"), //$NON-NLS-1$
+                    Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$
                 createSysInfo()));
             sysTable.getColumnModel().setColumnMargin(5);
             JMVUtils.formatTableHeaders(sysTable, SwingConstants.CENTER);

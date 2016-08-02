@@ -26,11 +26,11 @@ import javax.swing.event.ListDataEvent;
 public class JToogleButtonGroup implements ActionListener, ComboBoxModelAdapter {
 
     protected final List<JToggleButton> itemList;
-    protected final HashMap<JToggleButton, Object> map = new HashMap<JToggleButton, Object>();
+    protected final HashMap<JToggleButton, Object> map = new HashMap<>();
     protected ComboBoxModel dataModel;
 
     public JToogleButtonGroup() {
-        this.itemList = new ArrayList<JToggleButton>();
+        this.itemList = new ArrayList<>();
     }
 
     private void init() {

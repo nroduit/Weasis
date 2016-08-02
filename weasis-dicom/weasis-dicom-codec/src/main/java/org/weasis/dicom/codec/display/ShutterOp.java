@@ -12,7 +12,9 @@ package org.weasis.dicom.codec.display;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.image.DataBuffer;
 import java.awt.image.MultiPixelPackedSampleModel;
@@ -24,19 +26,28 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.ROIShape;
 import javax.media.jai.TiledImage;
 
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
+import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
+import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.image.MergeImgOp;
 import org.weasis.core.api.image.op.ShutterDescriptor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.codec.utils.OverlayUtils;
 
 public class ShutterOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShutterOp.class);
@@ -52,11 +63,21 @@ public class ShutterOp extends AbstractOp {
     public static final String P_SHAPE = "shape"; //$NON-NLS-1$
     public static final String P_RGB_COLOR = "rgb.color"; //$NON-NLS-1$
     public static final String P_PS_VALUE = "ps.value"; //$NON-NLS-1$
+    public static final String P_PR_ELEMENT = "pr.element"; //$NON-NLS-1$
+    public static final String P_IMAGE_ELEMENT = "img.element"; //$NON-NLS-1$
 
     public ShutterOp() {
         setName(OP_NAME);
     }
 
+    public ShutterOp(ShutterOp op) {
+        super(op);
+    }
+
+    @Override
+    public ShutterOp copy() {
+        return new ShutterOp(this);
+    }
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();
@@ -67,6 +88,8 @@ public class ShutterOp extends AbstractOp {
             setParam(P_SHAPE, noMedia ? null : img.getTagValue(TagW.ShutterFinalShape));
             setParam(P_PS_VALUE, noMedia ? null : img.getTagValue(TagW.ShutterPSValue));
             setParam(P_RGB_COLOR, noMedia ? null : img.getTagValue(TagW.ShutterRGBColor));
+            setParam(P_PR_ELEMENT, null);
+            setParam(P_IMAGE_ELEMENT, noMedia ? null : img);
         } else if (OpEvent.ApplyPR.equals(type)) {
             HashMap<String, Object> p = event.getParams();
             if (p != null) {
@@ -76,26 +99,31 @@ public class ShutterOp extends AbstractOp {
                 setParam(P_SHAPE, pr == null ? null : pr.getTagValue(TagW.ShutterFinalShape));
                 setParam(P_PS_VALUE, pr == null ? null : pr.getTagValue(TagW.ShutterPSValue));
                 setParam(P_RGB_COLOR, pr == null ? null : pr.getTagValue(TagW.ShutterRGBColor));
+                setParam(P_PR_ELEMENT, pr);
+                setParam(P_IMAGE_ELEMENT, event.getImage());
 
-                // if (area != null) {
-                // Area shape = (Area) actionsInView.get(TagW.ShutterFinalShape.getName());
-                // if (shape != null) {
-                // Area trArea = new Area(shape);
-                // trArea.transform(AffineTransform.getTranslateInstance(-area.getX(), -area.getY()));
-                // actionsInView.put(TagW.ShutterFinalShape.getName(), trArea);
-                // }
-                // }
+                Area shape = (Area) params.get(P_SHAPE);
+                if (shape != null) {
+                    Rectangle area =
+                        (Rectangle) ((PresentationStateReader) prReader).getTagValue(ActionW.CROP.cmd(), null);
+                    if (area != null) {
+                        Area trArea = new Area(shape);
+                        trArea.transform(AffineTransform.getTranslateInstance(-area.getX(), -area.getY()));
+                        setParam(P_SHAPE, trArea);
+                    }
+                }
             }
         }
     }
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
 
         Boolean shutter = (Boolean) params.get(P_SHOW);
         Area area = (Area) params.get(P_SHAPE);
+        Object pr = params.get(P_PR_ELEMENT);
 
         if (shutter == null) {
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
@@ -109,7 +137,41 @@ public class ShutterOp extends AbstractOp {
             }
         }
 
-        params.put(OUTPUT_IMG, result);
+        // Potentially override the shutter in the original dicom
+        if (shutter && params.get(P_PS_VALUE) != null && (pr instanceof PRSpecialElement)) {
+            DicomMediaIO prReader = ((PRSpecialElement) pr).getMediaReader();
+            RenderedImage imgOverlay = null;
+            int transperency = 255;
+            ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
+            boolean overlays = JMVUtils.getNULLtoFalse(prReader.getTagValue(TagW.HasOverlay));
+
+            if (overlays && image != null && image.getKey() instanceof Integer) {
+                int frame = (Integer) image.getKey();
+                Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
+                Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
+                if (height != null && width != null) {
+                    Byte[] color = getShutterColor();
+
+                    Attributes attributes = ((PRSpecialElement) pr).getMediaReader().getDicomObject();
+                    Integer shuttOverlayGroup =
+                        DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.ShutterOverlayGroup, null);
+                    if (shuttOverlayGroup != null) {
+                        PlanarImage alpha = PlanarImage.wrapRenderedImage(
+                            OverlayUtils.getShutterOverlay(attributes, frame, width, height, shuttOverlayGroup));
+                        if (color.length == 1) {
+                            transperency = color[0];
+                            imgOverlay = MergeImgOp.combineTwoImages(result, alpha, transperency);
+                        } else {
+                            imgOverlay = MergeImgOp.combineTwoImages(result,
+                                ImageFiler.getEmptyImage(color, width, height), alpha);
+                        }
+                    }
+                }
+            }
+            result = imgOverlay == null ? result : imgOverlay;
+        }
+
+        params.put(Param.OUTPUT_IMG, result);
     }
 
     private boolean isBlack(Byte[] color) {

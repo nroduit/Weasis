@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<selectGraphic fill="false" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffffff" />
+	<pts>
+		<pt x="1440.5" y="1161.0" />
+		<pt x="1769.5" y="1328.0" />
+		<pt x="1769.5" y="1161.0" />
+		<pt x="1440.5" y="1328.0" />
+		<pt x="1605.0" y="1161.0" />
+		<pt x="1605.0" y="1328.0" />
+		<pt x="1769.5" y="1244.5" />
+		<pt x="1440.5" y="1244.5" />
+	</pts>
+</selectGraphic>

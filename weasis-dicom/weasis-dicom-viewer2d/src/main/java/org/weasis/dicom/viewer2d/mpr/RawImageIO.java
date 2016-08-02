@@ -16,6 +16,10 @@ import java.net.URI;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -37,6 +41,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -45,6 +50,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
@@ -59,6 +65,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     private static final int[] OFFSETS_0_1_2 = { 0, 1, 2 };
 
     protected URI uri;
+    private final FileCache fileCache;
 
     private final HashMap<TagW, Object> tags;
     private final Codec codec;
@@ -66,11 +73,9 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     private Attributes attributes;
 
     public RawImageIO(URI media, Codec codec) {
-        if (media == null) {
-            throw new IllegalArgumentException("media uri is null"); //$NON-NLS-1$
-        }
-        this.tags = new HashMap<TagW, Object>();
-        this.uri = media;
+        this.uri = Objects.requireNonNull(media);
+        this.fileCache = new FileCache(this);
+        this.tags = new HashMap<>();
         this.codec = codec;
     }
 
@@ -111,8 +116,8 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
         // Series Group
         if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
             // Information for series ToolTips
-            group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
-            group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
+            group.setTagNoNull(TagD.get(Tag.PatientName), getTagValue(TagD.get(Tag.PatientName)));
+            group.setTagNoNull(TagD.get(Tag.StudyDescription), header.getString(Tag.StudyDescription));
 
             // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
             // MediaElement[] elements = getMediaElement();
@@ -128,12 +133,14 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     @Override
     public PlanarImage getMediaFragment(MediaElement<PlanarImage> media) throws Exception {
         if (media != null && media.getFile() != null) {
-            ImageParameters h = new ImageParameters((Integer) media.getTagValue(TagW.Rows),
-                (Integer) media.getTagValue(TagW.Columns), (Integer) media.getTagValue(TagW.BitsAllocated),
-                (Integer) media.getTagValue(TagW.SamplesPerPixel), false);
+            Integer allocated = TagD.getTagValue(media, Tag.BitsAllocated, Integer.class);
+            Integer sample = TagD.getTagValue(media, Tag.SamplesPerPixel, Integer.class);
+            Integer rows = TagD.getTagValue(media, Tag.Rows, Integer.class);
+            Integer columns = TagD.getTagValue(media, Tag.Columns, Integer.class);
+            ImageParameters h = new ImageParameters(rows, columns, allocated, sample, false);
             // RawImageReader doesn't need to be disposed
             ImageReader reader = initRawImageReader(imageStream = ImageIO.createImageInputStream(media.getFile()), h, 1,
-                0, false, (Integer) media.getTagValue(TagW.PixelRepresentation));
+                0, false, TagD.getTagValue(media, Tag.PixelRepresentation, Integer.class));
 
             RenderedImage buffer = reader.readAsRenderedImage(0, null);
             PlanarImage img = null;
@@ -143,8 +150,8 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
                     pb.addSource(buffer);
                     // Tile size are set in this operation
                     img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
-                } else
-                    if (buffer.getTileWidth() != ImageFiler.TILESIZE || buffer.getTileHeight() != ImageFiler.TILESIZE) {
+                } else if (buffer.getTileWidth() != ImageFiler.TILESIZE
+                    || buffer.getTileHeight() != ImageFiler.TILESIZE) {
                     img = ImageFiler.tileImage(buffer);
                 } else {
                     img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
@@ -193,18 +200,13 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     }
 
     @Override
-    public String getMediaFragmentMimeType(Object key) {
+    public String getMediaFragmentMimeType() {
         return mimeType;
     }
 
     @Override
-    public HashMap<TagW, Object> getMediaFragmentTags(Object key) {
+    public Map<TagW, Object> getMediaFragmentTags(Object key) {
         return tags;
-    }
-
-    @Override
-    public URI getMediaFragmentURI(Object key) {
-        return uri;
     }
 
     @Override
@@ -224,19 +226,29 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
 
     @Override
     public Object getTagValue(TagW tag) {
-        return tags.get(tag);
+        return tag == null ? null : tags.get(tag);
     }
 
+    @Override
     public void setTag(TagW tag, Object value) {
-        if (tag != null) {
-            tags.put(tag, value);
+        DicomMediaUtils.setTag(tags, tag, value);
+    }
+
+    @Override
+    public void setTagNoNull(TagW tag, Object value) {
+        if (value != null) {
+            setTag(tag, value);
         }
     }
 
-    public void setTagNoNull(TagW tag, Object value) {
-        if (tag != null && value != null) {
-            tags.put(tag, value);
-        }
+    @Override
+    public boolean containTagKey(TagW tag) {
+        return tags.containsKey(tag);
+    }
+
+    @Override
+    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
+        return tags.entrySet().iterator();
     }
 
     public void copyTags(TagW[] tagList, MediaElement<?> media, boolean allowNullValue) {
@@ -328,5 +340,15 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
         DicomMediaUtils.fillAttributes(tags, dcm);
         dcm.addAll(attributes);
         return dcm;
+    }
+
+    @Override
+    public FileCache getFileCache() {
+        return fileCache;
+    }
+
+    @Override
+    public boolean buildFile(File ouptut) {
+        return false;
     }
 }

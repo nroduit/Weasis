@@ -236,13 +236,12 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         List<LoadSeries> loadSeries = loadDicomDir(file, dicomModel, chckbxWriteInCache.isSelected());
 
         if (loadSeries != null && loadSeries.size() > 0) {
-            DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, dicomModel));
+            DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
         } else {
             LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
 
-            int response = JOptionPane.showConfirmDialog(this,
-                Messages.getString("DicomExplorer.mes_import_manual"), this.getTitle(), //$NON-NLS-1$
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            int response = JOptionPane.showConfirmDialog(this, Messages.getString("DicomExplorer.mes_import_manual"), //$NON-NLS-1$
+                this.getTitle(), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
             if (response == JOptionPane.YES_OPTION) {
                 Dialog dialog = WinUtil.getParentDialog(this);
@@ -262,7 +261,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     }
 
     public static List<LoadSeries> loadDicomDir(File file, DicomModel dicomModel, boolean writeIncache) {
-        ArrayList<LoadSeries> loadSeries = null;
+        List<LoadSeries> loadSeries = null;
         if (file != null) {
             if (file.canRead()) {
                 DicomDirLoader dirImport = new DicomDirLoader(file, dicomModel, writeIncache);
@@ -273,7 +272,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     }
 
     public static File getDcmDirFromMedia() {
-        final List<File> dvs = new ArrayList<File>();
+        final List<File> dvs = new ArrayList<>();
         try {
             if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
                 dvs.addAll(Arrays.asList(File.listRoots()));
@@ -287,7 +286,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                     dvs.addAll(Arrays.asList(userDir.listFiles()));
                 }
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             LOGGER.error("Error when reading device directories: {}", e.getMessage()); //$NON-NLS-1$
         }
 

@@ -20,20 +20,17 @@ public abstract class AbstractOp implements ImageOpNode {
     protected HashMap<String, Object> params;
 
     public AbstractOp() {
-        params = new HashMap<String, Object>();
+        params = new HashMap<>();
+    }
+
+    public AbstractOp(AbstractOp op) {
+        params = new HashMap<>(op.params);
+        clearIOCache();
     }
 
     @Override
     public void clearParams() {
         params.clear();
-    }
-
-    @Override
-    public AbstractOp clone() throws CloneNotSupportedException {
-        AbstractOp obj = (AbstractOp) super.clone();
-        obj.params = new HashMap<String, Object>(params);
-        obj.clearIOCache();
-        return obj;
     }
 
     @Override
@@ -68,24 +65,31 @@ public abstract class AbstractOp implements ImageOpNode {
     }
 
     @Override
+    public void removeParam(String key) {
+        if (key != null) {
+            params.remove(key);
+        }
+    }
+
+    @Override
     public boolean isEnabled() {
-        return JMVUtils.getNULLtoTrue(params.get(ENABLE));
+        return JMVUtils.getNULLtoTrue(params.get(Param.ENABLE));
     }
 
     @Override
     public void setEnabled(boolean enabled) {
-        params.put(ENABLE, enabled);
+        params.put(Param.ENABLE, enabled);
     }
 
     @Override
     public String getName() {
-        return (String) params.get(NAME);
+        return (String) params.get(Param.NAME);
     }
 
     @Override
     public void setName(String name) {
         if (name != null) {
-            params.put(NAME, name);
+            params.put(Param.NAME, name);
         }
     }
 

@@ -25,7 +25,6 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -39,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
 
@@ -53,7 +51,7 @@ public class ImagePrint implements Printable {
     public ImagePrint(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
         this.layout = layout;
         this.printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(true) : printOptions;
+        this.printOptions = printOptions == null ? new PrintOptions() : printOptions;
     }
 
     public void setPrintLocation(Point d) {
@@ -89,11 +87,11 @@ public class ImagePrint implements Printable {
                             pj.print(aset);
                             LOGGER.info("Bypass Printer is not accepting job"); //$NON-NLS-1$
                         } catch (PrinterException ex) {
-                            AuditLog.logError(LOGGER, e, "Printer exception"); //$NON-NLS-1$
+                            LOGGER.error("Printer exception", ex); //$NON-NLS-1$
                         }
                     }
                 } else {
-                    AuditLog.logError(LOGGER, e, "Print exception"); //$NON-NLS-1$
+                    LOGGER.error("Print exception", e); //$NON-NLS-1$
                 }
             }
         }
@@ -180,7 +178,7 @@ public class ImagePrint implements Printable {
 
     private void formatImage(ExportImage<? extends ImageElement> image, LayoutConstraints key,
         Point2D.Double placeholder, Point2D.Double pad) {
-        if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
+        if (!printOptions.isShowingAnnotations() && image.getInfoLayer().getVisible()) {
             image.getInfoLayer().setVisible(false);
         }
 

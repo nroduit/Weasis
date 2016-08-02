@@ -16,6 +16,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -99,10 +101,10 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         return basicState.getActionW().getTitle();
     }
 
-    private DefaultView2d getDefaultView2d(InputEvent e) {
+    private ViewCanvas<?> getIViewCanvas(InputEvent e) {
         Object source = e.getSource();
-        if (source instanceof DefaultView2d) {
-            return (DefaultView2d) source;
+        if (source instanceof ViewCanvas) {
+            return (ViewCanvas<?>) source;
         }
         return null;
     }
@@ -112,8 +114,8 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if (basicState.isActionEnabled()) {
             int buttonMask = getButtonMaskEx();
             if ((e.getModifiersEx() & buttonMask) != 0) {
-                DefaultView2d panner = getDefaultView2d(e);
-                if (panner != null) {
+                ViewCanvas<?> panner = getIViewCanvas(e);
+                if (Objects.nonNull(panner)) {
                     pickPoint = e.getPoint();
                     setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
                 }
@@ -126,11 +128,9 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if (basicState.isActionEnabled()) {
             int buttonMask = getButtonMaskEx();
             if ((e.getModifiersEx() & buttonMask) != 0) {
-                DefaultView2d panner = getDefaultView2d(e);
-                if (panner != null) {
-                    if (pickPoint != null) {
-                        setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
-                    }
+                ViewCanvas<?> panner = getIViewCanvas(e);
+                if (Objects.nonNull(panner) && Objects.nonNull(pickPoint)) {
+                    setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
                 }
             }
         }
@@ -141,11 +141,8 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if (basicState.isActionEnabled()) {
             int buttonMask = getButtonMask();
             if ((e.getModifiers() & buttonMask) != 0) {
-                DefaultView2d panner = getDefaultView2d(e);
-                if (panner != null) {
-                    // panner.resetPointerType(DefaultView2d.CENTER_POINTER);
-                    panner.repaint();
-                }
+                ViewCanvas<?> panner = getIViewCanvas(e);
+                Optional.ofNullable(panner).ifPresent(p -> p.getJComponent().repaint());
             }
         }
     }

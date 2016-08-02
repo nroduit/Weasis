@@ -18,6 +18,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 import org.weasis.core.api.util.StringUtil;
@@ -33,7 +34,7 @@ public class MagicMimeEntry {
     public static final int BYTE_TYPE = 7;
     public static final int UNKNOWN_TYPE = 20;
 
-    private final ArrayList<MagicMimeEntry> subEntries = new ArrayList<MagicMimeEntry>();
+    private final ArrayList<MagicMimeEntry> subEntries = new ArrayList<>();
     private int checkBytesFrom;
     private int type;
     private String typeStr;
@@ -43,15 +44,15 @@ public class MagicMimeEntry {
 
     boolean isBetween;
 
-    public MagicMimeEntry(ArrayList<String> entries) throws InvalidMagicMimeEntryException {
+    public MagicMimeEntry(List<String> entries) throws InvalidMagicMimeEntryException {
 
         this(0, null, entries);
     }
 
-    private MagicMimeEntry(int level, MagicMimeEntry parent, ArrayList<String> entries)
+    private MagicMimeEntry(int level, MagicMimeEntry parent, List<String> entries)
         throws InvalidMagicMimeEntryException {
 
-        if (entries == null || entries.size() == 0) {
+        if (entries == null || entries.isEmpty()) {
             return;
         }
         try {
@@ -64,7 +65,7 @@ public class MagicMimeEntry {
             parent.subEntries.add(this);
         }
 
-        while (entries.size() > 0) {
+        while (!entries.isEmpty()) {
             int thisLevel = howManyGreaterThans(entries.get(0));
             if (thisLevel > level) {
                 new MagicMimeEntry(thisLevel, this, entries);
@@ -481,10 +482,10 @@ public class MagicMimeEntry {
             got = Long.parseLong(testContent);
         }
 
-        long found = bbuf.getInt();
+        long found = Integer.toUnsignedLong(bbuf.getInt());
 
         if (needMask) {
-            found = (short) (found & lMask);
+            found = found & lMask;
         }
 
         if (got != found) {

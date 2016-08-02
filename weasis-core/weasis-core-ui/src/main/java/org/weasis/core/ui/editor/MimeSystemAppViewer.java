@@ -24,11 +24,12 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 
 public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement<?>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MimeSystemAppViewer.class);
+
+    private static final String ERROR_MSG = "Cannot open {} with the default system application";
 
     @Override
     public void close() {
@@ -44,8 +45,8 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement<?
             try {
                 String cmd = String.format("xdg-open %s", file.getAbsolutePath()); //$NON-NLS-1$
                 Runtime.getRuntime().exec(cmd);
-            } catch (IOException e1) {
-                LOGGER.error("Cannot open {} with the default system application", file.getName()); //$NON-NLS-1$
+            } catch (IOException e) {
+                LOGGER.error(ERROR_MSG, file, e); // $NON-NLS-1$
             }
         }
     }
@@ -55,8 +56,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement<?
             try {
                 Runtime.getRuntime().exec("cmd /c \"" + file + '"'); //$NON-NLS-1$
             } catch (IOException e) {
-                LOGGER.error("Cannot open {} with the default system application", file); //$NON-NLS-1$
-                e.printStackTrace();
+                LOGGER.error(ERROR_MSG, file, e); // $NON-NLS-1$
             }
         }
     }
@@ -65,8 +65,8 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement<?
         if (file != null && file.canRead()) {
             try {
                 desktop.open(file);
-            } catch (IOException e1) {
-                LOGGER.error("Cannot open {} with the default system application", file.getName()); //$NON-NLS-1$
+            } catch (IOException e) {
+                LOGGER.error(ERROR_MSG, file, e); // $NON-NLS-1$
             }
         }
     }
@@ -83,11 +83,6 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement<?
 
     @Override
     public List<Toolbar> getToolBar() {
-        return null;
-    }
-
-    @Override
-    public WtoolBar getStatusBar() {
         return null;
     }
 

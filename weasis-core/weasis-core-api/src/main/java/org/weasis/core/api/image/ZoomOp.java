@@ -19,6 +19,7 @@ import javax.media.jai.JAI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.ImageToolkit;
 
 public class ZoomOp extends AbstractOp {
@@ -55,16 +56,25 @@ public class ZoomOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public ZoomOp(ZoomOp op) {
+        super(op);
+    }
+
+    @Override
+    public ZoomOp copy() {
+        return new ZoomOp(this);
+    }
+
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         Double zoomFactorX = (Double) params.get(P_RATIO_X);
         Double zoomFactorY = (Double) params.get(P_RATIO_Y);
 
         if (zoomFactorX == null || zoomFactorY == null) {
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else if (zoomFactorX != 1.0 || zoomFactorY != 1.0) {
+        } else if (MathUtil.isDifferent(zoomFactorX, 1.0) || MathUtil.isDifferent(zoomFactorY, 1.0)) {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(source);
             pb.add(Math.abs(zoomFactorX.floatValue()));
@@ -76,7 +86,7 @@ public class ZoomOp extends AbstractOp {
             result = JAI.create("scale", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
     public Interpolation getInterpolation() {

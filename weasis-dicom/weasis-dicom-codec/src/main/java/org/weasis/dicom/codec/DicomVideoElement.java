@@ -12,11 +12,12 @@ package org.weasis.dicom.codec;
 
 import java.io.File;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.AudioVideoElement;
 import org.weasis.core.api.media.data.TagW;
 
-public class DicomVideoElement extends AudioVideoElement {
+public class DicomVideoElement extends AudioVideoElement  implements FileExtractor {
 
     public static final String MPEG_MIMETYPE = "video/mpeg"; //$NON-NLS-1$
 
@@ -28,9 +29,9 @@ public class DicomVideoElement extends AudioVideoElement {
     public DicomVideoElement(DicomMediaIO mediaIO, Object key) {
         super(mediaIO, key);
         // Physical distance in mm between the center of each pixel (ratio in mm)
-        double[] val = (double[]) mediaIO.getTagValue(TagW.PixelSpacing);
+        double[] val = TagD.getTagValue(mediaIO, Tag.PixelSpacing, double[].class);
         if (val == null || val.length != 2) {
-            val = (double[]) mediaIO.getTagValue(TagW.ImagerPixelSpacing);
+            val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
         }
         if (val != null) {
             pixelSizeX = val[0];
@@ -51,11 +52,12 @@ public class DicomVideoElement extends AudioVideoElement {
         return pixelSpacingUnit;
     }
 
-    public File getVideoFile() {
-        return videoFile;
-    }
-
     public void setVideoFile(File videoFile) {
         this.videoFile = videoFile;
+    }
+
+    @Override
+    public File getExtractFile() {
+        return videoFile;
     }
 }

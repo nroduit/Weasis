@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
@@ -26,10 +27,12 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.AbstractUIAction;
 import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.TagD;
 
 public class OpenDicomAction extends AbstractUIAction {
 
@@ -61,16 +64,14 @@ public class OpenDicomAction extends AbstractUIAction {
         fileChooser.setAcceptAllFileFilterUsed(true);
         fileChooser.setFileFilter(filter);
 
-        File[] selectedFiles = null;
-        if (fileChooser
-            .showOpenDialog(EventManager.getInstance().getSelectedView2dContainer()) != JFileChooser.APPROVE_OPTION
+        File[] selectedFiles;
+        if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION
             || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
             return;
         } else {
             Codec codec = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
             if (codec != null) {
-                ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+                ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>();
                 for (File file : selectedFiles) {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file, DicomMediaIO.MIMETYPE)) {
                         MediaReader reader = codec.getMediaIO(file.toURI(), DicomMediaIO.MIMETYPE, null);
@@ -79,10 +80,10 @@ public class OpenDicomAction extends AbstractUIAction {
                                 // DICOM is not readable
                                 continue;
                             }
-                            String sUID = (String) reader.getTagValue(TagW.SeriesInstanceUID);
-                            String gUID = (String) reader.getTagValue(TagW.PatientID);
-                            TagW tname = TagW.PatientName;
-                            String tvalue = (String) reader.getTagValue(TagW.PatientName);
+                            String sUID = TagD.getTagValue(reader, Tag.SeriesInstanceUID, String.class);
+                            String gUID = TagD.getTagValue(reader, Tag.PatientID, String.class);
+                            TagW tname = TagD.get(Tag.PatientName);
+                            String tvalue = (String) reader.getTagValue(tname);
 
                             MediaSeries s =
                                 ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
@@ -93,14 +94,13 @@ public class OpenDicomAction extends AbstractUIAction {
                         }
                     }
                 }
-                if (list.size() > 0) {
+                if (!list.isEmpty()) {
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(list, ViewerPluginBuilder.DefaultDataModel, true,
                         true);
                 } else {
                     Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
                     JOptionPane.showMessageDialog(c, Messages.getString("OpenDicomAction.open_err_msg"), //$NON-NLS-1$
-                        getDescription(),
-                        JOptionPane.WARNING_MESSAGE);
+                        getDescription(), JOptionPane.WARNING_MESSAGE);
                 }
             }
             BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent()); //$NON-NLS-1$

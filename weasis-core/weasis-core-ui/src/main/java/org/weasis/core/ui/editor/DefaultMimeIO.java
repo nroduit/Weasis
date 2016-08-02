@@ -13,29 +13,36 @@ package org.weasis.core.ui.editor;
 import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
+import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 
 public class DefaultMimeIO<F extends File> implements MediaReader<F> {
 
+    private static final TagView defaultTagView = new TagView(TagW.FileName);
+
     protected URI uri;
     protected final String mimeType;
     private MediaElement<F> mediaElement = null;
+    private final FileCache fileCache;
 
     public DefaultMimeIO(URI media, String mimeType) {
-        if (media == null) {
-            throw new IllegalArgumentException("mediaElement uri is null"); //$NON-NLS-1$
-        }
-        this.uri = media;
+        this.uri = Objects.requireNonNull(media);
+        this.fileCache = new FileCache(this);
         this.mimeType = mimeType == null ? MimeInspector.UNKNOWN_MIME_TYPE : mimeType;
     }
 
@@ -64,7 +71,6 @@ public class DefaultMimeIO<F extends File> implements MediaReader<F> {
 
     @Override
     public boolean delegate(DataExplorerModel explorerModel) {
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -79,8 +85,9 @@ public class DefaultMimeIO<F extends File> implements MediaReader<F> {
 
     @Override
     public MediaSeries<MediaElement<F>> getMediaSeries() {
+
         MediaSeries<MediaElement<F>> mediaSeries =
-            new Series<MediaElement<F>>(TagW.FilePath, this.toString(), TagW.FileName, 1) {
+            new Series<MediaElement<F>>(TagW.FilePath, this.toString(), defaultTagView, 1) {
 
                 @Override
                 public String getMimeType() {
@@ -128,24 +135,17 @@ public class DefaultMimeIO<F extends File> implements MediaReader<F> {
     }
 
     @Override
-    public String getMediaFragmentMimeType(Object key) {
+    public String getMediaFragmentMimeType() {
         return mimeType;
     }
 
     @Override
-    public HashMap<TagW, Object> getMediaFragmentTags(Object key) {
-        return new HashMap<TagW, Object>();
-    }
-
-    @Override
-    public URI getMediaFragmentURI(Object key) {
-        return uri;
+    public Map<TagW, Object> getMediaFragmentTags(Object key) {
+        return new HashMap<>();
     }
 
     @Override
     public void close() {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -160,13 +160,41 @@ public class DefaultMimeIO<F extends File> implements MediaReader<F> {
 
     @Override
     public Object getTagValue(TagW tag) {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void replaceURI(URI uri) {
-        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
 
+    @Override
+    public void setTag(TagW tag, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean containTagKey(TagW tag) {
+        return false;
+    }
+
+    @Override
+    public void setTagNoNull(TagW tag, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public FileCache getFileCache() {
+        return fileCache;
+    }
+
+    @Override
+    public boolean buildFile(File ouptut) {
+        return false;
     }
 }

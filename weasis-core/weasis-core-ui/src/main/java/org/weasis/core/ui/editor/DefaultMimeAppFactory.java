@@ -11,10 +11,8 @@
 package org.weasis.core.ui.editor;
 
 import java.awt.Desktop;
-import java.util.List;
 import java.util.Map;
 
-import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -107,11 +105,6 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
     @Override
     public int getLevel() {
         return 100;
-    }
-
-    @Override
-    public List<Action> getOpenActions() {
-        return null;
     }
 
     @Override

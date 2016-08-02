@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<fourPointsAngle fill="false" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Angle : 39.4 deg</label>
+	</label>
+	<pts>
+		<pt x="1294.5" y="1528.0" />
+		<pt x="1456.5" y="1498.0" />
+		<pt x="1181.5" y="1553.0" />
+		<pt x="1430.5" y="1638.0" />
+		<pt x="1438.5" y="1525.0" />
+		<pt x="1367.5" y="1717.0" />
+		<pt x="1498.5" y="1556.0" />
+		<pt x="1540.5" y="1643.0" />
+	</pts>
+</fourPointsAngle>

@@ -1,9 +1,7 @@
 package org.weasis.dicom.au;
 
-import java.util.List;
 import java.util.Map;
 
-import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -103,11 +101,6 @@ public class AuFactory implements SeriesViewerFactory {
     @Override
     public int getLevel() {
         return 35;
-    }
-
-    @Override
-    public List<Action> getOpenActions() {
-        return null;
     }
 
     @Override

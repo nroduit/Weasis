@@ -11,12 +11,14 @@ import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.StringUtil;
 
 public class AuditLog {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(AuditLog.class);
 
     public static final String LOG_LEVEL = "org.apache.sling.commons.log.level"; //$NON-NLS-1$
+    public static final String LOG_STACKTRACE_LIMIT = "org.apache.sling.commons.log.stack.limit"; //$NON-NLS-1$
     public static final String LOG_FILE_ACTIVATION = "org.apache.sling.commons.log.file.activate"; //$NON-NLS-1$
     public static final String LOG_FILE = "org.apache.sling.commons.log.file"; //$NON-NLS-1$
     public static final String LOG_FILE_NUMBER = "org.apache.sling.commons.log.file.number"; //$NON-NLS-1$
@@ -30,16 +32,17 @@ public class AuditLog {
         public static LEVEL getLevel(String level) {
             try {
                 return LEVEL.valueOf(level);
-            } catch (Exception e) {
+            } catch (Exception ignore) {
+                // Do nothing
             }
             return INFO;
         }
     };
 
     public static void createOrUpdateLogger(BundleContext bundleContext, String loggerKey, String[] loggerVal,
-        String level, String logFile, String pattern, String nbFiles, String logSize) {
+        String level, String logFile, String pattern, String nbFiles, String logSize, String limit) {
         if (bundleContext != null && loggerKey != null && loggerVal != null && loggerVal.length > 0) {
-            ServiceReference configurationAdminReference =
+            ServiceReference<?> configurationAdminReference =
                 bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
             if (configurationAdminReference != null) {
                 ConfigurationAdmin confAdmin =
@@ -51,7 +54,7 @@ public class AuditLog {
                         if (logConfiguration == null) {
                             logConfiguration = confAdmin.createFactoryConfiguration(
                                 "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
-                            loggingProperties = new Hashtable<String, Object>();
+                            loggingProperties = new Hashtable<>();
                             loggingProperties.put(LOG_LOGGERS, loggerVal);
                             // add this property to give us something unique to re-find this configuration
                             loggingProperties.put(loggerKey, loggerVal[0]);
@@ -71,9 +74,12 @@ public class AuditLog {
                         if (pattern != null) {
                             loggingProperties.put(LOG_PATTERN, pattern);
                         }
+                        if (limit != null) {
+                            loggingProperties.put(LOG_STACKTRACE_LIMIT, StringUtil.hasText(limit) ? limit : "-1");
+                        }
                         logConfiguration.update(loggingProperties);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LOGGER.error("Update log parameters", e); //$NON-NLS-1$
                     }
                 }
             }
@@ -90,7 +96,7 @@ public class AuditLog {
                     logConfiguration = configs[0];
                 }
             } catch (InvalidSyntaxException e) {
-                // ignore this as we'll create what we need
+                LOGGER.error("", e); //$NON-NLS-1$
             }
         }
         return logConfiguration;

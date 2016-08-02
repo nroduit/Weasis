@@ -11,30 +11,29 @@
 package org.weasis.core.api.media.data;
 
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 
 public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
+    public static final MediaSeriesGroup rootNode = new MediaSeriesGroupNode(TagW.RootElement, "__ROOT__", null); //$NON-NLS-1$
+
     private final TagW tagID;
-    private final TagW displayTag;
+    private final TagView displayTag;
     private final HashMap<TagW, Object> tags;
     private Comparator<TagW> comparator;
 
-    public MediaSeriesGroupNode(TagW tagID, Object identifier) {
-        this(tagID, identifier, null);
-    }
-
-    public MediaSeriesGroupNode(TagW tagID, Object identifier, TagW displayTag) {
+    public MediaSeriesGroupNode(TagW tagID, Object identifier, TagView displayTag) {
         if (tagID == null || identifier == null) {
             throw new IllegalArgumentException("tagID or identifier cannot be null"); //$NON-NLS-1$
         }
-        this.displayTag = displayTag == null ? tagID : displayTag;
-        this.tags = new HashMap<TagW, Object>();
+        this.displayTag = displayTag == null ? new TagView(tagID) : displayTag;
+        this.tags = new HashMap<>();
         this.tagID = tagID;
         tags.put(tagID, identifier);
     }
@@ -51,12 +50,9 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
     @Override
     public String toString() {
-        Object val = tags.get(displayTag);
-        if (val instanceof Date) {
-            val = TagW.DATETIME_FORMATTER.format(val);
-        }
-        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") + " " + displayTag.getName() //$NON-NLS-1$ //$NON-NLS-2$
-            : val.toString();
+        String val = displayTag.getFormattedText(false, this);
+        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") //$NON-NLS-1$
+            : StringUtil.getTruncatedString(val, 25, Suffix.THREE_PTS);
     }
 
     @Override
@@ -83,7 +79,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         }
         // Should never happens, but it does very rarely ?
         if (val == null) {
-            return super.hashCode();
+            return tags.hashCode();
         }
         return val.hashCode();
     }
@@ -110,7 +106,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
     @Override
     public Object getTagValue(TagW tag) {
-        return tags.get(tag);
+        return tag == null ? null : tags.get(tag);
     }
 
     @Override
@@ -132,7 +128,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
     @Override
     public void dispose() {
-
+        // Nothing to dispose
     }
 
     // can be null

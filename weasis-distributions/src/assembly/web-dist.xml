@@ -43,4 +43,14 @@
 			<filtered>true</filtered>
 		</fileSet>
 	</fileSets>
+
+	<dependencySets>
+		<dependencySet>
+			<outputDirectory>WEB-INF/lib</outputDirectory>
+			<includes>
+				<include>org.tuckey:urlrewritefilter</include>
+			</includes>
+		</dependencySet>
+	</dependencySets>
+
 </assembly>

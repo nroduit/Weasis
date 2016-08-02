@@ -37,9 +37,18 @@ public class FlipOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public FlipOp(FlipOp op) {
+        super(op);
+    }
+
+    @Override
+    public FlipOp copy() {
+        return new FlipOp(this);
+    }
+
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         Boolean flip = (Boolean) params.get(P_FLIP);
 
@@ -53,6 +62,6 @@ public class FlipOp extends AbstractOp {
             result = JAI.create("transpose", param, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 }

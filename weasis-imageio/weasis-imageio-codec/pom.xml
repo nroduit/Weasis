@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-imageio-parent</artifactId>
 		<groupId>org.weasis.imageio</groupId>
-		<version>2.0.7-SNAPSHOT</version>
+		<version>2.5.0-SNAPSHOT</version>
 		<relativePath>../weasis-imageio-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -32,7 +32,7 @@
 						<!-- <_exportcontents>com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator</_exportcontents> -->
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<!-- Do not add com.sun.media.jai => problem to initialize JAI class -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator,com.sun.media.imageioimpl.plugins.raw,com.sun.media.imageioimpl.plugins.clib,com.sun.media.imageioimpl.plugins.jpeg,com.sun.medialib.codec.jiio,com.sun.medialib.codec.jpeg</Export-Package>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator,com.sun.media.imageioimpl.plugins.raw,com.sun.media.imageioimpl.plugins.clib,com.sun.media.imageioimpl.plugins.jpeg,com.sun.medialib.codec.jiio,com.sun.medialib.codec.jpeg,com.sun.media.imageioimpl.plugins.jpeg2000</Export-Package>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
 						<Specification-Version>1.2.3</Specification-Version>

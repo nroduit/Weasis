@@ -12,10 +12,8 @@ package org.weasis.dicom.explorer;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.util.List;
 import java.util.Map;
 
-import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -29,10 +27,8 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.codec.DicomVideoSeries;
-import org.weasis.dicom.codec.FileExtractor;
+import org.weasis.dicom.codec.FilesExtractor;
 
 @Component(immediate = false)
 @Service
@@ -50,24 +46,22 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
 
         @Override
         public void addSeries(MediaSeries series) {
-            if (series instanceof DicomVideoSeries || series instanceof DicomEncapDocSeries) {
+            if (series instanceof FilesExtractor) {
                 // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
                 // in KDE session, but actually does not support it.
                 // http://bugs.sun.com/view_bug.do?bug_id=6486393
-                if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
-                    FileExtractor extractor = (FileExtractor) series;
-                    startAssociatedProgramFromLinux(extractor.getExtractFile());
-
-                } else if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
-                    // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
-                    FileExtractor extractor = (FileExtractor) series;
-                    File file = extractor.getExtractFile();
-                    startAssociatedProgramFromWinCMD(file);
-                } else if (Desktop.isDesktopSupported()) {
-                    final Desktop desktop = Desktop.getDesktop();
-                    if (desktop.isSupported(Desktop.Action.OPEN)) {
-                        FileExtractor extractor = (FileExtractor) series;
-                        startAssociatedProgramFromDesktop(desktop, extractor.getExtractFile());
+                FilesExtractor extractor = (FilesExtractor) series;
+                for (File file : extractor.getExtractFiles()) {
+                    if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
+                        startAssociatedProgramFromLinux(file);
+                    } else if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+                        // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
+                        startAssociatedProgramFromWinCMD(file);
+                    } else if (Desktop.isDesktopSupported()) {
+                        final Desktop desktop = Desktop.getDesktop();
+                        if (desktop.isSupported(Desktop.Action.OPEN)) {
+                            startAssociatedProgramFromDesktop(desktop, file);
+                        }
                     }
                 }
             }
@@ -94,7 +88,7 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return ""; //$NON-NLS-1$
+        return NAME;
     }
 
     @Override
@@ -116,11 +110,6 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
     @Override
     public int getLevel() {
         return 100;
-    }
-
-    @Override
-    public List<Action> getOpenActions() {
-        return null;
     }
 
     @Override

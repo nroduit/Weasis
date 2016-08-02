@@ -15,6 +15,7 @@ import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
+import java.util.Arrays;
 import java.util.Map;
 
 import javax.media.jai.ColormapOpImage;
@@ -50,7 +51,7 @@ final class RectifySignedShortDataOpImage extends ColormapOpImage {
                 this.shift[i] = constants[0];
             }
         } else {
-            this.shift = constants.clone();
+            this.shift = Arrays.copyOf(constants, constants.length);
         }
 
         // Set flag to permit in-place operation.

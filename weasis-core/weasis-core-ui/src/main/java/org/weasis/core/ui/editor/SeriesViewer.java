@@ -10,8 +10,10 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor;
 
+import java.util.Collections;
 import java.util.List;
 
+import javax.swing.Action;
 import javax.swing.JMenu;
 
 import org.weasis.core.api.media.data.MediaElement;
@@ -37,7 +39,9 @@ public interface SeriesViewer<E extends MediaElement<?>> {
 
     List<Toolbar> getToolBar();
 
-    WtoolBar getStatusBar();
+    default WtoolBar getStatusBar() {
+        return null;
+    }
 
     List<DockableTool> getToolPanel();
 
@@ -46,5 +50,13 @@ public interface SeriesViewer<E extends MediaElement<?>> {
     MediaSeriesGroup getGroupID();
 
     String getDockableUID();
+
+    default List<Action> getExportActions() {
+        return Collections.emptyList();
+    }
+
+    default List<Action> getPrintActions() {
+        return Collections.emptyList();
+    }
 
 }

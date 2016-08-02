@@ -40,10 +40,7 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
         if (model == null) {
             model = new DicomModel();
             if (context != null) {
-                Dictionary<String, Object> dict = new Hashtable<String, Object>();
-                dict.put(CommandProcessor.COMMAND_SCOPE, "dicom"); //$NON-NLS-1$
-                dict.put(CommandProcessor.COMMAND_FUNCTION, DicomModel.functions);
-                context.getBundleContext().registerService(DicomModel.class.getName(), model, dict);
+                registerCommands(context);
             }
         } else if (context != null) {
             ServiceReference<?>[] val = null;
@@ -53,12 +50,16 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
                 // Do nothing
             }
             if (val == null || val.length == 0) {
-                Dictionary<String, Object> dict = new Hashtable<String, Object>();
-                dict.put(CommandProcessor.COMMAND_SCOPE, "dicom"); //$NON-NLS-1$
-                dict.put(CommandProcessor.COMMAND_FUNCTION, DicomModel.functions);
-                context.getBundleContext().registerService(DicomModel.class.getName(), model, dict);
+                registerCommands(context);
             }
         }
+    }
+
+    private void registerCommands(ComponentContext context) {
+        Dictionary<String, Object> dict = new Hashtable<>();
+        dict.put(CommandProcessor.COMMAND_SCOPE, "dicom"); //$NON-NLS-1$
+        dict.put(CommandProcessor.COMMAND_FUNCTION, DicomModel.functions);
+        context.getBundleContext().registerService(DicomModel.class.getName(), model, dict);
     }
 
     @Activate
@@ -69,8 +70,8 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
     @Deactivate
     protected void deactivate(ComponentContext context) {
         if (explorer != null) {
-            DataExplorerModel model = explorer.getDataExplorerModel();
-            model.removePropertyChangeListener(explorer);
+            DataExplorerModel dataModel = explorer.getDataExplorerModel();
+            dataModel.removePropertyChangeListener(explorer);
             explorer = null;
         }
         model = null;

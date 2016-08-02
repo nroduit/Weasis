@@ -13,17 +13,19 @@ package org.weasis.core.api.image;
 import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.image.ImageOpNode.Param;
 
 public class SimpleOpManager implements OpManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleOpManager.class);
-    public static final String NAME = Messages.getString("SimpleOpManager.img_op"); //$NON-NLS-1$
+
+    public static final String IMAGE_OP_NAME = Messages.getString("SimpleOpManager.img_op"); //$NON-NLS-1$
 
     public enum Position {
         BEFORE, AFTER
@@ -34,13 +36,27 @@ public class SimpleOpManager implements OpManager {
     private String name;
 
     public SimpleOpManager() {
-        this(null);
+        this(IMAGE_OP_NAME);
     }
 
     public SimpleOpManager(String name) {
-        this.operations = new ArrayList<ImageOpNode>();
-        this.nodes = new HashMap<String, ImageOpNode>();
+        this.operations = new ArrayList<>();
+        this.nodes = new HashMap<>();
         setName(name);
+    }
+
+    public SimpleOpManager(SimpleOpManager som) {
+        this.operations = new ArrayList<>();
+        this.nodes = new HashMap<>();
+        setName(som.name);
+
+        som.nodes.entrySet().forEach(el -> {
+            Optional.ofNullable(el.getValue()).ifPresent(n -> {
+                ImageOpNode node = n.copy();
+                operations.add(node);
+                nodes.put(el.getKey(), node);
+            });
+        });
     }
 
     public synchronized String getName() {
@@ -48,7 +64,7 @@ public class SimpleOpManager implements OpManager {
     }
 
     public synchronized void setName(String name) {
-        this.name = name == null ? NAME : name;
+        this.name = name == null ? IMAGE_OP_NAME : name;
     }
 
     @Override
@@ -108,21 +124,6 @@ public class SimpleOpManager implements OpManager {
     }
 
     @Override
-    public SimpleOpManager clone() throws CloneNotSupportedException {
-        SimpleOpManager obj = new SimpleOpManager();
-        for (Iterator<Entry<String, ImageOpNode>> iter = nodes.entrySet().iterator(); iter.hasNext();) {
-            Entry<String, ImageOpNode> el = iter.next();
-            ImageOpNode node = el.getValue();
-            if (node != null) {
-                ImageOpNode n = node.clone();
-                obj.operations.add(n);
-                obj.nodes.put(el.getKey(), n);
-            }
-        }
-        return obj;
-    }
-
-    @Override
     public void removeAllImageOperationAction() {
         clearNodeParams();
         operations.clear();
@@ -147,7 +148,7 @@ public class SimpleOpManager implements OpManager {
     public void setFirstNode(RenderedImage imgSource) {
         ImageOpNode node = getFirstNode();
         if (node != null) {
-            node.setParam(ImageOpNode.INPUT_IMG, imgSource);
+            node.setParam(Param.INPUT_IMG, imgSource);
         }
     }
 
@@ -155,7 +156,7 @@ public class SimpleOpManager implements OpManager {
     public RenderedImage getFirstNodeInputImage() {
         ImageOpNode node = getFirstNode();
         if (node != null) {
-            return (RenderedImage) node.getParam(ImageOpNode.INPUT_IMG);
+            return (RenderedImage) node.getParam(Param.INPUT_IMG);
         }
         return null;
     }
@@ -190,9 +191,21 @@ public class SimpleOpManager implements OpManager {
     public RenderedImage getLastNodeOutputImage() {
         ImageOpNode node = getLastNode();
         if (node != null) {
-            return (RenderedImage) node.getParam(ImageOpNode.OUTPUT_IMG);
+            return (RenderedImage) node.getParam(Param.OUTPUT_IMG);
         }
         return null;
+    }
+
+    /**
+     * Allow to remove the preprocessing cache
+     * 
+     * @param imgSource
+     */
+    public void resetLastNodeOutputImage() {
+        ImageOpNode node = getLastNode();
+        if (node != null) {
+            node.setParam(Param.OUTPUT_IMG, null);
+        }
     }
 
     @Override
@@ -203,13 +216,17 @@ public class SimpleOpManager implements OpManager {
                 ImageOpNode op = operations.get(i);
                 try {
                     if (i > 0) {
-                        op.setParam(ImageOpNode.INPUT_IMG, operations.get(i - 1).getParam(ImageOpNode.OUTPUT_IMG));
+                        op.setParam(Param.INPUT_IMG, operations.get(i - 1).getParam(Param.OUTPUT_IMG));
                     }
-                    op.process();
+                    if (op.isEnabled()) {
+                        op.process();
+                    } else {
+                        // Skip this operation
+                        op.setParam(Param.OUTPUT_IMG, op.getParam(Param.INPUT_IMG));
+                    }
                 } catch (Exception e) {
-                    LOGGER.error("Image {} failed: {}", op.getParam(ImageOpNode.NAME), e.getMessage()); //$NON-NLS-1$
-                    // Skip this operation
-                    op.setParam(ImageOpNode.OUTPUT_IMG, op.getParam(ImageOpNode.INPUT_IMG));
+                    LOGGER.error("Image {} failed: {}", op.getParam(Param.NAME), e); //$NON-NLS-1$
+                    op.setParam(Param.OUTPUT_IMG, op.getParam(Param.INPUT_IMG));
                 }
             }
         } else {
@@ -242,10 +259,25 @@ public class SimpleOpManager implements OpManager {
     }
 
     @Override
+    public void removeParam(String opName, String param) {
+        if (opName != null && param != null) {
+            ImageOpNode node = getNode(opName);
+            if (node != null) {
+                node.removeParam(param);
+            }
+        }
+    }
+
+    @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         for (ImageOpNode node : operations) {
             node.handleImageOpEvent(event);
         }
+    }
+
+    @Override
+    public SimpleOpManager copy() {
+        return new SimpleOpManager(this);
     }
 
 }

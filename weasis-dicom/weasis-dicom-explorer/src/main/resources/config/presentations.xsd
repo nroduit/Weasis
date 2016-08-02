@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns="http://www.weasis.org/xsd/2.5" targetNamespace="http://www.weasis.org/xsd/2.5"
+	elementFormDefault="qualified">
+
+	<xsd:simpleType name="rgb">
+		<xsd:restriction base="xsd:string">
+			<xsd:maxLength value="8" />
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:complexType name="paint">
+		<xsd:attribute type="rgb" name="rgb" />
+	</xsd:complexType>
+
+	<xsd:complexType name="pts">
+		<xsd:sequence>
+			<xsd:element name="pt" minOccurs="0" maxOccurs="unbounded">
+				<xsd:complexType>
+					<xsd:attribute name="x" type="xsd:double" use="required" />
+					<xsd:attribute name="y" type="xsd:double" use="required" />
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+
+	</xsd:complexType>
+
+	<xsd:complexType name="text">
+		<xsd:sequence>
+			<xsd:element name="string" type="xsd:string" minOccurs="0"
+				maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:element name="pixelInfo">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="pts" type="pts" minOccurs="1"
+					maxOccurs="1" />
+				<xsd:element name="paint" type="paint" minOccurs="0"
+					maxOccurs="1" />
+				<xsd:element name="text" type="text" minOccurs="0"
+					maxOccurs="1" />
+			</xsd:sequence>
+			<xsd:attribute type="xsd:int" name="class_id" />
+			<xsd:attribute type="xsd:boolean" name="fill" />
+			<xsd:attribute type="xsd:int" name="handle_pts_nb" />
+			<xsd:attribute type="xsd:boolean" name="label_visible" />
+			<xsd:attribute type="xsd:float" name="thickness" />
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:complexType name="graphicList">
+		<xsd:sequence>
+			<xsd:element name="pixelInfo" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="layer">
+		<xsd:sequence>
+			<xsd:element name="graphicList" type="graphicList" minOccurs="0" maxOccurs="1" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="presentation">
+		<xsd:sequence>
+			<xsd:element name="image" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="layer" type="layer" minOccurs="0"
+				maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="presentations">
+		<xsd:sequence>
+			<xsd:element name="presentation" type="presentation"
+				minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+
+	<xsd:element name="presentations" type="presentations" />
+
+</xsd:schema>

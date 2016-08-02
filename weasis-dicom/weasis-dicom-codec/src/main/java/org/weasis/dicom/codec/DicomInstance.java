@@ -13,27 +13,20 @@ package org.weasis.dicom.codec;
 public class DicomInstance {
 
     private final String sopInstanceUID;
-    private final String transferSyntaxUID;
     private String directDownloadFile;
     private int instanceNumber;
 
-    public DicomInstance(String sopInstanceUID, String transferSyntaxUID) {
+    public DicomInstance(String sopInstanceUID) {
         // sopInstanceUID is absolutely required
         if (sopInstanceUID == null) {
             throw new IllegalArgumentException("sopInstanceUID tag cannot be null"); //$NON-NLS-1$
         }
         this.sopInstanceUID = sopInstanceUID;
-        // If we know the tsuid before downloading file, it can be useful (for instance dicom/mpeg)
-        this.transferSyntaxUID = transferSyntaxUID;
         this.instanceNumber = -1;
     }
 
     public String getSopInstanceUID() {
         return sopInstanceUID;
-    }
-
-    public String getTransferSyntaxUID() {
-        return transferSyntaxUID;
     }
 
     public int getInstanceNumber() {

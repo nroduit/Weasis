@@ -163,16 +163,12 @@ public class AuView extends JPanel implements SeriesViewerListener {
     private void showPlayer(final DicomSpecialElement media)
         throws IOException, UnsupportedAudioFileException, LineUnavailableException {
 
-        AudioInputStream audioStream = getAudioInputStream(media);
-        try {
+        try (AudioInputStream audioStream = getAudioInputStream(media)) {
             DataLine.Info info = new DataLine.Info(Clip.class, audioStream.getFormat());
             clip = (Clip) AudioSystem.getLine(info);
             clip.open(audioStream);
-        } finally {
-            if (audioStream != null) {
-                audioStream.close();
-            }
         }
+
         // Get the clip length in microseconds and convert to milliseconds
         audioLength = (int) (clip.getMicrosecondLength() / 1000);
 
@@ -364,7 +360,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         float fval = c.getValue();
         s.setValue((int) ((fval - min) / width * 1000));
 
-        java.util.Hashtable<Integer, JLabel> labels = new java.util.Hashtable<Integer, JLabel>(3);
+        java.util.Hashtable<Integer, JLabel> labels = new java.util.Hashtable<>(3);
         labels.put(new Integer(0), new JLabel(c.getMinLabel()));
         labels.put(new Integer(500), new JLabel(c.getMidLabel()));
         labels.put(new Integer(1000), new JLabel(c.getMaxLabel()));
@@ -389,18 +385,18 @@ public class AuView extends JPanel implements SeriesViewerListener {
             DicomAudioElement dcmAudio = (DicomAudioElement) media;
             if (media.getMediaReader() instanceof DicomMediaIO) {
                 DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
-                Attributes attritutes = dicomImageLoader.getDicomObject().getNestedDataset(Tag.WaveformSequence);
-                if (attritutes != null) {
+                Attributes attributes = dicomImageLoader.getDicomObject().getNestedDataset(Tag.WaveformSequence);
+                if (attributes != null) {
                     VR.Holder holder = new VR.Holder();
-                    Object data = attritutes.getValue(Tag.WaveformData, holder);
+                    Object data = attributes.getValue(Tag.WaveformData, holder);
                     if (data instanceof BulkData) {
                         BulkData bulkData = (BulkData) data;
                         DcmAudioStream in = null;
                         try {
-                            int numChannels = attritutes.getInt(Tag.NumberOfWaveformChannels, 0);
-                            double sampleRate = attritutes.getDouble(Tag.SamplingFrequency, 0.0);
-                            int bitsPerSample = attritutes.getInt(Tag.WaveformBitsAllocated, 0);
-                            String spInterpretation = attritutes.getString(Tag.WaveformSampleInterpretation, 0);
+                            int numChannels = attributes.getInt(Tag.NumberOfWaveformChannels, 0);
+                            double sampleRate = attributes.getDouble(Tag.SamplingFrequency, 0.0);
+                            int bitsPerSample = attributes.getInt(Tag.WaveformBitsAllocated, 0);
+                            String spInterpretation = attributes.getString(Tag.WaveformSampleInterpretation, 0);
 
                             in = new DcmAudioStream(new FileInputStream(dcmAudio.getFile()), bulkData.offset());
                             // StreamUtils.skipFully(in, bulkData.offset);
@@ -423,12 +419,12 @@ public class AuView extends JPanel implements SeriesViewerListener {
                                 audioFormat =
                                     new AudioFormat("AB".equals(spInterpretation) ? Encoding.ALAW : Encoding.ULAW, //$NON-NLS-1$
                                         (float) sampleRate, bitsPerSample, numChannels, frameSize, (float) sampleRate,
-                                        attritutes.bigEndian());
+                                        attributes.bigEndian());
                             } else {
                                 boolean signed =
                                     "UB".equals(spInterpretation) || "US".equals(spInterpretation) ? false : true; //$NON-NLS-1$ //$NON-NLS-2$
                                 audioFormat = new AudioFormat((float) sampleRate, bitsPerSample, numChannels, signed,
-                                    attritutes.bigEndian());
+                                    attributes.bigEndian());
                             }
 
                             AudioInputStream audioInputStream =

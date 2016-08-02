@@ -121,18 +121,18 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                File dicomdir = new File(dir, "DICOMDIR"); //$NON-NLS-1$
+                File dicomdir = new File(dir, "DICOMDIR");
                 if (dicomdir.canRead()) {
                     DicomDirLoader dirImport = new DicomDirLoader(dicomdir, dicomModel, false); // $NON-NLS-1$
                     List<LoadSeries> loadSeries = dirImport.readDicomDir();
                     if (loadSeries != null && loadSeries.size() > 0) {
-                        DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, dicomModel));
+                        DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
                     } else {
                         LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
                     }
                 } else {
                     LoadLocalDicom dicom = new LoadLocalDicom(new File[] { dir }, true, dicomModel);
-                    DicomModel.loadingExecutor.execute(dicom);
+                    DicomModel.LOADING_EXECUTOR.execute(dicom);
                 }
             }
         }

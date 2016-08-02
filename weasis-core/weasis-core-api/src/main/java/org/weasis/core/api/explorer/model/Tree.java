@@ -18,11 +18,11 @@ public class Tree<T> {
 
     private final T head;
 
-    private final ArrayList<Tree<T>> leafs = new ArrayList<Tree<T>>();
+    private final ArrayList<Tree<T>> leafs = new ArrayList<>();
 
     private Tree<T> parent = null;
 
-    private HashMap<T, Tree<T>> locate = new HashMap<T, Tree<T>>();
+    private HashMap<T, Tree<T>> locate = new HashMap<>();
 
     public Tree(T head) {
         this.head = head;
@@ -38,7 +38,7 @@ public class Tree<T> {
     }
 
     private Tree<T> addLeaf(T leaf) {
-        Tree<T> t = new Tree<T>(leaf);
+        Tree<T> t = new Tree<>(leaf);
         leafs.add(t);
         t.parent = this;
         t.locate = this.locate;
@@ -56,7 +56,7 @@ public class Tree<T> {
     }
 
     public Tree<T> setAsParent(T parentRoot) {
-        Tree<T> t = new Tree<T>(parentRoot);
+        Tree<T> t = new Tree<>(parentRoot);
         t.leafs.add(this);
         this.parent = t;
         t.locate = this.locate;
@@ -78,7 +78,7 @@ public class Tree<T> {
     }
 
     public Collection<T> getSuccessors(T root) {
-        Collection<T> successors = new ArrayList<T>();
+        Collection<T> successors = new ArrayList<>();
         Tree<T> tree = getTree(root);
         if (null != tree) {
             for (Tree<T> leaf : tree.leafs) {
@@ -98,7 +98,7 @@ public class Tree<T> {
                 return tree.getSuccessors(of);
             }
         }
-        return new ArrayList<T>();
+        return new ArrayList<>();
     }
 
     @Override

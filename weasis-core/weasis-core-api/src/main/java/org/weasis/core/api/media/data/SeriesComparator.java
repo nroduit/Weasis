@@ -11,6 +11,5 @@ public abstract class SeriesComparator<T> implements Comparator<T> {
             inverse = Collections.reverseOrder(this);
         }
         return inverse;
-
     }
 }

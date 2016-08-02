@@ -45,6 +45,8 @@ import org.weasis.core.api.util.FontTools;
 
 public class SeriesThumbnail extends Thumbnail
     implements MouseListener, DragGestureListener, DragSourceListener, DragSourceMotionListener, FocusListener {
+    private static final long serialVersionUID = 2359304176364341395L;
+
     private static final int BUTTON_SIZE_HALF = 7;
     private static final Polygon startButton = new Polygon(new int[] { 0, 2 * BUTTON_SIZE_HALF, 0 },
         new int[] { 0, BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF }, 3);
@@ -141,7 +143,7 @@ public class SeriesThumbnail extends Thumbnail
         if (media == null) {
             List<MediaElement<?>> specialElements =
                 (List<MediaElement<?>>) series.getTagValue(TagW.DicomSpecialElementList);
-            if (specialElements != null && specialElements.size() > 0) {
+            if (specialElements != null && !specialElements.isEmpty()) {
                 media = specialElements.get(0);
             }
         }
@@ -187,7 +189,7 @@ public class SeriesThumbnail extends Thumbnail
             glassPane.setVisible(true);
             dge.startDrag(null, series, this);
             return;
-        } catch (RuntimeException re) {
+        } catch (Exception e) {
         }
 
     }
@@ -201,15 +203,17 @@ public class SeriesThumbnail extends Thumbnail
 
     @Override
     public void dragEnter(DragSourceDragEvent dsde) {
+        // Do nothing
     }
 
     @Override
     public void dragOver(DragSourceDragEvent dsde) {
+        // Do nothing
     }
 
     @Override
     public void dragExit(DragSourceEvent dsde) {
-
+        // Do nothing
     }
 
     @Override
@@ -223,6 +227,7 @@ public class SeriesThumbnail extends Thumbnail
 
     @Override
     public void dropActionChanged(DragSourceDragEvent dsde) {
+        // Do nothing
     }
 
     public void drawGlassPane(Point p) {
@@ -299,8 +304,8 @@ public class SeriesThumbnail extends Thumbnail
         int hbleft = y + height - 2;
         if (splitNb != null) {
             g2d.drawString("#" + splitNb + " [" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                                                                           //$NON-NLS-1$ $NON-NLS-2$
-                                                                                           //$NON-NLS-1$ $NON-NLS-3$
+                                                                                           // $NON-NLS-1$ $NON-NLS-2$
+                                                                                           // $NON-NLS-1$ $NON-NLS-3$
         } else {
             g2d.drawString("[" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ $NON-NLS-2$
         }
@@ -312,13 +317,13 @@ public class SeriesThumbnail extends Thumbnail
                 g2d.drawString(FileUtil.formatSize(series.getFileSize()), x + 2, hbleft - 12);
             }
             if (bar.isVisible()) {
-                // Draw in the bottom right corner of thumbnail;
+                // Draw in the bottom right corner of thumbnail
                 int shiftx = thumbnailSize - bar.getWidth();
                 int shifty = thumbnailSize - bar.getHeight();
                 g2d.translate(shiftx, shifty);
                 bar.paint(g2d);
 
-                // Draw in the top right corner;
+                // Draw in the top right corner
                 SeriesImporter seriesLoader = series.getSeriesLoader();
                 boolean stopped = seriesLoader.isStopped();
 
@@ -345,10 +350,12 @@ public class SeriesThumbnail extends Thumbnail
 
     @Override
     public void mouseClicked(MouseEvent e) {
+        // Do nothing
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
+        // Do nothing
     }
 
     @Override
@@ -382,10 +389,12 @@ public class SeriesThumbnail extends Thumbnail
 
     @Override
     public void mouseEntered(MouseEvent e) {
+        // Do nothing
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
+        // Do nothing
     }
 
 }

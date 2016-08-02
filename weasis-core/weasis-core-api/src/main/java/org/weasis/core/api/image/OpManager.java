@@ -2,9 +2,9 @@ package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
 
-public interface OpManager extends OpEventListener, Cloneable {
+import org.weasis.core.api.util.Copyable;
 
-    OpManager clone() throws CloneNotSupportedException;
+public interface OpManager extends OpEventListener, Copyable<OpManager> {
 
     void removeAllImageOperationAction();
 
@@ -29,5 +29,7 @@ public interface OpManager extends OpEventListener, Cloneable {
     Object getParamValue(String opName, String param);
 
     boolean setParamValue(String opName, String param, Object value);
+
+    void removeParam(String opName, String param);
 
 }

@@ -13,8 +13,8 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mip.MipPopup;
@@ -72,7 +72,7 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
                 ImageViewerPlugin<org.weasis.dicom.codec.DicomImageElement> container =
                     eventManager.getSelectedView2dContainer();
                 if (container instanceof View2dContainer) {
-                    DefaultView2d<org.weasis.dicom.codec.DicomImageElement> selView = container.getSelectedImagePane();
+                    ViewCanvas<org.weasis.dicom.codec.DicomImageElement> selView = container.getSelectedImagePane();
                     if (selView != null) {
                         MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = selView.getSeries();
                         if (s != null && s.size(null) > 2) {

@@ -19,10 +19,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
@@ -35,9 +36,11 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.serialize.DefaultSerializer;
+import org.weasis.core.ui.serialize.XmlSerializer;
 
 public class ViewerPluginBuilder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ViewerPluginBuilder.class);
+
     public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer"; //$NON-NLS-1$
     public static final String BEST_DEF_LAYOUT = "best.def.layout"; //$NON-NLS-1$
     public static final String OPEN_IN_SELECTION = "add.in.selected.view"; // For only one image //$NON-NLS-1$
@@ -46,7 +49,7 @@ public class ViewerPluginBuilder {
     public static final String ICON = "plugin.icon"; //$NON-NLS-1$
     public static final String UID = "plugin.uid"; //$NON-NLS-1$
 
-    public static final AbstractFileModel DefaultDataModel = new AbstractFileModel();
+    public static final FileModel DefaultDataModel = new FileModel();
     private final SeriesViewerFactory factory;
     private final List<MediaSeries<? extends MediaElement<?>>> series;
     private final DataExplorerModel model;
@@ -84,8 +87,7 @@ public class ViewerPluginBuilder {
         if (factory == null || series == null || model == null) {
             return;
         }
-        ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-            new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
+        ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>(1);
         list.add(series);
         openSequenceInPlugin(factory, list, model, compareEntryToBuildNewViewer, removeOldSeries);
     }
@@ -120,7 +122,7 @@ public class ViewerPluginBuilder {
 
     public static void openSequenceInDefaultPlugin(List<MediaSeries<? extends MediaElement<?>>> series,
         DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
-        ArrayList<String> mimes = new ArrayList<String>();
+        ArrayList<String> mimes = new ArrayList<>();
         for (MediaSeries<? extends MediaElement<?>> s : series) {
             String mime = s.getMimeType();
             if (mime != null && !mimes.contains(mime)) {
@@ -130,8 +132,7 @@ public class ViewerPluginBuilder {
         for (String mime : mimes) {
             SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
             if (plugin != null) {
-                ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList =
-                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+                ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList = new ArrayList<>();
                 for (MediaSeries<? extends MediaElement<?>> s : series) {
                     if (mime.equals(s.getMimeType())) {
                         seriesList.add(s);
@@ -187,7 +188,7 @@ public class ViewerPluginBuilder {
                 }
             }
             if (systemReader) {
-                return new DefaultMimeIO<File>(file.toURI(), null);
+                return new DefaultMimeIO<>(file.toURI(), null);
             }
         }
         return null;
@@ -216,15 +217,11 @@ public class ViewerPluginBuilder {
 
         String sUID = seriesUID == null ? UUID.randomUUID().toString() : seriesUID;
         String gUID = groupUID == null ? UUID.randomUUID().toString() : groupUID;
-        MediaSeriesGroup group1 = DefaultDataModel.getHierarchyNode(TreeModel.rootNode, gUID);
+        MediaSeriesGroup group1 = DefaultDataModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, gUID);
         if (group1 == null) {
-            if (groupName == null || groupValue == null) {
-                group1 = new MediaSeriesGroupNode(TagW.Group, gUID);
-            } else {
-                group1 = new MediaSeriesGroupNode(TagW.Group, gUID, groupName);
-                group1.setTag(groupName, groupValue);
-            }
-            DefaultDataModel.addHierarchyNode(TreeModel.rootNode, group1);
+            group1 = new MediaSeriesGroupNode(TagW.Group, gUID, AbstractFileModel.group.getTagView());
+            group1.setTagNoNull(groupName, groupValue);
+            DefaultDataModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, group1);
         }
 
         MediaSeriesGroup group2 = DefaultDataModel.getHierarchyNode(group1, sUID);
@@ -233,35 +230,35 @@ public class ViewerPluginBuilder {
         }
 
         try {
-
             if (series == null) {
                 series = reader.getMediaSeries();
                 series.setTag(TagW.ExplorerModel, DefaultDataModel);
                 DefaultDataModel.addHierarchyNode(group1, series);
             } else {
                 // Test if SOPInstanceUID already exists
-                if (series instanceof Series && ((Series<?>) series).hasMediaContains(TagW.SOPInstanceUID,
-                    reader.getTagValue(TagW.SOPInstanceUID))) {
+                TagW sopTag = TagW.get("SOPInstanceUID");
+                if (series instanceof Series
+                    && ((Series<?>) series).hasMediaContains(sopTag, reader.getTagValue(sopTag))) {
                     return series;
                 }
-                if (medias != null) {
-                    for (MediaElement<?> media : medias) {
-                        series.addMedia(media);
-                    }
-                }
-            }
-            if (medias != null) {
+
                 for (MediaElement<?> media : medias) {
-                    if (media instanceof ImageElement) {
-                        DefaultSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
-                    }
+                    series.addMedia(media);
                 }
             }
+
+            for (MediaElement<?> media : medias) {
+                if (media instanceof ImageElement) {
+                    XmlSerializer.readMeasurementGraphics(new File(media.getFile().getPath() + ".xml"));
+                }
+            }
+
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Build series error", e);
         } finally {
             reader.reset();
         }
         return series;
     }
+
 }

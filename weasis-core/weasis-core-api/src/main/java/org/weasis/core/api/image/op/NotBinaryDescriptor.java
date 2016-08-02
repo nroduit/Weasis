@@ -27,15 +27,15 @@ public class NotBinaryDescriptor extends OperationDescriptorImpl implements Rend
 
     private static final String resources[][] = { { "GlobalName", "NotBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "LocalName", "NotBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "NotBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Description", "Not for binary image (better than use transform colormodel)" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Description", "Not for binary image (better than use transform colormodel)" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-                    { "Version", "1.0" } //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" } //$NON-NLS-1$ //$NON-NLS-2$
 
     };
 

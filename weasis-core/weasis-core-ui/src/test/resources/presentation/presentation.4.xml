@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<presentation uuid="test.presentation-abcd-123-efg45.0">
+	<references>
+		<series uuid="test.presentation-abcd-123-efg45.2">
+			<image frames="" uuid="test.presentation-abcd-123-efg45.1" />
+		</series>
+	</references>
+	<layers />
+	<graphics />
+</presentation>

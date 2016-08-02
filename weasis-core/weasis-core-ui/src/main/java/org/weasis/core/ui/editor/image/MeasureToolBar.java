@@ -10,12 +10,15 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
 
 import javax.swing.AbstractButton;
 import javax.swing.Box;
@@ -39,100 +42,113 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.graphic.AngleToolGraphic;
-import org.weasis.core.ui.graphic.AnnotationGraphic;
-import org.weasis.core.ui.graphic.CobbAngleToolGraphic;
-import org.weasis.core.ui.graphic.EllipseGraphic;
-import org.weasis.core.ui.graphic.FourPointsAngleToolGraphic;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.LineGraphic;
-import org.weasis.core.ui.graphic.OpenAngleToolGraphic;
-import org.weasis.core.ui.graphic.ParallelLineGraphic;
-import org.weasis.core.ui.graphic.PerpendicularLineGraphic;
-import org.weasis.core.ui.graphic.PixelInfoGraphic;
-import org.weasis.core.ui.graphic.PolygonGraphic;
-import org.weasis.core.ui.graphic.PolylineGraphic;
-import org.weasis.core.ui.graphic.RectangleGraphic;
-import org.weasis.core.ui.graphic.SelectGraphic;
-import org.weasis.core.ui.graphic.ThreePointsCircleGraphic;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.DragGraphic;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
+import org.weasis.core.ui.model.graphic.imp.PixelInfoGraphic;
+import org.weasis.core.ui.model.graphic.imp.angle.AngleToolGraphic;
+import org.weasis.core.ui.model.graphic.imp.angle.CobbAngleToolGraphic;
+import org.weasis.core.ui.model.graphic.imp.angle.FourPointsAngleToolGraphic;
+import org.weasis.core.ui.model.graphic.imp.angle.OpenAngleToolGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.ParallelLineGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.PerpendicularLineGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
+import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
+    private static final long serialVersionUID = -6672565963157176685L;
 
-    public static final SelectGraphic selectionGraphic = new SelectGraphic(1.0f, Color.WHITE);
-    public static final LineGraphic lineGraphic = new LineGraphic(1.0f, Color.YELLOW, true);
-    public static final AngleToolGraphic angleToolGraphic = new AngleToolGraphic(1.0f, Color.YELLOW, true);
-
-    public static final RectangleGraphic rectangleGraphic = new RectangleGraphic(1.0f, Color.YELLOW, true);
-    public static final EllipseGraphic ellipseGraphic = new EllipseGraphic(1.0f, Color.YELLOW, true);
-    public static final ThreePointsCircleGraphic threePtCircleGraphic =
-        new ThreePointsCircleGraphic(1.0f, Color.YELLOW, true);
-    public static final PolygonGraphic polygonGraphic = new PolygonGraphic(1.0f, Color.YELLOW, true);
-    public static final PolylineGraphic polylineGraphic = new PolylineGraphic(1.0f, Color.YELLOW, true);
-    public static final PerpendicularLineGraphic perpendicularToolGraphic =
-        new PerpendicularLineGraphic(1.0f, Color.YELLOW, true);
-    public static final ParallelLineGraphic parallelLineGraphic = new ParallelLineGraphic(1.0f, Color.YELLOW, true);
-    public static final OpenAngleToolGraphic openAngleToolGraphic = new OpenAngleToolGraphic(1.0f, Color.YELLOW, true);
-    public static final FourPointsAngleToolGraphic fourPointsAngleToolGraphic =
-        new FourPointsAngleToolGraphic(1.0f, Color.YELLOW, true);
-    public static final CobbAngleToolGraphic cobbAngleToolGraphic = new CobbAngleToolGraphic(1.0f, Color.YELLOW, true);
-    public static final PixelInfoGraphic pixelInfoGraphic = new PixelInfoGraphic(1.0f, Color.YELLOW, true);
-    public static final AnnotationGraphic textGrahic = new AnnotationGraphic(1.0f, Color.YELLOW, true);
+    public static final SelectGraphic selectionGraphic = new SelectGraphic();
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
-    public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
+    public static final List<Graphic> measureGraphicList = new ArrayList<>();
+    public static final List<Graphic> drawGraphicList = new ArrayList<>();
 
     static {
+        selectionGraphic.setLayerType(LayerType.TEMP_DRAW);
         WProperties p = BundleTools.SYSTEM_PREFERENCES;
         if (p.getBooleanProperty("weasis.measure.selection", true)) { //$NON-NLS-1$
-            graphicList.add(selectionGraphic);
+            measureGraphicList.add(selectionGraphic);
         }
         if (p.getBooleanProperty("weasis.measure.line", true)) { //$NON-NLS-1$
-            graphicList.add(lineGraphic);
+            measureGraphicList.add(new LineGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.polyline", true)) { //$NON-NLS-1$
-            graphicList.add(polylineGraphic);
+            measureGraphicList.add(new PolylineGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.rectangle", true)) { //$NON-NLS-1$
-            graphicList.add(rectangleGraphic);
+            measureGraphicList.add(new RectangleGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.ellipse", true)) { //$NON-NLS-1$
-            graphicList.add(ellipseGraphic);
+            measureGraphicList.add(new EllipseGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.threeptcircle", true)) { //$NON-NLS-1$
-            graphicList.add(threePtCircleGraphic);
+            measureGraphicList.add(new ThreePointsCircleGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.polygon", true)) { //$NON-NLS-1$
-            graphicList.add(polygonGraphic);
+            measureGraphicList.add(new PolygonGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.perpendicular", true)) { //$NON-NLS-1$
-            graphicList.add(perpendicularToolGraphic);
+            measureGraphicList.add(new PerpendicularLineGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.parallele", true)) { //$NON-NLS-1$
-            graphicList.add(parallelLineGraphic);
+            measureGraphicList.add(new ParallelLineGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.angle", true)) { //$NON-NLS-1$
-            graphicList.add(angleToolGraphic);
+            measureGraphicList.add(new AngleToolGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.openangle", true)) { //$NON-NLS-1$
-            graphicList.add(openAngleToolGraphic);
+            measureGraphicList.add(new OpenAngleToolGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.fourptangle", true)) { //$NON-NLS-1$
-            graphicList.add(fourPointsAngleToolGraphic);
+            measureGraphicList.add(new FourPointsAngleToolGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.cobbangle", true)) { //$NON-NLS-1$
-            graphicList.add(cobbAngleToolGraphic);
+            measureGraphicList.add(new CobbAngleToolGraphic());
         }
         if (p.getBooleanProperty("weasis.measure.pixelinfo", true)) { //$NON-NLS-1$
-            graphicList.add(pixelInfoGraphic);
+            measureGraphicList.add(new PixelInfoGraphic());
         }
-        if (p.getBooleanProperty("weasis.measure.textGrahic", true)) { //$NON-NLS-1$
-            graphicList.add(textGrahic);
+        measureGraphicList.stream().filter(g -> Objects.isNull(g.getLayerType())).forEach(g -> g.setLayerType(LayerType.MEASURE));
+        
+        
+        if (p.getBooleanProperty("weasis.draw.selection", true)) { //$NON-NLS-1$
+            drawGraphicList.add(selectionGraphic);
         }
-
+        if (p.getBooleanProperty("weasis.draw.line", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new LineGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.polyline", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new PolylineGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.rectangle", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new RectangleGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.ellipse", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new EllipseGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.threeptcircle", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new ThreePointsCircleGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.polygon", true)) { //$NON-NLS-1$
+            drawGraphicList.add(new PolygonGraphic());
+        }
+        if (p.getBooleanProperty("weasis.draw.textGrahic", true)) { //$NON-NLS-1$
+            Graphic graphic = new AnnotationGraphic();
+            graphic.setLayerType(LayerType.ANNOTATION);
+            drawGraphicList.add(graphic);
+        }
+        drawGraphicList.forEach(g -> g.setLabelVisible(false));
+        drawGraphicList.stream().filter(g -> Objects.isNull(g.getLayerType())).forEach(g -> g.setLayerType(LayerType.DRAW));
     }
 
     protected final JButton jButtondelete = new JButton();
@@ -149,8 +165,8 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         this.eventManager = eventManager;
 
         // Do not apply to textGrahic
-        for (int i = 1; i < graphicList.size() - 1; i++) {
-            applyDefaultSetting(MeasureTool.viewSetting, graphicList.get(i));
+        for (int i = 1; i < measureGraphicList.size() - 1; i++) {
+            applyDefaultSetting(MeasureTool.viewSetting, measureGraphicList.get(i));
         }
 
         GroupRadioMenu menu = null;
@@ -189,17 +205,16 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                ImageViewerPlugin view = eventManager.getSelectedView2dContainer();
+                ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
                 if (view != null) {
+                    @SuppressWarnings("rawtypes")
                     final ViewerToolBar toolBar = view.getViewerToolBar();
                     if (toolBar != null) {
                         String cmd = ActionW.MEASURE.cmd();
                         if (!toolBar.isCommandActive(cmd)) {
                             MouseActions mouseActions = eventManager.getMouseActions();
                             mouseActions.setAction(MouseActions.LEFT, cmd);
-                            if (view != null) {
-                                view.setMouseActions(mouseActions);
-                            }
+                            view.setMouseActions(mouseActions);
                             toolBar.changeButtonState(MouseActions.LEFT, cmd);
                         }
                     }
@@ -209,22 +224,14 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
         add(measureButton);
 
-        // add(measureButtonGap);
-
         jButtondelete.setToolTipText(Messages.getString("MeasureToolBar.del")); //$NON-NLS-1$
         jButtondelete.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw-delete.png"))); //$NON-NLS-1$
-        jButtondelete.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                AbstractLayerModel model = getCurrentLayerModel();
-                if (model != null) {
-                    if (model.getSelectedGraphics().size() == 0) {
-                        model.setSelectedGraphics(model.getAllGraphics());
-                    }
-                    model.deleteSelectedGraphics(true);
-                }
+        jButtondelete.addActionListener(e -> {
+            GraphicModel gm = eventManager.getSelectedViewPane().getGraphicManager();
+            if (gm.getSelectedGraphics().isEmpty()) {
+                gm.setSelectedAllGraphics();
             }
+            gm.deleteSelectedGraphics(eventManager.getSelectedViewPane(), Boolean.TRUE);
         });
         if (measure != null) {
             measure.registerActionState(jButtondelete);
@@ -233,19 +240,11 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     }
 
     public static void applyDefaultSetting(ViewSetting setting, Graphic graphic) {
-        if (graphic instanceof AbstractDragGraphic) {
-            AbstractDragGraphic g = (AbstractDragGraphic) graphic;
-            g.setLineThickness(setting.getLineWidth());
+        if (graphic instanceof DragGraphic) {
+            DragGraphic g = (DragGraphic) graphic;
+            g.setLineThickness((float) setting.getLineWidth());
             g.setPaint(setting.getLineColor());
         }
-    }
-
-    protected AbstractLayerModel getCurrentLayerModel() {
-        DefaultView2d view = eventManager.getSelectedViewPane();
-        if (view != null) {
-            return view.getLayerModel();
-        }
-        return null;
     }
 
     public static Icon buildIcon(final Graphic graphic) {
@@ -295,14 +294,11 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     }
 
     public static Graphic getGraphic(String action) {
-        if (action != null) {
-            for (Graphic g : graphicList) {
-                if (action.equals(g.toString())) {
-                    return g;
-                }
-            }
-        }
-        return null;
+        return Optional.ofNullable(action).flatMap(firstSameAction(measureGraphicList)).orElse(null);
+    }
+
+    private static Function<String, Optional<Graphic>> firstSameAction(List<Graphic> list) {
+        return action -> list.stream().filter(graphic -> Objects.equals(action, graphic.toString())).findFirst();
     }
 
     class MeasureGroupMenu extends GroupRadioMenu {

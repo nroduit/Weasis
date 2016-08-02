@@ -22,17 +22,13 @@ import java.util.Map;
 import javax.swing.JPanel;
 import javax.swing.plaf.PanelUI;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ExportImage;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 
 public class ExportLayout<E extends ImageElement> extends JPanel {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExportLayout.class);
 
     protected final JPanel grid = new JPanel();
     protected GridBagLayoutModel layoutModel;
@@ -42,9 +38,9 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         adaptLayoutModel(layoutModel);
     }
 
-    public ExportLayout(DefaultView2d<E> viewCanvas) {
+    public ExportLayout(ViewCanvas<E> IViewCanvas) {
         initGrid();
-        adaptLayoutModel(viewCanvas);
+        adaptLayoutModel(IViewCanvas);
 
     }
 
@@ -66,39 +62,39 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         return layoutModel;
     }
 
-    private void adaptLayoutModel(DefaultView2d<E> viewCanvas) {
-        this.layoutModel = new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(1), "exp_tmp", "", null); //$NON-NLS-1$ //$NON-NLS-2$
+    private void adaptLayoutModel(ViewCanvas<E> IViewCanvas) {
+        final Map<LayoutConstraints, Component> map = new LinkedHashMap<>(1);
+        this.layoutModel = new GridBagLayoutModel(map, "exp_tmp", "", null);
 
-        ExportImage<E> export = new ExportImage<E>(viewCanvas);
+        ExportImage<E> export = new ExportImage<>(IViewCanvas);
         export.getInfoLayer().setBorder(3);
-        LayoutConstraints e = new LayoutConstraints(viewCanvas.getClass().getName(), 0, 0, 0, 1, 1, 1.0, 1.0,
+        LayoutConstraints e = new LayoutConstraints(IViewCanvas.getClass().getName(), 0, 0, 0, 1, 1, 1.0, 1.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH);
-        layoutModel.getConstraints().put(e, export);
+        map.put(e, export);
         grid.add(export, e);
         grid.revalidate();
     }
 
     private void adaptLayoutModel(GridBagLayoutModel layoutModel) {
-        final Map<LayoutConstraints, Component> old = layoutModel.getConstraints();
-        final LinkedHashMap<LayoutConstraints, Component> elements =
-            new LinkedHashMap<LayoutConstraints, Component>(old.size());
-        this.layoutModel = new GridBagLayoutModel(elements, "exp_tmp", "", null); //$NON-NLS-1$ //$NON-NLS-2$
-        Iterator<LayoutConstraints> enumVal = old.keySet().iterator();
+        final Map<LayoutConstraints, Component> oldMap = layoutModel.getConstraints();
+        final Map<LayoutConstraints, Component> map = new LinkedHashMap<>(oldMap.size());
+        this.layoutModel = new GridBagLayoutModel(map, "exp_tmp", "", null);
+        Iterator<LayoutConstraints> enumVal = oldMap.keySet().iterator();
 
         while (enumVal.hasNext()) {
             LayoutConstraints e = enumVal.next();
-            Component v = old.get(e);
-            LayoutConstraints constraint = (LayoutConstraints) e.clone();
+            Component v = oldMap.get(e);
+            LayoutConstraints constraint = e.copy();
 
-            if (v instanceof DefaultView2d) {
-                ExportImage export = new ExportImage((DefaultView2d) v);
+            if (v instanceof ViewCanvas) {
+                ExportImage<E> export = new ExportImage<>((ViewCanvas<E>)v);
                 export.getInfoLayer().setBorder(3);
-                elements.put(constraint, export);
+                map.put(constraint, export);
                 v = export;
             } else {
-                // Create a new empty panel to net steel the component from the original layout
+                // Non printable component. Create a new empty panel to not steel the component from the original UI
                 v = new JPanel();
-                elements.put(constraint, v);
+                map.put(constraint, v);
             }
 
             grid.add(v, e);

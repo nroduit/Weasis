@@ -33,6 +33,15 @@ public class WindowOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public WindowOp(WindowOp op) {
+        super(op);
+    }
+
+    @Override
+    public WindowOp copy() {
+        return new WindowOp(this);
+    }
+
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();
@@ -50,15 +59,15 @@ public class WindowOp extends AbstractOp {
                 boolean pixelPadding = JMVUtils.getNULLtoTrue(getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
                 setParam(ActionW.WINDOW.cmd(), img.getDefaultWindow(pixelPadding));
                 setParam(ActionW.LEVEL.cmd(), img.getDefaultLevel(pixelPadding));
-                setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pixelPadding));
-                setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(pixelPadding));
+                setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(null, pixelPadding));
+                setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(null, pixelPadding));
             }
         }
     }
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         ImageElement imageElement = (ImageElement) params.get(P_IMAGE_ELEMENT);
 
@@ -68,7 +77,7 @@ public class WindowOp extends AbstractOp {
             result = imageElement.getRenderedImage(source, params);
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
 }

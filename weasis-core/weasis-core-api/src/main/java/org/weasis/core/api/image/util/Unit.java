@@ -11,6 +11,7 @@
 package org.weasis.core.api.image.util;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.weasis.core.api.Messages;
 
@@ -98,8 +99,8 @@ public enum Unit {
         return calibRatio / convFactor;
     }
 
-    public static ArrayList<AbbreviationUnit> getAbbreviationUnits() {
-        ArrayList<AbbreviationUnit> units = new ArrayList<AbbreviationUnit>();
+    public static List<AbbreviationUnit> getAbbreviationUnits() {
+        ArrayList<AbbreviationUnit> units = new ArrayList<>();
         for (Unit u : Unit.values()) {
             if (u.getId() != Unit.PIXEL.getId()) {
                 units.add(new AbbreviationUnit(u));
@@ -117,8 +118,8 @@ public enum Unit {
         return Unit.PIXEL;
     }
 
-    public static final ArrayList<String> getUnitsName() {
-        ArrayList<String> list = new ArrayList<String>();
+    public static final List<String> getUnitsName() {
+        ArrayList<String> list = new ArrayList<>();
         for (Unit u : Unit.values()) {
             list.add(u.getFullName());
         }
@@ -143,8 +144,8 @@ public enum Unit {
         return null;
     }
 
-    public static ArrayList<Unit> getUnitExceptPixel() {
-        ArrayList<Unit> list = new ArrayList<Unit>();
+    public static List<Unit> getUnitExceptPixel() {
+        ArrayList<Unit> list = new ArrayList<>();
         for (Unit u : Unit.values()) {
             if (u.getId() != Unit.PIXEL.getId()) {
                 list.add(u);

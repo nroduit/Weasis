@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.display.OverlayOp;
 
@@ -60,16 +59,15 @@ public class OverlayUtils {
     private static final byte[] icmColorValues = new byte[] { (byte) 0xFF, (byte) 0x00 };
 
     /**
-     * Merge the overlays into the buffered image.
+     * Merge the overlays into the buffered image. This method apply only white pixel overlays.
      *
      * @param params
      *
      */
-    public static RenderedImage getOverlays(ImageElement image, DicomMediaIO reader, int frameIndex, int width,
+    public static RenderedImage getBinaryOverlays(ImageElement image, Attributes attributes, int frameIndex, int width,
         int height, HashMap<String, Object> params) throws IOException {
-        Attributes ds = reader.getDicomObject();
 
-        // TODO get grayscaleValue from PR
+        // Default grayscale value for overlay
         int grayscaleValue = 0xFFFF;
         int outBits = 1;
         IndexColorModel icm =
@@ -98,31 +96,18 @@ public class OverlayUtils {
             }
         }
 
-        int[] overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ds, 0xffff);
+        int[] overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(attributes, 0xffff);
 
         for (int i = 0; i < overlayGroupOffsets.length; i++) {
             byte[] ovlyData = null;
-            if (data != null && ds.getInt(Tag.OverlayBitsAllocated | overlayGroupOffsets[i], 1) != 1) {
+            // Get bitmap overlay from pixel data
+            if (data != null && attributes.getInt(Tag.OverlayBitsAllocated | overlayGroupOffsets[i], 1) != 1) {
                 if (data.length > i) {
                     ovlyData = data[i];
                 }
             }
-
-            Attributes ovlyAttrs = ds;
-
-            // if (param instanceof DicomImageReadParam) {
-            // DicomImageReadParam dParam = (DicomImageReadParam) param;
-            // Attributes psAttrs = dParam.getPresentationState();
-            // if (psAttrs != null) {
-            // if (psAttrs.containsValue(Tag.OverlayData | gg0000)) {
-            // ovlyAttrs = psAttrs;
-            // }
-            // grayscaleValue = Overlays.getRecommendedDisplayGrayscaleValue(psAttrs, gg0000);
-            // } else {
-            // grayscaleValue = dParam.getOverlayGrayscaleValue();
-            // }
-            // }
-            Overlays.applyOverlay(ovlyData != null ? 0 : frameIndex, raster, ovlyAttrs, overlayGroupOffsets[i],
+            // If onlyData is null, get bitmap overlay from dicom attributes
+            Overlays.applyOverlay(ovlyData != null ? 0 : frameIndex, raster, attributes, overlayGroupOffsets[i],
                 grayscaleValue >>> (16 - outBits), ovlyData);
         }
 
@@ -130,13 +115,29 @@ public class OverlayUtils {
         if (pr instanceof PRSpecialElement) {
             Attributes ovlyAttrs = ((PRSpecialElement) pr).getMediaReader().getDicomObject();
             overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ovlyAttrs, 0xffff);
+            Integer shuttOverlayGroup =
+                DicomMediaUtils.getIntegerFromDicomElement(ovlyAttrs, Tag.ShutterOverlayGroup, Integer.MIN_VALUE);
 
             // grayscaleValue = Overlays.getRecommendedDisplayGrayscaleValue(psAttrs, gg0000);
             for (int i = 0; i < overlayGroupOffsets.length; i++) {
-                Overlays.applyOverlay(frameIndex, raster, ovlyAttrs, overlayGroupOffsets[i],
-                    grayscaleValue >>> (16 - outBits), null);
+                if (shuttOverlayGroup != overlayGroupOffsets[i]) {
+                    Overlays.applyOverlay(frameIndex, raster, ovlyAttrs, overlayGroupOffsets[i],
+                        grayscaleValue >>> (16 - outBits), null);
+                }
             }
         }
+
+        return overBi;
+    }
+
+    public static RenderedImage getShutterOverlay(Attributes attributes, int frameIndex, int width, int height,
+        int shuttOverlayGroup) throws IOException {
+        IndexColorModel icm =
+            new IndexColorModel(1, icmColorValues.length, icmColorValues, icmColorValues, icmColorValues, 0);
+        BufferedImage overBi = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY, icm);
+
+        Overlays.applyOverlay(frameIndex, overBi.getRaster(), attributes, shuttOverlayGroup - 0x6000, 1, null);
+
         return overBi;
     }
 

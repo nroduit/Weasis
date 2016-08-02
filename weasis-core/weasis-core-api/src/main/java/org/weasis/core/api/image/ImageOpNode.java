@@ -12,16 +12,23 @@ package org.weasis.core.api.image;
 
 import java.util.Map;
 
-public interface ImageOpNode extends Cloneable {
-    String NAME = "op.display.name"; //$NON-NLS-1$
-    String ENABLE = "op.enable"; //$NON-NLS-1$
+import org.weasis.core.api.util.Copyable;
 
-    String INPUT_IMG = "op.input.img"; //$NON-NLS-1$
-    String OUTPUT_IMG = "op.output.img"; //$NON-NLS-1$
+public interface ImageOpNode extends Copyable<ImageOpNode> {
+
+    public final class Param {
+
+        public static final String NAME = "op.display.name"; //$NON-NLS-1$
+        public static final String ENABLE = "op.enable"; //$NON-NLS-1$
+
+        public static final String INPUT_IMG = "op.input.img"; //$NON-NLS-1$
+        public static final String OUTPUT_IMG = "op.output.img"; //$NON-NLS-1$
+
+        private Param() {
+        }
+    }
 
     void process() throws Exception;
-
-    ImageOpNode clone() throws CloneNotSupportedException;
 
     boolean isEnabled();
 
@@ -37,6 +44,8 @@ public interface ImageOpNode extends Cloneable {
 
     void setAllParameters(Map<String, Object> map);
 
+    void removeParam(String key);
+
     void clearParams();
 
     /**
@@ -45,4 +54,5 @@ public interface ImageOpNode extends Cloneable {
     void clearIOCache();
 
     void handleImageOpEvent(ImageOpEvent event);
+
 }

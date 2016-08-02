@@ -20,8 +20,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -37,21 +35,23 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.model.GraphicModel;
 
 public class LabelPrefView extends AbstractItemDialogPage {
+    private static final long serialVersionUID = -189458600074707084L;
+
     public static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
     private final JButton jButtonApply = new JButton();
     private final JPanel jPanel2 = new JPanel();
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
     private final JLabel jLabelFont = new JLabel();
-    private final JComboBox jComboName = new JComboBox();
+    private final JComboBox<String> jComboName = new JComboBox<>();
     private final JLabel jLabelSize = new JLabel();
-    private final JComboBox jComboSize = new JComboBox(fontSize);
+    private final JComboBox<String> jComboSize = new JComboBox<>(fontSize);
     private final JCheckBox jCheckBoxBold = new JCheckBox();
     private final JCheckBox jCheckBoxItalic = new JCheckBox();
     private final ViewSetting viewSetting;
@@ -162,15 +162,13 @@ public class LabelPrefView extends AbstractItemDialogPage {
         closeAdditionalWindow();
         synchronized (UIManager.VIEWER_PLUGINS) {
             for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
                 if (p instanceof ImageViewerPlugin) {
-                    for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
-                        if (v instanceof DefaultView2d) {
-                            DefaultView2d view = (DefaultView2d) v;
-                            List<Graphic> list = view.getLayerModel().getAllGraphics();
-                            for (Graphic graphic : list) {
-                                graphic.updateLabel(true, view);
-                            }
+                    for (Object v : ((ImageViewerPlugin<?>) p).getImagePanels()) {
+                        if (v instanceof ViewCanvas) {
+                            ViewCanvas<?> view = (ViewCanvas<?>) v;
+                            GraphicModel graphicList = view.getGraphicManager();
+                            graphicList.updateLabels(true, view);
                         }
                     }
                 }
@@ -204,9 +202,6 @@ public class LabelPrefView extends AbstractItemDialogPage {
         viewSetting.setFontSize(size);
         viewSetting.setFontType(style);
 
-        ArrayList<Graphic> graphicList = MeasureToolBar.graphicList;
-        for (int i = 1; i < graphicList.size(); i++) {
-            MeasureToolBar.applyDefaultSetting(viewSetting, graphicList.get(i));
-        }
+        MeasureToolBar.measureGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
     }
 }

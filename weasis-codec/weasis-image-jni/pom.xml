@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-parent</artifactId>
+		<groupId>org.weasis</groupId>
+		<version>2.5.0-SNAPSHOT</version>
+		<relativePath>../../weasis-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>weasis-image-jni</artifactId>
+	<packaging>bundle</packaging>
+	<name>JPEG Codec [${project.artifactId}]</name>
+	<properties>
+		<bundle.namespace>org.weasis.image.jni</bundle.namespace>
+		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*</Export-Package>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>jai_imageio</artifactId>
+			<version>1.2.3</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+</project>

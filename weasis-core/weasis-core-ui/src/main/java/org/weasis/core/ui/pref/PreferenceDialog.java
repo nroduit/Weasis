@@ -40,21 +40,21 @@ public class PreferenceDialog extends AbstractWizardDialog {
         pack();
 
         Component horizontalStrut = Box.createHorizontalStrut(20);
-        GridBagConstraints gbc_horizontalStrut = new GridBagConstraints();
-        gbc_horizontalStrut.weightx = 1.0;
-        gbc_horizontalStrut.insets = new Insets(0, 0, 0, 5);
-        gbc_horizontalStrut.gridx = 0;
-        gbc_horizontalStrut.gridy = 0;
-        jPanelButtom.add(horizontalStrut, gbc_horizontalStrut);
+        GridBagConstraints gbcHorizontalStrut = new GridBagConstraints();
+        gbcHorizontalStrut.weightx = 1.0;
+        gbcHorizontalStrut.insets = new Insets(0, 0, 0, 5);
+        gbcHorizontalStrut.gridx = 0;
+        gbcHorizontalStrut.gridy = 0;
+        jPanelButtom.add(horizontalStrut, gbcHorizontalStrut);
         showPageFirstPage();
     }
 
     @Override
     protected void initializePages() {
-        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        Hashtable<String, Object> properties = new Hashtable<>();
         properties.put("weasis.user.prefs", System.getProperty("weasis.user.prefs", "user")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-        ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
+        ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
         list.add(new GeneralSetting());
         list.add(new LabelsPrefView());
         list.add(new ScreenPrefView());

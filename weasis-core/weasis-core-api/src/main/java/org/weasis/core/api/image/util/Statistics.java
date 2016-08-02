@@ -11,7 +11,7 @@
 package org.weasis.core.api.image.util;
 
 import java.awt.Point;
-import java.util.ArrayList;
+import java.util.List;
 
 public class Statistics {
 
@@ -28,7 +28,7 @@ public class Statistics {
      * This constructor creates a new <tt>Statistics</tt> object, and initializes the data array with an array of
      * Objects that must be convertable to numeric values.
      */
-    public Statistics(ArrayList<Point> arrayList) {
+    public Statistics(List<Point> arrayList) {
         x = new int[arrayList.size()];
         y = new int[arrayList.size()];
 
@@ -51,7 +51,7 @@ public class Statistics {
         }
     }
 
-    public static double CorrCoef(double xVal[], double yVal[], double xyStDev, double xMean, double yMean) {
+    public static double corrCoef(double[] xVal, double[] yVal, double xyStDev, double xMean, double yMean) {
         double r = 0.0D;
         for (int i = 0; i < xVal.length; i++) {
             r += ((xVal[i] - xMean) * (yVal[i] - yMean)) / (xyStDev);
@@ -60,7 +60,7 @@ public class Statistics {
         return r;
     }
 
-    public static double CorrCoef(double xVal[], double yVal[]) {
+    public static double corrCoef(double[] xVal, double[] yVal) {
         double r = 0.0D;
         double mX = mean(xVal);
         double mY = mean(yVal);
@@ -76,7 +76,7 @@ public class Statistics {
     public static double stDev(int[] data) {
         double sHat;
         if (data == null || data.length == 0) {
-            sHat = (0.0D / 0.0D);
+            sHat = Double.NaN;
         } else {
             double mu = mean(data);
             sHat = 0.0D;
@@ -91,7 +91,7 @@ public class Statistics {
     public static double stDev(double[] data) {
         double sHat;
         if (data == null || data.length == 0) {
-            sHat = (0.0D / 0.0D);
+            sHat = Double.NaN;
         } else {
             double mu = mean(data);
             sHat = 0.0D;
@@ -103,10 +103,10 @@ public class Statistics {
         return sHat;
     }
 
-    public static double stDev(double data[], double mu) {
+    public static double stDev(double[] data, double mu) {
         double sHat;
         if (data == null || data.length == 0) {
-            sHat = (0.0D / 0.0D);
+            sHat = Double.NaN;
         } else {
             sHat = 0.0D;
             for (int i = 0; i < data.length; i++) {
@@ -127,7 +127,7 @@ public class Statistics {
     public static double stDevOnePass(double[] data) {
         double sHat;
         if (data == null || data.length == 0) {
-            sHat = (0.0D / 0.0D);
+            sHat = Double.NaN;
         } else {
 
             double meanSum = data[0];
@@ -147,7 +147,7 @@ public class Statistics {
     public static double stDev(int[] data, double mu) {
         double sHat;
         if (data == null || data.length == 0) {
-            sHat = (0.0D / 0.0D);
+            sHat = Double.NaN;
         } else {
             sHat = 0.0D;
             for (int i = 0; i < data.length; i++) {
@@ -162,7 +162,7 @@ public class Statistics {
     public static double mean(double[] data) {
         double mu;
         if (data == null || data.length == 0) {
-            mu = (0.0D / 0.0D);
+            mu = Double.NaN;
         } else {
             mu = 0.0D;
             for (int i = 0; i < data.length; i++) {
@@ -214,9 +214,9 @@ public class Statistics {
      */
     public static double median(double[] data) {
 
-        double median = 0;
+        double median;
         if (data == null || data.length < 1) {
-            return (0.);
+            return Double.NaN;
         } else {
             // Get local copy of data
             double[] out = new double[data.length];
@@ -239,9 +239,9 @@ public class Statistics {
     }
 
     public static double median(int[] data) {
-        double median = 0;
+        double median;
         if (data == null || data.length < 1) {
-            return 0.0;
+            return Double.NaN;
         } else {
             // Get local copy of data
             int[] out = new int[data.length];
@@ -272,11 +272,11 @@ public class Statistics {
     public static double skewness(double[] data) {
 
         if (data == null || data.length < 2) {
-            return (0.);
+            return Double.NaN;
         } else {
             double m3 = moment(data, 3);
             double sm2 = Math.sqrt(moment(data, 2));
-            return (m3 / Math.pow(sm2, 3));
+            return m3 / Math.pow(sm2, 3);
         }
     }
 
@@ -292,24 +292,24 @@ public class Statistics {
     public static double kurtosis(double[] data) {
 
         if (data == null || data.length < 2) {
-            return (0.);
+            return Double.NaN;
         } else {
             double m4 = moment(data, 4);
             double sm2 = Math.sqrt(moment(data, 2));
-            return (m4 / Math.pow(sm2, 4));
+            return m4 / Math.pow(sm2, 4);
         }
     }
 
     private static double moment(double[] x, int order) {
         if (x == null || order == 1) {
-            return (0.);
+            return Double.NaN;
         } else {
             double mu = mean(x);
             double sum = 0;
             for (int i = 0; i < x.length; i++) {
-                sum += Math.pow((x[i] - mu), order);
+                sum += Math.pow(x[i] - mu, order);
             }
-            return (sum / (x.length - 1));
+            return sum / (x.length - 1);
         }
     }
 
@@ -342,10 +342,11 @@ public class Statistics {
 
     public static final double[] averageSmooth(double[] img, int rad) {
         int h = img.length;
-        double result[] = new double[h];
+        double[] result = new double[h];
 
         for (int i = 0; i < h; i++) {
-            int by = i - rad, ey = i + rad;
+            int by = i - rad;
+            int ey = i + rad;
             if (by < 0) {
                 by = 0;
             }
@@ -375,9 +376,9 @@ public class Statistics {
      * @return the coefficients for the solved equation in the form {a0, a1,...,an}
      */
     public static double[] regression(double[] x, double[] y, int norder) {
-        double a[][] = new double[norder + 1][norder + 1];
-        double b[] = new double[norder + 1];
-        double term[] = new double[norder + 1];
+        double[][] a = new double[norder + 1][norder + 1];
+        double[] b = new double[norder + 1];
+        double[] term = new double[norder + 1];
         double ysquare = 0;
         // step through each raw data entries
         for (int i = 0; i < y.length; i++) {
@@ -401,7 +402,7 @@ public class Statistics {
             }
         }
         // solve for the coefficients
-        double coef[] = gauss(a, b);
+        double[] coef = gauss(a, b);
         // calculate the r-squared statistic
         double ss = 0;
         double yaverage = b[0] / y.length;
@@ -429,14 +430,14 @@ public class Statistics {
      * @param bx
      * @return
      */
-    private static double[] gauss(double ax[][], double bx[]) {
-        double a[][] = new double[ax.length][ax[0].length];
-        double b[] = new double[bx.length];
+    private static double[] gauss(double[][] ax, double[] bx) {
+        double[][] a = new double[ax.length][ax[0].length];
+        double[] b = new double[bx.length];
         double pivot;
         double mult;
         double top;
         int n = b.length;
-        double coef[] = new double[n];
+        double[] coef = new double[n];
         // copy over the array values - inplace solution changes values
         for (int i = 0; i < ax.length; i++) {
             for (int j = 0; j < ax[i].length; j++) {

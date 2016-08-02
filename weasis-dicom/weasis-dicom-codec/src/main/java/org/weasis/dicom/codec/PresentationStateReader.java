@@ -11,24 +11,17 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public class PresentationStateReader {
+public class PresentationStateReader implements TagReadable {
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
-
-    public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
-    public static final String TAG_OLD_PIX_SIZE = "original.pixel.spacing"; //$NON-NLS-1$
-    public static final String TAG_OLD_ModalityLUTData = "original.modality.lut"; //$NON-NLS-1$
-    public static final String TAG_OLD_RescaleSlope = "original.rescale.slope"; //$NON-NLS-1$
-    public static final String TAG_OLD_RescaleIntercept = "original.rescale.intercept"; //$NON-NLS-1$
-    public static final String TAG_OLD_RescaleType = "original.rescale.type"; //$NON-NLS-1$
-    public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers"; //$NON-NLS-1$
 
     private final PRSpecialElement prSpecialElement;
     private final Attributes dcmobj;
-    private final HashMap<String, Object> tags = new HashMap<String, Object>();
+    private final HashMap<String, Object> tags = new HashMap<>();
 
     public PresentationStateReader(PRSpecialElement dicom) {
         if (dicom == null) {
@@ -52,10 +45,6 @@ public class PresentationStateReader {
         return dcmobj;
     }
 
-    public HashMap<String, Object> getTags() {
-        return tags;
-    }
-
     public Object getTagValue(String key, Object defaultValue) {
         if (key == null) {
             return defaultValue;
@@ -70,7 +59,7 @@ public class PresentationStateReader {
             if (sops == null || sops.isEmpty()) {
                 return true;
             }
-            String imgSop = (String) img.getTagValue(TagW.SOPInstanceUID);
+            String imgSop = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
             if (imgSop != null) {
                 for (Attributes sop : sops) {
                     if (imgSop.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
@@ -99,9 +88,8 @@ public class PresentationStateReader {
 
     public void readGrayscaleSoftcopyModule(DicomImageElement img) {
         if (dcmobj != null) {
-            List<PresetWindowLevel> presets =
-                PresetWindowLevel.getPresetCollection(img, prSpecialElement.geTags(), true);
-            if (presets != null && presets.size() > 0) {
+            List<PresetWindowLevel> presets = PresetWindowLevel.getPresetCollection(img, prSpecialElement, true);
+            if (presets != null && !presets.isEmpty()) {
                 tags.put(ActionW.PRESET.cmd(), presets);
             }
         }
@@ -123,26 +111,18 @@ public class PresentationStateReader {
             }
             for (Attributes item : srcSeq) {
                 if (isModuleAppicable(item, img)) {
-                    double[] pixelsize = null;
                     float[] spacing =
                         DicomMediaUtils.getFloatArrayFromDicomElement(item, Tag.PresentationPixelSpacing, null);
                     if (spacing != null && spacing.length == 2) {
-                        pixelsize = new double[] { spacing[1], spacing[0] };
+                        tags.put(TagD.get(Tag.PixelSpacing).getKeyword(), new double[] { spacing[1], spacing[0] });
                     }
                     if (spacing == null) {
                         int[] aspects =
                             DicomMediaUtils.getIntAyrrayFromDicomElement(item, Tag.PresentationPixelAspectRatio, null);
-                        if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
-                            // set the aspects to the pixel size of the image to stretch the image rendering (square
-                            // pixel)
-                            if (aspects[1] < aspects[0]) {
-                                pixelsize = new double[] { 1.0, (double) aspects[0] / (double) aspects[1] };
-                            } else {
-                                pixelsize = new double[] { (double) aspects[1] / (double) aspects[0], 1.0 };
-                            }
+                        if (aspects != null) {
+                            tags.put(TagD.get(Tag.PixelAspectRatio).getKeyword(), aspects);
                         }
                     }
-                    tags.put(TagW.PixelSpacing.getName(), pixelsize);
 
                     String presentationMode = item.getString(Tag.PresentationSizeMode);
                     int[] tlhc =
@@ -165,15 +145,13 @@ public class PresentationStateReader {
                     }
                     tags.put("presentationMode", presentationMode); //$NON-NLS-1$
                     if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
-                        tags.put(ActionW.ZOOM.cmd(), 0.0);
+                        tags.put(ActionW.ZOOM.cmd(), -200.0);
                     } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
                         tags.put(ActionW.ZOOM.cmd(),
                             (double) item.getFloat(Tag.PresentationPixelMagnificationRatio, 1.0f));
                     } else if ("TRUE SIZE".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
-                        // TODO required to calibrate the screen (Measure physically two lines displayed on screen, must
-                        // be
-                        // square pixel)
-                        // tags.put(ActionW.ZOOM.cmd(), 0.0);
+                        // Required to calibrate the screen in preferences
+                        tags.put(ActionW.ZOOM.cmd(), -100.0);
                     }
                     // Cannot apply a second DisplayedAreaModule to the image. It makes no sense.
                     break;
@@ -203,13 +181,32 @@ public class PresentationStateReader {
                 b >>= 8;
             }
         } else {
-            r = g = b = (pGray >> 8);
+            r = g = b = pGray >> 8;
         }
         r &= 0xFF;
         g &= 0xFF;
         b &= 0xFF;
         int conv = (r << 16) | (g << 8) | b | 0x1000000;
         return new Color(conv);
+    }
+
+    public static float[] ColorToLAB(Color color) {
+        float[] rgb = new float[3];
+        rgb[0] = color.getRed() / 255.f;
+        rgb[1] = color.getGreen() / 255.f;
+        rgb[2] = color.getBlue() / 255.f;
+
+        return LAB.fromRGB(rgb);
+    }
+
+    @Override
+    public boolean containTagKey(TagW tag) {
+        return tags.containsKey(tag);
+    }
+
+    @Override
+    public Object getTagValue(TagW tag) {
+        return tag == null ? null : tags.get(tag);
     }
 
 }

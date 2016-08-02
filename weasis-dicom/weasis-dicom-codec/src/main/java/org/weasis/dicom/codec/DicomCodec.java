@@ -12,12 +12,18 @@ package org.weasis.dicom.codec;
 
 import java.net.URI;
 import java.util.Hashtable;
+import java.util.List;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
+import org.dcm4che3.data.ItemPointer;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi;
+import org.dcm4che3.io.BulkDataDescriptor;
+import org.dcm4che3.util.TagUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 
@@ -34,6 +40,30 @@ public class DicomCodec implements Codec {
 
     public static final String NAME = "dcm4che"; //$NON-NLS-1$
     public static final String[] FILE_EXTENSIONS = { "dcm", "dicm" }; //$NON-NLS-1$ //$NON-NLS-2$
+
+    public static final BulkDataDescriptor BULKDATA_DESCRIPTOR = new BulkDataDescriptor() {
+
+        @Override
+        public boolean isBulkData(List<ItemPointer> itemPointer,
+            String privateCreator, int tag, VR vr, int length) {
+            switch (TagUtils.normalizeRepeatingGroup(tag)) {
+                case Tag.PixelDataProviderURL:
+                case Tag.AudioSampleData:
+                case Tag.CurveData:
+                case Tag.SpectroscopyData:
+                case Tag.OverlayData:
+                case Tag.EncapsulatedDocument:
+                case Tag.PixelData:
+                    return itemPointer.isEmpty();
+                case Tag.WaveformData:
+                    return itemPointer.size() == 1 && itemPointer.get(0).sequenceTag == Tag.WaveformSequence;
+            }
+            if (TagUtils.isPrivateTag(tag)) {
+                return length > 5000; // Do no read in memory private value more than 5 KB
+            }
+            return false;
+        }
+    };
 
     @Override
     public String[] getReaderMIMETypes() {
@@ -58,67 +88,6 @@ public class DicomCodec implements Codec {
         return false;
     }
 
-    // @Override
-    // public MediaSeries buildSequence(List<MediaElement> mediaList, MediaElement selectedMedia) {
-    // DicomModel model = DicomModel.getInstance();
-    //
-    // if (selectedMedia instanceof DicomImageElement || selectedMedia instanceof DicomVideoElement) {
-    //
-    // String patientID = (String) selectedMedia.getTagValue(TagW.PatientID);
-    // HierarchyNode patient = model.getHierarchyNode(null, patientID);
-    // if (patient == null) {
-    // patient = new HierarchyNode(TagW.PatientID, TagW.PatientName);
-    // patient.addTag(TagW.PatientID, patientID);
-    // patient.addTag(TagW.PatientName, (String) selectedMedia.getTagValue(TagW.PatientName));
-    // patient.addTag(TagW.PatientBirthDate, selectedMedia.getTagValue(TagW.PatientBirthDate));
-    // patient.addTag(TagW.PatientSex, selectedMedia.getTagValue(TagW.PatientSex));
-    //
-    // model.addHierarchyNode(model.rootNode, patient);
-    // }
-    //
-    // String studyUID = (String) selectedMedia.getTagValue(TagW.StudyInstanceUID);
-    //
-    // HierarchyNode study = model.getHierarchyNode(patient, studyUID);
-    // if (study == null) {
-    // study = new HierarchyNode(TagW.StudyInstanceUID, TagW.StudyDate);
-    // study.addTag(TagW.StudyInstanceUID, studyUID);
-    // study.addTag(TagW.StudyDate, selectedMedia.getTagValue(TagW.StudyDate));
-    // study.addTag(TagW.StudyDescription, selectedMedia.getTagValue(TagW.StudyDescription));
-    // model.addHierarchyNode(patient, study);
-    // }
-    //
-    // String seriesUID = (String) selectedMedia.getTagValue(TagW.SeriesInstanceUID);
-    // DicomSeriesAdapter dicomSeries = (DicomSeriesAdapter) model.getHierarchyNode(study, seriesUID);
-    // if (dicomSeries == null) {
-    // dicomSeries = (selectedMedia instanceof DicomImageElement) ? new DicomSeries() : new DicomVideo();
-    // dicomSeries.addTag(TagW.SeriesInstanceUID, seriesUID);
-    // dicomSeries.addTag(TagW.Modality, selectedMedia.getTagValue(TagW.Modality));
-    // dicomSeries.addTag(TagW.SeriesDate, selectedMedia.getTagValue(TagW.SeriesDate));
-    // dicomSeries.addTag(TagW.SeriesDescription, selectedMedia.getTagValue(TagW.SeriesDescription));
-    // dicomSeries.addMedia((selectedMedia instanceof DicomImageElement) ? ((DicomImageElement) selectedMedia)
-    // .getDicomImageLoader() : ((DicomVideoElement) selectedMedia).getDicomImageLoader());
-    // model.addHierarchyNode(study, (HierarchyNode) dicomSeries);
-    // }
-    //
-    // else {
-    // dicomSeries.addMedia((selectedMedia instanceof DicomImageElement) ? ((DicomImageElement) selectedMedia)
-    // .getDicomImageLoader() : ((DicomVideoElement) selectedMedia).getDicomImageLoader());
-    // }
-    // if (selectedMedia instanceof DicomImageElement) {
-    // for (MediaElement media : mediaList) {
-    // if (media instanceof DicomImageElement) {
-    // final DicomImageElement e = (DicomImageElement) media;
-    // if (seriesUID.equals(e.getTagValue(TagW.SeriesInstanceUID))) {
-    // dicomSeries.add(e);
-    // }
-    // }
-    // }
-    // }
-    // return dicomSeries;
-    // }
-    // return null;
-    // }
-
     @Override
     public MediaReader getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties) {
 
@@ -135,14 +104,12 @@ public class DicomCodec implements Codec {
 
     @Override
     public String[] getWriterExtensions() {
-        // TODO Auto-generated method stub
-        return null;
+        return FILE_EXTENSIONS;
     }
 
     @Override
     public String[] getWriterMIMETypes() {
-        // TODO Auto-generated method stub
-        return null;
+        return new String[] { DicomMediaIO.MIMETYPE };
     }
 
 }

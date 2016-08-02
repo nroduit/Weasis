@@ -1,24 +1,25 @@
 package org.weasis.core.ui.editor.image;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class SynchEvent {
 
-    private final DefaultView2d<?> view;
-    private final HashMap<String, Object> events;
+    private final ViewCanvas<?> view;
+    private final Map<String, Object> events;
 
-    public SynchEvent(DefaultView2d<?> view) {
+    public SynchEvent(ViewCanvas<?> view) {
         this.view = view;
-        this.events = new HashMap<String, Object>();
+        this.events = new HashMap<>();
     }
 
-    public SynchEvent(DefaultView2d<?> view, String command, Object value) {
+    public SynchEvent(ViewCanvas<?> view, String command, Object value) {
         this.view = view;
         if (command != null) {
-            this.events = new HashMap<String, Object>(2);
+            this.events = new HashMap<>(2);
             this.getEvents().put(command, value);
         } else {
-            this.events = new HashMap<String, Object>(8);
+            this.events = new HashMap<>(8);
         }
     }
 
@@ -26,11 +27,11 @@ public class SynchEvent {
         events.put(key, value);
     }
 
-    public DefaultView2d<?> getView() {
+    public ViewCanvas<?> getView() {
         return view;
     }
 
-    public HashMap<String, Object> getEvents() {
+    public Map<String, Object> getEvents() {
         return events;
     }
 }

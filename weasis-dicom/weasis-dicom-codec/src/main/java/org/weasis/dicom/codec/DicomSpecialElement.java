@@ -12,11 +12,12 @@ package org.weasis.dicom.codec;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -32,14 +33,64 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.SeriesComparator;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
+import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class DicomSpecialElement extends MediaElement<PlanarImage> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomSpecialElement.class);
+
+    public static final SeriesComparator<DicomSpecialElement> ORDER_BY_DESCRIPTION =
+        new SeriesComparator<DicomSpecialElement>() {
+            @Override
+            public int compare(DicomSpecialElement arg0, DicomSpecialElement arg1) {
+                return String.CASE_INSENSITIVE_ORDER.compare(arg0.getLabel(), arg1.getLabel());
+            }
+        };
+
+    public static final SeriesComparator<DicomSpecialElement> ORDER_BY_DATE =
+        new SeriesComparator<DicomSpecialElement>() {
+
+            @Override
+            public int compare(DicomSpecialElement m1, DicomSpecialElement m2) {
+
+                // Note : Dicom Standard PS3.3 - Table C.17.6-1 KEY OBJECT DOCUMENT SERIES MODULE ATTRIBUTES
+                //
+                // SeriesDate stands for "Date the Series started" and is optional parameter, don't use this to compare
+                // and prefer "Content Date And Time" Tags (date and time the document content creation started)
+
+                LocalDateTime date1 = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, m1);
+                LocalDateTime date2 = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, m2);
+
+                if (date1 == null || date2 == null) {
+                    // SeriesDate and time
+                    date1 = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, m1);
+                    date2 = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, m2);
+                }
+                if (date1 != null && date2 != null) {
+                    // inverse time
+                    int comp = date2.compareTo(date1);
+                    if (comp != 0) {
+                        return comp;
+                    }
+                }
+
+                // Note : SeriesNumber stands for a number that identifies the Series.
+                // No specific semantics are specified.
+                Integer val1 = TagD.getTagValue(m1, Tag.SeriesNumber, Integer.class);
+                Integer val2 = TagD.getTagValue(m2, Tag.SeriesNumber, Integer.class);
+                if (val1 != null && val2 != null) {
+                    // inverse number
+                    int comp = val1 > val2 ? -1 : (val1 == val2 ? 0 : 1);
+                    if (comp != 0) {
+                        return comp;
+                    }
+                }
+
+                return String.CASE_INSENSITIVE_ORDER.compare(m1.getLabel(), m2.getLabel());
+            }
+        };
 
     protected String label;
 
@@ -50,12 +101,12 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     protected String getLabelPrefix() {
         StringBuilder buf = new StringBuilder();
-        String modality = (String) getTagValue(TagW.Modality);
+        String modality = TagD.getTagValue(this, Tag.Modality, String.class);
         if (modality != null) {
             buf.append(modality);
             buf.append(" "); //$NON-NLS-1$
         }
-        Integer val = (Integer) getTagValue(TagW.InstanceNumber);
+        Integer val = TagD.getTagValue(this, Tag.InstanceNumber, Integer.class);
         if (val != null) {
             buf.append("["); //$NON-NLS-1$
             buf.append(val);
@@ -66,7 +117,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     protected void initLabel() {
         StringBuilder buf = new StringBuilder(getLabelPrefix());
-        String desc = (String) getTagValue(TagW.SeriesDescription);
+        String desc = TagD.getTagValue(this, Tag.SeriesDescription, String.class);
         if (desc != null) {
             buf.append(desc);
         }
@@ -88,7 +139,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     @Override
     public String toString() {
-        String modality = (String) getTagValue(TagW.Modality);
+        String modality = TagD.getTagValue(this, Tag.Modality, String.class);
         int prefix = modality == null ? 0 : modality.length() + 1;
         String l = getShortLabel();
         return l.length() > prefix ? label.substring(prefix) : l;
@@ -96,18 +147,15 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     @Override
     public boolean saveToFile(File output) {
-        if (file == null) {
+        // When object is in memory, write it
+        if (getMediaReader().isEditableDicom()) {
             Attributes dcm = getMediaReader().getDicomObject();
             if (dcm != null) {
-                DicomOutputStream out = null;
-                try {
-                    out = new DicomOutputStream(output);
+                try (DicomOutputStream out = new DicomOutputStream(output)){
                     out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                     return true;
                 } catch (IOException e) {
-                    LOGGER.error("Cannot write dicom ({}): {}", getLabel(), e.getMessage()); //$NON-NLS-1$
-                } finally {
-                    FileUtil.safeClose(out);
+                    LOGGER.error("Cannot write dicom ({}): {}", getLabel(), e); //$NON-NLS-1$
                 }
             }
         }
@@ -120,13 +168,12 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     public static final List<DicomSpecialElement> getPRfromSopUID(String seriesUID, String sopUID, Integer frameNumber,
         List<DicomSpecialElement> studyElements) {
-        List<DicomSpecialElement> filteredList = new ArrayList<DicomSpecialElement>();
+        List<DicomSpecialElement> filteredList = new ArrayList<>();
         if (studyElements != null && seriesUID != null && sopUID != null) {
             for (DicomSpecialElement dicom : studyElements) {
-                if (dicom != null && "PR".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
-                    if (isSopuidInReferencedSeriesSequence(
-                        (Attributes[]) dicom.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID,
-                        frameNumber)) {
+                if (dicom != null && "PR".equals(TagD.getTagValue(dicom, Tag.Modality))) { //$NON-NLS-1$
+                    Attributes[] seq = TagD.getTagValue(dicom, Tag.ReferencedSeriesSequence, Attributes[].class);
+                    if (isSopuidInReferencedSeriesSequence(seq, seriesUID, sopUID, frameNumber)) {
                         filteredList.add(dicom);
                     }
                 }
@@ -168,6 +215,29 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         return false;
     }
 
+    public static boolean isSopuidInReferencedSeriesSequence(Map<String, SOPInstanceReferenceAndMAC> seq, String sopUID,
+        Integer frameNumber) {
+        if (seq != null && StringUtil.hasText(sopUID) && seq.containsKey(sopUID)) {
+            if (frameNumber != null && frameNumber > 1) {
+                SOPInstanceReferenceAndMAC val = seq.get(sopUID);
+                int[] seqFrame = val == null ? null : val.getReferencedFrameNumber();
+                if (seqFrame == null || seqFrame.length == 0) {
+                    return true;
+                } else {
+                    for (int k : seqFrame) {
+                        if (k == frameNumber) {
+                            return true;
+                        }
+                    }
+                }
+            } else {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      *
      * @param seriesUID
@@ -181,7 +251,7 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
         Collection<DicomSpecialElement> specialElements, String seriesUID) {
 
         if (specialElements == null) {
-            return null;
+            return Collections.emptySet();
         }
 
         SortedSet<KOSpecialElement> koElementSet = null;
@@ -197,22 +267,78 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
                     || koElement.getMediaReader().isEditableDicom()) {
 
                     if (koElementSet == null) {
-                        // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DESCRIPTION);
-                        koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DATE);
+                        koElementSet = new TreeSet<>(ORDER_BY_DATE);
                     }
                     koElementSet.add(koElement);
                 }
             }
         }
+        return  koElementSet ==null ? Collections.emptySet() : koElementSet;
+    }
 
-        return koElementSet;
+    public static final Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
+        Collection<DicomSpecialElement> specialElements, String seriesUID) {
+
+        if (specialElements == null) {
+            return Collections.emptySet();
+        }
+
+        SortedSet<RejectedKOSpecialElement> koElementSet = null;
+
+        for (DicomSpecialElement element : specialElements) {
+
+            if (element instanceof RejectedKOSpecialElement) {
+                RejectedKOSpecialElement koElement = (RejectedKOSpecialElement) element;
+
+                Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
+
+                if (seriesUID == null || referencedSeriesInstanceUIDSet.contains(seriesUID)
+                    || koElement.getMediaReader().isEditableDicom()) {
+
+                    if (koElementSet == null) {
+                        koElementSet = new TreeSet<>(ORDER_BY_DATE);
+                    }
+                    koElementSet.add(koElement);
+                }
+            }
+        }
+        return koElementSet ==null ? Collections.emptySet() : koElementSet;
+    }
+
+    public static final RejectedKOSpecialElement getRejectionKoSpecialElement(
+        Collection<DicomSpecialElement> specialElements, String seriesUID, String sopUID, Integer frameNumber) {
+
+        if (specialElements == null) {
+            return null;
+        }
+        List<RejectedKOSpecialElement> koList = null;
+
+        for (DicomSpecialElement element : specialElements) {
+            if (element instanceof RejectedKOSpecialElement) {
+                RejectedKOSpecialElement koElement = (RejectedKOSpecialElement) element;
+                if (isSopuidInReferencedSeriesSequence(koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID,
+                    frameNumber)) {
+                    if (koList == null) {
+                        koList = new ArrayList<>();
+                    }
+                    koList.add(koElement);
+                }
+            }
+        }
+
+        if (koList != null) {
+            // return the most recent Rejection Object
+            Collections.sort(koList, ORDER_BY_DATE);
+            return koList.get(0);
+        }
+        return null;
     }
 
     public static final List<PRSpecialElement> getPRSpecialElements(Collection<DicomSpecialElement> specialElements,
         String seriesUID, String sopUID, Integer frameNumber) {
 
         if (specialElements == null) {
-            return null;
+            return Collections.emptyList();
         }
         List<PRSpecialElement> prList = null;
 
@@ -220,13 +346,11 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
             if (element instanceof PRSpecialElement) {
                 PRSpecialElement prElement = (PRSpecialElement) element;
-
-                if (isSopuidInReferencedSeriesSequence(
-                    (Attributes[]) prElement.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID,
-                    frameNumber)) {
+                Attributes[] seq = TagD.getTagValue(prElement, Tag.ReferencedSeriesSequence, Attributes[].class);
+                if (isSopuidInReferencedSeriesSequence(seq, seriesUID, sopUID, frameNumber)) {
 
                     if (prList == null) {
-                        prList = new ArrayList<PRSpecialElement>();
+                        prList = new ArrayList<>();
                     }
                     prList.add(prElement);
 
@@ -234,63 +358,8 @@ public class DicomSpecialElement extends MediaElement<PlanarImage> {
             }
         }
         if (prList != null) {
-            // Collections.sort(koElementSet, ORDER_BY_DESCRIPTION);
             Collections.sort(prList, ORDER_BY_DATE);
         }
-        return prList;
+        return prList == null ? Collections.emptyList() : prList;
     }
-
-    public final static SeriesComparator<DicomSpecialElement> ORDER_BY_DESCRIPTION =
-        new SeriesComparator<DicomSpecialElement>() {
-            @Override
-            public int compare(DicomSpecialElement arg0, DicomSpecialElement arg1) {
-                return String.CASE_INSENSITIVE_ORDER.compare(arg0.getLabel(), arg1.getLabel());
-            }
-        };
-
-    public final static SeriesComparator<DicomSpecialElement> ORDER_BY_DATE =
-        new SeriesComparator<DicomSpecialElement>() {
-
-            @Override
-            public int compare(DicomSpecialElement m1, DicomSpecialElement m2) {
-
-                // Note : Dicom Standard PS3.3 - Table C.17.6-1 KEY OBJECT DOCUMENT SERIES MODULE ATTRIBUTES
-                //
-                // SeriesDate stands for "Date the Series started" and is optional parameter, don't use this to compare
-                // and prefer "Content Date And Time" Tags (date and time the document content creation started)
-
-                Date date1 =
-                    TagW.dateTime((Date) m1.getTagValue(TagW.ContentDate), (Date) m1.getTagValue(TagW.ContentTime));
-                Date date2 =
-                    TagW.dateTime((Date) m2.getTagValue(TagW.ContentDate), (Date) m2.getTagValue(TagW.ContentTime));
-
-                if (date1 == null || date2 == null) {
-                    // SeriesDate contains date and time
-                    date1 = (Date) m1.getTagValue(TagW.SeriesDate);
-                    date2 = (Date) m2.getTagValue(TagW.SeriesDate);
-                }
-                if (date1 != null && date2 != null) {
-                    // inverse time
-                    int comp = date2.compareTo(date1);
-                    if (comp != 0) {
-                        return comp;
-                    }
-                }
-
-                // Note : SeriesNumber stands for a number that identifies the Series.
-                // No specific semantics are specified.
-                Integer val1 = (Integer) m1.getTagValue(TagW.SeriesNumber);
-                Integer val2 = (Integer) m2.getTagValue(TagW.SeriesNumber);
-                if (val1 != null && val2 != null) {
-                    // inverse number
-                    int comp = val1 > val2 ? -1 : (val1 == val2 ? 0 : 1);
-                    if (comp != 0) {
-                        return comp;
-                    }
-                }
-
-                return String.CASE_INSENSITIVE_ORDER.compare(m1.getLabel(), m2.getLabel());
-            }
-        };
-
 }

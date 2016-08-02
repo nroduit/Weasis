@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.explorer.model;
 
+import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 
 /**
@@ -19,18 +20,21 @@ import org.weasis.core.api.media.data.TagW;
  *
  */
 public class TreeModelNode {
+    public static final TreeModelNode ROOT = new TreeModelNode(0, 0, TagW.RootElement, null);
 
     private final int depth;
     private final int nodePosition;
     private final TagW tagElement;
+    private final TagView tagView;
 
-    public TreeModelNode(int depth, int nodePosition, TagW tagElement) {
+    public TreeModelNode(int depth, int nodePosition, TagW tagElement, TagView tagView) {
         if (tagElement == null) {
             throw new IllegalArgumentException("TagW is null"); //$NON-NLS-1$
         }
         this.depth = depth;
         this.nodePosition = nodePosition;
         this.tagElement = tagElement;
+        this.tagView = tagView;
     }
 
     public int getDepth() {
@@ -43,6 +47,10 @@ public class TreeModelNode {
 
     public TagW getTagElement() {
         return tagElement;
+    }
+
+    public TagView getTagView() {
+        return tagView;
     }
 
 }

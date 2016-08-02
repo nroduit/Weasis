@@ -2,9 +2,10 @@ package org.weasis.dicom.explorer;
 
 import java.io.File;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -12,28 +13,36 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-import org.weasis.core.api.explorer.model.TreeModel;
+import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.MediaSeriesGroupNode;
+import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.TagD;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultTreeCheckingModel;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
 public class CheckTreeModel {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CheckTreeModel.class);
 
     private final DefaultMutableTreeNode rootNode;
     private final DefaultTreeModel model;
     private final TreeCheckingModel checkingModel;
+    private final List<TreePath> defaultSelectedPaths;
 
     public CheckTreeModel(DicomModel dicomModel) {
         this.model = buildModel(dicomModel);
         this.rootNode = (DefaultMutableTreeNode) model.getRoot();
         this.checkingModel = new DefaultTreeCheckingModel(model);
+        this.defaultSelectedPaths = Collections.synchronizedList(new ArrayList<TreePath>());
     }
 
     public DefaultMutableTreeNode getRootNode() {
@@ -52,11 +61,65 @@ public class CheckTreeModel {
         return checkingModel.getCheckingPaths();
     }
 
+    public void setDefaultSelectionPaths(List<TreePath> selectedPaths) {
+        defaultSelectedPaths.clear();
+        defaultSelectedPaths.addAll(selectedPaths);
+    }
+
+    public List<TreePath> getDefaultSelectedPaths() {
+        return defaultSelectedPaths;
+    }
+
+    private static void buildSeries(DefaultMutableTreeNode studyNode, Series<?> series) {
+        DefaultMutableTreeNode seriesNode = new ToolTipTreeNode(series, true);
+        List<DicomSpecialElement> specialElements =
+            (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
+        if (specialElements != null) {
+            for (DicomSpecialElement specialElement : specialElements) {
+                seriesNode.add(new DefaultMutableTreeNode(specialElement, false) {
+                    @Override
+                    public String toString() {
+                        DicomSpecialElement d = (DicomSpecialElement) getUserObject();
+                        return d.getShortLabel();
+                    }
+                });
+            }
+        }
+        for (MediaElement<?> dicom : series.getMedias(null, null)) {
+            seriesNode.add(new DefaultMutableTreeNode(dicom, false) {
+                @Override
+                public String toString() {
+                    MediaElement<?> m = (MediaElement<?>) getUserObject();
+                    Integer val = TagD.getTagValue(m, Tag.InstanceNumber, Integer.class);
+                    StringBuilder buffer = new StringBuilder();
+                    if (val != null) {
+                        buffer.append("["); //$NON-NLS-1$
+                        buffer.append(val);
+                        buffer.append("] "); //$NON-NLS-1$
+                    }
+                    String sopUID = TagD.getTagValue(m, Tag.SOPInstanceUID, String.class);
+                    if (sopUID != null) {
+                        buffer.append(sopUID);
+                    }
+                    return buffer.toString();
+                }
+            });
+        }
+
+        List children = Collections.list(studyNode.children());
+        int index = Collections.binarySearch(children, seriesNode, DicomModel.SERIES_COMPARATOR);
+        if (index < 0) {
+            studyNode.insert(seriesNode, -(index + 1));
+        } else {
+            studyNode.insert(seriesNode, index);
+        }
+    }
+
     public static DefaultTreeModel buildModel(DicomModel dicomModel) {
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(DicomExplorer.ALL_PATIENTS);
         synchronized (dicomModel) {
-            for (Iterator<MediaSeriesGroup> iterator = dicomModel.getChildren(TreeModel.rootNode).iterator(); iterator
-                .hasNext();) {
+            for (Iterator<MediaSeriesGroup> iterator =
+                dicomModel.getChildren(MediaSeriesGroupNode.rootNode).iterator(); iterator.hasNext();) {
                 MediaSeriesGroup pt = iterator.next();
                 DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);
                 Collection<MediaSeriesGroup> studies = dicomModel.getChildren(pt);
@@ -66,51 +129,8 @@ public class CheckTreeModel {
                     Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
                     for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                         Object item = it.next();
-                        if (item instanceof DicomSeries) {
-                            DicomSeries series = (DicomSeries) item;
-
-                            DefaultMutableTreeNode seriesNode = new ToolTipTreeNode(series, true);
-                            List<DicomSpecialElement> specialElements =
-                                (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
-                            if (specialElements != null) {
-                                for (DicomSpecialElement specialElement : specialElements) {
-                                    seriesNode.add(new DefaultMutableTreeNode(specialElement, false) {
-                                        @Override
-                                        public String toString() {
-                                            DicomSpecialElement d = (DicomSpecialElement) getUserObject();
-                                            return d.getShortLabel();
-                                        }
-                                    });
-                                }
-                            }
-                            for (DicomImageElement dicom : series.getMedias(null, null)) {
-                                seriesNode.add(new DefaultMutableTreeNode(dicom, false) {
-                                    @Override
-                                    public String toString() {
-                                        DicomImageElement d = (DicomImageElement) getUserObject();
-                                        Integer val = (Integer) d.getTagValue(TagW.InstanceNumber);
-                                        StringBuilder buffer = new StringBuilder();
-                                        if (val != null) {
-                                            buffer.append("["); //$NON-NLS-1$
-                                            buffer.append(val);
-                                            buffer.append("] "); //$NON-NLS-1$
-                                        }
-                                        String sopUID = (String) d.getTagValue(TagW.SOPInstanceUID);
-                                        if (sopUID != null) {
-                                            buffer.append(sopUID);
-                                        }
-                                        return buffer.toString();
-                                    }
-                                });
-                            }
-
-                            List children = Collections.list(studyNode.children());
-                            int index = Collections.binarySearch(children, seriesNode, DicomModel.SERIES_COMPARATOR);
-                            if (index < 0) {
-                                studyNode.insert(seriesNode, -(index + 1));
-                            } else {
-                                studyNode.insert(seriesNode, index);
-                            }
+                        if (item instanceof Series) {
+                            buildSeries(studyNode, (Series) item);
                         }
                     }
                     List children = Collections.list(patientNode.children());
@@ -145,28 +165,27 @@ public class CheckTreeModel {
         public String getToolTipText() {
             MediaSeries<?> s = (MediaSeries<?>) getUserObject();
             Thumbnail thumb = (Thumbnail) s.getTagValue(TagW.Thumbnail);
-            URL url = null;
             if (thumb != null) {
                 try {
                     File path = thumb.getThumbnailPath();
                     if (path != null) {
-                        url = path.toURI().toURL();
+                        URL url = path.toURI().toURL();
                         if (url != null) {
                             StringBuilder buf = new StringBuilder();
                             buf.append("<html>"); //$NON-NLS-1$
                             buf.append("<img src=\""); //$NON-NLS-1$
                             buf.append(url.toString());
                             buf.append("\"><br>"); //$NON-NLS-1$
-                            Date date = (Date) s.getTagValue(TagW.SeriesDate);
+                            LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
                             if (date != null) {
-                                buf.append(TagW.formatDateTime(date));
+                                buf.append(TagUtil.formatDateTime(date));
                             }
                             buf.append("</html>"); //$NON-NLS-1$
                             return buf.toString();
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Display tooltip", e);
                 }
             }
 
@@ -177,18 +196,18 @@ public class CheckTreeModel {
         public String toString() {
             MediaSeries<?> s = (MediaSeries<?>) getUserObject();
             StringBuilder buf = new StringBuilder();
-            Integer val = (Integer) s.getTagValue(TagW.SeriesNumber);
+            Integer val = TagD.getTagValue(s, Tag.SeriesNumber, Integer.class);
             if (val != null) {
                 buf.append("["); //$NON-NLS-1$
                 buf.append(val);
                 buf.append("] "); //$NON-NLS-1$
             }
-            String modality = (String) s.getTagValue(TagW.Modality);
+            String modality = TagD.getTagValue(s, Tag.Modality, String.class);
             if (modality != null) {
                 buf.append(modality);
                 buf.append(" "); //$NON-NLS-1$
             }
-            String desc = (String) s.getTagValue(TagW.SeriesDescription);
+            String desc = TagD.getTagValue(s, Tag.SeriesDescription, String.class);
             if (desc != null) {
                 buf.append(desc);
             }

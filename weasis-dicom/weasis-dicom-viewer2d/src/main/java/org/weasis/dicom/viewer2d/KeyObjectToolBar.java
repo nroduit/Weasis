@@ -38,8 +38,8 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -145,7 +145,7 @@ public class KeyObjectToolBar extends WtoolBar {
             public void actionPerformed(ActionEvent e) {
 
                 ImageViewerPlugin<DicomImageElement> selectedView2dContainer;
-                DefaultView2d<DicomImageElement> selectedView2d;
+                ViewCanvas<DicomImageElement> selectedView2d;
                 MediaSeries<DicomImageElement> selectedDicomSeries;
 
                 if ((selectedView2dContainer = evtMgr.getSelectedView2dContainer()) == null) {

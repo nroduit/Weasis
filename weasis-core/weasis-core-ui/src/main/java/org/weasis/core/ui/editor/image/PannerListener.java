@@ -21,14 +21,15 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.ui.graphic.PanPoint;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
 
 public abstract class PannerListener extends MouseActionAdapter implements ActionState, KeyListener {
 
     private final BasicActionState basicState;
     private final boolean triggerAction = true;
-    private Point pickPoint;
+    protected Point pickPoint;
 
     private Point2D point;
 
@@ -90,10 +91,10 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         return basicState.getActionW().getTitle();
     }
 
-    private DefaultView2d getDefaultView2d(InputEvent e) {
+    protected ViewCanvas<? extends ImageElement> getViewCanvas(InputEvent e) {
         Object source = e.getSource();
-        if (source instanceof DefaultView2d) {
-            return (DefaultView2d) source;
+        if (source instanceof ViewCanvas) {
+            return (ViewCanvas<?>) source;
         }
         return null;
     }
@@ -102,12 +103,12 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     public void mousePressed(MouseEvent e) {
         int buttonMask = getButtonMaskEx();
         if ((e.getModifiersEx() & buttonMask) != 0) {
-            DefaultView2d panner = getDefaultView2d(e);
+            ViewCanvas<?> panner = getViewCanvas(e);
             if (panner != null) {
                 pickPoint = e.getPoint();
                 if (panner.getViewModel() != null) {
                     double scale = panner.getViewModel().getViewScale();
-                    setPoint(new PanPoint(PanPoint.STATE.DragStart, -(pickPoint.getX() / scale),
+                    setPoint(new PanPoint(PanPoint.State.DRAGSTART, -(pickPoint.getX() / scale),
                         -(pickPoint.getY() / scale)));
                 }
             }
@@ -118,13 +119,13 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     public void mouseDragged(MouseEvent e) {
         int buttonMask = getButtonMaskEx();
         if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
-            DefaultView2d panner = getDefaultView2d(e);
+            ViewCanvas<?> panner = getViewCanvas(e);
             if (panner != null) {
                 if (pickPoint != null && panner.getViewModel() != null) {
                     double scale = panner.getViewModel().getViewScale();
-                    setPoint(new PanPoint(PanPoint.STATE.Dragging, -((e.getX() - pickPoint.getX()) / scale),
+                    setPoint(new PanPoint(PanPoint.State.DRAGGING, -((e.getX() - pickPoint.getX()) / scale),
                         -((e.getY() - pickPoint.getY()) / scale)));
-                    panner.addPointerType(DefaultView2d.CENTER_POINTER);
+                    panner.addPointerType(ViewCanvas.CENTER_POINTER);
                 }
             }
         }
@@ -134,10 +135,10 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     public void mouseReleased(MouseEvent e) {
         int buttonMask = getButtonMask();
         if (!e.isConsumed() && (e.getModifiers() & buttonMask) != 0) {
-            DefaultView2d panner = getDefaultView2d(e);
+            ViewCanvas<?> panner = getViewCanvas(e);
             if (panner != null) {
-                panner.resetPointerType(DefaultView2d.CENTER_POINTER);
-                panner.repaint();
+                panner.resetPointerType(ViewCanvas.CENTER_POINTER);
+                panner.getJComponent().repaint();
             }
         }
     }
@@ -149,13 +150,13 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            setPoint(new PanPoint(PanPoint.STATE.Move, 5, 0));
+            setPoint(new PanPoint(PanPoint.State.MOVE, 5, 0));
         } else if (e.getKeyCode() == KeyEvent.VK_UP) {
-            setPoint(new PanPoint(PanPoint.STATE.Move, 0, 5));
+            setPoint(new PanPoint(PanPoint.State.MOVE, 0, 5));
         } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            setPoint(new PanPoint(PanPoint.STATE.Move, -5, 0));
+            setPoint(new PanPoint(PanPoint.State.MOVE, -5, 0));
         } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            setPoint(new PanPoint(PanPoint.STATE.Move, 0, -5));
+            setPoint(new PanPoint(PanPoint.State.MOVE, 0, -5));
         }
     }
 

@@ -25,36 +25,32 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
  *
  * @author Marcelo Porto (marcelo@animati.com.br)
  */
-public class PrintDialog extends javax.swing.JDialog {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(PrintDialog.class);
+@SuppressWarnings("serial")
+public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
 
     private javax.swing.JCheckBox annotationsCheckBox;
     private javax.swing.JButton cancelButton;
-    private javax.swing.JComboBox positionComboBox;
+    private javax.swing.JComboBox<String> positionComboBox;
     private javax.swing.JLabel positionLabel;
     private javax.swing.JButton printButton;
     private JLabel label;
-
     private JCheckBox chckbxSelectedView;
-    private JComboBox comboBoxDPI;
-    private ImageViewerEventManager eventManager;
+    private JComboBox<PrintOptions.DotPerInches> comboBoxDPI;
+    private ImageViewerEventManager<I> eventManager;
 
     /** Creates new form PrintDialog */
-    public PrintDialog(Window parent, String title, ImageViewerEventManager eventManager) {
+    public PrintDialog(Window parent, String title, ImageViewerEventManager<I> eventManager) {
         super(parent, title, ModalityType.APPLICATION_MODAL);
         this.eventManager = eventManager;
         boolean layout = eventManager.getSelectedView2dContainer().getLayoutModel().getConstraints().size() > 1;
@@ -66,23 +62,22 @@ public class PrintDialog extends javax.swing.JDialog {
 
         GridBagLayout gridBagLayout = new GridBagLayout();
         getContentPane().setLayout(gridBagLayout);
-
         positionLabel = new javax.swing.JLabel();
 
         positionLabel.setText(Messages.getString("PrintDialog.pos") + StringUtil.COLON); //$NON-NLS-1$
-
         GridBagConstraints gbcPositionLabel = new GridBagConstraints();
         gbcPositionLabel.anchor = GridBagConstraints.EAST;
-        gbcPositionLabel.insets = new Insets(0, 15, 10, 5);
+        gbcPositionLabel.insets = new Insets(15, 20, 10, 5);
         gbcPositionLabel.gridx = 0;
         gbcPositionLabel.gridy = 0;
         getContentPane().add(positionLabel, gbcPositionLabel);
-        positionComboBox = new javax.swing.JComboBox();
-        positionComboBox.setModel(new javax.swing.DefaultComboBoxModel(
+        positionComboBox = new javax.swing.JComboBox<>();
+
+        positionComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(
             new String[] { Messages.getString("PrintDialog.center"), Messages.getString("PrintDialog.top") })); //$NON-NLS-1$ //$NON-NLS-2$
         GridBagConstraints gbcPositionComboBox = new GridBagConstraints();
         gbcPositionComboBox.anchor = GridBagConstraints.WEST;
-        gbcPositionComboBox.insets = new Insets(0, 0, 10, 5);
+        gbcPositionComboBox.insets = new Insets(15, 0, 10, 5);
         gbcPositionComboBox.gridx = 1;
         gbcPositionComboBox.gridy = 0;
         getContentPane().add(positionComboBox, gbcPositionComboBox);
@@ -91,18 +86,18 @@ public class PrintDialog extends javax.swing.JDialog {
         label.setText(Messages.getString("PrintDialog.dpi") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbcLabel = new GridBagConstraints();
         gbcLabel.anchor = GridBagConstraints.EAST;
-        gbcLabel.insets = new Insets(0, 15, 10, 5);
+        gbcLabel.insets = new Insets(0, 20, 10, 5);
         gbcLabel.gridx = 0;
         gbcLabel.gridy = 1;
         getContentPane().add(label, gbcLabel);
 
-        comboBoxDPI = new JComboBox();
+        comboBoxDPI = new JComboBox<>();
         GridBagConstraints gbcComboBoxDPI = new GridBagConstraints();
         gbcComboBoxDPI.anchor = GridBagConstraints.NORTHWEST;
         gbcComboBoxDPI.insets = new Insets(0, 0, 10, 5);
         gbcComboBoxDPI.gridx = 1;
         gbcComboBoxDPI.gridy = 1;
-        comboBoxDPI.setModel(new DefaultComboBoxModel(PrintOptions.DotPerInches.values()));
+        comboBoxDPI.setModel(new DefaultComboBoxModel<>(PrintOptions.DotPerInches.values()));
         comboBoxDPI.setSelectedItem(PrintOptions.DotPerInches.DPI_150);
         getContentPane().add(comboBoxDPI, gbcComboBoxDPI);
 
@@ -111,7 +106,7 @@ public class PrintDialog extends javax.swing.JDialog {
         annotationsCheckBox.setSelected(true);
         GridBagConstraints gbcAnnotationsCheckBox = new GridBagConstraints();
         gbcAnnotationsCheckBox.anchor = GridBagConstraints.WEST;
-        gbcAnnotationsCheckBox.insets = new Insets(0, 15, 10, 0);
+        gbcAnnotationsCheckBox.insets = new Insets(0, 17, 10, 0);
         gbcAnnotationsCheckBox.gridwidth = 3;
         gbcAnnotationsCheckBox.gridx = 0;
         gbcAnnotationsCheckBox.gridy = 2;
@@ -120,22 +115,12 @@ public class PrintDialog extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
 
         cancelButton.setText(Messages.getString("PrintDialog.cancel")); //$NON-NLS-1$
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                doClose();
-            }
-        });
+        cancelButton.addActionListener(e -> dispose());
 
         printButton = new javax.swing.JButton();
 
         printButton.setText(Messages.getString("PrintDialog.print")); //$NON-NLS-1$
-        printButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                printAction();
-            }
-        });
+        printButton.addActionListener(e-> printAction());
 
         if (layout) {
             chckbxSelectedView = new JCheckBox(Messages.getString("PrintDialog.selected_view")); //$NON-NLS-1$
@@ -166,8 +151,8 @@ public class PrintDialog extends javax.swing.JDialog {
     }
 
     private void printAction() {
-        PrintOptions printOptions = new PrintOptions(annotationsCheckBox.isSelected());
-        printOptions.setHasAnnotations(annotationsCheckBox.isSelected());
+        PrintOptions printOptions = new PrintOptions();
+        printOptions.setShowingAnnotations(annotationsCheckBox.isSelected());
         printOptions.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
         if (positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center"))) { //$NON-NLS-1$
             printOptions.setCenter(true);
@@ -175,34 +160,30 @@ public class PrintDialog extends javax.swing.JDialog {
             printOptions.setCenter(false);
         }
 
-        ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
+        ImageViewerPlugin<I> container = eventManager.getSelectedView2dContainer();
 
-        List<DefaultView2d<ImageElement>> views = container.getImagePanels();
+        List<ViewCanvas<I>> views = container.getImagePanels();
         if (views.isEmpty()) {
             JOptionPane.showMessageDialog(this, Messages.getString("PrintDialog.no_print"), null, //$NON-NLS-1$
                 JOptionPane.ERROR_MESSAGE);
-            doClose();
+            dispose();
             return;
         }
-        doClose();
+        dispose();
 
-        ExportLayout<ImageElement> layout;
+        ExportLayout<I> layout;
         if (chckbxSelectedView != null && !chckbxSelectedView.isSelected()) {
             // Several views
-            layout = new ExportLayout<ImageElement>(container.getLayoutModel());
+            layout = new ExportLayout<>(container.getLayoutModel());
         } else {
             // One View
-            layout = new ExportLayout<ImageElement>(eventManager.getSelectedViewPane());
+            layout = new ExportLayout<>(eventManager.getSelectedViewPane());
         }
 
         ImagePrint print = new ImagePrint(layout, printOptions);
         print.print();
         layout.dispose();
 
-    }
-
-    private void doClose() {
-        dispose();
     }
 
 }

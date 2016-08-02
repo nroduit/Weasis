@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<angle resizingOrMoving="false" fill="false" showLabel="true"
+	thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Angle : 61.8 deg</label>
+	</label>
+	<pts>
+		<pt x="1345.5" y="815.0" />
+		<pt x="1313.5" y="954.0" />
+		<pt x="1423.5" y="924.0" />
+	</pts>
+</angle>

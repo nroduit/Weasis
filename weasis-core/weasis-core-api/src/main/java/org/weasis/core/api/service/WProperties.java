@@ -12,19 +12,32 @@ package org.weasis.core.api.service;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Properties;
 
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
-import org.weasis.core.api.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.util.GzipManager;
 
 public class WProperties extends Properties {
 
-    private final BundleContext context;
+    private static final Logger LOGGER = LoggerFactory.getLogger(WProperties.class);
+
+    private final transient BundleContext context;
 
     public WProperties() {
-        context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+        context = AppProperties.getBundleContext(this.getClass());
+    }
+
+    @Override
+    public synchronized Object setProperty(String key, String value) {
+        if (isValid(key, value)) {
+            return super.setProperty(key, value);
+        }
+        return null;
     }
 
     // Get value from: 1) Local preferences 2) Java System properties 3) config.properties
@@ -34,7 +47,7 @@ public class WProperties extends Properties {
         if (value == null) {
             value = System.getProperty(key, null);
             if (value == null) {
-                value = context.getProperty(key);
+                value = context == null ? null : context.getProperty(key);
             }
         }
         return value;
@@ -44,7 +57,7 @@ public class WProperties extends Properties {
         if (isKeyValid(key)) {
             String value = System.getProperty(key, null);
             if (value == null) {
-                value = context.getProperty(key);
+                value = context == null ? null : context.getProperty(key);
                 if (value == null) {
                     value = defaultValue;
                 }
@@ -60,7 +73,7 @@ public class WProperties extends Properties {
         if (isKeyValid(key)) {
             String value = System.getProperty(key, null);
             if (value == null) {
-                value = context.getProperty("def." + key); //$NON-NLS-1$
+                value = context == null ? null : context.getProperty("def." + key); //$NON-NLS-1$
                 if (value == null) {
                     value = defaultValue;
                 }
@@ -114,7 +127,7 @@ public class WProperties extends Properties {
     }
 
     public void putBooleanProperty(String key, boolean value) {
-        if (isValid(key, value)) {
+        if (isKeyValid(key)) {
             this.put(key, String.valueOf(value));
         }
     }
@@ -124,9 +137,9 @@ public class WProperties extends Properties {
         if (isKeyValid(key)) {
             final String value = this.getProperty(key);
             if (value != null) {
-                if (value.equalsIgnoreCase("true")) { //$NON-NLS-1$
+                if ("true".equalsIgnoreCase(value)) { //$NON-NLS-1$
                     result = true;
-                } else if (value.equalsIgnoreCase("false")) { //$NON-NLS-1$
+                } else if ("false".equalsIgnoreCase(value)) { //$NON-NLS-1$
                     result = false;
                 }
             }
@@ -135,7 +148,7 @@ public class WProperties extends Properties {
     }
 
     public void putFloatProperty(String key, float value) {
-        if (isValid(key, value)) {
+        if (isKeyValid(key)) {
             this.put(key, String.valueOf(value));
         }
     }
@@ -156,7 +169,7 @@ public class WProperties extends Properties {
     }
 
     public void putDoubleProperty(String key, double value) {
-        if (isValid(key, value)) {
+        if (isKeyValid(key)) {
             this.put(key, String.valueOf(value));
         }
     }
@@ -180,18 +193,18 @@ public class WProperties extends Properties {
         return hexadecimal2Color(this.getProperty(key));
     }
 
-    public void setColorProperty(String key, Color color) {
+    public void putColorProperty(String key, Color color) {
         if (isValid(key, color)) {
-            this.put(key, color2Hexadecimal(color));
+            this.put(key, color2Hexadecimal(color, true));
         }
     }
 
     public void putByteArrayProperty(String key, byte[] value) {
         if (isValid(key, value)) {
             try {
-                this.put(key, Base64.encodeBytes(value, Base64.GZIP));
+                this.put(key, Base64.getEncoder().encode(GzipManager.gzipCompressToByte(value)));
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("Set byte property", e); //$NON-NLS-1$
             }
         }
     }
@@ -199,40 +212,44 @@ public class WProperties extends Properties {
     public byte[] getByteArrayProperty(String key, byte[] def) {
         byte[] result = def;
         if (isKeyValid(key)) {
-            String value = this.getProperty(key);
-            if (value != null) {
+            Object value = this.get(key);
+            if (value instanceof byte[]) {
                 try {
-                    result = Base64.decode(value);
+                    result = GzipManager.gzipUncompressToByte(Base64.getDecoder().decode((byte[]) value));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Get byte property", e); //$NON-NLS-1$
                 }
             }
         }
         return result;
     }
 
-    private boolean isValid(String key, Object value) {
+    private static boolean isValid(String key, Object value) {
         return key != null && value != null;
     }
 
-    private boolean isKeyValid(String key) {
+    private static boolean isKeyValid(String key) {
         return key != null;
     }
 
-    public static String color2Hexadecimal(Color c) {
-        int val = c == null ? 0 : c.getRGB() & 0x00ffffff;
+    public static String color2Hexadecimal(Color c, boolean alpha) {
+        int val = c == null ? 0 : alpha ? c.getRGB() : c.getRGB() & 0x00ffffff;
         return Integer.toHexString(val);
     }
 
     public static Color hexadecimal2Color(String hexColor) {
-        int intValue = 0;
-        if (hexColor != null) {
-            try {
-                intValue = Integer.parseInt(hexColor, 16);
-            } catch (NumberFormatException e) {
+        int intValue = 0xff000000;
+
+        try {
+            if (hexColor != null && hexColor.length() > 6) {
+                intValue = (int) (Long.parseLong(hexColor, 16) & 0xffffffff);
+            } else {
+                intValue |= Integer.parseInt(hexColor, 16);
             }
+        } catch (NumberFormatException e) {
+            LOGGER.error("Cannot parse color {} into int", hexColor); //$NON-NLS-1$
         }
-        return new Color(intValue);
+        return new Color(intValue, true);
     }
 
     public static void setProperty(WProperties properties, String key, Preferences prefNode, String defaultValue) {
