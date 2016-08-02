@@ -636,7 +636,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         GraphicLayer layer = canvas.getGraphicManager().findLayerByType(newGraphic.getLayerType())
             .orElse(new DragLayer(newGraphic.getLayerType()));
     
-        if (!layer.getVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAW.cmd())) {
+        if (!layer.getVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAWINGS.cmd())) {
             JOptionPane.showMessageDialog(canvas.getJComponent(), Messages.getString("AbstractLayerModel.msg_not_vis"), //$NON-NLS-1$
                 Messages.getString("AbstractLayerModel.draw"), //$NON-NLS-1$
                 JOptionPane.ERROR_MESSAGE);

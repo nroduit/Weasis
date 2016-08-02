@@ -171,6 +171,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         setAction(newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
+        
+        actions.put(ActionW.WINLEVEL, null);
+        actions.put(ActionW.CONTEXTMENU, null);
+        actions.put(ActionW.NO_ACTION, null);
+    //    actions.put(ActionW.DRAW, null);
+        actions.put(ActionW.MEASURE, null);
         setAction(
             newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
         setAction(newSpatialUnit(Unit.values()));

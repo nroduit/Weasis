@@ -116,7 +116,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.FRAME, true));
         dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.PIXEL, true));
         rootNode.add(dicomInfo);
-        drawings = new DefaultMutableTreeNode(ActionW.DRAW, true);
+        drawings = new DefaultMutableTreeNode(ActionW.DRAWINGS, true);
         rootNode.add(drawings);
 
         DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
@@ -328,7 +328,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private void initLayers(ViewCanvas<?> view) {
         // Drawings node
         drawings.removeAllChildren();
-        Boolean draw = (Boolean) view.getActionValue(ActionW.DRAW.cmd());
+        Boolean draw = (Boolean) view.getActionValue(ActionW.DRAWINGS.cmd());
         TreePath drawingsPath = getTreePath(drawings);
         initPathSelection(getTreePath(drawings), draw == null ? true : draw);
 

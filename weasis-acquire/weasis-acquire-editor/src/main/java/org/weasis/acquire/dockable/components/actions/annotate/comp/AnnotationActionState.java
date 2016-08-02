@@ -14,15 +14,29 @@ public class AnnotationActionState extends ComboItemListener implements ActionSt
     private static AnnotationActionState instance = null;
 
     private AnnotationActionState() {
-        super(ActionW.DRAW_MEASURE, MeasureToolBar.drawGraphicList.toArray(new Graphic[MeasureToolBar.drawGraphicList.size()]));
+        super(ActionW.DRAW_GRAPHICS, MeasureToolBar.drawGraphicList.toArray(new Graphic[MeasureToolBar.drawGraphicList.size()]));
     }
 
     public static AnnotationActionState getInstance() {
         if (Objects.isNull(instance)) {
             instance = new AnnotationActionState();
-            // Replace the default implementation for drawing graphics
             instance.enableAction(true);
-            EventManager.getInstance().setAction(instance);
+            EventManager eventManager = EventManager.getInstance();
+            // Replace the default implementation for drawing graphics
+            eventManager.setAction(instance);
+            
+            // Remove actions which are not useful
+            eventManager.removeAction(ActionW.SCROLL_SERIES);
+            eventManager.removeAction(ActionW.WINDOW);
+            eventManager.removeAction(ActionW.LEVEL);
+            eventManager.removeAction(ActionW.ROTATION);
+            eventManager.removeAction(ActionW.FLIP);
+            eventManager.removeAction(ActionW.FILTER);
+            eventManager.removeAction(ActionW.INVERSESTACK);
+            eventManager.removeAction(ActionW.INVERT_LUT);
+            eventManager.removeAction(ActionW.LUT);
+            eventManager.removeAction(ActionW.LAYOUT);
+            eventManager.removeAction(ActionW.SYNCH);
         }
         return instance;
 

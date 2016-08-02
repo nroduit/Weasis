@@ -177,7 +177,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             m.registerActionState(menu);
 
             for (Component mitem : menu.getRadioMenuItemListCopy()) {
-                RadioMenuItem ritem = ((RadioMenuItem) mitem);
+                RadioMenuItem ritem = (RadioMenuItem) mitem;
                 if (ritem.getUserObject() instanceof Graphic) {
                     Graphic g = (Graphic) ritem.getUserObject();
                     if (g.getKeyCode() != 0) {

@@ -1,24 +1,37 @@
 package org.weasis.acquire.explorer.gui.central.meta.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Font;
+import java.util.Optional;
 
+import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.dicom.codec.enums.BodyPartExaminated;
+
+import com.github.lgooddatepicker.tableeditors.DateTableEditor;
+import com.github.lgooddatepicker.tableeditors.TimeTableEditor;
 
 public abstract class AcquireMetadataPanel extends JPanel implements TableModelListener {
     private static final long serialVersionUID = -3479636894557525448L;
@@ -94,6 +107,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         model.addTableModelListener(this);
         table.setModel(model);
         table.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
+        table.getColumnModel().getColumn(1).setCellEditor(new AcquireImageCellEditor());
     }
 
     @Override
@@ -106,6 +120,52 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         @Override
         public void setValue(Object value) {
             setText((value == null) ? "" : TagW.getFormattedText(value, null));
+        }
+    }
+    
+    @SuppressWarnings("serial")
+    public static class AcquireImageCellEditor extends AbstractCellEditor implements TableCellEditor {
+        private static final JComboBox<BodyPartExaminated> bodyParts = new JComboBox<>(BodyPartExaminated.values());
+        static {
+            bodyParts.setMaximumRowCount(15);
+        }
+
+        private Optional<TableCellEditor> editor;
+
+        @Override
+        public Object getCellEditorValue() {
+            return editor.map(e -> e.getCellEditorValue()).orElse(null);
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
+            int column) {
+            TableCellEditor cellEditor;
+            Object tag = table.getModel().getValueAt(row, 0);
+            boolean bodyPartCell = false;
+            boolean date = false;
+            boolean time = false;
+            if (tag instanceof TagW) {
+                bodyPartCell = ((TagW) tag).getId() == Tag.BodyPartExamined;
+                TagType type = ((TagW) tag).getType();
+                date = TagType.DICOM_DATE == type || TagType.DATE == type;
+                time = TagType.DICOM_TIME == type || TagType.TIME == type;
+            }
+            if (bodyPartCell) {
+                cellEditor = new DefaultCellEditor(bodyParts);
+            } else if (date) {
+                DateTableEditor teditor = new DateTableEditor(false, true, true);
+                table.setRowHeight(row, (int) teditor.getDatePicker().getPreferredSize().getHeight());
+                cellEditor = teditor;
+            } else if (time) {
+                TimeTableEditor teditor = new TimeTableEditor(false, true, true);
+                table.setRowHeight(row, (int)teditor.getTimePicker().getPreferredSize().getHeight());
+                cellEditor = teditor;
+            } else {
+                cellEditor = new DefaultCellEditor(new JTextField());
+            }
+            editor = Optional.of(cellEditor);
+            return cellEditor.getTableCellEditorComponent(table, value, isSelected, row, column);
         }
     }
 }

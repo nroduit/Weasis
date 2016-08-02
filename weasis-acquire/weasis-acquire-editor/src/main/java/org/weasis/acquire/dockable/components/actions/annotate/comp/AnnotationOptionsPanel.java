@@ -38,8 +38,6 @@ import org.weasis.core.ui.pref.ViewSetting;
 public class AnnotationOptionsPanel extends JPanel {
     public static final ViewSetting viewSetting = new ViewSetting();
 
-    private final EventManager eventManager = EventManager.getInstance();
-
     private final JPanel lineStylePanel;
     private final JPanel drawOncePanel;
     private final JPanel unitPanel;
@@ -90,7 +88,7 @@ public class AnnotationOptionsPanel extends JPanel {
         panel.setLayout(new FlowLayout(FlowLayout.LEFT));
         panel.setBorder(border);
 
-        ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
+        ActionState drawOnceAction = EventManager.getInstance().getAction(ActionW.DRAW_ONLY_ONCE);
         if (drawOnceAction instanceof ToggleButtonListener) {
             JCheckBox checkDraw =
                 ((ToggleButtonListener) drawOnceAction).createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
@@ -104,7 +102,7 @@ public class AnnotationOptionsPanel extends JPanel {
     private JPanel createUnitPanel() {
         final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
         
-        ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+        ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
         if (spUnitAction instanceof ComboItemListener) {
             JLabel label = new JLabel(Messages.getString("MeasureTool.unit") + StringUtil.COLON); //$NON-NLS-1$
             panel.add(label);

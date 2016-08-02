@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.SwingPropertyChangeSupport;
@@ -76,6 +77,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     public void setAction(ActionState action) {
         actions.put(action.getActionW(), action);
+    }
+
+    public void removeAction(ActionW action) {
+        actions.remove(action);
     }
 
     protected SliderCineListener getMoveTroughSliceAction(int speed, final TIME time, double mouseSensivity) {
@@ -521,14 +526,21 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         return null;
     }
 
+    public boolean isActionRegistered(ActionW action) {
+        if (action != null) {
+            return actions.containsKey(action);
+        }
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
     public <T> Optional<T> getAction(ActionW action, Class<T> type) {
         Objects.requireNonNull(action);
         Objects.requireNonNull(type);
 
         ActionState val = actions.get(action);
-        if (val == null || type.isAssignableFrom(val.getClass())){
-            return Optional.ofNullable((T) val) ;
+        if (val == null || type.isAssignableFrom(val.getClass())) {
+            return Optional.ofNullable((T) val);
         }
         throw new IllegalStateException("The class doesn't match to the object!");
     }
@@ -586,7 +598,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     public Collection<ActionState> getAllActionValues() {
-        return actions.values();
+        return actions.values().stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public MouseActions getMouseActions() {
@@ -615,7 +627,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     public synchronized void enableActions(boolean enabled) {
         enabledAction = enabled;
-        for (ActionState a : actions.values()) {
+        for (ActionState a : getAllActionValues()) {
             a.enableAction(enabled);
         }
     }

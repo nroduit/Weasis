@@ -90,7 +90,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     /** The single instance of this singleton class. */
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
-        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
+        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.DRAW, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
 
     /** The single instance of this singleton class. */
 
@@ -131,6 +131,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         setAction(newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
+        
+
+        actions.put(ActionW.WINLEVEL, null);
+        actions.put(ActionW.CONTEXTMENU, null);
+        actions.put(ActionW.NO_ACTION, null);
+        actions.put(ActionW.DRAW, null);
+        actions.put(ActionW.MEASURE, null);
         setAction(
             newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
         setAction(newSpatialUnit(Unit.values()));
@@ -267,9 +274,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                                     String cmd = ActionW.MEASURE.cmd();
                                     if (!toolBar.isCommandActive(cmd)) {
                                         mouseActions.setAction(MouseActions.LEFT, cmd);
-                                        if (view != null) {
-                                            view.setMouseActions(mouseActions);
-                                        }
+                                        view.setMouseActions(mouseActions);
                                         toolBar.changeButtonState(MouseActions.LEFT, cmd);
                                     }
                                 }

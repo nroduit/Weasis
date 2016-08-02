@@ -239,7 +239,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(zoomTypeCmd, ZoomType.BEST_FIT);
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
-        actionsInView.put(ActionW.DRAW.cmd(), true);
+        actionsInView.put(ActionW.DRAWINGS.cmd(), true);
         actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
 
@@ -882,7 +882,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
-        if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
+        if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
             graphicManager.draw(g2d, transform, inverseTransform,
                 new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
                     modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
@@ -976,8 +976,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void setDrawingsVisibility(Boolean visible) {
-        if ((Boolean) actionsInView.get(ActionW.DRAW.cmd()) != visible) {
-            actionsInView.put(ActionW.DRAW.cmd(), visible);
+        if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()) != visible) {
+            actionsInView.put(ActionW.DRAWINGS.cmd(), visible);
             repaint();
         }
     }

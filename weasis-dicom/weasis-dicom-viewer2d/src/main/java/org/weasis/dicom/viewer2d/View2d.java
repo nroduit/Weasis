@@ -709,7 +709,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
     }
 
-    private synchronized void  updatePrButtonState(DicomImageElement img, boolean newImg) {
+    private synchronized void updatePrButtonState(DicomImageElement img, boolean newImg) {
         if (img == null) {
             // Remove old PR button
             getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
@@ -1226,16 +1226,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 synchronized (actionsButtons) {
                     for (int i = 0; i < actionsButtons.size(); i++) {
                         ActionW b = actionsButtons.get(i);
-                        JRadioButtonMenuItem radio =
-                            new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
-                        radio.setActionCommand(b.cmd());
-                        radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
-                        // Trigger the selected mouse action
-                        radio.addActionListener(toolBar);
-                        // Update the state of the button in the toolbar
-                        radio.addActionListener(leftButtonAction);
-                        popupMenu.add(radio);
-                        groupButtons.add(radio);
+                        if (eventManager.isActionRegistered(b)) {
+                            JRadioButtonMenuItem radio =
+                                new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+                            radio.setActionCommand(b.cmd());
+                            radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+                            // Trigger the selected mouse action
+                            radio.addActionListener(toolBar);
+                            // Update the state of the button in the toolbar
+                            radio.addActionListener(leftButtonAction);
+                            popupMenu.add(radio);
+                            groupButtons.add(radio);
+                        }
                     }
                 }
             }
