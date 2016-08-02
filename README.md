@@ -12,7 +12,7 @@ The master branch contains Weasis 2.5.x (requires Java 8+) and the old branches 
 
 ## Weasis 2.5 ##
 
-### New Features: ###
+### New ###
 * Embedded new codecs compiled for Windows 32/64-bit, Linux x86 32/64-bit and Mac OS X 64-bit.    
 	* jpeg-basline, jpeg-extended and jpeg-lossless (IJG 6b)   
 	* jpeg-ls (CharLS 1.0)   
@@ -29,7 +29,9 @@ The master branch contains Weasis 2.5.x (requires Java 8+) and the old branches 
 * Minimal annotations mode available in Display tool
 * Reading Presentation State improvement for overlay and shutter
 * Apply Presentation LUT sequence
+* Read DICOM image containing float or double data
 * Requires Java 8
+* See [JIRA Release Note](http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=11282)
 
 ### General Features: ###
 * Flexible integration to HIS or PHR (see [weasis-pacs-connector](https://github.com/nroduit/weasis-pacs-connector))
@@ -70,6 +72,6 @@ Prerequisites: JDK 8 and Maven 3
 
 See the instructions [here](http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source)
 
-The snapshot version may require to build first other snapshot dependencies:
+The snapshot version may require to build first other snapshot dependencies:   
 1. [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools) run "mvn clean install"
 1. In weasis root directory, run "mvn clean install"
