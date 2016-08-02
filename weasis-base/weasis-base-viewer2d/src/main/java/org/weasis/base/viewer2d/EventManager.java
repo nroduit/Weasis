@@ -89,11 +89,6 @@ import org.weasis.core.ui.util.PrintDialog;
 public class EventManager extends ImageViewerEventManager<ImageElement> implements ActionListener {
 
     /** The single instance of this singleton class. */
-    private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
-        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.DRAW, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
-
-    /** The single instance of this singleton class. */
-
     private static EventManager instance;
 
     /**
@@ -111,6 +106,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
      */
 
     private EventManager() {
+        // Initialize actions with a null value. These are used by mouse or keyevent actions.
+        setAction(new BasicActionState(ActionW.WINLEVEL));
+        setAction(new BasicActionState(ActionW.CONTEXTMENU));
+        setAction(new BasicActionState(ActionW.NO_ACTION));
+        setAction(new BasicActionState(ActionW.DRAW));
+        setAction(new BasicActionState(ActionW.MEASURE));
+        
         setAction(getMoveTroughSliceAction(10, TIME.minute, 0.1));
         setAction(newWindowAction());
         setAction(newLevelAction());
@@ -131,13 +133,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         setAction(newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
-        
-
-        actions.put(ActionW.WINLEVEL, null);
-        actions.put(ActionW.CONTEXTMENU, null);
-        actions.put(ActionW.NO_ACTION, null);
-        actions.put(ActionW.DRAW, null);
-        actions.put(ActionW.MEASURE, null);
         setAction(
             newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
         setAction(newSpatialUnit(Unit.values()));
@@ -196,37 +191,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     @Override
-    public ActionW getActionFromCommand(String command) {
-        ActionW action = super.getActionFromCommand(command);
-
-        if (action == null && command != null) {
-            for (ActionW a : keyEventActions) {
-                if (a.cmd().equals(command)) {
-                    return a;
-                }
-            }
-        }
-
-        return action;
-    }
-
-    @Override
-    public ActionW getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
-        ActionW action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
-
-        if (action == null && keyEvent != 0) {
-            for (ActionW a : keyEventActions) {
-                if (a.getKeyCode() == keyEvent && a.getModifier() == modifier) {
-                    return a;
-                }
-            }
-        }
-
-        ActionState a1 = getAction(action);
-        if (a1 == null || a1.isActionEnabled()) {
+    public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
+        Optional<ActionW> action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
+        // Only return the action if it is enabled
+        if(action.isPresent() && Optional.ofNullable(getAction(action.get())).filter(a -> a.isActionEnabled()).isPresent()){
             return action;
         }
-        return null;
+        return Optional.empty();
     }
 
     @Override

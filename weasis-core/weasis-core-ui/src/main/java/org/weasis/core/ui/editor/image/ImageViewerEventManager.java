@@ -17,7 +17,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -545,28 +544,19 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         throw new IllegalStateException("The class doesn't match to the object!");
     }
 
-    public ActionW getActionFromCommand(String command) {
-        if (command != null) {
-            for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
-                ActionW action = iterator.next();
-                if (action.cmd().equals(command)) {
-                    return action;
-                }
-            }
+    public Optional<ActionW> getActionFromCommand(String command) {
+        if (command == null) {
+            return Optional.empty();
         }
-        return null;
+        return actions.keySet().stream().filter(Objects::nonNull).filter(a -> a.cmd().equals(command)).findFirst();
     }
 
-    public ActionW getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
-        if (keyEvent != 0) {
-            for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
-                ActionW action = iterator.next();
-                if (action.getKeyCode() == keyEvent && action.getModifier() == modifier) {
-                    return action;
-                }
-            }
+    public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
+        if (keyEvent == 0) {
+            return Optional.empty();
         }
-        return null;
+        return actions.keySet().stream().filter(Objects::nonNull)
+            .filter(a -> a.getKeyCode() == keyEvent && a.getModifier() == modifier).findFirst();
     }
 
     public void changeLeftMouseAction(String command) {

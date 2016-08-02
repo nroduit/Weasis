@@ -894,7 +894,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     protected MouseActionAdapter getMouseAdapter(String action) {
-        if (action.equals(ActionW.MEASURE.cmd())) {
+        if (action.equals(ActionW.MEASURE.cmd()) || action.equals(ActionW.DRAW.cmd())) {
             return graphicMouseHandler;
         } else if (action.equals(ActionW.PAN.cmd())) {
             return getAction(ActionW.PAN);

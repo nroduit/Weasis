@@ -1267,11 +1267,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             eventManager.fireSeriesViewerListeners(
                 new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.TOOGLE_INFO));
         } else {
-            ActionW action = eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
-            if (action == null) {
-                eventManager.keyPressed(e);
+            Optional<ActionW> action = eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
+            if (action.isPresent()) {
+                eventManager.changeLeftMouseAction(action.get().cmd());
             } else {
-                eventManager.changeLeftMouseAction(action.cmd());
+                eventManager.keyPressed(e);
             }
         }
     }
@@ -1399,7 +1399,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             int modifiers = evt.getModifiersEx();
             MouseActions mouseActions = eventManager.getMouseActions();
-            ActionW action = null;
+            Optional<ActionW> action = Optional.empty();
             // left mouse button, always active
             if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
                 action = eventManager.getActionFromCommand(mouseActions.getLeft());
@@ -1415,7 +1415,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
 
-            DefaultView2d.this.setCursor(action == null ? DefaultView2d.DEFAULT_CURSOR : action.getCursor());
+            DefaultView2d.this.setCursor(action.isPresent() ? action.get().getCursor() : DefaultView2d.DEFAULT_CURSOR);
         }
 
         @Override

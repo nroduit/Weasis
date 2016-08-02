@@ -240,7 +240,6 @@ public class View2d extends DefaultView2d<ImageElement> {
         } else if (action.equals(ActionW.LEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
         }
-        // Tricky action, see in addMouseAdapter()
         else if (action.equals(ActionW.WINLEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
         } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
