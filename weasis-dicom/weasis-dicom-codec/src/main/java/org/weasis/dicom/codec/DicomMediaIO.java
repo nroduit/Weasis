@@ -636,8 +636,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
                     TagD.getTagValue(this, Tag.ImageOrientationPatient, double[].class)));
 
-            bitsStored = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsStored, 8);
-            bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsAllocated, bitsStored);
+            bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsAllocated, 8);
+            bitsStored = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsStored, bitsAllocated);
             highBit = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.HighBit, bitsStored - 1);
             if (highBit >= bitsAllocated) {
                 highBit = bitsStored - 1;
@@ -669,7 +669,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             dataType = bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE
                 : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
             if (bitsAllocated > 16 && samplesPerPixel == 1) {
-                dataType = DataBuffer.TYPE_INT;
+                dataType = DataBuffer.TYPE_FLOAT;
+            }
+            else if (bitsStored > 32 && samplesPerPixel == 1) {
+                dataType = DataBuffer.TYPE_FLOAT;
             }
             String photometricInterpretation = header.getString(Tag.PhotometricInterpretation, "MONOCHROME2"); //$NON-NLS-1$
             pmi = PhotometricInterpretation.fromString(photometricInterpretation);
@@ -1504,6 +1507,12 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             }
             DicomMetaData metadata = new DicomMetaData(fmi, ds);
             Object pixdata = ds.getValue(Tag.PixelData, pixeldataVR);
+            if(pixdata == null){
+                pixdata = ds.getValue(Tag.FloatPixelData, pixeldataVR);
+            }
+            if(pixdata == null){
+                pixdata = ds.getValue(Tag.DoubleFloatPixelData, pixeldataVR);
+            }
 
             if (pixdata != null) {
                 tsuid = dis.getTransferSyntax();

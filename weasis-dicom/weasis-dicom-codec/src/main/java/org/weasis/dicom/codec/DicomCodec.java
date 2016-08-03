@@ -53,6 +53,8 @@ public class DicomCodec implements Codec {
                 case Tag.SpectroscopyData:
                 case Tag.OverlayData:
                 case Tag.EncapsulatedDocument:
+                case Tag.FloatPixelData:
+                case Tag.DoubleFloatPixelData:
                 case Tag.PixelData:
                     return itemPointer.isEmpty();
                 case Tag.WaveformData:
