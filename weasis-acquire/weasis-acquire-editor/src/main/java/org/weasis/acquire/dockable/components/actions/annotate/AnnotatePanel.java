@@ -17,7 +17,6 @@ public class AnnotatePanel extends AbstractAcquireActionPanel {
     private JPanel content;
 
     public AnnotatePanel() {
-        super();
         setLayout(new BorderLayout());
 
         content = createContent();
@@ -33,5 +32,10 @@ public class AnnotatePanel extends AbstractAcquireActionPanel {
         panel.add(optionsPanel, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    @Override
+    public boolean needValidationPanel() {
+        return false;
     }
 }

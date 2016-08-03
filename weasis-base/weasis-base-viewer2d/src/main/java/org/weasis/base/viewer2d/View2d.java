@@ -239,8 +239,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             return getAction(ActionW.WINDOW);
         } else if (action.equals(ActionW.LEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
-        }
-        else if (action.equals(ActionW.WINLEVEL.cmd())) {
+        } else if (action.equals(ActionW.WINLEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
         } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
             return getAction(ActionW.SCROLL_SERIES);
@@ -386,7 +385,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                     calibMenu.addActionListener(e -> {
                         ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                         String title = Messages.getString("View2d.man_calib"); //$NON-NLS-1$
-                        CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this);
+                        CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this, false);
                         int res = JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
                             title, JOptionPane.OK_CANCEL_OPTION);
                         if (layer != null) {
@@ -520,7 +519,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             if ((evt.getModifiersEx() & getButtonMaskEx()) != 0) {
                 JPopupMenu popupMenu = null;
                 final List<Graphic> selected = View2d.this.getGraphicManager().getSelectedGraphics();
-                if (!selected.isEmpty()) {
+                if (!selected.isEmpty() && isDrawActionActive()) {
                     popupMenu = View2d.this.buildGraphicContextMenu(evt, selected);
                 } else if (View2d.this.getSourceImage() != null) {
                     popupMenu = View2d.this.buildContexMenu(evt);

@@ -31,12 +31,12 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.pref.ViewSetting;
 
 @SuppressWarnings("serial")
 public class AnnotationOptionsPanel extends JPanel {
-    public static final ViewSetting viewSetting = new ViewSetting();
 
     private final JPanel lineStylePanel;
     private final JPanel drawOncePanel;
@@ -71,12 +71,12 @@ public class AnnotationOptionsPanel extends JPanel {
         panel.add(label);
 
         JButton button = new JButton(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
-        button.setBackground(viewSetting.getLineColor());
+        button.setBackground(MeasureTool.viewSetting.getLineColor());
         button.addActionListener(pickColorAction);
         panel.add(button);
 
         JSpinner spinner = new JSpinner();
-        JMVUtils.setNumberModel(spinner, viewSetting.getLineWidth(), 1, 8, 1);
+        JMVUtils.setNumberModel(spinner, MeasureTool.viewSetting.getLineWidth(), 1, 8, 1);
         spinner.addChangeListener(changeLineWidth);
         panel.add(spinner);
 
@@ -92,7 +92,7 @@ public class AnnotationOptionsPanel extends JPanel {
         if (drawOnceAction instanceof ToggleButtonListener) {
             JCheckBox checkDraw =
                 ((ToggleButtonListener) drawOnceAction).createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
-            checkDraw.setSelected(viewSetting.isDrawOnlyOnce());
+            checkDraw.setSelected(MeasureTool.viewSetting.isDrawOnlyOnce());
             checkDraw.setAlignmentX(Component.LEFT_ALIGNMENT);
             panel.add(checkDraw);
         }
@@ -133,16 +133,16 @@ public class AnnotationOptionsPanel extends JPanel {
             button.getBackground());
         if (newColor != null) {
             button.setBackground(newColor);
-            viewSetting.setLineColor(newColor);
-            updateMeasureProperties(viewSetting);
+            MeasureTool.viewSetting.setLineColor(newColor);
+            updateMeasureProperties(MeasureTool.viewSetting);
         }
     };
 
     private ChangeListener changeLineWidth = e -> {
         Object val = ((JSpinner) e.getSource()).getValue();
         if (val instanceof Integer) {
-            viewSetting.setLineWidth((Integer) val);
-            updateMeasureProperties(viewSetting);
+            MeasureTool.viewSetting.setLineWidth((Integer) val);
+            updateMeasureProperties(MeasureTool.viewSetting);
         }
     };
 }

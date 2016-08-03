@@ -8,11 +8,13 @@ import javax.swing.Icon;
 import javax.swing.JOptionPane;
 
 import org.weasis.acquire.AcquireObject;
+import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationAction;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -34,16 +36,19 @@ public class CalibrationGraphic extends LineGraphic {
     @Override
     public void buildShape(MouseEventDouble mouseevent) {
         super.buildShape(mouseevent);
+        ViewCanvas<ImageElement> view = AcquireObject.getView();
+        GraphicModel graphicManager = view.getGraphicManager();
+        graphicManager.getModels()
+            .removeIf(g -> g.getLayer().getType() == getLayerType() && g != this);
+        
         if (!getResizingOrMoving()) {
-            ViewCanvas<ImageElement> view = AcquireObject.getView();
-
-            CalibrationView calibrationDialog = new CalibrationView(this, view);
+            CalibrationView calibrationDialog = new CalibrationView(this, view, false);
             int res = JOptionPane.showConfirmDialog(view.getJComponent(), calibrationDialog, "Calibration",
                 JOptionPane.OK_CANCEL_OPTION);
             if (res == JOptionPane.OK_OPTION) {
                 calibrationDialog.applyNewCalibration();
             }
-
+            view.getGraphicManager().setCreateGraphic(CalibrationAction.CALIBRATION_LINE_GRAPHIC);
         }
     }
 

@@ -8,6 +8,11 @@ public class CalibrationPanel extends AbstractAcquireActionPanel {
     private static final long serialVersionUID = 3956795043244254606L;
 
     public CalibrationPanel() {
-        add(new JLabel("Calibration options"));
+        add(new JLabel("Draw a line on the image"));
+    }
+    
+    @Override
+    public boolean needValidationPanel() {
+        return false;
     }
 }
