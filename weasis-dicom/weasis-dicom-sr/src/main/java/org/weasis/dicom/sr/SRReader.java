@@ -243,7 +243,7 @@ public class SRReader {
                 // map.put(id, imgRef);
                 // }
                 // // Identifier layerId = new Identifier(350, " [DICOM SR Graphics]");
-                // // DragLayer layer = new DragLayer(view.getLayerModel(), layerId);$
+                // // DefaultLayer layer = new DefaultLayer(view.getLayerModel(), layerId);$
                 // try {
                 // Graphic graphic =
                 // PrGraphicUtil.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false,

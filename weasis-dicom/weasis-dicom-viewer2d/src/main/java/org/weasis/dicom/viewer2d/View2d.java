@@ -421,7 +421,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
         // Delete previous PR Layers
-        List<String> dcmLayers = (List<String>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
+        List<GraphicLayer> dcmLayers = (List<GraphicLayer>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
         if (dcmLayers != null) {
             PRManager.deleteDicomLayers(dcmLayers, graphicManager);
             actionsInView.remove(PRManager.TAG_DICOM_LAYERS);

@@ -16,20 +16,20 @@ import org.weasis.core.ui.model.layer.AbstractGraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 
 /**
- * The Class DragLayer.
+ * The Class DefaultLayer.
  *
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
-@XmlRootElement(name = "dragLayer")
-public class DragLayer extends AbstractGraphicLayer {
+@XmlRootElement(name = "layer")
+public class DefaultLayer extends AbstractGraphicLayer {
 
     private static final long serialVersionUID = 8576601524359423997L;
 
-    public DragLayer() {
+    public DefaultLayer() {
         super(LayerType.TEMP_DRAW);
     }
 
-    public DragLayer(LayerType type) {
+    public DefaultLayer(LayerType type) {
         super(type);
     }
 

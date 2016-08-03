@@ -564,7 +564,7 @@ public final class GeomUtil {
         path.lineTo(ptI3.getX(), ptI3.getY());
         path.lineTo(ptO.getX(), ptO.getY());
         path.lineTo(ptI2.getX() - (ptI3.getX() - ptI2.getX()), ptI2.getY() - (ptI3.getY() - ptI2.getY()));
-        path.closePath();
+        path.lineTo(ptI2.getX(), ptI2.getY());
 
         return path;
     }

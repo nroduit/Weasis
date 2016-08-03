@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
@@ -37,8 +36,9 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
+import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.ui.model.layer.imp.DragLayer;
+import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -64,22 +64,22 @@ public class PRManager {
         reader.readSpatialTransformationModule();
         reader.readDisplayArea(img);
         reader.readGrayscaleSoftcopyModule(img);
-        List<String> layers = readGraphicAnnotation(view, reader, img);
+        List<GraphicLayer> layers = readGraphicAnnotation(view, reader, img);
         if (layers != null) {
             EventManager eventManager = EventManager.getInstance();
             SeriesViewerEvent event =
                 new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.ADD_LAYER);
-            for (String uid : layers) {
-                event.setShareObject(uid);
+            for (Layer layer : layers) {
+                event.setShareObject(layer);
                 eventManager.fireSeriesViewerListeners(event);
             }
             view.setActionsInView(PRManager.TAG_DICOM_LAYERS, layers);
         }
     }
 
-    private static ArrayList<String> readGraphicAnnotation(View2d view, PresentationStateReader reader,
+    private static ArrayList<GraphicLayer> readGraphicAnnotation(View2d view, PresentationStateReader reader,
         DicomImageElement img) {
-        ArrayList<String> layers = null;
+        ArrayList<GraphicLayer> layers = null;
         Attributes dcmobj = reader.getDcmobj();
         if (dcmobj != null) {
             Sequence gams = dcmobj.getSequence(Tag.GraphicAnnotationSequence);
@@ -126,11 +126,11 @@ public class PRManager {
                         continue;
                     }
 
-                    GraphicLayer layer = new DragLayer(LayerType.DICOM_PR);
+                    GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
                     layer.setName(graphicLayerName);
                     layer.setLocked(true);
                     layer.setLevel(310 + glm.getInt(Tag.GraphicLayerOrder, 0));
-                    layers.add(layer.getUuid());
+                    layers.add(layer);
 
                     Color rgb = PresentationStateReader.getRGBColor(
                         glm.getInt(Tag.GraphicLayerRecommendedDisplayGrayscaleValue, 255),
@@ -211,21 +211,22 @@ public class PRManager {
                                 }
                             } else if (rect != null) {
                                 Graphic g;
-                                try {
+   //                             try {
                                     List<Point2D.Double> pts = new ArrayList<>(2);
                                     pts.add(null);
                                     pts.add(new Point2D.Double(rect.getCenterX(), rect.getCenterY()));
-                                    g = new AnnotationGraphic().buildGraphic(pts);
+                                    // TODO cannot be built as other graphics
+                                    g = new AnnotationGraphic();
+                                    g.setPts(pts);
                                     g.setPaint(rgb);
                                     g.setLabelVisible(Boolean.TRUE);
                                     g.setLabel(lines, view);
                                     AbstractGraphicModel.addGraphicToModel(view, layer, g);
-                                } catch (InvalidShapeException e) {
-                                    LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
-                                }
+//                                } catch (InvalidShapeException e) {
+//                                    LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
+//                                }
                             }
                         }
-
                     }
                 }
             }
@@ -236,16 +237,17 @@ public class PRManager {
 
     /** Indicate if the graphic is to be filled in */
 
-    public static void deleteDicomLayers(List<String> layerUids, GraphicModel graphicManager) {
-        if (layerUids != null) {
+    public static void deleteDicomLayers(List<GraphicLayer> layers, GraphicModel graphicManager) {
+        if (layers != null) {
             EventManager eventManager = EventManager.getInstance();
             SeriesViewerEvent event =
                 new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.REMOVE_LAYER);
-            for (String uid : layerUids) {
-                graphicManager.getModels().removeIf(m -> Objects.equals(m.getLayer().getUuid(), uid));
-                event.setShareObject(uid);
+            for (GraphicLayer layer : layers) {
+                event.setShareObject(layer);
                 eventManager.fireSeriesViewerListeners(event);
             }
+            
+            graphicManager.deleteByLayerType(LayerType.DICOM_PR);
         }
     }
 

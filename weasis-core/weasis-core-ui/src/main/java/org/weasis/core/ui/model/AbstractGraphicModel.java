@@ -60,7 +60,7 @@ import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.ui.model.layer.imp.DragLayer;
+import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -120,7 +120,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @XmlElementWrapper(name = "layers")
     @XmlElements({ 
-        @XmlElement(name = "dragLayer", type = DragLayer.class)
+        @XmlElement(name = "layer", type = DefaultLayer.class)
     })
     @Override
     public List<GraphicLayer> getLayers() {
@@ -156,7 +156,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         if (graphic != null) {
             GraphicLayer layer = graphic.getLayer();
             if (layer == null) {
-                layer = findLayerByType(graphic.getLayerType()).orElse(new DragLayer(graphic.getLayerType()));
+                layer = findLayerByType(graphic.getLayerType()).orElse(new DefaultLayer(graphic.getLayerType()));
                 graphic.setLayer(layer);
             }
             if (!layers.contains(layer)) {
@@ -179,7 +179,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
                 boolean layerExist = false;
                 synchronized (models) {
                     for (Graphic g : models) {
-                        if (g.getLayer().getUuid().equals(layer.getUuid())) {
+                        if (g.getLayer().equals(layer)) {
                             layerExist = true;
                             break;
                         }
@@ -245,11 +245,27 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
         return layers;
     }
+    @Override
+    public void deleteByLayer(GraphicLayer layer) {
+        Objects.requireNonNull(layer);
+
+       synchronized (models) {
+            models.removeIf(g -> {
+                boolean delete = layer.equals(g.getLayer());
+                if(delete){
+                    g.removeAllPropertyChangeListener(); 
+                }
+                return delete;  
+            });
+            layers.removeIf(l -> Objects.equals(l, layer));
+        }
+
+        LOGGER.trace(managerStatus());
+    }
 
     @Override
     public void deleteByLayerType(LayerType type) {
         Objects.requireNonNull(type);
-        LOGGER.trace("deleteByLayerType(type => " + type + ")");
 
         synchronized (models) {
             for (Graphic g : models) {
@@ -257,7 +273,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
                     g.removeAllPropertyChangeListener();
                 }
             }
-            models.removeIf(isModelLayerTypeEquals(type));
+            models.removeIf(g -> Objects.equals(g.getLayer().getType(), type));
             layers.removeIf(l -> Objects.equals(l.getType(), type));
         }
 
@@ -633,8 +649,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     
         Graphic newGraphic =
             Optional.ofNullable(modelList.getCreateGraphic()).orElse(MeasureToolBar.selectionGraphic);
-        GraphicLayer layer = canvas.getGraphicManager().findLayerByType(newGraphic.getLayerType())
-            .orElse(new DragLayer(newGraphic.getLayerType()));
+        GraphicLayer layer = getOrBuildLayer(canvas, newGraphic.getLayerType());
     
         if (!layer.getVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAWINGS.cmd())) {
             JOptionPane.showMessageDialog(canvas.getJComponent(), Messages.getString("AbstractLayerModel.msg_not_vis"), //$NON-NLS-1$
@@ -655,10 +670,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         GraphicModel gm = canvas.getGraphicManager();
         graphic.updateLabel(Boolean.TRUE, canvas);
         graphic.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
-        if (layer == null) {
-            layer =  getOrBuildLayer(canvas, graphic.getLayerType());
-        }
-        graphic.setLayer(layer);
+        graphic.setLayer(Optional.ofNullable(layer).orElse(getOrBuildLayer(canvas, graphic.getLayerType())));
         gm.addGraphic(graphic);
     }
 
@@ -667,15 +679,10 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     }
 
     public static GraphicLayer getOrBuildLayer(ViewCanvas canvas, LayerType layerType) {
-        return canvas.getGraphicManager().findLayerByType(layerType).orElse(new DragLayer(layerType));
+        return canvas.getGraphicManager().findLayerByType(layerType).orElse(new DefaultLayer(layerType));
     }
 
     private static Predicate<GraphicLayer> isLayerTypeEquals(LayerType type) {
         return layer -> Objects.equals(layer.getType(), type);
     }
-
-    private static Predicate<Graphic> isModelLayerTypeEquals(LayerType type) {
-        return g -> Objects.equals(g.getLayer().getType(), type);
-    }
-
 }

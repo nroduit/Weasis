@@ -67,7 +67,6 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
-import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
@@ -173,6 +172,83 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     @Override
     public void setShowBottomScale(Boolean showBottomScale) {
         this.showBottomScale = showBottomScale;
+    }
+    
+    @Override
+    public Boolean getVisible() {
+        return visible;
+    }
+
+    @Override
+    public void setVisible(Boolean visible) {
+        this.visible = Optional.ofNullable(visible).orElse(getType().getVisible());
+    }
+
+    @Override
+    public Integer getLevel() {
+        return getType().getLevel();
+    }
+
+    @Override
+    public void setLevel(Integer i) {
+        // Do Nothing
+    }
+
+    @Override
+    public LayerType getType() {
+        return LayerType.IMAGE_ANNOTATION;
+    }
+
+    @Override
+    public void setType(LayerType type) {
+        // Cannot change this type
+    }
+
+    @Override
+    public void setName(String layerName) {
+        this.name = layerName;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return Optional.ofNullable(getName()).orElse(getType().getDefaultName());
+    }
+
+    @Override
+    public Boolean getDisplayPreferences(String item) {
+        return Optional.ofNullable(displayPreferences.get(item)).orElse(Boolean.FALSE);
+    }
+
+    @Override
+    public Boolean setDisplayPreferencesValue(String displayItem, Boolean selected) {
+        boolean selected2 = getDisplayPreferences(displayItem);
+        displayPreferences.put(displayItem, selected);
+        return !Objects.equals(selected, selected2);
+    }
+
+    @Override
+    public Rectangle getPreloadingProgressBound() {
+        return preloadingProgressBound;
+    }
+
+    @Override
+    public Rectangle getPixelInfoBound() {
+        return pixelInfoBound;
+    }
+
+    @Override
+    public void setPixelInfo(PixelInfo pixelInfo) {
+        this.pixelInfo = pixelInfo;
+    }
+
+    @Override
+    public PixelInfo getPixelInfo() {
+        return pixelInfo;
     }
 
     @Override
@@ -1367,62 +1443,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         return axis;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.weasis.dicom.viewer2d.AnnotationsLayer#getDisplayPreferences(java.lang.String)
-     */
-    @Override
-    public Boolean getDisplayPreferences(String item) {
-        return Optional.ofNullable(displayPreferences.get(item)).orElse(Boolean.FALSE);
-    }
 
-    @Override
-    public Boolean getVisible() {
-        return visible;
-    }
-
-    @Override
-    public void setVisible(Boolean visible) {
-        this.visible = visible;
-    }
-
-    @Override
-    public Integer getLevel() {
-        return getType().getLevel();
-    }
-
-    @Override
-    public void setLevel(Integer i) {
-        // Do Nothing
-    }
-
-    @Override
-    public Boolean setDisplayPreferencesValue(String displayItem, Boolean selected) {
-        boolean selected2 = getDisplayPreferences(displayItem);
-        displayPreferences.put(displayItem, selected);
-        return !Objects.equals(selected, selected2);
-    }
-
-    @Override
-    public Rectangle getPreloadingProgressBound() {
-        return preloadingProgressBound;
-    }
-
-    @Override
-    public Rectangle getPixelInfoBound() {
-        return pixelInfoBound;
-    }
-
-    @Override
-    public void setPixelInfo(PixelInfo pixelInfo) {
-        this.pixelInfo = pixelInfo;
-    }
-
-    @Override
-    public PixelInfo getPixelInfo() {
-        return pixelInfo;
-    }
 
     protected void drawExtendedActions(Graphics2D g2d, Point2D.Float[] positions) {
         if (view2DPane.getViewButtons().size() > 0) {
@@ -1476,33 +1497,4 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         return;
     }
 
-    @Override
-    public int compareTo(Layer obj) {
-        if (obj == null) {
-            return 1;
-        }
-        int thisVal = this.getLevel();
-        int anotherVal = obj.getLevel();
-        return thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1);
-    }
-
-    @Override
-    public LayerType getType() {
-        return LayerType.IMAGE_ANNOTATION;
-    }
-
-    @Override
-    public void setType(LayerType type) {
-        // Cannot change this type
-    }
-
-    @Override
-    public void setName(String graphicLayerName) {
-        this.name = graphicLayerName;
-    }
-
-    @Override
-    public String getName() {
-        return Optional.ofNullable(name).orElse(getType().toString());
-    }
 }

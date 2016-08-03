@@ -17,8 +17,8 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
-import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
+import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.UUIDable;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -31,7 +31,7 @@ public interface GraphicModel extends UUIDable {
 
     void addGraphic(Graphic graphic);
 
-    Optional<GraphicLayer> findLayerByType(LayerType tempdraglayer);
+    Optional<GraphicLayer> findLayerByType(LayerType layer);
 
     void deleteByLayerType(LayerType type);
 
@@ -122,4 +122,6 @@ public interface GraphicModel extends UUIDable {
     List<ReferencedSeries> getReferencedSeries();
 
     List<GraphicLayer> groupLayerByType();
+
+    void deleteByLayer(GraphicLayer type);
 }
