@@ -2,6 +2,7 @@ package org.weasis.acquire.explorer.gui.central;
 
 import java.awt.BorderLayout;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,12 +10,14 @@ import javax.swing.JPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.central.tumbnail.AcquireCentralTumbnailPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.dicom.codec.TagD;
 
 public class AcquireCentralImagePanel extends JPanel implements ListSelectionListener {
     private static final long serialVersionUID = 1270219114006046523L;
@@ -40,7 +43,10 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
     }
 
     private List<ImageElement> toImageElement(List<AcquireImageInfo> list) {
-        return list.stream().map(e -> e.getImage()).collect(Collectors.toList());
+        return list.stream().map(e -> e.getImage())
+            .sorted(Comparator.comparing(i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i)))
+            .collect(Collectors.toList());
+
     }
 
     public void updateList(List<AcquireImageInfo> imageInfos) {

@@ -47,7 +47,7 @@ public class AcquirePublishPanel extends JPanel {
             JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(AcquirePublishPanel.this));
         });
 
-        publishBtn.setPreferredSize(new Dimension(150, 50));
+        publishBtn.setPreferredSize(new Dimension(150, 40));
         publishBtn.setFont(FontTools.getFont12Bold());
 
         add(publishBtn);

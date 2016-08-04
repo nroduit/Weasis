@@ -2,6 +2,7 @@ package org.weasis.acquire.explorer.core.bean;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Objects;
 
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
@@ -18,7 +19,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
     private LocalDateTime date;
 
     public static final Serie DEFAULT_SERIE = new Serie();
-    public static final Serie DATE_SERIE = new Serie(Type.DATE);
+    public static final Serie DATE_SERIE = new Serie(LocalDateTime.now());
     public static final String DEFAULT_SERIE_NAME = "Other";
 
     public Serie() {
@@ -37,7 +38,8 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
     }
 
     public Serie(LocalDateTime date) {
-        this.type = Type.DATE;
+        Objects.requireNonNull(date);
+        this.type = Type.DATE;        
         this.date = date;
         init();
     }
@@ -50,6 +52,14 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     public Type getType() {
         return type;
+    }
+
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = Objects.requireNonNull(date);
     }
 
     public String getDisplayName() {

@@ -11,7 +11,6 @@ import javax.swing.JPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.dialog.AcquireImportDialog;
 import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
@@ -29,7 +28,7 @@ public class ImportPanel extends JPanel {
     private JButton importBtn = new JButton("Import");
 
     public ImportPanel(AcquireThumbnailListPane<MediaElement<?>> mainPanel, ImageGroupPane centralPane) {
-        importBtn.setPreferredSize(new Dimension(150, 50));
+        importBtn.setPreferredSize(new Dimension(150, 40));
         importBtn.setFont(FontTools.getFont12Bold());
 
         importBtn.addActionListener(new ActionListener() {
@@ -39,9 +38,6 @@ public class ImportPanel extends JPanel {
                 if (!selected.isEmpty()) {
                     AcquireImportDialog dialog = new AcquireImportDialog(mainPanel, selected);
                     JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
-                } else {
-                    // TODO do nothing?
-                    AcquireManager.importImages(Serie.DEFAULT_SERIE, selected);
                 }
             }
         });
