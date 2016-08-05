@@ -155,6 +155,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
 
+    public static final String PROP_LAYER_OFFSET = "layer.offset";
+
     public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
     public static final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
@@ -330,10 +332,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     pixelInfo.setPosition(p);
                     pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
                     pixelInfo.setPixelSize(imageElement.getPixelSize());
-
-                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null); // read
-                                                                                                                   // the
-                                                                                                                   // pixel
+                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null); 
                     pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
                     fillPixelInfo(pixelInfo, imageElement, c);
                     if (c != null && c.length >= 1) {
@@ -538,6 +537,27 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         return new Rectangle(0, 0, 512, 512);
     }
+    
+    protected void updateCanvas(E img, boolean triggerViewModelChangeListeners) {
+        final Rectangle modelArea = getImageBounds(img);
+        if (!modelArea.equals(getViewModel().getModelArea())) {
+            DefaultViewModel m = (DefaultViewModel) getViewModel();
+            boolean oldVal = m.isEnableViewModelChangeListeners();
+            if (!triggerViewModelChangeListeners) {
+                m.setEnableViewModelChangeListeners(false);
+            }
+            m.adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
+            m.setModelArea(modelArea);
+            if (!triggerViewModelChangeListeners) {
+                m.setEnableViewModelChangeListeners(oldVal);
+            }
+        }
+    }
+    
+    @Override
+    public void updateCanvas(boolean triggerViewModelChangeListeners) {
+        updateCanvas(getImage(), triggerViewModelChangeListeners);
+    }
 
     protected void setImage(E img) {
         boolean updateGraphics = false;
@@ -575,16 +595,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         .setSelectedItemWithoutTriggerAction(actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
                 }
 
-                final Rectangle modelArea = getImageBounds(img);
-                Rectangle2D area = getViewModel().getModelArea();
-                if (!modelArea.equals(area)) {
-                    DefaultViewModel m = (DefaultViewModel) getViewModel();
-                    boolean oldVal = m.isEnableViewModelChangeListeners();
-                    m.setEnableViewModelChangeListeners(false);
-                    m.adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
-                    m.setModelArea(modelArea);
-                    m.setEnableViewModelChangeListeners(oldVal);
-                }
+                updateCanvas(img, false);
 
                 imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, series, img, null));
                 resetZoom();
@@ -973,7 +984,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             affineTransform.scale(-1.0, 1.0);
             affineTransform.translate(-modelArea.getWidth(), 0.0);
         }
-        Point offset = (Point) actionsInView.get("layer.offset");
+        Point offset = (Point) actionsInView.get(PROP_LAYER_OFFSET);
         if (offset != null) {
             // TODO not consistent with image coordinates after crop
             affineTransform.translate(-offset.getX(), -offset.getY());

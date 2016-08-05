@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FontTools;
@@ -80,13 +81,13 @@ public class Thumbnail extends JLabel {
         this.thumbnailSize = thumbnailSize;
     }
 
-    public Thumbnail(final MediaElement<?> media, int thumbnailSize, boolean keepMediaCache) {
+    public Thumbnail(final MediaElement<?> media, int thumbnailSize, boolean keepMediaCache, OpManager opManager) {
         super(null, null, SwingConstants.CENTER);
         if (media == null) {
             throw new IllegalArgumentException("image cannot be null"); //$NON-NLS-1$
         }
         this.thumbnailSize = thumbnailSize;
-        init(media, keepMediaCache);
+        init(media, keepMediaCache, opManager);
     }
 
     /**
@@ -94,9 +95,9 @@ public class Thumbnail extends JLabel {
      * @param keepMediaCache
      *            if true will remove the media from cache after building the thumbnail. Only when media is an image.
      */
-    protected void init(MediaElement<?> media, boolean keepMediaCache) {
+    protected void init(MediaElement<?> media, boolean keepMediaCache, OpManager opManager) {
         this.setFont(FontTools.getFont10());
-        buildThumbnail(media, keepMediaCache);
+        buildThumbnail(media, keepMediaCache, opManager);
     }
 
     public void registerListeners() {
@@ -114,7 +115,7 @@ public class Thumbnail extends JLabel {
             : source;
     }
 
-    protected synchronized void buildThumbnail(MediaElement<?> media, boolean keepMediaCache) {
+    protected synchronized void buildThumbnail(MediaElement<?> media, boolean keepMediaCache, OpManager opManager) {
         imageSoftRef = null;
         Icon icon = MimeInspector.unknownIcon;
         String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
@@ -147,11 +148,11 @@ public class Thumbnail extends JLabel {
                 }
             }
         }
-        setIcon(media, icon, type, keepMediaCache);
+        setIcon(media, icon, type, keepMediaCache, opManager);
     }
 
     private void setIcon(final MediaElement<?> media, final Icon mime, final String type,
-        final boolean keepMediaCache) {
+        final boolean keepMediaCache, OpManager opManager) {
         this.setSize(thumbnailSize, thumbnailSize);
 
         ImageIcon icon = new ImageIcon() {
@@ -161,7 +162,7 @@ public class Thumbnail extends JLabel {
                 Graphics2D g2d = (Graphics2D) g;
                 int width = thumbnailSize;
                 int height = thumbnailSize;
-                final BufferedImage thumbnail = Thumbnail.this.getImage(media, keepMediaCache);
+                final BufferedImage thumbnail = Thumbnail.this.getImage(media, keepMediaCache, opManager);
                 if (thumbnail == null) {
                     FontMetrics fontMetrics = g2d.getFontMetrics();
                     int fheight = y + (thumbnailSize - fontMetrics.getAscent() + 5 - mime.getIconHeight()) / 2;
@@ -200,7 +201,7 @@ public class Thumbnail extends JLabel {
         return thumbnailPath;
     }
 
-    public synchronized BufferedImage getImage(final MediaElement<?> media, final boolean keepMediaCache) {
+    public synchronized BufferedImage getImage(final MediaElement<?> media, final boolean keepMediaCache, final OpManager opManager) {
         if ((imageSoftRef == null && readable) || (imageSoftRef != null && imageSoftRef.get() == null)) {
             if (loading.compareAndSet(false, true)) {
                 try {
@@ -212,7 +213,7 @@ public class Thumbnail extends JLabel {
 
                         @Override
                         protected Boolean doInBackground() throws Exception {
-                            loadThumbnail(media, keepMediaCache);
+                            loadThumbnail(media, keepMediaCache,opManager);
                             return Boolean.TRUE;
                         }
 
@@ -230,7 +231,7 @@ public class Thumbnail extends JLabel {
         return imageSoftRef.get();
     }
 
-    private void loadThumbnail(final MediaElement<?> media, final boolean keepMediaCache) throws Exception {
+    private void loadThumbnail(final MediaElement<?> media, final boolean keepMediaCache, final OpManager opManager) throws Exception {
         try {
             File file = thumbnailPath;
             boolean noPath = file == null || !file.canRead();
@@ -246,7 +247,7 @@ public class Thumbnail extends JLabel {
             if (noPath) {
                 if (media instanceof ImageElement) {
                     final ImageElement image = (ImageElement) media;
-                    PlanarImage imgPl = image.getImage(null);
+                    PlanarImage imgPl = image.getImage(opManager);
                     if (imgPl != null) {
                         RenderedImage img = image.getRenderedImage(imgPl);
                         final RenderedImage thumb = createThumbnail(img);

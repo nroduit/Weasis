@@ -33,11 +33,10 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        panel.setSelected((AcquireActionButton) e.getSource());
-
         Cmd cmd = Cmd.valueOf(e.getActionCommand());
         switch (cmd) {
             case INIT:
+                panel.setSelected((AcquireActionButton) e.getSource());
                 init();
                 break;
             case VALIDATE:
@@ -60,16 +59,17 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
         AcquireImageInfo imageInfo = getImageInfo();
         imageInfo.clearPreProcess();
         imageInfo.applyPostProcess(getView());
+        imageInfo.applyPreProcess(getView());
     }
 
     @Override
     public boolean cancel() {
         AcquireImageInfo imageInfo = getImageInfo();
+        imageInfo.removeLayer(getView());
         boolean dirty = imageInfo.isDirty();
 
         if (dirty) {
             imageInfo.clearPreProcess();
-            imageInfo.applyPreProcess(getView());
             centralPanel.initValues(imageInfo, imageInfo.getCurrentValues());
         }
         return dirty;
@@ -84,7 +84,7 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
             int confirm = JOptionPane.showConfirmDialog((Component) centralPanel, "Are you sure you want to reset ?",
                 "RESET", JOptionPane.YES_NO_OPTION);
             if (confirm == 0) {
-                centralPanel.initValues(imageInfo, imageInfo.restore(getView()));
+                centralPanel.initValues(imageInfo, imageInfo.getDefaultValues());
                 init();
             }
         }

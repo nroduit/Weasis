@@ -119,9 +119,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     }
 
     @XmlElementWrapper(name = "layers")
-    @XmlElements({ 
-        @XmlElement(name = "layer", type = DefaultLayer.class)
-    })
+    @XmlElements({ @XmlElement(name = "layer", type = DefaultLayer.class) })
     @Override
     public List<GraphicLayer> getLayers() {
         return layers;
@@ -245,17 +243,18 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
         return layers;
     }
+
     @Override
     public void deleteByLayer(GraphicLayer layer) {
         Objects.requireNonNull(layer);
 
-       synchronized (models) {
+        synchronized (models) {
             models.removeIf(g -> {
                 boolean delete = layer.equals(g.getLayer());
-                if(delete){
-                    g.removeAllPropertyChangeListener(); 
+                if (delete) {
+                    g.removeAllPropertyChangeListener();
                 }
-                return delete;  
+                return delete;
             });
             layers.removeIf(l -> Objects.equals(l, layer));
         }
@@ -458,8 +457,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @Override
     public List<DragGraphic> getSelectedDragableGraphics() {
-        return models.stream().filter(isGraphicSelected).filter(DragGraphic.class::isInstance)
-            .map(castToDragGraphic).collect(Collectors.toList());
+        return models.stream().filter(isGraphicSelected).filter(DragGraphic.class::isInstance).map(castToDragGraphic)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -545,8 +544,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         g2d.translate(-0.5, -0.5);
     }
 
-    private static void applyPaint(Graphic graphic, Graphics2D g2d, AffineTransform transform,
-        Rectangle2D bounds) {
+    private static void applyPaint(Graphic graphic, Graphics2D g2d, AffineTransform transform, Rectangle2D bounds) {
         if (graphic.getLayer().getVisible()) {
             if (bounds != null) {
                 Rectangle repaintBounds = graphic.getRepaintBounds(transform);
@@ -646,11 +644,10 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         Objects.requireNonNull(canvas);
         GraphicModel modelList = canvas.getGraphicManager();
         Objects.requireNonNull(modelList);
-    
-        Graphic newGraphic =
-            Optional.ofNullable(modelList.getCreateGraphic()).orElse(MeasureToolBar.selectionGraphic);
+
+        Graphic newGraphic = Optional.ofNullable(modelList.getCreateGraphic()).orElse(MeasureToolBar.selectionGraphic);
         GraphicLayer layer = getOrBuildLayer(canvas, newGraphic.getLayerType());
-    
+
         if (!layer.getVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAWINGS.cmd())) {
             JOptionPane.showMessageDialog(canvas.getJComponent(), Messages.getString("AbstractLayerModel.msg_not_vis"), //$NON-NLS-1$
                 Messages.getString("AbstractLayerModel.draw"), //$NON-NLS-1$
@@ -658,10 +655,12 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             return null;
         } else {
             Graphic graph = newGraphic.copy();
-            graph.updateLabel(Boolean.TRUE, canvas);
-            graph.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
-            graph.setLayer(layer);
-            canvas.getGraphicManager().addGraphic(graph);
+            if (graph != null) {
+                graph.updateLabel(Boolean.TRUE, canvas);
+                graph.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
+                graph.setLayer(layer);
+                canvas.getGraphicManager().addGraphic(graph);
+            }
             return graph;
         }
     }

@@ -118,4 +118,6 @@ public interface ViewCanvas<E extends ImageElement>
 
     void closeLens();
 
+    void updateCanvas(boolean triggerViewModelChangeListeners);
+
 }

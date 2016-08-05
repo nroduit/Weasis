@@ -21,7 +21,14 @@ public class RotationActionListener extends AcquireObject implements ActionListe
 
         int change = (imageInfo.getNextValues().getFullRotation() + angle >= 0)
             ? imageInfo.getNextValues().getRotation() + angle : imageInfo.getNextValues().getRotation() + 360 + angle;
-        imageInfo.getNextValues().setRotation(change);
+        setValue(change);     
+    }
+    
+    
+    public void setValue(int value) {
+        AcquireImageInfo imageInfo = getImageInfo();
+
+        imageInfo.getNextValues().setRotation(value);
 
         if (imageInfo.getNextValues().getFullRotation() % 90 != 0) {
             GraphicHelper.newGridLayer(getView());
@@ -29,7 +36,6 @@ public class RotationActionListener extends AcquireObject implements ActionListe
 
         RotationOp rotation = new RotationOp();
         rotation.setParam(RotationOp.P_ROTATE, imageInfo.getNextValues().getFullRotation());
-
         imageInfo.removePreProcessImageOperationAction(RotationOp.class);
         imageInfo.addPreProcessImageOperationAction(rotation);
 

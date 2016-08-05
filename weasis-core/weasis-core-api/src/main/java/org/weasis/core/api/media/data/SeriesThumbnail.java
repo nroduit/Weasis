@@ -39,6 +39,7 @@ import javax.swing.border.LineBorder;
 
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
@@ -89,12 +90,12 @@ public class SeriesThumbnail extends Thumbnail
          * Do not remove the image from the cache after building the thumbnail when the series is associated to a
          * explorerModel (stream should be closed at least when closing the application or when free the cache).
          */
-        init(media, series.getTagValue(TagW.ExplorerModel) != null);
+        init(media, series.getTagValue(TagW.ExplorerModel) != null, null);
     }
 
     @Override
-    protected void init(MediaElement<?> media, boolean keepMediaCache) {
-        super.init(media, keepMediaCache);
+    protected void init(MediaElement<?> media, boolean keepMediaCache, OpManager opManager) {
+        super.init(media, keepMediaCache, opManager);
         setBorder(outMouseOverBorder);
     }
 
@@ -155,7 +156,7 @@ public class SeriesThumbnail extends Thumbnail
              * Do not remove the image from the cache after building the thumbnail when the series is associated to a
              * explorerModel (stream should be closed at least when closing the application or when free the cache).
              */
-            buildThumbnail((MediaElement<?>) media, series.getTagValue(TagW.ExplorerModel) != null);
+            buildThumbnail((MediaElement<?>) media, series.getTagValue(TagW.ExplorerModel) != null, null);
             revalidate();
             repaint();
         }
@@ -170,7 +171,7 @@ public class SeriesThumbnail extends Thumbnail
         if (update) {
             Object media = series.getMedia(mediaPosition, null, null);
             this.thumbnailSize = thumbnailSize;
-            buildThumbnail((MediaElement<?>) media, series.getTagValue(TagW.ExplorerModel) != null);
+            buildThumbnail((MediaElement<?>) media, series.getTagValue(TagW.ExplorerModel) != null, null);
         }
     }
 

@@ -36,13 +36,13 @@ public class ImageInfoHelperTest {
         
         PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageWidth))).thenReturn(4000);
         PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageHeight))).thenReturn(2000);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.pacs_hd, MAX)).isEqualTo(0.75d);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.pacs_md, MAX)).isEqualTo(0.5d);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.hd, MAX)).isEqualTo(0.75d);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.md, MAX)).isEqualTo(0.5d);
         
         PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageWidth))).thenReturn(2000);
         PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageHeight))).thenReturn(4000);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.pacs_hd, MAX)).isEqualTo(0.75d);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.pacs_md, MAX)).isEqualTo(0.5d);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.hd, MAX)).isEqualTo(0.75d);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.md, MAX)).isEqualTo(0.5d);
     }
 
 }

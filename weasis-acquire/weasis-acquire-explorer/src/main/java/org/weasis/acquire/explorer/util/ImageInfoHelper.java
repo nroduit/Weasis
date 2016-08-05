@@ -33,10 +33,10 @@ public class ImageInfoHelper {
             
             Double expectedImageSize;
             switch (resolution) {
-                case pacs_hd:
+                case hd:
                     expectedImageSize = max;
                     break;
-                case pacs_md:
+                case md:
                     expectedImageSize = Math.floor((max * 2) / 3);
                     break;
                 default:

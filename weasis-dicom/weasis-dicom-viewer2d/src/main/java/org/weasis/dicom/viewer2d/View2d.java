@@ -451,11 +451,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             actionsInView.remove(PRManager.TAG_PR_ZOOM);
 
             // Reset crop
-            final Rectangle modelArea = getImageBounds(m);
-            if (!modelArea.equals(getViewModel().getModelArea())) {
-                ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
-                getViewModel().setModelArea(modelArea);
-            }
+            updateCanvas(false);
+            actionsInView.remove(DefaultView2d.PROP_LAYER_OFFSET);
         }
         // If no Presentation State use the current image
         if (pr == null) {
@@ -479,7 +476,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (area != null && !area.equals(getViewModel().getModelArea())) {
             ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
             getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
-            actionsInView.put("layer.offset", new Point(area.x, area.y));
+            actionsInView.put(DefaultView2d.PROP_LAYER_OFFSET, new Point(area.x, area.y));
         }
         imageLayer.setPreprocessing((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
         if (pr != null) {

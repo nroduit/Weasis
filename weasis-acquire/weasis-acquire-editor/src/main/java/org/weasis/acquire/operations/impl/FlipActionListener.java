@@ -14,9 +14,16 @@ public class FlipActionListener extends AcquireObject implements ActionListener 
         AcquireImageInfo imageInfo = getImageInfo();
         imageInfo.getNextValues().toggleFlip();
 
+        setValue(imageInfo.getNextValues().isFlip());
+    }
+    
+    public void setValue(boolean value) {
+        AcquireImageInfo imageInfo = getImageInfo();
+
+        imageInfo.getNextValues().setFlip(value);
+        
         FlipOp flip = new FlipOp();
         flip.setParam(FlipOp.P_FLIP, imageInfo.getNextValues().isFlip());
-
         imageInfo.removePreProcessImageOperationAction(FlipOp.class);
         imageInfo.addPreProcessImageOperationAction(flip);
 

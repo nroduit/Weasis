@@ -18,13 +18,6 @@ public class PublishTree extends JScrollPane {
 
         // Register tooltips
         checkboxTree.setToolTipText(""); //$NON-NLS-1$
-
-        /**
-         * At this point checking Paths are supposed to be binded at Series Level but depending on the CheckingMode it
-         * may also contains parents treeNode paths.<br>
-         * For medical use recommendation is to default select the whole series related to studies to be analyzed
-         */
-
         TreeCheckingModel checkingModel = publishTreeModel.getCheckingModel();
         checkboxTree.setCheckingModel(checkingModel); // be aware that checkingPaths is cleared at this point
 
