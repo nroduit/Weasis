@@ -68,11 +68,15 @@ public class CalibrationView extends JPanel {
     private final JRadioButton radioButtonSeries = new JRadioButton(Messages.getString("CalibrationView.series")); //$NON-NLS-1$
     private final JRadioButton radioButtonImage = new JRadioButton(Messages.getString("CalibrationView.current")); //$NON-NLS-1$
 
-    public CalibrationView(LineGraphic line, ViewCanvas<?> view2d) {
+    public CalibrationView(LineGraphic line, ViewCanvas<?> view2d, boolean selectSeries) {
         this.line = line;
         this.view2d = view2d;
         try {
             jbInit();
+            radioButtonSeries.setSelected(selectSeries);
+            if(!selectSeries){
+                radioButtonImage.setSelected(true);
+            }
             initialize();
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -108,7 +112,6 @@ public class CalibrationView extends JPanel {
         panel.add(lblApplyTo);
         ratioGroup.add(radioButtonSeries);
         ratioGroup.add(radioButtonImage);
-        radioButtonSeries.setSelected(true);
         panel.add(radioButtonSeries);
         panel.add(radioButtonImage);
 

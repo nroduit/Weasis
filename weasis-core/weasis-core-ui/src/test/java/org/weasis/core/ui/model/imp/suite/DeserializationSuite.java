@@ -14,7 +14,7 @@ import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.ui.model.layer.imp.DragLayer;
+import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.test.utils.ModelListHelper;
 import org.xml.sax.SAXParseException;
 
@@ -122,7 +122,7 @@ public class DeserializationSuite extends ModelListHelper {
         assertThat(result.getLayers()).hasSize(1);
         
         Layer layer = result.getLayers().get(0);
-        assertThat(layer).isInstanceOf(DragLayer.class);
+        assertThat(layer).isInstanceOf(DefaultLayer.class);
         assertThat(layer.getUuid()).isEqualTo(LAYER_UUID_0);
         assertThat(layer.getLevel()).isEqualTo(40);
         assertThat(layer.getName()).isNull();

@@ -434,6 +434,18 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
         };
     }
+    
+    protected ComboItemListener newDrawAction(Graphic[] graphics) {
+        return new ComboItemListener(ActionW.DRAW_GRAPHICS, Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+
+            @Override
+            public void itemStateChanged(Object object) {
+                if (object instanceof Graphic && selectedView2dContainer != null) {
+                    selectedView2dContainer.setDrawActions((Graphic) object);
+                }
+            }
+        };
+    }
 
     protected ToggleButtonListener newDrawOnlyOnceAction() {
         return new ToggleButtonListener(ActionW.DRAW_ONLY_ONCE, true) {

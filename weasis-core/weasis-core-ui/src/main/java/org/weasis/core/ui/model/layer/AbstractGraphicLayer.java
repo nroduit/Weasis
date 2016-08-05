@@ -18,8 +18,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
     private Integer level; // Layers are sorted by level number (ascending order)
 
     public AbstractGraphicLayer(LayerType type) {
-        this.type = Objects.requireNonNull(type);
-
+        setType(type);
         this.level = type.getLevel();
         this.visible = type.getVisible();
         this.locked = type.getLocked();
@@ -33,12 +32,12 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
 
     @Override
     public void setLocked(Boolean locked) {
-        this.locked = locked;
+        this.locked = Optional.ofNullable(locked).orElse(getType().getLocked());
     }
 
     @Override
-    public void setVisible(Boolean flag) {
-        this.visible = flag;
+    public void setVisible(Boolean visible) {
+        this.visible = Optional.ofNullable(visible).orElse(getType().getVisible());
     }
 
     @XmlAttribute
@@ -49,7 +48,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
 
     @Override
     public void setLevel(Integer level) {
-        this.level = level;
+        this.level = Optional.ofNullable(level).orElse(getType().getLevel());
     }
 
     @XmlAttribute
@@ -69,46 +68,6 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         return name;
     }
 
-    @Override
-    public int compareTo(Layer obj) {
-        if (obj == null) {
-            return 1;
-        }
-        int thisVal = this.getLevel();
-        int anotherVal = obj.getLevel();
-        return thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1);
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((type == null) ? 0 : type.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        AbstractGraphicLayer other = (AbstractGraphicLayer) obj;
-        if (type == null) {
-            if (other.type != null) {
-                return false;
-            }
-        } else if (!type.equals(other.type)) {
-            return false;
-        }
-        return true;
-    }
-
     @XmlAttribute
     @Override
     public LayerType getType() {
@@ -117,12 +76,12 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
 
     @Override
     public void setType(LayerType type) {
-        this.type = type;
+        this.type = Objects.requireNonNull(type);
     }
 
     @Override
     public String toString() {
-        return Optional.ofNullable(name).orElse(type.name());
+        return Optional.ofNullable(getName()).orElse(getType().getDefaultName());
     }
 
     static class Adapter extends XmlAdapter<AbstractGraphicLayer, Layer> {

@@ -15,27 +15,34 @@ public class MetadataPanel extends AbstractAcquireActionPanel {
     private static final long serialVersionUID = -1474114784513035056L;
 
     private AcquireMetadataPanel globalInfoPanel = new AcquireGlobalMetaPanel("Global");
-    private org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel serieInfoPanel = new org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel(null);
-    private AcquireMetadataPanel imageInfoPanel = new org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel("Image");
-    
+    private org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel serieInfoPanel =
+        new org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel(null);
+    private AcquireMetadataPanel imageInfoPanel =
+        new org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel("Image");
+
     private JPanel content = new JPanel(new GridLayout(3, 1));
-    
+
     public MetadataPanel() {
         super();
         setLayout(new BorderLayout());
-        
+
         add(content, BorderLayout.NORTH);
-        
+
         content.add(globalInfoPanel);
         content.add(serieInfoPanel);
         content.add(imageInfoPanel);
     }
-    
+
+    @Override
+    public boolean needValidationPanel() {
+        return false;
+    }
+
     @Override
     public void initValues(AcquireImageInfo info, AcquireImageValues values) {
         serieInfoPanel.setSerie(info.getSerie());
         imageInfoPanel.setImageInfo(info);
-        
+
         repaint();
     }
 }

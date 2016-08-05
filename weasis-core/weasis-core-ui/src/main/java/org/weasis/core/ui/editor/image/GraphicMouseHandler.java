@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -163,8 +162,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
             final List<Graphic> newSelectedGraphList = new ArrayList<>();
             if (isSelectionSingleClic) {
-                vImg.getGraphicManager().getFirstGraphicIntersecting(mouseEvt)
-                    .ifPresent(newSelectedGraphList::add);
+                vImg.getGraphicManager().getFirstGraphicIntersecting(mouseEvt).ifPresent(newSelectedGraphList::add);
             } else {
                 newSelectedGraphList
                     .addAll(vImg.getGraphicManager().getSelectedAllGraphicsIntersecting(selectionRect, transform));
@@ -194,15 +192,13 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         }
 
         if (ds.completeDrag(mouseEvt)) {
-            ActionState drawOnceAction = vImg.getEventManager().getAction(ActionW.DRAW_ONLY_ONCE);
-            if (drawOnceAction instanceof ToggleButtonListener) {
-                if (((ToggleButtonListener) drawOnceAction).isSelected()) {
-                    ActionState measure = vImg.getEventManager().getAction(ActionW.DRAW_MEASURE);
-                    if (measure instanceof ComboItemListener) {
-                        ((ComboItemListener) measure).setSelectedItem(MeasureToolBar.selectionGraphic);
-                    }
-                }
-            }
+            vImg.getEventManager().getAction(ActionW.DRAW_ONLY_ONCE, ToggleButtonListener.class)
+                .filter(ToggleButtonListener::isSelected).ifPresent(a -> {
+                    vImg.getEventManager().getAction(ActionW.DRAW_MEASURE, ComboItemListener.class)
+                        .ifPresent(c -> c.setSelectedItem(MeasureToolBar.selectionGraphic));
+                    vImg.getEventManager().getAction(ActionW.DRAW_GRAPHICS, ComboItemListener.class)
+                        .ifPresent(c -> c.setSelectedItem(MeasureToolBar.selectionGraphic));
+                });
             ds = null;
         }
 
@@ -213,8 +209,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
         // Evaluates if mouse is on a dragging position, and changes cursor image consequently
         List<DragGraphic> selectedDragGraphList = vImg.getGraphicManager().getSelectedDragableGraphics();
-        Optional<Graphic> firstGraphicIntersecting =
-            vImg.getGraphicManager().getFirstGraphicIntersecting(mouseEvt);
+        Optional<Graphic> firstGraphicIntersecting = vImg.getGraphicManager().getFirstGraphicIntersecting(mouseEvt);
 
         if (firstGraphicIntersecting.isPresent() && firstGraphicIntersecting.get() instanceof DragGraphic) {
             DragGraphic dragGraph = (DragGraphic) firstGraphicIntersecting.get();
@@ -285,11 +280,9 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                 // Evaluates if mouse is on a dragging position, and changes cursor image consequently
                 Optional<Graphic> firstGraphicIntersecting = graphicList.getFirstGraphicIntersecting(mouseEvt);
 
-                if (firstGraphicIntersecting.isPresent()
-                    && firstGraphicIntersecting.get() instanceof DragGraphic) {
+                if (firstGraphicIntersecting.isPresent() && firstGraphicIntersecting.get() instanceof DragGraphic) {
                     DragGraphic dragGraph = (DragGraphic) firstGraphicIntersecting.get();
-                    List<DragGraphic> selectedDragGraphList =
-                        vImg.getGraphicManager().getSelectedDragableGraphics();
+                    List<DragGraphic> selectedDragGraphList = vImg.getGraphicManager().getSelectedDragableGraphics();
 
                     if (selectedDragGraphList.contains(dragGraph)) {
 

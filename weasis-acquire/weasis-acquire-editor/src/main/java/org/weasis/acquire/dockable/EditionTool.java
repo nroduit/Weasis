@@ -15,8 +15,6 @@ import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.dockable.components.AcquireSubmitButtonsPanel;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.dockable.components.actions.AcquireAction;
-import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
-import org.weasis.acquire.dockable.components.actions.meta.MetadataPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.base.viewer2d.EventManager;
@@ -110,8 +108,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
         Optional.ofNullable(this.centralPanel).ifPresent(this::remove);
         this.centralPanel = centralPanel;
         this.add(this.centralPanel, BorderLayout.CENTER);
-        boolean noValidationPanel = centralPanel instanceof CalibrationPanel ||  centralPanel instanceof MetadataPanel;
-        bottomPanel.setVisible(!noValidationPanel);
+        bottomPanel.setVisible(centralPanel.needValidationPanel());
         revalidate();
         repaint();
     }

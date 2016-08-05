@@ -1,11 +1,16 @@
 package org.weasis.dicom.explorer;
 
 import java.awt.Color;
+import java.awt.Shape;
+import java.awt.geom.FlatteningPathIterator;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,11 +29,14 @@ import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.graphic.GraphicArea;
+import org.weasis.core.ui.model.graphic.GraphicLabel;
+import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -99,24 +107,26 @@ public class PrSerializer {
         Sequence layerSeq = attributes.newSequence(Tag.GraphicLayerSequence, layers.size());
         for (int i = 0; i < layers.size(); i++) {
             GraphicLayer layer = layers.get(i);
-            Attributes l = new Attributes(2);
-            l.setString(Tag.GraphicLayer, VR.CS, layer.getType().name());
-            l.setInt(Tag.GraphicLayerOrder, VR.IS, i);
-            layerSeq.add(l);
 
-            Attributes a = new Attributes(2);
-            a.setString(Tag.GraphicLayer, VR.CS, layer.getType().name());
-            List<Graphic> graphics = getGraphicsByLayer(model, layer.getUuid());
-            Sequence graphicSeq = a.newSequence(Tag.GraphicObjectSequence, graphics.size());
+            if (layer.getType().getSerializable()) {
+                String layerName = layer.getType().getDefaultName() + " [DICOM]";
 
-            for (Graphic graphic : graphics) {
-                Attributes g = new Attributes(5);
-                g.setString(Tag.GraphicAnnotationUnits, VR.CS, "PIXEL");
-                g.setInt(Tag.GraphicDimensions, VR.US, 2);
-                buildDicomGraphic(graphic, g);
-                graphicSeq.add(g);
+                Attributes l = new Attributes(2);
+                l.setString(Tag.GraphicLayer, VR.CS, layerName);
+                l.setInt(Tag.GraphicLayerOrder, VR.IS, i);
+                layerSeq.add(l);
+
+                Attributes a = new Attributes(2);
+                a.setString(Tag.GraphicLayer, VR.CS, layerName);
+                List<Graphic> graphics = getGraphicsByLayer(model, layer.getUuid());
+                Sequence graphicSeq = a.newSequence(Tag.GraphicObjectSequence, graphics.size());
+                Sequence textSeq = a.newSequence(Tag.TextObjectSequence, graphics.size());
+
+                for (Graphic graphic : graphics) {
+                    buildDicomGraphic(graphic, graphicSeq, textSeq);
+                }
+                annotationSeq.add(a);
             }
-            annotationSeq.add(a);
         }
 
     }
@@ -136,8 +146,29 @@ public class PrSerializer {
         return list;
     }
 
-    private static void buildDicomGraphic(Graphic graphic, Attributes dcm) {
+    private static Attributes getBasicGraphic(Graphic graphic) {
+        Attributes dcm = new Attributes(5);
+        dcm.setString(Tag.GraphicAnnotationUnits, VR.CS, "PIXEL");
+        dcm.setInt(Tag.GraphicDimensions, VR.US, 2);
+        dcm.setString(Tag.GraphicFilled, VR.CS, graphic.getFilled() ? "Y" : "N");
 
+        Sequence style = dcm.newSequence(Tag.LineStyleSequence, 1);
+        Attributes styles = new Attributes();
+        styles.setFloat(Tag.LineThickness, VR.FL, graphic.getLineThickness());
+
+        if (graphic.getColorPaint() instanceof Color) {
+            Color color = (Color) graphic.getColorPaint();
+            float[] rgb = PresentationStateReader.ColorToLAB(color);
+            if (rgb != null) {
+                styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, CIELab.convertToDicomLab(rgb));
+            }
+        }
+        style.add(styles);
+        return dcm;
+    }
+
+    private static void buildDicomGraphic(Graphic graphic, Sequence graphicSeq, Sequence textSeq) {
+        Attributes dcm = getBasicGraphic(graphic);
         List<Point2D.Double> pts;
 
         if (graphic instanceof RectangleGraphic) {
@@ -163,34 +194,108 @@ public class PrSerializer {
             dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.CIRCLE);
             Point2D.Double centerPt = GeomUtil.getCircleCenter(graphic.getPts());
             pts = Arrays.asList(centerPt, graphic.getPts().get(0));
-        } else if (graphic instanceof PointGraphic) {
-            dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POINT);
-            Point2D.Double centerPt = GeomUtil.getCircleCenter(graphic.getPts());
-            pts = Arrays.asList(centerPt, graphic.getPts().get(0));
-        } else {
+        } else if (graphic instanceof PolygonGraphic) {
             dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
             pts = graphic.getPts();
-            if (graphic instanceof GraphicArea) {
-                pts.add(pts.get(0));
-            }
+            pts.add(pts.get(0));
+        } else if (graphic instanceof PolylineGraphic) {
+            dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
+            pts = graphic.getPts();
+        } else if (graphic instanceof PointGraphic) {
+            dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POINT);
+            pts = Arrays.asList(graphic.getPts().get(0));
+        } else if (graphic instanceof AnnotationGraphic) {
+            transformShapeToContour(graphic, graphicSeq);
+            return;
+        } else {
+            transformShapeToContour(graphic, graphicSeq);
+            bluildLabel(graphic, textSeq, textSeq);
+            return;
         }
 
         dcm.setDouble(Tag.GraphicData, VR.FL, getGraphicsPoints(pts));
         dcm.setInt(Tag.NumberOfGraphicPoints, VR.US, pts.size());
-        dcm.setString(Tag.GraphicFilled, VR.CS, graphic.getFilled() ? "Y" : "N");
+        graphicSeq.add(dcm);
 
-        Sequence style = dcm.newSequence(Tag.LineStyleSequence, 1);
-        Attributes styles = new Attributes();
-        styles.setFloat(Tag.LineThickness, VR.FL, graphic.getLineThickness());
+        bluildLabel(graphic, textSeq, textSeq);
+    }
 
-        if (graphic.getColorPaint() instanceof Color) {
-            Color color = (Color) graphic.getColorPaint();
-            float[] rgb = PresentationStateReader.ColorToLAB(color);
-            if (rgb != null) {
-                styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, CIELab.convertToDicomLab(rgb));
-            }
+    private static void bluildLabel(Graphic graphic, Sequence graphicSeq, Sequence textSeq) {
+        if (graphic.getLabelVisible()) {
+            GraphicLabel label = graphic.getGraphicLabel();
+            Rectangle2D bound = label.getLabelBounds();
+            
+//            Shape shape = graphic.getShape();
+//            Rectangle2D rect;
+//            if (shape instanceof AdvancedShape && ((AdvancedShape) shape).shapeList.size() > 0) {
+//                // Assuming first shape is the user drawing path, else stands for decoration
+//                Shape generalPath = ((AdvancedShape) shape).shapeList.get(0).getShape();
+//                rect = generalPath.getBounds2D();
+//            } else {
+//                rect = shape.getBounds2D();
+//            }
+//
+//            double xPos = rect.getX() + rect.getWidth() + 3;
+//            double yPos = rect.getY() + rect.getHeight() * 0.5;
+//            Attributes dcm = getBasicGraphic(graphic);
+//            dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
+//            double[] pts = new double[]{xPos, yPos, bound.getMinX(), bound.getMinY()};
+//            dcm.setDouble(Tag.GraphicData, VR.FL, pts);
+//            dcm.setInt(Tag.NumberOfGraphicPoints, VR.US, pts.length);
+//            graphicSeq.add(dcm);
+
+            Attributes text = new Attributes(5);
+            text.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, "PIXEL");
+            
+            text.setDouble(Tag.BoundingBoxTopLeftHandCorner, VR.FL, new double[] { bound.getMinX(), bound.getMinY() });
+            text.setDouble(Tag.BoundingBoxBottomRightHandCorner, VR.FL,
+                new double[] { bound.getMaxX(), bound.getMaxY() });
+            // In text strings (value representation ST, LT, or UT) a new line shall be represented as CR LF.
+            // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/chapter_6.html
+            text.setString(Tag.UnformattedTextValue, VR.ST,
+                Arrays.stream(label.getLabels()).collect(Collectors.joining("\r\n")));
+            textSeq.add(text);
         }
-        style.add(styles);
+    }
+
+    public static void transformShapeToContour(Graphic graphic, Sequence graphicSeq) {
+
+        Shape shape = graphic.getShape();
+
+        Attributes dcm = null;
+        List<Point2D.Double> points = new ArrayList<>();
+
+        PathIterator iterator = new FlatteningPathIterator(shape.getPathIterator(null), 2);
+        double[] pts = new double[6];
+        while (!iterator.isDone()) {
+            int segType = iterator.currentSegment(pts);
+            switch (segType) {
+                case PathIterator.SEG_MOVETO:
+                    addNewSubGraphic(dcm, graphicSeq, points);
+                    dcm = getBasicGraphic(graphic);
+                    points.add(new Point2D.Double(pts[0], pts[1]));
+                    break;
+                case PathIterator.SEG_LINETO:
+                case PathIterator.SEG_CLOSE:
+                    points.add(new Point2D.Double(pts[0], pts[1]));
+                    break;
+                case PathIterator.SEG_CUBICTO:
+                case PathIterator.SEG_QUADTO:
+                    break; // should never append with FlatteningPathIterator
+            }
+            iterator.next();
+        }
+        addNewSubGraphic(dcm, graphicSeq, points);
+    }
+
+    private static void addNewSubGraphic(Attributes dcm, Sequence graphicSeq, List<Point2D.Double> points) {
+        if (dcm != null && dcm.getParent() == null) {
+            dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
+            dcm.setDouble(Tag.GraphicData, VR.FL, getGraphicsPoints(points));
+            dcm.setInt(Tag.NumberOfGraphicPoints, VR.US, points.size());
+            graphicSeq.add(dcm);
+            points.clear();
+        }
     }
 
     private static boolean saveToFile(File output, Attributes dcm) {

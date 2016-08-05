@@ -421,7 +421,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
         // Delete previous PR Layers
-        List<String> dcmLayers = (List<String>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
+        List<GraphicLayer> dcmLayers = (List<GraphicLayer>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
         if (dcmLayers != null) {
             PRManager.deleteDicomLayers(dcmLayers, graphicManager);
             actionsInView.remove(PRManager.TAG_DICOM_LAYERS);
@@ -1171,7 +1171,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.chg_calib")); //$NON-NLS-1$
                     calibMenu.addActionListener(e -> {
                         String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
-                        CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this);
+                        CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this, true);
                         ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                         int res = JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
                             title, JOptionPane.OK_CANCEL_OPTION);
@@ -1308,7 +1308,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if ((evt.getModifiersEx() & getButtonMaskEx()) != 0) {
                 JPopupMenu popupMenu = null;
                 final List<Graphic> selected = View2d.this.getGraphicManager().getSelectedGraphics();
-                if (!selected.isEmpty()) {
+                if (!selected.isEmpty() && isDrawActionActive()) {
                     popupMenu = View2d.this.buildGraphicContextMenu(evt, selected);
                 } else if (View2d.this.getSourceImage() != null) {
                     popupMenu = View2d.this.buildContexMenu(evt);

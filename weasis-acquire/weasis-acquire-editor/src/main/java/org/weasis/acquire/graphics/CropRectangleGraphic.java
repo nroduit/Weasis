@@ -52,9 +52,8 @@ public class CropRectangleGraphic extends RectangleGraphic {
             AcquireImageInfo info = AcquireManager.getCurrentAcquireImageInfo();
             if (info != null) {
                 GraphicModel graphicManager = AcquireObject.getView().getGraphicManager();
-
                 graphicManager.getModels()
-                    .removeIf(model -> model.getLayer().getType() == getLayerType() && model != this);
+                    .removeIf(g -> g.getLayer().getType() == getLayerType() && g != this);
 
                 info.clearPreProcess();
 

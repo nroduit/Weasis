@@ -48,7 +48,7 @@ public class SerializationSuite extends ModelListHelper {
             "<presentation uuid=\"%1$s\">"
             +   "<references/>"
             +   "<layers>"
-            +       "<dragLayer level=\"40\" locked=\"false\" type=\"DRAW\" visible=\"true\" uuid=\"%2$s\"/>"
+            +       "<layer level=\"40\" locked=\"false\" type=\"DRAW\" visible=\"true\" uuid=\"%2$s\"/>"
             +   "</layers>"
             +   "<graphics>"
             +       "<point pointSize=\"1\" fill=\"false\" showLabel=\"true\" thickness=\"3.0\" "

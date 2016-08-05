@@ -112,7 +112,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         setAction(new BasicActionState(ActionW.NO_ACTION));
         setAction(new BasicActionState(ActionW.DRAW));
         setAction(new BasicActionState(ActionW.MEASURE));
-        
+
         setAction(getMoveTroughSliceAction(10, TIME.minute, 0.1));
         setAction(newWindowAction());
         setAction(newLevelAction());
@@ -133,8 +133,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         setAction(newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
+        setAction(newMeasurementAction(
+            MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
         setAction(
-            newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
+            newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[MeasureToolBar.drawGraphicList.size()])));
         setAction(newSpatialUnit(Unit.values()));
         setAction(newPanAction());
         setAction(new BasicActionState(ActionW.RESET));
@@ -194,7 +196,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
         Optional<ActionW> action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
         // Only return the action if it is enabled
-        if(action.isPresent() && Optional.ofNullable(getAction(action.get())).filter(a -> a.isActionEnabled()).isPresent()){
+        if (action.isPresent()
+            && Optional.ofNullable(getAction(action.get())).filter(a -> a.isActionEnabled()).isPresent()) {
             return action;
         }
         return Optional.empty();
@@ -348,8 +351,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     if (img != null) {
                         boolean pixelPadding = JMVUtils.getNULLtoTrue(defaultView2d.getDisplayOpManager()
                             .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
-                        getAction(ActionW.WINDOW, SliderChangeListener.class).ifPresent(a -> a.setValue((int) img.getDefaultWindow(pixelPadding)));
-                        getAction(ActionW.LEVEL, SliderChangeListener.class).ifPresent(a -> a.setValue((int) img.getDefaultLevel(pixelPadding)));
+                        getAction(ActionW.WINDOW, SliderChangeListener.class)
+                            .ifPresent(a -> a.setValue((int) img.getDefaultWindow(pixelPadding)));
+                        getAction(ActionW.LEVEL, SliderChangeListener.class)
+                            .ifPresent(a -> a.setValue((int) img.getDefaultLevel(pixelPadding)));
                     }
                 }
             }

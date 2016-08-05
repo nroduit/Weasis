@@ -37,7 +37,6 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
@@ -62,10 +61,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     private RandomIter readIterator;
     private boolean buildIterator = false;
     private RenderedImage displayImage;
-    private boolean visible = true;
+    private Boolean visible = true;
     private boolean enableDispOperations = true;
-
-    private LayerType layerType = LayerType.IMAGE;
 
     public RenderedImageLayer(boolean buildIterator) {
         this(null, buildIterator);
@@ -117,6 +114,85 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     public void setPreprocessing(OpManager preprocessing) {
         setImage(sourceImage, preprocessing);
     }
+    
+
+    @Override
+    public SimpleOpManager getDisplayOpManager() {
+        return disOpManager;
+    }
+
+    @Override
+    public synchronized boolean isEnableDispOperations() {
+        return enableDispOperations;
+    }
+
+    @Override
+    public synchronized void setEnableDispOperations(boolean enabled) {
+        this.enableDispOperations = enabled;
+        if (enabled) {
+            updateDisplayOperations();
+        }
+    }
+
+    @Override
+    public void setVisible(Boolean visible) {
+        this.visible = Optional.ofNullable(visible).orElse(getType().getVisible());
+    }
+
+    @Override
+    public Boolean getVisible() {
+        return visible;
+    }
+
+    @Override
+    public void setType(LayerType type) {
+        // Do nothing
+    }
+
+    @Override
+    public void setName(String graphicLayerName) {
+        // Do nothing
+    }
+
+    @Override
+    public String getName() {
+        return getType().getDefaultName();
+    }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
+
+    @Override
+    public Integer getLevel() {
+        return getType().getLevel();
+    }
+
+    @Override
+    public void setLevel(Integer i) {
+        // Assume to be at the lowest level
+    }
+
+    @Override
+    public AffineTransform getTransform() {
+        return null;
+    }
+
+    @Override
+    public void setTransform(AffineTransform transform) {
+        // Does handle affine transform for image, already in operation manager
+    }
+
+    @Override
+    public LayerType getType() {
+        return LayerType.IMAGE;
+    }
+
+    @Override
+    public boolean hasContent() {
+        return getSourceImage() != null;
+    }
 
     @Override
     public void setImage(E image, OpManager preprocessing) {
@@ -162,7 +238,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
                 updateDisplayOperations();
             }
             // When outOfMemory exception or when tiles are not available anymore (file stream closed)
-            AuditLog.logError(LOGGER, t, "Draw rendered image error:"); //$NON-NLS-1$
+            LOGGER.error("Draw rendered image error:", t);//$NON-NLS-1$
             System.gc();
             try {
                 // Let garbage collection
@@ -283,63 +359,6 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         }
     }
 
-    @Override
-    public SimpleOpManager getDisplayOpManager() {
-        return disOpManager;
-    }
-
-    @Override
-    public synchronized boolean isEnableDispOperations() {
-        return enableDispOperations;
-    }
-
-    @Override
-    public synchronized void setEnableDispOperations(boolean enabled) {
-        this.enableDispOperations = enabled;
-        if (enabled) {
-            updateDisplayOperations();
-        }
-    }
-
-    @Override
-    public boolean isVisible() {
-        return visible;
-    }
-
-    @Override
-    public void setVisible(boolean visible) {
-        this.visible = visible;
-    }
-
-    @Override
-    public Integer getLevel() {
-        return 0;
-    }
-
-    @Override
-    public void setLevel(Integer i) {
-        // Assume to be at the lowest level
-    }
-
-    @Override
-    public AffineTransform getTransform() {
-        return null;
-    }
-
-    @Override
-    public void setTransform(AffineTransform transform) {
-        // Does handle affine transform for image, already in operation manager
-    }
-
-    @Override
-    public LayerType getType() {
-        return layerType;
-    }
-
-    @Override
-    public boolean hasContent() {
-        return getSourceImage() != null;
-    }
 
     @Override
     public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit) {
@@ -377,41 +396,6 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         if (imageElement != null) {
             return imageElement.getPixelValueUnit();
         }
-        return null;
-    }
-
-    @Override
-    public int compareTo(Layer o) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public void setVisible(Boolean flag) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public Boolean getVisible() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void setType(LayerType type) {
-        // Do nothing
-    }
-
-    @Override
-    public void setName(String graphicLayerName) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public String getName() {
-        // TODO Auto-generated method stub
         return null;
     }
 

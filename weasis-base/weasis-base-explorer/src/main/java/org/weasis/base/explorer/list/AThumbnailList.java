@@ -211,6 +211,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
 
     @Override
     public String getToolTipText(final MouseEvent evt) {
+        // FIXME return the more close index, => only when on thumbnails
         final int index = locationToIndex(evt.getPoint());
         if (index < 0) {
             return ""; //$NON-NLS-1$
@@ -218,7 +219,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
 
         final E item = getModel().getElementAt(index);
         if (item == null || item.getName() == null) {
-            return null;
+            return ""; //$NON-NLS-1$
         }
 
         StringBuilder toolTips = new StringBuilder();
@@ -609,8 +610,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
             if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
                 AThumbnailList.this.selectionModel.setCntrlKey(true);
             }
-            final Thread runner = new Thread(() -> AThumbnailList.this.jiThumbnailKeyPressed(e));
-            runner.start();
+            AThumbnailList.this.jiThumbnailKeyPressed(e);
         }
 
         @Override

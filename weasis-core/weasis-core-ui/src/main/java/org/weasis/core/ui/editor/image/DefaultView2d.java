@@ -85,6 +85,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpEvent;
@@ -153,7 +154,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
-    
+
     public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
     public static final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
@@ -190,7 +191,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected int tileOffset;
 
     protected final ImageViewerEventManager<E> eventManager;
-
 
     public DefaultView2d(ImageViewerEventManager<E> eventManager) {
         this(eventManager, null);
@@ -690,6 +690,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
         }
         return viewScale;
+    }
+
+    @SuppressWarnings("rawtypes")
+    protected boolean isDrawActionActive() {
+        ViewerPlugin container = WinUtil.getParentOfClass(this, ViewerPlugin.class);
+        if (container != null) {
+            final ViewerToolBar toolBar = container.getViewerToolBar();
+            if (toolBar != null) {
+                return toolBar.isCommandActive(ActionW.MEASURE.cmd()) || toolBar.isCommandActive(ActionW.DRAW.cmd());
+            }
+        }
+        return false;
     }
 
     @Override
