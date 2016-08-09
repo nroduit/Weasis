@@ -32,19 +32,17 @@ import java.io.ObjectOutputStream;
 import java.lang.ref.Reference;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
@@ -63,7 +61,6 @@ import javax.media.jai.operator.NullDescriptor;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
-import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
@@ -77,8 +74,8 @@ import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
 import org.dcm4che3.io.DicomInputStream;
-import org.dcm4che3.io.DicomOutputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
+import org.dcm4che3.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -647,10 +644,12 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             setTagNoNull(TagD.get(Tag.BitsStored), bitsStored);
             setTagNoNull(TagD.get(Tag.PixelRepresentation), pixelRepresentation);
 
-            TagD.get(Tag.ImagerPixelSpacing).readValue(header, this);
             TagD.get(Tag.PixelSpacing).readValue(header, this);
             TagD.get(Tag.PixelAspectRatio).readValue(header, this);
             TagD.get(Tag.PixelSpacingCalibrationDescription).readValue(header, this);
+            TagD.get(Tag.ImagerPixelSpacing).readValue(header, this);
+            TagD.get(Tag.NominalScannedPixelSpacing).readValue(header, this);
+
 
             DicomMediaUtils.applyModalityLutModule(header, this, null);
 
@@ -830,7 +829,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
              */
             Integer overlayBitMask = (Integer) getTagValue(TagW.OverlayBitMask);
             if (overlayBitMask != null) {
-                if (media.getTagValue(TagW.OverlayBurninData) == null) {
+                if (media.getTagValue(TagW.OverlayBurninDataPath) == null) {
                     // Serialize overlay (from pixel data)
                     Attributes ds = getDicomObject();
                     int[] embeddedOverlayGroupOffsets = Overlays.getEmbeddedOverlayGroupOffsets(ds);
@@ -849,7 +848,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                             fileOut = new FileOutputStream(file);
                             objOut = new ObjectOutputStream(fileOut);
                             objOut.writeObject(overlayData);
-                            media.setTag(TagW.OverlayBurninData, file.getPath());
+                            media.setTag(TagW.OverlayBurninDataPath, file.getPath());
                         } catch (Exception e) {
                             LOGGER.error("Cannot serialize overlay: {}", e.getMessage()); //$NON-NLS-1$
                         } finally {

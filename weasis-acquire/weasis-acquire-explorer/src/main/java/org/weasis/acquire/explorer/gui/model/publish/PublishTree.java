@@ -14,10 +14,7 @@ public class PublishTree extends JScrollPane {
 
     public PublishTree() {
         this.publishTreeModel = new PublishTreeModel();
-        this.checkboxTree = new PublishCheckboxTree(publishTreeModel);
-
-        // Register tooltips
-        checkboxTree.setToolTipText(""); //$NON-NLS-1$
+        checkboxTree = new CheckboxTree(publishTreeModel.getModel());
         TreeCheckingModel checkingModel = publishTreeModel.getCheckingModel();
         checkboxTree.setCheckingModel(checkingModel); // be aware that checkingPaths is cleared at this point
 

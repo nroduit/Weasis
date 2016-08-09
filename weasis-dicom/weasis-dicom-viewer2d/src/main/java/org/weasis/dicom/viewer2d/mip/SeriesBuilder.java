@@ -197,7 +197,7 @@ public class SeriesBuilder {
                     tagList2 = TagD.getTagFromIDs(Tag.ImageOrientationPatient, Tag.ImagePositionPatient,
                         Tag.RescaleSlope, Tag.RescaleIntercept, Tag.RescaleType, Tag.PixelPaddingValue,
                         Tag.PixelPaddingRangeLimit, Tag.WindowWidth, Tag.WindowCenter, Tag.WindowCenterWidthExplanation,
-                        Tag.VOILUTFunction, Tag.PixelSpacing, Tag.ImagerPixelSpacing,
+                        Tag.VOILUTFunction, Tag.PixelSpacing, Tag.ImagerPixelSpacing, Tag.NominalScannedPixelSpacing,
                         Tag.PixelSpacingCalibrationDescription, Tag.PixelAspectRatio);
                     rawIO.copyTags(tagList2, imgRef, false);
 

@@ -15,7 +15,6 @@ import java.io.File;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.AudioVideoElement;
-import org.weasis.core.api.media.data.TagW;
 
 public class DicomVideoElement extends AudioVideoElement  implements FileExtractor {
 
@@ -32,6 +31,9 @@ public class DicomVideoElement extends AudioVideoElement  implements FileExtract
         double[] val = TagD.getTagValue(mediaIO, Tag.PixelSpacing, double[].class);
         if (val == null || val.length != 2) {
             val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
+        }
+        if (val == null || val.length != 2) {
+            val = TagD.getTagValue(mediaIO, Tag.NominalScannedPixelSpacing, double[].class);
         }
         if (val != null) {
             pixelSizeX = val[0];

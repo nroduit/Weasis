@@ -41,7 +41,6 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -387,7 +386,17 @@ public class TagD extends TagW {
             } else if (VR.SQ.equals(vr)) {
                 return TagType.DICOM_SEQUENCE;
             } else {
-                return TagType.BYTE_ARRAY;
+                // Binary value type
+                if (VR.FD.equals(vr)) {
+                    return TagType.DOUBLE;
+                }
+                else if (VR.FL.equals(vr)) {
+                    return TagType.FLOAT;
+                }
+                else if (VR.SL.equals(vr) || VR.SS.equals(vr) || VR.UL.equals(vr) || VR.US.equals(vr)) {
+                    return TagType.INTEGER;
+                }
+                return TagType.BYTE;
             }
         }
         return TagType.STRING;

@@ -77,7 +77,7 @@ public class OverlayUtils {
 
         // Get serialized overlay (from pixel data)
         byte[][] data = null;
-        String filePath = (String) image.getTagValue(TagW.OverlayBurninData);
+        String filePath = (String) image.getTagValue(TagW.OverlayBurninDataPath);
         if (filePath != null) {
             FileInputStream fileIn = null;
             ObjectInputStream objIn = null;

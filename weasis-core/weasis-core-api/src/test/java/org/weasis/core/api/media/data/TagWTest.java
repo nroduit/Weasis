@@ -233,7 +233,7 @@ public class TagWTest {
     @Test
     public void test_isStringFamilyType() throws Exception {
         assertThat(new TagW(KEYWORD_1, TagType.BOOLEAN).isStringFamilyType()).isFalse();
-        assertThat(new TagW(KEYWORD_1, TagType.BYTE_ARRAY).isStringFamilyType()).isFalse();
+        assertThat(new TagW(KEYWORD_1, TagType.BYTE).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.COLOR).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.DATE).isStringFamilyType()).isFalse();
         assertThat(new TagW(KEYWORD_1, TagType.DATETIME).isStringFamilyType()).isFalse();
