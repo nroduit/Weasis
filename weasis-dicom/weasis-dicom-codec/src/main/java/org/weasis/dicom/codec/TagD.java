@@ -389,11 +389,9 @@ public class TagD extends TagW {
                 // Binary value type
                 if (VR.FD.equals(vr)) {
                     return TagType.DOUBLE;
-                }
-                else if (VR.FL.equals(vr)) {
+                } else if (VR.FL.equals(vr)) {
                     return TagType.FLOAT;
-                }
-                else if (VR.SL.equals(vr) || VR.SS.equals(vr) || VR.UL.equals(vr) || VR.US.equals(vr)) {
+                } else if (VR.SL.equals(vr) || VR.SS.equals(vr) || VR.UL.equals(vr) || VR.US.equals(vr)) {
                     return TagType.INTEGER;
                 }
                 return TagType.BYTE;
@@ -484,8 +482,8 @@ public class TagD extends TagW {
                                 }
 
                                 String defaultValue = null;
-                                if (tagID == Tag.PatientID && tagID == Tag.PatientName && tagID == Tag.StudyInstanceUID
-                                    && tagID == Tag.SeriesInstanceUID && tagID == Tag.Modality) {
+                                if (tagID == Tag.PatientID || tagID == Tag.PatientName || tagID == Tag.StudyInstanceUID
+                                    || tagID == Tag.SeriesInstanceUID || tagID == Tag.Modality) {
                                     defaultValue = TagW.NO_VALUE;
                                 }
 
