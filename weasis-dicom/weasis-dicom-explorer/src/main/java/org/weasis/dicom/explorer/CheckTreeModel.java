@@ -21,6 +21,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
@@ -155,7 +156,7 @@ public class CheckTreeModel {
 
     static class ToolTipTreeNode extends DefaultMutableTreeNode {
 
-        public ToolTipTreeNode(MediaSeries<?> userObject, boolean allowsChildren) {
+        public ToolTipTreeNode(TagReadable userObject, boolean allowsChildren) {
             super(userObject, allowsChildren);
             if (userObject == null) {
                 throw new IllegalArgumentException();
@@ -163,7 +164,7 @@ public class CheckTreeModel {
         }
 
         public String getToolTipText() {
-            MediaSeries<?> s = (MediaSeries<?>) getUserObject();
+            TagReadable s = (TagReadable) getUserObject();
             Thumbnail thumb = (Thumbnail) s.getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 try {
@@ -188,7 +189,6 @@ public class CheckTreeModel {
                     LOGGER.error("Display tooltip", e);
                 }
             }
-
             return null;
         }
 

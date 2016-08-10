@@ -89,11 +89,6 @@ import org.weasis.core.ui.util.PrintDialog;
 public class EventManager extends ImageViewerEventManager<ImageElement> implements ActionListener {
 
     /** The single instance of this singleton class. */
-    private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
-        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
-
-    /** The single instance of this singleton class. */
-
     private static EventManager instance;
 
     /**
@@ -111,6 +106,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
      */
 
     private EventManager() {
+        // Initialize actions with a null value. These are used by mouse or keyevent actions.
+        setAction(new BasicActionState(ActionW.WINLEVEL));
+        setAction(new BasicActionState(ActionW.CONTEXTMENU));
+        setAction(new BasicActionState(ActionW.NO_ACTION));
+        setAction(new BasicActionState(ActionW.DRAW));
+        setAction(new BasicActionState(ActionW.MEASURE));
+
         setAction(getMoveTroughSliceAction(10, TIME.minute, 0.1));
         setAction(newWindowAction());
         setAction(newLevelAction());
@@ -131,8 +133,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         setAction(newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
+        setAction(newMeasurementAction(
+            MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
         setAction(
-            newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
+            newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[MeasureToolBar.drawGraphicList.size()])));
         setAction(newSpatialUnit(Unit.values()));
         setAction(newPanAction());
         setAction(new BasicActionState(ActionW.RESET));
@@ -189,37 +193,14 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     @Override
-    public ActionW getActionFromCommand(String command) {
-        ActionW action = super.getActionFromCommand(command);
-
-        if (action == null && command != null) {
-            for (ActionW a : keyEventActions) {
-                if (a.cmd().equals(command)) {
-                    return a;
-                }
-            }
-        }
-
-        return action;
-    }
-
-    @Override
-    public ActionW getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
-        ActionW action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
-
-        if (action == null && keyEvent != 0) {
-            for (ActionW a : keyEventActions) {
-                if (a.getKeyCode() == keyEvent && a.getModifier() == modifier) {
-                    return a;
-                }
-            }
-        }
-
-        ActionState a1 = getAction(action);
-        if (a1 == null || a1.isActionEnabled()) {
+    public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
+        Optional<ActionW> action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
+        // Only return the action if it is enabled
+        if (action.isPresent()
+            && Optional.ofNullable(getAction(action.get())).filter(a -> a.isActionEnabled()).isPresent()) {
             return action;
         }
-        return null;
+        return Optional.empty();
     }
 
     @Override
@@ -267,9 +248,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                                     String cmd = ActionW.MEASURE.cmd();
                                     if (!toolBar.isCommandActive(cmd)) {
                                         mouseActions.setAction(MouseActions.LEFT, cmd);
-                                        if (view != null) {
-                                            view.setMouseActions(mouseActions);
-                                        }
+                                        view.setMouseActions(mouseActions);
                                         toolBar.changeButtonState(MouseActions.LEFT, cmd);
                                     }
                                 }
@@ -372,8 +351,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     if (img != null) {
                         boolean pixelPadding = JMVUtils.getNULLtoTrue(defaultView2d.getDisplayOpManager()
                             .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
-                        getAction(ActionW.WINDOW, SliderChangeListener.class).ifPresent(a -> a.setValue((int) img.getDefaultWindow(pixelPadding)));
-                        getAction(ActionW.LEVEL, SliderChangeListener.class).ifPresent(a -> a.setValue((int) img.getDefaultLevel(pixelPadding)));
+                        getAction(ActionW.WINDOW, SliderChangeListener.class)
+                            .ifPresent(a -> a.setValue((int) img.getDefaultWindow(pixelPadding)));
+                        getAction(ActionW.LEVEL, SliderChangeListener.class)
+                            .ifPresent(a -> a.setValue((int) img.getDefaultLevel(pixelPadding)));
                     }
                 }
             }

@@ -15,6 +15,8 @@ import org.weasis.acquire.dockable.components.actions.rectify.lib.btn.Rotate90Bu
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageValues;
+import org.weasis.acquire.operations.impl.FlipActionListener;
+import org.weasis.acquire.operations.impl.RotationActionListener;
 
 public class RectifyPanel extends AbstractAcquireActionPanel {
     private static final long serialVersionUID = 4041145212218086219L;
@@ -47,6 +49,8 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     @Override
     public void initValues(AcquireImageInfo info, AcquireImageValues values) {
         orientationPanel.setSliderValue(values.getOrientation());
+        ((RotationActionListener) rotate90btn.getActionListener()).setValue(values.getRotation());
+        ((FlipActionListener) flipBtn.getActionListener()).setValue(values.isFlip());
         repaint();
     }
 }

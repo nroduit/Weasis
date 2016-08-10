@@ -21,6 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import org.weasis.acquire.explorer.util.ImageInfoHelper;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
 
 public class AcquirePublishDialog extends JDialog {
     private static final long serialVersionUID = -8736946182228791444L;
@@ -52,6 +54,8 @@ public class AcquirePublishDialog extends JDialog {
         this.publishPanel = publishPanel;
         this.initContent();
 
+        tree.getTree().addCheckingPath(new TreePath(tree.getModel().getRootNode().getPath()));
+
         setContentPane(content);
 
         setPreferredSize(new Dimension(700, 400));
@@ -61,7 +65,7 @@ public class AcquirePublishDialog extends JDialog {
     private JPanel initContent() {
         content.setBorder(new EmptyBorder(10, 15, 10, 15));
         content.setLayout(new BorderLayout());
-        JLabel question = new JLabel("Quels images souhaitez vous publier ?");
+        JLabel question = new JLabel("Select the images to be published");
         question.setFont(FontTools.getFont12Bold());
         JPanel responsesPanel = new JPanel(new BorderLayout());
         responsesPanel.setBorder(BorderFactory.createEmptyBorder(30, 10, 10, 10));
@@ -109,7 +113,7 @@ public class AcquirePublishDialog extends JDialog {
 
         panel.setBorder(BorderFactory.createCompoundBorder(margin, line));
 
-        JLabel resolutionLabel = new JLabel("Résolution : ");
+        JLabel resolutionLabel = new JLabel("Resolution" + StringUtil.COLON_AND_SPACE);
 
         panel.add(resolutionLabel);
         panel.add(resolutionCombo);
@@ -181,7 +185,18 @@ public class AcquirePublishDialog extends JDialog {
     }
 
     public enum EResolution {
-        original, pacs_hd, pacs_md;
+        original("Original"), hd("High Resolution"), md("Medium Resolution");
+
+        private String title;
+
+        EResolution(String title) {
+            this.title = title;
+        }
+        
+        @Override
+        public String toString() {
+            return title;
+        }
     }
 
 }

@@ -1,12 +1,14 @@
 package org.weasis.acquire.graphics;
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.util.Collections;
 import java.util.List;
 
 import javax.swing.Icon;
+import javax.swing.JOptionPane;
 
 import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.explorer.AcquireImageInfo;
@@ -52,9 +54,8 @@ public class CropRectangleGraphic extends RectangleGraphic {
             AcquireImageInfo info = AcquireManager.getCurrentAcquireImageInfo();
             if (info != null) {
                 GraphicModel graphicManager = AcquireObject.getView().getGraphicManager();
-
                 graphicManager.getModels()
-                    .removeIf(model -> model.getLayer().getType() == getLayerType() && model != this);
+                    .removeIf(g -> g.getLayer().getType() == getLayerType() && g != this);
 
                 info.clearPreProcess();
 
@@ -90,6 +91,18 @@ public class CropRectangleGraphic extends RectangleGraphic {
 
     @Override
     public CropRectangleGraphic copy() {
+        if(!pts.isEmpty()){
+            // Do not allow to copy it elsewhere
+            return null;
+        }
+        AcquireImageInfo info = AcquireManager.getCurrentAcquireImageInfo();
+        if (info != null) {
+            Rectangle area =info.getCurrentValues().getCropZone();
+            if(area !=null){
+                JOptionPane.showMessageDialog(AcquireObject.getView().getJComponent(), "First reset crop before applying a new area.");
+                return null;
+            }
+        }
         return new CropRectangleGraphic(this);
     }
 }

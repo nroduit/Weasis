@@ -1,5 +1,7 @@
 package org.weasis.dicom.codec;
 
+import java.util.function.Predicate;
+
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.VR;
@@ -30,9 +32,12 @@ public class TagSeq extends TagD {
 
             if (val instanceof Attributes) {
                 Attributes dataset = (Attributes) val;
-                for (TagW tag : macro.getTags()) {
-                    if (tag != null) {
-                        tag.readValue(dataset, tagabale);
+                Predicate<? super Attributes> predicate = macro.getApplicable();
+                if (predicate == null || predicate.test(dataset)) {
+                    for (TagW tag : macro.getTags()) {
+                        if (tag != null) {
+                            tag.readValue(dataset, tagabale);
+                        }
                     }
                 }
             }
@@ -42,10 +47,16 @@ public class TagSeq extends TagD {
     public static class MacroSeqData {
         private final Attributes attributes;
         private final TagW[] tags;
+        private final Predicate<? super Attributes> applicable;
 
         public MacroSeqData(Attributes attributes, TagW[] tags) {
+            this(attributes, tags, null);
+        }
+
+        public MacroSeqData(Attributes attributes, TagW[] tags, Predicate<? super Attributes> applicable) {
             this.attributes = attributes;
             this.tags = tags;
+            this.applicable = applicable;
         }
 
         public Attributes getAttributes() {
@@ -54,6 +65,10 @@ public class TagSeq extends TagD {
 
         public TagW[] getTags() {
             return tags;
+        }
+
+        public Predicate<? super Attributes> getApplicable() {
+            return applicable;
         }
     }
 }

@@ -17,6 +17,7 @@ public abstract class AbstractRectifyButton extends JButton {
     
     public abstract ActionListener getActionListener();
     
+    @Override
     public abstract Icon getIcon();
     
     public abstract String getToolTip();

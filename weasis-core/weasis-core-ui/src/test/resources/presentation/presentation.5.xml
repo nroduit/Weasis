@@ -6,7 +6,7 @@
 		</series>
 	</references>
 	<layers>
-		<dragLayer level="40" locked="false" type="DRAW" visible="true"
+		<layer level="40" locked="false" type="DRAW" visible="true"
 			uuid="test.layer-abcd-123-efg45.0" />
 	</layers>
 	<graphics>

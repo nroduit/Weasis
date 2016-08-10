@@ -14,7 +14,8 @@
 		$V => the value which can be inserted into a text
 		$V:l$25$ => the value is limited to 25 characters followed by "..."
 		$V:f$#,##0.##$ => java pattern to display decimal number -->
-	<!-- The value of <p> is the name of variable available of the class TagW (see https://github.com/nroduit/Weasis/blob/master/weasis-core/weasis-core-api/src/main/java/org/weasis/core/api/media/data/TagW.java), 
+	<!-- The value of <p> is the name of variable of DICOM Attributes (see http://dicom.nema.org/medical/dicom/current/output/chtml/part06/chapter_6.html) 
+		or available in the class TagW (see https://github.com/nroduit/Weasis/blob/master/weasis-core/weasis-core-api/src/main/java/org/weasis/core/api/media/data/TagW.java), 
 		it can contain several values separated by a comma to display a value when the previous one is not available (null) -->
 
 	<!-- Uncomment to override the default configuration which is already defined in Weasis source code  -->

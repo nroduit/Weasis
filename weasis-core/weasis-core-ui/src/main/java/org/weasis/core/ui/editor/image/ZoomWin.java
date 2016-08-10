@@ -121,7 +121,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         disOp.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, z.getInterpolation());
 
         actionsInView.put(SYNCH_CMD, z.isLensSynchronize());
-        actionsInView.put(ActionW.DRAW.cmd(), z.isLensShowDrawings());
+        actionsInView.put(ActionW.DRAWINGS.cmd(), z.isLensShowDrawings());
         actionsInView.put(FREEZE_CMD, SyncType.NONE);
 
         Color bckColor = UIManager.getColor("Panel.background"); //$NON-NLS-1$
@@ -230,7 +230,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
-        if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
+        if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
             graphicManager.draw(g2d, transform, inverseTransform,
                 new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
                     modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
@@ -273,7 +273,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             affineTransform.scale(-1.0, 1.0);
             affineTransform.translate(-getViewModel().getModelArea().getWidth(), 0.0);
         }
-        Point offset = (Point) view2d.getActionValue("layer.offset");
+        Point offset = (Point) view2d.getActionValue(DefaultView2d.PROP_LAYER_OFFSET);
         if (offset != null) {
             affineTransform.translate(-offset.getX(), -offset.getY());
         }

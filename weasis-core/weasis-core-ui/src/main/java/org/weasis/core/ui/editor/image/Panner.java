@@ -12,6 +12,7 @@ import java.io.File;
 import javax.swing.event.MouseInputAdapter;
 
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Thumbnail;
@@ -40,8 +41,8 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
     }
 
     @Override
-    protected void init(MediaElement<?> media, boolean keepMediaCache) {
-        super.init(media, keepMediaCache);
+    protected void init(MediaElement<?> media, boolean keepMediaCache, OpManager opManager) {
+        super.init(media, keepMediaCache, opManager);
     }
 
     @Override
@@ -86,7 +87,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
             if (img != null) {
                 thumbnailPath = null;
                 readable = true;
-                buildThumbnail(img, false);
+                buildThumbnail(img, false, view.getImageLayer().getPreprocessing());
                 updateImageSize();
             }
         }

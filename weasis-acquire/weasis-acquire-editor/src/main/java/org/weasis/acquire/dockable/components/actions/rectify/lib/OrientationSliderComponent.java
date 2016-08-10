@@ -28,7 +28,7 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
         super(panel, "Orientation");
         addChangeListener(new RectifyOrientationChangeListener());
     }
-
+    
     @Override
     public int getDefaultValue() {
         return RECTIFY_ORIENTATION_DEFAULT;

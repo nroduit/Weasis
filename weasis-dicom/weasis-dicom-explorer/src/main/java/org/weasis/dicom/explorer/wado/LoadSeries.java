@@ -474,7 +474,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                     new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel, null, dicomSeries));
             });
 
-            Thumbnail.THUMB_LOADER.submit(() -> loadThumbnail(instance, wadoParameters));
+           loadThumbnail(instance, wadoParameters);
         }
     }
 

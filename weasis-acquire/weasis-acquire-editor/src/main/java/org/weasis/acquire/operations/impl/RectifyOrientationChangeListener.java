@@ -10,7 +10,6 @@ import org.weasis.acquire.utils.GraphicHelper;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.model.layer.LayerType;
 
 /**
  * 
@@ -32,7 +31,7 @@ public class RectifyOrientationChangeListener extends AcquireObject implements C
             AcquireImageInfo imageInfo = getImageInfo();
             int angle = s.getValue();
 
-            getView().getGraphicManager().deleteByLayerType(LayerType.ACQUIRE);
+            imageInfo.removeLayer(getView());
             if (angle % 90 != 0) {
                 GraphicHelper.newGridLayer(getView()); // Add a grid to the layer
             }

@@ -79,7 +79,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                zoomWin.setActionInView(ActionW.DRAW.cmd(), jCheckBoxMenuItemDraw.isSelected());
+                zoomWin.setActionInView(ActionW.DRAWINGS.cmd(), jCheckBoxMenuItemDraw.isSelected());
                 zoomWin.repaint();
             }
         });
@@ -146,7 +146,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
     public void enableMenuItem() {
         // Do not trigger actionLinstener
         jCheckBoxMenutemSychronize.setSelected((Boolean) zoomWin.getActionValue(ZoomWin.SYNCH_CMD));
-        jCheckBoxMenuItemDraw.setSelected((Boolean) zoomWin.getActionValue(ActionW.DRAW.cmd()));
+        jCheckBoxMenuItemDraw.setSelected((Boolean) zoomWin.getActionValue(ActionW.DRAWINGS.cmd()));
         Object type = zoomWin.getActionValue(ZoomWin.FREEZE_CMD);
         resetFreeze.setEnabled(SyncType.PARENT_PARAMETERS.equals(type) || SyncType.PARENT_IMAGE.equals(type));
 

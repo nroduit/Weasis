@@ -17,10 +17,10 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.SwingPropertyChangeSupport;
@@ -76,6 +76,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     public void setAction(ActionState action) {
         actions.put(action.getActionW(), action);
+    }
+
+    public void removeAction(ActionW action) {
+        actions.remove(action);
     }
 
     protected SliderCineListener getMoveTroughSliceAction(int speed, final TIME time, double mouseSensivity) {
@@ -430,6 +434,18 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
         };
     }
+    
+    protected ComboItemListener newDrawAction(Graphic[] graphics) {
+        return new ComboItemListener(ActionW.DRAW_GRAPHICS, Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+
+            @Override
+            public void itemStateChanged(Object object) {
+                if (object instanceof Graphic && selectedView2dContainer != null) {
+                    selectedView2dContainer.setDrawActions((Graphic) object);
+                }
+            }
+        };
+    }
 
     protected ToggleButtonListener newDrawOnlyOnceAction() {
         return new ToggleButtonListener(ActionW.DRAW_ONLY_ONCE, true) {
@@ -521,40 +537,38 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         return null;
     }
 
+    public boolean isActionRegistered(ActionW action) {
+        if (action != null) {
+            return actions.containsKey(action);
+        }
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
     public <T> Optional<T> getAction(ActionW action, Class<T> type) {
         Objects.requireNonNull(action);
         Objects.requireNonNull(type);
 
         ActionState val = actions.get(action);
-        if (val == null || type.isAssignableFrom(val.getClass())){
-            return Optional.ofNullable((T) val) ;
+        if (val == null || type.isAssignableFrom(val.getClass())) {
+            return Optional.ofNullable((T) val);
         }
         throw new IllegalStateException("The class doesn't match to the object!");
     }
 
-    public ActionW getActionFromCommand(String command) {
-        if (command != null) {
-            for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
-                ActionW action = iterator.next();
-                if (action.cmd().equals(command)) {
-                    return action;
-                }
-            }
+    public Optional<ActionW> getActionFromCommand(String command) {
+        if (command == null) {
+            return Optional.empty();
         }
-        return null;
+        return actions.keySet().stream().filter(Objects::nonNull).filter(a -> a.cmd().equals(command)).findFirst();
     }
 
-    public ActionW getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
-        if (keyEvent != 0) {
-            for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
-                ActionW action = iterator.next();
-                if (action.getKeyCode() == keyEvent && action.getModifier() == modifier) {
-                    return action;
-                }
-            }
+    public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
+        if (keyEvent == 0) {
+            return Optional.empty();
         }
-        return null;
+        return actions.keySet().stream().filter(Objects::nonNull)
+            .filter(a -> a.getKeyCode() == keyEvent && a.getModifier() == modifier).findFirst();
     }
 
     public void changeLeftMouseAction(String command) {
@@ -586,7 +600,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     public Collection<ActionState> getAllActionValues() {
-        return actions.values();
+        return actions.values().stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public MouseActions getMouseActions() {
@@ -615,7 +629,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     public synchronized void enableActions(boolean enabled) {
         enabledAction = enabled;
-        for (ActionState a : actions.values()) {
+        for (ActionState a : getAllActionValues()) {
             a.enableAction(enabled);
         }
     }

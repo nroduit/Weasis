@@ -131,16 +131,12 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
         if (measure instanceof ComboItemListener) {
-            final JPanel p_icons = new JPanel();
+            final JPanel pIcons = new JPanel();
             JToogleButtonGroup measures = ((ComboItemListener) measure).createButtonGroup();
             JToggleButton[] items = measures.getJToggleButtonList();
 
             GridBagLayout iconLayout = new GridBagLayout();
-            iconLayout.columnWidths = new int[] { 0, 0, 0, 0 };
-            iconLayout.rowHeights = new int[] { 0, 0, 0 };
-            iconLayout.columnWeights = new double[] { 0.0, 0.0, 0.0 };
-            iconLayout.rowWeights = new double[] { 0.0, 0.0, 0.0 };
-            p_icons.setLayout(iconLayout);
+            pIcons.setLayout(iconLayout);
             for (int i = 0; i < items.length; i++) {
                 items[i].addActionListener(e -> {
                     ImageViewerPlugin<? extends ImageElement> view = eventManager.getSelectedView2dContainer();
@@ -166,10 +162,10 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
                 if (size != null && size.width > size.height) {
                     items[i].setPreferredSize(new Dimension(size.height + 2, size.height));
                 }
-                p_icons.add(items[i], constraints);
+                pIcons.add(items[i], constraints);
             }
             JPanel panelLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-            panelLeft.add(p_icons);
+            panelLeft.add(pIcons);
             transform.add(panelLeft);
         }
         transform.add(Box.createVerticalStrut(5));

@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
@@ -45,6 +44,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.GraphicLayer;
+import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 
@@ -97,7 +97,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         info.add(new DefaultMutableTreeNode(LayerAnnotation.FRAME, true));
         info.add(new DefaultMutableTreeNode(LayerAnnotation.PIXEL, true));
         rootNode.add(info);
-        drawings = new DefaultMutableTreeNode(ActionW.DRAW, true);
+        drawings = new DefaultMutableTreeNode(ActionW.DRAWINGS, true);
         rootNode.add(drawings);
 
         DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
@@ -145,7 +145,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         if (view != null) {
             initPathSelection = true;
             // Image node
-            initPathSelection(getTreePath(image), view.getImageLayer().isVisible());
+            initPathSelection(getTreePath(image), view.getImageLayer().getVisible());
 
             // Annotations node
             LayerAnnotation layer = view.getInfoLayer();
@@ -194,13 +194,14 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private void initLayers(ViewCanvas<?> view) {
         // Drawings node
         drawings.removeAllChildren();
-        Boolean draw = (Boolean) view.getActionValue(ActionW.DRAW.cmd());
+        Boolean draw = (Boolean) view.getActionValue(ActionW.DRAWINGS.cmd());
         TreePath drawingsPath = getTreePath(drawings);
         initPathSelection(getTreePath(drawings), draw == null ? true : draw);
 
         List<GraphicLayer> layers = view.getGraphicManager().getLayers();
+        layers.removeIf(l -> l.getType() == LayerType.TEMP_DRAW);
         for (GraphicLayer layer : layers) {
-            DefaultMutableTreeNode treeNode = new DefaultMutableTreeNode(layer.getType(), true);
+            DefaultMutableTreeNode treeNode = new DefaultMutableTreeNode(layer, true);
             drawings.add(treeNode);
             initPathSelection(getTreePath(treeNode), layer.getVisible());
         }
@@ -239,7 +240,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 if (rootNode.equals(parent)) {
                     if (image.equals(selObject)) {
                         for (ViewCanvas<ImageElement> v : views) {
-                            if (selected != v.getImageLayer().isVisible()) {
+                            if (selected != v.getImageLayer().getVisible()) {
                                 v.getImageLayer().setVisible(selected);
                                 v.getJComponent().repaint();
                             }
@@ -271,15 +272,12 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 } else if (drawings.equals(parent)) {
                     if (selObject instanceof DefaultMutableTreeNode) {
                         if (((DefaultMutableTreeNode) selObject).getUserObject() instanceof LayerType) {
-                            LayerType layerType = (LayerType) ((DefaultMutableTreeNode) selObject).getUserObject();
+                            Layer layer = (Layer) ((DefaultMutableTreeNode) selObject).getUserObject();
                             for (ViewCanvas<ImageElement> v : views) {
-                                Optional<GraphicLayer> layer = v.getGraphicManager().findLayerByType(layerType);
-                                layer.ifPresent(l -> {
-                                    if (!Objects.equals(l.getVisible(), selected)) {
-                                        l.setVisible(selected);
-                                        v.getJComponent().repaint();
-                                    }
-                                });
+                                if (!Objects.equals(layer.getVisible(), selected)) {
+                                    layer.setVisible(selected);
+                                    v.getJComponent().repaint();
+                                }
                             }
                         }
                     }
@@ -321,29 +319,27 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             iniTreeValues(((View2dContainer) event.getSeriesViewer()).getSelectedImagePane());
         } else if (EVENT.ADD_LAYER.equals(e)) {
             Object obj = event.getSharedObject();
-            if (obj instanceof String) {
+            if (obj instanceof Layer) {
                 DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
                 DefaultMutableTreeNode node = new DefaultMutableTreeNode(obj, true);
                 drawings.add(node);
                 dtm.nodesWereInserted(drawings, new int[] { drawings.getIndex(node) });
-                if (event.getSeriesViewer() instanceof ImageViewerPlugin && node.getUserObject() instanceof LayerType) {
+                if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
                     ViewCanvas<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
-                    if (pane != null) {
-                        Optional<GraphicLayer> layer =
-                            pane.getGraphicManager().findLayerByType((LayerType) node.getUserObject());
-                        layer.filter(l -> l.getVisible()).ifPresent(l -> tree.addCheckingPath(getTreePath(node)));
+                    if (pane != null && ((Layer) obj).getVisible()) {
+                        tree.addCheckingPath(getTreePath(node));
                     }
                 }
             }
         } else if (EVENT.REMOVE_LAYER.equals(e)) {
             Object obj = event.getSharedObject();
-            if (obj instanceof String) {
-                String uid = (String) obj;
+            if (obj instanceof Layer) {
+                Layer layer = (Layer) obj;
                 Enumeration<?> en = drawings.children();
                 while (en.hasMoreElements()) {
                     Object node = en.nextElement();
                     if (node instanceof DefaultMutableTreeNode
-                        && uid.equals(((DefaultMutableTreeNode) node).getUserObject())) {
+                        && layer.equals(((DefaultMutableTreeNode) node).getUserObject())) {
                         DefaultMutableTreeNode n = (DefaultMutableTreeNode) node;
                         TreeNode parent = n.getParent();
                         int index = parent.getIndex(n);

@@ -538,7 +538,7 @@ public class WeasisWin {
                     }
                 });
             } else {
-                Component parent = WinUtil.getParentOfClass(oldWin, ConfiguredBackgroundPanel.class);
+                ConfiguredBackgroundPanel parent = WinUtil.getParentOfClass(oldWin, ConfiguredBackgroundPanel.class);
                 if (parent == null) {
                     return false;
                 } else {

@@ -229,7 +229,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     }
 
     private MouseActionAdapter getMouseAdapter(String action) {
-        if (action.equals(ActionW.MEASURE.cmd())) {
+        if (action.equals(ActionW.MEASURE.cmd()) || action.equals(ActionW.DRAW.cmd())) {
             return graphicMouseHandler;
         } else if (action.equals(ActionW.PAN.cmd())) {
             return getAction(ActionW.PAN);
@@ -239,9 +239,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             return getAction(ActionW.WINDOW);
         } else if (action.equals(ActionW.LEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
-        }
-        // Tricky action, see in addMouseAdapter()
-        else if (action.equals(ActionW.WINLEVEL.cmd())) {
+        } else if (action.equals(ActionW.WINLEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
         } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
             return getAction(ActionW.SCROLL_SERIES);
@@ -387,7 +385,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                     calibMenu.addActionListener(e -> {
                         ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                         String title = Messages.getString("View2d.man_calib"); //$NON-NLS-1$
-                        CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this);
+                        CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this, false);
                         int res = JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
                             title, JOptionPane.OK_CANCEL_OPTION);
                         if (layer != null) {
@@ -440,17 +438,19 @@ public class View2d extends DefaultView2d<ImageElement> {
                 synchronized (actionsButtons) {
                     for (int i = 0; i < actionsButtons.size(); i++) {
                         ActionW b = actionsButtons.get(i);
-                        JRadioButtonMenuItem radio =
-                            new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+                        if (eventManager.isActionRegistered(b)) {
+                            JRadioButtonMenuItem radio =
+                                new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
 
-                        radio.setActionCommand(b.cmd());
-                        radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
-                        // Trigger the selected mouse action
-                        radio.addActionListener(toolBar);
-                        // Update the state of the button in the toolbar
-                        radio.addActionListener(leftButtonAction);
-                        popupMenu.add(radio);
-                        groupButtons.add(radio);
+                            radio.setActionCommand(b.cmd());
+                            radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+                            // Trigger the selected mouse action
+                            radio.addActionListener(toolBar);
+                            // Update the state of the button in the toolbar
+                            radio.addActionListener(leftButtonAction);
+                            popupMenu.add(radio);
+                            groupButtons.add(radio);
+                        }
                     }
                 }
             }
@@ -519,7 +519,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             if ((evt.getModifiersEx() & getButtonMaskEx()) != 0) {
                 JPopupMenu popupMenu = null;
                 final List<Graphic> selected = View2d.this.getGraphicManager().getSelectedGraphics();
-                if (!selected.isEmpty()) {
+                if (!selected.isEmpty() && isDrawActionActive()) {
                     popupMenu = View2d.this.buildGraphicContextMenu(evt, selected);
                 } else if (View2d.this.getSourceImage() != null) {
                     popupMenu = View2d.this.buildContexMenu(evt);

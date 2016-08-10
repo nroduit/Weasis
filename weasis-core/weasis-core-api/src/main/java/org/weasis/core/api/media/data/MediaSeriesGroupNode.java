@@ -16,8 +16,6 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.api.util.StringUtil.Suffix;
 
 public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
@@ -51,8 +49,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public String toString() {
         String val = displayTag.getFormattedText(false, this);
-        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") //$NON-NLS-1$
-            : StringUtil.getTruncatedString(val, 25, Suffix.THREE_PTS);
+        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val"): val; //$NON-NLS-1$
     }
 
     @Override

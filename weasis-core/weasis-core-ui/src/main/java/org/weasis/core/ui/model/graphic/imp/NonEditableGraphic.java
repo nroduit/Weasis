@@ -114,6 +114,6 @@ public class NonEditableGraphic extends AbstractGraphic {
         if(stroke != null){
             return stroke;
         }
-        return super.getDashStroke(lineThickness);
+        return super.getStroke(lineThickness);
     }
 }

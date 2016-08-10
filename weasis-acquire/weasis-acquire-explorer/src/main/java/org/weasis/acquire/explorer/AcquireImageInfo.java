@@ -22,6 +22,7 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.layer.Layer;
@@ -141,7 +142,7 @@ public class AcquireImageInfo {
                 postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE,
                     nextValues.getFullRotation());
             }
-            if (nextValues.getCropZone() != null && !nextValues.getCropZone().equals(currentValues.getCropZone())) {
+            if (!Objects.equals(nextValues.getCropZone(),currentValues.getCropZone()) ) {
                 Rectangle area = nextValues.getCropZone();
                 postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, area);
                 postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_SHIFT_TO_ORIGIN, true);
@@ -149,7 +150,7 @@ public class AcquireImageInfo {
                 if (view != null && area != null && !area.equals(view.getViewModel().getModelArea())) {
                     ((DefaultViewModel) view.getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
                     view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
-                    view.setActionsInView("layer.offset", new Point(area.x, area.y));
+                    view.setActionsInView(DefaultView2d.PROP_LAYER_OFFSET, new Point(area.x, area.y));
                     view.resetZoom();
                 }
             }
@@ -209,7 +210,7 @@ public class AcquireImageInfo {
     }
 
     private void updateTags(ImageElement image) {
-        this.image.setTag(TagW.ImageWidth, image.getTagValue(TagW.ImageWidth));        
+        this.image.setTag(TagW.ImageWidth, image.getTagValue(TagW.ImageWidth));
         this.image.setTag(TagW.ImageHeight, image.getTagValue(TagW.ImageHeight));
     }
 
@@ -242,6 +243,7 @@ public class AcquireImageInfo {
         image.setPixelSize(defaultValues.getCalibrationRatio());
 
         postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, defaultValues.getOrientation());
+        postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, defaultValues.isFlip());
         postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
         postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_SHIFT_TO_ORIGIN, null);
         postProcessOpManager.setParamValue(BrightnessOp.OP_NAME, BrightnessOp.P_BRIGTNESS_VALUE,

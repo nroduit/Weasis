@@ -12,7 +12,7 @@ import org.weasis.acquire.explorer.util.ImageFileHelper;
 
 public class ChangePathSelectionAction extends AbstractAction {
     private static final long serialVersionUID = -65145837841144613L;
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChangePathSelectionAction.class);
 
     private final AcquisitionView mainView;
 
@@ -21,7 +21,7 @@ public class ChangePathSelectionAction extends AbstractAction {
 
         putValue(Action.NAME, " ... ");
         putValue(Action.ACTION_COMMAND_KEY, "onChangeRootPath");
-        putValue(Action.SHORT_DESCRIPTION, "Sélection répertoire ");
+        putValue(Action.SHORT_DESCRIPTION, "Select a folder");
     }
 
     @Override

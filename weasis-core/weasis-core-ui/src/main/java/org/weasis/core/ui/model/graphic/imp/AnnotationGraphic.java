@@ -74,8 +74,8 @@ public class AnnotationGraphic extends AbstractDragGraphic {
             labelBounds = Optional.ofNullable(annotationGraphic.labelBounds).map(lb -> lb.getBounds2D()).orElse(null);
             labelWidth = annotationGraphic.labelWidth;
             labelHeight = annotationGraphic.labelHeight;
-            // TODO should be clone and copy before super()
-            labels = annotationGraphic.labels;
+            if (annotationGraphic.labels != null)
+                labels = annotationGraphic.labels.clone();
         }
     }
 
@@ -89,7 +89,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         if (!isShapeValid()) {
             throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
         }
-        buildShape(null);
+       // Do not build shape as labelBounds can be initialize only by the method setLabel()
     }
 
     protected void setHandlePointList(Point2D.Double ptAnchor, Point2D.Double ptBox) {

@@ -17,7 +17,6 @@ import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
 import java.lang.ref.Reference;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +100,10 @@ public class DicomImageElement extends ImageElement {
                 pixelSizeCalibrationDescription =
                     TagD.getTagValue(mediaIO, Tag.PixelSpacingCalibrationDescription, String.class);
             }
+            if (val == null || val.length != 2) {
+                val = TagD.getTagValue(mediaIO, Tag.NominalScannedPixelSpacing, double[].class);
+            }
+            
             if (val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
                 /*
                  * Pixel Spacing = Row Spacing \ Column Spacing => (Y,X) The first value is the row spacing in mm, that

@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.Serie;
@@ -18,6 +19,8 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultTreeCheckingModel;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
 public class PublishTreeModel {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PublishTreeModel.class);
+
     private final DefaultTreeModel model;
     private final TreeCheckingModel checkingModel;
     private final List<TreePath> defaultSelectedPaths;
@@ -39,18 +42,13 @@ public class PublishTreeModel {
 
     private DefaultTreeModel buildModel() {
         rootNode = new DefaultMutableTreeNode(AcquireManager.GLOBAL);
-        series.stream().forEach(serie -> {
-            serieNode = new DefaultMutableTreeNode(serie);
+        series.stream().forEach(s -> {
+            serieNode = new DefaultMutableTreeNode(s);
             rootNode.add(serieNode);
-            dictionary.get(serie).stream().forEach(createImageNode);
+            dictionary.get(s).forEach(image -> serieNode.add(new DefaultMutableTreeNode(image)));
         });
         return new DefaultTreeModel(rootNode, false);
     }
-
-    private Consumer<AcquireImageInfo> createImageNode = image -> {
-        DefaultMutableTreeNode node = new DefaultMutableTreeNode(image);
-        serieNode.add(node);
-    };
 
     public DefaultMutableTreeNode getRootNode() {
         return rootNode;

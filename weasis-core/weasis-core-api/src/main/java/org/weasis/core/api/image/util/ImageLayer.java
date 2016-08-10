@@ -40,9 +40,9 @@ public interface ImageLayer<E extends ImageElement> extends MeasurableLayer {
     boolean isEnableDispOperations();
 
     void setEnableDispOperations(boolean enabled);
+    
+    // Duplicate of Layer interface
+    void setVisible(Boolean visible);
 
-    void setVisible(boolean flag);
-
-    boolean isVisible();
-
+    Boolean getVisible();
 }

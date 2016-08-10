@@ -33,10 +33,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
-import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
-import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.image.MergeImgOp;
 import org.weasis.core.api.image.op.ShutterDescriptor;
 import org.weasis.core.api.image.util.ImageFiler;
@@ -78,6 +76,7 @@ public class ShutterOp extends AbstractOp {
     public ShutterOp copy() {
         return new ShutterOp(this);
     }
+
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();
@@ -104,8 +103,7 @@ public class ShutterOp extends AbstractOp {
 
                 Area shape = (Area) params.get(P_SHAPE);
                 if (shape != null) {
-                    Rectangle area =
-                        (Rectangle) ((PresentationStateReader) prReader).getTagValue(ActionW.CROP.cmd(), null);
+                    Rectangle area = (Rectangle) p.get(ActionW.CROP.cmd());
                     if (area != null) {
                         Area trArea = new Area(shape);
                         trArea.transform(AffineTransform.getTranslateInstance(-area.getX(), -area.getY()));

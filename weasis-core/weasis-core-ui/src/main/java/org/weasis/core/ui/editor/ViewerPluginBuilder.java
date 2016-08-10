@@ -249,7 +249,7 @@ public class ViewerPluginBuilder {
 
             for (MediaElement<?> media : medias) {
                 if (media instanceof ImageElement) {
-                    XmlSerializer.readMeasurementGraphics(new File(media.getFile().getPath() + ".xml"));
+                    XmlSerializer.readPresentationModel(new File(media.getFile().getPath() + ".xml"));
                 }
             }
 

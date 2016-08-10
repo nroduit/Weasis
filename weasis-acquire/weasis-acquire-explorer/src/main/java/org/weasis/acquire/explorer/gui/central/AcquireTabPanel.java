@@ -106,7 +106,9 @@ public class AcquireTabPanel extends JPanel {
 
     public void removeElements(AcquireCentralImagePanel currentPane, List<ImageElement> medias) {
         currentPane.removeElements(medias);
-
+        currentPane.revalidate();
+        currentPane.repaint();
+        
         if (currentPane.isEmpty()) {
             remove(selected.getSerie());
             serieList.revalidate();

@@ -35,6 +35,26 @@ public class DefaultUUID implements UUIDable, Serializable {
     }
 
     @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((uuid == null) ? 0 : uuid.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!(obj instanceof DefaultUUID))
+            return false;
+        DefaultUUID other = (DefaultUUID) obj;
+        if (!uuid.equals(other.uuid))
+            return false;
+        return true;
+    }
+
+    @Override
     public String toString() {
         return this.getClass().getSimpleName() + "[" + this.uuid + "]";
     }

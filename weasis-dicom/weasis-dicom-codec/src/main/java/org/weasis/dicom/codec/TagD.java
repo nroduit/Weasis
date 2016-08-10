@@ -186,12 +186,13 @@ public class TagD extends TagW {
         }
         return value;
     }
-    
+
     private Object readValue(Attributes dataset) {
         Object value;
         if (isStringFamilyType()) {
-            value = vmMax > 1 ? DicomMediaUtils.getStringArrayFromDicomElement(dataset, id, privateCreatorID,
-                (String[]) defaultValue) : dataset.getString(privateCreatorID, id, (String) defaultValue);
+            value = vmMax > 1
+                ? DicomMediaUtils.getStringArrayFromDicomElement(dataset, id, privateCreatorID, (String[]) defaultValue)
+                : dataset.getString(privateCreatorID, id, (String) defaultValue);
         } else if (TagType.DICOM_DATE.equals(type) || TagType.DICOM_TIME.equals(type)
             || TagType.DICOM_DATETIME.equals(type)) {
             value = vmMax > 1
@@ -205,13 +206,11 @@ public class TagD extends TagW {
                 : DicomMediaUtils.getIntegerFromDicomElement(dataset, id, privateCreatorID, (Integer) defaultValue);
         } else if (TagType.FLOAT.equals(type)) {
             value = vmMax > 1
-                ? DicomMediaUtils.getFloatArrayFromDicomElement(dataset, id, privateCreatorID,
-                    (float[]) defaultValue)
+                ? DicomMediaUtils.getFloatArrayFromDicomElement(dataset, id, privateCreatorID, (float[]) defaultValue)
                 : DicomMediaUtils.getFloatFromDicomElement(dataset, id, privateCreatorID, (Float) defaultValue);
         } else if (TagType.DOUBLE.equals(type)) {
             value = vmMax > 1
-                ? DicomMediaUtils.getDoubleArrayFromDicomElement(dataset, id, privateCreatorID,
-                    (double[]) defaultValue)
+                ? DicomMediaUtils.getDoubleArrayFromDicomElement(dataset, id, privateCreatorID, (double[]) defaultValue)
                 : DicomMediaUtils.getDoubleFromDicomElement(dataset, id, privateCreatorID, (Double) defaultValue);
         } else if (TagType.DICOM_SEQUENCE.equals(type)) {
             value = dataset.getSequence(privateCreatorID, id);
@@ -220,7 +219,7 @@ public class TagD extends TagW {
         }
         return value;
     }
-    
+
     private Object readValue(XMLStreamReader xmler) {
         Object value;
         if (isStringFamilyType()) {
@@ -228,8 +227,8 @@ public class TagD extends TagW {
                 : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
         } else if (TagType.DICOM_DATE.equals(type) || TagType.DICOM_TIME.equals(type)
             || TagType.DICOM_DATETIME.equals(type)) {
-            value = vmMax > 1 ? TagUtil.getDatesFromElement(xmler, keyword, type, (TemporalAccessor[]) defaultValue)
-                : TagUtil.getDateFromElement(xmler, keyword, type, (TemporalAccessor) defaultValue);
+            value = vmMax > 1 ? getDatesFromElement(xmler, keyword, type, (TemporalAccessor[]) defaultValue)
+                : getDateFromElement(xmler, keyword, type, (TemporalAccessor) defaultValue);
         } else if (TagType.INTEGER.equals(type)) {
             value = vmMax > 1 ? TagUtil.getIntArrayTagAttribute(xmler, keyword, (int[]) defaultValue)
                 : TagUtil.getIntegerTagAttribute(xmler, keyword, (Integer) defaultValue);
@@ -247,7 +246,7 @@ public class TagD extends TagW {
         }
         return value;
     }
-    
+
     private Object readValue(String data) {
         if (!StringUtil.hasText(data)) {
             return null;
@@ -354,7 +353,6 @@ public class TagD extends TagW {
         return tags.get(keyword);
     }
 
-    
     public static String getKeywordFromTag(int tagID, String privateCreatorID) {
         return ElementDictionary.getElementDictionary(privateCreatorID).keywordOf(tagID);
     }
@@ -388,7 +386,15 @@ public class TagD extends TagW {
             } else if (VR.SQ.equals(vr)) {
                 return TagType.DICOM_SEQUENCE;
             } else {
-                return TagType.BYTE_ARRAY;
+                // Binary value type
+                if (VR.FD.equals(vr)) {
+                    return TagType.DOUBLE;
+                } else if (VR.FL.equals(vr)) {
+                    return TagType.FLOAT;
+                } else if (VR.SL.equals(vr) || VR.SS.equals(vr) || VR.UL.equals(vr) || VR.US.equals(vr)) {
+                    return TagType.INTEGER;
+                }
+                return TagType.BYTE;
             }
         }
         return TagType.STRING;
@@ -476,8 +482,8 @@ public class TagD extends TagW {
                                 }
 
                                 String defaultValue = null;
-                                if (tagID == Tag.PatientID && tagID == Tag.PatientName && tagID == Tag.StudyInstanceUID
-                                    && tagID == Tag.SeriesInstanceUID && tagID == Tag.Modality) {
+                                if (tagID == Tag.PatientID || tagID == Tag.PatientName || tagID == Tag.StudyInstanceUID
+                                    || tagID == Tag.SeriesInstanceUID || tagID == Tag.Modality) {
                                     defaultValue = TagW.NO_VALUE;
                                 }
 
@@ -668,7 +674,7 @@ public class TagD extends TagW {
         }
         return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     }
-    
+
     public static LocalDateTime dateTime(int dateID, int timeID, TagReadable tagable) {
         LocalDate date = TagD.getTagValue(tagable, dateID, LocalDate.class);
         LocalTime time = TagD.getTagValue(tagable, timeID, LocalTime.class);
@@ -693,5 +699,49 @@ public class TagD extends TagW {
             return DICOM_TIME.format(time);
         }
         return ""; //$NON-NLS-1$
+    }
+
+    public static TemporalAccessor getDateFromElement(XMLStreamReader xmler, String attribute, TagType type,
+        TemporalAccessor defaultValue) {
+        if (attribute != null) {
+            String val = xmler.getAttributeValue(null, attribute);
+            if (val != null) {
+                if (TagType.DICOM_TIME.equals(type)) {
+                    return getDicomTime(val);
+                } else if (TagType.DICOM_DATETIME.equals(type)) {
+                    return getDicomDateTime(null, val);
+                } else {
+                    return getDicomDate(val);
+                }
+            }
+        }
+        return defaultValue;
+    }
+
+    public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
+        TemporalAccessor[] defaultValue) {
+        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\");
+    }
+
+    public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
+        TemporalAccessor[] defaultValue, String separator) {
+        if (attribute != null) {
+            String val = xmler.getAttributeValue(null, attribute);
+            if (val != null) {
+                String[] strs = val.split(separator);
+                TemporalAccessor[] vals = new TemporalAccessor[strs.length];
+                for (int i = 0; i < strs.length; i++) {
+                    if (TagType.TIME.equals(type)) {
+                        vals[i] = getDicomTime(strs[i]);
+                    } else if (TagType.DATETIME.equals(type)) {
+                        vals[i] = getDicomDateTime(null, strs[i]);
+                    } else {
+                        vals[i] = getDicomDate(strs[i]);
+                    }
+                }
+                return vals;
+            }
+        }
+        return defaultValue;
     }
 }

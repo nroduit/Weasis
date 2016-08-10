@@ -48,9 +48,9 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
 
-    public static final List<ActionW> actionsButtons = Collections.synchronizedList(new ArrayList<ActionW>(
+    public static final List<ActionW> actionsButtons = Collections.synchronizedList(new ArrayList<>(
         Arrays.asList(new ActionW[] { ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM,
-            ActionW.ROTATION, ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.CROSSHAIR, ActionW.NO_ACTION })));
+            ActionW.ROTATION, ActionW.MEASURE, ActionW.DRAW, ActionW.CONTEXTMENU, ActionW.CROSSHAIR, ActionW.NO_ACTION })));
 
     public static final ActionW[] actionsScroll =
         { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION, ActionW.NO_ACTION };
@@ -203,15 +203,17 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         synchronized (actionsButtons) {
             for (int i = 0; i < actionsButtons.size(); i++) {
                 ActionW b = actionsButtons.get(i);
-                JRadioButtonMenuItem radio =
-                    new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
-                radio.setActionCommand(b.cmd());
-                radio.addActionListener(this);
-                if (MouseActions.LEFT.equals(type)) {
-                    radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+                if (eventManager.isActionRegistered(b)) {
+                    JRadioButtonMenuItem radio =
+                        new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+                    radio.setActionCommand(b.cmd());
+                    radio.addActionListener(this);
+                    if (MouseActions.LEFT.equals(type)) {
+                        radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+                    }
+                    popupMouseButtons.add(radio);
+                    groupButtons.add(radio);
                 }
-                popupMouseButtons.add(radio);
-                groupButtons.add(radio);
             }
         }
         return popupMouseButtons;
@@ -224,12 +226,14 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         popupMouseScroll.setInvoker(dropButton);
         ButtonGroup groupButtons = new ButtonGroup();
         for (int i = 0; i < actionsScroll.length; i++) {
-            JRadioButtonMenuItem radio = new JRadioButtonMenuItem(actionsScroll[i].getTitle(),
-                actionsScroll[i].getIcon(), actionsScroll[i].cmd().equals(action));
-            radio.setActionCommand(actionsScroll[i].cmd());
-            radio.addActionListener(this);
-            popupMouseScroll.add(radio);
-            groupButtons.add(radio);
+            if (eventManager.isActionRegistered(actionsScroll[i])) {
+                JRadioButtonMenuItem radio = new JRadioButtonMenuItem(actionsScroll[i].getTitle(),
+                    actionsScroll[i].getIcon(), actionsScroll[i].cmd().equals(action));
+                radio.setActionCommand(actionsScroll[i].cmd());
+                radio.addActionListener(this);
+                popupMouseScroll.add(radio);
+                groupButtons.add(radio);
+            }
         }
 
         return popupMouseScroll;
@@ -256,14 +260,11 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
     public boolean isCommandActive(String cmd) {
         int active = eventManager.getMouseActions().getActiveButtons();
-        if (cmd != null && cmd.equals(mouseLeft.getActionCommand())
+        return cmd != null && cmd.equals(mouseLeft.getActionCommand())
             || (((active & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK)
                 && ((mouseMiddle == null) ? false : cmd.equals(mouseMiddle.getActionCommand())))
             || (((active & InputEvent.BUTTON3_DOWN_MASK) == InputEvent.BUTTON3_DOWN_MASK)
-                && ((mouseRight == null) ? false : cmd.equals(mouseRight.getActionCommand())))) {
-            return true;
-        }
-        return false;
+                && ((mouseRight == null) ? false : cmd.equals(mouseRight.getActionCommand())));
     }
 
     public void changeButtonState(String type, String action) {

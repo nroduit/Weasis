@@ -4,7 +4,6 @@ import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireAction;
 import org.weasis.acquire.dockable.components.actions.AcquireActionPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
-import org.weasis.core.ui.model.layer.LayerType;
 
 /**
  * 
@@ -23,25 +22,15 @@ public class RectifyAction extends AbstractAcquireAction {
     public void validate() {
         AcquireImageInfo imageInfo = getImageInfo();
         imageInfo.applyPostProcess(getView());
-        getView().getGraphicManager().deleteByLayerType(LayerType.ACQUIRE);
-    }
-
-    @Override
-    public boolean cancel() {
-        boolean cancel = super.cancel();
-
-        getView().getGraphicManager().deleteByLayerType(LayerType.ACQUIRE);
-        return cancel;
+        getImageInfo().removeLayer(getView());
     }
 
     @Override
     public boolean reset() {
         boolean doReset = super.reset();
 
-        if (doReset) {
-            getView().getGraphicManager().deleteByLayerType(LayerType.ACQUIRE);
-        }
-
+        AcquireImageInfo imageInfo = getImageInfo();
+        imageInfo.applyPreProcess(getView());
         return doReset;
     }
 

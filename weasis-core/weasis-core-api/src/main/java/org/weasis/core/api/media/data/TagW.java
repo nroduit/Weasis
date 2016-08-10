@@ -55,7 +55,7 @@ public class TagW implements Serializable {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
 
         STRING(String.class), TEXT(String.class), URI(String.class), DATE(LocalDate.class),
-        DATETIME(LocalDateTime.class), TIME(LocalTime.class), BOOLEAN(Boolean.class), BYTE_ARRAY(Byte.class),
+        DATETIME(LocalDateTime.class), TIME(LocalTime.class), BOOLEAN(Boolean.class), BYTE(Byte.class),
         INTEGER(Integer.class), FLOAT(Float.class), DOUBLE(Double.class), COLOR(Color.class),
         THUMBNAIL(Thumbnail.class), LIST(List.class), OBJECT(Object.class), DICOM_DATE(LocalDate.class),
         DICOM_DATETIME(LocalDateTime.class), DICOM_TIME(LocalTime.class), DICOM_PERIOD(String.class),
@@ -120,7 +120,7 @@ public class TagW implements Serializable {
     public static final TagW ShutterRGBColor = new TagW("ShutterRGBColor", TagType.COLOR); //$NON-NLS-1$
     public static final TagW ShutterPSValue = new TagW("ShutterPSValue", TagType.INTEGER); //$NON-NLS-1$
     public static final TagW OverlayBitMask = new TagW("OverlayBitMask", TagType.INTEGER); //$NON-NLS-1$
-    public static final TagW OverlayBurninData = new TagW("OverlayBurninData", TagType.BYTE_ARRAY); //$NON-NLS-1$
+    public static final TagW OverlayBurninDataPath = new TagW("OverlayBurninDataPath", TagType.STRING); //$NON-NLS-1$
     public static final TagW HasOverlay = new TagW("HasOverlay", TagType.BOOLEAN); //$NON-NLS-1$
 
     public static final TagW WadoCompressionRate = new TagW("WadoCompressionRate", TagType.INTEGER); //$NON-NLS-1$

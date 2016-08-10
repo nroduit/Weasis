@@ -159,6 +159,10 @@ public final class JIThumbnailCache {
             if (img == null) {
                 img = diskObject.getRenderedImage(diskObject.getImage(null));
             }
+            
+            if (img == null) {
+                return;
+            }
 
             final double scale = Math.min(ThumbnailRenderer.ICON_DIM.height / (double) img.getHeight(),
                 ThumbnailRenderer.ICON_DIM.width / (double) img.getWidth());

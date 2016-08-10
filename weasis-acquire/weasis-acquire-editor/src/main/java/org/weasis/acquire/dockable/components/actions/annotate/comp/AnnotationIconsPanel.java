@@ -1,20 +1,26 @@
 package org.weasis.acquire.dockable.components.actions.annotate.comp;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.Optional;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.JToogleButtonGroup;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -22,20 +28,29 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 
 @SuppressWarnings("serial")
 public class AnnotationIconsPanel extends JPanel {
+    private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
     public AnnotationIconsPanel() {
-        setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-       createButtons();
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        createButtons(ActionW.MEASURE, ActionW.DRAW_MEASURE);
+        createButtons(ActionW.DRAW, ActionW.DRAW_GRAPHICS);
     }
 
-    private void createButtons() {
-        final JPanel p_icons = new JPanel();
-        p_icons.setBorder(new TitledBorder(new EmptyBorder(5, 5, 5, 5), "Graphics", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-        
-        JToogleButtonGroup measures = AnnotationActionState.getInstance().createButtonGroup();
+    private void createButtons(ActionW action, ActionW graphicAction) {
+        Optional<ComboItemListener> actionState =
+            EventManager.getInstance().getAction(graphicAction, ComboItemListener.class);
+        if (!actionState.isPresent()) {
+            return;
+        }
+
+        final JPanel pIcons = new JPanel();
+        pIcons.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, graphicAction.getTitle(),
+            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, FontTools.getFont12Bold(), Color.GRAY)));
+
+        JToogleButtonGroup measures = actionState.get().createButtonGroup();
         JToggleButton[] items = measures.getJToggleButtonList();
 
-        p_icons.setLayout(new GridBagLayout());
+        pIcons.setLayout(new GridBagLayout());
         for (int i = 0; i < items.length; i++) {
             items[i].addActionListener(e -> {
                 ImageViewerEventManager<ImageElement> eventManager = EventManager.getInstance();
@@ -43,7 +58,7 @@ public class AnnotationIconsPanel extends JPanel {
                 if (view != null) {
                     final ViewerToolBar toolBar = view.getViewerToolBar();
                     if (toolBar != null) {
-                        String cmd = ActionW.MEASURE.cmd();
+                        String cmd = action.cmd();
                         if (!toolBar.isCommandActive(cmd)) {
                             MouseActions mouseActions = eventManager.getMouseActions();
                             mouseActions.setAction(MouseActions.LEFT, cmd);
@@ -62,8 +77,10 @@ public class AnnotationIconsPanel extends JPanel {
             if (size != null && size.width > size.height) {
                 items[i].setPreferredSize(new Dimension(size.height + 2, size.height));
             }
-            p_icons.add(items[i], constraints);
+            pIcons.add(items[i], constraints);
         }
-        add(p_icons);
+        JPanel panelLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        panelLeft.add(pIcons);
+        add(panelLeft);
     }
 }

@@ -124,11 +124,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public static final String[] functions =
         { "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
-    private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
-        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
-
     /** The single instance of this singleton class. */
-
     private static EventManager instance;
 
     /**
@@ -146,6 +142,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
      */
 
     private EventManager() {
+        // Initialize actions with a null value. These are used by mouse or keyevent actions.
+        setAction(new BasicActionState(ActionW.WINLEVEL));
+        setAction(new BasicActionState(ActionW.CONTEXTMENU));
+        setAction(new BasicActionState(ActionW.NO_ACTION));
+        // setAction(new BasicActionState(ActionW.DRAW));
+        setAction(new BasicActionState(ActionW.MEASURE));
+
         setAction(getMoveTroughSliceAction(20, TIME.second, 0.1));
         setAction(newWindowAction());
         setAction(newLevelAction());
@@ -157,7 +160,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         setAction(newInverseStackAction());
         setAction(newLensAction());
         setAction(newLensZoomAction());
-        // iniAction(imageOverlayAction = newImageOverlayAction());
         setAction(newDrawOnlyOnceAction());
         setAction(newDefaulPresetAction());
 
@@ -171,8 +173,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         setAction(newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
-        setAction(
-            newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
+        setAction(newMeasurementAction(
+            MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
         setAction(newSpatialUnit(Unit.values()));
         setAction(newPanAction());
         setAction(newCrosshairAction());
@@ -702,45 +704,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         };
     }
 
-    @Override
-    public ActionW getActionFromCommand(String command) {
-        ActionW action = super.getActionFromCommand(command);
-
-        if (action == null && command != null) {
-            for (ActionW a : keyEventActions) {
-                if (a.cmd().equals(command)) {
-                    return a;
-                }
-            }
-        }
-
-        return action;
-    }
 
     @Override
-    public ActionW getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
+    public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
 
-        ActionW action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
-
-        if (action == null && keyEvent != 0) {
-            for (ActionW a : keyEventActions) {
-                if (a.getKeyCode() == keyEvent && a.getModifier() == modifier) {
-                    return a;
-                }
-            }
-        }
-
-        ActionState a1 = getAction(action);
-        if (a1 == null || a1.isActionEnabled()) {
+        Optional<ActionW> action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
+        if(!action.isPresent()){
             return action;
-        } else if (ActionW.KO_TOOGLE_STATE.equals(action) && keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode()) {
+        }
+        // Only return the action if it is enabled
+        if(Optional.ofNullable(getAction(action.get())).filter(a -> a.isActionEnabled()).isPresent()){
+            return action;
+        } else if (ActionW.KO_TOOGLE_STATE.equals(action.get()) && keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode()) {
             Optional<ToggleButtonListener> koToggleAction =
                 getAction(ActionW.KO_TOOGLE_STATE, ToggleButtonListener.class);
             if (koToggleAction.isPresent()) {
                 koToggleAction.get().setSelected(!koToggleAction.get().isSelected());
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     @Override
@@ -1445,7 +1427,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             if (sortStackAction.isPresent()) {
                 menu =
                     sortStackAction.get().createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack")); //$NON-NLS-1$
-                Optional<ToggleButtonListener> inverseStackAction = getAction(ActionW.INVERSESTACK, ToggleButtonListener.class);
+                Optional<ToggleButtonListener> inverseStackAction =
+                    getAction(ActionW.INVERSESTACK, ToggleButtonListener.class);
                 if (inverseStackAction.isPresent()) {
                     menu.add(new JSeparator());
                     menu.add(inverseStackAction.get()

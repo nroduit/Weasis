@@ -61,11 +61,14 @@ public class ActionW implements KeyActionValue {
         new ActionW(Messages.getString("ActionW.show_header"), "reset", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW PAN = new ActionW(Messages.getString("ActionW.pan"), "pan", KeyEvent.VK_T, 0, //$NON-NLS-1$ //$NON-NLS-2$
         getCustomCursor("pan.png", Messages.getString("ActionW.pan"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW DRAW = new ActionW(Messages.getString("ActionW.draw"), "draw", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW DRAWINGS = new ActionW(Messages.getString("ActionW.draw"), "drawings", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW MEASURE =
         new ActionW(Messages.getString("ActionW.measure"), "measure", KeyEvent.VK_M, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW DRAW = new ActionW("Draw", "draw", KeyEvent.VK_G, 0, null); //$NON-NLS-2$
     public static final ActionW DRAW_MEASURE =
-        new ActionW(Messages.getString("ActionW.measurement"), "measurement", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+        new ActionW(Messages.getString("ActionW.measurement"), "drawMeasure", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW DRAW_GRAPHICS =
+                    new ActionW(Messages.getString("ActionW.draw"), "drawGraphics", 0, 0, null);  //$NON-NLS-2$
     public static final ActionW SPATIAL_UNIT =
         new ActionW(Messages.getString("ActionW.spatial_unit"), "spunit", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW SORTSTACK = new ActionW("", "sortStack", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$

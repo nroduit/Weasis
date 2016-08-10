@@ -65,6 +65,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -74,6 +75,7 @@ import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.internal.Activator;
 
+@SuppressWarnings("serial")
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalExport.class);
 
@@ -92,7 +94,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private JPanel panel;
     private final ExportTree exportTree;
 
-    private JComboBox comboBoxImgFormat;
+    private JComboBox<String> comboBoxImgFormat;
     private JButton btnNewButton;
     private JCheckBox chckbxGraphics;
 
@@ -114,9 +116,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp") + StringUtil.COLON); //$NON-NLS-1$
         panel.add(lblImportAFolder);
 
-        comboBoxImgFormat = new JComboBox();
-
-        comboBoxImgFormat.setModel(new DefaultComboBoxModel(EXPORT_FORMAT));
+        comboBoxImgFormat = new JComboBox<>(new DefaultComboBoxModel<>(EXPORT_FORMAT));
         panel.add(comboBoxImgFormat);
 
         add(panel, BorderLayout.NORTH);
@@ -608,7 +608,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             TreeNode[] objects = node.getPath();
             if (objects.length > 2) {
                 for (int i = 1; i < objects.length - 1; i++) {
-                    buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[i].toString()));
+                    buffer.append(buildFolderName(objects[i].toString(), 30));
                     buffer.append(File.separator);
                 }
             }
@@ -631,17 +631,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (keepNames) {
             TreeNode[] objects = node.getPath();
             if (objects.length > 3) {
-                buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[1].toString()));
+                buffer.append(buildFolderName(objects[1].toString(), 30));
                 buffer.append(File.separator);
-                buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[2].toString()));
+                buffer.append(buildFolderName(objects[2].toString(), 30));
                 buffer.append(File.separator);
-                String seriesName = FileUtil.getValidFileNameWithoutHTML(objects[3].toString());
-                if (seriesName.length() > 30) {
-                    buffer.append(seriesName, 0, 27);
-                    buffer.append(Messages.getString("LocalExport.partialtext_symbol")); //$NON-NLS-1$
-                } else {
-                    buffer.append(seriesName);
-                }
+                buffer.append( buildFolderName(objects[3].toString(), 25));
                 buffer.append('-');
                 // Hash of UID to guaranty the unique behavior of the name.
                 buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class)));
@@ -654,6 +648,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             buffer.append(makeFileIDs(TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class)));
         }
         return buffer.toString();
+    }
+
+    private static String buildFolderName(String str, int length) {
+        String value = FileUtil.getValidFileNameWithoutHTML(str);
+        return StringUtil.getTruncatedString(value, length, Suffix.NO);
     }
 
     private static boolean writeInDicomDir(DicomDirWriter writer, MediaElement<?> img, DefaultMutableTreeNode node,
