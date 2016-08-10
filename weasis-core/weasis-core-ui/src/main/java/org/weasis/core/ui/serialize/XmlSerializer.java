@@ -2,6 +2,7 @@ package org.weasis.core.ui.serialize;
 
 import java.io.File;
 import java.io.StringReader;
+import java.io.StringWriter;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -18,12 +19,18 @@ import org.weasis.core.ui.model.imp.XmlGraphicModel;
 public class XmlSerializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSerializer.class);
 
-    public static GraphicModel readMeasurementGraphics(File gpxFile) {
+    public static GraphicModel readPresentationModel(File gpxFile) {
         if (gpxFile.canRead()) {
             try {
                 JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
                 Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-                return (GraphicModel) jaxbUnmarshaller.unmarshal(gpxFile);
+                GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(gpxFile);
+                int length = model.getModels().size();
+                model.getModels().removeIf(g -> g.getLayer() == null);
+                if (length > model.getModels().size()) {
+                    LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length);
+                }
+                return model;
             } catch (Exception e) {
                 LOGGER.error("Cannot load xml: ", e);
             }
@@ -58,5 +65,18 @@ public class XmlSerializer {
         Unmarshaller unmarshaller = context.createUnmarshaller();
 
         return (T) unmarshaller.unmarshal(sr);
+    }
+
+    public static String serialize(GraphicModel model) {
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(model.getClass());
+            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+            StringWriter sw = new StringWriter();
+            jaxbMarshaller.marshal(model, sw);
+            return sw.toString();
+        } catch (Exception e) {
+            LOGGER.error("Cannot serialize xml: ", e);
+        }
+        return null;
     }
 }

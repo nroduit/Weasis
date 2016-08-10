@@ -107,7 +107,7 @@ public class LoadLocalDicom extends ExplorerTask {
                             File gpxFile = new File(file[i].getPath() + ".xml"); //$NON-NLS-1$
 
                             // TODO : Change graphicList
-                            GraphicModel list = XmlSerializer.readMeasurementGraphics(gpxFile);
+                            GraphicModel list = XmlSerializer.readPresentationModel(gpxFile);
                             if (list != null) {
                                 loader.setTag(TagW.PresentationModel, list);
                             }

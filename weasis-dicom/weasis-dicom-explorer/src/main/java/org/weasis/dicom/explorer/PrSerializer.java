@@ -64,7 +64,7 @@ public class PrSerializer {
                     saveToFile(prFile, attributes);
                 }
             } catch (Exception e) {
-                LOGGER.error("Cannot save xml: ", e);
+                LOGGER.error("Cannot DICOM PR: ", e);
             }
         }
     }
@@ -205,7 +205,10 @@ public class PrSerializer {
             dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POINT);
             pts = Arrays.asList(graphic.getPts().get(0));
         } else if (graphic instanceof AnnotationGraphic) {
-            transformShapeToContour(graphic, graphicSeq);
+            AnnotationGraphic g = (AnnotationGraphic) graphic;
+            Attributes attributes = bluildLabelAndAnchor(g.getLabelBounds(), g.getAnchorPoint(),
+                Arrays.stream(g.getLabels()).collect(Collectors.joining("\r\n")));
+            textSeq.add(attributes);
             return;
         } else {
             transformShapeToContour(graphic, graphicSeq);
@@ -223,39 +226,41 @@ public class PrSerializer {
     private static void bluildLabel(Graphic graphic, Sequence graphicSeq, Sequence textSeq) {
         if (graphic.getLabelVisible()) {
             GraphicLabel label = graphic.getGraphicLabel();
-            Rectangle2D bound = label.getLabelBounds();
-            
-//            Shape shape = graphic.getShape();
-//            Rectangle2D rect;
-//            if (shape instanceof AdvancedShape && ((AdvancedShape) shape).shapeList.size() > 0) {
-//                // Assuming first shape is the user drawing path, else stands for decoration
-//                Shape generalPath = ((AdvancedShape) shape).shapeList.get(0).getShape();
-//                rect = generalPath.getBounds2D();
-//            } else {
-//                rect = shape.getBounds2D();
-//            }
-//
-//            double xPos = rect.getX() + rect.getWidth() + 3;
-//            double yPos = rect.getY() + rect.getHeight() * 0.5;
-//            Attributes dcm = getBasicGraphic(graphic);
-//            dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
-//            double[] pts = new double[]{xPos, yPos, bound.getMinX(), bound.getMinY()};
-//            dcm.setDouble(Tag.GraphicData, VR.FL, pts);
-//            dcm.setInt(Tag.NumberOfGraphicPoints, VR.US, pts.length);
-//            graphicSeq.add(dcm);
+            Rectangle2D bound = label.getTransformedBounds(null);
 
-            Attributes text = new Attributes(5);
-            text.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, "PIXEL");
-            
-            text.setDouble(Tag.BoundingBoxTopLeftHandCorner, VR.FL, new double[] { bound.getMinX(), bound.getMinY() });
-            text.setDouble(Tag.BoundingBoxBottomRightHandCorner, VR.FL,
-                new double[] { bound.getMaxX(), bound.getMaxY() });
-            // In text strings (value representation ST, LT, or UT) a new line shall be represented as CR LF.
-            // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/chapter_6.html
-            text.setString(Tag.UnformattedTextValue, VR.ST,
-                Arrays.stream(label.getLabels()).collect(Collectors.joining("\r\n")));
+            Attributes text =
+                bluildLabelAndBounds(bound, Arrays.stream(label.getLabels()).collect(Collectors.joining("\r\n")));
             textSeq.add(text);
         }
+    }
+
+    private static Attributes bluildLabelAndAnchor(Rectangle2D bound, Point2D anchor, String text) {
+        Attributes attributes = new Attributes(5);
+        attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, "PIXEL");
+        attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());
+        attributes.setString(Tag.AnchorPointVisibility, VR.CS, "Y");
+        attributes.setDouble(Tag.BoundingBoxTopLeftHandCorner, VR.FL,
+            new double[] { bound.getMinX(), bound.getMinY() });
+        attributes.setDouble(Tag.BoundingBoxBottomRightHandCorner, VR.FL,
+            new double[] { bound.getMaxX(), bound.getMaxY() });
+        // In text strings (value representation ST, LT, or UT) a new line shall be represented as CR LF.
+        // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/chapter_6.html
+        attributes.setString(Tag.UnformattedTextValue, VR.ST, text);
+        return attributes;
+    }
+
+    private static Attributes bluildLabelAndBounds(Rectangle2D bound, String text) {
+        Attributes attributes = new Attributes(5);
+        attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, "PIXEL");
+        attributes.setDouble(Tag.BoundingBoxTopLeftHandCorner, VR.FL,
+            new double[] { bound.getMinX(), bound.getMinY() });
+        attributes.setDouble(Tag.BoundingBoxBottomRightHandCorner, VR.FL,
+            new double[] { bound.getMaxX(), bound.getMaxY() });
+
+        // In text strings (value representation ST, LT, or UT) a new line shall be represented as CR LF.
+        // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/chapter_6.html
+        attributes.setString(Tag.UnformattedTextValue, VR.ST, text);
+        return attributes;
     }
 
     public static void transformShapeToContour(Graphic graphic, Sequence graphicSeq) {

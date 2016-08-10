@@ -128,7 +128,8 @@ public class PRManager {
 
         int[] tlhc = TagD.getTagValue(reader, Tag.DisplayedAreaTopLeftHandCorner, int[].class);
         int[] brhc = TagD.getTagValue(reader, Tag.DisplayedAreaBottomRightHandCorner, int[].class);
-        // TODO http://dicom.nema.org/medical/Dicom/current/output/chtml/part03/sect_C.10.4.html
+        // TODO http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.4.html
+        // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.8.12.2.html
         String pixelOriginInterpretation = TagD.getTagValue(reader, Tag.PixelOriginInterpretation, String.class);
 
         if (tlhc != null && tlhc.length == 2 && brhc != null && brhc.length == 2) {
