@@ -277,7 +277,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         boolean draw = true;
-        Object actionValue = getActionValue(ActionW.DRAW.cmd());
+        Object actionValue = getActionValue(ActionW.DRAWINGS.cmd());
         if (actionValue instanceof Boolean) {
             draw = (Boolean) actionValue;
         }
@@ -1544,8 +1544,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void setDrawingsVisibility(Boolean visible) {
-        if ((Boolean) actionsInView.get(ActionW.DRAW.cmd()) != visible) {
-            actionsInView.put(ActionW.DRAW.cmd(), visible);
+        if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()) != visible) {
+            actionsInView.put(ActionW.DRAWINGS.cmd(), visible);
             repaint();
         }
     }
