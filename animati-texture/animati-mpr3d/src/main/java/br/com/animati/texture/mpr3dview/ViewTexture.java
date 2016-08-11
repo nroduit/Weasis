@@ -43,6 +43,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultBoundedRangeModel;
@@ -73,9 +74,7 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -560,7 +559,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         actionsInView.put(zoomTypeCmd, ZoomType.BEST_FIT);
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
-        actionsInView.put(ActionW.DRAW.cmd(), true);
+        actionsInView.put(ActionW.DRAWINGS.cmd(), true);
         actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
 
@@ -1262,11 +1261,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             // Rotaciona para a esquerda
             rotateImage(-90);
         } else {
-            ActionW action = eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
-            if (action == null) {
-                eventManager.keyPressed(e);
+            Optional<ActionW> action = eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
+            if (action.isPresent()) {
+                eventManager.changeLeftMouseAction(action.get().cmd());
             } else {
-                eventManager.changeLeftMouseAction(action.cmd());
+                eventManager.keyPressed(e);
             }
         }
     }
@@ -1277,23 +1276,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void keyReleased(KeyEvent e) { /* TODO: ctrl + c */
-    }
-
-    private void changeLeftMouseAction(String command) {
-        ImageViewerPlugin view = eventManager.getSelectedView2dContainer();
-        if (view != null) {
-            ViewerToolBar toolBar = view.getViewerToolBar();
-            if (toolBar != null) {
-                MouseActions mouseActions = eventManager.getMouseActions();
-                if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
-                    mouseActions.setAction(MouseActions.LEFT, command);
-                    if (view != null) {
-                        view.setMouseActions(mouseActions);
-                    }
-                    toolBar.changeButtonState(MouseActions.LEFT, command);
-                }
-            }
-        }
     }
 
     private void addMouseAdapter(String actionName, int buttonMask) {
@@ -1913,7 +1895,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                         public void actionPerformed(ActionEvent e) {
                             String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
                             CalibrationView calibrationDialog =
-                                new CalibrationView((LineGraphic) graph, ViewTexture.this);
+                                new CalibrationView((LineGraphic) graph, ViewTexture.this, true);
                             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(ViewTexture.this);
                             int res = JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer),
                                 calibrationDialog, title, JOptionPane.OK_CANCEL_OPTION);
@@ -1959,14 +1941,10 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         if (view != null) {
             final ViewerToolBar toolBar = view.getViewerToolBar();
             if (toolBar != null) {
-                ActionListener leftButtonAction = new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (e.getSource() instanceof JRadioButtonMenuItem) {
-                            JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-                            toolBar.changeButtonState(MouseActions.LEFT, item.getActionCommand());
-                        }
+                ActionListener leftButtonAction = event -> {
+                    if (event.getSource() instanceof JRadioButtonMenuItem) {
+                        JRadioButtonMenuItem item = (JRadioButtonMenuItem) event.getSource();
+                        toolBar.changeButtonState(MouseActions.LEFT, item.getActionCommand());
                     }
                 };
 
@@ -1974,16 +1952,18 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 synchronized (actionsButtons) {
                     for (int i = 0; i < actionsButtons.size(); i++) {
                         ActionW b = actionsButtons.get(i);
-                        JRadioButtonMenuItem radio =
-                            new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
-                        radio.setActionCommand(b.cmd());
-                        radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
-                        // Trigger the selected mouse action
-                        radio.addActionListener(toolBar);
-                        // Update the state of the button in the toolbar
-                        radio.addActionListener(leftButtonAction);
-                        popupMenu.add(radio);
-                        groupButtons.add(radio);
+                        if (eventManager.isActionRegistered(b)) {
+                            JRadioButtonMenuItem radio =
+                                new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+                            radio.setActionCommand(b.cmd());
+                            radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+                            // Trigger the selected mouse action
+                            radio.addActionListener(toolBar);
+                            // Update the state of the button in the toolbar
+                            radio.addActionListener(leftButtonAction);
+                            popupMenu.add(radio);
+                            groupButtons.add(radio);
+                        }
                     }
                 }
             }
@@ -2112,7 +2092,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
             int modifiers = evt.getModifiersEx();
             MouseActions mouseActions = eventManager.getMouseActions();
-            ActionW action = null;
+            Optional<ActionW> action = Optional.empty();
             // left mouse button, always active
             if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
                 action = eventManager.getActionFromCommand(mouseActions.getLeft());
@@ -2128,7 +2108,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
 
-            ViewTexture.this.setCursor(action == null ? DefaultView2d.DEFAULT_CURSOR : action.getCursor());
+            ViewTexture.this.setCursor(action.isPresent() ? action.get().getCursor() : DefaultView2d.DEFAULT_CURSOR);
         }
 
         @Override
@@ -2140,6 +2120,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         public void mouseReleased(MouseEvent e) {
             ViewTexture.this.setCursor(DefaultView2d.DEFAULT_CURSOR);
         }
+    }
+
+    @Override
+    public void updateCanvas(boolean triggerViewModelChangeListeners) {
+        
     }
 
 }
