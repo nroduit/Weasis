@@ -6,6 +6,7 @@ import java.awt.geom.FlatteningPathIterator;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
@@ -27,6 +31,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicLabel;
@@ -60,11 +65,27 @@ public class PrSerializer {
                     writeCommonTags(img, attributes);
                     writeReferences(img, attributes);
                     writeGraphics(img, model, attributes);
+                    writePrivateTags(img, model, attributes);
 
                     saveToFile(prFile, attributes);
                 }
             } catch (Exception e) {
                 LOGGER.error("Cannot DICOM PR: ", e);
+            }
+        }
+    }
+
+    private static void writePrivateTags(DicomImageElement img, GraphicModel model, Attributes attributes) {
+        if (model != null && !model.getModels().isEmpty()) {
+            try {
+                JAXBContext jaxbContext = JAXBContext.newInstance(model.getClass());
+                Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                jaxbMarshaller.marshal(model, outputStream);
+                attributes.setString(PresentationStateReader.PRIVATE_CREATOR_TAG, VR.LO, PresentationStateReader.PR_MODEL_ID);
+                attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB, GzipManager.gzipCompressToByte(outputStream.toByteArray()));
+            } catch (Exception e) {
+                LOGGER.error("Cannot save xml: ", e);
             }
         }
     }

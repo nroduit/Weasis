@@ -124,7 +124,12 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             drawGraphicList.add(selectionGraphic);
         }
         if (p.getBooleanProperty("weasis.draw.line", true)) { //$NON-NLS-1$
-            drawGraphicList.add(new LineGraphic());
+            drawGraphicList.add(new LineGraphic() {
+                @Override
+                public int getKeyCode() {
+                    return 0;
+                }
+            });
         }
         if (p.getBooleanProperty("weasis.draw.polyline", true)) { //$NON-NLS-1$
             drawGraphicList.add(new PolylineGraphic());
@@ -139,7 +144,12 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             drawGraphicList.add(new ThreePointsCircleGraphic());
         }
         if (p.getBooleanProperty("weasis.draw.polygon", true)) { //$NON-NLS-1$
-            drawGraphicList.add(new PolygonGraphic());
+            drawGraphicList.add(new PolygonGraphic(){
+                @Override
+                public int getKeyCode() {
+                    return 0;
+                }
+            });
         }
         if (p.getBooleanProperty("weasis.draw.textGrahic", true)) { //$NON-NLS-1$
             Graphic graphic = new AnnotationGraphic();
@@ -311,6 +321,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     static class MeasureGroupMenu extends GroupRadioMenu {
         private ActionW actionW;
         private JButton button;
+
         public MeasureGroupMenu(ActionW actionW) {
             super();
         }
@@ -324,7 +335,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         public void changeButtonState() {
             Object sel = dataModel.getSelectedItem();
             if (sel instanceof Graphic && button != null) {
-                Icon icon = buildIcon((Graphic) sel,  actionW == ActionW.DRAW ? drawIcon : MeasureIcon);
+                Icon icon = buildIcon((Graphic) sel, actionW == ActionW.DRAW ? drawIcon : MeasureIcon);
                 button.setIcon(icon);
                 button.setActionCommand(sel.toString());
             }

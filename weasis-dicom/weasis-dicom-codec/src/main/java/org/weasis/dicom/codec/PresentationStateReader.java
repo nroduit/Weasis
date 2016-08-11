@@ -23,6 +23,10 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 public class PresentationStateReader implements Tagable {
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
+    public static final int PRIVATE_CREATOR_TAG = 0x71070070;
+    public static final int PR_MODEL_PRIVATE_TAG = 0x71077001;
+    public static final String PR_MODEL_ID = "weasis/model/xml/2.5";
+
     private final PRSpecialElement prSpecialElement;
     private final Attributes dcmobj;
     private final HashMap<TagW, Object> tags = new HashMap<>();
@@ -125,9 +129,9 @@ public class PresentationStateReader implements Tagable {
 
     public void readDisplayArea(DicomImageElement img) {
         if (dcmobj != null) {
-            TagW[] tagList = TagD.getTagFromIDs(Tag.PresentationPixelSpacing, Tag.PresentationPixelAspectRatio, Tag.PixelOriginInterpretation,
-                Tag.PresentationSizeMode, Tag.DisplayedAreaTopLeftHandCorner, Tag.DisplayedAreaBottomRightHandCorner,
-                Tag.PresentationPixelMagnificationRatio);
+            TagW[] tagList = TagD.getTagFromIDs(Tag.PresentationPixelSpacing, Tag.PresentationPixelAspectRatio,
+                Tag.PixelOriginInterpretation, Tag.PresentationSizeMode, Tag.DisplayedAreaTopLeftHandCorner,
+                Tag.DisplayedAreaBottomRightHandCorner, Tag.PresentationPixelMagnificationRatio);
             TagSeq.MacroSeqData data = new TagSeq.MacroSeqData(dcmobj, tagList, isSequenceApplicable(img));
             TagD.get(Tag.DisplayedAreaSelectionSequence).readValue(data, this);
         }

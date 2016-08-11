@@ -36,6 +36,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.serialize.XmlSerializer;
 
 public class ViewerPluginBuilder {
@@ -249,7 +250,11 @@ public class ViewerPluginBuilder {
 
             for (MediaElement<?> media : medias) {
                 if (media instanceof ImageElement) {
-                    XmlSerializer.readPresentationModel(new File(media.getFile().getPath() + ".xml"));
+                    File gpxFile = new File(media.getFile().getPath() + ".xml"); //$NON-NLS-1$
+                    GraphicModel graphicModel = XmlSerializer.readPresentationModel(gpxFile);
+                    if (graphicModel != null) {
+                        media.setTag(TagW.PresentationModel, graphicModel);
+                    }
                 }
             }
 
