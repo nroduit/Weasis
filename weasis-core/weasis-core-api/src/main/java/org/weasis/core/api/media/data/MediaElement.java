@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media.data;
 
 import java.io.File;
@@ -22,24 +22,24 @@ import java.util.Optional;
 
 import org.weasis.core.api.util.FileUtil;
 
-public abstract class MediaElement<E> implements Tagable {
+public abstract class MediaElement implements Tagable {
 
     // Metadata of the media
     protected final Map<TagW, Object> tags;
     // Reader of the media (local or remote)
-    protected final MediaReader<E> mediaIO;
+    protected final MediaReader mediaIO;
     // Key to identify the media (the URI passed to the Reader can contain several media elements)
     protected final Object key;
 
     private volatile boolean loading = false;
 
-    public MediaElement(MediaReader<E> mediaIO, Object key) {
+    public <E> MediaElement(MediaReader mediaIO, Object key) {
         this.mediaIO = Objects.requireNonNull(mediaIO);
         this.key = key;
         this.tags = Optional.ofNullable(mediaIO.getMediaFragmentTags(key)).orElse(new HashMap<TagW, Object>());
     }
 
-    public MediaReader<E> getMediaReader() {
+    public MediaReader getMediaReader() {
         return mediaIO;
     }
 

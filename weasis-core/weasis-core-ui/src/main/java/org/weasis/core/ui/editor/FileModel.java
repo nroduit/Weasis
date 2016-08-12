@@ -65,9 +65,9 @@ public class FileModel extends AbstractFileModel {
         GuiExecutor.instance().execute(() -> {
             AbstractFileModel dataModel = ViewerPluginBuilder.DefaultDataModel;
             dataModel.firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.Select, dataModel, null, dataModel));
+                new ObservableEvent(ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
             if (opt.isSet("file")) { //$NON-NLS-1$
-                args.stream().map(s -> new File(s)).filter(f -> f.isFile())
+                args.stream().map(File::new).filter(File::isFile)
                     .forEach(f -> ViewerPluginBuilder.openSequenceInDefaultPlugin(f, true, true));
             }
             if (opt.isSet("url")) { //$NON-NLS-1$

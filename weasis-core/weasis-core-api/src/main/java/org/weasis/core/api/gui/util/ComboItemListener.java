@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import javax.swing.DefaultComboBoxModel;
@@ -20,35 +20,36 @@ import javax.swing.event.ListDataListener;
 
 import org.weasis.core.api.service.AuditLog;
 
-public abstract class ComboItemListener extends BasicActionState implements ListDataListener, ChangeListener {
+public abstract class ComboItemListener<T> extends BasicActionState implements ListDataListener, ChangeListener {
 
-    protected final DefaultComboBoxModel model;
+    protected final DefaultComboBoxModel<T> model;
 
-    public ComboItemListener(ActionW action, Object[] objects) {
+    public ComboItemListener(ActionW action, T[] objects) {
         super(action);
-        model = (objects != null) ? new DefaultComboBoxModel(objects) : new DefaultComboBoxModel();
+        model = (objects != null) ? new DefaultComboBoxModel<>(objects) : new DefaultComboBoxModel<>();
         model.addListDataListener(this);
     }
 
     @Override
     public void contentsChanged(ListDataEvent e) {
-        // if (model.equals(e.getSource())) {
         Object val = model.getSelectedItem();
         itemStateChanged(val);
         AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), val); //$NON-NLS-1$
-        // }
     }
 
     @Override
     public void intervalAdded(ListDataEvent e) {
+        // Do nothing
     }
 
     @Override
     public void intervalRemoved(ListDataEvent e) {
+        // Do nothing
     }
 
     @Override
     public void stateChanged(ChangeEvent evt) {
+        // Do nothing
     }
 
     @Override
@@ -67,7 +68,7 @@ public abstract class ComboItemListener extends BasicActionState implements List
     public boolean registerActionState(Object c) {
         if (super.registerActionState(c)) {
             if (c instanceof ComboBoxModelAdapter) {
-                ((ComboBoxModelAdapter) c).setModel(model);
+                ((ComboBoxModelAdapter<T>) c).setModel(model);
             }
             return true;
         }
@@ -78,7 +79,7 @@ public abstract class ComboItemListener extends BasicActionState implements List
     public void unregisterActionState(Object c) {
         super.unregisterActionState(c);
         if (c instanceof ComboBoxModelAdapter) {
-            ((ComboBoxModelAdapter) c).setModel(new DefaultComboBoxModel());
+            ((ComboBoxModelAdapter<T>) c).setModel(new DefaultComboBoxModel<T>());
         }
     }
 
@@ -108,22 +109,22 @@ public abstract class ComboItemListener extends BasicActionState implements List
         model.addListDataListener(this);
     }
 
-    public synchronized void setDataListWithoutTriggerAction(Object[] objects) {
+    public synchronized void setDataListWithoutTriggerAction(T[] objects) {
         setDataList(objects, false);
     }
 
-    public synchronized void setDataList(Object[] objects) {
+    public synchronized void setDataList(T[] objects) {
         setDataList(objects, true);
     }
 
-    protected synchronized void setDataList(Object[] objects, boolean doTriggerAction) {
+    protected synchronized void setDataList(T[] objects, boolean doTriggerAction) {
         Object oldSelection = model.getSelectedItem();
         model.removeListDataListener(this);
         model.removeAllElements();
         if (objects != null && objects.length > 0) {
             boolean oldSelectionStillExist = false;
 
-            for (Object object : objects) {
+            for (T object : objects) {
                 model.addElement(object);
                 if (object.equals(oldSelection)) {
                     oldSelectionStillExist = true;
@@ -132,10 +133,9 @@ public abstract class ComboItemListener extends BasicActionState implements List
 
             for (Object c : components) {
                 if (c instanceof ComboBoxModelAdapter) {
-                    ((ComboBoxModelAdapter) c).setModel(model);
+                    ((ComboBoxModelAdapter<T>) c).setModel(model);
                 }
             }
-
             model.setSelectedItem(null);
 
             if (doTriggerAction) {
@@ -144,8 +144,6 @@ public abstract class ComboItemListener extends BasicActionState implements List
 
             if (oldSelection != null && oldSelectionStillExist) {
                 model.setSelectedItem(oldSelection);
-                // } else if (objects[0] == model.getSelectedItem()) {
-                // itemStateChanged(model.getSelectedItem());
             } else {
                 model.setSelectedItem(objects[0]);
             }
@@ -156,17 +154,17 @@ public abstract class ComboItemListener extends BasicActionState implements List
         }
     }
 
-    public DefaultComboBoxModel getModel() {
+    public DefaultComboBoxModel<T> getModel() {
         return model;
     }
 
-    public JToogleButtonGroup createButtonGroup() {
-        final JToogleButtonGroup group = new JToogleButtonGroup();
+    public JToogleButtonGroup<T> createButtonGroup() {
+        final JToogleButtonGroup<T> group = new JToogleButtonGroup<>();
         registerActionState(group);
         return group;
     }
 
-    public JComboBox createCombo(int width) {
+    public JComboBox<T> createCombo(int width) {
         final ComboItems combo = new ComboItems();
         registerActionState(combo);
         JMVUtils.setPreferredWidth(combo, width, width);
@@ -177,7 +175,7 @@ public abstract class ComboItemListener extends BasicActionState implements List
     }
 
     public JMenu createUnregisteredRadioMenu(String title) {
-        GroupRadioMenu radioMenu = new GroupRadioMenu();
+        GroupRadioMenu<T> radioMenu = new GroupRadioMenu<>();
         radioMenu.setModel(model);
         JMenu menu = radioMenu.createMenu(title);
         if (!enabled) {
@@ -186,20 +184,21 @@ public abstract class ComboItemListener extends BasicActionState implements List
         return menu;
     }
 
-    public GroupRadioMenu createGroupRadioMenu() {
-        GroupRadioMenu radioMenu = new GroupRadioMenu();
+    public GroupRadioMenu<T> createGroupRadioMenu() {
+        GroupRadioMenu<T> radioMenu = new GroupRadioMenu<>();
         radioMenu.setModel(model);
         registerActionState(radioMenu);
         return radioMenu;
     }
 
-    public GroupRadioMenu createUnregisteredGroupRadioMenu() {
-        GroupRadioMenu radioMenu = new GroupRadioMenu();
+    public GroupRadioMenu<T> createUnregisteredGroupRadioMenu() {
+        GroupRadioMenu<T> radioMenu = new GroupRadioMenu<>();
         radioMenu.setModel(model);
         return radioMenu;
     }
 
     // Trick to wrap JComboBox in the same interface as the GroupRadioMenu
-    static class ComboItems extends JComboBox implements ComboBoxModelAdapter {
+    @SuppressWarnings("serial")
+    class ComboItems extends JComboBox<T> implements ComboBoxModelAdapter<T> {
     }
 }

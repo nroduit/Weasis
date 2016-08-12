@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,21 +7,20 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media.data;
 
 public class SeriesEvent {
 
     public enum Action {
-        Add, Remove, Update, AddImage, RemoveImage, UpdateImage, loadImageInMemory
-    };
+         UPDATE, ADD_IMAGE, REMOVE_IMAGE, UPDATE_IMAGE, PRELOADING
+    }
 
     private final Action actionCommand;
     private final Object source;
     private final Object param;
 
     public SeriesEvent(Action actionCommand, Object source, Object param) {
-        super();
         this.actionCommand = actionCommand;
         this.source = source;
         this.param = param;

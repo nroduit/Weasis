@@ -39,7 +39,7 @@ import org.weasis.dicom.codec.TagD.Level;
 public class DicomVideoSeries extends Series<DicomVideoElement> implements FilesExtractor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomVideoSeries.class);
-    
+
     private int width = 256;
     private int height = 256;
 
@@ -48,7 +48,8 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
     }
 
     public DicomVideoSeries(DicomSeries dicomSeries) {
-        super(TagD.getUID(Level.SERIES), dicomSeries.getTagValue(TagW.SubseriesInstanceUID), DicomSeries.defaultTagView);
+        super(TagD.getUID(Level.SERIES), dicomSeries.getTagValue(TagW.SubseriesInstanceUID),
+            DicomSeries.defaultTagView);
 
         Iterator<Entry<TagW, Object>> iter = dicomSeries.getTagEntrySetIterator();
         while (iter.hasNext()) {
@@ -58,12 +59,12 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
     }
 
     @Override
-    public void addMedia(MediaElement media) {
+    public void addMedia(DicomVideoElement media) {
         if (media instanceof DicomVideoElement) {
             DicomVideoElement dcmVideo = (DicomVideoElement) media;
             if (media.getMediaReader() instanceof DicomMediaIO) {
                 DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
-                width = TagD.getTagValue(dicomImageLoader, Tag.Columns, Integer.class); 
+                width = TagD.getTagValue(dicomImageLoader, Tag.Columns, Integer.class);
                 height = TagD.getTagValue(dicomImageLoader, Tag.Rows, Integer.class);
                 VR.Holder holder = new VR.Holder();
                 Object pixdata = dicomImageLoader.getDicomObject().getValue(Tag.PixelData, holder);
@@ -78,7 +79,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
                             FileInputStream in = null;
                             FileOutputStream out = null;
                             try {
-                            	// TODO implement decompression in reader
+                                // TODO implement decompression in reader
                                 File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                 in = new FileInputStream(dcmVideo.getFile());
                                 out = new FileOutputStream(videoFile);

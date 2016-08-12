@@ -38,7 +38,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -68,7 +67,7 @@ import org.weasis.dicom.explorer.MimeSystemAppFactory;
 public class SRView extends JScrollPane implements SeriesViewerListener {
 
     private final JTextPane htmlPanel = new JTextPane();
-    private final Map<String, SRImageReference> map = new HashMap<String, SRImageReference>();
+    private final Map<String, SRImageReference> map = new HashMap<>();
     private Series<?> series;
     private KOSpecialElement keyReferences;
 
@@ -232,13 +231,12 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                                 props.put(ViewerPluginBuilder.ICON,
                                     new ImageIcon(model.getClass().getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
                                 props.put(ViewerPluginBuilder.UID, uid);
-                                List<MediaSeries<? extends MediaElement<?>>> seriesList =
-                                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
-                                seriesList.add(s);
+                                List<DicomSeries> seriesList = new ArrayList<>();
+                                seriesList.add((DicomSeries) s);
                                 ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, model, props);
                                 ViewerPluginBuilder.openSequenceInPlugin(builder);
                                 model.firePropertyChange(
-                                    new ObservableEvent(ObservableEvent.BasicAction.Select, uid, null, keyReferences));
+                                    new ObservableEvent(ObservableEvent.BasicAction.SELECT, uid, null, keyReferences));
                             }
                         }
                     } else {

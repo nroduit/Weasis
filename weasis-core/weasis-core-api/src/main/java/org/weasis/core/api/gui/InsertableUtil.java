@@ -1,7 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.gui;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
@@ -11,22 +20,17 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 
 public class InsertableUtil {
-    public final static String ALL_BUNDLE = "weasis"; //$NON-NLS-1$
-    public final static String ALL = "all"; //$NON-NLS-1$
+    public static final  String ALL_BUNDLE = "weasis"; //$NON-NLS-1$
+    public static final String ALL = "all"; //$NON-NLS-1$
 
     private InsertableUtil() {
-
     }
 
     public static void sortInsertable(List<? extends Insertable> list) {
-        Collections.sort(list, new Comparator<Insertable>() {
-
-            @Override
-            public int compare(Insertable o1, Insertable o2) {
-                int val1 = o1.getComponentPosition();
-                int val2 = o2.getComponentPosition();
-                return val1 < val2 ? -1 : (val1 == val2 ? 0 : 1);
-            }
+        Collections.sort(list, (o1, o2) -> {
+            int val1 = o1.getComponentPosition();
+            int val2 = o2.getComponentPosition();
+            return val1 < val2 ? -1 : (val1 == val2 ? 0 : 1);
         });
     }
 
@@ -46,7 +50,7 @@ public class InsertableUtil {
                         if (valString == null) {
                             val = getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                                 nodeName, key, val);
-                        } else if (valString.equalsIgnoreCase("false")) { //$NON-NLS-1$
+                        } else if ("false".equalsIgnoreCase(valString)) { //$NON-NLS-1$
                             val = false;
                         }
                         c.setComponentEnabled(val);
@@ -102,9 +106,9 @@ public class InsertableUtil {
                     buf.append(key);
                     final String value = props.getProperty(buf.toString());
                     if (value != null) {
-                        if (value.equalsIgnoreCase("true")) { //$NON-NLS-1$
+                        if ("true".equalsIgnoreCase(value)) { //$NON-NLS-1$
                             return true;
-                        } else if (value.equalsIgnoreCase("false")) { //$NON-NLS-1$
+                        } else if ("false".equalsIgnoreCase(value)) { //$NON-NLS-1$
                             return false;
                         }
                     }
@@ -131,7 +135,7 @@ public class InsertableUtil {
                         try {
                             return Integer.parseInt(value);
                         } catch (NumberFormatException ignore) {
-                            // return the default value
+                            // returns the default value
                         }
                     }
                 }

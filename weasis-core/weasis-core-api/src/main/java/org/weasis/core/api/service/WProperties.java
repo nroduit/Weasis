@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2010, 2016 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.util.GzipManager;
 
 public class WProperties extends Properties {
+    private static final long serialVersionUID = 3647479963645248145L;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WProperties.class);
 

@@ -8,7 +8,7 @@ import org.weasis.base.explorer.list.AThumbnailModel;
 import org.weasis.core.api.media.data.MediaElement;
 
 @SuppressWarnings({ "serial" })
-public class AcquireThumbnailModel<E extends MediaElement<?>> extends AThumbnailModel<E> {
+public class AcquireThumbnailModel<E extends MediaElement> extends AThumbnailModel<E> {
 
     public AcquireThumbnailModel(JList<E> list) {
         super(list);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,10 +7,11 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.media.jai.LookupTableJAI;
 
@@ -53,10 +54,10 @@ public final class LutShape {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static final ArrayList<LutShape> DEFAULT_FACTORY_FUNCTIONS;
+    public static final List<LutShape> DEFAULT_FACTORY_FUNCTIONS;
 
     static {
-        DEFAULT_FACTORY_FUNCTIONS = new ArrayList<LutShape>();
+        DEFAULT_FACTORY_FUNCTIONS = new ArrayList<>();
 
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LINEAR);
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.SIGMOID);
@@ -65,24 +66,6 @@ public final class LutShape {
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG_INV);
     }
 
-    public static final LutShape getLutShape(String shape) {
-        if (shape != null) {
-            String val = shape.toUpperCase();
-            if ("LINEAR".equals(val)) { //$NON-NLS-1$
-                return LutShape.LINEAR;
-            } else if ("SIGMOID".equals(val)) { //$NON-NLS-1$
-                return LutShape.SIGMOID;
-            } else if ("SIGMOID_NORM".equals(val)) { //$NON-NLS-1$
-                return LutShape.SIGMOID_NORM;
-            } else if ("LOG".equals(val)) { //$NON-NLS-1$
-                return LutShape.LOG;
-            } else if ("LOG_INV".equals(val)) { //$NON-NLS-1$
-                return LutShape.LOG_INV;
-            }
-        }
-        return null;
-
-    }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -148,5 +131,24 @@ public final class LutShape {
     @Override
     public int hashCode() {
         return (function != null) ? function.hashCode() : lookup.hashCode();
+    }
+    
+
+    public static final LutShape getLutShape(String shape) {
+        if (shape != null) {
+            String val = shape.toUpperCase();
+            if ("LINEAR".equals(val)) { //$NON-NLS-1$
+                return LutShape.LINEAR;
+            } else if ("SIGMOID".equals(val)) { //$NON-NLS-1$
+                return LutShape.SIGMOID;
+            } else if ("SIGMOID_NORM".equals(val)) { //$NON-NLS-1$
+                return LutShape.SIGMOID_NORM;
+            } else if ("LOG".equals(val)) { //$NON-NLS-1$
+                return LutShape.LOG;
+            } else if ("LOG_INV".equals(val)) { //$NON-NLS-1$
+                return LutShape.LOG_INV;
+            }
+        }
+        return null;
     }
 }

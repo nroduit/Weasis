@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.explorer.model;
 
 import java.beans.PropertyChangeListener;
@@ -29,6 +39,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileModel.class);
 
     public static final String[] functions = { "get", "close" }; //$NON-NLS-1$ //$NON-NLS-2$
+    
     public static final String NAME = "All Files"; //$NON-NLS-1$
     public static final TreeModelNode group =
         new TreeModelNode(1, 0, TagW.Group, new TagView(TagW.Group, TagW.FileName));
@@ -170,7 +181,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
     public void removeTopGroup(MediaSeriesGroup topGroup) {
         if (topGroup != null) {
             firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.Remove, AbstractFileModel.this, null, topGroup));
+                new ObservableEvent(ObservableEvent.BasicAction.REMOVE, AbstractFileModel.this, null, topGroup));
             Collection<MediaSeriesGroup> seriesList = getChildren(topGroup);
             for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                 MediaSeriesGroup s = it.next();
@@ -185,7 +196,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
         if (seriesGroup != null) {
             // remove first series in UI (Viewer using this series)
             firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.Remove, AbstractFileModel.this, null, seriesGroup));
+                new ObservableEvent(ObservableEvent.BasicAction.REMOVE, AbstractFileModel.this, null, seriesGroup));
             // remove in the data model
             MediaSeriesGroup topGroup = getParent(seriesGroup, AbstractFileModel.group);
             removeHierarchyNode(topGroup, seriesGroup);
@@ -216,7 +227,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
 
         GuiExecutor.instance().execute(() -> {
             AbstractFileModel dataModel = AbstractFileModel.this;
-            firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, dataModel, null, dataModel));
+            firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
             if (opt.isSet("all")) { //$NON-NLS-1$
                 for (MediaSeriesGroup g : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
                     dataModel.removeTopGroup(g);

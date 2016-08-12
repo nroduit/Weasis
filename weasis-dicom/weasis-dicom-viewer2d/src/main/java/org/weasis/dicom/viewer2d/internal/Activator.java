@@ -127,7 +127,7 @@ public class Activator implements BundleActivator, ServiceListener {
                             }
                         }
                         if (updateGUI) {
-                            updateViewerUI(ObservableEvent.BasicAction.UpdateToolbars);
+                            updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
                         }
                     } else if (Type.TOOL.equals(factory.getType())) {
                         synchronized (View2dContainer.TOOLS) {
@@ -165,7 +165,7 @@ public class Activator implements BundleActivator, ServiceListener {
                         if (instance instanceof Toolbar && !View2dContainer.TOOLBARS.contains(instance)) {
                             Toolbar bar = (Toolbar) instance;
                             View2dContainer.TOOLBARS.add(bar);
-                            updateViewerUI(ObservableEvent.BasicAction.UpdateToolbars);
+                            updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
                             LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName()); //$NON-NLS-1$
                         }
                     } else if (Type.TOOL.equals(factory.getType())) {

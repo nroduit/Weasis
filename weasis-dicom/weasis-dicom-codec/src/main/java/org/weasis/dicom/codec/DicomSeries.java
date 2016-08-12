@@ -64,30 +64,27 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
 
     @Override
-    public <T extends MediaElement<?>> void addMedia(T media) {
+    public void addMedia(DicomImageElement media) {
         if (media != null && media.getMediaReader() instanceof DcmMediaReader) {
-            if (media instanceof DicomImageElement) {
-                DicomImageElement dcm = (DicomImageElement) media;
-                int insertIndex;
-                synchronized (this) {
-                    // add image or multi-frame sorted by Instance Number (0020,0013) order
-                    int index = Collections.binarySearch(medias, dcm, SortSeriesStack.instanceNumber);
-                    if (index < 0) {
-                        insertIndex = -(index + 1);
-                    } else {
-                        // Should not happen because the instance number must be unique
-                        insertIndex = index + 1;
-                    }
-                    if (insertIndex < 0 || insertIndex > medias.size()) {
-                        insertIndex = medias.size();
-                    }
-                    add(insertIndex, dcm);
+            int insertIndex;
+            synchronized (this) {
+                // add image or multi-frame sorted by Instance Number (0020,0013) order
+                int index = Collections.binarySearch(medias, media, SortSeriesStack.instanceNumber);
+                if (index < 0) {
+                    insertIndex = -(index + 1);
+                } else {
+                    // Should not happen because the instance number must be unique
+                    insertIndex = index + 1;
                 }
-                DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
-                if (model != null) {
-                    model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                        new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
+                if (insertIndex < 0 || insertIndex > medias.size()) {
+                    insertIndex = medias.size();
                 }
+                add(insertIndex, media);
+            }
+            DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+            if (model != null) {
+                model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
+                    new SeriesEvent(SeriesEvent.Action.ADD_IMAGE, this, media)));
             }
         }
     }
@@ -296,8 +293,8 @@ public class DicomSeries extends Series<DicomImageElement> {
                     long stop = System.currentTimeMillis();
                     LOGGER.debug("Reading time: {} ms of image: {}", (stop - start), img); //$NON-NLS-1$
                     if (model != null) {
-                        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                            new SeriesEvent(SeriesEvent.Action.loadImageInMemory, series, img)));
+                        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
+                            new SeriesEvent(SeriesEvent.Action.PRELOADING, series, img)));
                     }
                 }
             }

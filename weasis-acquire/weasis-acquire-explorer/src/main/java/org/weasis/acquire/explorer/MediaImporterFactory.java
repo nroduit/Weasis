@@ -50,7 +50,6 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
         if (explorer != null) {
             explorer.saveLastPath();
         }
-        explorer = null;
     }
 
     private void initGlobalTags() {

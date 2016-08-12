@@ -52,7 +52,7 @@ import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
 
-public class ImageElementIO implements MediaReader<PlanarImage> {
+public class ImageElementIO implements MediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageElementIO.class);
 
     public static final File CACHE_UNCOMPRESSED_DIR =
@@ -81,7 +81,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public PlanarImage getMediaFragment(MediaElement<PlanarImage> media) throws Exception {
+    public PlanarImage getImageFragment(MediaElement media) throws Exception {
         Objects.requireNonNull(media);
         FileCache cache = media.getFileCache();
 
@@ -152,7 +152,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public MediaElement<PlanarImage> getPreview() {
+    public MediaElement getPreview() {
         return getSingleImage();
     }
 
@@ -172,7 +172,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public MediaSeries<ImageElement> getMediaSeries() {
+    public MediaSeries<MediaElement> getMediaSeries() {
         String sUID = null;
         MediaElement element = getSingleImage();
         if (element != null) {
@@ -181,13 +181,13 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
         if (sUID == null) {
             sUID = uri == null ? "unknown" : uri.toString(); //$NON-NLS-1$
         }
-        MediaSeries<ImageElement> series =
-            new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) { // $NON-NLS-1$
+        MediaSeries<MediaElement> series =
+            new Series<MediaElement>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) { // $NON-NLS-1$
 
                 @Override
                 public String getMimeType() {
                     synchronized (this) {
-                        for (ImageElement img : medias) {
+                        for (MediaElement img : medias) {
                             return img.getMimeType();
                         }
                     }
@@ -197,11 +197,11 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
                 @Override
                 public void addMedia(MediaElement media) {
                     if (media instanceof ImageElement) {
-                        this.add((ImageElement) media);
+                        this.add(media);
                         DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
                         if (model != null) {
-                            model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                                new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
+                            model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
+                                new SeriesEvent(SeriesEvent.Action.ADD_IMAGE, this, media)));
                         }
                     }
                 }

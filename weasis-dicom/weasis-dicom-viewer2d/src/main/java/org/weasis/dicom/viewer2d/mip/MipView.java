@@ -166,7 +166,7 @@ public class MipView extends View2d {
                                                 s.setTag(TagW.ExplorerModel, dicomModel);
                                                 dicomModel.addHierarchyNode(study, s);
                                                 dicomModel.firePropertyChange(new ObservableEvent(
-                                                    ObservableEvent.BasicAction.Add, dicomModel, null, s));
+                                                    ObservableEvent.BasicAction.ADD, dicomModel, null, s));
                                             }
 
                                             View2dFactory factory = new View2dFactory();

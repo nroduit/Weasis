@@ -44,8 +44,8 @@ public final class KOManager {
 
         int koElementNb = (koElements == null) ? 0 : koElements.size();
 
-        List<Object> koElementListWithNone = new ArrayList<Object>(koElementNb + 1);
-        koElementListWithNone.add(ActionState.NONE);
+        List<Object> koElementListWithNone = new ArrayList<>(koElementNb + 1);
+        koElementListWithNone.add(ActionState.NoneLabel.NONE);
 
         if (koElementNb > 0) {
             koElementListWithNone.addAll(koElements);
@@ -175,7 +175,7 @@ public final class KOManager {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static Attributes createNewDicomKeyObject(MediaElement<?> dicomMediaElement, Component parentComponent) {
+    public static Attributes createNewDicomKeyObject(MediaElement dicomMediaElement, Component parentComponent) {
 
         if (dicomMediaElement != null && dicomMediaElement.getMediaReader() instanceof DcmMediaReader) {
             Attributes dicomSourceAttribute = ((DcmMediaReader) dicomMediaElement.getMediaReader()).getDicomObject();
@@ -284,7 +284,7 @@ public final class KOManager {
                 // Fire an event since any view in any View2dContainer may have its KO selected state changed
                 if (dicomModel != null) {
                     dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null, validKOSelection));
+                        new ObservableEvent(ObservableEvent.BasicAction.UPDATE, view2d, null, validKOSelection));
                 }
 
                 boolean filter = JMVUtils.getNULLtoFalse(view2d.getActionValue(ActionW.KO_FILTER.cmd()));
@@ -333,8 +333,8 @@ public final class KOManager {
                 DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
                 // Fire an event since any view in any View2dContainer may have its KO selected state changed
                 if (dicomModel != null) {
-                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
-                        new SeriesEvent(SeriesEvent.Action.Update, validKOSelection, "updateAll"))); //$NON-NLS-1$
+                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UPDATE, view2d, null,
+                        new SeriesEvent(SeriesEvent.Action.UPDATE, validKOSelection, "updateAll"))); //$NON-NLS-1$
                 }
             }
         }
@@ -366,7 +366,7 @@ public final class KOManager {
                         ? DicomModel.getKoSpecialElements(view2D.getSeries()) : null;
                     if (koElements != null && koElements.contains(selectedKO) == false) {
                         selectedKO = null;
-                        newSelectedKO = ActionState.NONE;
+                        newSelectedKO = ActionState.NoneLabel.NONE;
                         view2D.setActionsInView(ActionW.KO_SELECTION.cmd(), newSelectedKO);
                     }
                 }

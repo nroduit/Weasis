@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
@@ -64,9 +64,7 @@ public class MergeImgOp extends AbstractOp {
         RenderedImage source2 = (RenderedImage) params.get(INPUT_IMG2);
         RenderedImage result = source;
 
-        if (source2 == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else {
+        if (source2 != null) {
             Integer transparency = (Integer) params.get(P_OPACITY);
             result = MergeImgOp.combineTwoImages(source, source2, transparency == null ? 255 : transparency);
         }

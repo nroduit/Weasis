@@ -62,7 +62,7 @@ public class LoadLocalDicom extends ExplorerTask {
     @Override
     protected Boolean doInBackground() throws Exception {
         dicomModel
-            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null, this));
+            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
         addSelectionAndnotify(files, true);
         return true;
     }
@@ -70,7 +70,7 @@ public class LoadLocalDicom extends ExplorerTask {
     @Override
     protected void done() {
         dicomModel
-            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null, this));
+            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
         LOGGER.info("End of loading DICOM locally"); //$NON-NLS-1$
     }
 
@@ -115,17 +115,10 @@ public class LoadLocalDicom extends ExplorerTask {
             }
         }
         for (final SeriesThumbnail t : thumbs) {
-            MediaSeries series = t.getSeries();
+             MediaSeries<MediaElement> series = t.getSeries();
             // Avoid to rebuild most of CR series thumbnail
             if (series != null && series.size(null) > 2) {
-                GuiExecutor.instance().execute(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        t.reBuildThumbnail();
-                    }
-
-                });
+                GuiExecutor.instance().execute(t::reBuildThumbnail);
             }
         }
         for (int i = 0; i < folders.size(); i++) {
@@ -183,7 +176,7 @@ public class LoadLocalDicom extends ExplorerTask {
                     dicomModel.addSpecialModality(dicomSeries);
                 } else {
                     dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel, null, dicomSeries));
+                        new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
                 }
 
                 // After the thumbnail is sent to interface, it will be return to be rebuilt later
@@ -193,7 +186,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                 if (splitNb != null || dicomObject != null) {
                     dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null, dicomSeries));
+                        new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
                 }
 
                 if (open) {
@@ -204,7 +197,7 @@ public class LoadLocalDicom extends ExplorerTask {
                     } else if (plugin != null) {
                         // Send event to select the related patient in Dicom Explorer.
                         dicomModel.firePropertyChange(
-                            new ObservableEvent(ObservableEvent.BasicAction.Select, dicomModel, null, dicomSeries));
+                            new ObservableEvent(ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
                     }
                 }
             } else {
@@ -236,7 +229,7 @@ public class LoadLocalDicom extends ExplorerTask {
                     Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                     if (splitNb != null || dicomObject != null) {
                         dicomModel.firePropertyChange(
-                            new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null, dicomSeries));
+                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
                     }
                 }
             }

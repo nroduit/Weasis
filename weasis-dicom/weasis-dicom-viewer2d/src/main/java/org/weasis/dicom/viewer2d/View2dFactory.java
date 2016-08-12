@@ -71,7 +71,7 @@ public class View2dFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
+    public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
         String uid = null;
         if (properties != null) {
@@ -148,7 +148,7 @@ public class View2dFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer) {
+    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
         if (viewer instanceof View2dContainer) {
             return true;
         }

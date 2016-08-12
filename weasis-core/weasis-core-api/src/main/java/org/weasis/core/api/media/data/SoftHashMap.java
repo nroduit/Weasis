@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media.data;
 
 import java.io.Serializable;
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
+    private static final long serialVersionUID = -1374929894464993435L;
 
     /** The internal HashMap that will hold the SoftReference. */
     protected final transient Map<K, SoftReference<V>> hash = new HashMap<>();

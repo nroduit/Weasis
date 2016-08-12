@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.internal;
 
 import java.awt.RenderingHints;
@@ -82,8 +82,8 @@ public class Activator implements BundleActivator, ServiceListener {
         JAIUtil.registerOp(or, new RectifySignedShortDataDescriptor());
         JAIUtil.registerOp(or, new RectifyUShortToShortDataDescriptor());
 
-        // TODO manage memory setting ?
-        jai.getTileCache().setMemoryCapacity(128 * 1024L * 1024L);
+        // Set 1/4 of the total memory for TileCache
+        jai.getTileCache().setMemoryCapacity(Runtime.getRuntime().maxMemory()/4);
 
         RecyclingTileFactory recyclingTileFactory = new RecyclingTileFactory();
         RenderingHints rh = jai.getRenderingHints();
@@ -97,8 +97,7 @@ public class Activator implements BundleActivator, ServiceListener {
         scheduler.setPrefetchParallelism(nbThread - 1);
 
         // Trick for avoiding 403 error when downloading from some web sites
-        System.setProperty("http.agent",
-            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.75 Safari/535.7");
+        System.setProperty("http.agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1");
         // Allows to connect through a proxy initialized by Java Webstart
         ProxyDetector.setProxyFromJavaWebStart();
 
@@ -158,7 +157,6 @@ public class Activator implements BundleActivator, ServiceListener {
                             .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                         Dictionary<String, Object> loggingProperties = new Hashtable<>();
                         loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); //$NON-NLS-1$ //$NON-NLS-2$
-                        // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
                         loggingProperties.put("org.apache.sling.commons.log.names", loggerVal); //$NON-NLS-1$
                         // add this property to give us something unique to re-find this configuration
                         loggingProperties.put(loggerKey, loggerVal[0]);

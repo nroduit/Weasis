@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,15 +7,33 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import org.weasis.core.api.Messages;
 
 public interface ActionState {
 
-    String NONE = Messages.getString("ActionState.none"); //$NON-NLS-1$
-    String NONE_SERIES = Messages.getString("ActionState.none_all"); //$NON-NLS-1$
+    enum NoneLabel {
+        NONE(Messages.getString("ActionState.none")), //$NON-NLS-1$
+
+        NONE_SERIES(Messages.getString("ActionState.none_all")); //$NON-NLS-1$
+
+        private final String title;
+
+        NoneLabel(String title) {
+            this.title = title;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        @Override
+        public String toString() {
+            return title;
+        }
+    }
 
     void enableAction(boolean enabled);
 

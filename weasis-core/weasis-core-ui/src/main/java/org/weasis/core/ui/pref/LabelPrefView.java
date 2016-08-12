@@ -18,8 +18,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.Arrays;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -31,7 +30,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
@@ -44,7 +42,10 @@ import org.weasis.core.ui.model.GraphicModel;
 public class LabelPrefView extends AbstractItemDialogPage {
     private static final long serialVersionUID = -189458600074707084L;
 
-    public static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+    private static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+
+    private static final String DEFAULT_LABEL = Messages.getString("LabelPrefView.default");
+    
     private final JButton jButtonApply = new JButton();
     private final JPanel jPanel2 = new JPanel();
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
@@ -65,17 +66,15 @@ public class LabelPrefView extends AbstractItemDialogPage {
         this.viewSetting = viewSetting;
         setComponentPosition(5);
         setBorder(new EmptyBorder(15, 10, 10, 10));
-        try {
-            JMVUtils.setList(jComboName, Messages.getString("LabelPrefView.default"), //$NON-NLS-1$
-                GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
-            jbInit();
-            initialize();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+
+        jComboName.addItem(DEFAULT_LABEL); 
+        Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames())
+            .forEach(jComboName::addItem);
+        jbInit();
+        initialize();
     }
 
-    private void jbInit() throws Exception {
+    private void jbInit() {
         this.setLayout(new BorderLayout());
         this.add(jPanel2, BorderLayout.CENTER);
         jPanel2.setLayout(gridBagLayout1);
@@ -97,37 +96,26 @@ public class LabelPrefView extends AbstractItemDialogPage {
         jPanel2.add(jLabelSize, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
             GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
 
-        GridBagConstraints gbc_verticalStrut = new GridBagConstraints();
-        gbc_verticalStrut.weighty = 1.0;
-        gbc_verticalStrut.weightx = 1.0;
-        gbc_verticalStrut.gridx = 4;
-        gbc_verticalStrut.gridy = 2;
-        jPanel2.add(verticalStrut, gbc_verticalStrut);
+        GridBagConstraints gbcVerticalStrut = new GridBagConstraints();
+        gbcVerticalStrut.weighty = 1.0;
+        gbcVerticalStrut.weightx = 1.0;
+        gbcVerticalStrut.gridx = 4;
+        gbcVerticalStrut.gridy = 2;
+        jPanel2.add(verticalStrut, gbcVerticalStrut);
 
-        JPanel panel_2 = new JPanel();
-        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
-        flowLayout_1.setHgap(10);
-        flowLayout_1.setAlignment(FlowLayout.RIGHT);
-        flowLayout_1.setVgap(7);
-        add(panel_2, BorderLayout.SOUTH);
-        panel_2.add(jButtonApply);
+        JPanel panel2 = new JPanel();
+        FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
+        flowLayout1.setHgap(10);
+        flowLayout1.setAlignment(FlowLayout.RIGHT);
+        flowLayout1.setVgap(7);
+        add(panel2, BorderLayout.SOUTH);
+        panel2.add(jButtonApply);
         jButtonApply.setText(Messages.getString("LabelPrefView.apply")); //$NON-NLS-1$
-        jButtonApply.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                apply();
-            }
-        });
+        jButtonApply.addActionListener(e -> apply());
 
         JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
-        panel_2.add(btnNewButton);
-        btnNewButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetoDefaultValues();
-            }
-        });
-
+        panel2.add(btnNewButton);
+        btnNewButton.addActionListener(e -> resetoDefaultValues());
     }
 
     private void initialize() {
@@ -179,7 +167,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        viewSetting.setFontName(Messages.getString("LabelPrefView.default")); //$NON-NLS-1$
+        viewSetting.setFontName(DEFAULT_LABEL); 
         viewSetting.setFontType(0);
         viewSetting.setFontSize(12);
         initialize();
@@ -198,7 +186,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         }
         String name = jComboName.getSelectedItem().toString();
 
-        viewSetting.setFontName(Messages.getString("LabelPrefView.default").equals(name) ? "default" : name); //$NON-NLS-1$ //$NON-NLS-2$
+        viewSetting.setFontName(DEFAULT_LABEL.equals(name) ? "default" : name); //$NON-NLS-1$ 
         viewSetting.setFontSize(size);
         viewSetting.setFontType(style);
 

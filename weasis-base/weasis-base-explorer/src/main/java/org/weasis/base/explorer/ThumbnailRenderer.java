@@ -22,7 +22,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.util.FontTools;
 
 @SuppressWarnings("serial")
-public class ThumbnailRenderer<E extends MediaElement<?>> extends JPanel implements ListCellRenderer<E> {
+public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements ListCellRenderer<E> {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER); //$NON-NLS-1$

@@ -123,9 +123,7 @@ public class ShutterOp extends AbstractOp {
         Area area = (Area) params.get(P_SHAPE);
         Object pr = params.get(P_PR_ELEMENT);
 
-        if (shutter == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else if (shutter && area != null) {
+        if (shutter != null && shutter && area != null) {
             Byte[] color = getShutterColor();
             if (isBlack(color)) {
                 result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(), null);

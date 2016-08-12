@@ -406,7 +406,7 @@ public class PRManager {
                     key instanceof Integer ? (Integer) key + 1 : null);
             if (!prList.isEmpty()) {
                 Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
-                if (!ActionState.NONE_SERIES.equals(oldPR)) {
+                if (!ActionState.NoneLabel.NONE_SERIES.equals(oldPR)) {
                     int index = prList.indexOf(oldPR);
                     index = index == -1 ? 0 : index;
                     // Set the previous selected value, otherwise set the more recent PR by default
@@ -415,9 +415,9 @@ public class PRManager {
 
                 int offset = series.size(null) > 1 ? 2 : 1;
                 final Object[] items = new Object[prList.size() + offset];
-                items[0] = ActionState.NONE;
+                items[0] = ActionState.NoneLabel.NONE;
                 if (offset == 2) {
-                    items[1] = ActionState.NONE_SERIES;
+                    items[1] = ActionState.NoneLabel.NONE_SERIES;
                 }
                 for (int i = offset; i < items.length; i++) {
                     items[i] = prList.get(i - offset);
@@ -428,7 +428,7 @@ public class PRManager {
                     public void showPopup(Component invoker, int x, int y) {
                         Object pr = view.getActionValue(ActionW.PR_STATE.cmd());
                         if (pr == null) {
-                            pr = ActionState.NONE;
+                            pr = ActionState.NoneLabel.NONE;
                         }
                         pr = (pr instanceof PresentationStateReader) ? ((PresentationStateReader) pr).getDicom() : pr;
                         JPopupMenu popupMenu = new JPopupMenu();

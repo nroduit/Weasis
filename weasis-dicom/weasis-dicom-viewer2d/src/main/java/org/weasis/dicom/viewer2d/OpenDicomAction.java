@@ -71,7 +71,7 @@ public class OpenDicomAction extends AbstractUIAction {
         } else {
             Codec codec = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
             if (codec != null) {
-                ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>();
+                ArrayList<MediaSeries<? extends MediaElement>> list = new ArrayList<>();
                 for (File file : selectedFiles) {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file, DicomMediaIO.MIMETYPE)) {
                         MediaReader reader = codec.getMediaIO(file.toURI(), DicomMediaIO.MIMETYPE, null);
@@ -85,7 +85,7 @@ public class OpenDicomAction extends AbstractUIAction {
                             TagW tname = TagD.get(Tag.PatientName);
                             String tvalue = (String) reader.getTagValue(tname);
 
-                            MediaSeries s =
+                            MediaSeries<MediaElement> s =
                                 ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
 
                             if (s != null && !list.contains(s)) {

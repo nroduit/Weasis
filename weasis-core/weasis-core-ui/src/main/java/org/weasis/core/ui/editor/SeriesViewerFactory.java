@@ -21,11 +21,11 @@ import org.weasis.core.api.media.data.MediaElement;
 
 public interface SeriesViewerFactory extends GUIEntry {
 
-    SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties);
+    SeriesViewer<?> createSeriesViewer(Map<String, Object> properties);
 
     boolean canReadMimeType(String mimeType);
 
-    boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer);
+    boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer);
 
     int getLevel();
 

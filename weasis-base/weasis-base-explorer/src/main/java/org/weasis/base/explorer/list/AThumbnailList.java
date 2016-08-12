@@ -62,7 +62,7 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 @SuppressWarnings("serial")
-public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E> implements IThumbnailList<E> {
+public abstract class AThumbnailList<E extends MediaElement> extends JList<E> implements IThumbnailList<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AThumbnailList.class);
 
     public static final String SECTION_CHANGED = "SECTION_CHANGED"; //$NON-NLS-1$
@@ -81,7 +81,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
     private boolean changed;
     private Point dragPressed = null;
     private DragSource dragSource = null;
-    private MediaElement<?> lastSelectedDiskObject = null;
+    private MediaElement lastSelectedDiskObject = null;
 
     public AThumbnailList() {
         this(HORIZONTAL_WRAP);
@@ -293,7 +293,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
             boolean oneFile = selMedias.size() == 1;
             String sUID = null;
             String gUID;
-            ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>();
+            ArrayList<MediaSeries<? extends MediaElement>> list = new ArrayList<>();
             for (E mediaElement : selMedias) {
 
                 MediaReader reader = mediaElement.getMediaReader();
@@ -343,7 +343,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
                 for (String mime : mimes) {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
                     if (plugin != null) {
-                        ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList = new ArrayList<>();
+                        ArrayList<MediaSeries<MediaElement>> seriesList = new ArrayList<>();
                         for (MediaSeries s : list) {
                             if (mime.equals(s.getMimeType())) {
                                 seriesList.add(s);
@@ -366,13 +366,13 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
             if (modeLayout) {
                 groupUID = UUID.randomUUID().toString();
             }
-            Map<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>> plugins = new HashMap<>();
+            Map<SeriesViewerFactory, List<MediaSeries<MediaElement>>> plugins = new HashMap<>();
             for (E m : selMedias) {
                 String mime = m.getMimeType();
                 if (mime != null) {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
                     if (plugin != null) {
-                        List<MediaSeries<? extends MediaElement<?>>> list = plugins.get(plugin);
+                        List<MediaSeries<MediaElement>> list = plugins.get(plugin);
                         if (list == null) {
                             list = new ArrayList<>(modeLayout ? 10 : 1);
                             plugins.put(plugin, list);
@@ -381,13 +381,13 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
                         // Get only application readers from files
                         MediaReader mreader = m.getMediaReader();
                         if (modeLayout) {
-                            MediaSeries<? extends MediaElement<?>> series = ViewerPluginBuilder
+                            MediaSeries<MediaElement> series = ViewerPluginBuilder
                                 .buildMediaSeriesWithDefaultModel(mreader, groupUID, null, null, null);
                             if (series != null) {
                                 list.add(series);
                             }
                         } else {
-                            MediaSeries<? extends MediaElement<?>> series;
+                            MediaSeries<MediaElement> series;
                             if (list.isEmpty()) {
                                 series = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader);
                                 if (series != null) {
@@ -396,9 +396,9 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
                             } else {
                                 series = list.get(0);
                                 if (series != null) {
-                                    MediaElement<?>[] ms = mreader.getMediaElement();
+                                    MediaElement[] ms = mreader.getMediaElement();
                                     if (ms != null) {
-                                        for (MediaElement<?> media : ms) {
+                                        for (MediaElement media : ms) {
                                             media.setTag(TagW.get("SeriesInstanceUID"),
                                                 series.getTagValue(series.getTagID()));
                                             URI uri = media.getMediaURI();
@@ -422,9 +422,9 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
                 props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
             }
 
-            for (Iterator<Entry<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>>> iterator =
+            for (Iterator<Entry<SeriesViewerFactory, List<MediaSeries<MediaElement>>>> iterator =
                 plugins.entrySet().iterator(); iterator.hasNext();) {
-                Entry<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>> item = iterator.next();
+                Entry<SeriesViewerFactory, List<MediaSeries<MediaElement>>> item = iterator.next();
                 ViewerPluginBuilder builder = new ViewerPluginBuilder(item.getKey(), item.getValue(),
                     ViewerPluginBuilder.DefaultDataModel, props);
                 ViewerPluginBuilder.openSequenceInPlugin(builder);
@@ -432,7 +432,7 @@ public abstract class AThumbnailList<E extends MediaElement<?>> extends JList<E>
         }
     }
 
-    private static boolean isDicomMedia(MediaElement<?> mediaElement) {
+    private static boolean isDicomMedia(MediaElement mediaElement) {
         if (mediaElement != null) {
             String mime = mediaElement.getMimeType();
             if (mime != null) {

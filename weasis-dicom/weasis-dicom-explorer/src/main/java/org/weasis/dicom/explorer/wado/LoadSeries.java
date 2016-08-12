@@ -215,11 +215,11 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
             if (splitNb != null || dicomObject != null) {
                 dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null, dicomSeries));
+                    new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
             } else if (dicomSeries.size(null) == 0) {
                 // Remove in case of split Series and all the SopInstanceUIDs already exist
                 dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Remove, dicomModel, null, dicomSeries));
+                    new ObservableEvent(ObservableEvent.BasicAction.REMOVE, dicomModel, null, dicomSeries));
             }
             this.dicomSeries.setSeriesLoader(null);
         }
@@ -471,7 +471,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
                 dicomSeries.setTag(TagW.Thumbnail, thumbnail);
                 dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel, null, dicomSeries));
+                    new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
             });
 
            loadThumbnail(instance, wadoParameters);
@@ -922,7 +922,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                                     thumb.repaint();
                                 }
                                 dicomModel.firePropertyChange(new ObservableEvent(
-                                    ObservableEvent.BasicAction.UpdateParent, dicomModel, null, dicomSeries));
+                                    ObservableEvent.BasicAction.UDPATE_PARENT, dicomModel, null, dicomSeries));
                             }
                         });
                     }
@@ -991,7 +991,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                                         } else if (plugin != null) {
                                             // Send event to select the related patient in Dicom Explorer.
                                             dicomModel.firePropertyChange(new ObservableEvent(
-                                                ObservableEvent.BasicAction.Select, dicomModel, null, dicomSeries));
+                                                ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
                                         }
                                     }
                                 }

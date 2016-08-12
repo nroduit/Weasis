@@ -3,8 +3,6 @@ package org.weasis.core.ui.test.utils;
 import java.util.Objects;
 import java.util.UUID;
 
-import javax.media.jai.PlanarImage;
-
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
@@ -16,7 +14,7 @@ public class ModelListHelper extends XmlSerialisationHelper {
     public static final String UUID_2 = "uuid.2." + UUID.randomUUID().toString();
     public static final String UUID_3 = "uuid.3." + UUID.randomUUID().toString();
 
-    @Mock protected MediaReader<PlanarImage> mediaIO;
+    @Mock protected MediaReader mediaIO;
     @Mock protected Object key;
     
     protected ImageElement mockImage(String uuid, String seriesUuid) {

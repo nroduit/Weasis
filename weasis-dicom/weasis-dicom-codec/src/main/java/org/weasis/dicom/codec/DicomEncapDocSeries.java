@@ -38,13 +38,14 @@ import org.weasis.core.api.util.StringUtil;
 public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements FilesExtractor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomEncapDocSeries.class);
-    
+
     public DicomEncapDocSeries(String subseriesInstanceUID) {
         super(TagW.SubseriesInstanceUID, subseriesInstanceUID, DicomSeries.defaultTagView);
     }
 
     public DicomEncapDocSeries(DicomSeries dicomSeries) {
-        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID), DicomSeries.defaultTagView);
+        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID),
+            DicomSeries.defaultTagView);
 
         Iterator<Entry<TagW, Object>> iter = dicomSeries.getTagEntrySetIterator();
         while (iter.hasNext()) {
@@ -54,7 +55,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     }
 
     @Override
-    public <T extends MediaElement<?>> void addMedia(T media) {
+    public void addMedia(DicomEncapDocElement media) {
         if (media instanceof DicomEncapDocElement) {
             DicomEncapDocElement dcmEnc = (DicomEncapDocElement) media;
             if (media.getMediaReader() instanceof DicomMediaIO) {

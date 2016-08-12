@@ -60,7 +60,7 @@ public class OpenImageAction extends AbstractUIAction {
             || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
             return;
         } else {
-            MediaSeries series = null;
+            MediaSeries<MediaElement> series = null;
             for (File file : selectedFiles) {
                 String mimeType = MimeInspector.getMimeType(file);
                 if (mimeType != null && mimeType.startsWith("image")) { //$NON-NLS-1$

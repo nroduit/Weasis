@@ -1097,7 +1097,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 patientContainer.addPane(selectedPatient);
                 koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
                 // Send message for selecting related plug-ins window
-                model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, model, null, patient));
+                model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.SELECT, model, null, patient));
             }
         }
     }
@@ -1339,7 +1339,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             ObservableEvent.BasicAction action = event.getActionCommand();
             Object newVal = event.getNewValue();
             if (model.equals(evt.getSource())) {
-                if (ObservableEvent.BasicAction.Select.equals(action)) {
+                if (ObservableEvent.BasicAction.SELECT.equals(action)) {
                     if (newVal instanceof Series) {
                         Series dcm = (Series) newVal;
                         MediaSeriesGroup patient = model.getParent(dcm, DicomModel.patient);
@@ -1347,11 +1347,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             modelPatient.setSelectedItem(patient);
                         }
                     }
-                } else if (ObservableEvent.BasicAction.Add.equals(action)) {
+                } else if (ObservableEvent.BasicAction.ADD.equals(action)) {
                     if (newVal instanceof Series) {
                         addDicomSeries((Series) newVal);
                     }
-                } else if (ObservableEvent.BasicAction.Remove.equals(action)) {
+                } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
                     if (newVal instanceof MediaSeriesGroup) {
                         MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                         // Patient Group
@@ -1369,7 +1369,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     }
                 }
                 // Update patient and study infos from the series (when receiving the first downloaded image)
-                else if (ObservableEvent.BasicAction.UpdateParent.equals(action)) {
+                else if (ObservableEvent.BasicAction.UDPATE_PARENT.equals(action)) {
                     if (newVal instanceof Series) {
                         Series dcm = (Series) newVal;
                         MediaSeriesGroup patient = model.getParent(dcm, DicomModel.patient);
@@ -1389,7 +1389,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     }
                 }
                 // update
-                else if (ObservableEvent.BasicAction.Update.equals(action)) {
+                else if (ObservableEvent.BasicAction.UPDATE.equals(action)) {
                     if (newVal instanceof Series) {
                         Series series = (Series) newVal;
                         Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
@@ -1400,17 +1400,17 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
                         }
                     }
-                } else if (ObservableEvent.BasicAction.LoadingStart.equals(action)) {
+                } else if (ObservableEvent.BasicAction.LOADING_START.equals(action)) {
                     if (newVal instanceof ExplorerTask) {
                         addTaskToGlobalProgression((ExplorerTask) newVal);
                     }
-                } else if (ObservableEvent.BasicAction.LoadingStop.equals(action)) {
+                } else if (ObservableEvent.BasicAction.LOADING_STOP.equals(action)) {
                     if (newVal instanceof ExplorerTask) {
                         removeTaskToGlobalProgression((ExplorerTask) newVal);
                     }
                 }
             } else if (evt.getSource() instanceof SeriesViewer) {
-                if (ObservableEvent.BasicAction.Select.equals(action)) {
+                if (ObservableEvent.BasicAction.SELECT.equals(action)) {
                     if (newVal instanceof MediaSeriesGroup) {
                         MediaSeriesGroup patient = (MediaSeriesGroup) newVal;
                         if (!isSelectedPatient(patient)) {
@@ -1548,7 +1548,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         plugin = DefaultMimeAppFactory.getInstance();
                     }
 
-                    ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>(1);
+                    ArrayList<MediaSeries<MediaElement>> list = new ArrayList<>(1);
                     list.add(series);
                     ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, dicomModel, props);
                     ViewerPluginBuilder.openSequenceInPlugin(builder);
@@ -1583,7 +1583,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             break;
                         }
                     }
-                    final List<MediaSeries<? extends MediaElement<?>>> seriesList;
+                    final List<MediaSeries<? extends MediaElement>> seriesList;
                     if (multipleMimes) {
                         // Filter the list to have only one mime type
                         seriesList = new ArrayList<>();
@@ -1903,7 +1903,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     }
                     selList.setOpenningSeries(true);
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(
-                        new ArrayList<MediaSeries<? extends MediaElement<?>>>(selList), dicomModel, true, true);
+                        new ArrayList<MediaSeries<? extends MediaElement>>(selList), dicomModel, true, true);
                     selList.setOpenningSeries(false);
                     if (e.getSource() instanceof JComponent) {
                         ((JComponent) e.getSource()).requestFocusInWindow();

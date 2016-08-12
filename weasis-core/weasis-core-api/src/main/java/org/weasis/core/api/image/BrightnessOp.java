@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
@@ -37,9 +47,7 @@ public class BrightnessOp extends AbstractOp {
         Double contrast = (Double) params.get(P_CONTRAST_VALUE);
         Double brigtness = (Double) params.get(P_BRIGTNESS_VALUE);
 
-        if (contrast == null || brigtness == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else {
+        if (contrast != null && brigtness != null) {
             double[] constants = { contrast / 100D };
             double[] offsets = { brigtness };
 

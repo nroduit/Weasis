@@ -239,7 +239,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
             if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
                 dicomView.getDataExplorerModel().firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, getGroupID()));
+                    new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
             }
 
         } else {
@@ -284,7 +284,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             ObservableEvent event = (ObservableEvent) evt;
             ObservableEvent.BasicAction action = event.getActionCommand();
             Object newVal = event.getNewValue();
-            if (ObservableEvent.BasicAction.Remove.equals(action)) {
+            if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
                 if (newVal instanceof DicomSeries) {
                     DicomSeries dicomSeries = (DicomSeries) newVal;
                     for (ViewCanvas<DicomImageElement> v : view2ds) {
@@ -317,7 +317,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                         }
                     }
                 }
-            } else if (ObservableEvent.BasicAction.Replace.equals(action)) {
+            } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
                     for (ViewCanvas<DicomImageElement> v : view2ds) {

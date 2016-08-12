@@ -322,7 +322,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
             if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
                 dicomView.getDataExplorerModel().firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, getGroupID()));
+                    new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
             }
 
         } else {
@@ -363,9 +363,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 Object source = event2.getSource();
                 Object param = event2.getParam();
 
-                if (ObservableEvent.BasicAction.Add.equals(action)) {
+                if (ObservableEvent.BasicAction.ADD.equals(action)) {
 
-                    if (SeriesEvent.Action.AddImage.equals(action2)) {
+                    if (SeriesEvent.Action.ADD_IMAGE.equals(action2)) {
                         if (source instanceof DicomSeries) {
                             DicomSeries series = (DicomSeries) source;
                             ViewCanvas<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
@@ -394,7 +394,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 }
                             }
                         }
-                    } else if (SeriesEvent.Action.UpdateImage.equals(action2)) {
+                    } else if (SeriesEvent.Action.UPDATE_IMAGE.equals(action2)) {
                         if (source instanceof DicomImageElement) {
                             DicomImageElement dcm = (DicomImageElement) source;
                             for (ViewCanvas<DicomImageElement> v : view2ds) {
@@ -412,7 +412,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 }
                             }
                         }
-                    } else if (SeriesEvent.Action.loadImageInMemory.equals(action2)) {
+                    } else if (SeriesEvent.Action.PRELOADING.equals(action2)) {
                         if (source instanceof DicomSeries) {
                             DicomSeries dcm = (DicomSeries) source;
                             for (ViewCanvas<DicomImageElement> v : view2ds) {
@@ -422,14 +422,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                             }
                         }
                     }
-                } else if (ObservableEvent.BasicAction.Update.equals(action)) {
-                    if (SeriesEvent.Action.Update.equals(action2)) {
+                } else if (ObservableEvent.BasicAction.UPDATE.equals(action)) {
+                    if (SeriesEvent.Action.UPDATE.equals(action2)) {
                         if (source instanceof KOSpecialElement) {
                             setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll")); //$NON-NLS-1$
                         }
                     }
                 }
-            } else if (ObservableEvent.BasicAction.Remove.equals(action)) {
+            } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
                 if (newVal instanceof DicomSeries) {
                     DicomSeries dicomSeries = (DicomSeries) newVal;
                     for (ViewCanvas<DicomImageElement> v : view2ds) {
@@ -462,7 +462,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         }
                     }
                 }
-            } else if (ObservableEvent.BasicAction.Replace.equals(action)) {
+            } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
                     for (ViewCanvas<DicomImageElement> v : view2ds) {
@@ -477,7 +477,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         }
                     }
                 }
-            } else if (ObservableEvent.BasicAction.Update.equals(action)) {
+            } else if (ObservableEvent.BasicAction.UPDATE.equals(action)) {
 
                 DicomSpecialElement specialElement = null;
 
@@ -518,7 +518,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 else if (specialElement instanceof KOSpecialElement) {
                     setKOSpecialElement((KOSpecialElement) specialElement, null, false, false);
                 }
-            } else if (ObservableEvent.BasicAction.Select.equals(action)) {
+            } else if (ObservableEvent.BasicAction.SELECT.equals(action)) {
                 if (newVal instanceof KOSpecialElement) {
                     // Match using UID of the plugin window and the source event
                     if (this.getDockableUID().equals(evt.getSource())) {

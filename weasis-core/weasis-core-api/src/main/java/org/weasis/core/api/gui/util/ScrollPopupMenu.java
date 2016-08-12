@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,12 +7,14 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GraphicsConfiguration;
 import java.awt.GridLayout;
+import java.awt.Point;
 
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
@@ -27,7 +29,7 @@ public class ScrollPopupMenu extends JPopupMenu {
     private JPanel panelMenus = null;
     private JScrollPane scroll = null;
 
-    public ScrollPopupMenu(Dimension dim) {
+    public ScrollPopupMenu( Point screenPt) {
         super();
 
         scroll = new JScrollPane();
@@ -35,10 +37,10 @@ public class ScrollPopupMenu extends JPopupMenu {
         panelMenus.setLayout(new GridLayout(0, 1));
         scroll.setViewportView(panelMenus);
         scroll.setBorder(null);
-        // TODO reimplement
-        // GraphicsConfiguration gc = WeasisWin.getInstance().getGraphicsConfiguration();
-        // scroll.setMaximumSize(new Dimension(scroll.getMaximumSize().width, this.getToolkit().getScreenSize().height
-        // - this.getToolkit().getScreenInsets(gc).top - this.getToolkit().getScreenInsets(gc).bottom - 4));
+
+        GraphicsConfiguration gc = WinUtil.getGraphicsDeviceConfig(screenPt);
+        scroll.setMaximumSize(new Dimension(scroll.getMaximumSize().width, this.getToolkit().getScreenSize().height
+            - this.getToolkit().getScreenInsets(gc).top - this.getToolkit().getScreenInsets(gc).bottom - 4));
         super.add(scroll);
     }
 

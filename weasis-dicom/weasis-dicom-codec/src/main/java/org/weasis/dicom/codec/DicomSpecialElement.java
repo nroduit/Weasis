@@ -38,7 +38,7 @@ import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public class DicomSpecialElement extends MediaElement<PlanarImage> {
+public class DicomSpecialElement extends MediaElement {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomSpecialElement.class);
 
     public static final SeriesComparator<DicomSpecialElement> ORDER_BY_DESCRIPTION =

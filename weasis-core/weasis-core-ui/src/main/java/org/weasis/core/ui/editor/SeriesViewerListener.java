@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor;
 
+@FunctionalInterface
 public interface SeriesViewerListener {
 
     void changingViewContentEvent(SeriesViewerEvent event);

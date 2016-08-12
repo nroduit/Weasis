@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import java.io.Serializable;
@@ -64,9 +64,6 @@ public class KernelData implements Serializable {
     public static final KernelData GAUSSIAN25 = gaussianKernel2(Messages.getString("KernelData.17"), 5); //$NON-NLS-1$
     public static final KernelData GAUSSIAN27 = gaussianKernel2(Messages.getString("KernelData.18"), 7); //$NON-NLS-1$
 
-    public static KernelData[] ALL_FILTERS =
-        new KernelData[] { NONE, MEAN, BLUR, BLURMORE, SHARPEN, SHARPENMORE, DEFOCUS, EDGE1, EDGE2, STRONGEDGE, OUTLINE,
-            EMBOSS, GAUSSIAN3, GAUSSIAN5, GAUSSIAN7, GAUSSIAN9, GAUSSIAN23, GAUSSIAN25, GAUSSIAN27 };
     /** The type of the kernel. */
     private boolean morphologicalFilter;
 
@@ -201,6 +198,12 @@ public class KernelData implements Serializable {
         } else {
             return new KernelJAI(width, height, xOrigin, yOrigin, data);
         }
+    }
+    
+
+    public static KernelData[] getAllFilters() {
+        return new KernelData[] { NONE, MEAN, BLUR, BLURMORE, SHARPEN, SHARPENMORE, DEFOCUS, EDGE1, EDGE2, STRONGEDGE,
+            OUTLINE, EMBOSS, GAUSSIAN3, GAUSSIAN5, GAUSSIAN7, GAUSSIAN9, GAUSSIAN23, GAUSSIAN25, GAUSSIAN27 };
     }
 
     public static final KernelData makeGaussianKernel(String name, int radius) {

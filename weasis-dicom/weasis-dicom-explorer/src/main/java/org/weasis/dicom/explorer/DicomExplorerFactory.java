@@ -72,8 +72,6 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
         if (explorer != null) {
             DataExplorerModel dataModel = explorer.getDataExplorerModel();
             dataModel.removePropertyChangeListener(explorer);
-            explorer = null;
         }
-        model = null;
     }
 }

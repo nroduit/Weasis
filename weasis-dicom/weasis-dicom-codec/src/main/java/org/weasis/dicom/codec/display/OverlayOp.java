@@ -80,9 +80,7 @@ public class OverlayOp extends AbstractOp {
         RenderedImage result = source;
         Boolean overlay = (Boolean) params.get(P_SHOW);
 
-        if (overlay == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else if (overlay) {
+        if (overlay != null && overlay) {
             RenderedImage imgOverlay = null;
             ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
 
