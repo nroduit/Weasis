@@ -22,7 +22,9 @@ public class AcquireSubmitButtonsPanel extends JPanel {
         
         validateBtn = new AcquireActionButton("Validate", Cmd.VALIDATE);
         cancelBtn = new AcquireActionButton("Cancel", Cmd.CANCEL);
+        cancelBtn.setToolTipText("Return to previous values");
         resetBtn = new AcquireActionButton("Reset", Cmd.RESET);
+        resetBtn.setToolTipText("Reset to default values");
         
         add(validateBtn);
         add(cancelBtn);
@@ -34,6 +36,4 @@ public class AcquireSubmitButtonsPanel extends JPanel {
         cancelBtn.setAcquireAction(acquireAction);
         resetBtn.setAcquireAction(acquireAction);
     }
-
-    
 }

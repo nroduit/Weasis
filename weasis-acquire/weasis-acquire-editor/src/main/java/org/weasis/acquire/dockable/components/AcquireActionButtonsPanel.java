@@ -16,7 +16,6 @@ import org.weasis.acquire.dockable.components.actions.AcquireAction.Cmd;
 import org.weasis.acquire.dockable.components.actions.annotate.AnnotateAction;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationAction;
 import org.weasis.acquire.dockable.components.actions.contrast.ContrastAction;
-import org.weasis.acquire.dockable.components.actions.crop.CropAction;
 import org.weasis.acquire.dockable.components.actions.meta.MetadataAction;
 import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
 
@@ -37,10 +36,9 @@ public class AcquireActionButtonsPanel extends JPanel {
         this.editionTool = editionTool;
 
         setSelected(addNewButton("Metadata", new MetadataAction(this)));
-        addNewButton("Crop", new CropAction(this));
         addNewButton("Rectify", new RectifyAction(this));
-        addNewButton("Calibration", new CalibrationAction(this));
         addNewButton("Contrasts", new ContrastAction(this));
+        addNewButton("Calibration", new CalibrationAction(this));
         addNewButton("Annotation", new AnnotateAction(this));
     }
 
@@ -52,11 +50,11 @@ public class AcquireActionButtonsPanel extends JPanel {
     }
 
     public void setSelected(AcquireActionButton selected) {
+        Objects.requireNonNull(selected);
         AcquireActionButton old = this.selected;
 
-        if (Objects.nonNull(old) && Objects.nonNull(selected) && Objects.equals(selected.getActionCommand(), Cmd.INIT.name())) {
-            AcquireAction action = old.getAcquireAction();
-            action.cancel();
+        if (Objects.nonNull(old) && Objects.equals(selected.getActionCommand(), Cmd.INIT.name())) {
+            old.getAcquireAction().validate();
         }
         this.selected = selected;
         btnGroup.clearSelection();
@@ -67,7 +65,6 @@ public class AcquireActionButtonsPanel extends JPanel {
 
         editionTool.setCentralPanel((AbstractAcquireActionPanel) selected.getCentralPanel());
         editionTool.setBottomPanelActions(selected.getAcquireAction());
-
     }
 
     public AcquireActionButton getSelected() {

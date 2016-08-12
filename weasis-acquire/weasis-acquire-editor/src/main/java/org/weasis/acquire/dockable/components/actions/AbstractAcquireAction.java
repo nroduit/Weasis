@@ -97,7 +97,5 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
         return centralPanel;
     }
 
-    public abstract void validate();
-
     public abstract AcquireActionPanel newCentralPanel();
 }
