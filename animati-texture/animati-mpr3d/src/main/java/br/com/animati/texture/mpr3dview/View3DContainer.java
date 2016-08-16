@@ -108,7 +108,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
     static {
         SYNCH_LIST.add(SynchView.NONE);
 
-        HashMap<String, Boolean> actions = new HashMap<String, Boolean>();
+        HashMap<String, Boolean> actions = new HashMap<>();
         actions.put(ActionW.RESET.cmd(), true);
         actions.put(ActionW.ZOOM.cmd(), true);
         actions.put(ActionW.WINDOW.cmd(), true);
@@ -536,7 +536,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
     private void handlesObservEvent(final PropertyChangeEvent event) {
         ObservableEvent obEvt = (ObservableEvent) event;
         ObservableEvent.BasicAction action = obEvt.getActionCommand();
-        if (ObservableEvent.BasicAction.Remove.equals(action)) {
+        if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
             removeContent(obEvt);
         }
     }
@@ -558,7 +558,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
             if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
                 dicomView.getDataExplorerModel().firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, getGroupID()));
+                    new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
             }
 
         } else {
@@ -604,7 +604,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
-                TOOLBARS.add(new ViewerToolBar<DicomImageElement>(eventManager,
+                TOOLBARS.add(new ViewerToolBar<>(eventManager,
                     eventManager.getMouseActions().getActiveButtons(), BundleTools.SYSTEM_PREFERENCES, 10));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
@@ -637,7 +637,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
                     @Override
                     public SliderChangeListener[] getActions() {
 
-                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                        ArrayList<SliderChangeListener> listeners = new ArrayList<>(3);
                         ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
                         if (seqAction instanceof SliderChangeListener) {
                             listeners.add((SliderChangeListener) seqAction);
