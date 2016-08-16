@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.image.DataBuffer;
@@ -52,9 +52,7 @@ public class AutoLevelsOp extends AbstractOp {
         RenderedImage result = source;
         Boolean auto = (Boolean) params.get(P_AUTO_LEVEL);
 
-        if (auto == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else if (auto) {
+        if (auto != null && auto) {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(source);
             PlanarImage dst = JAI.create("extrema", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$

@@ -46,7 +46,7 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
 
     private final ImageGroupPane centralPane = new ImageGroupPane("Albums");
 
-    private AcquireThumbnailListPane<MediaElement<?>> acquireThumbnailListPane;
+    private AcquireThumbnailListPane<MediaElement> acquireThumbnailListPane;
     private BrowsePanel browsePanel;
     private ImportPanel importPanel;
 

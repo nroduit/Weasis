@@ -20,13 +20,12 @@ import org.weasis.acquire.explorer.gui.dialog.AcquireNewSerieDialog;
 import org.weasis.base.explorer.list.AThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 
 @SuppressWarnings({ "serial" })
-public class AcquireCentralThumnailList<E extends MediaElement<?>> extends AThumbnailList<E> {
+public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbnailList<E> {
 
     private AcquireTabPanel acquireTabPanel;
 
@@ -84,7 +83,6 @@ public class AcquireCentralThumnailList<E extends MediaElement<?>> extends AThum
             JMenu operationsMenu = new JMenu("Operations...");
             operationRotate(operationsMenu, medias, "Rotate +90°", 90);
             operationRotate(operationsMenu, medias, "Rotate -90°", 270);
-            operationFlip(operationsMenu, medias);
 
             popupMenu.add(moveToMenu);
             popupMenu.add(operationsMenu);
@@ -168,28 +166,6 @@ public class AcquireCentralThumnailList<E extends MediaElement<?>> extends AThum
 
                     info.removePreProcessImageOperationAction(RotationOp.class);
                     info.addPreProcessImageOperationAction(rotation);
-
-                    // info.applyPreProcess(getView());
-                });
-            }
-        }));
-    }
-
-    private void operationFlip(JMenu operationsMenu, final List<E> medias) {
-        operationsMenu.add(new JMenuItem(new AbstractAction("Flip") {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                medias.stream().filter(m -> m instanceof ImageElement).map(ImageElement.class::cast).forEach(i -> {
-                    AcquireImageInfo info = AcquireManager.findByImage(i);
-
-                    info.getNextValues().toggleFlip();
-
-                    FlipOp flip = new FlipOp();
-                    flip.setParam(FlipOp.P_FLIP, info.getNextValues().isFlip());
-
-                    info.removePreProcessImageOperationAction(FlipOp.class);
-                    info.addPreProcessImageOperationAction(flip);
 
                     // info.applyPreProcess(getView());
                 });

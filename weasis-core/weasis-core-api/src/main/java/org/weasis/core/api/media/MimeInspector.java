@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media;
 
 import java.io.BufferedReader;
@@ -18,9 +18,11 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -33,6 +35,9 @@ import org.weasis.core.api.internal.mime.InvalidMagicMimeEntryException;
 import org.weasis.core.api.internal.mime.MagicMimeEntry;
 import org.weasis.core.api.util.FileUtil;
 
+/**
+ * The Class MimeInspector is a manager for mime types.
+ */
 public class MimeInspector {
     private static final Logger LOGGER = LoggerFactory.getLogger(MimeInspector.class);
 
@@ -50,13 +55,12 @@ public class MimeInspector {
     public static final Icon dicomIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom.png")); //$NON-NLS-1$
     public static final Icon dicomVideo = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom-video.png")); //$NON-NLS-1$
     public static final Icon pdfIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/pdf.png")); //$NON-NLS-1$
-    private static Properties mimeTypes;
 
-    private static ArrayList<MagicMimeEntry> mMagicMimeEntries = new ArrayList<>();
+    private static final Properties mimeTypes = new Properties();
+    private static final ArrayList<MagicMimeEntry> mMagicMimeEntries = new ArrayList<>();
 
     // Initialize the class in preparation for mime type detection
     static {
-        mimeTypes = new Properties();
         InputStream fileStream = null;
         try {
             // Load the default supplied mime types
@@ -77,6 +81,9 @@ public class MimeInspector {
                 LOGGER.error("Parse magic mime-types", e);
             }
         }
+    }
+
+    private MimeInspector() {
     }
 
     public static boolean isMatchingMimeTypeFromMagicNumber(final File file, String mimeType) {
@@ -126,18 +133,14 @@ public class MimeInspector {
         int lastPos = fileName.lastIndexOf("."); //$NON-NLS-1$
         String extension = lastPos > 0 ? fileName.substring(lastPos + 1).trim() : null;
 
-        String mimeType;
         // Get Mime Type form the extension if the length > 0 and < 5
         if (extension != null && extension.length() > 0 && extension.length() < 5) {
-            mimeType = mimeTypes.getProperty(extension.toLowerCase());
+            String mimeType = mimeTypes.getProperty(extension.toLowerCase());
             if (mimeType != null) {
                 String[] mimes = mimeType.split(","); //$NON-NLS-1$
                 // When several Mimes for an extension, try to find from magic number
                 if (mimes.length > 1) {
-                    mimeType = getMimeTypeFromMagicNumber(file);
-                    if (mimeType == null) {
-                        mimeType = mimes[0];
-                    }
+                    return Optional.ofNullable(getMimeTypeFromMagicNumber(file)).orElse(mimes[0]);
                 }
                 return mimeType;
             }
@@ -147,10 +150,9 @@ public class MimeInspector {
 
     private static void parse(Reader r) throws IOException {
         BufferedReader br = new BufferedReader(r);
-        String line;
         ArrayList<String> sequence = new ArrayList<>();
 
-        line = br.readLine();
+        String line = br.readLine();
         while (true) {
             if (line == null) {
                 break;
@@ -270,11 +272,7 @@ public class MimeInspector {
             String key = (String) entry.getKey();
             String val = (String) entry.getValue();
             if (val != null) {
-                for (String m : mimes) {
-                    if (val.equals(m)) {
-                        list.add(key);
-                    }
-                }
+                Arrays.stream(mimes).filter(val::equals).forEach(s -> list.add(key));
             }
         }
         return list;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media.data;
 
 import java.awt.image.DataBuffer;
@@ -37,11 +37,7 @@ import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ThreadUtil;
 
-public class ImageElement extends MediaElement<PlanarImage> {
-
-    /**
-     * Logger for this class
-     */
+public class ImageElement extends MediaElement {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageElement.class);
 
     /*
@@ -67,7 +63,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
             ImageElement key = reverseLookup.remove(soft);
             if (key != null) {
                 hash.remove(key);
-                MediaReader<PlanarImage> reader = key.getMediaReader();
+                MediaReader reader = key.getMediaReader();
                 key.setTag(TagW.ImageCache, false);
                 if (reader != null) {
                     // Close the image stream
@@ -87,7 +83,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
     protected Double minPixelValue;
     protected Double maxPixelValue;
 
-    public ImageElement(MediaReader<PlanarImage> mediaIO, Object key) {
+    public ImageElement(MediaReader mediaIO, Object key) {
         super(mediaIO, key);
     }
 
@@ -245,7 +241,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     public void removeImageFromCache() {
         mCache.remove(this);
-        MediaReader<PlanarImage> reader = this.getMediaReader();
+        MediaReader reader = this.getMediaReader();
         this.setTag(TagW.ImageCache, false);
         if (reader != null) {
             // Close the image stream
@@ -274,7 +270,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
      */
 
     protected PlanarImage loadImage() throws Exception {
-        return mediaIO.getMediaFragment(this);
+        return mediaIO.getImageFragment(this);
     }
 
     public RenderedImage getRenderedImage(final RenderedImage imageSource) {
@@ -407,8 +403,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     @Override
     public void dispose() {
-        // TODO find a clue to not dispose the display image
-        // Or do nothing, let the soft reference mechanism do its job
+        // Let the soft reference mechanism dispose the display image
 
         // Close image reader and image stream, but it should be already closed
         if (mediaIO != null) {

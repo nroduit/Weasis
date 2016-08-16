@@ -59,7 +59,7 @@ public class DefaultViewModel implements ViewModel {
         this.viewScaleMin = viewScaleMin;
         this.viewScaleMax = viewScaleMax;
         this.modelArea = new Rectangle2D.Double();
-        this.viewModelChangeListenerList = new ArrayList<ViewModelChangeListener>();
+        this.viewModelChangeListenerList = new ArrayList<>();
         this.enableViewModelChangeListeners = true;
     }
 

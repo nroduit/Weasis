@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import java.awt.Color;
@@ -382,7 +382,7 @@ public class ImageFiler extends AbstractBufferHandler {
         if (filename == null) {
             return ""; //$NON-NLS-1$
         }
-        // récupère dans le nom tous ce qu'il y a avant le dernier point et on ajoute l'extension
+        // replace extension after the last point
         int pointPos = filename.lastIndexOf("."); //$NON-NLS-1$
         if (pointPos == -1) {
             pointPos = filename.length();
@@ -429,7 +429,7 @@ public class ImageFiler extends AbstractBufferHandler {
         return JAI.create("format", pb, hints); //$NON-NLS-1$
     }
 
-    public static File cacheTiledImage(RenderedImage img, MediaElement<?> media) {
+    public static File cacheTiledImage(RenderedImage img, MediaElement media) {
         if (img.getWidth() > 2 * ImageFiler.TILESIZE || img.getHeight() > 2 * ImageFiler.TILESIZE) {
             File imgCacheFile = null;
             try {

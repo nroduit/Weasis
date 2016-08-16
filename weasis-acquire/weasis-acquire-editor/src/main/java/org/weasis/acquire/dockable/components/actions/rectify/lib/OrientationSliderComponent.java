@@ -12,23 +12,27 @@ import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
 public class OrientationSliderComponent extends AbstractSliderComponent {
     private static final long serialVersionUID = -4238024766089795426L;
 
-    private static final int RECTIFY_ORIENTATION_MIN = -5;
-    private static final int RECTIFY_ORIENTATION_MAX = 5;
+    private static final int RECTIFY_ORIENTATION_MIN = -45;
+    private static final int RECTIFY_ORIENTATION_MAX = 45;
     private static final int RECTIFY_ORIENTATION_DEFAULT = 0;
-    
+
     private static final Hashtable<Integer, JLabel> labels = new Hashtable<>();
-    
+
     static {
-        labels.put(RECTIFY_ORIENTATION_MIN, new JLabel(Integer.toString(RECTIFY_ORIENTATION_MIN)));
-        labels.put(RECTIFY_ORIENTATION_DEFAULT, new JLabel(Integer.toString(RECTIFY_ORIENTATION_DEFAULT)));
-        labels.put(RECTIFY_ORIENTATION_MAX, new JLabel(Integer.toString(RECTIFY_ORIENTATION_MAX)));
+        int div = 7;
+        int space = (RECTIFY_ORIENTATION_MAX - RECTIFY_ORIENTATION_MIN) / (div - 1);
+
+        for (int i = 0; i < div; i++) {
+            Integer index = i * space + RECTIFY_ORIENTATION_MIN;
+            labels.put(index, new JLabel("" + index)); //$NON-NLS-1$
+        }
     }
-    
+
     public OrientationSliderComponent(RectifyPanel panel) {
         super(panel, "Orientation");
         addChangeListener(new RectifyOrientationChangeListener());
     }
-    
+
     @Override
     public int getDefaultValue() {
         return RECTIFY_ORIENTATION_DEFAULT;
@@ -48,7 +52,7 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
     public Dictionary<Integer, JLabel> getLabels() {
         return labels;
     }
-    
+
     @Override
     public String getDisplayTitle() {
         return super.getDisplayTitle() + "°";

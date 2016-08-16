@@ -9,6 +9,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +17,8 @@ import java.util.Map;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
@@ -31,7 +34,9 @@ import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.EscapeChars;
+import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ShowPopup;
@@ -41,6 +46,7 @@ import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
+import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -69,6 +75,8 @@ public class PRManager {
         if (view == null || reader == null || img == null) {
             return;
         }
+
+        // TODO should move to the model
         Map<String, Object> actionsInView = view.getActionsInView();
         reader.applySpatialTransformationModule(actionsInView);
         List<PresetWindowLevel> presets = reader.getPresetCollection(img);
@@ -84,17 +92,46 @@ public class PRManager {
 
         applyPixelSpacing(view, reader, img);
 
-        List<GraphicLayer> layers = readGraphicAnnotation(view, reader, img);
-        if (layers != null) {
-            EventManager eventManager = EventManager.getInstance();
-            SeriesViewerEvent event =
-                new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.ADD_LAYER);
-            for (Layer layer : layers) {
-                event.setShareObject(layer);
-                eventManager.fireSeriesViewerListeners(event);
+        GraphicModel graphicModel = getPresentationModel(reader.getDcmobj());
+        if (graphicModel == null) {
+            List<GraphicLayer> layers = readGraphicAnnotation(view, reader, img);
+            if (layers != null) {
+                EventManager eventManager = EventManager.getInstance();
+                SeriesViewerEvent event =
+                    new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.ADD_LAYER);
+                for (Layer layer : layers) {
+                    event.setShareObject(layer);
+                    eventManager.fireSeriesViewerListeners(event);
+                }
+                view.setActionsInView(PRManager.TAG_DICOM_LAYERS, layers);
             }
-            view.setActionsInView(PRManager.TAG_DICOM_LAYERS, layers);
+        } else {
+            img.setTag(TagW.PresentationModel, graphicModel);
         }
+    }
+
+    private static GraphicModel getPresentationModel(Attributes dcmobj) {
+        if (dcmobj != null) {
+            String id = dcmobj.getString(PresentationStateReader.PRIVATE_CREATOR_TAG);
+            if (PresentationStateReader.PR_MODEL_ID.equals(id)) {
+                try {
+                    JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
+                    Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+                    ByteArrayInputStream inputStream = new ByteArrayInputStream(GzipManager
+                        .gzipUncompressToByte(dcmobj.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG)));
+                    GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(inputStream);
+                    int length = model.getModels().size();
+                    model.getModels().removeIf(g -> g.getLayer() == null);
+                    if (length > model.getModels().size()) {
+                        LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length);
+                    }
+                    return model;
+                } catch (Exception e) {
+                    LOGGER.error("Cannot load xml: ", e);
+                }
+            }
+        }
+        return null;
     }
 
     private static void applyPixelSpacing(ViewCanvas<DicomImageElement> view, PresentationStateReader reader,
@@ -311,10 +348,10 @@ public class PRManager {
                                  */
                                 ptBox =
                                     rect == null ? ptAnchor : new Point2D.Double(rect.getCenterX(), rect.getCenterY());
-                                if(!PrGraphicUtil.getBooleanValue(txo, Tag.AnchorPointVisibility)){
+                                if (!PrGraphicUtil.getBooleanValue(txo, Tag.AnchorPointVisibility)) {
                                     ptAnchor = null;
                                 }
-                                if(ptAnchor != null && ptAnchor.equals(ptBox)){
+                                if (ptAnchor != null && ptAnchor.equals(ptBox)) {
                                     ptBox = new Point2D.Double(ptAnchor.getX() + 20, ptAnchor.getY() + 50);
                                 }
                             } else if (rect != null) {
@@ -369,7 +406,7 @@ public class PRManager {
                     key instanceof Integer ? (Integer) key + 1 : null);
             if (!prList.isEmpty()) {
                 Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
-                if (!ActionState.NONE_SERIES.equals(oldPR)) {
+                if (!ActionState.NoneLabel.NONE_SERIES.equals(oldPR)) {
                     int index = prList.indexOf(oldPR);
                     index = index == -1 ? 0 : index;
                     // Set the previous selected value, otherwise set the more recent PR by default
@@ -378,9 +415,9 @@ public class PRManager {
 
                 int offset = series.size(null) > 1 ? 2 : 1;
                 final Object[] items = new Object[prList.size() + offset];
-                items[0] = ActionState.NONE;
+                items[0] = ActionState.NoneLabel.NONE;
                 if (offset == 2) {
-                    items[1] = ActionState.NONE_SERIES;
+                    items[1] = ActionState.NoneLabel.NONE_SERIES;
                 }
                 for (int i = offset; i < items.length; i++) {
                     items[i] = prList.get(i - offset);
@@ -391,7 +428,7 @@ public class PRManager {
                     public void showPopup(Component invoker, int x, int y) {
                         Object pr = view.getActionValue(ActionW.PR_STATE.cmd());
                         if (pr == null) {
-                            pr = ActionState.NONE;
+                            pr = ActionState.NoneLabel.NONE;
                         }
                         pr = (pr instanceof PresentationStateReader) ? ((PresentationStateReader) pr).getDicom() : pr;
                         JPopupMenu popupMenu = new JPopupMenu();

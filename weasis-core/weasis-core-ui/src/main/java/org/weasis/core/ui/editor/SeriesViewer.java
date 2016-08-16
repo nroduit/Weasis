@@ -23,7 +23,7 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
-public interface SeriesViewer<E extends MediaElement<?>> {
+public interface SeriesViewer<E extends MediaElement> {
 
     String getPluginName();
 

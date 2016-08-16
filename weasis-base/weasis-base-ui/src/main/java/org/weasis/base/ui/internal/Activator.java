@@ -12,6 +12,7 @@ package org.weasis.base.ui.internal;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Optional;
 
 import javax.swing.LookAndFeel;
 
@@ -25,6 +26,8 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.WeasisApp;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.base.ui.gui.WeasisWinPropertyChangeListener;
@@ -39,6 +42,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.pref.GeneralSetting;
 
 public class Activator implements BundleActivator, ServiceListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
@@ -60,78 +64,37 @@ public class Activator implements BundleActivator, ServiceListener {
         }
 
         // WeasisWin must be instantiate in the EDT
-        GuiExecutor.instance().invokeAndWait(new Runnable() {
+        GuiExecutor.instance().invokeAndWait(() -> {
+            final WeasisWin app = WeasisWin.getInstance();
+            try {
+                app.createMainPanel();
+                app.showWindow();
 
-            @Override
-            public void run() {
-                final WeasisWin app = WeasisWin.getInstance();
-                try {
-                    app.createMainPanel();
-                    app.showWindow();
-
-                } catch (Exception ex) {
-                    // Nimbus bug, hangs GUI: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
-                    // It is better to exit than to let run a zombie process
-                    System.err.println("Could not start GUI: " + ex); //$NON-NLS-1$
-                    ex.printStackTrace();
-                    System.exit(-1);
-                }
+            } catch (Exception ex) {
+                // It is better to exit than to let run a zombie process
+                LOGGER.error("Cannot start GUI", ex);//$NON-NLS-1$
+                System.exit(-1);
             }
         });
 
         // Register "weasis" command
-        Dictionary<String, Object> dict = new Hashtable<String, Object>();
+        Dictionary<String, Object> dict = new Hashtable<>();
         dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); //$NON-NLS-1$
         dict.put(CommandProcessor.COMMAND_FUNCTION, WeasisApp.functions);
         bundleContext.registerService(WeasisApp.class.getName(), WeasisApp.getInstance(), dict);
 
-        // Explorer (with non immediate instance)
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                // Register default model
-                ViewerPluginBuilder.DefaultDataModel
-                    .addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
-
-                try {
-                    for (ServiceReference<DataExplorerViewFactory> serviceReference : bundleContext
-                        .getServiceReferences(DataExplorerViewFactory.class, null)) {
-                        DataExplorerViewFactory service = bundleContext.getService(serviceReference);
-                        if (service != null && !UIManager.EXPLORER_PLUGINS.contains(service)) {
-                            String className = BundleTools.SYSTEM_PREFERENCES.getProperty(service.getClass().getName());
-                            if (StringUtil.hasText(className) && !Boolean.valueOf(className)) {
-                                continue;
-                            }
-                            final DataExplorerView explorer = service.createDataExplorerView(null);
-                            UIManager.EXPLORER_PLUGINS.add(explorer);
-
-                            if (explorer.getDataExplorerModel() != null) {
-                                explorer.getDataExplorerModel()
-                                    .addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
-                            }
-
-                            if (explorer instanceof DockableTool) {
-                                final DockableTool dockable = (DockableTool) explorer;
-                                dockable.showDockable();
-                            }
-                        }
-                    }
-
-                } catch (InvalidSyntaxException e1) {
-                    e1.printStackTrace();
-                }
-
-                // Add all the service listeners
-                try {
-                    bundleContext.addServiceListener(Activator.this,
-                        String.format("(%s=%s)", Constants.OBJECTCLASS, DataExplorerViewFactory.class.getName())); //$NON-NLS-1$
-                } catch (InvalidSyntaxException e) {
-                    e.printStackTrace();
-                }
-            }
-
+        // Explorer (with immediate instance)
+        GuiExecutor.instance().execute(() -> {
+          registerExistingDataExplorer(bundleContext);
         });
+        
+        // Add all the service listeners
+        try {
+            bundleContext.addServiceListener(Activator.this,
+                String.format("(%s=%s)", Constants.OBJECTCLASS, DataExplorerViewFactory.class.getName())); //$NON-NLS-1$
+        } catch (InvalidSyntaxException e3) {
+            LOGGER.error("Add service listener", e3);
+        }
     }
 
     @Override
@@ -144,62 +107,65 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public synchronized void serviceChanged(final ServiceEvent event) {
         // Explorer (with non immediate instance) and WeasisWin must be instantiate in the EDT
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                final ServiceReference<?> m_ref = event.getServiceReference();
-                final BundleContext context = FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
-                Object service = context.getService(m_ref);
-                if (service instanceof DataExplorerViewFactory) {
-                    final DataExplorerView explorer = ((DataExplorerViewFactory) service).createDataExplorerView(null);
-                    if (event.getType() == ServiceEvent.REGISTERED) {
-                        if (!UIManager.EXPLORER_PLUGINS.contains(explorer)) {
-                            // if ("Media Explorer".equals(explorer.getUIName())) { //$NON-NLS-1$
-                            // // in this case, if there are several Explorers, the Media Explorer is selected by
-                            // // default
-                            // UIManager.EXPLORER_PLUGINS.add(0, explorer);
-                            // } else {
-                            UIManager.EXPLORER_PLUGINS.add(explorer);
-                            // }
-                            if (explorer.getDataExplorerModel() != null) {
-                                explorer.getDataExplorerModel()
-                                    .addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
-                            }
-                            if (explorer instanceof DockableTool) {
-                                final DockableTool dockable = (DockableTool) explorer;
-                                dockable.showDockable();
-                            }
-
-                            // BundleTools.logger.log(LogService.LOG_INFO, "Register data explorer Plug-in: " +
-                            // m_ref.toString());
-                        }
-                    } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                if (UIManager.EXPLORER_PLUGINS.contains(explorer)) {
-                                    if (explorer.getDataExplorerModel() != null) {
-                                        explorer.getDataExplorerModel().removePropertyChangeListener(
-                                            WeasisWinPropertyChangeListener.getInstance());
-                                    }
-                                    UIManager.EXPLORER_PLUGINS.remove(explorer);
-                                    explorer.dispose();
-                                    // TODO unregister property change of the model
-                                    // BundleTools.logger.log(LogService.LOG_INFO,
-                                    // "Unregister data explorer Plug-in: " +
-                                    // m_ref.toString());
-                                }
-                                // Unget service object and null references.
-                                context.ungetService(m_ref);
-                            }
-                        });
-                    }
-                }
-            }
-        });
+        GuiExecutor.instance().execute(() -> dataExplorerChanged(event));
     }
 
+    private void dataExplorerChanged(final ServiceEvent event) {
+        final ServiceReference<?> mRef = event.getServiceReference();
+        final BundleContext context = FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
+        Object service = context.getService(mRef);
+        if (service instanceof DataExplorerViewFactory) {
+            final DataExplorerView explorer = ((DataExplorerViewFactory) service).createDataExplorerView(null);
+            if (event.getType() == ServiceEvent.REGISTERED) {
+                registerDataExplorer(explorer);
+            } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                GuiExecutor.instance().execute(() -> {
+                    if (UIManager.EXPLORER_PLUGINS.contains(explorer)) {
+                        Optional.ofNullable(explorer.getDataExplorerModel()).ifPresent(
+                            e -> e.removePropertyChangeListener(WeasisWinPropertyChangeListener.getInstance()));
+                        UIManager.EXPLORER_PLUGINS.remove(explorer);
+                        explorer.dispose();
+                        LOGGER.info("Unregister data explorer Plug-in: {}", explorer.getUIName()); //$NON-NLS-1$
+                    }
+                    // Unget service object and null references.
+                    context.ungetService(mRef);
+                });
+            }
+        }
+    }
+
+    private static void registerExistingDataExplorer(BundleContext bundleContext) {
+        // Register default model
+        ViewerPluginBuilder.DefaultDataModel.addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
+
+        try {
+            for (ServiceReference<DataExplorerViewFactory> serviceReference : bundleContext
+                .getServiceReferences(DataExplorerViewFactory.class, null)) {
+                DataExplorerViewFactory service = bundleContext.getService(serviceReference);
+                if (service != null) {
+                    String className1 = BundleTools.SYSTEM_PREFERENCES.getProperty(service.getClass().getName());
+                    if (StringUtil.hasText(className1) && !Boolean.valueOf(className1)) {
+                        continue;
+                    }
+                    registerDataExplorer(service.createDataExplorerView(null));
+                }
+            }
+
+        } catch (InvalidSyntaxException e2) {
+            LOGGER.error("Register data explorer", e2);
+        }
+    }
+
+    private static void registerDataExplorer(DataExplorerView explorer) {
+        if (explorer != null && !UIManager.EXPLORER_PLUGINS.contains(explorer)) {
+            UIManager.EXPLORER_PLUGINS.add(explorer);
+            Optional.ofNullable(explorer.getDataExplorerModel())
+                .ifPresent(e -> e.addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance()));
+            if (explorer instanceof DockableTool) {
+                final DockableTool dockable = (DockableTool) explorer;
+                dockable.showDockable();
+            }
+            LOGGER.info("Register data explorer Plug-in: {}", explorer.getUIName()); //$NON-NLS-1$
+        }
+    }
 }

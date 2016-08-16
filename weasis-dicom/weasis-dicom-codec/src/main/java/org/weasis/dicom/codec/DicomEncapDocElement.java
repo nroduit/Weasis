@@ -17,7 +17,7 @@ import javax.media.jai.PlanarImage;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
 
-public class DicomEncapDocElement extends MediaElement<PlanarImage>
+public class DicomEncapDocElement extends MediaElement
 		implements FileExtractor {
 	private File document = null;
 

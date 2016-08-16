@@ -18,7 +18,7 @@ import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
 @SuppressWarnings("serial")
-public abstract class AThumbnailListPane<E extends MediaElement<?>> extends JScrollPane
+public abstract class AThumbnailListPane<E extends MediaElement> extends JScrollPane
     implements IThumbnailListPane<E> {
     protected IThumbnailList<E> thumbnailList;
     protected ExecutorService pool;

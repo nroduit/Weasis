@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.io.File;
@@ -44,14 +44,14 @@ public class FileFormatFilter extends FileFilter {
 
     static {
         // extension alternatives : more than one is separated by comma
-        sExtToCodec = new HashMap<String, String>();
+        sExtToCodec = new HashMap<>();
         sExtToCodec.put("jpg,jpe", "jpeg"); //$NON-NLS-1$ //$NON-NLS-2$
         sExtToCodec.put("tif", "tiff"); //$NON-NLS-1$ //$NON-NLS-2$
         sExtToCodec.put("pbm,ppm,pgm", "pnm"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public FileFormatFilter(String extension, String description) {
-        fExtensions = new TreeMap<String, FileFormatFilter>();
+        fExtensions = new TreeMap<>();
         fDescription = null;
         fFullDescription = null;
         fDefaultExtension = null;
@@ -64,12 +64,12 @@ public class FileFormatFilter extends FileFilter {
         }
     }
 
-    public FileFormatFilter(String filters[]) {
+    public FileFormatFilter(String[] filters) {
         this(filters, null);
     }
 
-    public FileFormatFilter(String filters[], String description) {
-        fExtensions = new TreeMap<String, FileFormatFilter>();
+    public FileFormatFilter(String[] filters, String description) {
+        fExtensions = new TreeMap<>();
         fDescription = null;
         fFullDescription = null;
         fDefaultExtension = null;
@@ -112,9 +112,7 @@ public class FileFormatFilter extends FileFilter {
     }
 
     public void addExtension(String extension) {
-        extension = extension.replace('*', ' ');
-        extension = extension.replace('.', ' ');
-        fExtensions.put(extension.trim().toLowerCase(), this);
+        fExtensions.put(extension.replace('*', ' ').replace('.', ' ').trim().toLowerCase(), this);
         if (fDefaultExtension == null) {
             fDefaultExtension = extension;
         }
@@ -159,7 +157,7 @@ public class FileFormatFilter extends FileFilter {
     public static void setImageDecodeFilters(JFileChooser chooser) {
         // Get the current available codecs from ImageIO.
         Enumeration<?> codecs = ImageCodec.getCodecs();
-        ArrayList<String> namesList = new ArrayList<String>(20);
+        ArrayList<String> namesList = new ArrayList<>(20);
         ImageCodec ic;
         for (; codecs.hasMoreElements(); namesList.add(ic.getFormatName())) {
             ic = (ImageCodec) codecs.nextElement();
@@ -167,7 +165,7 @@ public class FileFormatFilter extends FileFilter {
         Collections.sort(namesList);
         Iterator<String> it = namesList.iterator();
         String desc = Messages.getString("FileFormatFilter.all_supported"); //$NON-NLS-1$
-        ArrayList<String> names = new ArrayList<String>();
+        ArrayList<String> names = new ArrayList<>();
         do {
             if (!it.hasNext()) {
                 break;

@@ -451,10 +451,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return null;
     }
 
-    class SynchGroupMenu extends GroupRadioMenu {
-
-        public SynchGroupMenu() {
-        }
+    class SynchGroupMenu extends GroupRadioMenu<SynchView> {
 
         @Override
         public void contentsChanged(ListDataEvent e) {

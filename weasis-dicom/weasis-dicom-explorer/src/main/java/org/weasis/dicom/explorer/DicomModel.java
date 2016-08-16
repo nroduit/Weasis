@@ -228,8 +228,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                     if ((c == 0 || (date1 == null && date2 == null)) && st1 instanceof MediaSeries
                         && st2 instanceof MediaSeries) {
-                        MediaElement<?> media1 = ((MediaSeries<? extends MediaElement<?>>) st1).getMedia(0, null, null);
-                        MediaElement<?> media2 = ((MediaSeries<? extends MediaElement<?>>) st2).getMedia(0, null, null);
+                        MediaElement media1 = ((MediaSeries<? extends MediaElement>) st1).getMedia(0, null, null);
+                        MediaElement media2 = ((MediaSeries<? extends MediaElement>) st2).getMedia(0, null, null);
                         if (media1 != null && media2 != null) {
                             date1 = TagD.dateTime(Tag.AcquisitionDate, Tag.AcquisitionTime, media1);
                             date2 = TagD.dateTime(Tag.AcquisitionDate, Tag.AcquisitionTime, media2);
@@ -472,7 +472,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
     }
 
-    public void mergeSeries(List<MediaSeries<? extends MediaElement<?>>> seriesList) {
+    public void mergeSeries(List<MediaSeries<? extends MediaElement>> seriesList) {
         if (seriesList != null && seriesList.size() > 1) {
             String uid = TagD.getTagValue(seriesList.get(0), Tag.SeriesInstanceUID, String.class);
             boolean sameOrigin = true;
@@ -486,15 +486,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             if (sameOrigin) {
                 int min = Integer.MAX_VALUE;
-                MediaSeries<? extends MediaElement<?>> base = seriesList.get(0);
-                for (MediaSeries<? extends MediaElement<?>> series : seriesList) {
+                MediaSeries<? extends MediaElement> base = seriesList.get(0);
+                for (MediaSeries<? extends MediaElement> series : seriesList) {
                     Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                     if (splitNb != null && min > splitNb) {
                         min = splitNb;
                         base = series;
                     }
                 }
-                for (MediaSeries<? extends MediaElement<?>> series : seriesList) {
+                for (MediaSeries<? extends MediaElement> series : seriesList) {
                     if (series != base) {
                         base.addAll((Collection) series.getMedias(null, null));
                         removeSeries(series);
@@ -505,7 +505,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 Collections.sort(sortedMedias, SortSeriesStack.instanceNumber);
                 // update observer
                 this.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Replace, DicomModel.this, base, base));
+                    new ObservableEvent(ObservableEvent.BasicAction.REPLACE, DicomModel.this, base, base));
             }
         }
     }
@@ -550,7 +550,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
             if (patientSpecialElementList.remove(dicomSpecialElement)) {
                 firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Update, this, null, dicomSpecialElement));
+                    new ObservableEvent(ObservableEvent.BasicAction.UPDATE, this, null, dicomSpecialElement));
             }
 
             if (specialElementList.isEmpty()) {
@@ -566,7 +566,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             // remove first series in UI (Dicom Explorer, Viewer using this series)
             firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null, dicomSeries));
+                new ObservableEvent(ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, dicomSeries));
             // remove in the data model
             MediaSeriesGroup studyGroup = getParent(dicomSeries, DicomModel.study);
             removeHierarchyNode(studyGroup, dicomSeries);
@@ -587,7 +587,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             }
             firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null, studyGroup));
+                new ObservableEvent(ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, studyGroup));
             Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
             for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                 MediaSeriesGroup group = it.next();
@@ -615,7 +615,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             }
             firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null, patientGroup));
+                new ObservableEvent(ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, patientGroup));
             Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
             for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
                 MediaSeriesGroup studyGroup = it.next();
@@ -789,12 +789,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
             if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                 Set<String> koSet = koSpecialElement.getReferencedSeriesInstanceUIDSet();
-                List<MediaSeries<? extends MediaElement<?>>> seriesList = new ArrayList<>();
+                List<MediaSeries<MediaElement>> seriesList = new ArrayList<>();
 
                 for (MediaSeriesGroup st : this.getChildren(patient)) {
                     for (MediaSeriesGroup s : this.getChildren(st)) {
                         if (koSet.contains(TagD.getTagValue(s, Tag.SeriesInstanceUID))) {
-                            seriesList.add((MediaSeries<? extends MediaElement<?>>) s);
+                            seriesList.add((MediaSeries<MediaElement>) s);
                         }
                     }
                 }
@@ -809,7 +809,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, this, props);
                     ViewerPluginBuilder.openSequenceInPlugin(builder);
                     this.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.Select, uid, null, koSpecialElement));
+                        new ObservableEvent(ObservableEvent.BasicAction.SELECT, uid, null, koSpecialElement));
                 }
             }
         }
@@ -911,7 +911,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             dicomSeries.setTag(TagW.Thumbnail, t);
             t.repaint();
         }
-        firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, this, null, dicomSeries));
+        firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, this, null, dicomSeries));
     }
 
     @Override
@@ -956,7 +956,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                 int frames = dicomReader.getMediaElementNumber();
                 if (frames < 1) {
-                    initialSeries.addMedia(media);
+                    initialSeries.addMedia((DicomImageElement) media);
                 } else {
                     Modality modality =
                         Modality.getModality(TagD.getTagValue(initialSeries, Tag.Modality, String.class));
@@ -971,7 +971,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
                     // If similar add to the original series
                     if (isSimilar(rules, initialSeries, media)) {
-                        initialSeries.addMedia(media);
+                        initialSeries.addMedia((DicomImageElement) media);
                         return false;
                     }
 
@@ -983,7 +983,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         MediaSeriesGroup group = getHierarchyNode(study, uid);
                         if (group instanceof DicomSeries) {
                             if (isSimilar(rules, (DicomSeries) group, media)) {
-                                ((DicomSeries) group).addMedia(media);
+                                ((DicomSeries) group).addMedia((DicomImageElement) media);
                                 return false;
                             }
                         } else {
@@ -1058,8 +1058,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return false;
     }
 
-    private static boolean isSimilar(List<Rule> list, Series<?> s, final MediaElement<?> media) {
-        final MediaElement<?> firstMedia = s.getMedia(0, null, null);
+    private static boolean isSimilar(List<Rule> list, Series<?> s, final MediaElement media) {
+        final MediaElement firstMedia = s.getMedia(0, null, null);
         if (firstMedia == null) {
             // no image
             return true;
@@ -1095,7 +1095,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         GuiExecutor.instance().execute(() -> {
             firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null, DicomModel.this));
+                new ObservableEvent(ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
             getCommand(opt, args);
         });
     }
@@ -1191,7 +1191,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         GuiExecutor.instance().execute(() -> {
             firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null, DicomModel.this));
+                new ObservableEvent(ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
             closeCommand(opt, args);
 
         });

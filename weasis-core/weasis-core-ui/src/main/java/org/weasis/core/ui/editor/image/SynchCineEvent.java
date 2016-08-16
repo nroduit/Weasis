@@ -3,22 +3,22 @@ package org.weasis.core.ui.editor.image;
 import org.weasis.core.api.media.data.MediaElement;
 
 public class SynchCineEvent extends SynchEvent {
-    private final MediaElement<?> media;
+    private final MediaElement media;
     private final int seriesIndex;
     private Number location;
 
-    public SynchCineEvent(ViewCanvas<?> view, MediaElement<?> media, int seriesIndex) {
+    public SynchCineEvent(ViewCanvas<?> view, MediaElement media, int seriesIndex) {
         this(view, media, seriesIndex, null);
     }
 
-    public SynchCineEvent(ViewCanvas<?> view, MediaElement<?> media, int seriesIndex, Number location) {
+    public SynchCineEvent(ViewCanvas<?> view, MediaElement media, int seriesIndex, Number location) {
         super(view);
         this.media = media;
         this.seriesIndex = seriesIndex;
         this.location = location;
     }
 
-    public MediaElement<?> getMedia() {
+    public MediaElement getMedia() {
         return media;
     }
 

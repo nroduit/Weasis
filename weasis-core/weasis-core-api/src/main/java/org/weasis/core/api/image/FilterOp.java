@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
@@ -50,9 +50,7 @@ public class FilterOp extends AbstractOp {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         KernelData kernel = (KernelData) params.get(P_KERNEL_DATA);
-        if (kernel == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else if (!kernel.equals(KernelData.NONE)) {
+        if (kernel != null && !kernel.equals(KernelData.NONE)) {
             ParameterBlock paramBlock = new ParameterBlock();
             paramBlock.addSource(source);
             paramBlock.add(kernel.getKernelJAI());

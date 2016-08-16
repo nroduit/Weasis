@@ -19,7 +19,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 
 @SuppressWarnings("serial")
-public class AcquireThumbnailList<E extends MediaElement<?>> extends AThumbnailList<E> {
+public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList<E> {
 
     private AcquireThumbnailListPane<E> mainPanel;
 

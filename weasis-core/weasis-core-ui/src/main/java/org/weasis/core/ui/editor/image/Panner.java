@@ -41,7 +41,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
     }
 
     @Override
-    protected void init(MediaElement<?> media, boolean keepMediaCache, OpManager opManager) {
+    protected void init(MediaElement media, boolean keepMediaCache, OpManager opManager) {
         super.init(media, keepMediaCache, opManager);
     }
 

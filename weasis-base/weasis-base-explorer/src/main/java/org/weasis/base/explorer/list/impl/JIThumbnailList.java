@@ -19,7 +19,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.util.TitleMenuItem;
 
 @SuppressWarnings("serial")
-public final class JIThumbnailList<E extends MediaElement<?>> extends AThumbnailList<E> implements IThumbnailList<E> {
+public final class JIThumbnailList<E extends MediaElement> extends AThumbnailList<E> implements IThumbnailList<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(JIThumbnailList.class);
 
     public JIThumbnailList() {

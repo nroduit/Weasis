@@ -45,7 +45,7 @@ public class MPRFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
+    public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = MPRContainer.VIEWS_2x1_mpr;
         String uid = null;
         if (properties != null) {
@@ -108,7 +108,7 @@ public class MPRFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer) {
+    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
         if (viewer instanceof MPRContainer) {
             return true;
         }

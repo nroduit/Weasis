@@ -70,13 +70,13 @@ public final class KOComponentFactory {
             public void showPopup(Component invoker, int x, int y) {
 
                 final EventManager evtMgr = EventManager.getInstance();
-                ComboItemListener koSelectionAction = ((ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION));
+                ComboItemListener<Object> koSelectionAction = ((ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION));
                 JPopupMenu popupMenu = new JPopupMenu();
 
                 popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
                 popupMenu.addSeparator();
 
-                GroupRadioMenu groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
+                GroupRadioMenu<Object> groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
                 for (RadioMenuItem item : groupRadioMenu.getRadioMenuItemListCopy()) {
                     popupMenu.add(item);
                 }

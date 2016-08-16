@@ -12,6 +12,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 
 public abstract class AbstractSliderComponent extends AbstractComponent implements ChangeListener {
@@ -29,6 +30,7 @@ public abstract class AbstractSliderComponent extends AbstractComponent implemen
         slider.setPaintTicks(true);
         slider.setLabelTable(getLabels());
         slider.setPaintLabels(true);
+        FontTools.setFont10(slider);
         slider.setBorder(borderTitle); 
         slider.addChangeListener(this);
         
@@ -65,7 +67,5 @@ public abstract class AbstractSliderComponent extends AbstractComponent implemen
     public abstract int getMax();
     
     public abstract Dictionary<Integer, JLabel> getLabels();
-    
-    
     
 }

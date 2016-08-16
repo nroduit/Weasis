@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.util;
 
 import java.security.MessageDigest;
@@ -22,7 +32,7 @@ public class StringUtil {
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
     private static final int[] EMPTY_INT_ARRAY = new int[0];
 
-    public static final char[] HEX_DIGIT =
+    private static final char[] HEX_DIGIT =
         { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
     public enum Suffix {

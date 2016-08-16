@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media.data;
 
 import java.awt.datatransfer.DataFlavor;
@@ -38,7 +38,7 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.util.StringUtil;
 
-public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroupNode implements MediaSeries<E> {
+public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNode implements MediaSeries<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Series.class);
 
     public static final DataFlavor sequenceDataFlavor =
@@ -240,11 +240,6 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.weasis.media.data.MediaSeries#dispose()
-     */
     @Override
     public void dispose() {
         // forEach implement synchronized
@@ -339,11 +334,6 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
     public String getToolTips() {
         StringBuilder toolTips = new StringBuilder();
         toolTips.append("<html>"); //$NON-NLS-1$
-
-        // int seqSize = this.getLoadSeries() == null ? this.size() :
-        // this.getLoadSeries().getProgressBar().getMaximum();
-        // toolTips.append("Number of Frames: " + seqSize + "<br>");
-
         E media = this.getMedia(MEDIA_POSITION.MIDDLE, null, null);
         if (media instanceof ImageElement) {
             ImageElement image = (ImageElement) media;
@@ -356,7 +346,6 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
                 toolTips.append(img.getHeight());
             }
         }
-        // TODO for other medias
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
     }

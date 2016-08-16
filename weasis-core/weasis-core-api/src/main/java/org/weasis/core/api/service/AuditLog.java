@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     ${user} - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.service;
 
 import java.io.IOException;
@@ -13,8 +23,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.StringUtil;
 
+/**
+ * The Class AuditLog allows to write specific traces for the application usage.
+ * 
+ */
 public class AuditLog {
-
+    // Share this logger
     public static final Logger LOGGER = LoggerFactory.getLogger(AuditLog.class);
 
     public static final String LOG_LEVEL = "org.apache.sling.commons.log.level"; //$NON-NLS-1$

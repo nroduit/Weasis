@@ -279,7 +279,7 @@ public class SeriesBuilder {
                                             if (treeModel instanceof DicomModel) {
                                                 DicomModel dicomModel = (DicomModel) treeModel;
                                                 dicomModel.firePropertyChange(new ObservableEvent(
-                                                    ObservableEvent.BasicAction.Add, dicomModel, null, dicomSeries));
+                                                    ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
                                             }
                                         }
 

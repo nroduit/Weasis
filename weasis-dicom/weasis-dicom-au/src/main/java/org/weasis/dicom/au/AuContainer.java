@@ -147,7 +147,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
             if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
                 dicomView.getDataExplorerModel().firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, getGroupID()));
+                    new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
             }
 
         } else {
@@ -178,7 +178,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
             ObservableEvent.BasicAction action = event.getActionCommand();
             Object newVal = event.getNewValue();
 
-            if (ObservableEvent.BasicAction.Remove.equals(action)) {
+            if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
                 if (newVal instanceof DicomSeries) {
                     if (auview != null && auview.getSeries() == newVal) {
                         close();

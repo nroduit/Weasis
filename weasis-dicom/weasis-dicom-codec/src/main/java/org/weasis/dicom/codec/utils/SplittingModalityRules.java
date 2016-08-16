@@ -92,7 +92,7 @@ public class SplittingModalityRules {
             return condition;
         }
 
-        public boolean isTagValueMatching(MediaElement<?> seriesMedia, MediaElement<?> newMedia) {
+        public boolean isTagValueMatching(MediaElement seriesMedia, MediaElement newMedia) {
             Object val1 = seriesMedia.getTagValue(tag);
             Object val2 = newMedia.getTagValue(tag);
 
@@ -123,7 +123,7 @@ public class SplittingModalityRules {
             return this;
         }
 
-        public abstract boolean match(MediaElement<?> media);
+        public abstract boolean match(MediaElement media);
 
         public void addChild(Condition child) {
             throw new UnsupportedOperationException();
@@ -151,7 +151,7 @@ public class SplittingModalityRules {
 
     public static class And extends CompositeCondition {
         @Override
-        public boolean match(MediaElement<?> media) {
+        public boolean match(MediaElement media) {
             for (Condition child : childs) {
                 if (!child.match(media)) {
                     return not;
@@ -163,7 +163,7 @@ public class SplittingModalityRules {
 
     public static class Or extends CompositeCondition {
         @Override
-        public boolean match(MediaElement<?> media) {
+        public boolean match(MediaElement media) {
             for (Condition child : childs) {
                 if (child.match(media)) {
                     return !not;
@@ -193,7 +193,7 @@ public class SplittingModalityRules {
 
 
         @Override
-        public boolean match(MediaElement<?> media) {
+        public boolean match(MediaElement media) {
             Object value = media.getTagValue(tag);
 
             if (Type.equals.equals(type)) {

@@ -333,13 +333,13 @@ public class WeasisWin {
 
     }
 
-    HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> getSeriesByEntry(TreeModel treeModel,
-        List<MediaSeries<? extends MediaElement<?>>> series, TreeModelNode entry) {
-        HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> map = new HashMap<>();
+    HashMap<MediaSeriesGroup, List<MediaSeries<?>>> getSeriesByEntry(TreeModel treeModel,
+        List<? extends MediaSeries<?>> series, TreeModelNode entry) {
+        HashMap<MediaSeriesGroup, List<MediaSeries<?>>> map = new HashMap<>();
         if (series != null && treeModel != null && entry != null) {
-            for (MediaSeries<? extends MediaElement<?>> s : series) {
+            for (MediaSeries<?> s : series) {
                 MediaSeriesGroup entry1 = treeModel.getParent(s, entry);
-                List<MediaSeries<? extends MediaElement<?>>> seriesList =
+                List<MediaSeries<?>> seriesList =
                     Optional.ofNullable(map.get(entry1)).orElse(new ArrayList<>());
                 seriesList.add(s);
                 map.put(entry1, seriesList);
@@ -354,7 +354,7 @@ public class WeasisWin {
         }
         SeriesViewerFactory factory = builder.getFactory();
         DataExplorerModel model = builder.getModel();
-        List<MediaSeries<? extends MediaElement<?>>> seriesList = builder.getSeries();
+        List<MediaSeries<MediaElement>> seriesList = builder.getSeries();
         Map<String, Object> props = builder.getProperties();
 
         Rectangle screenBound = (Rectangle) props.get(ViewerPluginBuilder.SCREEN_BOUND);
@@ -998,7 +998,7 @@ public class WeasisWin {
                         if (factory.canReadMimeType(seq.getMimeType())) {
                             DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
                             if (model instanceof TreeModel) {
-                                ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<>(1);
+                                ArrayList<MediaSeries<MediaElement>> list = new ArrayList<>(1);
                                 list.add(seq);
                                 ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, list, model, null);
                                 openSeriesInViewerPlugin(builder,

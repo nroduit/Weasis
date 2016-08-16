@@ -244,7 +244,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void initKOActionWState() {
         actionsInView.put(ActionW.KO_FILTER.cmd(), false);
         actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), false);
-        actionsInView.put(ActionW.KO_SELECTION.cmd(), ActionState.NONE);
+        actionsInView.put(ActionW.KO_SELECTION.cmd(), ActionState.NoneLabel.NONE);
     }
 
     @Override
@@ -460,7 +460,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             initActionWState();
             setActionsInView(ActionW.KO_SELECTION.cmd(), ko);
             setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
-            if (ActionState.NONE_SERIES.equals(val)) {
+            if (ActionState.NoneLabel.NONE_SERIES.equals(val)) {
                 // Keeps no PS property (for all the series)
                 actionsInView.put(ActionW.PR_STATE.cmd(), val);
             }

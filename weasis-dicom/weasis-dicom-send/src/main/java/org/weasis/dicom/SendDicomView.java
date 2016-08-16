@@ -144,7 +144,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
             @Override
             protected void done() {
                 dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null, this));
+                    new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
             }
 
         };
@@ -154,7 +154,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     private boolean sendDicomFiles(final CheckTreeModel model, final ExplorerTask t) throws IOException {
         dicomModel
-            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null, t));
+            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, t));
         File exportDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "send"));
         try {
             writeDicom(t, exportDir, model);
@@ -248,8 +248,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     if (!dcm.saveToFile(destinationFile)) {
                         // LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
                     }
-                } else if (node.getUserObject() instanceof MediaElement<?>) {
-                    MediaElement<?> dcm = (MediaElement<?>) node.getUserObject();
+                } else if (node.getUserObject() instanceof MediaElement) {
+                    MediaElement dcm = (MediaElement) node.getUserObject();
                     String iuid = TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class);
 
                     String path = LocalExport.buildPath(dcm, false, false, false, node);

@@ -5,7 +5,7 @@ import org.weasis.base.explorer.list.IThumbnailListPane;
 import org.weasis.core.api.media.data.MediaElement;
 
 @SuppressWarnings("serial")
-public class JIThumbnailListPane<E extends MediaElement<?>> extends AThumbnailListPane<E>
+public class JIThumbnailListPane<E extends MediaElement> extends AThumbnailListPane<E>
     implements IThumbnailListPane<E> {
 
     public JIThumbnailListPane() {

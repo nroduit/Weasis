@@ -10,9 +10,11 @@ import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
+import org.weasis.core.api.gui.util.ActionW;
 
 /**
  * 
@@ -37,6 +39,22 @@ public class EditionToolFactory implements InsertableFactory {
     @Override
     public Insertable createInstance(Hashtable<String, Object> properties) {
         if (toolPane == null) {
+            EventManager eventManager = EventManager.getInstance();
+
+            // Remove actions which are not useful
+            eventManager.removeAction(ActionW.SCROLL_SERIES);
+            eventManager.removeAction(ActionW.WINLEVEL);
+            eventManager.removeAction(ActionW.WINDOW);
+            eventManager.removeAction(ActionW.LEVEL);
+            eventManager.removeAction(ActionW.ROTATION);
+            eventManager.removeAction(ActionW.FLIP);
+            eventManager.removeAction(ActionW.FILTER);
+            eventManager.removeAction(ActionW.INVERSESTACK);
+            eventManager.removeAction(ActionW.INVERT_LUT);
+            eventManager.removeAction(ActionW.LUT);
+            eventManager.removeAction(ActionW.LAYOUT);
+            eventManager.removeAction(ActionW.SYNCH);
+            
             toolPane = new EditionTool(getType());
         }
         return toolPane;

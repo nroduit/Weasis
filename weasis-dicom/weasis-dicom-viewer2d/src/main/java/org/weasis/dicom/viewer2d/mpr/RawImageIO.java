@@ -42,7 +42,6 @@ import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -56,7 +55,7 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.jai.util.ImageUtil;
 
-public class RawImageIO implements DcmMediaReader<PlanarImage> {
+public class RawImageIO implements DcmMediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawImageIO.class);
 
     private static final String mimeType = "image/raw"; //$NON-NLS-1$
@@ -131,7 +130,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     }
 
     @Override
-    public PlanarImage getMediaFragment(MediaElement<PlanarImage> media) throws Exception {
+    public PlanarImage getImageFragment(MediaElement media) throws Exception {
         if (media != null && media.getFile() != null) {
             Integer allocated = TagD.getTagValue(media, Tag.BitsAllocated, Integer.class);
             Integer sample = TagD.getTagValue(media, Tag.SamplesPerPixel, Integer.class);
@@ -175,7 +174,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     }
 
     @Override
-    public MediaElement<PlanarImage> getPreview() {
+    public MediaElement getPreview() {
         return null;
     }
 
@@ -190,7 +189,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
     }
 
     @Override
-    public MediaSeries<ImageElement> getMediaSeries() {
+    public MediaSeries<MediaElement> getMediaSeries() {
         return null;
     }
 
@@ -251,7 +250,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
         return tags.entrySet().iterator();
     }
 
-    public void copyTags(TagW[] tagList, MediaElement<?> media, boolean allowNullValue) {
+    public void copyTags(TagW[] tagList, MediaElement media, boolean allowNullValue) {
         if (tagList != null && media != null) {
             for (TagW tag : tagList) {
                 Object value = media.getTagValue(tag);
@@ -302,7 +301,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
         if (bps > 16 && spp == 1) {
             dataType = DataBuffer.TYPE_INT;
         }
-        ColorSpace cs = null;
+        ColorSpace cs;
         if (spp == 1) {
             cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
 
@@ -320,7 +319,7 @@ public class RawImageIO implements DcmMediaReader<PlanarImage> {
         Arrays.fill(bits, bps);
         ComponentColorModel cm = new ComponentColorModel(cs, bits, false, false, Transparency.OPAQUE, dataType);
 
-        SampleModel sm = null;
+        SampleModel sm;
         if (spp == 1) {
             sm = new PixelInterleavedSampleModel(dataType, width, height, 1, width, OFFSETS_0);
         }

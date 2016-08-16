@@ -141,7 +141,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 private volatile int currentCineRate;
                 private volatile long start;
                 private final int timeDiv =
-                    TIME.second.equals(time) ? 1000 : TIME.minute.equals(time) ? 60000 : 3600000;
+                    TIME.SECOND.equals(time) ? 1000 : TIME.MINUTE.equals(time) ? 60000 : 3600000;
 
                 @Override
                 public void run() {
@@ -372,11 +372,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
 
-    protected ComboItemListener newLayoutAction(GridBagLayoutModel[] layouts) {
-        if (layouts == null) {
-            layouts = new GridBagLayoutModel[0];
-        }
-        return new ComboItemListener(ActionW.LAYOUT, layouts) {
+    protected ComboItemListener<GridBagLayoutModel> newLayoutAction(GridBagLayoutModel[] layouts) {
+        return new ComboItemListener<GridBagLayoutModel>(ActionW.LAYOUT, Optional.ofNullable(layouts).orElse(new GridBagLayoutModel[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -398,8 +395,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
 
-    protected ComboItemListener newSynchAction(SynchView[] synchViewList) {
-        return new ComboItemListener(ActionW.SYNCH, Optional.ofNullable(synchViewList).orElse(new SynchView[0])) {
+    protected ComboItemListener<SynchView> newSynchAction(SynchView[] synchViewList) {
+        return new ComboItemListener<SynchView>(ActionW.SYNCH, Optional.ofNullable(synchViewList).orElse(new SynchView[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -422,8 +419,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
 
-    protected ComboItemListener newMeasurementAction(Graphic[] graphics) {
-        return new ComboItemListener(ActionW.DRAW_MEASURE, Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+    protected ComboItemListener<Graphic> newMeasurementAction(Graphic[] graphics) {
+        return new ComboItemListener<Graphic>(ActionW.DRAW_MEASURE, Optional.ofNullable(graphics).orElse(new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -435,8 +432,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
     
-    protected ComboItemListener newDrawAction(Graphic[] graphics) {
-        return new ComboItemListener(ActionW.DRAW_GRAPHICS, Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+    protected ComboItemListener<Graphic>  newDrawAction(Graphic[] graphics) {
+        return new ComboItemListener<Graphic> (ActionW.DRAW_GRAPHICS, Optional.ofNullable(graphics).orElse(new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -459,8 +456,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
 
-    protected ComboItemListener newSpatialUnit(Unit[] units) {
-        return new ComboItemListener(ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElse(new Unit[0])) {
+    protected ComboItemListener<Unit> newSpatialUnit(Unit[] units) {
+        return new ComboItemListener<Unit>(ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElse(new Unit[0])) {
 
             @Override
             public void itemStateChanged(Object object) {

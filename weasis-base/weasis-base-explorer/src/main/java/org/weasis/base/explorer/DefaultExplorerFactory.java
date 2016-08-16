@@ -45,8 +45,6 @@ public class DefaultExplorerFactory implements DataExplorerViewFactory {
         if (explorer != null) {
             explorer.saveLastPath();
         }
-        explorer = null;
-        model = null;
     }
 
 }

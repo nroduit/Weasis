@@ -98,12 +98,12 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer) {
+    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
         return false;
     }
 
     @Override
-    public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
+    public SeriesViewer<? extends MediaElement> createSeriesViewer(Map<String, Object> properties) {
         return mimeSystemViewer;
     }
 

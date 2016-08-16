@@ -151,7 +151,7 @@ public class AcquireManager {
        info.getSerie().setDate(TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getImage()));
     }
 
-    public static List<ImageElement> toImageElement(List<? extends MediaElement<?>> medias) {
+    public static List<ImageElement> toImageElement(List<? extends MediaElement> medias) {
         return medias.stream().filter(m -> m instanceof ImageElement).map(ImageElement.class::cast)
             .collect(Collectors.toList());
     }

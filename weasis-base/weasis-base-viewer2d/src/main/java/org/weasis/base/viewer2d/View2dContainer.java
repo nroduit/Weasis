@@ -171,7 +171,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImageTool.class), key, true)) {
-                tool = new ImageTool(ImageTool.BUTTON_NAME); //$NON-NLS-1$
+                tool = new ImageTool(ImageTool.BUTTON_NAME); 
                 TOOLS.add(tool);
             }
 
@@ -261,12 +261,12 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             Object newVal = event.getNewValue();
             if (newVal instanceof SeriesEvent) {
                 SeriesEvent event2 = (SeriesEvent) newVal;
-                if (ObservableEvent.BasicAction.Add.equals(action)) {
+                if (ObservableEvent.BasicAction.ADD.equals(action)) {
                     SeriesEvent.Action action2 = event2.getActionCommand();
                     Object source = event2.getSource();
                     Object param = event2.getParam();
 
-                    if (SeriesEvent.Action.AddImage.equals(action2)) {
+                    if (SeriesEvent.Action.ADD_IMAGE.equals(action2)) {
                         if (source instanceof Series) {
                             Series series = (Series) source;
                             ViewCanvas view2DPane = eventManager.getSelectedViewPane();
@@ -293,7 +293,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                                 }
                             }
                         }
-                    } else if (SeriesEvent.Action.loadImageInMemory.equals(action2)) {
+                    } else if (SeriesEvent.Action.PRELOADING.equals(action2)) {
                         if (source instanceof Series) {
                             Series s = (Series) source;
                             for (ViewCanvas<ImageElement> v : view2ds) {
@@ -304,7 +304,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                         }
                     }
                 }
-            } else if (ObservableEvent.BasicAction.Remove.equals(action)) {
+            } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
                     for (ViewCanvas<ImageElement> v : view2ds) {
@@ -314,7 +314,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                         }
                     }
                 }
-            } else if (ObservableEvent.BasicAction.Replace.equals(action)) {
+            } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
                     for (ViewCanvas<ImageElement> v : view2ds) {

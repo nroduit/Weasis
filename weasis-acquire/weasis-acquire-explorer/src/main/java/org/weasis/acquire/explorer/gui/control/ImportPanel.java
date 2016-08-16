@@ -27,7 +27,7 @@ public class ImportPanel extends JPanel {
 
     private JButton importBtn = new JButton("Import");
 
-    public ImportPanel(AcquireThumbnailListPane<MediaElement<?>> mainPanel, ImageGroupPane centralPane) {
+    public ImportPanel(AcquireThumbnailListPane<MediaElement> mainPanel, ImageGroupPane centralPane) {
         importBtn.setPreferredSize(new Dimension(150, 40));
         importBtn.setFont(FontTools.getFont12Bold());
 

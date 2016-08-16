@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2010, 2016 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -108,7 +108,10 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
     }
 
     /**
-     * Has the tree changes?
+     * Has the tree changes.
+     *
+     * @param prefs the prefs
+     * @return true, if successful
      */
     protected boolean hasChanges(PreferencesImpl prefs) {
         if (prefs.getChangeSet().hasChanges()) {
@@ -129,14 +132,7 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
      */
     @Override
     public void update(PreferencesImpl prefs) throws BackingStoreException {
-        // final PreferencesImpl root = this.load(prefs.getBackingStoreManager(), prefs.getDescription());
-        // if (root != null) {
-        // // and now update
-        // if (root.nodeExists(prefs.absolutePath())) {
-        // final PreferencesImpl updated = (PreferencesImpl) root.node(prefs.absolutePath());
-        // prefs.update(updated);
-        // }
-        // }
+        // Do nothing, only update when writing
     }
 
     /**

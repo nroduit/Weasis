@@ -64,7 +64,7 @@ public class LoadDicomObjects extends ExplorerTask {
     @Override
     protected Boolean doInBackground() throws Exception {
         dicomModel
-            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null, this));
+            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
         addSelectionAndnotify();
         return true;
     }
@@ -72,7 +72,7 @@ public class LoadDicomObjects extends ExplorerTask {
     @Override
     protected void done() {
         dicomModel
-            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null, this));
+            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
         LOGGER.info("End of loading DICOM locally"); //$NON-NLS-1$
     }
 
@@ -103,16 +103,10 @@ public class LoadDicomObjects extends ExplorerTask {
         }
 
         for (final SeriesThumbnail t : thumbs) {
-            MediaSeries series = t.getSeries();
+             MediaSeries<MediaElement> series = t.getSeries();
             // Avoid to rebuild most of CR series thumbnail
             if (series != null && series.size(null) > 2) {
-                GuiExecutor.instance().execute(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        t.reBuildThumbnail();
-                    }
-                });
+                GuiExecutor.instance().execute(t::reBuildThumbnail);
             }
         }
     }
@@ -139,7 +133,7 @@ public class LoadDicomObjects extends ExplorerTask {
         }
 
         String seriesUID = (String) dicomReader.getTagValue(TagD.get(Tag.SeriesInstanceUID));
-        Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
+        Series<?> dicomSeries = (Series<?>) dicomModel.getHierarchyNode(study, seriesUID);
         try {
             if (dicomSeries == null) {
                 dicomSeries = dicomReader.buildSeries(seriesUID);
@@ -168,7 +162,7 @@ public class LoadDicomObjects extends ExplorerTask {
                     dicomModel.addSpecialModality(dicomSeries);
                 } else {
                     dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel, null, dicomSeries));
+                        new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
                 }
 
                 // After the thumbnail is sent to interface, it will be return to be rebuilt later
@@ -178,7 +172,7 @@ public class LoadDicomObjects extends ExplorerTask {
                 Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                 if (splitNb != null || dicomObject != null) {
                     dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null, dicomSeries));
+                        new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
                 }
 
                 if (openPlugin) {
@@ -217,7 +211,7 @@ public class LoadDicomObjects extends ExplorerTask {
                     Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                     if (splitNb != null || dicomObject != null) {
                         dicomModel.firePropertyChange(
-                            new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null, dicomSeries));
+                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
                     }
                 }
             }

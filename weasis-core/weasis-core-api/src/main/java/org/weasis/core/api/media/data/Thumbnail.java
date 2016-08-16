@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media.data;
 
 import java.awt.Component;
@@ -51,6 +51,7 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
 
+@SuppressWarnings("serial")
 public class Thumbnail extends JLabel {
     private static final Logger LOGGER = LoggerFactory.getLogger(Thumbnail.class);
 
@@ -81,7 +82,7 @@ public class Thumbnail extends JLabel {
         this.thumbnailSize = thumbnailSize;
     }
 
-    public Thumbnail(final MediaElement<?> media, int thumbnailSize, boolean keepMediaCache, OpManager opManager) {
+    public Thumbnail(final MediaElement media, int thumbnailSize, boolean keepMediaCache, OpManager opManager) {
         super(null, null, SwingConstants.CENTER);
         if (media == null) {
             throw new IllegalArgumentException("image cannot be null"); //$NON-NLS-1$
@@ -95,7 +96,7 @@ public class Thumbnail extends JLabel {
      * @param keepMediaCache
      *            if true will remove the media from cache after building the thumbnail. Only when media is an image.
      */
-    protected void init(MediaElement<?> media, boolean keepMediaCache, OpManager opManager) {
+    protected void init(MediaElement media, boolean keepMediaCache, OpManager opManager) {
         this.setFont(FontTools.getFont10());
         buildThumbnail(media, keepMediaCache, opManager);
     }
@@ -115,7 +116,7 @@ public class Thumbnail extends JLabel {
             : source;
     }
 
-    protected synchronized void buildThumbnail(MediaElement<?> media, boolean keepMediaCache, OpManager opManager) {
+    protected synchronized void buildThumbnail(MediaElement media, boolean keepMediaCache, OpManager opManager) {
         imageSoftRef = null;
         Icon icon = MimeInspector.unknownIcon;
         String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
@@ -151,7 +152,7 @@ public class Thumbnail extends JLabel {
         setIcon(media, icon, type, keepMediaCache, opManager);
     }
 
-    private void setIcon(final MediaElement<?> media, final Icon mime, final String type,
+    private void setIcon(final MediaElement media, final Icon mime, final String type,
         final boolean keepMediaCache, OpManager opManager) {
         this.setSize(thumbnailSize, thumbnailSize);
 
@@ -201,7 +202,7 @@ public class Thumbnail extends JLabel {
         return thumbnailPath;
     }
 
-    public synchronized BufferedImage getImage(final MediaElement<?> media, final boolean keepMediaCache, final OpManager opManager) {
+    public synchronized BufferedImage getImage(final MediaElement media, final boolean keepMediaCache, final OpManager opManager) {
         if ((imageSoftRef == null && readable) || (imageSoftRef != null && imageSoftRef.get() == null)) {
             if (loading.compareAndSet(false, true)) {
                 try {
@@ -231,7 +232,7 @@ public class Thumbnail extends JLabel {
         return imageSoftRef.get();
     }
 
-    private void loadThumbnail(final MediaElement<?> media, final boolean keepMediaCache, final OpManager opManager) throws Exception {
+    private void loadThumbnail(final MediaElement media, final boolean keepMediaCache, final OpManager opManager) throws Exception {
         try {
             File file = thumbnailPath;
             boolean noPath = file == null || !file.canRead();

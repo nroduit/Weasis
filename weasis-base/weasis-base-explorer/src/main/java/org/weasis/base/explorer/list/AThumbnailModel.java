@@ -24,7 +24,7 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 @SuppressWarnings({ "serial" })
-public abstract class AThumbnailModel<E extends MediaElement<?>> extends AbstractListModel<E>
+public abstract class AThumbnailModel<E extends MediaElement> extends AbstractListModel<E>
     implements IThumbnailModel<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AThumbnailModel.class);
 

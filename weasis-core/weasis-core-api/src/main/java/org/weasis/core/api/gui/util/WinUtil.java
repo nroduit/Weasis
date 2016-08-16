@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.Component;
@@ -31,11 +31,8 @@ import javax.swing.SwingUtilities;
 /**
  * The Class WinUtil.
  *
- * @author Nicolas Roduit
  */
-public abstract class WinUtil {
-
-    protected static boolean c_beep_allowed = true;
+public class WinUtil {
 
     private WinUtil() {
     }
@@ -222,7 +219,7 @@ public abstract class WinUtil {
         if (window == null) {
             centerOnScreen(component);
         } else {
-            center(component, ((window)));
+            center(component, window);
         }
     }
 

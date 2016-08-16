@@ -39,7 +39,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
 
     private static final String P_MAX_RANGE = "maxMinuteRange";
 
-    private final AcquireThumbnailListPane<? extends MediaElement<?>> mainPanel;
+    private final AcquireThumbnailListPane<? extends MediaElement> mainPanel;
 
     private final Object[] options = { "Validate", "Cancel" };
     private final static String REVALIDATE = "ReValidate";
@@ -57,7 +57,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
 
     private List<ImageElement> mediaList;
 
-    public AcquireImportDialog(AcquireThumbnailListPane<? extends MediaElement<?>> mainPanel,
+    public AcquireImportDialog(AcquireThumbnailListPane<? extends MediaElement> mainPanel,
         List<ImageElement> mediaList) {
         super();
         this.mainPanel = mainPanel;

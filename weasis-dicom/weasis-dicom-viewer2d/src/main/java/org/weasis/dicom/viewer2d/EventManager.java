@@ -71,6 +71,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
@@ -149,7 +150,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         // setAction(new BasicActionState(ActionW.DRAW));
         setAction(new BasicActionState(ActionW.MEASURE));
 
-        setAction(getMoveTroughSliceAction(20, TIME.second, 0.1));
+        setAction(getMoveTroughSliceAction(20, TIME.SECOND, 0.1));
         setAction(newWindowAction());
         setAction(newLevelAction());
         setAction(newRotateAction());
@@ -213,8 +214,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         enableActions(false);
     }
 
-    private ComboItemListener newFilterAction() {
-        return new ComboItemListener(ActionW.FILTER, KernelData.ALL_FILTERS) {
+    private ComboItemListener<KernelData> newFilterAction() {
+        return new ComboItemListener<KernelData>(ActionW.FILTER, KernelData.getAllFilters()) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -559,8 +560,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         }
     }
 
-    private ComboItemListener newPresetAction() {
-        return new ComboItemListener(ActionW.PRESET, null) {
+    private ComboItemListener<PresetWindowLevel> newPresetAction() {
+        return new ComboItemListener<PresetWindowLevel>(ActionW.PRESET, null) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -569,8 +570,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         };
     }
 
-    private ComboItemListener newLutShapeAction() {
-        return new ComboItemListener(ActionW.LUT_SHAPE, LutShape.DEFAULT_FACTORY_FUNCTIONS.toArray()) {
+    private ComboItemListener<LutShape> newLutShapeAction() {
+        return new ComboItemListener<LutShape>(ActionW.LUT_SHAPE, LutShape.DEFAULT_FACTORY_FUNCTIONS.toArray(new LutShape[LutShape.DEFAULT_FACTORY_FUNCTIONS.size()])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -607,8 +608,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         };
     }
 
-    private ComboItemListener newKOSelectionAction() {
-        return new ComboItemListener(ActionW.KO_SELECTION, new String[] { ActionState.NONE }) {
+    private ComboItemListener<Object> newKOSelectionAction() {
+        return new ComboItemListener<Object>(ActionW.KO_SELECTION, new ActionState.NoneLabel[] { ActionState.NoneLabel.NONE }) {
             @Override
             public void itemStateChanged(Object object) {
                 koAction(action, object);
@@ -676,14 +677,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         }
     }
 
-    private ComboItemListener newLutAction() {
+    private ComboItemListener<ByteLut> newLutAction() {
         List<ByteLut> luts = new ArrayList<>();
         luts.add(ByteLut.grayLUT);
         ByteLutCollection.readLutFilesFromResourcesDir(luts, ResourceUtil.getResource("luts"));//$NON-NLS-1$
         // Set default first as the list has been sorted
         luts.add(0, ByteLut.defaultLUT);
 
-        return new ComboItemListener(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
+        return new ComboItemListener<ByteLut>(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -693,8 +694,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         };
     }
 
-    private ComboItemListener newSortStackAction() {
-        return new ComboItemListener(ActionW.SORTSTACK, SortSeriesStack.getValues()) {
+    private ComboItemListener<SeriesComparator<DicomImageElement>> newSortStackAction() {
+        return new ComboItemListener<SeriesComparator<DicomImageElement>>(ActionW.SORTSTACK, SortSeriesStack.getValues()) {
 
             @Override
             public void itemStateChanged(Object object) {

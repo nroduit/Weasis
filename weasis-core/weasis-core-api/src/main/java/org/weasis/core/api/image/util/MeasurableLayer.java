@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,8 @@
  *
  * Contributors:
  *     Gabriela Bauermann (gabriela@animati.com.br) - initial API and implementation
- ******************************************************************************/
+ *     Nicolas Roduit 
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import java.awt.geom.AffineTransform;
@@ -27,7 +28,6 @@ public interface MeasurableLayer {
     MeasurementsAdapter getMeasurementAdapter(Unit displayUnit);
 
     // Only for statistics:
-
     AffineTransform getShapeTransform();
 
     Object getSourceTagValue(TagW tagW);

@@ -46,6 +46,8 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class TagD extends TagW {
+    private static final long serialVersionUID = 8923709877411396802L;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TagD.class);
 
     static final DateTimeFormatter DICOM_DATE = new DateTimeFormatterBuilder().appendValue(YEAR, 4)

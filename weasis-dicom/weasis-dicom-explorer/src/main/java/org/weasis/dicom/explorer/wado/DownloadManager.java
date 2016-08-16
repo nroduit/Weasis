@@ -173,7 +173,7 @@ public class DownloadManager {
             }
             if (dicomModel != null) {
                 dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null, series));
+                    new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, series));
             }
             if (!DownloadManager.TASKS.contains(series)) {
                 DownloadManager.TASKS.add(series);
@@ -186,7 +186,7 @@ public class DownloadManager {
             DownloadManager.TASKS.remove(series);
             if (dicomModel != null) {
                 dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null, series));
+                    new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, series));
             }
             if (DownloadManager.TASKS.size() == 0) {
                 // When all loadseries are ended, reset to default the number of simultaneous download (series)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.Color;
@@ -48,8 +48,6 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
@@ -70,8 +68,6 @@ import org.weasis.core.api.util.StringUtil;
 
 /**
  * The Class JMVUtils.
- *
- * @author Nicolas Roduit
  */
 public class JMVUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(JMVUtils.class);
@@ -198,33 +194,6 @@ public class JMVUtils {
             names[i] = model.getColumnName(i);
         }
         return names;
-    }
-
-    public static void setList(JComboBox jComboBox, Object first, Object[] items) {
-        jComboBox.removeAllItems();
-        if (first != null) {
-            jComboBox.addItem(first);
-        }
-        for (Object object : items) {
-            jComboBox.addItem(object);
-        }
-    }
-
-    public static void setList(JComboBox jComboBox, Object[] items, Object last) {
-        jComboBox.removeAllItems();
-        for (Object object : items) {
-            jComboBox.addItem(object);
-        }
-        if (last != null) {
-            jComboBox.addItem(last);
-        }
-    }
-
-    public static void setList(JComboBox jComboBox, java.util.List list) {
-        jComboBox.removeAllItems();
-        for (int i = 0; i < list.size(); i++) {
-            jComboBox.addItem(list.get(i));
-        }
     }
 
     public static void addChangeListener(JSlider slider, ChangeListener listener) {
@@ -369,21 +338,17 @@ public class JMVUtils {
         return bounds.width;
     }
 
-    public static void addTooltipToComboList(final JComboBox combo) {
+    public static void addTooltipToComboList(final JComboBox<?> combo) {
         Object comp = combo.getUI().getAccessibleChild(combo, 0);
         if (comp instanceof BasicComboPopup) {
             final BasicComboPopup popup = (BasicComboPopup) comp;
-            popup.getList().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
-                @Override
-                public void valueChanged(ListSelectionEvent e) {
-                    if (!e.getValueIsAdjusting()) {
-                        ListSelectionModel model = (ListSelectionModel) e.getSource();
-                        int first = model.getMinSelectionIndex();
-                        if (first >= 0) {
-                            Object item = combo.getItemAt(first);
-                            ((JComponent) combo.getRenderer()).setToolTipText(item.toString());
-                        }
+            popup.getList().getSelectionModel().addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting()) {
+                    ListSelectionModel model = (ListSelectionModel) e.getSource();
+                    int first = model.getMinSelectionIndex();
+                    if (first >= 0) {
+                        Object item = combo.getItemAt(first);
+                        ((JComponent) combo.getRenderer()).setToolTipText(item.toString());
                     }
                 }
             });
@@ -418,18 +383,15 @@ public class JMVUtils {
     }
 
     public static HyperlinkListener buildHyperlinkListener() {
-        return new HyperlinkListener() {
-            @Override
-            public void hyperlinkUpdate(HyperlinkEvent e) {
-                JTextPane pane = (JTextPane) e.getSource();
-                if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-                    pane.setToolTipText(e.getDescription());
-                } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-                    pane.setToolTipText(null);
-                } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    Component parent = e.getSource() instanceof Component ? (Component) e.getSource() : null;
-                    openInDefaultBrowser(parent, e.getURL());
-                }
+        return e -> {
+            JTextPane pane = (JTextPane) e.getSource();
+            if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+                pane.setToolTipText(e.getDescription());
+            } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+                pane.setToolTipText(null);
+            } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                Component parent = e.getSource() instanceof Component ? (Component) e.getSource() : null;
+                openInDefaultBrowser(parent, e.getURL());
             }
         };
     }

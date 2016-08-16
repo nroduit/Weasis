@@ -61,7 +61,6 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
         topPanel = new AcquireActionButtonsPanel(this);
 
         add(topPanel, BorderLayout.NORTH);
-        add(bottomPanel, BorderLayout.SOUTH);
 
         EventManager.getInstance().addSeriesViewerListener(this);
     }
@@ -92,6 +91,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
             if (event.getSeriesViewer() instanceof View2dContainer) {
                 ViewCanvas<ImageElement> view = ((View2dContainer) event.getSeriesViewer()).getSelectedImagePane();
                 if (view != null) {
+                    view.changeZoomInterpolation(0);
                     AcquireImageInfo old = AcquireManager.getCurrentAcquireImageInfo();
                     AcquireImageInfo info = AcquireManager.findByImage(view.getImage());
                     AcquireManager.setCurrentAcquireImageInfo(info);
@@ -105,10 +105,15 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
     }
 
     public void setCentralPanel(AbstractAcquireActionPanel centralPanel) {
-        Optional.ofNullable(this.centralPanel).ifPresent(this::remove);
+        Optional.ofNullable(this.centralPanel).ifPresent(p -> {
+            p.remove(bottomPanel);
+            this.remove(p);
+        });
         this.centralPanel = centralPanel;
         this.add(this.centralPanel, BorderLayout.CENTER);
-        bottomPanel.setVisible(centralPanel.needValidationPanel());
+        if (centralPanel.needValidationPanel()) {
+            this.centralPanel.add(bottomPanel);
+        }
         revalidate();
         repaint();
     }

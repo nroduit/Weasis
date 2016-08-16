@@ -106,7 +106,7 @@ import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageioimpl.common.SignedDataImageParam;
 import com.sun.media.jai.util.ImageUtil;
 
-public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarImage> {
+public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaIO.class);
 
@@ -650,7 +650,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             TagD.get(Tag.ImagerPixelSpacing).readValue(header, this);
             TagD.get(Tag.NominalScannedPixelSpacing).readValue(header, this);
 
-
             DicomMediaUtils.applyModalityLutModule(header, this, null);
 
             TagD.get(Tag.PixelIntensityRelationship).readValue(header, this);
@@ -669,8 +668,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
                 : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
             if (bitsAllocated > 16 && samplesPerPixel == 1) {
                 dataType = DataBuffer.TYPE_FLOAT;
-            }
-            else if (bitsStored > 32 && samplesPerPixel == 1) {
+            } else if (bitsStored > 32 && samplesPerPixel == 1) {
                 dataType = DataBuffer.TYPE_FLOAT;
             }
             String photometricInterpretation = header.getString(Tag.PhotometricInterpretation, "MONOCHROME2"); //$NON-NLS-1$
@@ -775,7 +773,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     @Override
-    public PlanarImage getMediaFragment(MediaElement<PlanarImage> media) throws Exception {
+    public PlanarImage getImageFragment(MediaElement media) throws Exception {
         if (media != null && media.getKey() instanceof Integer && isReadableDicom()) {
             int frame = (Integer) media.getKey();
             if (frame >= 0 && frame < numberOfFrame && hasPixel) {
@@ -805,7 +803,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         return null;
     }
 
-    private PlanarImage getValidImage(RenderedImage buffer, MediaElement<PlanarImage> media) {
+    private PlanarImage getValidImage(RenderedImage buffer, MediaElement media) {
         PlanarImage img = null;
         if (buffer != null) {
             // Bug fix: CLibImageReader and J2KImageReaderCodecLib (imageio libs) do not handle negative values
@@ -926,8 +924,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
     }
 
     @Override
-    public MediaSeries getMediaSeries() {
-        Series<?> series = null;
+    public MediaSeries<MediaElement> getMediaSeries() {
+        Series<MediaElement> series = null;
         if (isReadableDicom()) {
             String seriesUID = TagD.getTagValue(this, Tag.SeriesInstanceUID, String.class);
             series = buildSeries(seriesUID);
@@ -1002,15 +1000,18 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
         return desc;
     }
 
-    public Series<?> buildSeries(String seriesUID) {
+    public Series<MediaElement> buildSeries(String seriesUID) {
+        Series<? extends MediaElement> series;
         if (IMAGE_MIMETYPE.equals(mimeType)) {
-            return new DicomSeries(seriesUID);
+            series = new DicomSeries(seriesUID);
         } else if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
-            return new DicomVideoSeries(seriesUID);
+            series = new DicomVideoSeries(seriesUID);
         } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
-            return new DicomEncapDocSeries(seriesUID);
+            series = new DicomEncapDocSeries(seriesUID);
+        } else {
+            series = new DicomSeries(seriesUID);
         }
-        return new DicomSeries(seriesUID);
+        return (Series<MediaElement>) series;
     }
 
     @Override
@@ -1309,8 +1310,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             return validateSignedShortDataBuffer(bi);
         } finally {
             /*
-             * "readingImage = false" will close the stream of the tiled image. The problem is that readAsRenderedImage() do not read
-             * data immediately: RenderedImage delays the image reading
+             * "readingImage = false" will close the stream of the tiled image. The problem is that
+             * readAsRenderedImage() do not read data immediately: RenderedImage delays the image reading
              */
         }
     }
@@ -1506,10 +1507,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader<PlanarIm
             }
             DicomMetaData metadata = new DicomMetaData(fmi, ds);
             Object pixdata = ds.getValue(Tag.PixelData, pixeldataVR);
-            if(pixdata == null){
+            if (pixdata == null) {
                 pixdata = ds.getValue(Tag.FloatPixelData, pixeldataVR);
             }
-            if(pixdata == null){
+            if (pixdata == null) {
                 pixdata = ds.getValue(Tag.DoubleFloatPixelData, pixeldataVR);
             }
 

@@ -5,7 +5,7 @@ import org.weasis.base.explorer.list.AThumbnailListPane;
 import org.weasis.core.api.media.data.MediaElement;
 
 @SuppressWarnings("serial")
-public class AcquireThumbnailListPane<E extends MediaElement<?>> extends AThumbnailListPane<E> {
+public class AcquireThumbnailListPane<E extends MediaElement> extends AThumbnailListPane<E> {
 
     private final ImageGroupPane centralPane;
 

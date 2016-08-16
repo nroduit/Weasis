@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.Color;
@@ -23,13 +23,10 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.ROIShape;
 import javax.media.jai.TiledImage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.op.ShutterDescriptor;
 import org.weasis.core.api.image.util.ImageFiler;
 
 public class MaskOp extends AbstractOp {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MaskOp.class);
 
     public static final String OP_NAME = "Mask";
 
@@ -64,9 +61,7 @@ public class MaskOp extends AbstractOp {
         Boolean mask = (Boolean) params.get(P_SHOW);
         Area area = (Area) params.get(P_SHAPE);
 
-        if (mask == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else if (mask && area != null) {
+        if (mask != null && mask && area != null) {
             Integer transparency = (Integer) params.get(P_GRAY_TRANSPARENCY);
             Byte[] color = getMaskColor();
             if (transparency == null && isBlack(color)) {

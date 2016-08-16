@@ -62,6 +62,7 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 
+@SuppressWarnings("serial")
 public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     private static final long serialVersionUID = -6672565963157176685L;
 
@@ -124,7 +125,12 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             drawGraphicList.add(selectionGraphic);
         }
         if (p.getBooleanProperty("weasis.draw.line", true)) { //$NON-NLS-1$
-            drawGraphicList.add(new LineGraphic());
+            drawGraphicList.add(new LineGraphic() {
+                @Override
+                public int getKeyCode() {
+                    return 0;
+                }
+            });
         }
         if (p.getBooleanProperty("weasis.draw.polyline", true)) { //$NON-NLS-1$
             drawGraphicList.add(new PolylineGraphic());
@@ -139,7 +145,12 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             drawGraphicList.add(new ThreePointsCircleGraphic());
         }
         if (p.getBooleanProperty("weasis.draw.polygon", true)) { //$NON-NLS-1$
-            drawGraphicList.add(new PolygonGraphic());
+            drawGraphicList.add(new PolygonGraphic() {
+                @Override
+                public int getKeyCode() {
+                    return 0;
+                }
+            });
         }
         if (p.getBooleanProperty("weasis.draw.textGrahic", true)) { //$NON-NLS-1$
             Graphic graphic = new AnnotationGraphic();
@@ -156,6 +167,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     protected final Component measureButtonGap = Box.createRigidArea(new Dimension(10, 0));
     protected final ImageViewerEventManager<E> eventManager;
 
+    @SuppressWarnings("rawtypes")
     public MeasureToolBar(final ImageViewerEventManager<E> eventManager, int index) {
         super(Messages.getString("MeasureToolBar.title"), index); //$NON-NLS-1$
         if (eventManager == null) {
@@ -204,7 +216,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         }
     }
 
-    private DropDownButton buildButton(ComboItemListener action) {
+    private DropDownButton buildButton(ComboItemListener<?> action) {
         boolean draw = action.getActionW() == ActionW.DRAW_GRAPHICS;
 
         MeasureGroupMenu menu = new MeasureGroupMenu(action.getActionW());
@@ -280,9 +292,9 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
                             smallIcon = graphic.getIcon();
                         }
                         if (smallIcon != null) {
-                            x += bckIcon.getIconWidth() - smallIcon.getIconWidth() - 1;
-                            y += bckIcon.getIconHeight() - smallIcon.getIconHeight() - 1;
-                            smallIcon.paintIcon(c, g, x, y);
+                            int offsetx = bckIcon.getIconWidth() - smallIcon.getIconWidth() - 1;
+                            int offsety = bckIcon.getIconHeight() - smallIcon.getIconHeight() - 1;
+                            smallIcon.paintIcon(c, g, x + offsetx, y + offsety);
                         }
                     }
                 }
@@ -308,11 +320,13 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         return action -> list.stream().filter(graphic -> Objects.equals(action, graphic.toString())).findFirst();
     }
 
-    static class MeasureGroupMenu extends GroupRadioMenu {
-        private ActionW actionW;
+    static class MeasureGroupMenu extends GroupRadioMenu<Graphic> {
+        private ActionW action;
         private JButton button;
-        public MeasureGroupMenu(ActionW actionW) {
+
+        public MeasureGroupMenu(ActionW action) {
             super();
+            this.action = action;
         }
 
         @Override
@@ -324,7 +338,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         public void changeButtonState() {
             Object sel = dataModel.getSelectedItem();
             if (sel instanceof Graphic && button != null) {
-                Icon icon = buildIcon((Graphic) sel,  actionW == ActionW.DRAW ? drawIcon : MeasureIcon);
+                Icon icon = buildIcon((Graphic) sel, action == ActionW.DRAW_GRAPHICS ? drawIcon : MeasureIcon);
                 button.setIcon(icon);
                 button.setActionCommand(sel.toString());
             }

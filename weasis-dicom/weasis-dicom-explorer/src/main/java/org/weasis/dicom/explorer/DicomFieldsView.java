@@ -93,7 +93,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private final JScrollPane limitedPane = new JScrollPane();
     private final JTextPane jTextPaneLimited = new JTextPane();
     private final JTextPane jTextPaneAll = new JTextPane();
-    private MediaElement<?> currentMedia;
+    private MediaElement currentMedia;
     private MediaSeries<?> currentSeries;
     private boolean anonymize = false;
 
@@ -182,7 +182,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
     }
 
-    private void changeDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
+    private void changeDicomInfo(MediaSeries<?> series, MediaElement media) {
         int index = getSelectedIndex();
         if (index == 0) {
             jTextPaneLimited.requestFocusInWindow();
@@ -193,14 +193,14 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
     }
 
-    private void displayAllDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
+    private void displayAllDicomInfo(MediaSeries<?> series, MediaElement media) {
         StyledDocument doc = jTextPaneAll.getStyledDocument();
         int oldCaretPosition = jTextPaneAll.getCaretPosition();
         try {
             // clear previous text
             doc.remove(0, doc.getLength());
             if (media != null) {
-                MediaReader<?> loader = media.getMediaReader();
+                MediaReader loader = media.getMediaReader();
                 if (loader instanceof DicomMediaIO) {
                     DicomMetaData metaData = null;
                     try {
@@ -213,7 +213,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                         printAttribute(metaData.getAttributes(), doc);
                     }
                 } else if (loader instanceof DcmMediaReader) {
-                    printAttribute(((DcmMediaReader<?>) loader).getDicomObject(), doc);
+                    printAttribute(((DcmMediaReader) loader).getDicomObject(), doc);
                 }
                 // Remove first return
                 doc.remove(0, 1);
@@ -336,7 +336,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
     }
 
-    private void displayLimitedDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
+    private void displayLimitedDicomInfo(MediaSeries<?> series, MediaElement media) {
         StyledDocument doc = jTextPaneLimited.getStyledDocument();
         int oldCaretPosition = jTextPaneLimited.getCaretPosition();
         try {

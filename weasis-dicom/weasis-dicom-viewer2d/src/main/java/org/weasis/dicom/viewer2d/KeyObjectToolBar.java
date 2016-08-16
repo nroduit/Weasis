@@ -240,7 +240,7 @@ public class KeyObjectToolBar extends WtoolBar {
 
                 if (list.getModel().getSize() > 0) {
                     Object selectedItem = koSelectionAction.getSelectedItem();
-                    if (selectedItem.equals(ActionState.NONE)) {
+                    if (selectedItem.equals(ActionState.NoneLabel.NONE)) {
                         selectedItem = null;
                     }
                     // list.setSelectedValue(selectedItem, true);
@@ -279,7 +279,7 @@ public class KeyObjectToolBar extends WtoolBar {
 
                         } else if (selectedValue.equals(copyBtn)) {
                             System.out.println("Copy selected KeyObject : " + list.getSelectedValue().toString()); //$NON-NLS-1$
-                            newDicomKO = KOManager.createNewDicomKeyObject((MediaElement<?>) list.getSelectedValue(),
+                            newDicomKO = KOManager.createNewDicomKeyObject((MediaElement) list.getSelectedValue(),
                                 selectedView2dContainer);
                         }
 

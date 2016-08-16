@@ -113,7 +113,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         setAction(new BasicActionState(ActionW.DRAW));
         setAction(new BasicActionState(ActionW.MEASURE));
 
-        setAction(getMoveTroughSliceAction(10, TIME.minute, 0.1));
+        setAction(getMoveTroughSliceAction(10, TIME.MINUTE, 0.1));
         setAction(newWindowAction());
         setAction(newLevelAction());
         setAction(newRotateAction());
@@ -160,8 +160,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         enableActions(false);
     }
 
-    private ComboItemListener newFilterAction() {
-        return new ComboItemListener(ActionW.FILTER, KernelData.ALL_FILTERS) {
+
+    private ComboItemListener<KernelData> newFilterAction() {
+        return new ComboItemListener<KernelData>(ActionW.FILTER, KernelData.getAllFilters()) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -173,18 +174,17 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         };
     }
 
-    private ComboItemListener newLutAction() {
+    private ComboItemListener<ByteLut> newLutAction() {
         List<ByteLut> luts = new ArrayList<>();
         luts.add(ByteLut.grayLUT);
         ByteLutCollection.readLutFilesFromResourcesDir(luts, ResourceUtil.getResource("luts"));//$NON-NLS-1$
         // Set default first as the list has been sorted
         luts.add(0, ByteLut.defaultLUT);
 
-        return new ComboItemListener(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
+        return new ComboItemListener<ByteLut>(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
             @Override
             public void itemStateChanged(Object object) {
                 if (object instanceof ByteLut) {
-                    // customPreset = false;
                     firePropertyChange(ActionW.SYNCH.cmd(), null,
                         new SynchEvent(getSelectedViewPane(), action.cmd(), object));
                 }

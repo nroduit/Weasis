@@ -86,11 +86,11 @@ public class CheckTreeModel {
                 });
             }
         }
-        for (MediaElement<?> dicom : series.getMedias(null, null)) {
+        for (MediaElement dicom : series.getMedias(null, null)) {
             seriesNode.add(new DefaultMutableTreeNode(dicom, false) {
                 @Override
                 public String toString() {
-                    MediaElement<?> m = (MediaElement<?>) getUserObject();
+                    MediaElement m = (MediaElement) getUserObject();
                     Integer val = TagD.getTagValue(m, Tag.InstanceNumber, Integer.class);
                     StringBuilder buffer = new StringBuilder();
                     if (val != null) {
