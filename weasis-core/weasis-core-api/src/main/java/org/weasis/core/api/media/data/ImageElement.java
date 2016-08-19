@@ -346,7 +346,7 @@ public class ImageElement extends MediaElement {
         }
         if (manager != null && cacheImage != null) {
             RenderedImage img = manager.getLastNodeOutputImage();
-            if (manager.getFirstNodeInputImage() != cacheImage || img == null) {
+            if (manager.getFirstNodeInputImage() != cacheImage || manager.needProcessing()) {
                 manager.setFirstNode(cacheImage);
                 img = manager.process();
             }

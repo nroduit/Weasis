@@ -16,10 +16,7 @@ public abstract class AbstractAcquireActionPanel extends JPanel implements Acqui
     public void initValues(AcquireImageInfo info, AcquireImageValues values) {
     }
 
-    public void updateOperations() {
-    }
-
     public boolean needValidationPanel() {
-        return true;
+        return false;
     }
 }

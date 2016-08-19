@@ -78,6 +78,7 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
     @Override
     public boolean reset() {
         AcquireImageInfo imageInfo = getImageInfo();
+        imageInfo.removeLayer(getView());
         boolean dirty = imageInfo.isDirtyFromDefault();
 
         if (dirty) {
@@ -88,7 +89,6 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
                 init();
             }
         }
-        imageInfo.removeLayer(getView());
         return dirty;
     }
 

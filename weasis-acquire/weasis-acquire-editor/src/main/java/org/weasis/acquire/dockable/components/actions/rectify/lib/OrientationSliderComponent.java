@@ -28,9 +28,16 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
         }
     }
 
+    private final RectifyOrientationChangeListener listener;
+
     public OrientationSliderComponent(RectifyPanel panel) {
         super(panel, "Orientation");
-        addChangeListener(new RectifyOrientationChangeListener());
+        listener = new RectifyOrientationChangeListener(panel.getRectifyAction());
+        addChangeListener(listener);
+    }
+
+    public RectifyOrientationChangeListener getListener() {
+        return listener;
     }
 
     @Override

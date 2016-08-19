@@ -33,16 +33,12 @@ public class MetadataPanel extends AbstractAcquireActionPanel {
         content.add(imageInfoPanel);
     }
 
-    @Override
-    public boolean needValidationPanel() {
-        return false;
-    }
+
 
     @Override
     public void initValues(AcquireImageInfo info, AcquireImageValues values) {
         serieInfoPanel.setSerie(info.getSerie());
         imageInfoPanel.setImageInfo(info);
-
         repaint();
     }
 }

@@ -12,6 +12,7 @@ package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
+import java.util.Optional;
 
 import javax.media.jai.InterpolationBilinear;
 import javax.media.jai.JAI;
@@ -53,9 +54,10 @@ public class RotationOp extends AbstractOp {
     public void process() throws Exception {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
-        Integer rotationAngle = (Integer) params.get(P_ROTATE);
-
-        if (rotationAngle != null && rotationAngle != 0 && rotationAngle != 360) {
+        Integer rotationAngle = Optional.ofNullable((Integer) params.get(P_ROTATE)).orElse(0);
+        rotationAngle = rotationAngle%360;
+        
+        if (rotationAngle != null && rotationAngle != 0) {
             // optimize rotation by right angles
             TransposeType rotOp = null;
             if (rotationAngle == 90) {

@@ -27,6 +27,7 @@ public class ContrastComponent extends AbstractSliderComponent {
     
     public ContrastComponent(ContrastPanel panel) {
         super(panel, "Contrasts");
+        addChangeListener(panel);
     }
 
     @Override

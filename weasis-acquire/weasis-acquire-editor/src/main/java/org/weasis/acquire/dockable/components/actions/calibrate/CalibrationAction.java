@@ -1,7 +1,5 @@
 package org.weasis.acquire.dockable.components.actions.calibrate;
 
-import java.util.List;
-
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireAction;
 import org.weasis.acquire.dockable.components.actions.AcquireActionPanel;
@@ -15,7 +13,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
-import org.weasis.core.ui.model.graphic.Graphic;
 
 /**
  * 
@@ -55,15 +52,13 @@ public class CalibrationAction extends AbstractAcquireAction {
 
     @Override
     public void validate() {
-        LOGGER.info("validate CALIBRATION");
-
-        List<Graphic> selectedGraphics = getView().getGraphicManager().getSelectedGraphics();
-        if (selectedGraphics.isEmpty()) {
-            return;
-        }
-
         AcquireImageInfo imageInfo = getImageInfo();
-        imageInfo.removeLayer(getView());
+        validate(imageInfo, getView());
+    }
+
+    @Override
+    public void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view) {
+        imageInfo.removeLayer(view);
     }
 
     @Override
@@ -76,11 +71,8 @@ public class CalibrationAction extends AbstractAcquireAction {
     @Override
     public boolean reset() {
         AcquireImageInfo imageInfo = getImageInfo();
-
         boolean reset = super.reset();
-
         imageInfo.removeLayer(getView());
-
         return reset;
     }
 

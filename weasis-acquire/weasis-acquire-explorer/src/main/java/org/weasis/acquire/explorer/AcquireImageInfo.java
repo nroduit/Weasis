@@ -15,6 +15,7 @@ import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.core.api.image.AutoLevelsOp;
 import org.weasis.core.api.image.BrightnessOp;
 import org.weasis.core.api.image.CropOp;
+import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
@@ -69,10 +70,11 @@ public class AcquireImageInfo {
         this.attributes = new Attributes();
         this.preProcessOpManager = new SimpleOpManager();
         this.postProcessOpManager = new SimpleOpManager();
-        this.postProcessOpManager.addImageOperationAction(new RotationOp());
-        this.postProcessOpManager.addImageOperationAction(new CropOp());
         this.postProcessOpManager.addImageOperationAction(new BrightnessOp());
         this.postProcessOpManager.addImageOperationAction(new AutoLevelsOp());
+        this.postProcessOpManager.addImageOperationAction(new RotationOp());
+        this.postProcessOpManager.addImageOperationAction(new FlipOp());
+        this.postProcessOpManager.addImageOperationAction(new CropOp());
         this.postProcessOpManager.addImageOperationAction(new ZoomOp());
 
         defaultValues = new AcquireImageValues();
@@ -163,6 +165,7 @@ public class AcquireImageInfo {
 
             postProcessOpManager.setParamValue(AutoLevelsOp.OP_NAME, AutoLevelsOp.P_AUTO_LEVEL,
                 nextValues.isAutoLevel());
+            postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, nextValues.isFlip());
 
             if (nextValues.getRatio() != currentValues.getRatio()) {
                 postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, nextValues.getRatio());
@@ -241,6 +244,7 @@ public class AcquireImageInfo {
         image.setPixelSize(defaultValues.getCalibrationRatio());
 
         postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, defaultValues.getOrientation());
+        postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, defaultValues.isFlip());
         postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
         postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_SHIFT_TO_ORIGIN, null);
         postProcessOpManager.setParamValue(BrightnessOp.OP_NAME, BrightnessOp.P_BRIGTNESS_VALUE,

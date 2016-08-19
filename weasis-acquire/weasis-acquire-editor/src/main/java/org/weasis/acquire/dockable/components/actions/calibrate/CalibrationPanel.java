@@ -11,8 +11,5 @@ public class CalibrationPanel extends AbstractAcquireActionPanel {
         add(new JLabel("Draw a line on the image"));
     }
     
-    @Override
-    public boolean needValidationPanel() {
-        return false;
-    }
+
 }

@@ -20,6 +20,7 @@ import org.weasis.acquire.explorer.gui.dialog.AcquireNewSerieDialog;
 import org.weasis.base.explorer.list.AThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -161,13 +162,14 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
                         ? info.getNextValues().getRotation() + angle : info.getNextValues().getRotation() + 360 + angle;
                     info.getNextValues().setRotation(change);
 
-                    RotationOp rotation = new RotationOp();
-                    rotation.setParam(RotationOp.P_ROTATE, info.getNextValues().getFullRotation());
-
-                    info.removePreProcessImageOperationAction(RotationOp.class);
-                    info.addPreProcessImageOperationAction(rotation);
-
-                    // info.applyPreProcess(getView());
+                    ImageOpNode node = info.getPreProcessOpManager().getNode(RotationOp.OP_NAME);
+                    if (node == null) {
+                        node = new RotationOp();
+                        info.addPreProcessImageOperationAction(node);
+                    } else {
+                        node.clearIOCache();
+                    }
+                    node.setParam(RotationOp.P_ROTATE, info.getNextValues().getFullRotation());
                 });
             }
         }));

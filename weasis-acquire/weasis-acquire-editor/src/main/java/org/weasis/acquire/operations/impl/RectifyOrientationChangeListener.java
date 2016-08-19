@@ -5,11 +5,15 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.weasis.acquire.AcquireObject;
+import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
 import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.operations.OpValueChanged;
 import org.weasis.acquire.utils.GraphicHelper;
 import org.weasis.core.api.image.RotationOp;
-import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 
 /**
  * 
@@ -17,34 +21,44 @@ import org.weasis.core.api.media.data.ImageElement;
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-12 - ylar - Creation
  */
-public class RectifyOrientationChangeListener extends AcquireObject implements ChangeListener {
+public class RectifyOrientationChangeListener extends AcquireObject implements ChangeListener, OpValueChanged {
+
+    private final RectifyAction rectifyAction;
+
+    public RectifyOrientationChangeListener(RectifyAction rectifyAction) {
+        this.rectifyAction = rectifyAction;
+    }
+
     /**
      * @since 2.5.0
      */
     @Override
     public void stateChanged(ChangeEvent e) {
         JSlider s = (JSlider) e.getSource();
+        AcquireImageInfo imageInfo = getImageInfo();
+        imageInfo.getNextValues().setOrientation(s.getValue());
+        imageInfo.applyPreProcess(getView());
+    }
 
-        ImageLayer<ImageElement> layer = getImageLayer();
-
-        if (layer != null) {
+    @Override
+    public void applyNextValues() {
+        ViewCanvas<ImageElement> view = AcquireObject.getView();
+        if (view != null) {
             AcquireImageInfo imageInfo = getImageInfo();
-            int angle = s.getValue();
-
-            imageInfo.removeLayer(getView());
-            if (angle % 90 != 0) {
-                GraphicHelper.newGridLayer(getView()); // Add a grid to the layer
+            int angle = imageInfo.getNextValues().getOrientation();
+            RectangleGraphic cropGraphic = rectifyAction.getCurrentCropArea();
+            if (cropGraphic != null) {
+                GraphicModel graphicManager = view.getGraphicManager();
+                graphicManager.getModels().removeIf(g -> g.getLayer().getType() == cropGraphic.getLayerType());
             }
+            if (angle % 90 != 0) {
+                GraphicHelper.newGridLayer(view);
+            }
+            
+            int rotation = (imageInfo.getNextValues().getFullRotation() + 360) % 360;
+            getView().getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, rotation - 360);
 
-            imageInfo.getNextValues().setOrientation(angle);
-
-            RotationOp rotation = new RotationOp();
-            rotation.setParam(RotationOp.P_ROTATE, imageInfo.getNextValues().getFullRotation());
-
-            imageInfo.removePreProcessImageOperationAction(RotationOp.class);
-            imageInfo.addPreProcessImageOperationAction(rotation);
-
-            imageInfo.applyPreProcess(getView());
+            rectifyAction.updateCropDisplay();
         }
     }
 }

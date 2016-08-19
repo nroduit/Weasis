@@ -280,4 +280,14 @@ public class SimpleOpManager implements OpManager {
         return new SimpleOpManager(this);
     }
 
+    @Override
+    public boolean needProcessing() {
+        for (ImageOpNode op : operations) {
+            if (op.getParam(Param.INPUT_IMG) == null || op.getParam(Param.OUTPUT_IMG) == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

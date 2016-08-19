@@ -13,6 +13,7 @@ package org.weasis.dicom.codec.internal;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
+import org.dcm4che3.util.UIDUtils;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
@@ -34,16 +36,16 @@ import org.weasis.dicom.codec.pref.DicomPrefManager;
 
 import com.sun.media.imageioimpl.common.ImageioUtil;
 
-
 public class Activator implements BundleActivator, ServiceListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
     private static final String LOGGER_KEY = "always.info.ItemParser"; //$NON-NLS-1$
     private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser"; //$NON-NLS-1$
 
-    // @Override
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
+        setDicomRootUID();
+
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:
         // org.dcm4che3.imageioimpl.plugins.rle.RLEImageReaderSpi
@@ -58,9 +60,8 @@ public class Activator implements BundleActivator, ServiceListener {
             if (logConfiguration == null) {
                 logConfiguration = confAdmin
                     .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
-                Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
+                Dictionary<String, Object> loggingProperties = new Hashtable<>();
                 loggingProperties.put("org.apache.sling.commons.log.level", "INFO"); //$NON-NLS-1$ //$NON-NLS-2$
-                // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
                 loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL); //$NON-NLS-1$
                 // add this property to give us something unique to re-find this configuration
                 loggingProperties.put(LOGGER_KEY, LOGGER_VAL);
@@ -78,12 +79,12 @@ public class Activator implements BundleActivator, ServiceListener {
                         if (prev != null) {
                             LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass()); //$NON-NLS-1$
                         }
-                        LOGGER.debug("Register DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
+                        LOGGER.info("Register DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
                     }
                 }
             }
         } catch (InvalidSyntaxException e) {
-            e.printStackTrace();
+            LOGGER.error("", e);
         }
 
         bundleContext.addServiceListener(this,
@@ -100,9 +101,9 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public synchronized void serviceChanged(final ServiceEvent event) {
-        ServiceReference<?> m_ref = event.getServiceReference();
+        ServiceReference<?> mef = event.getServiceReference();
         BundleContext context = FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
-        DicomSpecialElementFactory factory = (DicomSpecialElementFactory) context.getService(m_ref);
+        DicomSpecialElementFactory factory = (DicomSpecialElementFactory) context.getService(mef);
         if (factory == null) {
             return;
         }
@@ -113,7 +114,7 @@ public class Activator implements BundleActivator, ServiceListener {
                 if (prev != null) {
                     LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass()); //$NON-NLS-1$
                 }
-                LOGGER.debug("Register DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
+                LOGGER.info("Register DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
             }
 
         } else if (event.getType() == ServiceEvent.UNREGISTERING) {
@@ -124,11 +125,25 @@ public class Activator implements BundleActivator, ServiceListener {
                 } else {
                     LOGGER.warn("Cannot unregister {}, {} is registered instead", factory.getClass(), f.getClass()); //$NON-NLS-1$
                 }
-                LOGGER.debug("Unregister DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
+                LOGGER.info("Unregister DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
             }
             // Unget service object and null references.
-            context.ungetService(m_ref);
+            context.ungetService(mef);
         }
+    }
 
+    private static void setDicomRootUID() {
+        /**
+         * Set value for dicom root UID which should be registered at the
+         * http://www.iana.org/assignments/enterprise-numbers <br>
+         * Default value is 2.25, this enables users to generate OIDs without any registration procedure
+         *
+         * @see http://www.dclunie.com/medical-image-faq/html/part2.html#UUID <br>
+         *      http://www.oid-info.com/get/2.25 <br>
+         *      http://www.itu.int/ITU-T/asn1/uuid.html<br>
+         *      http://healthcaresecprivacy.blogspot.ch/2011/02/creating-and-using-unique-id-uuid-oid.html
+         */
+        String weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot()); //$NON-NLS-1$
+        UIDUtils.setRoot(weasisRootUID);
     }
 }

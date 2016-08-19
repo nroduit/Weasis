@@ -4,6 +4,8 @@ import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireAction;
 import org.weasis.acquire.dockable.components.actions.AcquireActionPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
  * 
@@ -18,11 +20,15 @@ public class ContrastAction extends AbstractAcquireAction {
         super(panel);
     }
 
-
     @Override
     public void validate() {
         AcquireImageInfo imageInfo = getImageInfo();
-        imageInfo.applyPostProcess(getView());
+        validate(imageInfo, getView());
+    }
+
+    @Override
+    public void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view) {
+        imageInfo.applyPostProcess(view);
     }
 
     @Override

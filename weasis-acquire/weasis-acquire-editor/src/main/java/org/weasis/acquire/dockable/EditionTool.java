@@ -11,6 +11,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 
 import org.weasis.acquire.Messages;
+import org.weasis.acquire.dockable.components.AcquireActionButton;
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.dockable.components.AcquireSubmitButtonsPanel;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
@@ -49,8 +50,6 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
     private final AcquireActionButtonsPanel topPanel;
     private AbstractAcquireActionPanel centralPanel;
     private final AcquireSubmitButtonsPanel bottomPanel = new AcquireSubmitButtonsPanel();
-
-    ViewCanvas<ImageElement> view = EventManager.getInstance().getSelectedViewPane();
 
     public EditionTool(Type type) {
         super(BUTTON_NAME, BUTTON_NAME, type, 9);
@@ -91,12 +90,21 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
             if (event.getSeriesViewer() instanceof View2dContainer) {
                 ViewCanvas<ImageElement> view = ((View2dContainer) event.getSeriesViewer()).getSelectedImagePane();
                 if (view != null) {
+                    // For better performance use nearest neighbor scaling
                     view.changeZoomInterpolation(0);
                     AcquireImageInfo old = AcquireManager.getCurrentAcquireImageInfo();
+                    ViewCanvas<ImageElement> oldView = AcquireManager.getCurrentView();
                     AcquireImageInfo info = AcquireManager.findByImage(view.getImage());
                     AcquireManager.setCurrentAcquireImageInfo(info);
+                    AcquireManager.setCurrentView(view);
 
                     if (info != null && info != old) {
+                        if (old != null && oldView != null) {
+                            AcquireActionButton button = topPanel.getSelected();
+                            button.getAcquireAction().validate(old, oldView);
+                        }
+
+                    //    topPanel.setSelected(topPanel.getSelected());
                         centralPanel.initValues(info, info.getNextValues());
                     }
                 }

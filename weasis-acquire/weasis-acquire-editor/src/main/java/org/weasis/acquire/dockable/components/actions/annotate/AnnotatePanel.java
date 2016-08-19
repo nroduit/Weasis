@@ -34,8 +34,5 @@ public class AnnotatePanel extends AbstractAcquireActionPanel {
         return panel;
     }
 
-    @Override
-    public boolean needValidationPanel() {
-        return false;
-    }
+
 }

@@ -4,41 +4,43 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import org.weasis.acquire.AcquireObject;
+import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
 import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.operations.OpValueChanged;
 import org.weasis.acquire.utils.GraphicHelper;
 import org.weasis.core.api.image.RotationOp;
 
-public class RotationActionListener extends AcquireObject implements ActionListener {
+public class RotationActionListener extends AcquireObject implements ActionListener, OpValueChanged {
     private int angle;
+    private final RectifyAction rectifyAction;
 
-    public RotationActionListener(int angle) {
+    public RotationActionListener(int angle, RectifyAction rectifyAction) {
         this.angle = angle;
+        this.rectifyAction = rectifyAction;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         AcquireImageInfo imageInfo = getImageInfo();
 
-        int change = (imageInfo.getNextValues().getFullRotation() + angle >= 0)
-            ? imageInfo.getNextValues().getRotation() + angle : imageInfo.getNextValues().getRotation() + 360 + angle;
-        setValue(change);     
+        int rotation = (imageInfo.getNextValues().getRotation() + 720 + angle) % 360;
+        imageInfo.getNextValues().setRotation(rotation);
+        applyNextValues();
+        imageInfo.applyPreProcess(getView());
     }
-    
-    
-    public void setValue(int value) {
+
+    @Override
+    public void applyNextValues() {
         AcquireImageInfo imageInfo = getImageInfo();
 
-        imageInfo.getNextValues().setRotation(value);
-
-        if (imageInfo.getNextValues().getFullRotation() % 90 != 0) {
+        int rotation = (imageInfo.getNextValues().getFullRotation() + 360) % 360;
+        if (rotation % 90 != 0) {
             GraphicHelper.newGridLayer(getView());
         }
 
-        RotationOp rotation = new RotationOp();
-        rotation.setParam(RotationOp.P_ROTATE, imageInfo.getNextValues().getFullRotation());
-        imageInfo.removePreProcessImageOperationAction(RotationOp.class);
-        imageInfo.addPreProcessImageOperationAction(rotation);
+        getView().getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE,
+            rotation % 90 == 0 ? rotation : rotation - 360);
 
-        imageInfo.applyPreProcess(getView());
+        rectifyAction.updateCropDisplay();
     }
 }

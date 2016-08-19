@@ -69,7 +69,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final SelectGraphic selectionGraphic = new SelectGraphic();
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
-    public static final Icon drawIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
+    public static final Icon drawIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw.png")); //$NON-NLS-1$
     public static final List<Graphic> measureGraphicList = new ArrayList<>();
     public static final List<Graphic> drawGraphicList = new ArrayList<>();
 

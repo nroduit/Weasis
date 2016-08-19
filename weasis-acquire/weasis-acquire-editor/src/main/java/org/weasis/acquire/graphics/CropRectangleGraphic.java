@@ -1,7 +1,7 @@
 package org.weasis.acquire.graphics;
 
 import java.awt.Color;
-import java.awt.geom.AffineTransform;
+import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.util.Collections;
 import java.util.List;
@@ -11,10 +11,12 @@ import javax.swing.Icon;
 import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.MaskOp;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -39,7 +41,7 @@ public class CropRectangleGraphic extends RectangleGraphic {
     public CropRectangleGraphic(CropRectangleGraphic rectangleGraphic) {
         super(rectangleGraphic);
     }
-    
+
     @Override
     public LayerType getLayerType() {
         return LayerType.ACQUIRE;
@@ -51,20 +53,29 @@ public class CropRectangleGraphic extends RectangleGraphic {
         if (!getResizingOrMoving()) {
             AcquireImageInfo info = AcquireManager.getCurrentAcquireImageInfo();
             if (info != null) {
-                GraphicModel graphicManager = AcquireObject.getView().getGraphicManager();
-                graphicManager.getModels()
-                    .removeIf(g -> g.getLayer().getType() == getLayerType() && g != this);
+                ViewCanvas<ImageElement> view = AcquireObject.getView();
+                info.getNextValues().setCropZone(this.getShape().getBounds());
+                updateCropDisplay(info);
 
-                info.clearPreProcess();
-
-                MaskOp mask = new MaskOp();
-                mask.setParam(MaskOp.P_SHOW, true);
-                mask.setParam(MaskOp.P_SHAPE, new Area(this.getBounds((AffineTransform) null)));
-                mask.setParam(MaskOp.P_GRAY_TRANSPARENCY, 255);
-                info.addPreProcessImageOperationAction(mask);
-                info.applyPreProcess(AcquireObject.getView());
+                if (view != null) {
+                    view.getImageLayer().setImage(view.getImage(), info.getPreProcessOpManager());
+                }
             }
         }
+    }
+
+    public void updateCropDisplay(AcquireImageInfo imageInfo) {
+        ImageOpNode node = imageInfo.getPreProcessOpManager().getNode(MaskOp.OP_NAME);
+        if (node == null) {
+            node = new MaskOp();
+            imageInfo.addPreProcessImageOperationAction(node);
+        } else {
+            node.clearIOCache();
+        }
+        node.setParam(MaskOp.P_SHOW, true);
+        Rectangle area =  imageInfo.getNextValues().getCropZone();
+        node.setParam(MaskOp.P_SHAPE, area == null ? null :new Area(area));
+        node.setParam(MaskOp.P_GRAY_TRANSPARENCY, 255);
     }
 
     @Override
@@ -89,7 +100,7 @@ public class CropRectangleGraphic extends RectangleGraphic {
 
     @Override
     public CropRectangleGraphic copy() {
-        if(!pts.isEmpty()){
+        if (!pts.isEmpty()) {
             // Do not allow to copy it elsewhere
             return null;
         }
