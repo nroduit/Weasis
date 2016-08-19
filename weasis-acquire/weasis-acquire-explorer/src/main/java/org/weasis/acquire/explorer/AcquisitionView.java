@@ -25,6 +25,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.dicom.codec.TagD;
 
 import bibliothek.gui.dock.common.CLocation;
@@ -65,6 +66,9 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
         this.acquireThumbnailListPane.loadDirectory(systemDrive.getID());
 
         centralPane.setPluginName(TagD.getTagValue(AcquireManager.GLOBAL, Tag.PatientName, String.class));
+        
+        // Remove dropping capabilities in the central area (limit to import from browse panel)
+        UIManager.MAIN_AREA.getComponent().setTransferHandler(null);
     }
 
     void saveLastPath() {

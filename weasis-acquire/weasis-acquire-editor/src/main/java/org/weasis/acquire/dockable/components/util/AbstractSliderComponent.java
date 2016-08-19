@@ -1,13 +1,12 @@
 package org.weasis.acquire.dockable.components.util;
 
-import java.awt.FlowLayout;
 import java.util.Dictionary;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
@@ -21,9 +20,8 @@ public abstract class AbstractSliderComponent extends AbstractComponent {
     
     public AbstractSliderComponent(AbstractAcquireActionPanel panel, String title) {
         super(panel, title);
-        setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-        borderTitle = new TitledBorder(getDisplayTitle());
-        
+        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
         slider = new JSlider(getMin(), getMax(), getDefaultValue());
         slider.setMajorTickSpacing(getMax());
         slider.setPaintTicks(true);

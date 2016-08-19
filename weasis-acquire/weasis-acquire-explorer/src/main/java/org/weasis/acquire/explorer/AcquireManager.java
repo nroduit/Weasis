@@ -73,6 +73,8 @@ public class AcquireManager {
 
     public static void setCurrentView(ViewCanvas<ImageElement> view) {
         getInstance().currentView = view;
+        // Remove capabilities to open a view by dragging a thumbnail from the import panel. 
+        view.getJComponent().setTransferHandler(null);
     }
 
     public static Collection<AcquireImageInfo> getAllAcquireImageInfo() {

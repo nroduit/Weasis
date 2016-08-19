@@ -236,7 +236,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
                 // some checks before closing a Dockable
                 if (child instanceof CommonDockable) {
                     CDockable cChild = ((CommonDockable) child).getDockable();
-                    if (closeAll || cChild != dockable) {
+                    if (cChild.isCloseable() && (closeAll || cChild != dockable)) {
                         if (cChild.getFocusComponent() instanceof SeriesViewer) {
                             ((SeriesViewer) cChild.getFocusComponent()).close();
                         } else {

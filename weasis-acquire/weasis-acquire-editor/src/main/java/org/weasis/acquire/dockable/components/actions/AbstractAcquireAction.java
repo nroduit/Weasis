@@ -11,6 +11,8 @@ import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.dockable.components.AcquireActionButton;
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
  * 
@@ -37,7 +39,6 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
         switch (cmd) {
             case INIT:
                 panel.setSelected((AcquireActionButton) e.getSource());
-                init();
                 break;
             case VALIDATE:
                 validate();
@@ -55,11 +56,12 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
     }
 
     @Override
-    public void init() {
+    public void validate() {
         AcquireImageInfo imageInfo = getImageInfo();
-        imageInfo.clearPreProcess();
-        imageInfo.applyPostProcess(getView());
-        imageInfo.applyPreProcess(getView());
+        ViewCanvas<ImageElement> view = getView();
+        if (imageInfo != null && view != null) {
+            validate(imageInfo, view);
+        }
     }
 
     @Override
@@ -69,7 +71,6 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
         boolean dirty = imageInfo.isDirty();
 
         if (dirty) {
-            imageInfo.clearPreProcess();
             centralPanel.initValues(imageInfo, imageInfo.getCurrentValues());
         }
         return dirty;
@@ -86,7 +87,6 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
                 "RESET", JOptionPane.YES_NO_OPTION);
             if (confirm == 0) {
                 centralPanel.initValues(imageInfo, imageInfo.getDefaultValues());
-                init();
             }
         }
         return dirty;

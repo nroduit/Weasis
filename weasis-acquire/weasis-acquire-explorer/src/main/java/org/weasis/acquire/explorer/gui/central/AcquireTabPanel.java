@@ -15,8 +15,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 
 import org.dcm4che3.data.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.Serie;
@@ -27,8 +25,6 @@ import org.weasis.dicom.codec.TagD;
 
 @SuppressWarnings("serial")
 public class AcquireTabPanel extends JPanel {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AcquireTabPanel.class);
 
     private final Map<Serie, AcquireCentralImagePanel> btnMap = new HashMap<>();
 
@@ -84,7 +80,13 @@ public class AcquireTabPanel extends JPanel {
     private void remove(Serie s) {
         btnMap.remove(s);
         Optional<SerieButton> nextBtn = serieList.removeBySerie(s);
-        nextBtn.ifPresent(this::setSelected);
+        if(nextBtn.isPresent()){
+            btnGrp.setSelected(nextBtn.get().getModel(), true);
+            setSelected(nextBtn.get());          
+        }
+        else if(btnMap.isEmpty()) {
+            selected = null;
+        }
     }
 
     public SerieButton getSelected() {
@@ -108,7 +110,7 @@ public class AcquireTabPanel extends JPanel {
         currentPane.removeElements(medias);
         currentPane.revalidate();
         currentPane.repaint();
-        
+
         if (currentPane.isEmpty()) {
             remove(selected.getSerie());
             serieList.revalidate();

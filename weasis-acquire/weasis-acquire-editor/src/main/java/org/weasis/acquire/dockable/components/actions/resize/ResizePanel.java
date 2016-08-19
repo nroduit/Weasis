@@ -6,6 +6,8 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
+import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireImageValues;
 
 public class ResizePanel extends AbstractAcquireActionPanel {
     private static final long serialVersionUID = 3176116747953034000L;
@@ -27,5 +29,10 @@ public class ResizePanel extends AbstractAcquireActionPanel {
 
         add(new JLabel("height: "));
         add(spinnerHeight);
+    }
+
+    @Override
+    public void initValues(AcquireImageInfo info, AcquireImageValues values) {
+        // TODO Auto-generated method stub
     }
 }

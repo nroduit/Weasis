@@ -3,6 +3,7 @@ package org.weasis.acquire.explorer.gui.central.tumbnail;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -56,11 +57,26 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
     }
 
     @Override
+    public void openSelection() {
+        for (E s :  getSelectedValuesList()) {
+            openSelection(Arrays.asList(s), true, true, false);
+        }
+    }
+
+    @Override
     public JPopupMenu buidContexMenu(final MouseEvent e) {
         final List<E> medias = getSelected(e);
 
         if (!medias.isEmpty()) {
             JPopupMenu popupMenu = new JPopupMenu();
+
+            popupMenu.add(new JMenuItem(new AbstractAction("Edit") {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    openSelection();
+                }
+            }));
 
             popupMenu.add(new JMenuItem(new AbstractAction("Remove") {
 
@@ -77,8 +93,9 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
             moveToOther(moveToMenu, medias);
             moveToMenu.addSeparator();
             moveToExisting(moveToMenu, medias);
-            moveToMenu.addSeparator();
-            moveToByDate(moveToMenu, medias);
+            if (moveToMenu.getItemCount() > 3) {
+                moveToMenu.addSeparator();
+            }
             moveToNewSerie(moveToMenu, medias);
 
             JMenu operationsMenu = new JMenu("Operations...");
@@ -93,18 +110,6 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
 
         return null;
 
-    }
-
-    private void moveToByDate(JMenu moveToMenu, final List<E> medias) {
-        moveToMenu.add(new JMenuItem(new AbstractAction("Related date serie") {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                AcquireCentralThumnailList.this.acquireTabPanel
-                    .moveElementsByDate(AcquireManager.toImageElement(medias));
-                repaint();
-            }
-        }));
     }
 
     private void moveToExisting(JMenu moveToMenu, final List<E> medias) {

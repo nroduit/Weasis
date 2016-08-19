@@ -21,18 +21,6 @@ public class ResizeAction extends AbstractAcquireAction {
     }
 
     @Override
-    public void init() {
-        super.init();
-        LOGGER.info("image width: " + getView().getSourceImage().getWidth() + "px");
-        LOGGER.info("image height: " + getView().getSourceImage().getHeight() + "px");
-    }
-
-    @Override
-    public void validate() {
-        // Nothing to do
-    }
-
-    @Override
     public void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view) {
         // Nothing to do
     }

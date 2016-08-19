@@ -22,8 +22,17 @@ import org.weasis.acquire.explorer.AcquireImageValues;
 import org.weasis.acquire.operations.impl.FlipActionListener;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
 import org.weasis.base.viewer2d.EventManager;
+import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.image.CropOp;
+import org.weasis.core.api.image.FlipOp;
+import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewerToolBar;
 
 public class RectifyPanel extends AbstractAcquireActionPanel {
     private static final long serialVersionUID = 4041145212218086219L;
@@ -83,13 +92,12 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     @Override
     public void initValues(AcquireImageInfo info, AcquireImageValues values) {
         ViewCanvas<ImageElement> view = EventManager.getInstance().getSelectedViewPane();
+        info.clearPreProcess();
+
         AcquireImageValues next = info.getNextValues();
         next.setFlip(values.isFlip());
         next.setOrientation(values.getOrientation());
         next.setRotation(values.getRotation());
-        Rectangle2D area = Optional.ofNullable((Rectangle2D) info.getNextValues().getCropZone())
-            .orElse(view.getViewModel().getModelArea());
-        next.setCropZone(RectifyAction.adaptToinitCropArea(area));
 
         flipCheckBox.removeActionListener(flipActionListener);
         RectifyOrientationChangeListener listener = orientationPanel.getListener();
@@ -100,9 +108,37 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         flipCheckBox.addActionListener(flipActionListener);
         repaint();
 
+        // Remove the crop before super.init() to get the entire image.
+        info.getPostProcessOpManager().setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
+        info.getPostProcessOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
+        info.getPostProcessOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
+        view.updateCanvas(false);
+        view.getActionsInView().remove(DefaultView2d.PROP_LAYER_OFFSET);
+        view.resetZoom();
+
+        view.getGraphicManager().setCreateGraphic(null);
+        ImageViewerPlugin container = WinUtil.getParentOfClass(view.getJComponent(), ImageViewerPlugin.class);
+        if (container != null) {
+            final ViewerToolBar toolBar = container.getViewerToolBar();
+            if (toolBar != null) {
+                String cmd = ActionW.DRAW.cmd();
+                if (!toolBar.isCommandActive(cmd)) {
+                    MouseActions mouseActions = EventManager.getInstance().getMouseActions();
+                    mouseActions.setAction(MouseActions.LEFT, cmd);
+                    container.setMouseActions(mouseActions);
+                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                }
+            }
+        }
+
         flipActionListener.applyNextValues();
         listener.applyNextValues();
-        
+
+        Rectangle2D area = Optional.ofNullable((Rectangle2D) info.getNextValues().getCropZone())
+            .orElse(view.getViewModel().getModelArea());
+        next.setCropZone(RectifyAction.adaptToinitCropArea(area));
+        rectifyAction.updateCropGraphic();
+
         info.applyPreProcess(view);
     }
 

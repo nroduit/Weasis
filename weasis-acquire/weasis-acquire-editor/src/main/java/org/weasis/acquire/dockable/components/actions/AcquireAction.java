@@ -13,8 +13,6 @@ public interface AcquireAction extends ActionListener {
 
     AcquireActionPanel getCentralPanel();
 
-    void init();
-
     void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view);
 
     void validate();

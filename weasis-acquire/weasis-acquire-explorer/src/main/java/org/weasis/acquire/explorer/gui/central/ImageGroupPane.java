@@ -9,24 +9,22 @@ import javax.swing.JMenu;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.gui.AcquireToolBar;
+import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class ImageGroupPane extends ViewerPlugin<ImageElement> {
     private static final long serialVersionUID = -1446534853755678224L;
-
-    @SuppressWarnings("unused")
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     public final List<Toolbar> toolBar = Collections.synchronizedList(new ArrayList<Toolbar>(1));
 
@@ -92,8 +90,10 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
 
     @Override
     public void setSelected(boolean selected) {
-        // TODO Auto-generated method stub
-
+        if (selected) {
+            EventManager.getInstance()
+                .fireSeriesViewerListeners(new SeriesViewerEvent(this, null, null, EVENT.SELECT_VIEW));
+        }
     }
 
     @Override

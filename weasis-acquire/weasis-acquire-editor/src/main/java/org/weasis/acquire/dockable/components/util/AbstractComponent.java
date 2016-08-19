@@ -1,7 +1,5 @@
 package org.weasis.acquire.dockable.components.util;
 
-import java.awt.BorderLayout;
-
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
@@ -15,7 +13,6 @@ public abstract class AbstractComponent extends JPanel {
     protected AbstractAcquireActionPanel panel;
 
     public AbstractComponent(AbstractAcquireActionPanel panel, String title) {
-        super(new BorderLayout());
         this.title = title;
         this.borderTitle = new TitledBorder(getDisplayTitle());
         this.panel = panel;

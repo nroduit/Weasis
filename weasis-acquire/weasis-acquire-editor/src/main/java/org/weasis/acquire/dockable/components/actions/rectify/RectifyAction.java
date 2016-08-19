@@ -16,23 +16,16 @@ import org.weasis.acquire.dockable.components.actions.AbstractAcquireAction;
 import org.weasis.acquire.dockable.components.actions.AcquireActionPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.graphics.CropRectangleGraphic;
-import org.weasis.base.viewer2d.EventManager;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.DefaultView2d;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
@@ -54,42 +47,6 @@ public class RectifyAction extends AbstractAcquireAction {
 
     public RectifyAction(AcquireActionButtonsPanel panel) {
         super(panel);
-    }
-
-    @Override
-    public void init() {
-        AcquireImageInfo imageInfo = getImageInfo();
-        ViewCanvas<ImageElement> view = getView();
-        // Remove the crop before super.init() to get the entire image.
-        imageInfo.getPostProcessOpManager().setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
-        imageInfo.getPostProcessOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
-        imageInfo.getPostProcessOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
-        view.updateCanvas(false);
-        view.getActionsInView().remove(DefaultView2d.PROP_LAYER_OFFSET);
-        view.resetZoom();
-
-        super.init();
-
-        int rotation = imageInfo.getCurrentValues().getFullRotation() % 360;
-        view.getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, rotation - 360);
-        view.getDisplayOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, imageInfo.getCurrentValues().isFlip());
-
-        view.getGraphicManager().setCreateGraphic(null);
-        ImageViewerPlugin container = WinUtil.getParentOfClass(view.getJComponent(), ImageViewerPlugin.class);
-        if (container != null) {
-            final ViewerToolBar toolBar = container.getViewerToolBar();
-            if (toolBar != null) {
-                String cmd = ActionW.DRAW.cmd();
-                if (!toolBar.isCommandActive(cmd)) {
-                    MouseActions mouseActions = EventManager.getInstance().getMouseActions();
-                    mouseActions.setAction(MouseActions.LEFT, cmd);
-                    container.setMouseActions(mouseActions);
-                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
-                }
-            }
-        }
-
-        updateCropGraphic();
     }
 
     protected void updateCropGraphic() {
@@ -165,6 +122,7 @@ public class RectifyAction extends AbstractAcquireAction {
         Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
 
         if (rotationAngle != null && rotationAngle != 0) {
+            rotationAngle = (rotationAngle + 720) % 360;
             if (flip != null && flip) {
                 rotationAngle = 360 - rotationAngle;
             }
@@ -202,20 +160,15 @@ public class RectifyAction extends AbstractAcquireAction {
     }
 
     @Override
-    public void validate() {
-        AcquireImageInfo imageInfo = getImageInfo();
-        ViewCanvas<ImageElement> view = getView();
-        validate(imageInfo, view);
-    }
-    
-    @Override
     public void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view) {
-        getImageInfo().removeLayer(view);
+        imageInfo.removeLayer(view);
 
-        if (view.getImageLayer() instanceof RenderedImageLayer) {
+        if (view.getImageLayer() instanceof RenderedImageLayer && currentCropArea != null) {
             imageInfo.getCurrentValues().setCropZone(null); // Force dirty value
             imageInfo.getNextValues()
                 .setCropZone(adaptToValidateCropArea(currentCropArea.getShape().getBounds()).getBounds());
+            view.getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
+            view.getDisplayOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
             imageInfo.applyPostProcess(view);
             view.getImage().setTag(TagW.ThumbnailPath, null);
             Panner panner = view.getPanner();
@@ -223,8 +176,6 @@ public class RectifyAction extends AbstractAcquireAction {
                 panner.updateImage();
             }
         }
-        view.getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
-        view.getDisplayOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
     }
 
     @Override
@@ -249,6 +200,5 @@ public class RectifyAction extends AbstractAcquireAction {
     public AcquireActionPanel newCentralPanel() {
         return new RectifyPanel(this);
     }
-
 
 }

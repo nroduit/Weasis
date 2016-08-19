@@ -66,6 +66,12 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.weasis.base</groupId>
+			<artifactId>weasis-base-viewer2d</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>com.drewnoakes</groupId>
 			<artifactId>metadata-extractor</artifactId>
 			<version>2.9.1</version>

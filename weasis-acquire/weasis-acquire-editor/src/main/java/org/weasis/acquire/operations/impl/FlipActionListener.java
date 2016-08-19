@@ -22,6 +22,7 @@ public class FlipActionListener extends AcquireObject implements ActionListener,
         AcquireImageInfo imageInfo = getImageInfo();
         imageInfo.getNextValues().toggleFlip();
         applyNextValues();
+        rectifyAction.updateCropDisplay();
         imageInfo.applyPreProcess(getView());
     }
 
@@ -30,7 +31,6 @@ public class FlipActionListener extends AcquireObject implements ActionListener,
         AcquireImageInfo imageInfo = getImageInfo();
         getView().getDisplayOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP,
             imageInfo.getNextValues().isFlip());
-        rectifyAction.updateCropDisplay();
     }
 
 }

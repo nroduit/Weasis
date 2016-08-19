@@ -13,6 +13,7 @@ import java.awt.dnd.DragSourceDragEvent;
 import java.awt.dnd.DragSourceDropEvent;
 import java.awt.dnd.DragSourceEvent;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.Icon;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
@@ -44,7 +46,6 @@ import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.JIUtility;
 import org.weasis.base.explorer.Messages;
 import org.weasis.base.explorer.ThumbnailRenderer;
-import org.weasis.base.explorer.ToggleSelectionModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.media.data.Codec;
@@ -76,7 +77,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
     }
 
     private final int editingIndex = -1;
-    private final ToggleSelectionModel selectionModel;
+    private final DefaultListSelectionModel selectionModel;
 
     private boolean changed;
     private Point dragPressed = null;
@@ -93,7 +94,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
         this.setModel(newModel());
         this.changed = false;
 
-        this.selectionModel = new ToggleSelectionModel();
+        this.selectionModel = new DefaultListSelectionModel();
         this.setBackground(new Color(242, 242, 242));
 
         setSelectionModel(this.selectionModel);
@@ -155,7 +156,12 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
     public void registerListeners() {
         registerDragListeners();
         addMouseListener(new PopupTrigger());
-        addKeyListener(new JIThumbnailKeyAdapter());
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                AThumbnailList.this.jiThumbnailKeyPressed(e);
+            }
+        });
     }
 
     public void registerDragListeners() {
@@ -211,15 +217,17 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
 
     @Override
     public String getToolTipText(final MouseEvent evt) {
-        // FIXME return the more close index, => only when on thumbnails
-        final int index = locationToIndex(evt.getPoint());
-        if (index < 0) {
-            return ""; //$NON-NLS-1$
+        Point pt = evt.getPoint();
+        final int index = locationToIndex(pt);
+        final Rectangle thumBounds = getCellBounds(index, index);
+
+        if (thumBounds == null || !thumBounds.contains(pt)) {
+            return null; 
         }
 
         final E item = getModel().getElementAt(index);
         if (item == null || item.getName() == null) {
-            return ""; //$NON-NLS-1$
+            return null; 
         }
 
         StringBuilder toolTips = new StringBuilder();
@@ -505,7 +513,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
         return new AbstractAction(Messages.getString("JIThumbnailList.refresh_list")) { //$NON-NLS-1$
             @Override
             public void actionPerformed(final ActionEvent e) {
-                final Thread runner = new Thread(() -> AThumbnailList.this.getThumbnailListModel().reload());
+                final Thread runner = new Thread(AThumbnailList.this.getThumbnailListModel()::reload);
                 runner.start();
             }
         };
@@ -597,27 +605,6 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
             clearChanged();
         }
 
-    }
-
-    final class JIThumbnailKeyAdapter extends java.awt.event.KeyAdapter {
-
-        /** key event handlers */
-        @Override
-        public void keyPressed(final KeyEvent e) {
-            if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
-                AThumbnailList.this.selectionModel.setShiftKey(true);
-            }
-            if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-                AThumbnailList.this.selectionModel.setCntrlKey(true);
-            }
-            AThumbnailList.this.jiThumbnailKeyPressed(e);
-        }
-
-        @Override
-        public void keyReleased(final KeyEvent e) {
-            AThumbnailList.this.selectionModel.setShiftKey(false);
-            AThumbnailList.this.selectionModel.setCntrlKey(false);
-        }
     }
 
     // --- DragGestureListener methods -----------------------------------

@@ -19,7 +19,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 public class SerieButtonList extends JScrollPane {
     private static final long serialVersionUID = 3875335843304715915L;
     protected static final Logger LOGGER = LoggerFactory.getLogger(SerieButtonList.class);
-    
+
     private static final JPanel panel1 = new JPanel(new BorderLayout());
     private static final JPanel panel2 = new JPanel(new GridLayout(0, 1));
 
@@ -30,7 +30,7 @@ public class SerieButtonList extends JScrollPane {
         super(panel1, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         JMVUtils.setPreferredWidth(panel1, 200);
         JMVUtils.setPreferredHeight(panel1, 300);
-        
+
         panel1.add(panel2, BorderLayout.NORTH);
         panel1.add(publishPanel, BorderLayout.SOUTH);
     }
@@ -46,13 +46,9 @@ public class SerieButtonList extends JScrollPane {
     }
 
     private void remove(SerieButton btn) {
-        panel2.remove(btn);
-        btns.remove(btn);
-    }
-
-    public Optional<SerieButton> removeBySerieButton(final SerieButton serieButton) {
-        btns.stream().filter(sb -> sb.equals(serieButton)).findFirst().ifPresent(sb -> remove(sb));
-        return btns.stream().sorted().findFirst();
+        if (btns.remove(btn)) {
+            panel2.remove(btn);
+        }
     }
 
     public Optional<SerieButton> removeBySerie(final Serie serie) {

@@ -7,6 +7,8 @@ import javax.swing.JPanel;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.dockable.components.actions.annotate.comp.AnnotationIconsPanel;
 import org.weasis.acquire.dockable.components.actions.annotate.comp.AnnotationOptionsPanel;
+import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireImageValues;
 
 public class AnnotatePanel extends AbstractAcquireActionPanel {
     private static final long serialVersionUID = -3096519473431772537L;
@@ -34,5 +36,9 @@ public class AnnotatePanel extends AbstractAcquireActionPanel {
         return panel;
     }
 
+    @Override
+    public void initValues(AcquireImageInfo info, AcquireImageValues values) {
+        // Nothing to do
+    }
 
 }

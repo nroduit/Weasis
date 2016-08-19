@@ -1,11 +1,14 @@
 package org.weasis.acquire.operations.impl;
 
+import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
+import org.weasis.acquire.dockable.components.util.AbstractComponent;
+import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.operations.OpValueChanged;
 import org.weasis.acquire.utils.GraphicHelper;
@@ -35,8 +38,14 @@ public class RectifyOrientationChangeListener extends AcquireObject implements C
     @Override
     public void stateChanged(ChangeEvent e) {
         JSlider s = (JSlider) e.getSource();
+        JPanel panel = (JPanel) s.getParent();
+        if (panel instanceof AbstractSliderComponent) {
+            ((AbstractComponent) panel).updatePanelTitle();
+        }
         AcquireImageInfo imageInfo = getImageInfo();
         imageInfo.getNextValues().setOrientation(s.getValue());
+        applyNextValues();
+        rectifyAction.updateCropDisplay();
         imageInfo.applyPreProcess(getView());
     }
 
@@ -45,20 +54,18 @@ public class RectifyOrientationChangeListener extends AcquireObject implements C
         ViewCanvas<ImageElement> view = AcquireObject.getView();
         if (view != null) {
             AcquireImageInfo imageInfo = getImageInfo();
-            int angle = imageInfo.getNextValues().getOrientation();
+            int rotation = (imageInfo.getNextValues().getFullRotation() + 360) % 360;
             RectangleGraphic cropGraphic = rectifyAction.getCurrentCropArea();
             if (cropGraphic != null) {
                 GraphicModel graphicManager = view.getGraphicManager();
                 graphicManager.getModels().removeIf(g -> g.getLayer().getType() == cropGraphic.getLayerType());
             }
-            if (angle % 90 != 0) {
+            if (rotation % 90 != 0) {
                 GraphicHelper.newGridLayer(view);
             }
-            
-            int rotation = (imageInfo.getNextValues().getFullRotation() + 360) % 360;
-            getView().getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, rotation - 360);
 
-            rectifyAction.updateCropDisplay();
+            getView().getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE,
+                rotation % 90 == 0 ? rotation : rotation - 360);
         }
     }
 }

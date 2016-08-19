@@ -21,12 +21,6 @@ public class ContrastAction extends AbstractAcquireAction {
     }
 
     @Override
-    public void validate() {
-        AcquireImageInfo imageInfo = getImageInfo();
-        validate(imageInfo, getView());
-    }
-
-    @Override
     public void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view) {
         imageInfo.applyPostProcess(view);
     }

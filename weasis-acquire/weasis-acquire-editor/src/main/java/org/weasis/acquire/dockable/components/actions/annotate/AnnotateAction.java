@@ -21,11 +21,6 @@ public class AnnotateAction extends AbstractAcquireAction {
     }
 
     @Override
-    public void validate() {
-        // Nothing to do
-    }
-
-    @Override
     public void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view) {
         // Nothing to do
     }

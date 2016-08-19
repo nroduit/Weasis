@@ -1,9 +1,11 @@
 package org.weasis.acquire.dockable.components.actions.contrast;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -45,6 +47,9 @@ public class ContrastPanel extends AbstractAcquireActionPanel implements ChangeL
         brightnessPanel = new BrightnessComponent(this);
 
         JPanel content = new JPanel(new GridLayout(3, 1, 0, 10));
+        content.setAlignmentX(Component.LEFT_ALIGNMENT);
+        content.setAlignmentY(Component.TOP_ALIGNMENT);
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.add(contrastPanel);
         content.add(brightnessPanel);
         content.add(autoLevelBtn);
@@ -59,6 +64,9 @@ public class ContrastPanel extends AbstractAcquireActionPanel implements ChangeL
 
     @Override
     public void initValues(AcquireImageInfo info, AcquireImageValues values) {
+        ViewCanvas<ImageElement> view = EventManager.getInstance().getSelectedViewPane();
+        info.clearPreProcess();
+        
         AcquireImageValues next = info.getNextValues();
         next.setContrast(values.getContrast());
         next.setBrightness(values.getBrightness());
@@ -77,7 +85,6 @@ public class ContrastPanel extends AbstractAcquireActionPanel implements ChangeL
         applyNextValues();
         autoLevelListener.applyNextValues();
         
-        ViewCanvas<ImageElement> view = EventManager.getInstance().getSelectedViewPane();
         info.applyPreProcess(view);
     }
 

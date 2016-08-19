@@ -8,7 +8,7 @@ import javax.swing.Icon;
 import javax.swing.JOptionPane;
 
 import org.weasis.acquire.AcquireObject;
-import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationAction;
+import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -48,7 +48,7 @@ public class CalibrationGraphic extends LineGraphic {
             if (res == JOptionPane.OK_OPTION) {
                 calibrationDialog.applyNewCalibration();
             }
-            view.getGraphicManager().setCreateGraphic(CalibrationAction.CALIBRATION_LINE_GRAPHIC);
+            view.getGraphicManager().setCreateGraphic(CalibrationPanel.CALIBRATION_LINE_GRAPHIC);
         }
     }
 
