@@ -1,4 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.acquire.explorer.media;
+
+import java.util.Objects;
 
 import javax.swing.Icon;
 
@@ -16,13 +28,10 @@ public abstract class MediaSource {
     protected Icon icon;
 
     public MediaSource(String id) {
-        if (id == null || id.equals("")) {
-            throw new IllegalArgumentException();
-        }
-        this.id = id;
+        this.id = Objects.requireNonNull(id);
     }
 
-    final public String getID() {
+    public final String getID() {
         return id;
     }
 
@@ -39,7 +48,7 @@ public abstract class MediaSource {
     }
 
     @Override
-    final public boolean equals(Object obj) {
+    public final boolean equals(Object obj) {
         if (obj instanceof MediaSource) {
             return getID().equals(((MediaSource) obj).getID());
         }
@@ -47,7 +56,7 @@ public abstract class MediaSource {
     }
 
     @Override
-    final public int hashCode() {
+    public final int hashCode() {
         return getID().hashCode();
     }
 
