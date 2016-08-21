@@ -268,8 +268,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             });
             layers.removeIf(l -> Objects.equals(l, layer));
         }
-
-        LOGGER.trace(managerStatus());
     }
 
     @Override
@@ -285,8 +283,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             models.removeIf(g -> Objects.equals(g.getLayer().getType(), type));
             layers.removeIf(l -> Objects.equals(l.getType(), type));
         }
-
-        LOGGER.trace(managerStatus());
     }
 
     @Override
@@ -522,15 +518,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     @Override
     public void clear() {
         models.clear();
-    }
-
-    private String managerStatus() {
-        StringBuilder sb = new StringBuilder(this.getClass().getSimpleName() + "[ " + getUuid() + "]");
-        sb.append("\n\t-size: " + models.size());
-        sb.append("\n");
-        models.stream().forEachOrdered(m -> sb.append("\n\t -> " + m.toString()));
-
-        return sb.toString();
     }
 
     @Override

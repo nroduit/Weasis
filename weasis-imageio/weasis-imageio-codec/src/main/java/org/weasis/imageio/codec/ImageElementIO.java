@@ -106,28 +106,27 @@ public class ImageElementIO implements MediaReader {
         }
 
         if (file != null) {
-            PlanarImage img = readImage(file);
+            PlanarImage img = readImage(file, imgCachePath == null);
 
             if (imgCachePath != null) {
                 file = uncompress(imgCachePath, img);
                 cache.setTransformedFile(file);
-                img = readImage(file);
+                img = readImage(file, true);
             }
             return img;
         }
         return null;
     }
 
-    private PlanarImage readImage(File file) throws Exception {
+    private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
         ImageReader reader = getDefaultReader(mimeType);
         if (reader == null) {
             LOGGER.info("Cannot find a reader for the mime type: {}", mimeType); //$NON-NLS-1$
             return null;
         }
         PlanarImage img;
-        RenderingHints hints = LayoutUtil.createTiledLayoutHints();
+        RenderingHints hints = createTiledLayout ? LayoutUtil.createTiledLayoutHints() : null;
         ImageInputStream in = new FileImageInputStream(new RandomAccessFile(file, "r")); //$NON-NLS-1$
-        // hints.add(new RenderingHints(JAI.KEY_TILE_CACHE, null));
         ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
         pb.setParameter("Input", in); //$NON-NLS-1$
         pb.setParameter("Reader", reader); //$NON-NLS-1$

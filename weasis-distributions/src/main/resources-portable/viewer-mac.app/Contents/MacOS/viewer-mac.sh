@@ -65,7 +65,7 @@ function jversion {
 	fi
 }
 
-function isJava6orBetter {
+function isJava8orBetter {
 	jversion $1
 	
 	if [ $jversion != 0 ] ; then
@@ -82,7 +82,7 @@ function isJava6orBetter {
 }
 
 for i in {1..2} ; do
-	isJava6orBetter $JAVA_HOME 1 6
+	isJava8orBetter $JAVA_HOME 1 8
 	
 	if [ $? != 1 ] ; then
 		if [ $i == 1 ] ; then
@@ -91,13 +91,13 @@ for i in {1..2} ; do
 			else
 				echo "JAVA_HOME points to an unavailable installation of Java. Looking for other available installations..."
 			fi
-			# JAVA_HOME is less than 1.6, whats the highest version available?
+			# JAVA_HOME is less than 1.8, what's the highest version available?
 			versions="`ls -r /System/Library/Frameworks/JavaVM.framework/Versions | grep '[0-9]'`"
 			declare -a versions=($versions)
 			# versions array contains version numbers highest to lowest, so pick the 1st
 			export JAVA_HOME="/System/Library/Frameworks/JavaVM.framework/Versions/${versions[0]}/Home"
 		else
-			echo "The Weasis launcher was unable to find an installation of Java 1.6 or better."
+			echo "The Weasis launcher was unable to find an installation of Java 1.8 or better."
 			open "$macospath/failure.app"
 			exit 0
 		fi
