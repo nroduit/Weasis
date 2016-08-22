@@ -13,6 +13,7 @@ package org.weasis.acquire.explorer;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Hashtable;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -30,6 +31,8 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.GzipManager;
 
 @Component(immediate = false)
 @Service
@@ -64,11 +67,23 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
 
     private void initGlobalTags() {
         String xml = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.patient.context"); //$NON-NLS-1$
+
         if (xml == null) {
             // TODO read service
         } else {
+
+            InputStream stream = null;
             try {
-                InputStream stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+                byte[] buf = null;
+                if (Boolean
+                    .valueOf(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.patient.context.gzip", "TRUE"))) {
+                    buf = GzipManager
+                        .gzipUncompressToByte(Base64.getDecoder().decode(xml.getBytes(StandardCharsets.UTF_8)));
+                } else {
+                    buf = xml.getBytes(StandardCharsets.UTF_8);
+                }
+                stream = new ByteArrayInputStream(buf);
+
                 DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
                 Document doc = dBuilder.parse(stream);
@@ -76,6 +91,8 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
                 AcquireManager.GLOBAL.init(doc);
             } catch (Exception e) {
                 LOGGER.error("Loading gobal tags", e);
+            } finally {
+                FileUtil.safeClose(stream);
             }
         }
     }
