@@ -75,10 +75,14 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
             InputStream stream = null;
             try {
                 byte[] buf = null;
-                if (Boolean
-                    .valueOf(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.patient.context.gzip", "TRUE"))) {
-                    buf = GzipManager
-                        .gzipUncompressToByte(Base64.getDecoder().decode(xml.getBytes(StandardCharsets.UTF_8)));
+                boolean isPatientContextGzip =
+                    Boolean.valueOf(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.patient.context.gzip", "TRUE"));
+
+                if (isPatientContextGzip) {
+                    // byte[] byteArray = Base64.getDecoder().decode(xml.getBytes(StandardCharsets.UTF_8));
+                    byte[] byteArray = Base64.getUrlDecoder().decode(xml.getBytes(StandardCharsets.UTF_8));
+
+                    buf = GzipManager.gzipUncompressToByte(byteArray);
                 } else {
                     buf = xml.getBytes(StandardCharsets.UTF_8);
                 }
