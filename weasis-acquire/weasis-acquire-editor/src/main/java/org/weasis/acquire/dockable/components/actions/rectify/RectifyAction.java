@@ -89,8 +89,7 @@ public class RectifyAction extends AbstractAcquireAction {
         }
     }
 
-    private static Rectangle2D adaptToValidateCropArea(Rectangle2D area) {
-        ViewCanvas<ImageElement> view = getView();
+    private static Rectangle2D adaptToValidateCropArea(ViewCanvas<ImageElement> view, Rectangle2D area) {
         AffineTransform transform = AffineTransform.getScaleInstance(1.0, 1.0);
         buildAffineTransform(transform, view.getDisplayOpManager(), view.getViewModel().getModelArea(),
             (Point) view.getActionValue(DefaultView2d.PROP_LAYER_OFFSET));
@@ -176,7 +175,7 @@ public class RectifyAction extends AbstractAcquireAction {
         if (view.getImageLayer() instanceof RenderedImageLayer && currentCropArea != null) {
             imageInfo.getCurrentValues().setCropZone(null); // Force dirty value
             imageInfo.getNextValues()
-                .setCropZone(adaptToValidateCropArea(currentCropArea.getShape().getBounds()).getBounds());
+                .setCropZone(adaptToValidateCropArea(view, currentCropArea.getShape().getBounds()).getBounds());
             view.getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
             view.getDisplayOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
             imageInfo.applyPostProcess(view);

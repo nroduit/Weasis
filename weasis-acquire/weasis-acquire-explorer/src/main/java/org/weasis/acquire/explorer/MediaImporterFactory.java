@@ -87,6 +87,7 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
                     buf = xml.getBytes(StandardCharsets.UTF_8);
                 }
                 stream = new ByteArrayInputStream(buf);
+        //        LOGGER.debug("xml:\n{}", new String(buf));
 
                 DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
