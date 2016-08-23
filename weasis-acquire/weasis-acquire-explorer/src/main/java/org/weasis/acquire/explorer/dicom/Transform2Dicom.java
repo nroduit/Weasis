@@ -44,7 +44,7 @@ import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.param.ProgressListener;
-import org.weasis.dicom.tool.Dicomizer;
+
 
 public final class Transform2Dicom {
 
