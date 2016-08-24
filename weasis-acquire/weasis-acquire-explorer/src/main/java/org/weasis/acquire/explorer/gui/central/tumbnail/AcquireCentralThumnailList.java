@@ -68,7 +68,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
 
     @Override
     public void openSelection() {
-        for (E s :  getSelectedValuesList()) {
+        for (E s : getSelectedValuesList()) {
             openSelection(Arrays.asList(s), true, true, false);
         }
     }
@@ -92,6 +92,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    clearSelection();
                     AcquireCentralThumnailList.this.acquireTabPanel
                         .removeElements(AcquireManager.toImageElement(medias));
                     repaint();
@@ -206,7 +207,6 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
 
     @Override
     public void jiThumbnailKeyPressed(KeyEvent e) {
-        List<E> selected = getSelectedValuesList();
 
         switch (e.getKeyCode()) {
             case KeyEvent.VK_PAGE_DOWN:
@@ -216,9 +216,11 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
                 lastPage(e);
                 break;
             case KeyEvent.VK_DELETE:
+                List<E> selected = getSelectedValuesList();
                 if (!selected.isEmpty()) {
-                    AcquireCentralThumnailList.this.acquireTabPanel
-                        .removeElements(AcquireManager.toImageElement(selected));
+                    List<ImageElement> list = AcquireManager.toImageElement(selected);
+                    clearSelection();
+                    AcquireCentralThumnailList.this.acquireTabPanel.removeElements(list);
                 }
                 break;
         }

@@ -51,7 +51,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     public Serie(LocalDateTime date) {
         Objects.requireNonNull(date);
-        this.type = Type.DATE;        
+        this.type = Type.DATE;
         this.date = date;
         init();
     }
@@ -66,6 +66,10 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     public Type getType() {
         return type;
+    }
+
+    public String getUID() {
+        return TagD.getTagValue(this, Tag.SeriesInstanceUID, String.class);
     }
 
     public LocalDateTime getDate() {

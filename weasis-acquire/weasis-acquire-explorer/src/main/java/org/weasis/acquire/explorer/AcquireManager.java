@@ -190,10 +190,10 @@ public class AcquireManager {
             return null;
         }
         TagW tagUid = TagD.getUID(Level.INSTANCE);
-        String UUID = (String) image.getTagValue(tagUid);
-        if (UUID == null) {
-            UUID = UIDUtils.createUID();
-            image.setTag(tagUid, UUID);
+        String uuid = (String) image.getTagValue(tagUid);
+        if (uuid == null) {
+            uuid = UIDUtils.createUID();
+            image.setTag(tagUid, uuid);
         }
 
         AcquireImageInfo info = images.get(image.getMediaURI());

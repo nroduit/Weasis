@@ -10,21 +10,25 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer.dicom;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 import javax.media.jai.PlanarImage;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 import org.dcm4che3.net.Status;
+import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
@@ -32,10 +36,15 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -43,8 +52,6 @@ import org.weasis.dicom.op.CStore;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
-import org.weasis.dicom.param.ProgressListener;
-
 
 public final class Transform2Dicom {
 
@@ -67,7 +74,7 @@ public final class Transform2Dicom {
                     TagW tagUid = TagD.getUID(Level.INSTANCE);
                     String uid = (String) img.getTagValue(tagUid);
                     if (uid == null) {
-                        uid = UUID.randomUUID().toString();
+                        uid = UIDUtils.createUID();
                         img.setTag(tagUid, uid);
                     }
 
@@ -90,6 +97,12 @@ public final class Transform2Dicom {
                         DicomMediaUtils.fillAttributes(AcquireManager.GLOBAL.getTagEntrySetIterator(), attrs);
                         DicomMediaUtils.fillAttributes(imageInfo.getSerie().getTagEntrySetIterator(), attrs);
                         DicomMediaUtils.fillAttributes(img.getTagEntrySetIterator(), attrs);
+                        // Spatial calibration
+                        if (Unit.PIXEL != img.getPixelSpacingUnit()) {
+                            attrs.setString(Tag.PixelSpacingCalibrationDescription, VR.LO, "Manually");
+                            attrs.setDouble(Tag.PixelSpacing, VR.DS, img.getPixelSize(), img.getPixelSize());
+                        }
+                        writeModelInPrivateTags(img, attrs);
 
                         try {
                             Dicomizer.jpeg(attrs, imgFile, new File(exportDirDicom, uid), false);
@@ -108,48 +121,44 @@ public final class Transform2Dicom {
         return exportDirDicom;
     }
 
+    private static void writeModelInPrivateTags(ImageElement img, Attributes attributes) {
+        GraphicModel model = (GraphicModel) img.getTagValue(TagW.PresentationModel);
+        if (model != null && !model.getModels().isEmpty()) {
+            try {
+                JAXBContext jaxbContext = JAXBContext.newInstance(model.getClass());
+                Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                jaxbMarshaller.marshal(model, outputStream);
+                attributes.setString(PresentationStateReader.PRIVATE_CREATOR_TAG, VR.LO,
+                    PresentationStateReader.PR_MODEL_ID);
+                attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB,
+                    GzipManager.gzipCompressToByte(outputStream.toByteArray()));
+            } catch (Exception e) {
+                LOGGER.error("Cannot save xml: ", e);
+            }
+        }
+    }
+
     public static void sendDicomFiles(File exportDir, DicomNode destination, final JProgressBar progressBar)
         throws IOException {
-        // dicomModel
-        // .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null, t));
-
         try {
-
-            // if (t.isCancelled()) {
-            // return false;
-            // }
-
             String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE"); //$NON-NLS-1$ //$NON-NLS-2$
 
             List<String> files = new ArrayList<>();
             files.add(exportDir.getPath());
 
             DicomProgress dicomProgress = new DicomProgress();
-            dicomProgress.addProgressListener(new ProgressListener() {
-
-                @Override
-                public void handleProgression(final DicomProgress p) {
-                    // if (t.isCancelled()) {
-                    // p.cancel();
-                    // }
-
-                    GuiExecutor.instance().execute(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            int c = p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
-                            int r = p.getNumberOfRemainingSuboperations();
-                            progressBar.setValue((c * 100) / (c + r));
-                        }
-                    });
-                }
-            });
+            dicomProgress.addProgressListener(p -> GuiExecutor.instance().execute(() -> {
+                int c = p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
+                int r = p.getNumberOfRemainingSuboperations();
+                progressBar.setValue((c * 100) / (c + r));
+            }));
 
             final DicomState state = CStore.process(new DicomNode(weasisAet), destination, files, dicomProgress);
             if (state.getStatus() != Status.Success) {
                 LOGGER.error("Dicom send error: {}", state.getMessage());
                 GuiExecutor.instance()
-                    .execute(() -> JOptionPane.showOptionDialog(null,
+                    .execute(() -> JOptionPane.showOptionDialog(UIManager.getApplicationWindow(),
                         String.format("Dicom send error: %s", state.getMessage()), null, JOptionPane.DEFAULT_OPTION,
                         JOptionPane.ERROR_MESSAGE, null, null, null));
             }
@@ -170,13 +179,12 @@ public final class Transform2Dicom {
             if (date == null) {
                 continue;
             }
-            
+
             LocalDateTime minSeries = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, imageInfo.getSerie());
             if (minSeries == null || date.isBefore(minSeries)) {
                 imageInfo.getSerie().setTag(seriesDate, date.toLocalDate());
                 imageInfo.getSerie().setTag(seriesTime, date.toLocalTime());
             }
-
 
             LocalDateTime minStudy = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, AcquireManager.GLOBAL);
             if (minStudy == null || date.isBefore(minStudy)) {

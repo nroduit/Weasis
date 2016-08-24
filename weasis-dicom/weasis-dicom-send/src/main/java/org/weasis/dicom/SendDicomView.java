@@ -188,10 +188,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     CStore.process(new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
                 if (state.getStatus() != Status.Success) {
                     LOGGER.error("Dicom send error: {}", state.getMessage());
-                    GuiExecutor.instance().execute(() -> {
-                        JOptionPane.showOptionDialog(exportTree, state.getMessage(), null, JOptionPane.DEFAULT_OPTION,
-                            JOptionPane.ERROR_MESSAGE, null, null, null);
-                    });
+                    GuiExecutor.instance().execute(() -> JOptionPane.showOptionDialog(exportTree, state.getMessage(),
+                        null, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null));
                 }
             } else if (selectedItem instanceof DicomWebNode) {
                 // TODO to implement

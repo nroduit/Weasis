@@ -178,7 +178,7 @@ public class Dicomizer {
                 attrs.setInt(Tag.HighBit, VR.US, p - 1);
                 attrs.setInt(Tag.PixelRepresentation, VR.US, 0);
             }
-            if (h.noAPPn & (marker & 0xf0) == JPEG.APP0) {
+            if (h.noAPPn && (marker & 0xf0) == JPEG.APP0) {
                 h.fileLength -= segmLen + 2;
                 h.headerLength -= 4;
             } else {

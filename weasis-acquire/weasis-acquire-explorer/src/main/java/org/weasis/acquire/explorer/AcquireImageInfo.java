@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.core.bean.Serie;
@@ -39,7 +40,6 @@ import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TagD.Level;
 
 /**
  * 
@@ -96,7 +96,7 @@ public class AcquireImageInfo {
     }
 
     public String getUID() {
-        return (String) image.getTagValue(TagD.getUID(Level.INSTANCE));
+        return TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
     }
 
     public ImageElement getImage() {
@@ -282,6 +282,9 @@ public class AcquireImageInfo {
 
     public void setSerie(Serie serie) {
         this.serie = serie;
+        if(serie != null){
+            image.setTag(TagD.get(Tag.SeriesInstanceUID), serie.getUID());
+        }
     }
 
     @Override
