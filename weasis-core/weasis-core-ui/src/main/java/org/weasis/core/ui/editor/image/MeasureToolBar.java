@@ -152,12 +152,12 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
                 }
             });
         }
+        drawGraphicList.forEach(g -> g.setLabelVisible(false));
         if (p.getBooleanProperty("weasis.draw.textGrahic", true)) { //$NON-NLS-1$
             Graphic graphic = new AnnotationGraphic();
             graphic.setLayerType(LayerType.ANNOTATION);
             drawGraphicList.add(graphic);
         }
-        drawGraphicList.forEach(g -> g.setLabelVisible(false));
         drawGraphicList.stream().filter(g -> Objects.isNull(g.getLayerType()))
             .forEach(g -> g.setLayerType(LayerType.DRAW));
     }

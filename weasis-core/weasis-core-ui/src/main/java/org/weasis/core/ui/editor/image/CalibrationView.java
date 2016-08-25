@@ -128,7 +128,6 @@ public class CalibrationView extends JPanel {
         if (image != null) {
             Unit unit = image.getPixelSpacingUnit();
             if (!Unit.PIXEL.equals(unit)) {
-
                 Point2D ptA = line.getStartPoint();
                 Point2D ptB = line.getEndPoint();
                 if (Objects.nonNull(ptA) && Objects.nonNull(ptB)) {

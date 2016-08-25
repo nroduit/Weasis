@@ -99,8 +99,10 @@ public final class Transform2Dicom {
                         DicomMediaUtils.fillAttributes(img.getTagEntrySetIterator(), attrs);
                         // Spatial calibration
                         if (Unit.PIXEL != img.getPixelSpacingUnit()) {
-                            attrs.setString(Tag.PixelSpacingCalibrationDescription, VR.LO, "Manually");
-                            attrs.setDouble(Tag.PixelSpacing, VR.DS, img.getPixelSize(), img.getPixelSize());
+                            attrs.setString(Tag.PixelSpacingCalibrationDescription, VR.LO, "Used fiducial");
+                            double unitRatio = img.getPixelSize()
+                                * Unit.MILLIMETER.getConversionRatio(img.getPixelSpacingUnit().getConvFactor());
+                            attrs.setDouble(Tag.PixelSpacing, VR.DS, unitRatio, unitRatio);
                         }
                         writeModelInPrivateTags(img, attrs);
 

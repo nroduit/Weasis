@@ -16,26 +16,38 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.CIELab;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.NonEditableGraphic;
 import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
+import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class PrGraphicUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PrGraphicUtil.class);
 
     public static final String POINT = "POINT"; //$NON-NLS-1$
     public static final String POLYLINE = "POLYLINE"; //$NON-NLS-1$
@@ -246,8 +258,8 @@ public class PrGraphicUtil {
         return "Y".equalsIgnoreCase(dcmobj.getString(tag)); //$NON-NLS-1$
     }
 
-    private static void setProperties(Graphic shape, Float thickness, Color color, Boolean labelVisible,
-        Boolean filled, Integer classID) {
+    private static void setProperties(Graphic shape, Float thickness, Color color, Boolean labelVisible, Boolean filled,
+        Integer classID) {
         shape.setLineThickness(thickness);
         shape.setPaint(color);
         shape.setLabelVisible(labelVisible);
@@ -353,7 +365,52 @@ public class PrGraphicUtil {
                 shape = new NonEditableGraphic(ellipse);
                 setProperties(shape, thickness, color, labelVisible, Boolean.TRUE, groupID);
             }
-        } 
+        }
         return shape;
+    }
+
+    public static GraphicModel getPresentationModel(Attributes dcmobj) {
+        if (dcmobj != null) {
+            String id = dcmobj.getString(PresentationStateReader.PRIVATE_CREATOR_TAG);
+            if (PresentationStateReader.PR_MODEL_ID.equals(id)) {
+                try {
+                    return buildPresentationModel(dcmobj.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG));
+                } catch (Exception e) {
+                    LOGGER.error("Cannot extract binary model: ", e);
+                }
+            }
+        }
+        return null;
+    }
+
+    public static boolean applyPresentationModel(ImageElement img) {
+        if (img != null) {
+            byte[] prBinary = TagW.getTagValue(img, TagW.PresentationModelBirary, byte[].class);
+            if (prBinary != null) {
+                GraphicModel model = buildPresentationModel(prBinary);
+                img.setTag(TagW.PresentationModel, model);
+                img.setTag(TagW.PresentationModelBirary, null);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static GraphicModel buildPresentationModel(byte[] binary) {
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(GzipManager.gzipUncompressToByte(binary));
+            GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(inputStream);
+            int length = model.getModels().size();
+            model.getModels().removeIf(g -> g.getLayer() == null);
+            if (length > model.getModels().size()) {
+                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length);
+            }
+            return model;
+        } catch (Exception e) {
+            LOGGER.error("Cannot load xml graphic model: ", e);
+        }
+        return null;
     }
 }

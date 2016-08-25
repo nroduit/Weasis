@@ -135,6 +135,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
+import org.weasis.dicom.explorer.PrGraphicUtil;
 import org.weasis.dicom.explorer.SeriesSelectionModel;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
@@ -620,7 +621,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     protected void setImage(DicomImageElement img) {
         boolean newImg = img != null && !img.equals(imageLayer.getSourceImage());
-
+        if (newImg) {
+            PrGraphicUtil.applyPresentationModel(img);
+        }
         super.setImage(img);
 
         updatePrButtonState(img, newImg);

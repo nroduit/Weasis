@@ -19,7 +19,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,8 +26,6 @@ import java.util.Map;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
@@ -46,7 +43,6 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.EscapeChars;
-import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ShowPopup;
@@ -56,7 +52,6 @@ import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
-import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -102,7 +97,7 @@ public class PRManager {
 
         applyPixelSpacing(view, reader, img);
 
-        GraphicModel graphicModel = getPresentationModel(reader.getDcmobj());
+        GraphicModel graphicModel = PrGraphicUtil.getPresentationModel(reader.getDcmobj());
         if (graphicModel == null) {
             List<GraphicLayer> layers = readGraphicAnnotation(view, reader, img);
             if (layers != null) {
@@ -118,30 +113,6 @@ public class PRManager {
         } else {
             img.setTag(TagW.PresentationModel, graphicModel);
         }
-    }
-
-    private static GraphicModel getPresentationModel(Attributes dcmobj) {
-        if (dcmobj != null) {
-            String id = dcmobj.getString(PresentationStateReader.PRIVATE_CREATOR_TAG);
-            if (PresentationStateReader.PR_MODEL_ID.equals(id)) {
-                try {
-                    JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
-                    Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-                    ByteArrayInputStream inputStream = new ByteArrayInputStream(GzipManager
-                        .gzipUncompressToByte(dcmobj.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG)));
-                    GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(inputStream);
-                    int length = model.getModels().size();
-                    model.getModels().removeIf(g -> g.getLayer() == null);
-                    if (length > model.getModels().size()) {
-                        LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length);
-                    }
-                    return model;
-                } catch (Exception e) {
-                    LOGGER.error("Cannot load xml: ", e);
-                }
-            }
-        }
-        return null;
     }
 
     private static void applyPixelSpacing(ViewCanvas<DicomImageElement> view, PresentationStateReader reader,
