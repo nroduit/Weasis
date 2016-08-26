@@ -106,6 +106,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         setLabelVisible(graphic.labelVisible);
         setFilled(graphic.filled);
         setClassID(graphic.classID);
+        this.graphicLabel = graphic.graphicLabel == null ? null :graphic.graphicLabel.copy();
 
         this.variablePointsNumber = Objects.isNull(graphic.pointNumber) || graphic.pointNumber < 0;
         List<Point2D.Double> ptsList = graphic.pts.stream().filter(Objects::nonNull)
