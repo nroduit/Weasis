@@ -163,6 +163,7 @@ public final class Transform2Dicom {
                     .execute(() -> JOptionPane.showOptionDialog(UIManager.getApplicationWindow(),
                         String.format("Dicom send error: %s", state.getMessage()), null, JOptionPane.DEFAULT_OPTION,
                         JOptionPane.ERROR_MESSAGE, null, null, null));
+                // TODO throw exception
             }
         } finally {
             FileUtil.recursiveDelete(exportDir);
