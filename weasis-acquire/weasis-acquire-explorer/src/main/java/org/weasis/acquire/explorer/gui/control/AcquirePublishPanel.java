@@ -81,6 +81,7 @@ public class AcquirePublishPanel extends JPanel {
             toPublish.stream().forEach(AcquireImageInfo.changeStatus(AcquireImageStatus.PUBLISHED));
         } catch (Exception ex) {
             LOGGER.error("Sending DICOM", ex);
+            // TODO Change to FAILED
             toPublish.stream().forEach(AcquireImageInfo.changeStatus(AcquireImageStatus.TO_PUBLISH));
         } finally {
             progressBar.setVisible(false);
