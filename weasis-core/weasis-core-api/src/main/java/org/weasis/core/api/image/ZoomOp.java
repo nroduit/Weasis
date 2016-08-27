@@ -69,7 +69,7 @@ public class ZoomOp extends AbstractOp {
         Double zoomFactorX = (Double) params.get(P_RATIO_X);
         Double zoomFactorY = (Double) params.get(P_RATIO_Y);
 
-        if (zoomFactorX != null && zoomFactorY != null && MathUtil.isDifferent(zoomFactorX, 1.0) && MathUtil.isDifferent(zoomFactorY, 1.0)) {
+        if (zoomFactorX != null && zoomFactorY != null && (MathUtil.isDifferent(zoomFactorX, 1.0) || MathUtil.isDifferent(zoomFactorY, 1.0))) {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(source);
             pb.add(Math.abs(zoomFactorX.floatValue()));
