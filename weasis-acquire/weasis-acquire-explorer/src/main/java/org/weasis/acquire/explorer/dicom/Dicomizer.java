@@ -15,17 +15,14 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.imageio.codec.jpeg.JPEG;
 import org.dcm4che3.io.DicomOutputStream;
 import org.dcm4che3.util.UIDUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Dicomizer {
-    protected static final Logger LOGGER = LoggerFactory.getLogger(Dicomizer.class);
 
     private Dicomizer() {
-        // UIDUtils.setRoot("");
     }
 
     public static void pdf(final Attributes attrs, File pdfFile, File dcmFile) throws IOException {
+        attrs.setString(Tag.SpecificCharacterSet, VR.CS, "ISO_IR 192"); // UTF-8
         attrs.setString(Tag.SOPClassUID, VR.UI, UID.EncapsulatedPDFStorage);
         ensureUID(attrs, Tag.StudyInstanceUID);
         ensureUID(attrs, Tag.SeriesInstanceUID);
@@ -54,7 +51,6 @@ public class Dicomizer {
         DataInputStream jpgInput = new DataInputStream(new BufferedInputStream(new FileInputStream(jpgFile)));
         try {
             attrs.setString(Tag.SOPClassUID, VR.UI, UID.VLPhotographicImageStorage);
-            // attrs.setString(Tag.SpecificCharacterSet, VR.CS, "ISO_IR 100"); // ISO-8859-1
             attrs.setString(Tag.SpecificCharacterSet, VR.CS, "ISO_IR 192"); // UTF-8
             if (noAPPn || missingRowsColumnsSamplesPMI(attrs)) {
                 readHeader(attrs, jpgInput, h);
@@ -104,14 +100,14 @@ public class Dicomizer {
         h.fileLength = (int) jpgFile.length();
         DataInputStream jpgInput = new DataInputStream(new BufferedInputStream(new FileInputStream(jpgFile)));
         try {
-            // attrs.setString(Tag.SpecificCharacterSet, VR.CS, "ISO_IR 100");
+            attrs.setString(Tag.SpecificCharacterSet, VR.CS, "ISO_IR 192"); // UTF-8
             if (noAPPn || missingRowsColumnsSamplesPMI(attrs)) {
                 readHeader(attrs, jpgInput, h);
             }
             ensureUS(attrs, Tag.BitsAllocated, 8);
             ensureUS(attrs, Tag.BitsStored,
                 attrs.getInt(Tag.BitsAllocated, (h.buffer[h.headerLength] & 0xff) > 8 ? 16 : 8));
-            ensureUS(attrs, Tag.HighBit, attrs.getInt(Tag.BitsStored, (h.buffer[h.headerLength] & 0xff)) - 1);
+            ensureUS(attrs, Tag.HighBit, attrs.getInt(Tag.BitsStored, h.buffer[h.headerLength] & 0xff) - 1);
             ensureUS(attrs, Tag.PixelRepresentation, 0);
             ensureUID(attrs, Tag.StudyInstanceUID);
             ensureUID(attrs, Tag.SeriesInstanceUID);
@@ -182,7 +178,7 @@ public class Dicomizer {
                 attrs.setInt(Tag.HighBit, VR.US, p - 1);
                 attrs.setInt(Tag.PixelRepresentation, VR.US, 0);
             }
-            if (h.noAPPn & (marker & 0xf0) == JPEG.APP0) {
+            if (h.noAPPn && (marker & 0xf0) == JPEG.APP0) {
                 h.fileLength -= segmLen + 2;
                 h.headerLength -= 4;
             } else {

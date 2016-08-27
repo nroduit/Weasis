@@ -1,6 +1,6 @@
 package org.weasis.dicom;
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,7 +8,7 @@ package org.weasis.dicom;
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -188,10 +188,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     CStore.process(new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
                 if (state.getStatus() != Status.Success) {
                     LOGGER.error("Dicom send error: {}", state.getMessage());
-                    GuiExecutor.instance().execute(() -> {
-                        JOptionPane.showOptionDialog(exportTree, state.getMessage(), null, JOptionPane.DEFAULT_OPTION,
-                            JOptionPane.ERROR_MESSAGE, null, null, null);
-                    });
+                    GuiExecutor.instance().execute(() -> JOptionPane.showOptionDialog(exportTree, state.getMessage(),
+                        null, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null));
                 }
             } else if (selectedItem instanceof DicomWebNode) {
                 // TODO to implement

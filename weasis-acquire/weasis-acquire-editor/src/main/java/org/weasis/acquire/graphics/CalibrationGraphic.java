@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.acquire.graphics;
 
 import java.awt.Color;
@@ -8,7 +18,9 @@ import javax.swing.Icon;
 import javax.swing.JOptionPane;
 
 import org.weasis.acquire.AcquireObject;
-import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationAction;
+import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
+import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -28,7 +40,7 @@ public class CalibrationGraphic extends LineGraphic {
         super();
         setColorPaint(Color.RED);
     }
-    
+
     public CalibrationGraphic(CalibrationGraphic calibrationGraphic) {
         super(calibrationGraphic);
     }
@@ -38,17 +50,34 @@ public class CalibrationGraphic extends LineGraphic {
         super.buildShape(mouseevent);
         ViewCanvas<ImageElement> view = AcquireObject.getView();
         GraphicModel graphicManager = view.getGraphicManager();
-        graphicManager.getModels()
-            .removeIf(g -> g.getLayer().getType() == getLayerType() && g != this);
-        
+        if (graphicManager.getModels().removeIf(g -> g.getLayer().getType() == getLayerType() && g != this)) {
+            graphicManager.fireChanged();
+        }
+
         if (!getResizingOrMoving()) {
             CalibrationView calibrationDialog = new CalibrationView(this, view, false);
             int res = JOptionPane.showConfirmDialog(view.getJComponent(), calibrationDialog, "Calibration",
                 JOptionPane.OK_CANCEL_OPTION);
             if (res == JOptionPane.OK_OPTION) {
                 calibrationDialog.applyNewCalibration();
+                if (calibrationDialog.isApplyingToSeries()) {
+                    ImageElement image = view.getImage();
+                    if (image != null) {
+                        AcquireImageInfo info = AcquireManager.findByImage(image);
+                        if (info != null) {
+                            List<AcquireImageInfo> list = AcquireManager.findbySerie(info.getSerie());
+                            for (AcquireImageInfo acquireImageInfo : list) {
+                                ImageElement img = acquireImageInfo.getImage();
+                                if (img != image) {
+                                    img.setPixelSpacingUnit(image.getPixelSpacingUnit());
+                                    img.setPixelSize(image.getPixelSize());
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            view.getGraphicManager().setCreateGraphic(CalibrationAction.CALIBRATION_LINE_GRAPHIC);
+            view.getGraphicManager().setCreateGraphic(CalibrationPanel.CALIBRATION_LINE_GRAPHIC);
         }
     }
 

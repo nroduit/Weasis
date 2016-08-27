@@ -1,6 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.acquire.dockable.components.util;
-
-import java.awt.BorderLayout;
 
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
@@ -13,16 +21,19 @@ public abstract class AbstractComponent extends JPanel {
     protected final String title;
     protected TitledBorder borderTitle;
     protected AbstractAcquireActionPanel panel;
-        
+
     public AbstractComponent(AbstractAcquireActionPanel panel, String title) {
-        super(new BorderLayout());
         this.title = title;
         this.borderTitle = new TitledBorder(getDisplayTitle());
         this.panel = panel;
     }
-    
+
     public String getTitle() {
         return title;
+    }
+
+    public void updatePanelTitle() {
+        borderTitle.setTitle(getDisplayTitle());
     }
 
     public abstract String getDisplayTitle();

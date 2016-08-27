@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.dicom.codec;
 
 import java.awt.Dimension;
@@ -627,6 +627,16 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     private void writeImageValues(Attributes header) {
         if (header != null && hasPixel) {
+            if (PresentationStateReader.PR_MODEL_ID
+                .equals(header.getString(PresentationStateReader.PRIVATE_CREATOR_TAG))) {
+                try {
+                    setTagNoNull(TagW.PresentationModelBirary,
+                        header.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG));
+                } catch (IOException e) {
+                    LOGGER.error("Extracting xml binary model", e);
+                }
+            }
+
             TagD.get(Tag.ImagePositionPatient).readValue(header, this);
             TagD.get(Tag.ImageOrientationPatient).readValue(header, this);
             setTagNoNull(TagW.ImageOrientationPlane,

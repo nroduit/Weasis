@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Component;
@@ -69,7 +69,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final SelectGraphic selectionGraphic = new SelectGraphic();
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
-    public static final Icon drawIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
+    public static final Icon drawIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw.png")); //$NON-NLS-1$
     public static final List<Graphic> measureGraphicList = new ArrayList<>();
     public static final List<Graphic> drawGraphicList = new ArrayList<>();
 
@@ -152,12 +152,12 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
                 }
             });
         }
+        drawGraphicList.forEach(g -> g.setLabelVisible(false));
         if (p.getBooleanProperty("weasis.draw.textGrahic", true)) { //$NON-NLS-1$
             Graphic graphic = new AnnotationGraphic();
             graphic.setLayerType(LayerType.ANNOTATION);
             drawGraphicList.add(graphic);
         }
-        drawGraphicList.forEach(g -> g.setLabelVisible(false));
         drawGraphicList.stream().filter(g -> Objects.isNull(g.getLayerType()))
             .forEach(g -> g.setLayerType(LayerType.DRAW));
     }

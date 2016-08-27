@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
 import java.awt.BasicStroke;
@@ -332,7 +332,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     pixelInfo.setPosition(p);
                     pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
                     pixelInfo.setPixelSize(imageElement.getPixelSize());
-                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null); 
+                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null);
                     pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
                     fillPixelInfo(pixelInfo, imageElement, c);
                     if (c != null && c.length >= 1) {
@@ -537,7 +537,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         return new Rectangle(0, 0, 512, 512);
     }
-    
+
     protected void updateCanvas(E img, boolean triggerViewModelChangeListeners) {
         final Rectangle modelArea = getImageBounds(img);
         if (!modelArea.equals(getViewModel().getModelArea())) {
@@ -553,7 +553,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
         }
     }
-    
+
     @Override
     public void updateCanvas(boolean triggerViewModelChangeListeners) {
         updateCanvas(getImage(), triggerViewModelChangeListeners);

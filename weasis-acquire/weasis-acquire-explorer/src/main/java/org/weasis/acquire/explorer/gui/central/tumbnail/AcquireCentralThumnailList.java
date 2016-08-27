@@ -1,8 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.acquire.explorer.gui.central.tumbnail;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -20,6 +31,7 @@ import org.weasis.acquire.explorer.gui.dialog.AcquireNewSerieDialog;
 import org.weasis.base.explorer.list.AThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -55,16 +67,32 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
     }
 
     @Override
+    public void openSelection() {
+        for (E s : getSelectedValuesList()) {
+            openSelection(Arrays.asList(s), true, true, false);
+        }
+    }
+
+    @Override
     public JPopupMenu buidContexMenu(final MouseEvent e) {
         final List<E> medias = getSelected(e);
 
         if (!medias.isEmpty()) {
             JPopupMenu popupMenu = new JPopupMenu();
 
+            popupMenu.add(new JMenuItem(new AbstractAction("Edit") {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    openSelection();
+                }
+            }));
+
             popupMenu.add(new JMenuItem(new AbstractAction("Remove") {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    clearSelection();
                     AcquireCentralThumnailList.this.acquireTabPanel
                         .removeElements(AcquireManager.toImageElement(medias));
                     repaint();
@@ -76,8 +104,9 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
             moveToOther(moveToMenu, medias);
             moveToMenu.addSeparator();
             moveToExisting(moveToMenu, medias);
-            moveToMenu.addSeparator();
-            moveToByDate(moveToMenu, medias);
+            if (moveToMenu.getItemCount() > 3) {
+                moveToMenu.addSeparator();
+            }
             moveToNewSerie(moveToMenu, medias);
 
             JMenu operationsMenu = new JMenu("Operations...");
@@ -92,18 +121,6 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
 
         return null;
 
-    }
-
-    private void moveToByDate(JMenu moveToMenu, final List<E> medias) {
-        moveToMenu.add(new JMenuItem(new AbstractAction("Related date serie") {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                AcquireCentralThumnailList.this.acquireTabPanel
-                    .moveElementsByDate(AcquireManager.toImageElement(medias));
-                repaint();
-            }
-        }));
     }
 
     private void moveToExisting(JMenu moveToMenu, final List<E> medias) {
@@ -161,13 +178,14 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
                         ? info.getNextValues().getRotation() + angle : info.getNextValues().getRotation() + 360 + angle;
                     info.getNextValues().setRotation(change);
 
-                    RotationOp rotation = new RotationOp();
-                    rotation.setParam(RotationOp.P_ROTATE, info.getNextValues().getFullRotation());
-
-                    info.removePreProcessImageOperationAction(RotationOp.class);
-                    info.addPreProcessImageOperationAction(rotation);
-
-                    // info.applyPreProcess(getView());
+                    ImageOpNode node = info.getPreProcessOpManager().getNode(RotationOp.OP_NAME);
+                    if (node == null) {
+                        node = new RotationOp();
+                        info.addPreProcessImageOperationAction(node);
+                    } else {
+                        node.clearIOCache();
+                    }
+                    node.setParam(RotationOp.P_ROTATE, info.getNextValues().getFullRotation());
                 });
             }
         }));
@@ -189,7 +207,6 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
 
     @Override
     public void jiThumbnailKeyPressed(KeyEvent e) {
-        List<E> selected = getSelectedValuesList();
 
         switch (e.getKeyCode()) {
             case KeyEvent.VK_PAGE_DOWN:
@@ -199,9 +216,11 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
                 lastPage(e);
                 break;
             case KeyEvent.VK_DELETE:
+                List<E> selected = getSelectedValuesList();
                 if (!selected.isEmpty()) {
-                    AcquireCentralThumnailList.this.acquireTabPanel
-                        .removeElements(AcquireManager.toImageElement(selected));
+                    List<ImageElement> list = AcquireManager.toImageElement(selected);
+                    clearSelection();
+                    AcquireCentralThumnailList.this.acquireTabPanel.removeElements(list);
                 }
                 break;
         }

@@ -5,7 +5,7 @@
 #
 # To specify the required version, set the REQUIRED_VERSION to the major version required, 
 # e.g. 1.3, but not 1.3.1.
-REQUIRED_TEXT_VERSION=1.6
+REQUIRED_TEXT_VERSION=1.8
 
 # Transform the required version string into a number that can be used in comparisons
 REQUIRED_VERSION=`echo $REQUIRED_TEXT_VERSION | sed -e 's;\.;0;g'`

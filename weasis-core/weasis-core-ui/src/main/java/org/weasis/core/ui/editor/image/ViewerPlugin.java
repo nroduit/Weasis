@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 // Placed in public domain by Dmitry Olshansky, 2006
 package org.weasis.core.ui.editor.image;
 
@@ -236,7 +236,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
                 // some checks before closing a Dockable
                 if (child instanceof CommonDockable) {
                     CDockable cChild = ((CommonDockable) child).getDockable();
-                    if (closeAll || cChild != dockable) {
+                    if (cChild.isCloseable() && (closeAll || cChild != dockable)) {
                         if (cChild.getFocusComponent() instanceof SeriesViewer) {
                             ((SeriesViewer) cChild.getFocusComponent()).close();
                         } else {

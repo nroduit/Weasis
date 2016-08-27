@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.launcher;
 
 import java.awt.Desktop;
@@ -287,8 +287,12 @@ public class WeasisLauncher {
                 baseURL = basePortableDir.toURI().toURL().toString() + "weasis"; //$NON-NLS-1$
                 System.setProperty("weasis.codebase.url", baseURL); //$NON-NLS-1$
                 baseURL += "/" + CONFIG_DIRECTORY + "/"; //$NON-NLS-1$ //$NON-NLS-2$
-                System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + CONFIG_PROPERTIES_FILE_VALUE);
-                System.setProperty(EXTENDED_PROPERTIES_PROP, baseURL + EXTENDED_PROPERTIES_FILE_VALUE);
+                if (System.getProperty(CONFIG_PROPERTIES_PROP) == null) {
+                    System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + CONFIG_PROPERTIES_FILE_VALUE);
+                }
+                if (System.getProperty(EXTENDED_PROPERTIES_PROP) == null) {
+                    System.setProperty(EXTENDED_PROPERTIES_PROP, baseURL + EXTENDED_PROPERTIES_FILE_VALUE);
+                }
                 // Allow export feature for portable version
                 System.setProperty("weasis.export.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (Exception e) {
@@ -466,7 +470,7 @@ public class WeasisLauncher {
                         Object[] options =
                             { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-                        String appName = System.getProperty(P_WEASIS_NAME); 
+                        String appName = System.getProperty(P_WEASIS_NAME);
                         int response = JOptionPane.showOptionDialog(
                             mainFrame.getRootPaneContainer() == null ? null
                                 : mainFrame.getRootPaneContainer().getContentPane(),
@@ -520,7 +524,7 @@ public class WeasisLauncher {
                 final String releaseNotesUrl = s_prop.getProperty("weasis.releasenotes"); //$NON-NLS-1$
                 final StringBuilder message = new StringBuilder("<P>"); //$NON-NLS-1$
                 message.append(String.format(Messages.getString("WeasisLauncher.change.version"), //$NON-NLS-1$
-                    System.getProperty(P_WEASIS_NAME), versionOld, versionNew)); 
+                    System.getProperty(P_WEASIS_NAME), versionOld, versionNew));
 
                 EventQueue.invokeLater(new Runnable() {
                     @Override
@@ -718,13 +722,12 @@ public class WeasisLauncher {
         // Read the properties file
         Properties props = null;
         if (propURI != null) {
-            System.out.println(EXTENDED_PROPERTIES_PROP + ": " + propURI);
+            System.out.println(CONFIG_PROPERTIES_PROP + ": " + propURI);
             props = readProperties(propURI, null);
-        }
-        else {
+        } else {
             System.err.println("No config.properties path found, Weasis cannot start!");
         }
-        
+
         propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
         if (propURI != null) {
             System.out.println(EXTENDED_PROPERTIES_PROP + ": " + propURI);
@@ -878,7 +881,7 @@ public class WeasisLauncher {
         System.setProperty(P_WEASIS_PATH, dir);
 
         String weasisName = s_prop.getProperty(P_WEASIS_NAME, "Weasis");//$NON-NLS-1$
-        System.setProperty(P_WEASIS_NAME, weasisName); 
+        System.setProperty(P_WEASIS_NAME, weasisName);
 
         String profileName = s_prop.getProperty(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
         System.setProperty(P_WEASIS_PROFILE, profileName);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Color;
@@ -135,6 +135,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
+import org.weasis.dicom.explorer.PrGraphicUtil;
 import org.weasis.dicom.explorer.SeriesSelectionModel;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
@@ -620,7 +621,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     protected void setImage(DicomImageElement img) {
         boolean newImg = img != null && !img.equals(imageLayer.getSourceImage());
-
+        if (newImg) {
+            PrGraphicUtil.applyPresentationModel(img);
+        }
         super.setImage(img);
 
         updatePrButtonState(img, newImg);

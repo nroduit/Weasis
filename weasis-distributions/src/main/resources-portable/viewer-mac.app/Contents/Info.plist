@@ -9,7 +9,7 @@
 	<key>CFBundleAllowMixedLocalizations</key>
 	<string>true</string>
 	<key>CFBundleExecutable</key>
-	<string>weasis-mac.sh</string>
+	<string>viewer-mac.sh</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundlePackageType</key>

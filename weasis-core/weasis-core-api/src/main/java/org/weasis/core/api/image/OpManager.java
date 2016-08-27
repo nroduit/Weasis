@@ -41,5 +41,7 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
     boolean setParamValue(String opName, String param, Object value);
 
     void removeParam(String opName, String param);
+    
+    boolean needProcessing();
 
 }

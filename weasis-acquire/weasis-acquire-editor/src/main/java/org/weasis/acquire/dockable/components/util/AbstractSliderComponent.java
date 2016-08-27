@@ -1,30 +1,37 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.acquire.dockable.components.util;
 
-import java.awt.BorderLayout;
 import java.util.Dictionary;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 
-public abstract class AbstractSliderComponent extends AbstractComponent implements ChangeListener {
+public abstract class AbstractSliderComponent extends AbstractComponent {
     private static final long serialVersionUID = -1311547844550893305L;
     
     protected JSlider slider;
     
     public AbstractSliderComponent(AbstractAcquireActionPanel panel, String title) {
         super(panel, title);
-        
-        borderTitle = new TitledBorder(getDisplayTitle());
-        
+        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
         slider = new JSlider(getMin(), getMax(), getDefaultValue());
         slider.setMajorTickSpacing(getMax());
         slider.setPaintTicks(true);
@@ -32,9 +39,8 @@ public abstract class AbstractSliderComponent extends AbstractComponent implemen
         slider.setPaintLabels(true);
         FontTools.setFont10(slider);
         slider.setBorder(borderTitle); 
-        slider.addChangeListener(this);
         
-        add(slider, BorderLayout.CENTER);
+        add(slider);
     }
     
     @Override
@@ -54,11 +60,10 @@ public abstract class AbstractSliderComponent extends AbstractComponent implemen
         slider.addChangeListener(listener);
     }
     
-    @Override
-    public void stateChanged(ChangeEvent e) {
-        borderTitle.setTitle(getDisplayTitle());
-        panel.updateOperations();
+    public void removeChangeListener(ChangeListener listener) {
+        slider.removeChangeListener(listener);
     }
+    
 
     public abstract int getDefaultValue();
     

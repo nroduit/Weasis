@@ -12,6 +12,7 @@ package org.weasis.core.api.image;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Area;
 import java.awt.image.DataBuffer;
@@ -19,12 +20,14 @@ import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 
+import javax.media.jai.ImageLayout;
+import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.ROIShape;
 import javax.media.jai.TiledImage;
+import javax.media.jai.operator.ConstantDescriptor;
 
 import org.weasis.core.api.image.op.ShutterDescriptor;
-import org.weasis.core.api.image.util.ImageFiler;
 
 public class MaskOp extends AbstractOp {
 
@@ -61,7 +64,7 @@ public class MaskOp extends AbstractOp {
         Boolean mask = (Boolean) params.get(P_SHOW);
         Area area = (Area) params.get(P_SHAPE);
 
-        if (mask != null && mask && area != null) {
+        if (mask != null && mask && area != null && !area.equals(new Area(new Rectangle(0, 0, source.getWidth(), source.getHeight())))) {
             Integer transparency = (Integer) params.get(P_GRAY_TRANSPARENCY);
             Byte[] color = getMaskColor();
             if (transparency == null && isBlack(color)) {
@@ -69,15 +72,24 @@ public class MaskOp extends AbstractOp {
             } else {
                 RenderedImage sourceUP;
                 if (transparency != null) {
-                    sourceUP = MergeImgOp.combineTwoImages(source,
-                        ImageFiler.getEmptyImage(Color.GRAY, source.getWidth(), source.getHeight()), transparency);
+                    sourceUP = MergeImgOp.combineTwoImages(source, getEmptyImage(getByteValues(Color.GRAY), source),
+                        transparency);
                 } else {
-                    sourceUP = ImageFiler.getEmptyImage(color, source.getWidth(), source.getHeight());
+                    sourceUP = getEmptyImage(color, source);
                 }
                 result = MergeImgOp.combineTwoImages(source, sourceUP, getAsImage(area, source));
             }
         }
         params.put(Param.OUTPUT_IMG, result);
+    }
+
+    private static Byte[] getByteValues(Color color) {
+        return new Byte[] { (byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue() };
+    }
+
+    private static PlanarImage getEmptyImage(Byte[] bandValues, RenderedImage source) {
+        RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, new ImageLayout(source));
+        return ConstantDescriptor.create((float) source.getWidth() , (float) source.getHeight(), bandValues, hints);
     }
 
     private boolean isBlack(Byte[] color) {

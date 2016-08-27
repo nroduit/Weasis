@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.ui.model;
 
 import java.awt.Graphics2D;
@@ -258,8 +268,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             });
             layers.removeIf(l -> Objects.equals(l, layer));
         }
-
-        LOGGER.trace(managerStatus());
     }
 
     @Override
@@ -275,8 +283,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             models.removeIf(g -> Objects.equals(g.getLayer().getType(), type));
             layers.removeIf(l -> Objects.equals(l.getType(), type));
         }
-
-        LOGGER.trace(managerStatus());
     }
 
     @Override
@@ -512,15 +518,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     @Override
     public void clear() {
         models.clear();
-    }
-
-    private String managerStatus() {
-        StringBuilder sb = new StringBuilder(this.getClass().getSimpleName() + "[ " + getUuid() + "]");
-        sb.append("\n\t-size: " + models.size());
-        sb.append("\n");
-        models.stream().forEachOrdered(m -> sb.append("\n\t -> " + m.toString()));
-
-        return sb.toString();
     }
 
     @Override

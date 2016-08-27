@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.acquire.explorer.core.bean;
 
 import java.time.LocalDateTime;
@@ -6,7 +16,9 @@ import java.util.Objects;
 
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
+import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.media.data.TagUtil;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
 
 public class Serie extends AbstractTagable implements Comparable<Serie> {
@@ -39,7 +51,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     public Serie(LocalDateTime date) {
         Objects.requireNonNull(date);
-        this.type = Type.DATE;        
+        this.type = Type.DATE;
         this.date = date;
         init();
     }
@@ -48,10 +60,16 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
         // Default Modality if not overridden
         tags.put(TagD.get(Tag.Modality), "XC");
         tags.put(TagD.get(Tag.SeriesInstanceUID), UIDUtils.createUID());
+        TagW operator = TagD.get(Tag.OperatorsName);
+        tags.put(operator, AcquireManager.GLOBAL.getTagValue(operator));
     }
 
     public Type getType() {
         return type;
+    }
+
+    public String getUID() {
+        return TagD.getTagValue(this, Tag.SeriesInstanceUID, String.class);
     }
 
     public LocalDateTime getDate() {

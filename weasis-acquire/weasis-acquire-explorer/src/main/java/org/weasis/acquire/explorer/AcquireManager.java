@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.acquire.explorer;
 
 import java.io.File;
@@ -26,6 +36,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 
@@ -49,6 +60,7 @@ public class AcquireManager {
 
     private final Map<URI, AcquireImageInfo> images = new HashMap<>();
     private AcquireImageInfo currentAcquireImageInfo = null;
+    private ViewCanvas<ImageElement> currentView = null;
 
     private AcquireManager() {
     }
@@ -63,6 +75,16 @@ public class AcquireManager {
 
     public static void setCurrentAcquireImageInfo(AcquireImageInfo imageInfo) {
         getInstance().currentAcquireImageInfo = imageInfo;
+    }
+
+    public static ViewCanvas<ImageElement> getCurrentView() {
+        return getInstance().currentView;
+    }
+
+    public static void setCurrentView(ViewCanvas<ImageElement> view) {
+        getInstance().currentView = view;
+        // Remove capabilities to open a view by dragging a thumbnail from the import panel. 
+        view.getJComponent().setTransferHandler(null);
     }
 
     public static Collection<AcquireImageInfo> getAllAcquireImageInfo() {
@@ -117,38 +139,38 @@ public class AcquireManager {
 
             if (Serie.Type.DATE.equals(searched.getType())) {
                 LocalDateTime date = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getImage());
-                Optional<Serie> ser = getBySeries().stream().filter(s -> Serie.Type.DATE.equals(s.getType())).filter(s -> {
-                    LocalDateTime start = s.getDate();
-                    LocalDateTime end = date;
-                    if (end.isBefore(start)) {
-                        start = date;
-                        end = s.getDate();
-                    }
-                    Duration duration = Duration.between(start, end);
-                    return duration.toMinutes() < maxRangeInMinutes;
-                }).findFirst();
+                Optional<Serie> ser =
+                    getBySeries().stream().filter(s -> Serie.Type.DATE.equals(s.getType())).filter(s -> {
+                        LocalDateTime start = s.getDate();
+                        LocalDateTime end = date;
+                        if (end.isBefore(start)) {
+                            start = date;
+                            end = s.getDate();
+                        }
+                        Duration duration = Duration.between(start, end);
+                        return duration.toMinutes() < maxRangeInMinutes;
+                    }).findFirst();
 
-                serie = ser.isPresent() ? ser.get() :AcquireManager.getSerie(new Serie(date));
+                serie = ser.isPresent() ? ser.get() : AcquireManager.getSerie(new Serie(date));
                 info.setSerie(serie);
-                if(ser.isPresent()){
+                if (ser.isPresent()) {
                     List<AcquireImageInfo> list = findbySerie(serie);
-                    if(list.size() > 2){
+                    if (list.size() > 2) {
                         recalculateCentralTime(list);
                     }
                 }
-            }
-            else {
+            } else {
                 info.setSerie(serie);
             }
         }
     }
-    
-    
 
     private static void recalculateCentralTime(List<AcquireImageInfo> list) {
-       List<AcquireImageInfo> sortedList = list.stream().sorted(Comparator.comparing(i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i.getImage()))).collect(Collectors.toList());
-       AcquireImageInfo info = sortedList.get(sortedList.size() /2 );
-       info.getSerie().setDate(TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getImage()));
+        List<AcquireImageInfo> sortedList = list.stream()
+            .sorted(Comparator.comparing(i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i.getImage())))
+            .collect(Collectors.toList());
+        AcquireImageInfo info = sortedList.get(sortedList.size() / 2);
+        info.getSerie().setDate(TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getImage()));
     }
 
     public static List<ImageElement> toImageElement(List<? extends MediaElement> medias) {
@@ -158,21 +180,20 @@ public class AcquireManager {
 
     /* ===================================== PRIVATE METHODS ===================================== */
 
-
     private static List<AcquireImageInfo> getAcquireImageInfoList() {
         return getInstance().images.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList());
 
     }
-    
+
     private AcquireImageInfo getAcquireImageInfo(ImageElement image) {
         if (image == null) {
             return null;
         }
         TagW tagUid = TagD.getUID(Level.INSTANCE);
-        String UUID = (String) image.getTagValue(tagUid);
-        if (UUID == null) {
-            UUID = UIDUtils.createUID();
-            image.setTag(tagUid, UUID);
+        String uuid = (String) image.getTagValue(tagUid);
+        if (uuid == null) {
+            uuid = UIDUtils.createUID();
+            image.setTag(tagUid, uuid);
         }
 
         AcquireImageInfo info = images.get(image.getMediaURI());

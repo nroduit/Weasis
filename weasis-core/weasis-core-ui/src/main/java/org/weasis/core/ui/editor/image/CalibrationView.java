@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
@@ -17,6 +17,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
@@ -55,7 +56,7 @@ public class CalibrationView extends JPanel {
     private final ViewCanvas<?> view2d;
     private final LineGraphic line;
 
-    private final JComboBox<Unit> jComboBoxUnit = new JComboBox<>(Unit.getUnitExceptPixel().toArray(new Unit[0]));
+    private final JComboBox<Unit> jComboBoxUnit;
     private final JPanel jPanelMode = new JPanel();
     private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField();
 
@@ -71,10 +72,12 @@ public class CalibrationView extends JPanel {
     public CalibrationView(LineGraphic line, ViewCanvas<?> view2d, boolean selectSeries) {
         this.line = line;
         this.view2d = view2d;
+        List<Unit> units = Unit.getUnitExceptPixel();
+        this.jComboBoxUnit = new JComboBox<>(units.toArray(new Unit[units.size()]));
         try {
             jbInit();
             radioButtonSeries.setSelected(selectSeries);
-            if(!selectSeries){
+            if (!selectSeries) {
                 radioButtonImage.setSelected(true);
             }
             initialize();
@@ -114,7 +117,10 @@ public class CalibrationView extends JPanel {
         ratioGroup.add(radioButtonImage);
         panel.add(radioButtonSeries);
         panel.add(radioButtonImage);
+    }
 
+    public boolean isApplyingToSeries() {
+        return radioButtonSeries.isSelected();
     }
 
     private void initialize() {
@@ -122,13 +128,11 @@ public class CalibrationView extends JPanel {
         if (image != null) {
             Unit unit = image.getPixelSpacingUnit();
             if (!Unit.PIXEL.equals(unit)) {
-
                 Point2D ptA = line.getStartPoint();
                 Point2D ptB = line.getEndPoint();
                 if (Objects.nonNull(ptA) && Objects.nonNull(ptB)) {
                     jTextFieldLineWidth.setValue(ptA.distance(ptB) * image.getPixelSize());
                 }
-
             } else {
                 GridBagConstraints gbcTextPane = new GridBagConstraints();
                 gbcTextPane.gridwidth = 4;
@@ -159,6 +163,42 @@ public class CalibrationView extends JPanel {
         return area;
     }
 
+    public void removeCalibration() {
+        applyCalibration(1.0, Unit.PIXEL);
+    }
+    
+    private void applyCalibration(double ratio, Unit unit) {
+        ImageElement image = view2d.getImage();
+        if (image != null) {
+            if (radioButtonSeries.isSelected()) {
+                MediaSeries<?> seriesList = view2d.getSeries();
+                if (Objects.nonNull(seriesList)) {
+                    Iterable<?> list = seriesList.getMedias(null, null);
+                    synchronized (seriesList) {
+                        for (Object media : list) {
+                            if (media instanceof ImageElement && media != image) {
+                                ImageElement img = (ImageElement) media;
+                                img.setPixelSpacingUnit(unit);
+                                img.setPixelSize(ratio);
+                            }
+                        }
+                    }
+                }
+            }
+            image.setPixelSize(ratio);
+            image.setPixelSpacingUnit(unit);
+
+
+            if (view2d.getEventManager().getSelectedViewPane() == view2d) {
+                ActionState spUnitAction = view2d.getEventManager().getAction(ActionW.SPATIAL_UNIT);
+                if (spUnitAction instanceof ComboItemListener) {
+                    ((ComboItemListener) spUnitAction).setSelectedItem(unit);
+                }
+            }
+            view2d.getGraphicManager().updateLabels(Boolean.TRUE, view2d);
+        }
+    }
+
     public void applyNewCalibration() {
         ImageElement image = view2d.getImage();
         if (image != null) {
@@ -182,32 +222,7 @@ public class CalibrationView extends JPanel {
                     double newRatio = inputCalibVal.doubleValue() / lineLength;
                     if ((Objects.nonNull(imgRatio) && MathUtil.isDifferent(newRatio, imgRatio))
                         || !Objects.equals(unit, imgUnit)) {
-                        if (radioButtonSeries.isSelected()) {
-                            MediaSeries<?> seriesList = view2d.getSeries();
-                            if (Objects.nonNull(seriesList)) {
-                                Iterable<?> list = seriesList.getMedias(null, null);
-                                synchronized (seriesList) {
-                                    for (Object media : list) {
-                                        if (media instanceof ImageElement) {
-                                            ImageElement img = (ImageElement) media;
-                                            img.setPixelSpacingUnit(unit);
-                                            img.setPixelSize(newRatio);
-                                            view2d.getGraphicManager().updateLabels(Boolean.TRUE, view2d);
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            image.setPixelSize(newRatio);
-                            view2d.getGraphicManager().updateLabels(Boolean.TRUE, view2d);
-                        }
-
-                        if (!unit.equals(imgUnit) && view2d.getEventManager().getSelectedViewPane() == view2d) {
-                            ActionState spUnitAction = view2d.getEventManager().getAction(ActionW.SPATIAL_UNIT);
-                            if (spUnitAction instanceof ComboItemListener) {
-                                ((ComboItemListener) spUnitAction).setSelectedItem(unit);
-                            }
-                        }
+                        applyCalibration(newRatio, unit);
                     }
                 }
             }

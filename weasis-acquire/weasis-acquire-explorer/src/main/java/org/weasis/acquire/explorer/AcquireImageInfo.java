@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.acquire.explorer;
 
 import java.awt.Point;
@@ -9,12 +19,14 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.core.api.image.AutoLevelsOp;
 import org.weasis.core.api.image.BrightnessOp;
 import org.weasis.core.api.image.CropOp;
+import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
@@ -28,7 +40,6 @@ import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TagD.Level;
 
 /**
  * 
@@ -69,10 +80,11 @@ public class AcquireImageInfo {
         this.attributes = new Attributes();
         this.preProcessOpManager = new SimpleOpManager();
         this.postProcessOpManager = new SimpleOpManager();
-        this.postProcessOpManager.addImageOperationAction(new RotationOp());
-        this.postProcessOpManager.addImageOperationAction(new CropOp());
         this.postProcessOpManager.addImageOperationAction(new BrightnessOp());
         this.postProcessOpManager.addImageOperationAction(new AutoLevelsOp());
+        this.postProcessOpManager.addImageOperationAction(new RotationOp());
+        this.postProcessOpManager.addImageOperationAction(new FlipOp());
+        this.postProcessOpManager.addImageOperationAction(new CropOp());
         this.postProcessOpManager.addImageOperationAction(new ZoomOp());
 
         defaultValues = new AcquireImageValues();
@@ -84,7 +96,7 @@ public class AcquireImageInfo {
     }
 
     public String getUID() {
-        return (String) image.getTagValue(TagD.getUID(Level.INSTANCE));
+        return TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
     }
 
     public ImageElement getImage() {
@@ -163,6 +175,7 @@ public class AcquireImageInfo {
 
             postProcessOpManager.setParamValue(AutoLevelsOp.OP_NAME, AutoLevelsOp.P_AUTO_LEVEL,
                 nextValues.isAutoLevel());
+            postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, nextValues.isFlip());
 
             if (nextValues.getRatio() != currentValues.getRatio()) {
                 postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, nextValues.getRatio());
@@ -241,6 +254,7 @@ public class AcquireImageInfo {
         image.setPixelSize(defaultValues.getCalibrationRatio());
 
         postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, defaultValues.getOrientation());
+        postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, defaultValues.isFlip());
         postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
         postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_SHIFT_TO_ORIGIN, null);
         postProcessOpManager.setParamValue(BrightnessOp.OP_NAME, BrightnessOp.P_BRIGTNESS_VALUE,
@@ -268,6 +282,9 @@ public class AcquireImageInfo {
 
     public void setSerie(Serie serie) {
         this.serie = serie;
+        if(serie != null){
+            image.setTag(TagD.get(Tag.SeriesInstanceUID), serie.getUID());
+        }
     }
 
     @Override

@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.ui.model.graphic;
 
 import java.awt.BasicStroke;
@@ -96,6 +106,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         setLabelVisible(graphic.labelVisible);
         setFilled(graphic.filled);
         setClassID(graphic.classID);
+        this.graphicLabel = graphic.graphicLabel == null ? null :graphic.graphicLabel.copy();
 
         this.variablePointsNumber = Objects.isNull(graphic.pointNumber) || graphic.pointNumber < 0;
         List<Point2D.Double> ptsList = graphic.pts.stream().filter(Objects::nonNull)
