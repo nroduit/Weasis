@@ -49,31 +49,28 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
+@SuppressWarnings("serial")
 public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuContainer.class);
 
-    public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
-
-    static {
-        SYNCH_LIST.add(SynchView.NONE);
-    }
-
-    public static final List<GridBagLayoutModel> LAYOUT_LIST =
+    private static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
+    private static final List<GridBagLayoutModel> LAYOUT_LIST =
         Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
-
-    public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1", //$NON-NLS-1$
+    
+    static final GridBagLayoutModel DEFAULT_VIEW = new GridBagLayoutModel("1x1", //$NON-NLS-1$
         "1x1", 1, 1, AuView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$
             .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
 
     static {
-        LAYOUT_LIST.add(VIEWS_1x1);
+        SYNCH_LIST.add(SynchView.NONE);
+        LAYOUT_LIST.add(DEFAULT_VIEW);
     }
 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>(1));
-    private static volatile boolean INI_COMPONENTS = false;
+    private static volatile boolean initComponents = false;
 
     static final ImageViewerEventManager<DicomImageElement> AU_EVENT_MANAGER =
         new ImageViewerEventManager<DicomImageElement>() {
@@ -112,14 +109,14 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     protected AuView auview;
 
     public AuContainer() {
-        this(VIEWS_1x1, null);
+        this(DEFAULT_VIEW, null);
     }
 
     public AuContainer(GridBagLayoutModel layoutModel, String uid) {
         super(AU_EVENT_MANAGER, layoutModel, uid, AuFactory.NAME, AuFactory.ICON, null);
         setSynchView(SynchView.NONE);
-        if (!INI_COMPONENTS) {
-            INI_COMPONENTS = true;
+        if (!initComponents) {
+            initComponents = true;
             // Add standard toolbars
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             String bundleName = context.getBundle().getSymbolicName();
@@ -170,13 +167,9 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
         super.close();
         AuFactory.closeSeriesViewer(this);
 
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                if (auview != null) {
-                    auview.dispose();
-                }
+        GuiExecutor.instance().execute(() -> {
+            if (auview != null) {
+                auview.dispose();
             }
         });
     }
@@ -282,7 +275,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     @Override
     public void addSeriesList(List<MediaSeries<DicomImageElement>> seriesList, boolean removeOldSeries) {
-        if (seriesList != null && seriesList.size() > 0) {
+        if (seriesList != null && !seriesList.isEmpty()) {
             addSeries(seriesList.get(0));
         }
     }

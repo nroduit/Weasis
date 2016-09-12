@@ -12,10 +12,7 @@ package org.weasis.dicom.au;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -40,15 +37,14 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.FileFormatFilter;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -60,7 +56,9 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 
+@SuppressWarnings("serial")
 public class AuView extends JPanel implements SeriesViewerListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuView.class);
 
     private Series<?> series;
 
@@ -105,11 +103,11 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
         if (series != null) {
             DicomSpecialElement s = null;
-            List<MediaElement> specialElements =
-                (List<MediaElement>) series.getTagValue(TagW.DicomSpecialElementList);
-            if (specialElements != null && specialElements.size() > 0) {
+            List<DicomSpecialElement> specialElements =
+                (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
+            if (specialElements != null && !specialElements.isEmpty()) {
                 // Should have only one object by series (if more, they are split in several sub-series in dicomModel)
-                s = (DicomSpecialElement) specialElements.get(0);
+                s = specialElements.get(0);
             }
             series.setOpen(true);
             series.setFocused(true);
@@ -118,8 +116,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                 showPlayer(s);
 
             } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOGGER.error("Build audio player", e);
             }
         }
 
@@ -187,38 +184,27 @@ public class AuView extends JPanel implements SeriesViewerListener {
         time = new JLabel("0"); // Shows position as a # //$NON-NLS-1$
 
         // When clicked, start or stop playing the sound
-        play.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (playing) {
-                    stop();
-                } else {
-                    play();
-                }
+        play.addActionListener(e -> {
+            if (playing) {
+                stop();
+            } else {
+                play();
             }
         });
 
-        progress.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int value = progress.getValue();
-                time.setText(String.format("%.2f s", value / 1000.0)); //$NON-NLS-1$
+        progress.addChangeListener(e -> {
+            int value = progress.getValue();
+            time.setText(String.format("%.2f s", value / 1000.0)); //$NON-NLS-1$
 
-                // If we're not already there, skip there.
-                if (value != audioPosition) {
-                    skip(value);
-                }
+            // If we're not already there, skip there.
+            if (value != audioPosition) {
+                skip(value);
             }
         });
 
         // This timer calls the tick( ) method 10 times a second to keep
         // our slider in sync with the music.
-        timer = new javax.swing.Timer(100, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tick();
-            }
-        });
+        timer = new javax.swing.Timer(100, e -> tick());
 
         // put those controls in a row
         Box row = Box.createHorizontalBox();
@@ -233,47 +219,44 @@ public class AuView extends JPanel implements SeriesViewerListener {
         addSampledControls();
 
         JButton export = new JButton(Messages.getString("AuView.export_audio")); //$NON-NLS-1$
-        export.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                AudioInputStream stream = getAudioInputStream(media);
-                if (stream != null) {
-                    JFileChooser fileChooser = new JFileChooser();
-                    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                    fileChooser.setAcceptAllFileFilterUsed(false);
-                    FileFormatFilter filter = new FileFormatFilter("au", "AU"); //$NON-NLS-1$ //$NON-NLS-2$
-                    fileChooser.addChoosableFileFilter(filter);
-                    fileChooser.addChoosableFileFilter(new FileFormatFilter("wav", "WAVE")); //$NON-NLS-1$ //$NON-NLS-2$
-                    fileChooser.setFileFilter(filter);
-
-                    if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-                        if (fileChooser.getSelectedFile() != null) {
-                            File file = fileChooser.getSelectedFile();
-                            filter = (FileFormatFilter) fileChooser.getFileFilter();
-                            String extension = filter == null ? ".au" : "." + filter.getDefaultExtension(); //$NON-NLS-1$ //$NON-NLS-2$
-                            String filename =
-                                file.getName().endsWith(extension) ? file.getPath() : file.getPath() + extension;
-
-                            try {
-                                if (".wav".equals(extension)) { //$NON-NLS-1$
-                                    AudioSystem.write(stream, AudioFileFormat.Type.WAVE, new File(filename));
-                                } else {
-                                    AudioSystem.write(stream, AudioFileFormat.Type.AU, new File(filename));
-                                }
-                            } catch (IOException ex) {
-                                ex.printStackTrace();
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        export.addActionListener(e -> saveAudioFile(media));
 
         this.add(Box.createVerticalStrut(15));
         row = Box.createHorizontalBox();
         row.add(export);
         this.add(row);
+    }
+
+    private void saveAudioFile(DicomSpecialElement media) {
+        AudioInputStream stream = getAudioInputStream(media);
+        if (stream != null) {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            FileFormatFilter filter = new FileFormatFilter("au", "AU"); //$NON-NLS-1$ //$NON-NLS-2$
+            fileChooser.addChoosableFileFilter(filter);
+            fileChooser.addChoosableFileFilter(new FileFormatFilter("wav", "WAVE")); //$NON-NLS-1$ //$NON-NLS-2$
+            fileChooser.setFileFilter(filter);
+
+            if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+                if (fileChooser.getSelectedFile() != null) {
+                    File file = fileChooser.getSelectedFile();
+                    filter = (FileFormatFilter) fileChooser.getFileFilter();
+                    String extension = filter == null ? ".au" : "." + filter.getDefaultExtension(); //$NON-NLS-1$ //$NON-NLS-2$
+                    String filename = file.getName().endsWith(extension) ? file.getPath() : file.getPath() + extension;
+
+                    try {
+                        if (".wav".equals(extension)) { //$NON-NLS-1$
+                            AudioSystem.write(stream, AudioFileFormat.Type.WAVE, new File(filename));
+                        } else {
+                            AudioSystem.write(stream, AudioFileFormat.Type.AU, new File(filename));
+                        }
+                    } catch (IOException ex) {
+                        LOGGER.error("Cannot save audio file!", ex);
+                    }
+                }
+            }
+        }
     }
 
     /** Start playing the sound at the current position */
@@ -357,8 +340,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         }
     }
 
-    // Return a JSlider component to manipulate the supplied FloatControl
-    // for sampled audio.
+    // Return a JSlider component to manipulate the supplied FloatControl for sampled audio.
     JSlider createSlider(final FloatControl c) {
         if (c == null) {
             return null;
@@ -379,72 +361,56 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
         s.setBorder(new TitledBorder(c.getType().toString() + " " + c.getUnits())); //$NON-NLS-1$
 
-        s.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int i = s.getValue();
-                float f = min + (i * width / 1000.0f);
-                c.setValue(f);
-            }
+        s.addChangeListener(e -> {
+            int i = s.getValue();
+            float f = min + (i * width / 1000.0f);
+            c.setValue(f);
         });
         return s;
     }
 
-    public AudioInputStream getAudioInputStream(MediaElement media) {
+    protected AudioInputStream getAudioInputStream(DicomSpecialElement media) {
         if (media instanceof DicomAudioElement) {
-            DicomAudioElement dcmAudio = (DicomAudioElement) media;
-            if (media.getMediaReader() instanceof DicomMediaIO) {
-                DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
-                Attributes attributes = dicomImageLoader.getDicomObject().getNestedDataset(Tag.WaveformSequence);
-                if (attributes != null) {
-                    VR.Holder holder = new VR.Holder();
-                    Object data = attributes.getValue(Tag.WaveformData, holder);
-                    if (data instanceof BulkData) {
-                        BulkData bulkData = (BulkData) data;
-                        DcmAudioStream in = null;
-                        try {
-                            int numChannels = attributes.getInt(Tag.NumberOfWaveformChannels, 0);
-                            double sampleRate = attributes.getDouble(Tag.SamplingFrequency, 0.0);
-                            int bitsPerSample = attributes.getInt(Tag.WaveformBitsAllocated, 0);
-                            String spInterpretation = attributes.getString(Tag.WaveformSampleInterpretation, 0);
+            DicomMediaIO dicomImageLoader = media.getMediaReader();
+            Attributes attributes = dicomImageLoader.getDicomObject().getNestedDataset(Tag.WaveformSequence);
+            if (attributes != null) {
+                VR.Holder holder = new VR.Holder();
+                Object data = attributes.getValue(Tag.WaveformData, holder);
+                if (data instanceof BulkData) {
+                    BulkData bulkData = (BulkData) data;
 
-                            in = new DcmAudioStream(new FileInputStream(dcmAudio.getFile()), bulkData.offset());
-                            // StreamUtils.skipFully(in, bulkData.offset);
-                            // StreamUtils.copy(in, outData, bulkData.length);
+                    try {
+                        int numChannels = attributes.getInt(Tag.NumberOfWaveformChannels, 0);
+                        double sampleRate = attributes.getDouble(Tag.SamplingFrequency, 0.0);
+                        int bitsPerSample = attributes.getInt(Tag.WaveformBitsAllocated, 0);
+                        String spInterpretation = attributes.getString(Tag.WaveformSampleInterpretation, 0);
 
-                            // http://medical.nema.org/medical/dicom/current/output/chtml/part03/sect_A.34.html
-                            // SB: signed 8 bit linear
-                            // UB: unsigned 8 bit linear
-                            // MB: 8 bit mu-law (in accordance with ITU-T Recommendation G.711)
-                            // AB: 8 bit A-law (in accordance with ITU-T Recommendation G.711)
-                            // SS: signed 16 bit linear
-                            // US: unsigned 16 bit linear
+                        // http://medical.nema.org/medical/dicom/current/output/chtml/part03/sect_A.34.html
+                        // SB: signed 8 bit linear
+                        // UB: unsigned 8 bit linear
+                        // MB: 8 bit mu-law (in accordance with ITU-T Recommendation G.711)
+                        // AB: 8 bit A-law (in accordance with ITU-T Recommendation G.711)
+                        // SS: signed 16 bit linear
+                        // US: unsigned 16 bit linear
 
-                            AudioFormat audioFormat;
-
-                            if ("MB".equals(spInterpretation) || "AB".equals(spInterpretation)) { //$NON-NLS-1$ //$NON-NLS-2$
-                                int frameSize = (numChannels == AudioSystem.NOT_SPECIFIED
-                                    || bitsPerSample == AudioSystem.NOT_SPECIFIED) ? AudioSystem.NOT_SPECIFIED
-                                        : ((bitsPerSample + 7) / 8) * numChannels;
-                                audioFormat =
-                                    new AudioFormat("AB".equals(spInterpretation) ? Encoding.ALAW : Encoding.ULAW, //$NON-NLS-1$
-                                        (float) sampleRate, bitsPerSample, numChannels, frameSize, (float) sampleRate,
-                                        attributes.bigEndian());
-                            } else {
-                                boolean signed =
-                                    "UB".equals(spInterpretation) || "US".equals(spInterpretation) ? false : true; //$NON-NLS-1$ //$NON-NLS-2$
-                                audioFormat = new AudioFormat((float) sampleRate, bitsPerSample, numChannels, signed,
-                                    attributes.bigEndian());
-                            }
-
-                            AudioInputStream audioInputStream =
-                                new AudioInputStream(in, audioFormat, bulkData.length() / audioFormat.getFrameSize());
-                            return audioInputStream;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        } finally {
-                            // FileUtil.safeClose(in);
+                        AudioFormat audioFormat;
+                        if ("MB".equals(spInterpretation) || "AB".equals(spInterpretation)) { //$NON-NLS-1$ //$NON-NLS-2$
+                            int frameSize =
+                                (numChannels == AudioSystem.NOT_SPECIFIED || bitsPerSample == AudioSystem.NOT_SPECIFIED)
+                                    ? AudioSystem.NOT_SPECIFIED : ((bitsPerSample + 7) / 8) * numChannels;
+                            audioFormat = new AudioFormat("AB".equals(spInterpretation) ? Encoding.ALAW : Encoding.ULAW, //$NON-NLS-1$
+                                (float) sampleRate, bitsPerSample, numChannels, frameSize, (float) sampleRate,
+                                attributes.bigEndian());
+                        } else {
+                            boolean signed =
+                                "UB".equals(spInterpretation) || "US".equals(spInterpretation) ? false : true; //$NON-NLS-1$ //$NON-NLS-2$
+                            audioFormat = new AudioFormat((float) sampleRate, bitsPerSample, numChannels, signed,
+                                attributes.bigEndian());
                         }
+
+                        return new AudioInputStream(bulkData.openStream(), audioFormat, bulkData.length() / audioFormat.getFrameSize());
+                    } catch (Exception e) {
+                        LOGGER.error("Get audio stream", e);
                     }
                 }
             }
@@ -469,7 +435,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                     sourceLine.write(bytesBuffer, 0, bytesRead);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Play audio stream", e);
             } finally {
                 if (sourceLine != null) {
                     sourceLine.drain();

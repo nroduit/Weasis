@@ -19,6 +19,7 @@ public class Activator implements BundleActivator {
 
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
+        // Do noting
     }
 
     @Override

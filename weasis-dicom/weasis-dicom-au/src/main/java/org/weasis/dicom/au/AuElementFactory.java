@@ -21,9 +21,9 @@ import org.weasis.dicom.codec.DicomSpecialElementFactory;
 @Service
 @Property(name = "service.name", value = "DICOM ECG Element Factory")
 public class AuElementFactory implements DicomSpecialElementFactory {
+    private static final String[] modalities = { "AU" }; //$NON-NLS-1$
 
     public static final String SERIES_AU_MIMETYPE = "au/dicom"; //$NON-NLS-1$
-    public static final String[] modalities = { "AU" }; //$NON-NLS-1$
 
     @Override
     public String getSeriesMimeType() {

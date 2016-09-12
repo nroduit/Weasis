@@ -37,9 +37,6 @@ public class AuFactory implements SeriesViewerFactory {
     public static final String NAME = "DICOM AU"; //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MediaElement.class.getResource("/icon/22x22/audio-x-generic.png")); //$NON-NLS-1$
 
-    public AuFactory() {
-    }
-
     @Override
     public Icon getIcon() {
         return ICON;
@@ -57,7 +54,7 @@ public class AuFactory implements SeriesViewerFactory {
 
     @Override
     public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
-        GridBagLayoutModel model = AuContainer.VIEWS_1x1;
+        GridBagLayoutModel model = AuContainer.DEFAULT_VIEW;
         String uid = null;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
