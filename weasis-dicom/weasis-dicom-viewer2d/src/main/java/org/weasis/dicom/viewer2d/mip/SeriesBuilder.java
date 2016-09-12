@@ -85,7 +85,7 @@ public class SeriesBuilder {
             ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
             if (sequence instanceof SliderCineListener) {
                 SliderCineListener cineAction = (SliderCineListener) sequence;
-                curImg = cineAction.getValue() - 1;
+                curImg = cineAction.getSliderValue() - 1;
             }
 
             int minImg = fullSeries ? extend : curImg;

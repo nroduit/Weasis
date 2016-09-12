@@ -160,7 +160,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         enableActions(false);
     }
 
-
     private ComboItemListener<KernelData> newFilterAction() {
         return new ComboItemListener<KernelData>(ActionW.FILTER, KernelData.getAllFilters()) {
 
@@ -342,7 +341,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
         } else if (ResetTools.Rotation.equals(action)) {
-            getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a.setValue(0));
+            getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a.setSliderValue(0));
         } else if (ResetTools.WindowLevel.equals(action)) {
             if (selectedView2dContainer != null) {
                 ViewCanvas<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
@@ -352,9 +351,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                         boolean pixelPadding = JMVUtils.getNULLtoTrue(defaultView2d.getDisplayOpManager()
                             .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
                         getAction(ActionW.WINDOW, SliderChangeListener.class)
-                            .ifPresent(a -> a.setValue((int) img.getDefaultWindow(pixelPadding)));
+                            .ifPresent(a -> a.setRealValue(img.getDefaultWindow(pixelPadding)));
                         getAction(ActionW.LEVEL, SliderChangeListener.class)
-                            .ifPresent(a -> a.setValue((int) img.getDefaultLevel(pixelPadding)));
+                            .ifPresent(a -> a.setRealValue(img.getDefaultLevel(pixelPadding)));
                     }
                 }
             }
@@ -403,14 +402,29 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             if (windowAction.isPresent() && levelAction.isPresent()) {
                 Double windowValue = (Double) node.getParam(ActionW.WINDOW.cmd());
                 Double levelValue = (Double) node.getParam(ActionW.LEVEL.cmd());
-                if (windowValue != null && levelValue != null) {
-                    boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-                    windowAction.get().setMinMaxValueWithoutTriggerAction(0,
-                        (int) (image.getMaxValue(null, pixelPadding) - image.getMinValue(null, pixelPadding)),
-                        windowValue.intValue());
-                    levelAction.get().setMinMaxValueWithoutTriggerAction((int) image.getMinValue(null, pixelPadding),
-                        (int) image.getMaxValue(null, pixelPadding), levelValue.intValue());
+
+                double window;
+                double minLevel;
+                double maxLevel;
+                if (windowValue == null) {
+                    windowValue = windowAction.get().getRealValue();
                 }
+                if (levelValue == null) {
+                    levelValue = levelAction.get().getRealValue();
+                }
+                Double levelMin = (Double) node.getParam(ActionW.LEVEL_MIN.cmd());
+                Double levelMax = (Double) node.getParam(ActionW.LEVEL_MAX.cmd());
+                if (levelMin == null || levelMax == null) {
+                    minLevel = levelValue - windowValue / 2.0;
+                    maxLevel = levelValue + windowValue / 2.0;
+                } else {
+                    minLevel = levelMin;
+                    maxLevel = levelMax;
+                }
+                window = Math.max(windowValue, maxLevel - minLevel);
+
+                windowAction.get().setRealMinMaxValue(1.0, window, windowValue, false);
+                levelAction.get().setRealMinMaxValue(minLevel, maxLevel, levelValue, false);
             }
         }
 
@@ -420,13 +434,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             (Boolean) dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE)));
         getAction(ActionW.FILTER, ComboItemListener.class).ifPresent(
             a -> a.setSelectedItemWithoutTriggerAction(dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA)));
-        getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a
-            .setValueWithoutTriggerAction((Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)));
+        getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(
+            a -> a.setSliderValue((Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE), false));
         getAction(ActionW.FLIP, ToggleButtonListener.class).ifPresent(
             a -> a.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP)));
 
-        getAction(ActionW.ZOOM, SliderChangeListener.class).ifPresent(a -> a.setValueWithoutTriggerAction(
-            viewScaleToSliderValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd())))));
+        getAction(ActionW.ZOOM, SliderChangeListener.class)
+            .ifPresent(a -> a.setRealValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd())), false));
         getAction(ActionW.SPATIAL_UNIT, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd())));
         getAction(ActionW.LENS, ToggleButtonListener.class)
@@ -437,11 +451,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         Double lensZoom = (Double) view2d.getLensActionValue(ActionW.ZOOM.cmd());
         if (lensZoom != null) {
             getAction(ActionW.LENSZOOM, SliderChangeListener.class)
-                .ifPresent(a -> a.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs(lensZoom))));
+                .ifPresent(a -> a.setRealValue(Math.abs(lensZoom), false));
         }
-        cineAction.ifPresent(a -> a.setMinMaxValueWithoutTriggerAction(1,
+        cineAction.ifPresent(a -> a.setSliderMinMaxValue(1,
             series.size((Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
-            view2d.getFrameIndex() + 1));
+            view2d.getFrameIndex() + 1, false));
         final Integer speed = (Integer) series.getTagValue(TagW.get("CineRate"));
         if (speed != null) {
             cineAction.ifPresent(a -> a.setSpeed(speed));
@@ -563,19 +577,19 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
                 if (rotateAction.get().isActionEnabled()) {
                     JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-                    menuItem.addActionListener(e -> rotateAction.get().setValue(0));
+                    menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
                     menuItem.addActionListener(
-                        e -> rotateAction.get().setValue((rotateAction.get().getValue() - 90 + 360) % 360));
+                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() - 90 + 360) % 360));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
                     menuItem.addActionListener(
-                        e -> rotateAction.get().setValue((rotateAction.get().getValue() + 90) % 360));
+                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 90) % 360));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
                     menuItem.addActionListener(
-                        e -> rotateAction.get().setValue((rotateAction.get().getValue() + 180) % 360));
+                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 180) % 360));
                     menu.add(menuItem);
 
                     Optional<ToggleButtonListener> flipAction = getAction(ActionW.FLIP, ToggleButtonListener.class);

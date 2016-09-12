@@ -676,10 +676,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 && DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PlanarConfiguration, 0) != 0;
             dataType = bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE
                 : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
-            if (bitsAllocated > 16 && samplesPerPixel == 1) {
-                dataType = DataBuffer.TYPE_FLOAT;
-            } else if (bitsStored > 32 && samplesPerPixel == 1) {
-                dataType = DataBuffer.TYPE_FLOAT;
+            if (bitsAllocated == 32 && samplesPerPixel == 1) {
+                dataType = header.getValue(Tag.FloatPixelData, pixeldataVR) == null ? DataBuffer.TYPE_INT : DataBuffer.TYPE_FLOAT;
+            } else if (bitsAllocated == 64 && samplesPerPixel == 1) {
+                dataType = DataBuffer.TYPE_DOUBLE;
             }
             String photometricInterpretation = header.getString(Tag.PhotometricInterpretation, "MONOCHROME2"); //$NON-NLS-1$
             pmi = PhotometricInterpretation.fromString(photometricInterpretation);

@@ -459,7 +459,7 @@ public final class KOManager {
                     ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
                     if (seqAction instanceof SliderCineListener) {
                         SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
-                        moveTroughSliceAction.setMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter),
+                        moveTroughSliceAction.setSliderMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter),
                             newImageIndex + 1);
                     }
                 }

@@ -382,7 +382,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             Number level = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
             boolean outside = false;
             if (window != null && level != null) {
-                sb.append(Messages.getString("InfoLayer.wl"));//$NON-NLS-1$
+                sb.append(ActionW.WINLEVEL.getTitle());
                 sb.append(StringUtil.COLON_AND_SPACE);
                 sb.append(DecFormater.oneDecimal(window));
                 sb.append("/");//$NON-NLS-1$

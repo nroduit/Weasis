@@ -287,7 +287,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                                             view2DPane.setSeries(series, null);
                                         }
                                         if (imgIndex >= 0) {
-                                            sliceAction.setMinMaxValue(1, series.size(filter), imgIndex + 1);
+                                            sliceAction.setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
                                         }
                                     }
                                 }

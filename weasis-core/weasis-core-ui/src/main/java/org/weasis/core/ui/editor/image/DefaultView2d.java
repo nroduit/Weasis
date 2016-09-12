@@ -59,7 +59,6 @@ import java.util.Optional;
 import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
@@ -681,26 +680,25 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected double adjustViewScale(double viewScale) {
+        double ratio = viewScale;
+        if (ratio < DefaultViewModel.SCALE_MIN) {
+            ratio = DefaultViewModel.SCALE_MIN;
+        } else if (ratio > DefaultViewModel.SCALE_MAX) {
+            ratio = DefaultViewModel.SCALE_MAX;
+        }
         ActionState zoom = eventManager.getAction(ActionW.ZOOM);
         if (zoom instanceof SliderChangeListener) {
             SliderChangeListener z = (SliderChangeListener) zoom;
             // Adjust the best fit value according to the possible range of the model zoom action.
-            int sliderValue = ImageViewerEventManager.viewScaleToSliderValue(viewScale);
             if (eventManager.getSelectedViewPane() == this) {
                 // Set back the value to UI components as this value cannot be computed early.
-                z.setValueWithoutTriggerAction(sliderValue);
-                viewScale = ImageViewerEventManager.sliderValueToViewScale(z.getValue());
+                z.setRealValue(ratio, false);
+                ratio = z.getRealValue();
             } else {
-                DefaultBoundedRangeModel model = z.getModel();
-                if (sliderValue < model.getMinimum()) {
-                    sliderValue = model.getMinimum();
-                } else if (sliderValue > model.getMaximum()) {
-                    sliderValue = model.getMaximum();
-                }
-                viewScale = ImageViewerEventManager.sliderValueToViewScale(sliderValue);
+                ratio = z.toModelValue(z.toSliderValue(ratio));
             }
         }
-        return viewScale;
+        return ratio;
     }
 
     @SuppressWarnings("rawtypes")
@@ -1130,7 +1128,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 continue;
             }
             if (command.equals(ActionW.WINDOW.cmd()) || command.equals(ActionW.LEVEL.cmd())) {
-                if (manager.setParamValue(WindowOp.OP_NAME, command, ((Integer) entry.getValue()).doubleValue())) {
+                if (manager.setParamValue(WindowOp.OP_NAME, command, ((Number) entry.getValue()).doubleValue())) {
                     imageLayer.updateDisplayOperations();
                 }
             } else if (command.equals(ActionW.ROTATION.cmd())) {

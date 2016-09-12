@@ -231,11 +231,17 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             // g2.draw(pixelInfoBound);
         }
         if (getDisplayPreferences(WINDOW_LEVEL)) {
-            DefaultGraphicLabel.paintFontOutline(g2,
-                Messages.getString("InfoLayer.wl") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                    + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) + "/" //$NON-NLS-1$
-                    + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()),
-                border, drawY);
+            StringBuilder sb = new StringBuilder();
+            Number window = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
+            Number level = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
+            if (window != null && level != null) {
+                sb.append(ActionW.WINLEVEL.getTitle());
+                sb.append(StringUtil.COLON_AND_SPACE);
+                sb.append(DecFormater.oneDecimal(window));
+                sb.append("/");//$NON-NLS-1$
+                sb.append(DecFormater.oneDecimal(level));
+            }
+            DefaultGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {

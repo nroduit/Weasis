@@ -45,7 +45,6 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.MouseActions;
 
 import bibliothek.gui.dock.common.CLocation;
@@ -136,7 +135,7 @@ public class ImageTool extends PluginTool {
         ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
         if (sequence instanceof SliderCineListener) {
             SliderCineListener cineAction = (SliderCineListener) sequence;
-            final JSliderW frameSlider = cineAction.createSlider(4, true);
+            final JSliderW frameSlider = cineAction.createSlider(2, true);
             framePanel.add(frameSlider.getParent());
 
             final JPanel panel_3 = new JPanel();
@@ -181,16 +180,13 @@ public class ImageTool extends PluginTool {
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         ActionState winAction = EventManager.getInstance().getAction(ActionW.WINDOW);
         if (winAction instanceof SliderChangeListener) {
-            final JSliderW windowSlider = ((SliderChangeListener) winAction).createSlider(4, true);
-            // windowSlider.setMajorTickSpacing((largestWindow - smallestWindow) / 4);
+            final JSliderW windowSlider = ((SliderChangeListener) winAction).createSlider(2, true);
             JMVUtils.setPreferredWidth(windowSlider, 100);
             winLevelPanel.add(windowSlider.getParent());
         }
         ActionState levelAction = EventManager.getInstance().getAction(ActionW.LEVEL);
         if (levelAction instanceof SliderChangeListener) {
-            final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(4, true);
-            levelSlider.setMajorTickSpacing(
-                (ImageViewerEventManager.LEVEL_LARGEST - ImageViewerEventManager.LEVEL_SMALLEST) / 4);
+            final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(2, true);
             JMVUtils.setPreferredWidth(levelSlider, 100);
             winLevelPanel.add(levelSlider.getParent());
         }
@@ -250,7 +246,7 @@ public class ImageTool extends PluginTool {
         }
         ActionState rotateAction = EventManager.getInstance().getAction(ActionW.ROTATION);
         if (rotateAction instanceof SliderChangeListener) {
-            final JSliderW rotationSlider = ((SliderChangeListener) rotateAction).createSlider(4, true);
+            final JSliderW rotationSlider = ((SliderChangeListener) rotateAction).createSlider(5, true);
             JMVUtils.setPreferredWidth(rotationSlider, 100);
             transform.add(rotationSlider.getParent());
         }

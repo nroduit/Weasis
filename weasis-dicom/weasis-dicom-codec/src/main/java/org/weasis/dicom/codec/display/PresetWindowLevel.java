@@ -267,11 +267,11 @@ public class PresetWindowLevel {
         InputStream stream = null;
         try {
             File file = ResourceUtil.getResource("presets.xml");
-            if (!file.canRead()){
+            if (!file.canRead()) {
                 return Collections.emptyMap();
             }
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            stream = new FileInputStream(file); //$NON-NLS-1$
+            stream = new FileInputStream(file); // $NON-NLS-1$
             xmler = xmlif.createXMLStreamReader(stream);
 
             int eventType;

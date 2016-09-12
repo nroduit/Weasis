@@ -51,8 +51,6 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
 
 public abstract class ImageViewerEventManager<E extends ImageElement> implements KeyListener {
-    public static final int ZOOM_SLIDER_MIN = -100;
-    public static final int ZOOM_SLIDER_MAX = 100;
     public static final int WINDOW_SMALLEST = 0;
     public static final int WINDOW_LARGEST = 4096;
     public static final int WINDOW_DEFAULT = 700;
@@ -149,9 +147,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
                     while (cining) {
                         GuiExecutor.instance().execute(() -> {
-                            int frameIndex = getValue() + 1;
-                            frameIndex = frameIndex > getMax() ? 0 : frameIndex;
-                            setValue(frameIndex);
+                            int frameIndex = getSliderValue() + 1;
+                            frameIndex = frameIndex > getSliderMax() ? 0 : frameIndex;
+                            setSliderValue(frameIndex);
                         });
                         iteration++;
 
@@ -200,7 +198,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 if (currentCine != null) {
                     stop();
                 }
-                if (getMax() - getMin() > 0) {
+                if (getSliderMax() - getSliderMin() > 0) {
                     cining = true;
                     currentCine = new CineThread();
                     currentCine.start();
@@ -226,7 +224,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                setValue(getValue() + e.getWheelRotation());
+                setSliderValue(getSliderValue() + e.getWheelRotation());
             }
 
             @Override
@@ -247,7 +245,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             @Override
             public void stateChanged(BoundedRangeModel model) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null,
-                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), model.getValue()));
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
             }
         };
     }
@@ -258,7 +256,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             @Override
             public void stateChanged(BoundedRangeModel model) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null,
-                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), model.getValue()));
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
             }
         };
     }
@@ -274,25 +272,39 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public String getValueToDisplay() {
-                return getValue() + " \u00b0"; //$NON-NLS-1$
+                return getSliderValue() + " \u00b0"; //$NON-NLS-1$
             }
         };
     }
 
     protected SliderChangeListener newZoomAction() {
-        return new SliderChangeListener(ActionW.ZOOM, ZOOM_SLIDER_MIN, ZOOM_SLIDER_MAX, 0, true, 0.1) {
+
+        return new SliderChangeListener(ActionW.ZOOM, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX, 1.0, true,
+            0.1, 100) { // special case will set range -100 to 100
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    sliderValueToViewScale(model.getValue())));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
             }
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue()));
+                return DecFormater.percentTwoDecimal(getRealValue());
             }
 
+            @Override
+            public int toSliderValue(double viewScale) {
+                double v = Math.log(viewScale) / Math.log(DefaultViewModel.SCALE_MAX) * getSliderMax();
+                return (int) Math.round(v);
+            }
+
+            @Override
+            public double toModelValue(int sliderValue) {
+                double v = sliderValue / (double) getSliderMax();
+                double viewScale = Math.exp(v * Math.log(DefaultViewModel.SCALE_MAX));
+                return roundAndCropViewScale(viewScale, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX);
+            }
         };
     }
 
@@ -355,25 +367,39 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     protected SliderChangeListener newLensZoomAction() {
-        return new SliderChangeListener(ActionW.LENSZOOM, ZOOM_SLIDER_MIN, ZOOM_SLIDER_MAX, viewScaleToSliderValue(2.0),
-            true, 0.1) {
+        return new SliderChangeListener(ActionW.LENSZOOM, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX, 2.0,
+            true, 0.1, 100) { // special case will set range -100 to 100
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    sliderValueToViewScale(model.getValue())));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
             }
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue()));
+                return DecFormater.percentTwoDecimal(getRealValue());
+            }
+
+            @Override
+            public int toSliderValue(double viewScale) {
+                double v = Math.log(viewScale) / Math.log(DefaultViewModel.SCALE_MAX) * getSliderMax();
+                return (int) Math.round(v);
+            }
+
+            @Override
+            public double toModelValue(int sliderValue) {
+                double v = sliderValue / (double) getSliderMax();
+                double viewScale = Math.exp(v * Math.log(DefaultViewModel.SCALE_MAX));
+                return roundAndCropViewScale(viewScale, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX);
             }
 
         };
     }
 
     protected ComboItemListener<GridBagLayoutModel> newLayoutAction(GridBagLayoutModel[] layouts) {
-        return new ComboItemListener<GridBagLayoutModel>(ActionW.LAYOUT, Optional.ofNullable(layouts).orElse(new GridBagLayoutModel[0])) {
+        return new ComboItemListener<GridBagLayoutModel>(ActionW.LAYOUT,
+            Optional.ofNullable(layouts).orElse(new GridBagLayoutModel[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -396,7 +422,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     protected ComboItemListener<SynchView> newSynchAction(SynchView[] synchViewList) {
-        return new ComboItemListener<SynchView>(ActionW.SYNCH, Optional.ofNullable(synchViewList).orElse(new SynchView[0])) {
+        return new ComboItemListener<SynchView>(ActionW.SYNCH,
+            Optional.ofNullable(synchViewList).orElse(new SynchView[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -420,7 +447,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     protected ComboItemListener<Graphic> newMeasurementAction(Graphic[] graphics) {
-        return new ComboItemListener<Graphic>(ActionW.DRAW_MEASURE, Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+        return new ComboItemListener<Graphic>(ActionW.DRAW_MEASURE,
+            Optional.ofNullable(graphics).orElse(new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -431,9 +459,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
         };
     }
-    
-    protected ComboItemListener<Graphic>  newDrawAction(Graphic[] graphics) {
-        return new ComboItemListener<Graphic> (ActionW.DRAW_GRAPHICS, Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+
+    protected ComboItemListener<Graphic> newDrawAction(Graphic[] graphics) {
+        return new ComboItemListener<Graphic>(ActionW.DRAW_GRAPHICS,
+            Optional.ofNullable(graphics).orElse(new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -610,18 +639,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     public WProperties getOptions() {
         return options;
-    }
-
-    public static int viewScaleToSliderValue(double viewScale) {
-        final double v = Math.log(viewScale) / Math.log(DefaultViewModel.SCALE_MAX) * ZOOM_SLIDER_MAX;
-        return (int) Math.round(v);
-    }
-
-    public static double sliderValueToViewScale(final int sliderValue) {
-        final double v = sliderValue / (double) ZOOM_SLIDER_MAX;
-        double viewScale = Math.exp(v * Math.log(DefaultViewModel.SCALE_MAX));
-        viewScale = roundAndCropViewScale(viewScale, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX);
-        return viewScale;
     }
 
     public synchronized void enableActions(boolean enabled) {

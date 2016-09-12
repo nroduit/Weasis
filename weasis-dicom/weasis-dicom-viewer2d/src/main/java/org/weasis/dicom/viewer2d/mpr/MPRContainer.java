@@ -496,7 +496,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                                 ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
                                 if (seqAction instanceof SliderChangeListener) {
                                     SliderCineListener sliceAction = (SliderCineListener) seqAction;
-                                    sliceAction.setValue(sliceAction.getMax() / 2);
+                                    sliceAction.setSliderValue(sliceAction.getSliderMax() / 2);
                                 }
                                 ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
                                 if (cross instanceof CrosshairListener) {
@@ -516,13 +516,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                     } catch (final Exception e) {
                         e.printStackTrace();
                         // Following actions need to be executed in EDT thread
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                showErrorMessage(view2ds, view, e.getMessage());
-                            }
-                        });
+                        GuiExecutor.instance().execute(() -> showErrorMessage(view2ds, view, e.getMessage()));
                     }
                 }
 

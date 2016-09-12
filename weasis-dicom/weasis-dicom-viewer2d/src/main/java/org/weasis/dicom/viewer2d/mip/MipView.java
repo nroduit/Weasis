@@ -209,7 +209,7 @@ public class MipView extends View2d {
             ActionState sequence = eventManager.getAction(ActionW.SCROLL_SERIES);
             if (sequence instanceof SliderCineListener) {
                 SliderCineListener cineAction = (SliderCineListener) sequence;
-                cineAction.stateChanged(cineAction.getModel());
+                cineAction.stateChanged(cineAction.getSliderModel());
             }
             // Close stream
             oldImage.dispose();
