@@ -4,8 +4,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 
 import org.junit.Test;
+import org.weasis.core.api.Messages;
 
 public class TagDTest {
 
@@ -19,9 +21,9 @@ public class TagDTest {
      * <P>
      * Note The ACR-NEMA Standard 300 (predecessor to DICOM) supported a string of characters of the format YYYY.MM.DD
      * for this VR. Use of this format is not compliant.
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @see <a href="http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html">6.2 Value
      *      Representation (VR)</a>
      */
@@ -47,7 +49,7 @@ public class TagDTest {
      * <P>
      * The FFFFFF component, if present, shall contain 1 to 6 digits. If FFFFFF is unspecified the preceding "." shall
      * not be included.
-     * 
+     *
      * <P>
      * Examples: 1. “070907.0705 ” represents a time of 7 hours, 9 minutes and 7.0705 seconds.
      * <P>
@@ -57,9 +59,9 @@ public class TagDTest {
      * <P>
      * Notes: 1. The ACR-NEMA Standard 300 (predecessor to DICOM) supported a string of characters of the format
      * HH:MM:SS.frac for this VR. Use of this format is not compliant.
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @see <a href="http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html">6.2 Value
      *      Representation (VR)</a>
      */
@@ -101,37 +103,107 @@ public class TagDTest {
      * The year, month, and day shall be interpreted as a date of the Gregorian calendar system.
      * <P>
      * A 24-hour clock is used. Midnight shall be represented by only "0000" since "2400" would violate the hour range.
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @see <a href="http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html">6.2 Value
      *      Representation (VR)</a>
      */
     @Test
     public void testGetDicomDateTime() throws Exception {
-        
-//        Date date = DateUtils.parseDA(null, "1993:08:22");
-//        LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
-//        assertEquals(LocalDate.of(1993, 8, 22), datetime.toLocalDate());
-//
-//        DatePrecision precision = new DatePrecision();
-//        date = DateUtils.parseTM(null, "0709.0705 ", precision);
-//        datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
-//        assertEquals(LocalTime.of(7, 9, 7, 70_000_000), datetime.toLocalTime());
 
-//        LocalDateTime time = TagD.getDicomDateTime(null, "1953082711");
-//        assertEquals(LocalDateTime.of(1953, 8, 27, 11, 0), time);
-//
-//        time = TagD.getDicomDateTime(null,"19530827111300");
-//        assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
-//
-//        time = TagD.getDicomDateTime(null,"19530827111300.0");
-//        assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
-//
-//        time = TagD.getDicomDateTime(null,"19530827111300.000055");
-//        assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 55_000), time);
-//
-//        time = TagD.getDicomDateTime(null,"19530827111300+0700");
-//        assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 55_000), time);
+        // Date date = DateUtils.parseDA(null, "1993:08:22");
+        // LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        // assertEquals(LocalDate.of(1993, 8, 22), datetime.toLocalDate());
+        //
+        // DatePrecision precision = new DatePrecision();
+        // date = DateUtils.parseTM(null, "0709.0705 ", precision);
+        // datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        // assertEquals(LocalTime.of(7, 9, 7, 70_000_000), datetime.toLocalTime());
+
+        // LocalDateTime time = TagD.getDicomDateTime(null, "1953082711");
+        // assertEquals(LocalDateTime.of(1953, 8, 27, 11, 0), time);
+        //
+        // time = TagD.getDicomDateTime(null,"19530827111300");
+        // assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
+        //
+        // time = TagD.getDicomDateTime(null,"19530827111300.0");
+        // assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
+        //
+        // time = TagD.getDicomDateTime(null,"19530827111300.000055");
+        // assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 55_000), time);
+        //
+        // time = TagD.getDicomDateTime(null,"19530827111300+0700");
+        // assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 55_000), time);
     }
+
+    @Test
+    public void testGetDicomPatientSex() throws Exception {
+        String sex = TagD.getDicomPatientSex(null);
+        assertEquals("", sex);
+
+        sex = TagD.getDicomPatientSex("");
+        assertEquals("", sex);
+
+        sex = TagD.getDicomPatientSex("F");
+        assertEquals(Messages.getString("TagW.female"), sex);
+
+        sex = TagD.getDicomPatientSex("M");
+        assertEquals(Messages.getString("TagW.Male"), sex);
+
+        sex = TagD.getDicomPatientSex("Male");
+        assertEquals(Messages.getString("TagW.Male"), sex);
+
+        sex = TagD.getDicomPatientSex("O");
+        assertEquals(Messages.getString("TagW.other"), sex);
+
+        sex = TagD.getDicomPatientSex("U");
+        assertEquals(Messages.getString("TagW.other"), sex);
+    }
+
+    @Test
+    public void testGetDicomPersonName() throws Exception {
+        String name = TagD.getDicomPersonName(null);
+        assertEquals("", name);
+
+        name = TagD.getDicomPersonName(" ");
+        assertEquals("", name);
+
+        name = TagD.getDicomPersonName("Delaney^William^M.^Dr^MD");
+        assertEquals("Delaney, William M., Dr, MD", name);
+    }
+
+    @Test
+    public void testGetDicomPeriod() throws Exception {
+        String period = TagD.getDicomPeriod(null);
+        assertEquals("", period);
+
+        period = TagD.getDicomPeriod("0");
+        assertEquals("", period);
+
+        period = TagD.getDicomPeriod("0Z");
+        assertEquals("", period);
+
+        period = TagD.getDicomPeriod("031Y");
+        assertEquals("31 " + ChronoUnit.YEARS.toString(), period);
+
+        period = TagD.getDicomPeriod("001Y");
+        assertEquals("1 " + ChronoUnit.YEARS.toString(), period);
+
+        period = TagD.getDicomPeriod("1Y");
+        assertEquals("1 " + ChronoUnit.YEARS.toString(), period);
+
+        period = TagD.getDicomPeriod("000Y");
+        assertEquals("0 " + ChronoUnit.YEARS.toString(), period);
+
+        period = TagD.getDicomPeriod("001M");
+        assertEquals("1 " + ChronoUnit.MONTHS.toString(), period);
+
+        period = TagD.getDicomPeriod("011W");
+        assertEquals("11 " + ChronoUnit.WEEKS.toString(), period);
+
+        period = TagD.getDicomPeriod("111D");
+        assertEquals("111 " + ChronoUnit.DAYS.toString(), period);
+    }
+
 }

@@ -215,7 +215,7 @@ public class ImageParameters {
 
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer("Size:");
+        StringBuilder buf = new StringBuilder("Size:");
         buf.append(width);
         buf.append("x");
         buf.append(height);

@@ -14,7 +14,7 @@ import org.weasis.dicom.codec.Messages;
 
 public enum Modality {
 
-    Default(Messages.getString("Modality.default")), //$NON-NLS-1$
+    DEFAULT(Messages.getString("Modality.default")), //$NON-NLS-1$
 
     AU("Audio"), //$NON-NLS-1$
 
@@ -114,12 +114,12 @@ public enum Modality {
     }
 
     public static Modality getModality(String modality) {
-        Modality v = Modality.Default;
+        Modality v = Modality.DEFAULT;
         if (modality != null) {
             try {
                 v = Modality.valueOf(modality);
             } catch (Exception e) {
-                // System.err.println("Modality not supported: " + modality);
+                // return DEFAULT if unknown
             }
         }
         return v;

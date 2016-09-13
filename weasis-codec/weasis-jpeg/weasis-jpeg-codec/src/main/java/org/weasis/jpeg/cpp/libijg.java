@@ -28,7 +28,7 @@ import org.weasis.jpeg.internal.DecoderIJG;
  */
 @Platform(include = { "libcparam.h", "libeijg8.h", "jpeglib8.h", "libijg8.h", "libijg12.h", "libijg16.h",
     "interface.h" })
-//     "charls.h" }) // new lib 2.0, charls.h instead of interface.h
+// "charls.h" }) // new lib 2.0, charls.h instead of interface.h
 // , @Platform(value = "windows", define = "CHARLS_STATIC 0x01"),
 public class libijg {
     static {
@@ -127,11 +127,13 @@ public class libijg {
 
         private native void allocate();
 
-        public native @Cast("ERROR_TYPE") int code();
+        @Cast("ERROR_TYPE")
+        public native int code();
 
         public native RETURN_MSG code(@Cast("ERROR_TYPE") int code);
 
-        public native @Cast("const char*") BytePointer msg();
+        @Cast("const char*")
+        public native BytePointer msg();
 
         public native RETURN_MSG msg(@Cast("const char*") BytePointer msg);
 
@@ -152,7 +154,8 @@ public class libijg {
 
         public native jpeg_decompress_struct data_precision(int data_precision);
 
-        public native @Cast("J_COLOR_SPACE") int jpeg_color_space();
+        @Cast("J_COLOR_SPACE")
+        public native int jpeg_color_space();
 
         public native jpeg_decompress_struct jpeg_color_space(@Cast("J_COLOR_SPACE") int jpeg_color_space);
 
@@ -207,14 +210,17 @@ public class libijg {
         public native int bytesPerSample();
 
         @Override
-        public native @ByVal RETURN_MSG init(boolean isYBR);
+        @ByVal
+        public native RETURN_MSG init(boolean isYBR);
 
         @Override
-        public native @ByVal RETURN_MSG readHeader(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
+        @ByVal
+        public native RETURN_MSG readHeader(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
             @Cast("unsigned long") long compressedFrameBufferSize, boolean isSigned);
 
         @Override
-        public native @ByVal RETURN_MSG decode(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
+        @ByVal
+        public native RETURN_MSG decode(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
             @Cast("unsigned long") long compressedFrameBufferSize,
             @Cast("unsigned char*") ByteBuffer uncompressedFrameBuffer,
             @Cast("unsigned long") long uncompressedFrameBufferSize);
@@ -242,14 +248,17 @@ public class libijg {
         public native int bytesPerSample();
 
         @Override
-        public native @ByVal RETURN_MSG init(boolean isYBR);
+        @ByVal
+        public native RETURN_MSG init(boolean isYBR);
 
         @Override
-        public native @ByVal RETURN_MSG readHeader(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
+        @ByVal
+        public native RETURN_MSG readHeader(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
             @Cast("unsigned long") long compressedFrameBufferSize, boolean isSigned);
 
         @Override
-        public native @ByVal RETURN_MSG decode(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
+        @ByVal
+        public native RETURN_MSG decode(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
             @Cast("unsigned long") long compressedFrameBufferSize,
             @Cast("unsigned char*") ByteBuffer uncompressedFrameBuffer,
             @Cast("unsigned long") long uncompressedFrameBufferSize);
@@ -277,14 +286,17 @@ public class libijg {
         public native int bytesPerSample();
 
         @Override
-        public native @ByVal RETURN_MSG init(boolean isYBR);
+        @ByVal
+        public native RETURN_MSG init(boolean isYBR);
 
         @Override
-        public native @ByVal RETURN_MSG readHeader(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
+        @ByVal
+        public native RETURN_MSG readHeader(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
             @Cast("unsigned long") long compressedFrameBufferSize, boolean isSigned);
 
         @Override
-        public native @ByVal RETURN_MSG decode(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
+        @ByVal
+        public native RETURN_MSG decode(@Cast("unsigned char*") ByteBuffer compressedFrameBuffer,
             @Cast("unsigned long") long compressedFrameBufferSize,
             @Cast("unsigned char*") ByteBuffer uncompressedFrameBuffer,
             @Cast("unsigned long") long uncompressedFrameBufferSize);
@@ -473,17 +485,21 @@ public class libijg {
 
         public native void rawData(@Cast("unsigned char*") ByteBuffer buf);
 
-        public native @ByVal SizeTPointer count();
+        @ByVal
+        public native SizeTPointer count();
 
         public native void count(@ByVal SizeTPointer count);
 
     }
 
-    public static native @ByVal ByteStreamInfo FromByteArray(ByteBuffer buf, @ByVal SizeTPointer count);
+    @ByVal
+    public static native ByteStreamInfo FromByteArray(ByteBuffer buf, @ByVal SizeTPointer count);
 
-    public static native @ByVal ByteStreamInfo FromByteArray(byte[] buf, @ByVal SizeTPointer count);
+    @ByVal
+    public static native ByteStreamInfo FromByteArray(byte[] buf, @ByVal SizeTPointer count);
 
-    public static native @ByVal ByteStreamInfo FromByteArray(BytePointer buf, @ByVal SizeTPointer count);
+    @ByVal
+    public static native ByteStreamInfo FromByteArray(BytePointer buf, @ByVal SizeTPointer count);
 
     public static class JlsParameters extends Pointer {
         static {
@@ -537,11 +553,14 @@ public class libijg {
         // struct JfifParameters jfif;
     }
 
-    public static native @Cast("JLS_ERROR") int JpegLsEncodeStream(@ByVal ByteStreamInfo rawStream,
-        SizeTPointer bytesWritten, @ByVal ByteStreamInfo inputStream, JlsParameters info);
+    @Cast("JLS_ERROR")
+    public static native int JpegLsEncodeStream(@ByVal ByteStreamInfo rawStream, SizeTPointer bytesWritten,
+        @ByVal ByteStreamInfo inputStream, JlsParameters info);
 
-    public static native @Cast("JLS_ERROR") int JpegLsDecodeStream(@ByVal ByteStreamInfo output,
-        @ByVal ByteStreamInfo input, JlsParameters info);
+    @Cast("JLS_ERROR")
+    public static native int JpegLsDecodeStream(@ByVal ByteStreamInfo output, @ByVal ByteStreamInfo input,
+        JlsParameters info);
 
-    public static native @Cast("JLS_ERROR") int JpegLsReadHeaderStream(@ByVal ByteStreamInfo input, JlsParameters info);
+    @Cast("JLS_ERROR")
+    public static native int JpegLsReadHeaderStream(@ByVal ByteStreamInfo input, JlsParameters info);
 }

@@ -45,15 +45,12 @@ public class TagView {
     public String getFormattedText(boolean anonymize, TagReadable... tagable) {
         for (TagW t : this.tag) {
             if (!anonymize || t.getAnonymizationType() != 1) {
-                Object value = TagUtil.getTagValue(t, tagable);
-                if (value != null) {
-                    String str = TagW.getFormattedText(value, format);
-                    if (StringUtil.hasText(str)) {
-                        return str;
-                    }
+                String str = t.getFormattedTagValue(TagUtil.getTagValue(t, tagable), format);
+                if (StringUtil.hasText(str)) {
+                    return str;
                 }
             }
         }
-        return "";
+        return StringUtil.EMPTY_STRING;
     }
 }

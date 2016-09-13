@@ -25,10 +25,8 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.LocalUtil;
-import org.weasis.core.api.util.StringUtil;
 
 public final class TagUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(TagUtil.class);
@@ -471,95 +469,4 @@ public final class TagUtil {
             return value.toString().contains(s);
         }
     }
-
-    public static String getDicomPeriod(String value) {
-        // 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
-        // For ex: DICOM (0010,1010) = 031Y
-        String str = value;
-        char[] tab = str.toCharArray();
-        if (tab.length < 2) {
-            return ""; //$NON-NLS-1$
-        }
-        for (int i = 0; i < 2; i++) {
-            if (tab[i] == '0') {
-                str = str.substring(1);
-            } else {
-                break;
-            }
-        }
-        if (str.length() > 1 && tab.length > 0) {
-            switch (tab[tab.length - 1]) {
-                case 'Y':
-                    str = str.replaceFirst("Y", " years"); //$NON-NLS-1$
-                    break;
-                case 'M':
-                    str = str.replaceFirst("M", " months"); //$NON-NLS-1$
-                    break;
-                case 'W':
-                    str = str.replaceFirst("W", " weeks"); //$NON-NLS-1$
-                    break;
-                case 'D':
-                    str = str.replaceFirst("D", " days"); //$NON-NLS-1$
-                    break;
-                default:
-            }
-        } else {
-            str = ""; //$NON-NLS-1$
-        }
-        return str;
-    }
-
-    public static String buildDicomPersonName(String name) {
-        if (name == null) {
-            return null;
-        }
-        /*
-         * Further internationalization issues arise in countries where the language has a phonetic or ideographic
-         * representation, such as in Japan and Korea. For these situations, DICOM allows up to three “component
-         * groups,” the first a single-byte representation as is used for western languages, then an ideographic (Kanji
-         * or Hanga) representation and then a phonetic representation (Hiragana or Hangul). These are separated by ‘=’
-         * (0x3d) characters.
-         */
-        StringBuilder buf = new StringBuilder();
-        String[] names = name.split("="); //$NON-NLS-1$
-        for (int k = 0; k < names.length; k++) {
-            if (k > 0) {
-                buf.append("="); //$NON-NLS-1$
-            }
-            /*
-             * In DICOM “family name^given name^middle name^prefix^suffix”
-             *
-             * In HL7 “family name^given name^middle name^suffix^prefix^ degree”
-             */
-            String[] vals = names[k].split("\\^"); //$NON-NLS-1$
-
-            for (int i = 0; i < vals.length; i++) {
-                if (StringUtil.hasText(vals[i])) {
-                    if (i >= 3) {
-                        buf.append(", "); //$NON-NLS-1$
-                    } else {
-                        buf.append(" "); //$NON-NLS-1$
-                    }
-                }
-                buf.append(vals[i]);
-            }
-
-        }
-        return buf.toString().trim();
-    }
-
-    public static String buildDicomPatientSex(String val) {
-        // Sex attribute can have the following values: M(male), F(female), or O(other)
-        String name = val == null ? "O" : val; //$NON-NLS-1$
-        return name.startsWith("F") ? Messages.getString("TagW.female") //$NON-NLS-1$ //$NON-NLS-2$
-            : name.startsWith("M") ? Messages.getString("TagW.Male") : Messages.getString("TagW.other"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    }
-
-    public static String convertSecondsInTime(int totalSecs) {
-        int hours = totalSecs / 3600;
-        int minutes = (totalSecs % 3600) / 60;
-        int seconds = totalSecs % 60;
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-    }
-
 }

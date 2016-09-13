@@ -12,6 +12,7 @@ package org.weasis.dicom.codec;
 
 import java.io.File;
 
+@FunctionalInterface
 public interface FileExtractor {
 
     File getExtractFile();

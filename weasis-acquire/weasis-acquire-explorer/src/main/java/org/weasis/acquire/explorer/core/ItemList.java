@@ -68,27 +68,21 @@ public class ItemList<T> extends AbstractBean<ItemList.eProperty> {
         return itemList;
     }
 
-    @SuppressWarnings("unchecked")
-    public List<T> getCopyList() {
-        return (List<T>) itemList.clone();
-    }
-
     public void addItem(T item) {
         insertItem(Integer.MAX_VALUE, item); // append to the end of list
     }
 
     public void insertItem(int index, T item) {
-        // if (item != null && !itemList.contains(item)) { // Use Set instead of List !!!!
         if (item != null) {
-            index = index < 0 ? 0 : index >= itemList.size() ? itemList.size() : index;
-            itemList.add(index, item);
-            firePropertyChange(eProperty.INTERVAL_ADDED, null, new Interval(index, index));
+            int insert = index < 0 ? 0 : index >= itemList.size() ? itemList.size() : index;
+            itemList.add(insert, item);
+            firePropertyChange(eProperty.INTERVAL_ADDED, null, new Interval(insert, insert));
         }
         this.itemList = itemList.stream().distinct().collect(Collectors.toCollection(ArrayList::new));
     }
 
     public void addItems(List<T> list) {
-        if (list != null && list.size() > 0) {
+        if (list != null && !list.isEmpty()) {
             for (T item : list) {
                 if (item != null) {
                     itemList.add(item);
@@ -111,7 +105,7 @@ public class ItemList<T> extends AbstractBean<ItemList.eProperty> {
     }
 
     public void removeItems(List<T> list) {
-        if (list != null && list.size() > 0) {
+        if (list != null && !list.isEmpty()) {
             for (T item : list) {
                 removeItem(item);
             }
@@ -144,11 +138,20 @@ public class ItemList<T> extends AbstractBean<ItemList.eProperty> {
     }
 
     public static class Interval {
-        public int index0, index1;
+        private final int min;
+        private final int max;
 
         public Interval(int index0, int index1) {
-            this.index0 = Math.min(index0, index1);
-            this.index1 = Math.max(index0, index1);
+            this.min = Math.min(index0, index1);
+            this.max = Math.max(index0, index1);
+        }
+
+        public int getMin() {
+            return min;
+        }
+
+        public int getMax() {
+            return max;
         }
     }
 

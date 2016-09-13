@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 import org.weasis.jpeg.cpp.libijg.RETURN_MSG;
 import org.weasis.jpeg.cpp.libijg.jpeg_decompress_struct;
 
-public interface DecoderIJG {
+public interface DecoderIJG extends AutoCloseable {
 
     jpeg_decompress_struct getJpeg_DecompressStruct();
 
@@ -31,5 +31,8 @@ public interface DecoderIJG {
         ByteBuffer uncompressedFrameBuffer, long uncompressedFrameBufferSize);
 
     void deallocate();
+    
+    @Override
+    default void close() {}
 
 }

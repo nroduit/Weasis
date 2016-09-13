@@ -145,7 +145,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<DockableTool> TOOLS = View2dContainer.TOOLS;
-    private static volatile boolean INI_COMPONENTS = false;
+    private static volatile boolean initComponents = false;
 
     private volatile Thread process;
     private volatile String lastCommand;
@@ -157,8 +157,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     public MPRContainer(GridBagLayoutModel layoutModel, String uid) {
         super(EventManager.getInstance(), layoutModel, uid, MPRFactory.NAME, MPRFactory.ICON, null);
         setSynchView(SynchView.NONE);
-        if (!INI_COMPONENTS) {
-            INI_COMPONENTS = true;
+        if (!initComponents) {
+            initComponents = true;
             // Add standard toolbars
             // WProperties props = (WProperties) BundleTools.SYSTEM_PREFERENCES.clone();
             // props.putBooleanProperty("weasis.toolbar.synchbouton", false); //$NON-NLS-1$

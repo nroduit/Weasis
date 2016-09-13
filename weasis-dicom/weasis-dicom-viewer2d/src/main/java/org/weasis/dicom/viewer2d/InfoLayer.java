@@ -464,7 +464,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
                                 value = getTagValue(tag, patient, study, series, dcm);
                                 if (value != null) {
-                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2, str, border, drawY);
                                         drawY += fontHeight;
@@ -489,7 +489,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
                                 value = getTagValue(tag, patient, study, series, dcm);
                                 if (value != null) {
-                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2, str,
                                             bound.width - g2.getFontMetrics().stringWidth(str) - (float) border, drawY);
@@ -515,7 +515,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
                                 value = getTagValue(tag, patient, study, series, dcm);
                                 if (value != null) {
-                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2, str,
                                             bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);

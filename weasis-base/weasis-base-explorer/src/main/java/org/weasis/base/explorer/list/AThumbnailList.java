@@ -50,8 +50,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.JIUtility;
 import org.weasis.base.explorer.Messages;
@@ -74,7 +72,6 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 @SuppressWarnings("serial")
 public abstract class AThumbnailList<E extends MediaElement> extends JList<E> implements IThumbnailList<E> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AThumbnailList.class);
 
     public static final String SECTION_CHANGED = "SECTION_CHANGED"; //$NON-NLS-1$
     public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; //$NON-NLS-1$
@@ -92,7 +89,6 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
     private boolean changed;
     private Point dragPressed = null;
     private DragSource dragSource = null;
-    private MediaElement lastSelectedDiskObject = null;
 
     public AThumbnailList() {
         this(HORIZONTAL_WRAP);
@@ -246,7 +242,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
         toolTips.append("<br>"); //$NON-NLS-1$
         toolTips.append(Messages.getString("JIThumbnailList.size")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(FileUtil.formatSize((item.getLength())));
+        toolTips.append(FileUtil.formatSize(item.getLength()));
         toolTips.append("<br>"); //$NON-NLS-1$
 
         toolTips.append(Messages.getString("JIThumbnailList.date")); //$NON-NLS-1$
@@ -535,7 +531,6 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
 
     @Override
     public void listValueChanged(final ListSelectionEvent e) {
-        this.lastSelectedDiskObject = null;
         setChanged();
         notifyObservers(SECTION_CHANGED);
         clearChanged();

@@ -47,7 +47,7 @@ public final class InputStreamAdapter extends InputStream {
     }
 
     @Override
-    public int read(byte b[], int off, int len) throws IOException {
+    public int read(byte[] b, int off, int len) throws IOException {
         return stream.read(b, off, len);
     }
 

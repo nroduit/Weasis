@@ -75,7 +75,7 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         if (t == 0) {
             return pos;
         } else {
-            return (pos + (period - t));
+            return pos + (period - t);
         }
     }
 
@@ -87,7 +87,7 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
     @Override
     protected Object createStatistics(String name) {
         int numBands = sampleModel.getNumBands();
-        Object stats = null;
+        Object stats;
 
         if (name.equalsIgnoreCase("statistics")) { //$NON-NLS-1$
             stats = new double[3][numBands];

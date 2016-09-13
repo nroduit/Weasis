@@ -49,7 +49,7 @@ public class SplittingRules {
     }
 
     private void initDefault() {
-        SplittingModalityRules defRules = new SplittingModalityRules(Modality.Default);
+        SplittingModalityRules defRules = new SplittingModalityRules(Modality.DEFAULT);
 
         defRules.addSingleFrameTags(Tag.ImageType, null);
         defRules.addSingleFrameTags(Tag.SOPClassUID, null);

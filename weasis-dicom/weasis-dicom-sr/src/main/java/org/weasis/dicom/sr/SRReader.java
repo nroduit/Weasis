@@ -168,7 +168,7 @@ public class SRReader {
                 addCodeMeaning(html, c.getConceptCode(), null, null);
             } else if ("PNAME".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
-                convertTextToHTML(html, TagUtil.buildDicomPersonName(c.getPersonName()));
+                convertTextToHTML(html, TagD.getDicomPersonName(c.getPersonName()));
             } else if ("NUM".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : " = "); //$NON-NLS-1$ //$NON-NLS-2$
                 Attributes val = c.getMeasuredValue();
@@ -374,7 +374,7 @@ public class SRReader {
             html.append(tag.getDisplayedName());
             html.append("</B>"); //$NON-NLS-1$
             html.append(StringUtil.COLON_AND_SPACE);
-            html.append(tag.getFormattedText(tag.getValue(dcmItems), null));
+            html.append(tag.getFormattedTagValue(tag.getValue(dcmItems), null));
         }
     }
 
@@ -402,12 +402,12 @@ public class SRReader {
                 html.append(StringUtil.COLON);
                 html.append("<BR>"); //$NON-NLS-1$
                 for (Attributes v : seq) {
-                    TemporalAccessor date =  (TemporalAccessor) TagD.get(Tag.VerificationDateTime).getValue(v);
+                    TemporalAccessor date = (TemporalAccessor) TagD.get(Tag.VerificationDateTime).getValue(v);
                     if (date != null) {
                         html.append(" * "); //$NON-NLS-1$
                         html.append(TagUtil.formatDateTime(date));
                         html.append(" - "); //$NON-NLS-1$
-                        String name = TagUtil.buildDicomPersonName(v.getString(Tag.VerifyingObserverName));
+                        String name = TagD.getDicomPersonName(v.getString(Tag.VerifyingObserverName));
                         if (name != null) {
                             html.append(name);
                             html.append(", "); //$NON-NLS-1$

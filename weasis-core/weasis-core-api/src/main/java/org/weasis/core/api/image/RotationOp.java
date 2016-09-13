@@ -19,15 +19,12 @@ import javax.media.jai.JAI;
 import javax.media.jai.operator.TransposeDescriptor;
 import javax.media.jai.operator.TransposeType;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.ImageToolkit;
 
 public class RotationOp extends AbstractOp {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RotationOp.class);
-
+    
     public static final String OP_NAME = Messages.getString("RotationOperation.title"); //$NON-NLS-1$
 
     /**

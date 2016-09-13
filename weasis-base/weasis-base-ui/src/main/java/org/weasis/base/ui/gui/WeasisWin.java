@@ -24,8 +24,6 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -166,6 +164,7 @@ public class WeasisWin {
 
         @Override
         public void focusLost(CDockable dockable) {
+            // Do nothing
         }
     };
 
@@ -267,7 +266,7 @@ public class WeasisWin {
     }
 
     public void destroyOnClose(final CControl control) {
-        runOnClose(() -> control.destroy());
+        runOnClose(control::destroy);
     }
 
     public void createMainPanel() throws Exception {
@@ -297,7 +296,7 @@ public class WeasisWin {
             Color inactiveColor = DockUI.getColor(LookAndFeelColors.TITLE_BACKGROUND).darker();
             Color inactiveColorGradient = DockUI.getColor(LookAndFeelColors.PANEL_BACKGROUND);
             Color activeColor = selection.darker();
-            Color ActiveTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground"); //$NON-NLS-1$
+            Color activeTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground"); //$NON-NLS-1$
 
             colors.put(Priority.CLIENT, "stack.tab.border.selected", inactiveColorGradient); //$NON-NLS-1$
             colors.put(Priority.CLIENT, "stack.tab.border.selected.focused", selection); //$NON-NLS-1$
@@ -312,11 +311,11 @@ public class WeasisWin {
             colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focuslost", inactiveColor); //$NON-NLS-1$
 
             colors.put(Priority.CLIENT, "stack.tab.text.selected", RexSystemColor.getInactiveTextColor()); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", ActiveTextColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", activeTextColor); //$NON-NLS-1$
             colors.put(Priority.CLIENT, "stack.tab.text.selected.focuslost", RexSystemColor.getInactiveTextColor()); //$NON-NLS-1$
 
             colors.put(Priority.CLIENT, "title.flap.active", selection); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "title.flap.active.text", ActiveTextColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "title.flap.active.text", activeTextColor); //$NON-NLS-1$
             colors.put(Priority.CLIENT, "title.flap.active.knob.highlight", Colors.brighter(selection)); //$NON-NLS-1$
             colors.put(Priority.CLIENT, "title.flap.active.knob.shadow", Colors.darker(selection)); //$NON-NLS-1$
         }
@@ -419,7 +418,7 @@ public class WeasisWin {
                     // });
                 }
             }
-            if (group == null && model instanceof TreeModel && seriesList.size() > 0
+            if (group == null && model instanceof TreeModel && !seriesList.isEmpty()
                 && model.getTreeModelNodeForNewPlugin() != null) {
                 TreeModel treeModel = (TreeModel) model;
                 MediaSeries s = seriesList.get(0);
@@ -506,7 +505,7 @@ public class WeasisWin {
         }
     }
 
-    private boolean registerDetachWindow(final ViewerPlugin plugin, Rectangle screenBound) {
+    private static boolean registerDetachWindow(final ViewerPlugin plugin, Rectangle screenBound) {
         if (plugin != null && screenBound != null) {
             ViewerPlugin oldWin = null;
 
@@ -621,7 +620,7 @@ public class WeasisWin {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Toolkit kit = Toolkit.getDefaultToolkit();
 
-        Rectangle bound = null;
+        Rectangle bound;
 
         GraphicsConfiguration config = ge.getDefaultScreenDevice().getDefaultConfiguration();
         Rectangle b;
@@ -665,14 +664,11 @@ public class WeasisWin {
         final String helpURL = System.getProperty("weasis.help.url"); //$NON-NLS-1$
         if (helpURL != null) {
             final JMenuItem helpContentMenuItem = new JMenuItem(Messages.getString("WeasisWin.guide")); //$NON-NLS-1$
-            helpContentMenuItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        JMVUtils.openInDefaultBrowser(helpContentMenuItem, new URL(helpURL));
-                    } catch (MalformedURLException e1) {
-                        e1.printStackTrace();
-                    }
+            helpContentMenuItem.addActionListener(e -> {
+                try {
+                    JMVUtils.openInDefaultBrowser(helpContentMenuItem, new URL(helpURL));
+                } catch (MalformedURLException e1) {
+                    LOGGER.error("Open URL in default browser", e);
                 }
             });
             helpMenuItem.add(helpContentMenuItem);
@@ -684,7 +680,7 @@ public class WeasisWin {
                 URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")); //$NON-NLS-1$
                 JMVUtils.openInDefaultBrowser(webMenuItem, url);
             } catch (MalformedURLException e1) {
-                e1.printStackTrace();
+                LOGGER.error("Open URL in default browser", e);
             }
         });
         helpMenuItem.add(webMenuItem);
@@ -695,7 +691,7 @@ public class WeasisWin {
                 URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")); //$NON-NLS-1$
                 JMVUtils.openInDefaultBrowser(websiteMenuItem, url);
             } catch (MalformedURLException e1) {
-                e1.printStackTrace();
+                LOGGER.error("Open URL in default browser", e);
             }
         });
         helpMenuItem.add(websiteMenuItem);
@@ -716,14 +712,10 @@ public class WeasisWin {
         for (final Toolbar bar : bars) {
             if (!Insertable.Type.EMPTY.equals(bar.getType())) {
                 JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
-                item.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (e.getSource() instanceof JCheckBoxMenuItem) {
-                            toolbarContainer.displayToolbar(bar.getComponent(),
-                                ((JCheckBoxMenuItem) e.getSource()).isSelected());
-                        }
+                item.addActionListener(e -> {
+                    if (e.getSource() instanceof JCheckBoxMenuItem) {
+                        toolbarContainer.displayToolbar(bar.getComponent(),
+                            ((JCheckBoxMenuItem) e.getSource()).isSelected());
                     }
                 });
                 toolBarMenu.add(item);

@@ -21,19 +21,17 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -81,23 +79,9 @@ public class DicomMediaUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaUtils.class);
 
-    public static final String weasisRootUID;
-
-    static {
-        /**
-         * Set value for dicom root UID which should be registered at the
-         * http://www.iana.org/assignments/enterprise-numbers <br>
-         * Default value is 2.25, this enables users to generate OIDs without any registration procedure
-         *
-         * @see http://www.dclunie.com/medical-image-faq/html/part2.html#UUID <br>
-         *      http://www.oid-info.com/get/2.25 <br>
-         *      http://www.itu.int/ITU-T/asn1/uuid.html<br>
-         *      http://healthcaresecprivacy.blogspot.ch/2011/02/creating-and-using-unique-id-uuid-oid.html
-         */
-        weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot()); //$NON-NLS-1$
-
-        UIDUtils.setRoot(weasisRootUID);
-    }
+    private static final int[] modalityLutAttributes = new int[] { Tag.RescaleIntercept, Tag.RescaleSlope };
+    private static final int[] VOILUTWindowLevelAttributes = new int[] { Tag.WindowCenter, Tag.WindowWidth };
+    private static final int[] LUTAttributes = new int[] { Tag.LUTDescriptor, Tag.LUTData };
 
     public static synchronized void enableAnonymizationProfile(boolean activate) {
         // Default anonymization profile
@@ -131,7 +115,6 @@ public class DicomMediaUtils {
             }
         }
         TagW.PatientPseudoUID.setAnonymizationType(type);
-
     }
 
     /**
@@ -155,10 +138,9 @@ public class DicomMediaUtils {
                 missingTagList.add(TagUtils.toString(tag));
             }
         }
-        return (countValues == requiredTags.length);
+        return countValues == requiredTags.length;
     }
 
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
      * Either a Modality LUT Sequence containing a single Item or Rescale Slope and Intercept values shall be present
      * but not both.<br>
@@ -170,8 +152,6 @@ public class DicomMediaUtils {
      * @see - Dicom Standard 2011 - PS 3.3 § C.11.1 Modality LUT Module
      */
 
-    public static final int[] modalityLutAttributes = new int[] { Tag.RescaleIntercept, Tag.RescaleSlope };
-
     public static boolean containsRequiredModalityLUTAttributes(Attributes dcmItems) {
         return containsRequiredAttributes(dcmItems, modalityLutAttributes);
     }
@@ -180,7 +160,6 @@ public class DicomMediaUtils {
         return containsRequiredAttributes(dcmItems, Tag.ModalityLUTType) && containsLUTAttributes(dcmItems);
     }
 
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
      *
      * If any VOI LUT Table is included by an Image, a Window Width and Window Center or the VOI LUT Table, but not
@@ -195,16 +174,9 @@ public class DicomMediaUtils {
      * @see - Dicom Standard 2011 - PS 3.3 § C.11.2 VOI LUT Module
      */
 
-    public static final int[] VOILUTWindowLevelAttributes = new int[] { Tag.WindowCenter, Tag.WindowWidth };
-
     public static boolean containsRequiredVOILUTWindowLevelAttributes(Attributes dcmItems) {
         return containsRequiredAttributes(dcmItems, VOILUTWindowLevelAttributes);
     }
-
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public static final int[] LUTAttributes = //
-        new int[] { Tag.LUTDescriptor, Tag.LUTData };
 
     public static boolean containsLUTAttributes(Attributes dcmItems) {
         return containsRequiredAttributes(dcmItems, LUTAttributes);
@@ -253,7 +225,7 @@ public class DicomMediaUtils {
             try {
                 bData = dicomLutObject.getBytes(Tag.LUTData);
             } catch (IOException e) {
-                LOGGER.error("Cannot get byte[] of {}: {} ", TagUtils.toString(Tag.LUTData), e.getMessage()); //$NON-NLS-1$
+                LOGGER.error("Cannot get byte[] of {}: {} ", TagUtils.toString(Tag.LUTData), e); //$NON-NLS-1$
                 return null;
             }
 
@@ -321,14 +293,11 @@ public class DicomMediaUtils {
         }
 
         String[] s = dicom.getStrings(tag);
-        if (s == null) {
+        if (s == null || s.length == 0) {
             return null;
         }
         if (s.length == 1) {
             return s[0];
-        }
-        if (s.length == 0) {
-            return ""; //$NON-NLS-1$
         }
         StringBuilder sb = new StringBuilder(s[0]);
         for (int i = 1; i < s.length; i++) {
@@ -383,12 +352,12 @@ public class DicomMediaUtils {
         return val;
     }
 
-    public static String getPatientAgeFromDicomElement(Attributes dicom, int tag, boolean computeIfNull) {
-        return getPatientAgeFromDicomElement(dicom, tag, null, null, computeIfNull);
+    public static String getPatientAgeInPeriod(Attributes dicom, int tag, boolean computeIfNull) {
+        return getPatientAgeInPeriod(dicom, tag, null, null, computeIfNull);
     }
 
-    public static String getPatientAgeFromDicomElement(Attributes dicom, int tag, String privateCreatorID,
-        String defaultValue, boolean computeIfNull) {
+    public static String getPatientAgeInPeriod(Attributes dicom, int tag, String privateCreatorID, String defaultValue,
+        boolean computeIfNull) {
         if (dicom == null) {
             return defaultValue;
         }
@@ -403,7 +372,7 @@ public class DicomMediaUtils {
         if (date != null) {
             Date bithdate = dicom.getDate(Tag.PatientBirthDate);
             if (bithdate != null) {
-                return String.format("%03dY", getDiffYears(bithdate, date));
+                return getPeriod(TagUtil.toLocalDate(bithdate), TagUtil.toLocalDate(date));
             }
         }
         return null;
@@ -420,21 +389,19 @@ public class DicomMediaUtils {
         return date;
     }
 
-    public static int getDiffYears(Date first, Date last) {
-        Calendar a = getCalendar(first);
-        Calendar b = getCalendar(last);
-        int diff = b.get(Calendar.YEAR) - a.get(Calendar.YEAR);
-        if (a.get(Calendar.MONTH) > b.get(Calendar.MONTH)
-            || (a.get(Calendar.MONTH) == b.get(Calendar.MONTH) && a.get(Calendar.DATE) > b.get(Calendar.DATE))) {
-            diff--;
-        }
-        return diff;
-    }
+    public static String getPeriod(LocalDate first, LocalDate last) {
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(last);
 
-    private static Calendar getCalendar(Date date) {
-        Calendar cal = Calendar.getInstance(Locale.US);
-        cal.setTime(date);
-        return cal;
+        long years = ChronoUnit.YEARS.between(first, last);
+        if (years < 2) {
+            long months = ChronoUnit.MONTHS.between(first, last);
+            if (months < 2) {
+                return String.format("%03dD", ChronoUnit.DAYS.between(first, last));
+            }
+            return String.format("%03dM", months);
+        }
+        return String.format("%03dY", years);
     }
 
     public static Float getFloatFromDicomElement(Attributes dicom, int tag, Float defaultValue) {
@@ -645,7 +612,7 @@ public class DicomMediaUtils {
         if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
             DicomMediaIO.tagManager.readTags(Level.PATIENT, header, group);
             // Build patient age if not present
-            group.setTagNoNull(TagD.get(Tag.PatientAge), getPatientAgeFromDicomElement(header, Tag.PatientAge, true));
+            group.setTagNoNull(TagD.get(Tag.PatientAge), getPatientAgeInPeriod(header, Tag.PatientAge, true));
         }
         // Study Group
         else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
@@ -698,7 +665,7 @@ public class DicomMediaUtils {
 
     /**
      * Build the shape from DICOM Shutter
-     * 
+     *
      * @see <a href="http://dicom.nema.org/MEDICAL/DICOM/current/output/chtml/part03/sect_C.7.6.11.html">C.7.6.11
      *      Display Shutter Module</a>
      * @see <a href="http://dicom.nema.org/MEDICAL/DICOM/current/output/chtml/part03/sect_C.7.6.15.html">C.7.6.15 Bitmap
@@ -955,7 +922,7 @@ public class DicomMediaUtils {
                 } else {
                     String modlality = TagD.getTagValue(tagable, Tag.Modality, String.class);
                     if (("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        || "PT".equals(modlality)) == false) { //$NON-NLS-1$
+                        || !"PT".equals(modlality))) { //$NON-NLS-1$
                         LOGGER
                             .debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
                     }
@@ -1128,7 +1095,7 @@ public class DicomMediaUtils {
                 // STDDEV = standard deviations
                 if ("BQML".equals(units)) { //$NON-NLS-1$
                     Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f);
-                    if (weight != 0.0f) {
+                    if (MathUtil.isDifferentFromZero(weight)) {
                         Attributes dcm =
                             dicomObject.getNestedDataset(Tag.RadiopharmaceuticalInformationSequence, index);
                         if (dcm != null) {
@@ -1179,15 +1146,12 @@ public class DicomMediaUtils {
                 } else if ("CNTS".equals(units)) { //$NON-NLS-1$
                     String privateTagCreator = dicomObject.getString(0x70530010);
                     double privateSUVFactor = dicomObject.getDouble(0x70531000, 0.0);
-                    if ("Philips PET Private Group".equals(privateTagCreator) && privateSUVFactor != 0.0) { //$NON-NLS-1$
-                        suvFactor = privateSUVFactor;
-                        // units= "g/ml";
+                    if ("Philips PET Private Group".equals(privateTagCreator) //$NON-NLS-1$
+                        && MathUtil.isDifferentFromZero(privateSUVFactor)) {
+                        suvFactor = privateSUVFactor; // units => "g/ml"
                     }
                 } else if ("GML".equals(units)) { //$NON-NLS-1$
                     suvFactor = 1.0;
-                    // UNIT
-                    // String unit = dicomObject.getString(Tag.SUVType);
-
                 }
                 if (MathUtil.isDifferentFromZero(suvFactor)) {
                     tagable.setTag(TagW.SuvFactor, suvFactor);
@@ -1453,6 +1417,16 @@ public class DicomMediaUtils {
 
     public static class KeyObjectSelectionCode implements Comparable<KeyObjectSelectionCode> {
 
+        final String resourceName;
+        final String contextGroupID;
+
+        final String codingSchemeDesignator;
+        final String codeValue;
+        final String codeMeaning;
+
+        final String conceptNameCodeModifier;
+        final String contexGroupIdModifier;
+
         public KeyObjectSelectionCode(String resourceName, String contextGroupID, String codingSchemeDesignator,
             String codeValue, String codeMeaning, String conceptNameCodeModifier, String contexGroupIdModifier) {
 
@@ -1467,16 +1441,6 @@ public class DicomMediaUtils {
             this.contexGroupIdModifier = contexGroupIdModifier;
         }
 
-        final String resourceName;
-        final String contextGroupID;
-
-        final String codingSchemeDesignator;
-        final String codeValue;
-        final String codeMeaning;
-
-        final String conceptNameCodeModifier;
-        final String contexGroupIdModifier;
-
         final Boolean hasConceptModifier() {
             return conceptNameCodeModifier != null;
         }
@@ -1485,7 +1449,7 @@ public class DicomMediaUtils {
         public int compareTo(KeyObjectSelectionCode o) {
             return this.codeValue.compareToIgnoreCase(o.codeValue);
         }
-
+        
         public Attributes toCodeItem() {
             Attributes attrs = new Attributes(3);
             attrs.setString(Tag.CodeValue, VR.SH, codeValue);
@@ -1574,9 +1538,9 @@ public class DicomMediaUtils {
                 String[] strs = val.split(separator);
                 TemporalAccessor[] vals = new TemporalAccessor[strs.length];
                 for (int i = 0; i < strs.length; i++) {
-                    if (TagType.TIME.equals(type)) {
+                    if (TagType.DICOM_TIME.equals(type)) {
                         vals[i] = TagD.getDicomTime(strs[i]);
-                    } else if (TagType.DATETIME.equals(type)) {
+                    } else if (TagType.DICOM_DATETIME.equals(type)) {
                         vals[i] = TagD.getDicomDateTime(null, strs[i]);
                     } else {
                         vals[i] = TagD.getDicomDate(strs[i]);

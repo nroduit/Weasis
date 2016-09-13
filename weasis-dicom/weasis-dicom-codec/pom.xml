@@ -15,6 +15,7 @@
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 		<dcm4che.version>dcm4chee-arc-light-5.2.1</dcm4che.version>
+		<powermock.version>1.6.5</powermock.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -60,7 +61,7 @@
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-imageio</artifactId>
-			<version>${dcm4che.version}-r1</version>
+			<version>${dcm4che.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
@@ -114,6 +115,26 @@
 			<artifactId>vecmath</artifactId>
 			<version>1.5.2</version>
 			<scope>provided</scope>
+		</dependency>
+		
+				<!-- FOR TESTS -->
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.5.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito2</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

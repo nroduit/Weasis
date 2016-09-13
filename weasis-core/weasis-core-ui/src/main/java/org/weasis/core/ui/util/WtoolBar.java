@@ -26,6 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
+@SuppressWarnings("serial")
 public class WtoolBar extends JPanel implements Toolbar {
 
     private final String barName;

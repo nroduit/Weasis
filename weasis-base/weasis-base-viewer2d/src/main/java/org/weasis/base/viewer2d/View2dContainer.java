@@ -101,7 +101,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
-    private static volatile boolean INI_COMPONENTS = false;
+    private static volatile boolean initComponents = false;
 
     public View2dContainer() {
         this(VIEWS_1x1, null);
@@ -110,8 +110,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public View2dContainer(GridBagLayoutModel layoutModel, String uid) {
         super(EventManager.getInstance(), layoutModel, uid, ViewerFactory.NAME, ViewerFactory.ICON, null);
         setSynchView(SynchView.DEFAULT_STACK);
-        if (!INI_COMPONENTS) {
-            INI_COMPONENTS = true;
+        if (!initComponents) {
+            initComponents = true;
 
             // Add standard toolbars
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();

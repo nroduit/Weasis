@@ -1003,7 +1003,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         if (desc[1] == null) {
             String ts = tsuid;
             if (ts == null) {
-                ts = TagW.NO_VALUE;
+                ts = "unknown";
             }
             desc[1] = Messages.getString("DicomMediaIO.msg_no_reader") + StringUtil.COLON_AND_SPACE + ts; //$NON-NLS-1$
         }

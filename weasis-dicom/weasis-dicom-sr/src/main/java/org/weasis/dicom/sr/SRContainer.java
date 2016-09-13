@@ -94,7 +94,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>(1));
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>(1));
-    private static volatile boolean INI_COMPONENTS = false;
+    private static volatile boolean initComponents = false;
     static final ImageViewerEventManager<DicomImageElement> SR_EVENT_MANAGER =
         new ImageViewerEventManager<DicomImageElement>() {
 
@@ -139,8 +139,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public SRContainer(GridBagLayoutModel layoutModel, String uid) {
         super(SR_EVENT_MANAGER, layoutModel, uid, SRFactory.NAME, SRFactory.ICON, null);
         setSynchView(SynchView.NONE);
-        if (!INI_COMPONENTS) {
-            INI_COMPONENTS = true;
+        if (!initComponents) {
+            initComponents = true;
             // Add standard toolbars
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             String bundleName = context.getBundle().getSymbolicName();

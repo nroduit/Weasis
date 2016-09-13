@@ -79,7 +79,6 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
                             FileInputStream in = null;
                             FileOutputStream out = null;
                             try {
-                                // TODO implement decompression in reader
                                 File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                 in = new FileInputStream(dcmVideo.getFile());
                                 out = new FileOutputStream(videoFile);
@@ -87,6 +86,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
                                 StreamUtils.copy(in, out, bulkData.length());
                                 dcmVideo.setVideoFile(videoFile);
                                 this.add(dcmVideo);
+                                return;
                             } catch (Exception e) {
                                 LOGGER.error("Cannot extract video stream", e);
                             } finally {
@@ -129,12 +129,19 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
         }
         Integer frames = TagD.getTagValue(this, Tag.NumberOfFrames, Integer.class);
         if (frames != null) {
-            toolTips.append(TagUtil.convertSecondsInTime(frames / speed));
+            toolTips.append(convertSecondsInTime(frames / speed));
         }
         toolTips.append("<br>"); //$NON-NLS-1$
 
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
+    }
+    
+    private static String convertSecondsInTime(int totalSecs) {
+        int hours = totalSecs / 3600;
+        int minutes = (totalSecs % 3600) / 60;
+        int seconds = totalSecs % 60;
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
     @Override
@@ -151,13 +158,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
     public List<File> getExtractFiles() {
         // Should have only one file as all the DicomVideoElement items are split in sub-series
         List<File> files = new ArrayList<>();
-        Iterable<DicomVideoElement> mediaList = getMedias(null, null);
-        synchronized (this) {
-            for (Iterator<DicomVideoElement> iter = mediaList.iterator(); iter.hasNext();) {
-                DicomVideoElement dcm = iter.next();
-                files.add(dcm.getExtractFile());
-            }
-        }
+        getMedias(null, null).forEach(dcm -> files.add(dcm.getExtractFile())); // Synchronized iteration with forEach
         return files;
     }
 }

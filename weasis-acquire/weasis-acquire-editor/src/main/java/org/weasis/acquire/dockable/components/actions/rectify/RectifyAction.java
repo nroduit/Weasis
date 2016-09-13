@@ -116,8 +116,7 @@ public class RectifyAction extends AbstractAcquireAction {
             transform.transform(pMin, pMin);
             transform.transform(pMax, pMax);
         } catch (NoninvertibleTransformException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOGGER.error("Create inverse transformation", e);
         }
 
         Rectangle2D rect = new Rectangle2D.Double();

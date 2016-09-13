@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Configuration of the rules for splitting series in the DICOM Explorer. 
-	The "Default" modality configuration will be applied on all the modalities 
+	The "DEFAULT" modality configuration will be applied on all the modalities 
 	without configuration (or unknown) -->
 <modalities>
 	<!-- <modality> attributes: name is a mandatory attribute, extend is optional. -->
@@ -32,7 +32,7 @@
 		Weasis source code -->
 
 	<!--
-	<modality name="Default">
+	<modality name="DEFAULT">
 		<splittingTags>
 			<ImageType />
 			<SOPClassUID />
@@ -47,7 +47,7 @@
 		</multiframeSplittingTags>
 	</modality>
 
-	<modality name="CT" extend="Default">
+	<modality name="CT" extend="DEFAULT">
 		<splittingTags>
 			<ConvolutionKernel />
 			<GantryDetectorTilt />
@@ -59,14 +59,14 @@
 		</splittingTags>
 	</modality>
 
-	<modality name="PT" extend="Default">
+	<modality name="PT" extend="DEFAULT">
 		<splittingTags>
 			<ConvolutionKernel />
 			<GantryDetectorTilt />
 		</splittingTags>
 	</modality>
 
-	<modality name="MR" extend="Default">
+	<modality name="MR" extend="DEFAULT">
 		<splittingTags>
 			<ScanningSequence />
 			<SequenceVariant />

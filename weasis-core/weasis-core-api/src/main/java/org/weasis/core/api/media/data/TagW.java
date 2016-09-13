@@ -49,7 +49,7 @@ public class TagW implements Serializable {
 
     protected static final Map<String, TagW> tags = Collections.synchronizedMap(new HashMap<String, TagW>());
 
-    public static final String NO_VALUE = Messages.getString("TagW.unknown");//$NON-NLS-1$
+    public static final String NO_VALUE = "UNKNOWN";//$NON-NLS-1$
 
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
@@ -386,11 +386,6 @@ public class TagW implements Serializable {
         return TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type);
     }
 
-    public String getFormattedText(Object value) {
-        return getFormattedText(value, null);
-    }
-
-
     public synchronized int getAnonymizationType() {
         return anonymizationType;
     }
@@ -398,10 +393,14 @@ public class TagW implements Serializable {
     public synchronized void setAnonymizationType(int anonymizationType) {
         this.anonymizationType = anonymizationType;
     }
+    
+    public String getFormattedTagValue(Object value, String format) {
+        return getFormattedText(value, format);
+    }
 
-    public static String getFormattedText(Object value, String format) {
+    protected static String getFormattedText(Object value, String format) {
         if (value == null) {
-            return ""; //$NON-NLS-1$
+            return StringUtil.EMPTY_STRING;
         }
 
         String str;
@@ -430,7 +429,7 @@ public class TagW implements Serializable {
             return formatValue(str, value instanceof Float || value instanceof Double, format);
         }
 
-        return str;
+        return str == null ? StringUtil.EMPTY_STRING : str;
     }
 
     protected static String formatValue(String value, boolean decimal, String format) {

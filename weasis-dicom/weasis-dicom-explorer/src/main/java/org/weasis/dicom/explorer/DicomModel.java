@@ -962,7 +962,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         Modality.getModality(TagD.getTagValue(initialSeries, Tag.Modality, String.class));
 
                     SplittingModalityRules splitRules =
-                        splittingRules.getSplittingModalityRules(modality, Modality.Default);
+                        splittingRules.getSplittingModalityRules(modality, Modality.DEFAULT);
                     List<Rule> rules;
                     if (splitRules == null) {
                         rules = Collections.emptyList();
@@ -1022,7 +1022,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             String seriesUID = TagD.getTagValue(original, Tag.SeriesInstanceUID, String.class);
 
             Modality modality = Modality.getModality(TagD.getTagValue(original, Tag.Modality, String.class));
-            SplittingModalityRules splitRules = splittingRules.getSplittingModalityRules(modality, Modality.Default);
+            SplittingModalityRules splitRules = splittingRules.getSplittingModalityRules(modality, Modality.DEFAULT);
             List<Rule> rules;
             if (splitRules == null) {
                 rules = Collections.emptyList();

@@ -93,6 +93,7 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 
+@SuppressWarnings("serial")
 public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
 
@@ -131,7 +132,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
-    private static volatile boolean INI_COMPONENTS = false;
+    private static volatile boolean initComponents = false;
 
     public View2dContainer() {
         this(VIEWS_1x1, null, View2dFactory.NAME, View2dFactory.ICON, null);
@@ -140,8 +141,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     public View2dContainer(GridBagLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
         super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
         setSynchView(SynchView.DEFAULT_STACK);
-        if (!INI_COMPONENTS) {
-            INI_COMPONENTS = true;
+        if (!initComponents) {
+            initComponents = true;
 
             // Add standard toolbars
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -223,7 +224,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImageTool.class), key, true)) {
-                tool = new ImageTool(ImageTool.BUTTON_NAME); //$NON-NLS-1$
+                tool = new ImageTool(ImageTool.BUTTON_NAME); 
                 TOOLS.add(tool);
             }
 
@@ -453,7 +454,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                             DicomModel model = (DicomModel) event.getSource();
                             for (MediaSeriesGroup s : model.getChildren(group)) {
                                 for (ViewCanvas<DicomImageElement> v : view2ds) {
-                                    MediaSeries series = v.getSeries();
+                                     MediaSeries<DicomImageElement> series = v.getSeries();
                                     if (s.equals(series)) {
                                         v.setSeries(null);
                                     }

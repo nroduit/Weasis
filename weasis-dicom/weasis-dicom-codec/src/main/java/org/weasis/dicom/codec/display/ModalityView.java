@@ -38,7 +38,7 @@ public class ModalityView {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModalityView.class);
 
     public static final Map<Modality, ModalityInfoData> MODALITY_VIEW_MAP = new HashMap<>();
-    public static final ModalityInfoData DEFAULT_MODALITY_VIEW = new ModalityInfoData(Modality.Default, null);
+    public static final ModalityInfoData DEFAULT_MODALITY_VIEW = new ModalityInfoData(Modality.DEFAULT, null);
 
     static {
         // Format associated to DICOM field:
@@ -89,14 +89,14 @@ public class ModalityView {
          * Spacing Between Slices (0018,0088), if present, else a value derived from successive values of Image Position
          * (Patient) (0020,0032) perpendicular to the Image Orientation (Patient) (0020,0037)
          */
-        MODALITY_VIEW_MAP.put(Modality.Default, DEFAULT_MODALITY_VIEW);
+        MODALITY_VIEW_MAP.put(Modality.DEFAULT, DEFAULT_MODALITY_VIEW);
         readTagDisplayByModality();
     }
 
     public static ModalityInfoData getModlatityInfos(Modality mod) {
         ModalityInfoData mdata = MODALITY_VIEW_MAP.get(mod);
         if (mdata == null) {
-            mdata = MODALITY_VIEW_MAP.get(Modality.Default);
+            mdata = MODALITY_VIEW_MAP.get(Modality.DEFAULT);
         }
         if (mdata == null) {
             mdata = DEFAULT_MODALITY_VIEW;

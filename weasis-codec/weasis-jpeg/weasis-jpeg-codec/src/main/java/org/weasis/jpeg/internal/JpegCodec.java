@@ -25,10 +25,10 @@ import javax.imageio.stream.ImageOutputStream;
 import org.bytedeco.javacpp.IntPointer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.image.jni.StreamSegment;
 import org.weasis.image.jni.ImageParameters;
 import org.weasis.image.jni.NativeCodec;
 import org.weasis.image.jni.NativeImage;
+import org.weasis.image.jni.StreamSegment;
 import org.weasis.jpeg.JpegParameters;
 import org.weasis.jpeg.NativeJPEGImage;
 import org.weasis.jpeg.cpp.libijg;
@@ -49,23 +49,17 @@ public class JpegCodec implements NativeCodec {
         String msg = null;
         StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
-            DecoderIJG decomp = new DJDecompressIJG8Bit();
-            try {
+            try (DecoderIJG decomp = new DJDecompressIJG8Bit()) {
                 ByteBuffer buffer = seg.getDirectByteBuffer(0);
                 decomp.init(false);
                 RETURN_MSG val = decomp.readHeader(buffer, buffer.limit(), false);
                 if (val != null && val.code() == libijg.OK) {
                     setParameters(nImage.getImageParameters(), decomp);
-                } else {
-                    if (val != null) {
-                        msg = val == null ? "error" : val.msg().getString();
-                    }
+                } else if (val != null) {
+                    msg = val.msg().getString();
                 }
                 // keep a reference to be not garbage collected
                 buffer.clear();
-            } finally {
-                // Do not close inChannel (comes from image input stream)
-                decomp.deallocate();
             }
         }
         return msg;
@@ -82,9 +76,8 @@ public class JpegCodec implements NativeCodec {
             if (bps < 1 || bps > 16) {
                 return "JPEG codec: invalid bit per sample: " + bps;
             }
-            DecoderIJG decomp = bps > 12 ? new DJDecompressIJG16Bit()
-                : bps > 8 ? new DJDecompressIJG12Bit() : new DJDecompressIJG8Bit();
-            try {
+            try (DecoderIJG decomp = bps > 12 ? new DJDecompressIJG16Bit()
+                : bps > 8 ? new DJDecompressIJG12Bit() : new DJDecompressIJG8Bit()) {
                 int segmentFragment = 0;
                 ByteBuffer buffer = seg.getDirectByteBuffer(segmentFragment);
                 boolean signed = params.isSignedData();
@@ -111,19 +104,13 @@ public class JpegCodec implements NativeCodec {
                         }
                     }
 
-                    if (val == null || val.code() != libijg.OK) {
-                        msg = val == null ? "error" : val.msg().getString();
-                    }
-                    if (msg == null) {
-                        bps = params.getBitsPerSample();
-                        nImage.setOutputBuffer((bps > 8 && bps <= 16) ? outBuf.asShortBuffer() : outBuf);
-                    }
+                    bps = params.getBitsPerSample();
+                    nImage.setOutputBuffer((bps > 8 && bps <= 16) ? outBuf.asShortBuffer() : outBuf);
+                } else if (val != null) {
+                    msg = val.msg().getString();
                 }
                 // keep a reference to be not garbage collected
                 buffer.clear();
-            } finally {
-                decomp.deallocate();
-                // Do not close inChannel (comes from image input stream)
             }
         }
         return msg;
@@ -274,32 +261,32 @@ public class JpegCodec implements NativeCodec {
                 }
                 // Start of Frame, also known as SOF55, indicates a JPEG-LS file.
                 if (byte2 == 0xF7) {
-                    return getSOF(iis, (byte1 << 8) + (byte2 << 0));
+                    return getSOF(iis, (byte1 << 8) + byte2);
                 }
                 // 0xffc0: // SOF_0: JPEG baseline
                 // 0xffc1: // SOF_1: JPEG extended sequential DCT
                 // 0xffc2: // SOF_2: JPEG progressive DCT
                 // 0xffc3: // SOF_3: JPEG lossless sequential
                 if ((byte2 >= 0xC0) && (byte2 <= 0xC3)) {
-                    return getSOF(iis, (byte1 << 8) + (byte2 << 0));
+                    return getSOF(iis, (byte1 << 8) + byte2);
                 }
                 // 0xffc5: // SOF_5: differential (hierarchical) extended sequential, Huffman
                 // 0xffc6: // SOF_6: differential (hierarchical) progressive, Huffman
                 // 0xffc7: // SOF_7: differential (hierarchical) lossless, Huffman
                 if ((byte2 >= 0xC5) && (byte2 <= 0xC7)) {
-                    return getSOF(iis, (byte1 << 8) + (byte2 << 0));
+                    return getSOF(iis, (byte1 << 8) + byte2);
                 }
                 // 0xffc9: // SOF_9: extended sequential, arithmetic
                 // 0xffca: // SOF_10: progressive, arithmetic
                 // 0xffcb: // SOF_11: lossless, arithmetic
                 if ((byte2 >= 0xC9) && (byte2 <= 0xCB)) {
-                    return getSOF(iis, (byte1 << 8) + (byte2 << 0));
+                    return getSOF(iis, (byte1 << 8) + byte2);
                 }
                 // 0xffcd: // SOF_13: differential (hierarchical) extended sequential, arithmetic
                 // 0xffce: // SOF_14: differential (hierarchical) progressive, arithmetic
                 // 0xffcf: // SOF_15: differential (hierarchical) lossless, arithmetic
                 if ((byte2 >= 0xCD) && (byte2 <= 0xCF)) {
-                    return getSOF(iis, (byte1 << 8) + (byte2 << 0));
+                    return getSOF(iis, (byte1 << 8) + byte2);
                 }
                 int length = iis.read() << 8;
                 length += iis.read();
@@ -337,7 +324,7 @@ public class JpegCodec implements NativeCodec {
         if ((ch1 | ch2) < 0) {
             throw new EOFException();
         }
-        return (ch1 << 8) + (ch2 << 0);
+        return (ch1 << 8) + ch2;
     }
 
 }

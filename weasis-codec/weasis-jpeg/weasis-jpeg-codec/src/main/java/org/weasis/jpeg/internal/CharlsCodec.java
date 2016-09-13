@@ -22,14 +22,15 @@ import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
 import org.bytedeco.javacpp.SizeTPointer;
-import org.weasis.image.jni.StreamSegment;
 import org.weasis.image.jni.ImageParameters;
 import org.weasis.image.jni.NativeCodec;
 import org.weasis.image.jni.NativeImage;
+import org.weasis.image.jni.StreamSegment;
 import org.weasis.jpeg.JpegParameters;
 import org.weasis.jpeg.NativeJPEGImage;
 import org.weasis.jpeg.cpp.libijg;
 import org.weasis.jpeg.cpp.libijg.ByteStreamInfo;
+import org.weasis.jpeg.cpp.libijg.JlsParameters;
 
 public class CharlsCodec implements NativeCodec {
 
@@ -41,24 +42,16 @@ public class CharlsCodec implements NativeCodec {
         int ret = 0;
         StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
-            org.weasis.jpeg.cpp.libijg.JlsParameters p = new org.weasis.jpeg.cpp.libijg.JlsParameters();
-            ByteStreamInfo input = null;
-            try {
+            try (JlsParameters p = new JlsParameters(); SizeTPointer size = new SizeTPointer(1)) {
                 ByteBuffer buffer = seg.getDirectByteBuffer(0);
-                SizeTPointer size = new SizeTPointer(1);
                 size.put(buffer.limit());
-                input = libijg.FromByteArray(buffer, size);
-                ret = libijg.JpegLsReadHeaderStream(input, p);
+                try (ByteStreamInfo input = libijg.FromByteArray(buffer, size)) {
+                    ret = libijg.JpegLsReadHeaderStream(input, p);
+                }
                 if (ret == libijg.OK) {
                     setParameters((JpegParameters) nImage.getImageParameters(), p);
                 }
                 buffer.clear();
-            } finally {
-                // Do not close inChannel (comes from image input stream)
-                p.deallocate();
-                if (input != null) {
-                    input.deallocate();
-                }
             }
         }
         return ret == 0 ? null : libijg.getErrorMessage(ret);
@@ -66,47 +59,48 @@ public class CharlsCodec implements NativeCodec {
 
     @Override
     public String decompress(NativeImage nImage, ImageReadParam param) throws IOException {
-        // TODO use ImageReadParam
         int ret = 0;
         StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
-            org.weasis.jpeg.cpp.libijg.JlsParameters p = new org.weasis.jpeg.cpp.libijg.JlsParameters();
-            ByteStreamInfo input = null;
-            try {
+            // Set JlsParameters in first position to load native library
+            try (JlsParameters p = new JlsParameters();
+                            SizeTPointer size = new SizeTPointer(1);
+                            SizeTPointer size2 = new SizeTPointer(1);) {
                 // When multiple fragments segments, aggregate them in the byteBuffer.
                 ByteBuffer buffer = seg.getDirectByteBuffer(0, seg.getSegLength().length - 1);
-                SizeTPointer size = new SizeTPointer(1);
+                ByteBuffer outBuf;
                 size.put(buffer.limit());
-                input = libijg.FromByteArray(buffer, size);
+                try (ByteStreamInfo input = libijg.FromByteArray(buffer, size)) {
 
-                JpegParameters params = (JpegParameters) nImage.getImageParameters();
-                if (params.getBytesPerLine() == 0) {
-                    ret = libijg.JpegLsReadHeaderStream(input, p);
-                    buffer.clear();
-                    if (ret == libijg.OK) {
-                        setParameters(params, p);
+                    JpegParameters params = (JpegParameters) nImage.getImageParameters();
+                    if (params.getBytesPerLine() == 0) {
+                        ret = libijg.JpegLsReadHeaderStream(input, p);
+                        buffer.clear();
+                        if (ret == libijg.OK) {
+                            setParameters(params, p);
+                        } else {
+                            return "Cannot read JPEG-LS header!";
+                        }
                     } else {
-                        return "Cannot read JPEG-LS header!";
+                        p.width(params.getWidth());
+                        p.height(params.getHeight());
+                        p.bitspersample(params.getBitsPerSample());
+                        p.components(params.getSamplesPerPixel());
+                        p.bytesperline(params.getBytesPerLine());
+                        p.allowedlossyerror(params.getAllowedLossyError());
                     }
-                } else {
-                    p.width(params.getWidth());
-                    p.height(params.getHeight());
-                    p.bitspersample(params.getBitsPerSample());
-                    p.components(params.getSamplesPerPixel());
-                    p.bytesperline(params.getBytesPerLine());
-                    p.allowedlossyerror(params.getAllowedLossyError());
+                    // p.outputBgr('1'); // convert RGB to BGR
+                    p.colorTransform(0); // default (RGB)
+
+                    // Build outputStream here and transform to an array
+                    outBuf = ByteBuffer.allocateDirect(p.bytesperline() * p.height());
+                    outBuf.order(ByteOrder.nativeOrder()); // Not test with big endian system
+                    size2.put(outBuf.limit());
+
+                    try (ByteStreamInfo outStream = libijg.FromByteArray(outBuf, size2)) {
+                        ret = libijg.JpegLsDecodeStream(outStream, input, p);
+                    }
                 }
-                // p.outputBgr('1'); // convert RGB to BGR
-                p.colorTransform(0); // default (RGB)
-
-                // Build outputStream here and transform to an array
-                ByteBuffer outBuf = ByteBuffer.allocateDirect(p.bytesperline() * p.height());
-                outBuf.order(ByteOrder.nativeOrder()); // Not test with big endian system
-                SizeTPointer size2 = new SizeTPointer(1);
-                size2.put(outBuf.limit());
-
-                ByteStreamInfo outStream = libijg.FromByteArray(outBuf, size2);
-                ret = libijg.JpegLsDecodeStream(outStream, input, p);
                 // keep a reference to be not garbage collected
                 buffer.clear();
 
@@ -115,12 +109,6 @@ public class CharlsCodec implements NativeCodec {
                     nImage.setOutputBuffer((bps > 8 && bps <= 16) ? outBuf.asShortBuffer() : outBuf);
                 }
 
-            } finally {
-                // Do not close inChannel (comes from image input stream)
-                p.deallocate();
-                if (input != null) {
-                    input.deallocate();
-                }
             }
         }
         return ret == 0 ? null : libijg.getErrorMessage(ret);
@@ -128,11 +116,10 @@ public class CharlsCodec implements NativeCodec {
 
     @Override
     public String compress(NativeImage nImage, ImageOutputStream ouputStream, Rectangle region) throws IOException {
+        // TODO use ImageReadParam
         int ret = 0;
         if (nImage != null && ouputStream != null && nImage.getInputBuffer() != null) {
-            org.weasis.jpeg.cpp.libijg.JlsParameters p = new org.weasis.jpeg.cpp.libijg.JlsParameters();
-            ByteStreamInfo input = null;
-            try {
+            try (JlsParameters p = new JlsParameters()) {
                 JpegParameters params = (JpegParameters) nImage.getImageParameters();
                 if (params.getBitsPerSample() != 8 && params.getBitsPerSample() != 16) {
                     return "JPGLS codec supports only 8 and 16-bit per pixel!";
@@ -161,7 +148,7 @@ public class CharlsCodec implements NativeCodec {
                 if (b instanceof ByteBuffer) {
                     buffer = ByteBuffer.allocateDirect(b.limit());
                     buffer.order(ByteOrder.LITTLE_ENDIAN);
-                    buffer.put(((ByteBuffer) b));
+                    buffer.put((ByteBuffer) b);
                 } else if (b instanceof ShortBuffer) {
                     ShortBuffer sBuf = (ShortBuffer) b;
                     buffer = ByteBuffer.allocateDirect(sBuf.limit() * 2);
@@ -173,34 +160,33 @@ public class CharlsCodec implements NativeCodec {
                     return "JPGLS codec exception: not valid input buffer";
                 }
                 buffer.flip();
-                SizeTPointer size = new SizeTPointer(1);
-                size.put(buffer.limit());
-                input = libijg.FromByteArray(buffer, size);
 
-                // Build outputStream here and transform to an array
-                ByteBuffer outBuf = ByteBuffer.allocateDirect(params.getWidth() * params.getHeight()
-                    * params.getSamplesPerPixel() * params.getBitsPerSample() / 16);
-                outBuf.order(params.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-                SizeTPointer size2 = new SizeTPointer(1);
-                size2.put(outBuf.limit());
-                ByteStreamInfo outStream = libijg.FromByteArray(outBuf, size2);
-                SizeTPointer bytesWritten = new SizeTPointer(1);
+                try (SizeTPointer size = new SizeTPointer(1);
+                                SizeTPointer size2 = new SizeTPointer(1);
+                                SizeTPointer bytesWritten = new SizeTPointer(1)) {
+                    ByteBuffer outBuf;
+                    size.put(buffer.limit());
+                    try (ByteStreamInfo input = libijg.FromByteArray(buffer, size)) {
 
-                ret = libijg.JpegLsEncodeStream(outStream, bytesWritten, input, p);
-                // keep a reference to be not garbage collected
-                buffer.clear();
+                        // Build outputStream here and transform to an array
+                        outBuf = ByteBuffer.allocateDirect(params.getWidth() * params.getHeight()
+                            * params.getSamplesPerPixel() * params.getBitsPerSample() / 16);
+                        outBuf.order(params.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+                        size2.put(outBuf.limit());
+                        try (ByteStreamInfo outStream = libijg.FromByteArray(outBuf, size2)) {
+                            ret = libijg.JpegLsEncodeStream(outStream, bytesWritten, input, p);
+                        }
+                    }
+                    // keep a reference to be not garbage collected
+                    buffer.clear();
 
-                if (ret == libijg.OK) {
-                    outBuf.rewind();
-                    NativeImage.writeByteBuffer(ouputStream, outBuf, (int) bytesWritten.get());
+                    if (ret == libijg.OK) {
+                        outBuf.rewind();
+                        NativeImage.writeByteBuffer(ouputStream, outBuf, (int) bytesWritten.get());
+                    }
                 }
             } finally {
                 nImage.setInputBuffer(null);
-                // Do not close inChannel (comes from image input stream)
-                p.deallocate();
-                if (input != null) {
-                    input.deallocate();
-                }
             }
         }
         return ret == 0 ? null : libijg.getErrorMessage(ret);

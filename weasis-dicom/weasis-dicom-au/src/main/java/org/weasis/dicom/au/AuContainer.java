@@ -69,7 +69,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
     // initialization with a method.
-    public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>(1));
+    private static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>(1));
     private static volatile boolean initComponents = false;
 
     static final ImageViewerEventManager<DicomImageElement> AU_EVENT_MANAGER =

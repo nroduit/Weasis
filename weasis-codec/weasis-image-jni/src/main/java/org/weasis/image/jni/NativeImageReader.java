@@ -62,6 +62,11 @@ public abstract class NativeImageReader extends ImageReader {
         new HashMap<>();
     protected HashMap<Integer, NativeImage> nativeImages = new HashMap<>();
 
+    protected NativeImageReader(ImageReaderSpi originatingProvider) {
+        super(originatingProvider);
+    }
+
+    protected abstract NativeCodec getCodec();
     /**
      * Creates a <code>ImageTypeSpecifier</code> from the <code>ImageParameters</code>. The default sample model is
      * pixel interleaved and the default color model is CS_GRAY or CS_sRGB and IndexColorModel with palettes.
@@ -93,15 +98,16 @@ public abstract class NativeImageReader extends ImageReader {
             sampleModel = new PixelInterleavedSampleModel(nType, nWidth, nHeight, nBands, nScanlineStride, bandOffsets);
         }
 
-        ColorModel colorModel = null;
+        ColorModel colorModel;
         if (nBands == 1 && redPalette != null && greenPalette != null && bluePalette != null
             && redPalette.length == greenPalette.length && redPalette.length == bluePalette.length) {
 
             // Build IndexColorModel
             int paletteLength = redPalette.length;
             if (alphaPalette != null) {
+                byte[] alphaTmp = alphaPalette ;
                 if (alphaPalette.length != paletteLength) {
-                    byte[] alphaTmp = new byte[paletteLength];
+                    alphaTmp = new byte[paletteLength];
                     if (alphaPalette.length > paletteLength) {
                         System.arraycopy(alphaPalette, 0, alphaTmp, 0, paletteLength);
                     } else {
@@ -110,11 +116,9 @@ public abstract class NativeImageReader extends ImageReader {
                             alphaTmp[i] = (byte) 255; // Opaque.
                         }
                     }
-                    alphaPalette = alphaTmp;
                 }
-
                 colorModel =
-                    new IndexColorModel(nBitDepth, paletteLength, redPalette, greenPalette, bluePalette, alphaPalette);
+                    new IndexColorModel(nBitDepth, paletteLength, redPalette, greenPalette, bluePalette, alphaTmp);
             } else {
                 colorModel = new IndexColorModel(nBitDepth, paletteLength, redPalette, greenPalette, bluePalette);
             }
@@ -145,11 +149,6 @@ public abstract class NativeImageReader extends ImageReader {
         return new ImageTypeSpecifier(colorModel, sampleModel);
     }
 
-    protected NativeImageReader(ImageReaderSpi originatingProvider) {
-        super(originatingProvider);
-    }
-
-    protected abstract NativeCodec getCodec();
 
     /**
      * Stores the location of the image at the specified index in the imageStartPosition List.
@@ -288,7 +287,7 @@ public abstract class NativeImageReader extends ImageReader {
             throw new IllegalStateException("input cannot be null");
         }
         seekToImage(imageIndex);
-        InputStreamAdapter stream = null;
+        InputStreamAdapter stream;
         if (input instanceof ImageInputStream) {
             stream = new InputStreamAdapter((ImageInputStream) input);
         } else {
@@ -559,10 +558,8 @@ public abstract class NativeImageReader extends ImageReader {
     @Override
     public void setInput(Object input, boolean seekForwardOnly, boolean ignoreMetadata) {
         super.setInput(input, seekForwardOnly, ignoreMetadata);
-        if (input != null) {
-            if (!(input instanceof ImageInputStream)) {
+        if (input != null && !(input instanceof ImageInputStream)) {
                 throw new IllegalArgumentException("input is not an ImageInputStream!");
-            }
         }
         resetLocal();
     }

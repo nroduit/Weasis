@@ -159,9 +159,9 @@ public class LoadLocalDicom extends ExplorerTask {
                     for (MediaElement media : medias) {
                         dicomModel.applySplittingRules(dicomSeries, media);
                     }
-                }
-                if (medias.length > 0) {
-                    dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
+                    if (medias.length > 0) {
+                        dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
+                    }
                 }
 
                 // Load image and create thumbnail in this Thread
