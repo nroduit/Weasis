@@ -261,10 +261,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     private static final SoftHashMap<DicomMediaIO, DicomMetaData> HEADER_CACHE =
         new SoftHashMap<DicomMediaIO, DicomMetaData>() {
 
-            public Reference<? extends DicomMetaData> getReference(DicomMediaIO key) {
-                return hash.get(key);
-            }
-
             @Override
             public void removeElement(Reference<? extends DicomMetaData> soft) {
                 DicomMediaIO key = reverseLookup.remove(soft);
@@ -346,7 +342,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     /**
-     * 
+     *
      * @return true when the DICOM Object has no source file (only in memory)
      */
     public boolean isEditableDicom() {
@@ -397,61 +393,15 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
                 writeInstanceTags(fmi, header);
 
-            } catch (Throwable t) {
+            } catch (Exception | OutOfMemoryError e) {
                 mimeType = UNREADABLE;
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.error("Cannot read DICOM:", t); //$NON-NLS-1$
-                } else {
-                    LOGGER.error(t.getMessage());
-                }
+                LOGGER.error("Cannot read DICOM:", e); //$NON-NLS-1$
                 close();
                 return false;
             }
         }
         return true;
     }
-
-    /**
-     * Sets the input for the image reader.
-     *
-     * @param imageIndex
-     *            The Dicom frame index, or overlay number
-     * @return
-     * @throws IOException
-     */
-
-    // protected void initImageReader(int imageIndex) throws IOException {
-    // readMetaData(true);
-    // if (reader == null) {
-    // if (compressed) {
-    // initCompressedImageReader(imageIndex);
-    // } else {
-    // initRawImageReader();
-    // }
-    // }
-    // // Reset the input stream location if required, and reset the reader if required
-    // if (compressed && itemParser != null) {
-    // itemParser.seekFrame(siis, imageIndex);
-    // reader.setInput(siis, false);
-    // }
-    // // TODO 1.2.840.10008.1.2.4.95 (DICOM JPIP Referenced Deflate Transfer Syntax)
-    // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
-    // MediaElement[] elements = getMediaElement();
-    // // TODO handle frame
-    // if (elements != null && elements.length > 0) {
-    // reader.setInput(elements[0]);
-    // }
-    // }
-    // }
-
-    // private void initCompressedImageReader(int imageIndex) throws IOException {
-    // ImageReaderFactory f = ImageReaderFactory.getInstance();
-    // this.reader = f.getReaderForTransferSyntax(tsuid);
-    // if (!"1.2.840.10008.1.2.4.94".equals(tsuid)) {
-    // this.itemParser = new ItemParser(dis, iis, numberOfFrame, tsuid);
-    // this.siis = new SegmentedImageInputStream(iis, itemParser);
-    // }
-    // }
 
     private ImageReader initRawImageReader() {
         long[] frameOffsets = new long[numberOfFrame];
@@ -485,11 +435,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         // riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
 
         ImageReader reader = new RawImageReader(DicomCodec.RawImageReaderSpi);
-        // ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next();
-        // if (reader == null) {
-        // FileUtil.safeClose(riis);
-        // throw new UnsupportedOperationException("No RAW Reader available");
-        // }
         reader.setInput(riis);
         return reader;
     }
@@ -560,15 +505,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             // Information for series ToolTips
             group.setTagNoNull(TagD.get(Tag.PatientName), getTagValue(TagD.get(Tag.PatientName)));
             group.setTagNoNull(TagD.get(Tag.StudyDescription), header.getString(Tag.StudyDescription));
-
-            // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
-            // MediaElement[] elements = getMediaElement();
-            // if (elements != null) {
-            // for (MediaElement m : elements) {
-            // m.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
-            // }
-            // }
-            // }
         }
     }
 
@@ -677,7 +613,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             dataType = bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE
                 : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
             if (bitsAllocated == 32 && samplesPerPixel == 1) {
-                dataType = header.getValue(Tag.FloatPixelData, pixeldataVR) == null ? DataBuffer.TYPE_INT : DataBuffer.TYPE_FLOAT;
+                dataType = header.getValue(Tag.FloatPixelData, pixeldataVR) == null ? DataBuffer.TYPE_INT
+                    : DataBuffer.TYPE_FLOAT;
             } else if (bitsAllocated == 64 && samplesPerPixel == 1) {
                 dataType = DataBuffer.TYPE_DOUBLE;
             }
@@ -790,24 +727,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 // read as tiled rendered image
                 LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", //$NON-NLS-1$
                     frame, TagD.getTagValue(this, Tag.SOPInstanceUID));
-                RenderedImage buffer = null;
-                // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
-                // if (jpipReader == null) {
-                // // TODO change JPIP reader
-                // // ImageReaderFactory f = ImageReaderFactory.getInstance();
-                // // jpipReader = f.getReaderForTransferSyntax(tsuid);
-                // }
-                // MediaElement[] elements = getMediaElement();
-                // if (elements != null && elements.length > frame) {
-                // jpipReader.setInput(elements);
-                // buffer = jpipReader.readAsRenderedImage(frame, null);
-                // }
-                // } else {
-
-                // if (buffer == null) {
-                buffer = readAsRenderedImage(frame, null);
-                // }
-                return getValidImage(buffer, media);
+                return getValidImage(readAsRenderedImage(frame, null), media);
             }
         }
         return null;
@@ -858,7 +778,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                             objOut.writeObject(overlayData);
                             media.setTag(TagW.OverlayBurninDataPath, file.getPath());
                         } catch (Exception e) {
-                            LOGGER.error("Cannot serialize overlay: {}", e.getMessage()); //$NON-NLS-1$
+                            LOGGER.error("Cannot serialize overlay", e); //$NON-NLS-1$
                         } finally {
                             FileUtil.safeClose(objOut);
                             FileUtil.safeClose(fileOut);
@@ -888,44 +808,41 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     @Override
     public boolean delegate(DataExplorerModel explorerModel) {
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public MediaElement[] getMediaElement() {
-        if (image == null) {
-            if (isReadableDicom()) {
-                if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
-                    image = new MediaElement[] { new DicomVideoElement(this, null) };
-                } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
-                    image = new MediaElement[] { new DicomEncapDocElement(this, null) };
-                } else {
-                    if (numberOfFrame > 0) {
-                        image = new MediaElement[numberOfFrame];
+        if (image == null && isReadableDicom()) {
+            if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
+                image = new MediaElement[] { new DicomVideoElement(this, null) };
+            } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
+                image = new MediaElement[] { new DicomEncapDocElement(this, null) };
+            } else {
+                if (numberOfFrame > 0) {
+                    image = new MediaElement[numberOfFrame];
+                    for (int i = 0; i < image.length; i++) {
+                        image[i] = new DicomImageElement(this, i);
+                    }
+                    if (numberOfFrame > 1) {
+                        // IF enhanced DICOM, instance number can be overridden later
+                        // IF simple Multiframe instance number is necessary
                         for (int i = 0; i < image.length; i++) {
-                            image[i] = new DicomImageElement(this, i);
+                            image[i].setTag(TagD.get(Tag.InstanceNumber), i + 1);
                         }
-                        if (numberOfFrame > 1) {
-                            // IF enhanced DICOM, instance number can be overridden later
-                            // IF simple Multiframe instance number is necessary
-                            for (int i = 0; i < image.length; i++) {
-                                image[i].setTag(TagD.get(Tag.InstanceNumber), i + 1);
-                            }
+                    }
+                } else {
+                    String modality = TagD.getTagValue(this, Tag.Modality, String.class);
+                    if (modality != null) {
+                        DicomSpecialElementFactory factory = DCM_ELEMENT_FACTORIES.get(modality);
+                        if (factory != null) {
+                            image = new MediaElement[1];
+                            image[0] = factory.buildDicomSpecialElement(this);
                         }
-                    } else {
-                        String modality = TagD.getTagValue(this, Tag.Modality, String.class);
-                        if (modality != null) {
-                            DicomSpecialElementFactory factory = DCM_ELEMENT_FACTORIES.get(modality);
-                            if (factory != null) {
-                                image = new MediaElement[1];
-                                image[0] = factory.buildDicomSpecialElement(this);
-                            }
-                        }
-                        if (image == null) {
-                            // Corrupted image => should have one frame
-                            image = new MediaElement[0];
-                        }
+                    }
+                    if (image == null) {
+                        // Corrupted image => should have one frame
+                        image = new MediaElement[0];
                     }
                 }
             }
@@ -1055,20 +972,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     @Override
     public Iterator<ImageTypeSpecifier> getImageTypes(int frameIndex) throws IOException {
-        // Index changes from 1 to 0 as the Dicom frames start to count at 1
-        // ImageReader expects the first frame to be 0.
-        // initImageReader(0);
-        // return reader.getImageTypes(0);
-
-        // TODO 1.2.840.10008.1.2.4.95 (DICOM JPIP Referenced Deflate Transfer Syntax)
-        // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
-        // MediaElement[] elements = getMediaElement();
-        // // TODO handle frame
-        // if (elements != null && elements.length > 0) {
-        // reader.setInput(elements[0]);
-        // }
-        // }
-
         readMetaData(true);
         checkIndex(frameIndex);
 
@@ -1241,24 +1144,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 raster = (WritableRaster) readRaster(frameIndex, param);
             }
 
-            // ColorModel cm;
-            // if (pmi.isMonochrome()) {
-            // int[] overlayGroupOffsets = getActiveOverlayGroupOffsets(param);
-            // byte[][] overlayData = new byte[overlayGroupOffsets.length][];
-            // for (int i = 0; i < overlayGroupOffsets.length; i++) {
-            // overlayData[i] = extractOverlay(overlayGroupOffsets[i], raster);
-            // }
-            // cm = createColorModel(8, DataBuffer.TYPE_BYTE);
-            // SampleModel sm = createSampleModel(DataBuffer.TYPE_BYTE, false);
-            // raster = applyLUTs(raster, frameIndex, param, sm, 8);
-            // for (int i = 0; i < overlayGroupOffsets.length; i++) {
-            // applyOverlay(overlayGroupOffsets[i],
-            // raster, frameIndex, param, 8, overlayData[i]);
-            // }
-            // } else {
-            // cm = createColorModel(bitsStored, dataType);
-            // }
-
             ColorModel cm = createColorModel(bitsStored, dataType);
             return new BufferedImage(cm, raster, false, null);
         } finally {
@@ -1276,7 +1161,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 param = getDefaultReadParam();
             }
 
-            RenderedImage bi = null;
+            RenderedImage bi;
             if (decompressor != null) {
                 decompressor.setInput(iisOfFrame(frameIndex));
                 bi = decompressor.readAsRenderedImage(0, decompressParam(param));
@@ -1340,19 +1225,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         // TODO test with all decoders (works with raw decoder)
         if (source != null && dataType == DataBuffer.TYPE_SHORT
             && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT && (highBit + 1) < bitsAllocated) {
-            source = RectifySignedShortDataDescriptor.create(source, new int[] { highBit + 1 }, null);
+            return RectifySignedShortDataDescriptor.create(source, new int[] { highBit + 1 }, null);
         }
         return source;
-    }
-
-    @Override
-    public BufferedImage readTile(int imageIndex, int tileX, int tileY) throws IOException {
-        return super.readTile(imageIndex, tileX, tileY);
-    }
-
-    @Override
-    public Raster readTileRaster(int imageIndex, int tileX, int tileY) throws IOException {
-        return super.readTileRaster(imageIndex, tileX, tileY);
     }
 
     public boolean isSkipLargePrivate() {
@@ -1508,8 +1383,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             dis = new DicomInputStream(new ImageInputStreamAdapter(iis));
             dis.setIncludeBulkData(IncludeBulkData.URI);
             dis.setBulkDataDescriptor(DicomCodec.BULKDATA_DESCRIPTOR);
-            dis.setURI(uri.toString()); // avoid a copy of pixeldata into
-                                        // temporary file
+            // avoid a copy of pixeldata into temporary file
+            dis.setURI(uri.toString());
             Attributes fmi = dis.readFileMetaInformation();
             Attributes ds = dis.readDataset(-1, -1);
             if (fmi == null) {
@@ -1550,15 +1425,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                             throw new IOException("Unsupported Transfer Syntax: " + tsuid); //$NON-NLS-1$
                         }
                         this.decompressor = readerItem.getImageReader();
-
-                        // ImageReaderParam param =
-                        // ImageReaderFactory.getImageReaderParam(tsuid);
-                        // if (param == null)
-                        // throw new UnsupportedOperationException("Unsupported Transfer Syntax: " + tsuid);
-                        // this.decompressor =
-                        // ImageReaderFactory.getImageReader(param);
-
-                        // this.patchJpegLS = param.patchJPEGLS;
                         this.pixeldataFragments = (Fragments) pixdata;
                     }
                 }

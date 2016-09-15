@@ -36,7 +36,6 @@ public class GeometryOfSlice {
 
     protected double[] voxelSpacingArray;
 
-
     protected double sliceThickness;
 
     protected Tuple3d dimensions; // number of rows, then number of columns, then number of slices
@@ -122,7 +121,7 @@ public class GeometryOfSlice {
         normal.normalize();
         normalArray = new double[3];
         normal.get(normalArray);
-        // normalArray[2] = normalArray[2] * -1;
+        // depends of vector system (right/left-handed system): normalArray[2] = normalArray[2] * -1
         normal = new Vector3d(normalArray);
     }
 
@@ -304,8 +303,8 @@ public class GeometryOfSlice {
      * @return a string rendering of the orientation, more than one letter if oblique to the orthogonal axes, or empty
      *         string (not null) if fails
      */
-    public static final String getOrientation(double orientation[], boolean quadruped) {
-        StringBuffer strbuf = new StringBuffer();
+    public static final String getOrientation(double[] orientation, boolean quadruped) {
+        StringBuilder strbuf = new StringBuilder();
         if (orientation != null && orientation.length == 3) {
             String orientationX = orientation[0] < 0 ? (quadruped ? "Rt" : "R") : (quadruped ? "Le" : "L");
             String orientationY = orientation[1] < 0 ? (quadruped ? "V" : "A") : (quadruped ? "D" : "P");
@@ -344,8 +343,8 @@ public class GeometryOfSlice {
      * @return a string rendering of the orientation, more than one letter if oblique to the orthogonal axes, or empty
      *         string (not null) if fails
      */
-    public static final String getOrientation(double orientation[]) {
-        return getOrientation(orientation, false/* quadruped */);
+    public static final String getOrientation(double[] orientation) {
+        return getOrientation(orientation, false);
     }
 
     /**
@@ -407,7 +406,7 @@ public class GeometryOfSlice {
      *         empty string (not null) if fails
      */
     public final String getRowOrientation() {
-        return getRowOrientation(false/* quadruped */);
+        return getRowOrientation(false);
     }
 
     /**
@@ -423,6 +422,6 @@ public class GeometryOfSlice {
      *         empty string (not null) if fails
      */
     public final String getColumnOrientation() {
-        return getColumnOrientation(false/* quadruped */);
+        return getColumnOrientation(false);
     }
 }

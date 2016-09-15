@@ -133,7 +133,7 @@ public class DicomExport extends AbstractWizardDialog {
 
     /**
      * Set the checking Paths for the CheckTreeModel to the open Series for the current selected Patient only <br>
-     * 
+     *
      * @return
      */
     private void initTreeCheckingModel() {

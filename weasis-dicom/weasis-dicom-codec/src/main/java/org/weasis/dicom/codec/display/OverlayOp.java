@@ -22,10 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
-import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
-import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.image.MergeImgOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -56,6 +54,7 @@ public class OverlayOp extends AbstractOp {
     public OverlayOp copy() {
         return new OverlayOp(this);
     }
+
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {
         OpEvent type = event.getEventType();
@@ -100,7 +99,7 @@ public class OverlayOp extends AbstractOp {
                             }
                         }
                     } catch (IOException e) {
-                        LOGGER.error("Applying overlays: {}", e.getMessage()); //$NON-NLS-1$
+                        LOGGER.error("Applying overlays", e); //$NON-NLS-1$
                     }
                 }
             }

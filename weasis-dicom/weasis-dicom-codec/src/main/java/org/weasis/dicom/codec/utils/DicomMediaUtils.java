@@ -60,7 +60,6 @@ import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Tagable;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -921,8 +920,8 @@ public class DicomMediaUtils {
                     }
                 } else {
                     String modlality = TagD.getTagValue(tagable, Tag.Modality, String.class);
-                    if (("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        || !"PT".equals(modlality))) { //$NON-NLS-1$
+                    if ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        || !"PT".equals(modlality)) { //$NON-NLS-1$
                         LOGGER
                             .debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
                     }
@@ -1094,7 +1093,7 @@ public class DicomMediaUtils {
                 // GML = grams/milliliter
                 // STDDEV = standard deviations
                 if ("BQML".equals(units)) { //$NON-NLS-1$
-                    Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f);
+                    Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f); // in Kg
                     if (MathUtil.isDifferentFromZero(weight)) {
                         Attributes dcm =
                             dicomObject.getNestedDataset(Tag.RadiopharmaceuticalInformationSequence, index);
@@ -1206,10 +1205,6 @@ public class DicomMediaUtils {
          *       Instances. Key Object Documents do not reside in a Series of Images or other Composite SOP Instances.
          */
 
-        if (!StringUtil.hasText(seriesInstanceUID)) {
-            seriesInstanceUID = UIDUtils.createUID();
-        }
-
         /**
          * @note Loads properties that reference all "Key Object Codes" defined in the following resource :
          *       KeyObjectSelectionCodes.xml
@@ -1227,7 +1222,8 @@ public class DicomMediaUtils {
         for (KeyObjectSelectionCode code : codeByValue.values()) {
             Set<KeyObjectSelectionCode> resourceSet = resourcesByContextID.get(code.contextGroupID);
             if (resourceSet == null) {
-                resourcesByContextID.put(code.contextGroupID, resourceSet = new TreeSet<>());
+                resourceSet = new TreeSet<>();
+                resourcesByContextID.put(code.contextGroupID, resourceSet);
             }
             resourceSet.add(code);
         }
@@ -1280,7 +1276,8 @@ public class DicomMediaUtils {
         dKOS.setDate(Tag.ContentDateAndTime, new Date());
         dKOS.setString(Tag.Modality, VR.CS, "KO"); //$NON-NLS-1$
         dKOS.setNull(Tag.ReferencedPerformedProcedureStepSequence, VR.SQ);
-        dKOS.setString(Tag.SeriesInstanceUID, VR.UI, seriesInstanceUID);
+        dKOS.setString(Tag.SeriesInstanceUID, VR.UI,
+            StringUtil.hasText(seriesInstanceUID) ? seriesInstanceUID : UIDUtils.createUID());
         dKOS.setString(Tag.SeriesNumber, VR.IS, seriesNumber);
         dKOS.setString(Tag.InstanceNumber, VR.IS, instanceNumber);
         dKOS.setString(Tag.ValueType, VR.CS, "CONTAINER"); //$NON-NLS-1$
@@ -1346,52 +1343,15 @@ public class DicomMediaUtils {
             stream = DicomMediaUtils.class.getResourceAsStream("/config/KeyObjectSelectionCodes.xml"); //$NON-NLS-1$
             xmler = xmlif.createXMLStreamReader(stream);
 
-            int eventType;
             while (xmler.hasNext()) {
-                eventType = xmler.next();
-                switch (eventType) {
+                switch (xmler.next()) {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
                         if ("resources".equals(key)) { //$NON-NLS-1$
                             while (xmler.hasNext()) {
-                                eventType = xmler.next();
-                                switch (eventType) {
+                                switch (xmler.next()) {
                                     case XMLStreamConstants.START_ELEMENT:
-                                        key = xmler.getName().getLocalPart();
-                                        if ("resource".equals(key)) { //$NON-NLS-1$
-                                            String resourceName = xmler.getAttributeValue(null, "name"); //$NON-NLS-1$
-                                            String contextGroupID = xmler.getAttributeValue(null, "contextId"); //$NON-NLS-1$
-
-                                            while (xmler.hasNext()) {
-                                                eventType = xmler.next();
-                                                switch (eventType) {
-                                                    case XMLStreamConstants.START_ELEMENT:
-                                                        key = xmler.getName().getLocalPart();
-                                                        if ("code".equals(key)) { //$NON-NLS-1$
-
-                                                            String codingSchemeDesignator =
-                                                                xmler.getAttributeValue(null, "scheme"); //$NON-NLS-1$
-                                                            String codeValue = xmler.getAttributeValue(null, "value"); //$NON-NLS-1$
-                                                            String codeMeaning =
-                                                                xmler.getAttributeValue(null, "meaning"); //$NON-NLS-1$
-
-                                                            String conceptNameCodeModifier =
-                                                                xmler.getAttributeValue(null, "conceptMod"); //$NON-NLS-1$
-                                                            String contexGroupIdModifier =
-                                                                xmler.getAttributeValue(null, "contexId"); //$NON-NLS-1$
-
-                                                            codeByValue.put(codeValue,
-                                                                new DicomMediaUtils.KeyObjectSelectionCode(resourceName,
-                                                                    contextGroupID, codingSchemeDesignator, codeValue,
-                                                                    codeMeaning, conceptNameCodeModifier,
-                                                                    contexGroupIdModifier));
-                                                        }
-                                                        break;
-                                                    default:
-                                                        break;
-                                                }
-                                            }
-                                        }
+                                        readCodeResource(xmler, codeByValue);
                                         break;
                                     default:
                                         break;
@@ -1406,13 +1366,47 @@ public class DicomMediaUtils {
         }
 
         catch (XMLStreamException e) {
-            e.printStackTrace();
+            LOGGER.error("Reading KO Codes", e);
             codeByValue = null;
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
         }
         return codeByValue;
+    }
+
+    private static void readCodeResource(XMLStreamReader xmler, Map<String, KeyObjectSelectionCode> codeByValue)
+        throws XMLStreamException {
+        String key = xmler.getName().getLocalPart();
+        if ("resource".equals(key)) { //$NON-NLS-1$
+            String resourceName = xmler.getAttributeValue(null, "name"); //$NON-NLS-1$
+            String contextGroupID = xmler.getAttributeValue(null, "contextId"); //$NON-NLS-1$
+
+            while (xmler.hasNext()) {
+                int eventType = xmler.next();
+                switch (eventType) {
+                    case XMLStreamConstants.START_ELEMENT:
+                        key = xmler.getName().getLocalPart();
+                        if ("code".equals(key)) { //$NON-NLS-1$
+
+                            String codingSchemeDesignator = xmler.getAttributeValue(null, "scheme"); //$NON-NLS-1$
+                            String codeValue = xmler.getAttributeValue(null, "value"); //$NON-NLS-1$
+                            String codeMeaning = xmler.getAttributeValue(null, "meaning"); //$NON-NLS-1$
+
+                            String conceptNameCodeModifier = xmler.getAttributeValue(null, "conceptMod"); //$NON-NLS-1$
+                            String contexGroupIdModifier = xmler.getAttributeValue(null, "contexId"); //$NON-NLS-1$
+
+                            codeByValue.put(codeValue,
+                                new DicomMediaUtils.KeyObjectSelectionCode(resourceName, contextGroupID,
+                                    codingSchemeDesignator, codeValue, codeMeaning, conceptNameCodeModifier,
+                                    contexGroupIdModifier));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     public static class KeyObjectSelectionCode implements Comparable<KeyObjectSelectionCode> {
@@ -1449,7 +1443,7 @@ public class DicomMediaUtils {
         public int compareTo(KeyObjectSelectionCode o) {
             return this.codeValue.compareToIgnoreCase(o.codeValue);
         }
-        
+
         public Attributes toCodeItem() {
             Attributes attrs = new Attributes(3);
             attrs.setString(Tag.CodeValue, VR.SH, codeValue);
@@ -1553,7 +1547,6 @@ public class DicomMediaUtils {
     }
 
     public static void fillAttributes(Map<TagW, Object> tags, Attributes dataset) {
-
         if (tags != null && dataset != null) {
             ElementDictionary dic = ElementDictionary.getStandardElementDictionary();
 
@@ -1564,7 +1557,6 @@ public class DicomMediaUtils {
     }
 
     public static void fillAttributes(Iterator<Entry<TagW, Object>> iter, Attributes dataset) {
-
         if (iter != null && dataset != null) {
             ElementDictionary dic = ElementDictionary.getStandardElementDictionary();
 
@@ -1576,7 +1568,6 @@ public class DicomMediaUtils {
     }
 
     public static void fillAttributes(Attributes dataset, final TagW tag, final Object val, ElementDictionary dic) {
-
         if (dataset != null) {
             TagType type = tag.getType();
             int id = tag.getId();

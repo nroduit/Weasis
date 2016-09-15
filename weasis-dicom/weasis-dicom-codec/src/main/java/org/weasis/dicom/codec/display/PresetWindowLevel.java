@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import javax.media.jai.LookupTableJAI;
@@ -46,7 +47,6 @@ import org.weasis.dicom.codec.TagD;
 public class PresetWindowLevel {
     private static final Logger LOGGER = LoggerFactory.getLogger(PresetWindowLevel.class);
 
-    public static final String fullDynamicExplanation = Messages.getString("PresetWindowLevel.full"); //$NON-NLS-1$
     private static final Map<String, List<PresetWindowLevel>> presetListByModality = getPresetListByModality();
 
     private final String name;
@@ -56,13 +56,10 @@ public class PresetWindowLevel {
     private int keyCode = 0;
 
     public PresetWindowLevel(String name, Double window, Double level, LutShape shape) {
-        if (name == null || window == null || level == null || shape == null) {
-            throw new IllegalArgumentException();
-        }
-        this.name = name;
-        this.window = window;
-        this.level = level;
-        this.shape = shape;
+        this.name = Objects.requireNonNull(name);
+        this.window = Objects.requireNonNull(window);
+        this.level = Objects.requireNonNull(level);
+        this.shape = Objects.requireNonNull(shape);
     }
 
     public String getName() {
@@ -108,12 +105,30 @@ public class PresetWindowLevel {
     }
 
     @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + level.hashCode();
+        result = prime * result + name.hashCode();
+        result = prime * result + shape.hashCode();
+        result = prime * result + window.hashCode();
+        return result;
+    }
+
+    @Override
     public boolean equals(Object obj) {
-        if (obj instanceof PresetWindowLevel) {
-            PresetWindowLevel p = (PresetWindowLevel) obj;
-            return window.equals(p.window) && level.equals(p.level) && name.equals(p.name) && shape.equals(p.shape);
+        if (this == obj) {
+            return true;
         }
-        return false;
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        PresetWindowLevel other = (PresetWindowLevel) obj;
+        return name.equals(other.name) && level.equals(other.level) && window.equals(other.window)
+            && shape.equals(other.shape);
     }
 
     public static List<PresetWindowLevel> getPresetCollection(DicomImageElement image, TagReadable tagable,
@@ -204,9 +219,9 @@ public class PresetWindowLevel {
             }
         }
 
-        PresetWindowLevel autoLevel =
-            new PresetWindowLevel(fullDynamicExplanation, image.getFullDynamicWidth(tagable, pixelPadding),
-                image.getFullDynamicCenter(tagable, pixelPadding), defaultLutShape);
+        PresetWindowLevel autoLevel = new PresetWindowLevel(Messages.getString("PresetWindowLevel.full"), //$NON-NLS-1$
+            image.getFullDynamicWidth(tagable, pixelPadding), image.getFullDynamicCenter(tagable, pixelPadding),
+            defaultLutShape);
         // Set O shortcut for auto levels
         autoLevel.setKeyCode(KeyEvent.VK_0);
         presetList.add(autoLevel);

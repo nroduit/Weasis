@@ -42,8 +42,8 @@ public class IntersectVolume extends LocalizerPoster {
             // Edges with both Z values +ve or both -ve don't cross the localizer plane
         }
         List<Point3d> intersections = getIntersectionsOfCubeWithZPlane(corners);
-        if (intersections != null && intersections.size() > 0) {
-            List<Point2D.Double> pts = new ArrayList<Point2D.Double>(intersections.size());
+        if (intersections != null && !intersections.isEmpty()) {
+            List<Point2D.Double> pts = new ArrayList<>(intersections.size());
             for (Point3d point3d : intersections) {
                 pts.add(transformPointInLocalizerPlaneIntoImageSpace(point3d));
             }

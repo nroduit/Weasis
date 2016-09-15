@@ -25,16 +25,15 @@ public class WadoPrefFactory implements PreferencesPageFactory {
 
     @Override
     public AbstractItemDialogPage createInstance(Hashtable<String, Object> properties) {
-        if (properties != null) {
-            if ("superuser".equals(properties.get("weasis.user.prefs"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                return new WadoPrefView();
-            }
+        if (properties != null && "superuser".equals(properties.get("weasis.user.prefs"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            return new WadoPrefView();
         }
         return null;
     }
 
     @Override
     public void dispose(Insertable component) {
+        // Do nothing
     }
 
     @Override

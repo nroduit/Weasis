@@ -44,8 +44,7 @@ public class DicomCodec implements Codec {
     public static final BulkDataDescriptor BULKDATA_DESCRIPTOR = new BulkDataDescriptor() {
 
         @Override
-        public boolean isBulkData(List<ItemPointer> itemPointer,
-            String privateCreator, int tag, VR vr, int length) {
+        public boolean isBulkData(List<ItemPointer> itemPointer, String privateCreator, int tag, VR vr, int length) {
             switch (TagUtils.normalizeRepeatingGroup(tag)) {
                 case Tag.PixelDataProviderURL:
                 case Tag.AudioSampleData:
@@ -92,7 +91,6 @@ public class DicomCodec implements Codec {
 
     @Override
     public MediaReader getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties) {
-
         if (isMimeTypeSupported(mimeType)) {
             return new DicomMediaIO(media);
         }

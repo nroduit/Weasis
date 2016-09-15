@@ -35,7 +35,7 @@ public class MprView extends View2d {
 
     public enum SliceOrientation {
         AXIAL, CORONAL, SAGITTAL
-    };
+    }
 
     private SliceOrientation sliceOrientation;
     private JProgressBar progressBar;

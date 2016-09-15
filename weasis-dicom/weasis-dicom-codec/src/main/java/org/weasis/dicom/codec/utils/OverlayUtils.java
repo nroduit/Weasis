@@ -23,7 +23,7 @@ import java.awt.image.WritableRaster;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.HashMap;
+import java.util.Map;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -41,6 +41,9 @@ public class OverlayUtils {
 
     private static final byte[] icmColorValues = new byte[] { (byte) 0xFF, (byte) 0x00 };
 
+    private OverlayUtils() {
+    }
+
     /**
      * Merge the overlays into the buffered image. This method apply only white pixel overlays.
      *
@@ -48,7 +51,7 @@ public class OverlayUtils {
      *
      */
     public static RenderedImage getBinaryOverlays(ImageElement image, Attributes attributes, int frameIndex, int width,
-        int height, HashMap<String, Object> params) throws IOException {
+        int height, Map<String, Object> params) throws IOException {
 
         // Default grayscale value for overlay
         int grayscaleValue = 0xFFFF;
@@ -72,7 +75,7 @@ public class OverlayUtils {
                     data = (byte[][]) o;
                 }
             } catch (Exception e) {
-                LOGGER.error("Cannot read serialized overlay: {}", e.getMessage()); //$NON-NLS-1$
+                LOGGER.error("Cannot read serialized overlay", e); //$NON-NLS-1$
             } finally {
                 FileUtil.safeClose(objIn);
                 FileUtil.safeClose(fileIn);
@@ -84,10 +87,9 @@ public class OverlayUtils {
         for (int i = 0; i < overlayGroupOffsets.length; i++) {
             byte[] ovlyData = null;
             // Get bitmap overlay from pixel data
-            if (data != null && attributes.getInt(Tag.OverlayBitsAllocated | overlayGroupOffsets[i], 1) != 1) {
-                if (data.length > i) {
-                    ovlyData = data[i];
-                }
+            if (data != null && attributes.getInt(Tag.OverlayBitsAllocated | overlayGroupOffsets[i], 1) != 1
+                && data.length > i) {
+                ovlyData = data[i];
             }
             // If onlyData is null, get bitmap overlay from dicom attributes
             Overlays.applyOverlay(ovlyData != null ? 0 : frameIndex, raster, attributes, overlayGroupOffsets[i],
@@ -144,30 +146,26 @@ public class OverlayUtils {
 
     public static void extractFromPixeldata(Raster raster, int mask, byte[] ovlyData, int off, int length) {
         ComponentSampleModel sm = (ComponentSampleModel) raster.getSampleModel();
-        int rows = raster.getHeight();
         int columns = raster.getWidth();
         int stride = sm.getScanlineStride();
         DataBuffer db = raster.getDataBuffer();
         switch (db.getDataType()) {
             case DataBuffer.TYPE_BYTE:
-                extractFromPixeldata(((DataBufferByte) db).getData(), rows, columns, stride, mask, ovlyData, off,
-                    length);
+                extractFromPixeldata(((DataBufferByte) db).getData(), columns, stride, mask, ovlyData, off, length);
                 break;
             case DataBuffer.TYPE_USHORT:
-                extractFromPixeldata(((DataBufferUShort) db).getData(), rows, columns, stride, mask, ovlyData, off,
-                    length);
+                extractFromPixeldata(((DataBufferUShort) db).getData(), columns, stride, mask, ovlyData, off, length);
                 break;
             case DataBuffer.TYPE_SHORT:
-                extractFromPixeldata(((DataBufferShort) db).getData(), rows, columns, stride, mask, ovlyData, off,
-                    length);
+                extractFromPixeldata(((DataBufferShort) db).getData(), columns, stride, mask, ovlyData, off, length);
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported DataBuffer type: " + db.getDataType());
         }
     }
 
-    private static void extractFromPixeldata(byte[] pixeldata, int rows, int columns, int stride, int mask,
-        byte[] ovlyData, int off, int length) {
+    private static void extractFromPixeldata(byte[] pixeldata, int columns, int stride, int mask, byte[] ovlyData,
+        int off, int length) {
         for (int y = 0, i = off, imax = off + length; y < columns && i < imax; y++) {
             for (int j = y * stride; j < imax && i < imax; j++, i++) {
                 if ((pixeldata[j] & mask) != 0) {
@@ -177,8 +175,8 @@ public class OverlayUtils {
         }
     }
 
-    private static void extractFromPixeldata(short[] pixeldata, int rows, int columns, int stride, int mask,
-        byte[] ovlyData, int off, int length) {
+    private static void extractFromPixeldata(short[] pixeldata, int columns, int stride, int mask, byte[] ovlyData,
+        int off, int length) {
         for (int y = 0, i = off, imax = off + length; y < columns && i < imax; y++) {
             for (int j = y * stride; j < imax && i < imax; j++, i++) {
                 if ((pixeldata[j] & mask) != 0) {

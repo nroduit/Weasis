@@ -12,9 +12,7 @@ package org.weasis.dicom.codec;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.dcm4che3.data.Attributes;
 import org.weasis.core.api.media.data.TagW;

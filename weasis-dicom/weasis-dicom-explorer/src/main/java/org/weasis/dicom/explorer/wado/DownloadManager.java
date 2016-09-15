@@ -94,7 +94,7 @@ public class DownloadManager {
     public static final String TAG_PR = "presentation"; //$NON-NLS-1$
 
     public static final String CONCURRENT_SERIES = "download.concurrent.series"; //$NON-NLS-1$
-    public static final ArrayList<LoadSeries> TASKS = new ArrayList<>();
+    public static final List<LoadSeries> TASKS = new ArrayList<>();
 
     // Executor without concurrency (only one task is executed at the same time)
     private static final BlockingQueue<Runnable> UNIQUE_QUEUE =
@@ -163,12 +163,9 @@ public class DownloadManager {
             if (startLoading) {
                 offerSeriesInQueue(series);
             } else {
-                GuiExecutor.instance().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        series.getProgressBar().setValue(0);
-                        series.stop();
-                    }
+                GuiExecutor.instance().execute(() -> {
+                    series.getProgressBar().setValue(0);
+                    series.stop();
                 });
             }
             if (dicomModel != null) {
@@ -188,7 +185,7 @@ public class DownloadManager {
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, series));
             }
-            if (DownloadManager.TASKS.size() == 0) {
+            if (DownloadManager.TASKS.isEmpty()) {
                 // When all loadseries are ended, reset to default the number of simultaneous download (series)
                 DownloadManager.CONCURRENT_EXECUTOR.setCorePoolSize(
                     BundleTools.SYSTEM_PREFERENCES.getIntProperty(DownloadManager.CONCURRENT_SERIES, 3));
@@ -216,21 +213,11 @@ public class DownloadManager {
     }
 
     public static void resume() {
-        handleAllSeries(new LoadSeriesHandler() {
-            @Override
-            public void handle(LoadSeries loadSeries) {
-                loadSeries.resume();
-            }
-        });
+        handleAllSeries(loadSeries -> loadSeries.resume());
     }
 
     public static void stop() {
-        handleAllSeries(new LoadSeriesHandler() {
-            @Override
-            public void handle(LoadSeries loadSeries) {
-                loadSeries.stop();
-            }
-        });
+        handleAllSeries(loadSeries -> loadSeries.stop());
     }
 
     private static void handleAllSeries(LoadSeriesHandler handler) {
@@ -243,11 +230,12 @@ public class DownloadManager {
         }
     }
 
+    @FunctionalInterface
     private static interface LoadSeriesHandler {
         void handle(LoadSeries loadSeries);
     }
 
-    public static ArrayList<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) {
+    public static List<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) {
         ArrayList<LoadSeries> seriesList = new ArrayList<>();
         XMLStreamReader xmler = null;
         InputStream stream = null;
@@ -442,25 +430,19 @@ public class DownloadManager {
                                         .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
                                             : JOptionPane.WARNING_MESSAGE;
 
-                            GuiExecutor.instance().execute(new Runnable() {
-
-                                @Override
-                                public void run() {
-
-                                    PluginTool explorer = null;
-                                    DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                                    if (dicomExplorer instanceof PluginTool) {
-                                        explorer = (PluginTool) dicomExplorer;
-                                    }
-                                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
-                                    JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, title,
-                                        JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
-                                    if (layer != null) {
-                                        layer.hideUI();
-                                    }
+                            GuiExecutor.instance().execute(() -> {
+                                PluginTool explorer = null;
+                                DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+                                if (dicomExplorer instanceof PluginTool) {
+                                    explorer = (PluginTool) dicomExplorer;
+                                }
+                                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
+                                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, title,
+                                    JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                                if (layer != null) {
+                                    layer.hideUI();
                                 }
                             });
-
                         }
                     }
                     break;
@@ -476,16 +458,12 @@ public class DownloadManager {
         if (pat == 1) {
             // In case of the patient already exists, select it
             final MediaSeriesGroup uniquePatient = patient;
-            GuiExecutor.instance().execute(new Runnable() {
-
-                @Override
-                public void run() {
-                    synchronized (UIManager.VIEWER_PLUGINS) {
-                        for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
-                            if (uniquePatient.equals(p.getGroupID())) {
-                                p.setSelectedAndGetFocus();
-                                break;
-                            }
+            GuiExecutor.instance().execute(() -> {
+                synchronized (UIManager.VIEWER_PLUGINS) {
+                    for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
+                        if (uniquePatient.equals(p.getGroupID())) {
+                            p.setSelectedAndGetFocus();
+                            break;
                         }
                     }
                 }
@@ -669,11 +647,9 @@ public class DownloadManager {
 
         List<DicomInstance> dicomInstances =
             (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
-        boolean containsInstance = false;
         if (dicomInstances == null) {
-            dicomSeries.setTag(TagW.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
-        } else if (dicomInstances.size() > 0) {
-            containsInstance = true;
+            dicomInstances = new ArrayList<>();
+            dicomSeries.setTag(TagW.WadoInstanceReferenceList, dicomInstances);
         }
 
         int eventType;
@@ -688,7 +664,7 @@ public class DownloadManager {
                             TagUtil.getTagAttribute(xmler, TagD.getKeywordFromTag(Tag.SOPInstanceUID, null), null);
                         if (sopInstanceUID != null) {
                             DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
-                            if (containsInstance && dicomInstances.contains(dcmInstance)) {
+                            if (dicomInstances.contains(dcmInstance)) {
                                 LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                             } else {
                                 dcmInstance.setInstanceNumber(TagUtil.getIntegerTagAttribute(xmler,
@@ -710,7 +686,7 @@ public class DownloadManager {
             }
         }
 
-        if (dicomInstances.size() > 0) {
+        if (!dicomInstances.isEmpty()) {
             final LoadSeries loadSeries = new LoadSeries(dicomSeries, model,
                 BundleTools.SYSTEM_PREFERENCES.getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
             loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));

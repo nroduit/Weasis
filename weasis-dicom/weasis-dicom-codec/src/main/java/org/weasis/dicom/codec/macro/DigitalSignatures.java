@@ -30,14 +30,12 @@ public class DigitalSignatures extends Module {
         super(new Attributes());
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public static Collection<DigitalSignatures> toDigitalSignaturesMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
             return null;
         }
 
-        ArrayList<DigitalSignatures> list = new ArrayList<DigitalSignatures>(seq.size());
+        ArrayList<DigitalSignatures> list = new ArrayList<>(seq.size());
 
         for (Attributes attr : seq) {
             list.add(new DigitalSignatures(attr));
@@ -45,8 +43,6 @@ public class DigitalSignatures extends Module {
 
         return list;
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public int getMACIDNumber() {
         return dcmItems.getInt(Tag.MACIDNumber, -1);

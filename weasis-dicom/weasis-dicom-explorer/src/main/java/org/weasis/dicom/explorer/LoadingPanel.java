@@ -20,7 +20,7 @@ public class LoadingPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private final ArrayList<ExplorerTask> tasks = new ArrayList<ExplorerTask>();
+    private final ArrayList<ExplorerTask> tasks = new ArrayList<>();
     private final LoadingTaskPanel globalDownloadTask = new LoadingTaskPanel(true);
 
     public LoadingPanel() {

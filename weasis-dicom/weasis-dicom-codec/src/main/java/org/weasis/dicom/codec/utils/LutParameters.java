@@ -39,39 +39,54 @@ public class LutParameters {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         LutParameters other = (LutParameters) obj;
-        if (applyPadding != other.applyPadding)
+        if (applyPadding != other.applyPadding) {
             return false;
-        if (bitsOutput != other.bitsOutput)
+        }
+        if (bitsOutput != other.bitsOutput) {
             return false;
-        if (bitsStored != other.bitsStored)
+        }
+        if (bitsStored != other.bitsStored) {
             return false;
-        if (Double.doubleToLongBits(intercept) != Double.doubleToLongBits(other.intercept))
+        }
+        if (Double.doubleToLongBits(intercept) != Double.doubleToLongBits(other.intercept)) {
             return false;
-        if (inversePaddingMLUT != other.inversePaddingMLUT)
+        }
+        if (inversePaddingMLUT != other.inversePaddingMLUT) {
             return false;
-        if (outputSigned != other.outputSigned)
+        }
+        if (outputSigned != other.outputSigned) {
             return false;
+        }
         if (paddingMaxValue == null) {
-            if (other.paddingMaxValue != null)
+            if (other.paddingMaxValue != null) {
                 return false;
-        } else if (!paddingMaxValue.equals(other.paddingMaxValue))
+            }
+        } else if (!paddingMaxValue.equals(other.paddingMaxValue)) {
             return false;
+        }
         if (paddingMinValue == null) {
-            if (other.paddingMinValue != null)
+            if (other.paddingMinValue != null) {
                 return false;
-        } else if (!paddingMinValue.equals(other.paddingMinValue))
+            }
+        } else if (!paddingMinValue.equals(other.paddingMinValue)) {
             return false;
-        if (signed != other.signed)
+        }
+        if (signed != other.signed) {
             return false;
-        if (Double.doubleToLongBits(slope) != Double.doubleToLongBits(other.slope))
+        }
+        if (Double.doubleToLongBits(slope) != Double.doubleToLongBits(other.slope)) {
             return false;
+        }
         return true;
     }
 

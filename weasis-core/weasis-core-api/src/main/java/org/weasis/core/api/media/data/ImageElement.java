@@ -54,10 +54,6 @@ public class ImageElement extends MediaElement {
 
     private static final SoftHashMap<ImageElement, PlanarImage> mCache = new SoftHashMap<ImageElement, PlanarImage>() {
 
-        public Reference<? extends PlanarImage> getReference(ImageElement key) {
-            return hash.get(key);
-        }
-
         @Override
         public void removeElement(Reference<? extends PlanarImage> soft) {
             ImageElement key = reverseLookup.remove(soft);
@@ -298,7 +294,7 @@ public class ImageElement extends MediaElement {
         Double level = (params == null) ? null : (Double) params.get(ActionW.LEVEL.cmd());
         Boolean pixelPadding = (params == null) ? null : (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
 
-        pixelPadding = (pixelPadding == null) ? true : pixelPadding;
+        pixelPadding = (pixelPadding == null) ? Boolean.TRUE : pixelPadding;
         window = (window == null) ? getDefaultWindow(pixelPadding) : window;
         level = (level == null) ? getDefaultLevel(pixelPadding) : level;
 

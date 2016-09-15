@@ -27,15 +27,13 @@ public class SOPInstanceReferenceAndPurpose extends SOPInstanceReference {
         this(new Attributes());
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public static Collection<SOPInstanceReferenceAndPurpose> toSOPInstanceReferenceAndPurposesMacros(Sequence seq) {
 
         if (seq == null || seq.isEmpty()) {
             return null;
         }
 
-        ArrayList<SOPInstanceReferenceAndPurpose> list = new ArrayList<SOPInstanceReferenceAndPurpose>(seq.size());
+        ArrayList<SOPInstanceReferenceAndPurpose> list = new ArrayList<>(seq.size());
 
         for (Attributes attr : seq) {
             list.add(new SOPInstanceReferenceAndPurpose(attr));
@@ -43,8 +41,6 @@ public class SOPInstanceReferenceAndPurpose extends SOPInstanceReference {
 
         return list;
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public Code getPurposeOfReferenceCode() {
         Attributes item = dcmItems.getNestedDataset(Tag.PurposeOfReferenceCodeSequence);

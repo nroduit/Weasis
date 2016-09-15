@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -32,6 +34,7 @@ import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
 
 public class LoadRemoteDicomURL extends ExplorerTask {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadRemoteDicomURL.class);
 
     private final URL[] urls;
     private final DicomModel dicomModel;
@@ -47,7 +50,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
                 try {
                     urlRef[i] = new URL(urls[i]);
                 } catch (MalformedURLException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Not a valid URL", e);
                 }
             }
         }

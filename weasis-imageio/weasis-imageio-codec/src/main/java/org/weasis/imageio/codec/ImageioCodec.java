@@ -30,7 +30,7 @@ public class ImageioCodec implements Codec {
 
     @Override
     public String[] getReaderMIMETypes() {
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         for (String s : ImageIO.getReaderMIMETypes()) {
             list.add(s);
         }

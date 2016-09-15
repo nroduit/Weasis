@@ -15,6 +15,6 @@ import java.util.List;
 
 @FunctionalInterface
 public interface FilesExtractor {
-    
+
     List<File> getExtractFiles();
 }

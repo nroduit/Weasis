@@ -27,7 +27,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -72,7 +71,6 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TransferSyntax;
-import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.codec.wado.WadoParameters.HttpTag;
@@ -111,8 +109,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         this.writeInCache = writeInCache;
         final List<DicomInstance> sopList =
             (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
-        // Trick to keep progressBar with a final modifier. The progressBar must be instantiated in EDT (required by
-        // substance)
+        // Trick to keep progressBar with a final modifier to be instantiated in EDT (required by substance)
         final CircularProgressBar[] bar = new CircularProgressBar[1];
         GuiExecutor.instance().invokeAndWait(() -> bar[0] = new CircularProgressBar(0, sopList.size()));
         this.progressBar = bar[0];
@@ -357,19 +354,18 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                         dicomSeries.setTag(TagW.WadoTransferSyntaxUID, transcoding.getTransferSyntaxUID());
                     }
                     // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
-                    String wado_tsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
-                    if (StringUtil.hasText(wado_tsuid)) {
+                    String wadoTsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
+                    if (StringUtil.hasText(wadoTsuid)) {
                         // On Mac and Win 64 some decoders (JPEGImageReaderCodecLib) are missing, ask for uncompressed
                         // syntax for TSUID: 1.2.840.10008.1.2.4.51, 1.2.840.10008.1.2.4.57
                         // 1.2.840.10008.1.2.4.70 1.2.840.10008.1.2.4.80, 1.2.840.10008.1.2.4.81
                         // Solaris has all the decoders, but no bundle has been built for Weasis
-                        if (!DicomImageUtils.hasPlatformNativeImageioCodecs()) {
-                            if (TransferSyntax.requiresNativeImageioCodecs(wado_tsuid)) {
-                                wado_tsuid = TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID();
-                            }
+                        if (!TransferSyntax.containsImageioCodec(wadoTsuid)) {
+                            wadoTsuid = TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID();
                         }
+
                         request.append("&transferSyntax="); //$NON-NLS-1$
-                        request.append(wado_tsuid);
+                        request.append(wadoTsuid);
                         if (transcoding.getTransferSyntaxUID() != null) {
                             dicomSeries.setTag(TagW.WadoCompressionRate, transcoding.getCompression());
                         }
@@ -393,21 +389,6 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             LOGGER.debug("Download DICOM instance {} index {}.", url, k); //$NON-NLS-1$
             Download ref = new Download(url, wado);
             tasks.add(ref);
-            // Future future = imageDownloader.submit(ref);
-            // try {
-            // Object series = future.get();
-            //
-            // }
-            // catch (InterruptedException e) {
-            // // Re-assert the thread's interrupted status
-            // Thread.currentThread().interrupt();
-            // // We don't need the result, so cancel the task too
-            // future.cancel(true);
-            // }
-            // catch (ExecutionException e) {
-            //
-            // }
-
         }
 
         try {
@@ -424,40 +405,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         final List<DicomInstance> sopList =
             (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
         if (!sopList.isEmpty()) {
-            // Sort the UIDs for building the thumbnail that is in the middle of
-            // the Series
-            Collections.sort(sopList, new Comparator<DicomInstance>() {
-
-                @Override
-                public int compare(DicomInstance dcm1, DicomInstance dcm2) {
-                    int number1 = dcm1.getInstanceNumber();
-                    int number2 = dcm2.getInstanceNumber();
-                    if (number1 == -1 && number2 == -1) {
-                        String str1 = dcm1.getSopInstanceUID();
-                        String str2 = dcm2.getSopInstanceUID();
-                        int length1 = str1.length();
-                        int length2 = str2.length();
-                        if (length1 < length2) {
-                            char[] c = new char[length2 - length1];
-                            for (int i = 0; i < c.length; i++) {
-                                c[i] = '0';
-                            }
-                            int index = str1.lastIndexOf(".") + 1; //$NON-NLS-1$
-                            str1 = str1.substring(0, index) + new String(c) + str1.substring(index);
-                        } else if (length1 > length2) {
-                            char[] c = new char[length1 - length2];
-                            for (int i = 0; i < c.length; i++) {
-                                c[i] = '0';
-                            }
-                            int index = str2.lastIndexOf(".") + 1; //$NON-NLS-1$
-                            str2 = str2.substring(0, index) + new String(c) + str2.substring(index);
-                        }
-                        return str1.compareTo(str2);
-                    } else {
-                        return (number1 < number2 ? -1 : (number1 == number2 ? 0 : 1));
-                    }
-                }
-            });
+            // Sort the UIDs for building the thumbnail that is in the middle of the Series
+            Collections.sort(sopList);
             final DicomInstance instance = sopList.get(sopList.size() / 2);
 
             GuiExecutor.instance().execute(() -> {
@@ -474,7 +423,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                     new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
             });
 
-           loadThumbnail(instance, wadoParameters);
+            loadThumbnail(instance, wadoParameters);
         }
     }
 
@@ -561,55 +510,6 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         return dicomSeries;
     }
 
-    // public File getDICOMFile(String StudyUID, String SeriesUID, String
-    // SOPInstanceUID) throws Exception {
-    // URL url = new URL(dicomSeries.getWadoParameters().getWadoURL() +
-    // "?requestType=WADO&studyUID=" + StudyUID
-    // + "&seriesUID=" + SeriesUID + "&objectUID=" + SOPInstanceUID +
-    // "&contentType=application%2Fdicom");
-    //
-    // HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-    // // HttpURLConnection httpCon = (HttpURLConnection)
-    // // url.openConnection(DownloadManager.PROXY);
-    // // httpCon.setDoOutput(true);
-    // // httpCon.setDoInput(true);
-    // // httpCon.setRequestMethod("GET");
-    //
-    // // JProgressBar statusBar = new JProgressBar();
-    // // statusBar.setMinimum(0);
-    // // statusBar.setMaximum(httpCon.getContentLength());
-    // // statusBar.setValue(0);
-    // // statusBar.setStringPainted(true);
-    //
-    // OutputStream tempFileStream = null;
-    // InputStream httpStream = null;
-    // // File outFile = new File(TEMP_DIR + SOPInstanceUID);
-    // File tempFile = File.createTempFile("image_", ".dcm",
-    // AppProperties.APP_TEMP_DIR);
-    // tempFile.deleteOnExit();
-    // try {
-    // tempFileStream = new BufferedOutputStream(new
-    // FileOutputStream(tempFile));
-    // httpStream = httpCon.getInputStream();
-    // byte[] buffer = new byte[4096];
-    // int numRead;
-    // long numWritten = 0;
-    // while ((numRead = httpStream.read(buffer)) != -1) {
-    // tempFileStream.write(buffer, 0, numRead);
-    // numWritten += numRead;
-    // // statusBar.setValue((int) numWritten);
-    // }
-    // }
-    // catch (Exception e) {
-    // e.printStackTrace();
-    // }
-    // finally {
-    // FileUtil.safeClose(tempFileStream);
-    // FileUtil.safeClose(httpStream);
-    // }
-    // return tempFile;
-    // }
-
     public File getJPEGThumnails(WadoParameters wadoParameters, String StudyUID, String SeriesUID,
         String SOPInstanceUID) throws IOException {
         // TODO set quality as a preference
@@ -645,18 +545,6 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         }
         return outFile;
     }
-
-    // public void interruptionRequested() {
-    // if (isCancelled()) {
-    // return;
-    // }
-    // int response = JOptionPane.showConfirmDialog(WeasisWin.getInstance(),
-    // "Do you really want to stop this process?",
-    // "Stopping Process", 0);
-    // if (response == 0) {
-    // cancel(true);
-    // }
-    // }
 
     private int[] generateDownladOrder(final int size) {
         int[] dindex = new int[size];
@@ -698,42 +586,18 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     class Download implements Callable<Boolean> {
 
         private final URL url; // download URL
-        private int size; // size of download in bytes
-        private final int downloaded; // number of bytes downloaded
+        private final WadoParameters wadoParameters;
         private Status status; // current status of download
         private File tempFile;
-        private final WadoParameters wadoParameters;
-
-        // private Thread thread;
 
         public Download(URL url, final WadoParameters wadoParameters) {
             this.url = url;
             this.wadoParameters = wadoParameters;
-            size = -1;
-            downloaded = 0;
             status = Status.DOWNLOADING;
-        }
-
-        public File getTempFile() {
-            return tempFile;
         }
 
         public String getUrl() {
             return url.toString();
-        }
-
-        // Get this download's size.
-        public int getSize() {
-            return size;
-        }
-
-        // Get this download's progress.
-        public float getProgress() {
-            return ((float) downloaded / size) * 100;
-        }
-
-        public Status getStatus() {
-            return status;
         }
 
         public void pause() {
@@ -780,19 +644,16 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 if (wadoParameters.getWebLogin() != null) {
                     httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
                 }
-                if (wadoParameters.getHttpTaglist().size() > 0) {
+                if (!wadoParameters.getHttpTaglist().isEmpty()) {
                     for (HttpTag tag : wadoParameters.getHttpTaglist()) {
                         httpCon.setRequestProperty(tag.getKey(), tag.getValue());
                     }
                 }
-                // Specify what portion of file to download.
-                httpCon.setRequestProperty("Range", "bytes=" + downloaded + "-"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
                 // Connect to server.
                 httpCon.connect();
             } catch (IOException e) {
                 error();
-                LOGGER.error("IOException for {}: {} ", url, e.getMessage()); //$NON-NLS-1$
+                LOGGER.error("Init connection for {}", url, e); //$NON-NLS-1$
                 return null;
             }
             if (httpCon instanceof HttpURLConnection) {
@@ -811,7 +672,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         @Override
         public Boolean call() throws Exception {
 
-            InputStream stream = null;
+            InputStream stream;
             URLConnection httpCon = initConnection(url);
             if (httpCon == null) {
                 return false;
@@ -826,21 +687,10 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             }
 
             stream = httpCon.getInputStream();
-            // Does not work with WADO because the stream is modified on the fly by the wado server. In dcm4chee, see
+            // Cannot resume with WADO because the stream is modified on the fly by the wado server. In dcm4chee, see
             // http://www.dcm4che.org/jira/browse/DCMEE-421
-            int contentLength = httpCon.getContentLength();
-            contentLength = -1;
-            if (contentLength == -1) {
-                progressBar.setIndeterminate(progressBar.getMaximum() < 3);
-            } else {
-                // TODO add external circle progression
-            }
+            progressBar.setIndeterminate(progressBar.getMaximum() < 3);
 
-            // Set the size for this download if it hasn't been already set.
-            if (size == -1) {
-                size = contentLength;
-                // stateChanged();
-            }
             DicomMediaIO dicomReader = null;
             LOGGER.debug("Start to download DICOM instance {} to {}.", url, cache ? tempFile.getName() : "null"); //$NON-NLS-1$ //$NON-NLS-2$
             if (dicomSeries != null) {
@@ -859,11 +709,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                         LOGGER.info("End of downloading {} ", url); //$NON-NLS-1$
                     } else if (bytesTransferred >= 0) {
                         LOGGER.warn("Download interruption {} ", url); //$NON-NLS-1$
-                        try {
-                            tempFile.delete();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        FileUtil.delete(tempFile);
                         return false;
                     } else if (bytesTransferred == Integer.MIN_VALUE) {
                         LOGGER.warn("Stop downloading unsupported TSUID, retry to download non compressed TSUID"); //$NON-NLS-1$
@@ -872,7 +718,6 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                             return false;
                         }
                         stream = httpCon.getInputStream();
-                        size = -1;
                         if (overrideList == null && wado != null) {
                             bytesTransferred =
                                 FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, false),
@@ -885,11 +730,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                             LOGGER.info("End of downloading {} ", url); //$NON-NLS-1$
                         } else if (bytesTransferred >= 0) {
                             LOGGER.warn("Download interruption {} ", url); //$NON-NLS-1$
-                            try {
-                                tempFile.delete();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                            FileUtil.delete(tempFile);
                             return false;
                         }
                     }
@@ -904,33 +745,25 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 FileUtil.safeClose(stream);
 
                 dicomReader = new DicomMediaIO(tempFile);
-                if (dicomReader.isReadableDicom()) {
-                    if (dicomSeries.size(null) == 0) {
-                        // Override the group (patient, study and series) by the dicom fields except the UID of
-                        // the group
-                        MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-                        dicomReader.writeMetaData(patient);
-                        MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-                        dicomReader.writeMetaData(study);
-                        dicomReader.writeMetaData(dicomSeries);
-                        GuiExecutor.instance().invokeAndWait(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                                if (thumb != null) {
-                                    thumb.repaint();
-                                }
-                                dicomModel.firePropertyChange(new ObservableEvent(
-                                    ObservableEvent.BasicAction.UDPATE_PARENT, dicomModel, null, dicomSeries));
-                            }
-                        });
-                    }
+                if (dicomReader.isReadableDicom() && dicomSeries.size(null) == 0) {
+                    // Override the group (patient, study and series) by the dicom fields except the UID of the group
+                    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+                    dicomReader.writeMetaData(patient);
+                    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+                    dicomReader.writeMetaData(study);
+                    dicomReader.writeMetaData(dicomSeries);
+                    GuiExecutor.instance().invokeAndWait(() -> {
+                        Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                        if (thumb != null) {
+                            thumb.repaint();
+                        }
+                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UDPATE_PARENT,
+                            dicomModel, null, dicomSeries));
+                    });
                 }
             }
 
-            // Change status to complete if this point was reached because
-            // downloading has finished.
+            // Change status to complete if this point was reached because downloading has finished.
             if (status == Status.DOWNLOADING) {
                 status = Status.COMPLETE;
                 if (tempFile != null) {
@@ -938,68 +771,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                         final DicomMediaIO reader = dicomReader;
                         // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
                         // before reaching done() of SwingWorker
-                        GuiExecutor.instance().invokeAndWait(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                boolean firstImageToDisplay = false;
-                                MediaElement[] medias = reader.getMediaElement();
-                                if (medias != null) {
-                                    firstImageToDisplay = dicomSeries.size(null) == 0;
-                                    for (MediaElement media : medias) {
-                                        dicomModel.applySplittingRules(dicomSeries, media);
-                                    }
-                                    if (firstImageToDisplay && dicomSeries.size(null) == 0) {
-                                        firstImageToDisplay = false;
-                                    }
-                                }
-
-                                // reader.reset();
-                                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                                if (thumb != null) {
-                                    thumb.repaint();
-                                }
-
-                                if (firstImageToDisplay) {
-                                    boolean openNewTab = true;
-                                    MediaSeriesGroup entry1 = dicomModel.getParent(dicomSeries, DicomModel.patient);
-                                    if (entry1 != null) {
-                                        synchronized (UIManager.VIEWER_PLUGINS) {
-                                            for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
-                                                if (entry1.equals(p.getGroupID())) {
-                                                    if (p instanceof ImageViewerPlugin) {
-                                                        ViewCanvas pane =
-                                                            ((ImageViewerPlugin) p).getSelectedImagePane();
-                                                        if (pane != null
-                                                            && pane.getImageLayer().getSourceImage() == null) {
-                                                            // When the selected view has no image send, open in it.
-                                                            break;
-                                                        }
-                                                    }
-                                                    openNewTab = false;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (openNewTab) {
-                                        SeriesViewerFactory plugin =
-                                            UIManager.getViewerFactory(dicomSeries.getMimeType());
-                                        if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                                            ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel,
-                                                true, true);
-                                        } else if (plugin != null) {
-                                            // Send event to select the related patient in Dicom Explorer.
-                                            dicomModel.firePropertyChange(new ObservableEvent(
-                                                ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
-                                        }
-                                    }
-                                }
-                            }
-                        });
-
+                        GuiExecutor.instance().invokeAndWait(() -> updateUI(reader));
                     }
-                    // stateChanged();
                 }
             }
             // Increment progress bar in EDT and repaint when downloaded
@@ -1061,7 +834,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             } catch (InterruptedIOException e) {
                 return e.bytesTransferred;
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Error when writing DICOM temp file", e);
                 return 0;
             } finally {
                 SafeClose.close(dos);
@@ -1076,6 +849,56 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             }
         }
 
+        private void updateUI(final DicomMediaIO reader) {
+            boolean firstImageToDisplay = false;
+            MediaElement[] medias = reader.getMediaElement();
+            if (medias != null) {
+                firstImageToDisplay = dicomSeries.size(null) == 0;
+                for (MediaElement media : medias) {
+                    dicomModel.applySplittingRules(dicomSeries, media);
+                }
+                if (firstImageToDisplay && dicomSeries.size(null) == 0) {
+                    firstImageToDisplay = false;
+                }
+            }
+
+            Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+            if (thumb != null) {
+                thumb.repaint();
+            }
+
+            if (firstImageToDisplay) {
+                boolean openNewTab = true;
+                MediaSeriesGroup entry1 = dicomModel.getParent(dicomSeries, DicomModel.patient);
+                if (entry1 != null) {
+                    synchronized (UIManager.VIEWER_PLUGINS) {
+                        for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
+                            if (entry1.equals(p.getGroupID())) {
+                                if (p instanceof ImageViewerPlugin) {
+                                    ViewCanvas pane = ((ImageViewerPlugin) p).getSelectedImagePane();
+                                    if (pane != null && pane.getImageLayer().getSourceImage() == null) {
+                                        // When the selected view has no image send, open in it.
+                                        break;
+                                    }
+                                }
+                                openNewTab = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (openNewTab) {
+                    SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
+                    if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
+                        ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
+                    } else if (plugin != null) {
+                        // Send event to select the related patient in Dicom Explorer.
+                        dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
+                    }
+                }
+            }
+        }
     }
 
     public synchronized DownloadPriority getPriority() {
@@ -1089,29 +912,27 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     @Override
     public void setPriority() {
         DownloadPriority p = getPriority();
-        if (p != null) {
-            if (StateValue.PENDING.equals(getState())) {
-                boolean change = DownloadManager.removeSeriesInQueue(this);
-                if (change) {
-                    // Set the priority to the current loadingSeries and stop a task.
-                    p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
-                    DownloadManager.offerSeriesInQueue(this);
-                    synchronized (DownloadManager.TASKS) {
-                        for (LoadSeries s : DownloadManager.TASKS) {
-                            if (s != this && StateValue.STARTED.equals(s.getState())) {
-                                LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel,
-                                    s.getProgressBar(), s.getConcurrentDownloads(), s.writeInCache);
-                                s.cancel(true);
-                                taskResume.setPriority(s.getPriority());
-                                Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
-                                if (thumbnail != null) {
-                                    LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
-                                    addListenerToThumbnail(thumbnail, taskResume, dicomModel);
-                                }
-                                DownloadManager.addLoadSeries(taskResume, dicomModel, true);
-                                DownloadManager.removeLoadSeries(s, dicomModel);
-                                break;
+        if (p != null && StateValue.PENDING.equals(getState())) {
+            boolean change = DownloadManager.removeSeriesInQueue(this);
+            if (change) {
+                // Set the priority to the current loadingSeries and stop a task.
+                p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
+                DownloadManager.offerSeriesInQueue(this);
+                synchronized (DownloadManager.TASKS) {
+                    for (LoadSeries s : DownloadManager.TASKS) {
+                        if (s != this && StateValue.STARTED.equals(s.getState())) {
+                            LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
+                                s.getConcurrentDownloads(), s.writeInCache);
+                            s.cancel(true);
+                            taskResume.setPriority(s.getPriority());
+                            Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
+                            if (thumbnail != null) {
+                                LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
+                                addListenerToThumbnail(thumbnail, taskResume, dicomModel);
                             }
+                            DownloadManager.addLoadSeries(taskResume, dicomModel, true);
+                            DownloadManager.removeLoadSeries(s, dicomModel);
+                            break;
                         }
                     }
                 }

@@ -27,7 +27,6 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -82,6 +81,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
@@ -552,11 +552,10 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             String rowTop = null;
             if (getDisplayPreferences(IMAGE_ORIENTATION) && v != null && v.length == 6) {
                 orientation.append(" - ");//$NON-NLS-1$
-                String imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
+                Label imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
                     v[1], v[2], v[3], v[4], v[5]);
-                if (imgOrientation != null) {
-                    orientation.append(imgOrientation);
-                }
+                orientation.append(imgOrientation);
+                
                 // Set the opposite vector direction (otherwise label should be placed in mid-right and mid-bottom
                 Vector3d vr = new Vector3d(-v[0], -v[1], -v[2]);
                 Vector3d vc = new Vector3d(-v[3], -v[4], -v[5]);
@@ -617,7 +616,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 Font oldFont = g2.getFont();
                 Font bigFont = oldFont.deriveFont(oldFont.getSize() + 5.0f);
                 g2.setFont(bigFont);
-                Map<TextAttribute, Object> map = new Hashtable<>(1);
+                Map<TextAttribute, Object> map = new HashMap<>(1);
                 map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
                 String fistLetter = rowTop.substring(0, 1);
                 DefaultGraphicLabel.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
@@ -652,7 +651,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         drawExtendedActions(g2, positions);
     }
 
-    private void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
+    private static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
         axis.normalize();
         vDst.x = axis.x * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
             + vSrc.x * Math.cos(angle) + (-axis.z * vSrc.y + axis.y * vSrc.z) * Math.sin(angle);

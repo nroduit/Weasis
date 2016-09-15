@@ -1124,7 +1124,7 @@ public class RawRenderedImage extends SimpleRenderedImage {
         return num;
     }
 
-    private int clip(int value, int min, int max) {
+    private static int clip(int value, int min, int max) {
         if (value < min) {
             value = min;
         }

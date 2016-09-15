@@ -22,8 +22,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import javax.media.jai.PlanarImage;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -151,7 +149,7 @@ public class DicomSpecialElement extends MediaElement {
         if (getMediaReader().isEditableDicom()) {
             Attributes dcm = getMediaReader().getDicomObject();
             if (dcm != null) {
-                try (DicomOutputStream out = new DicomOutputStream(output)){
+                try (DicomOutputStream out = new DicomOutputStream(output)) {
                     out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                     return true;
                 } catch (IOException e) {
@@ -164,6 +162,7 @@ public class DicomSpecialElement extends MediaElement {
 
     @Override
     public void dispose() {
+        // Do nothing
     }
 
     public static final List<DicomSpecialElement> getPRfromSopUID(String seriesUID, String sopUID, Integer frameNumber,
@@ -273,7 +272,7 @@ public class DicomSpecialElement extends MediaElement {
                 }
             }
         }
-        return  koElementSet ==null ? Collections.emptySet() : koElementSet;
+        return koElementSet == null ? Collections.emptySet() : koElementSet;
     }
 
     public static final Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
@@ -302,7 +301,7 @@ public class DicomSpecialElement extends MediaElement {
                 }
             }
         }
-        return koElementSet ==null ? Collections.emptySet() : koElementSet;
+        return koElementSet == null ? Collections.emptySet() : koElementSet;
     }
 
     public static final RejectedKOSpecialElement getRejectionKoSpecialElement(

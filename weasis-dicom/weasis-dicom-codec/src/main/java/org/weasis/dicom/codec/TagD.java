@@ -169,20 +169,26 @@ public class TagD extends TagW {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (!super.equals(obj))
+        }
+        if (!super.equals(obj)) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         TagD other = (TagD) obj;
         if (privateCreatorID == null) {
-            if (other.privateCreatorID != null)
+            if (other.privateCreatorID != null) {
                 return false;
-        } else if (!privateCreatorID.equals(other.privateCreatorID))
+            }
+        } else if (!privateCreatorID.equals(other.privateCreatorID)) {
             return false;
-        if (vr != other.vr)
+        }
+        if (vr != other.vr) {
             return false;
+        }
         return true;
     }
 
@@ -359,7 +365,7 @@ public class TagD extends TagW {
             || TagType.DICOM_PERSON_NAME.equals(type) || TagType.DICOM_PERIOD.equals(type)
             || TagType.DICOM_SEX.equals(type);
     }
-    
+
     @Override
     public String getFormattedTagValue(Object value, String format) {
         if (value == null) {
@@ -846,11 +852,9 @@ public class TagD extends TagW {
                         buf.append(" "); //$NON-NLS-1$
                     }
                     buf.append(vals[i]);
-                }
-                else if(i == 0){
+                } else if (i == 0) {
                     buf.append(TagW.NO_VALUE);
                 }
-                
             }
 
         }

@@ -1,16 +1,15 @@
 package org.weasis.dicom.codec.utils;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.weasis.dicom.codec.TagD;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class DicomMediaUtilsTest {
     public static final String[] STRING_ARRAY = { "RECTANGULAR", "CIRCULAR", "POLYGONAL" };

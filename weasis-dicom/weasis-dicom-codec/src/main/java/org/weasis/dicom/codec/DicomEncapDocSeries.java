@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -27,13 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.TagUtil;
-import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.core.api.util.StringUtil;
 
 public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements FilesExtractor {
 

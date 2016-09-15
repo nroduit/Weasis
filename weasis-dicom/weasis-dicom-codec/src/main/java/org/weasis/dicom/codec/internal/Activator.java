@@ -32,7 +32,6 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
-import org.weasis.dicom.codec.pref.DicomPrefManager;
 
 import com.sun.media.imageioimpl.common.ImageioUtil;
 
@@ -94,7 +93,6 @@ public class Activator implements BundleActivator, ServiceListener {
     // @Override
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
-        DicomPrefManager.getInstance().savePreferences();
         ImageioUtil.deregisterServiceProvider(DicomCodec.RLEImageReaderSpi);
         ImageioUtil.deregisterServiceProvider(DicomCodec.DicomImageReaderSpi);
     }

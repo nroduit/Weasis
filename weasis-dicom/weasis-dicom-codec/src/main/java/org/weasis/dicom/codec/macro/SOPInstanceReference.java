@@ -29,14 +29,12 @@ public class SOPInstanceReference extends Module {
         super(new Attributes());
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public static Collection<SOPInstanceReference> toSOPInstanceReferenceMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
             return null;
         }
 
-        ArrayList<SOPInstanceReference> list = new ArrayList<SOPInstanceReference>(seq.size());
+        ArrayList<SOPInstanceReference> list = new ArrayList<>(seq.size());
 
         for (Attributes attr : seq) {
             list.add(new SOPInstanceReference(attr));
@@ -45,15 +43,14 @@ public class SOPInstanceReference extends Module {
         return list;
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
     public int[] getReferencedFrameNumber() {
         return DicomMediaUtils.getIntAyrrayFromDicomElement(dcmItems, Tag.ReferencedFrameNumber, null);
     }
-    
+
     public void setReferencedFrameNumber(int... frameNumber) {
         dcmItems.setInt(Tag.ReferencedFrameNumber, VR.IS, frameNumber);
     }
-    
+
     public String getReferencedSOPInstanceUID() {
         return dcmItems.getString(Tag.ReferencedSOPInstanceUID);
     }

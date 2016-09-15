@@ -79,6 +79,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
@@ -566,12 +567,12 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             if (img instanceof DicomImageElement) {
                 double[] v = TagD.getTagValue((DicomImageElement) img, Tag.ImageOrientationPatient, double[].class);
                 if (v != null && v.length == 6) {
-                    String orientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
+                    Label orientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
                         v[1], v[2], v[3], v[4], v[5]);
                     SliceOrientation sliceOrientation = SliceOrientation.AXIAL;
-                    if (ImageOrientation.LABELS[3].equals(orientation)) {
+                    if (ImageOrientation.Label.CORONAL.equals(orientation)) {
                         sliceOrientation = SliceOrientation.CORONAL;
-                    } else if (ImageOrientation.LABELS[2].equals(orientation)) {
+                    } else if (ImageOrientation.Label.SAGITTAL.equals(orientation)) {
                         sliceOrientation = SliceOrientation.SAGITTAL;
                     }
                     MprView view = getMprView(sliceOrientation);

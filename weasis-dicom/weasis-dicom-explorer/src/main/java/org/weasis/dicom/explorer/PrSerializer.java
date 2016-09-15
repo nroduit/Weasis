@@ -92,8 +92,10 @@ public class PrSerializer {
                 Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 jaxbMarshaller.marshal(model, outputStream);
-                attributes.setString(PresentationStateReader.PRIVATE_CREATOR_TAG, VR.LO, PresentationStateReader.PR_MODEL_ID);
-                attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB, GzipManager.gzipCompressToByte(outputStream.toByteArray()));
+                attributes.setString(PresentationStateReader.PRIVATE_CREATOR_TAG, VR.LO,
+                    PresentationStateReader.PR_MODEL_ID);
+                attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB,
+                    GzipManager.gzipCompressToByte(outputStream.toByteArray()));
             } catch (Exception e) {
                 LOGGER.error("Cannot save xml: ", e);
             }
@@ -189,7 +191,7 @@ public class PrSerializer {
 
         if (graphic.getColorPaint() instanceof Color) {
             Color color = (Color) graphic.getColorPaint();
-            float[] rgb = PresentationStateReader.ColorToLAB(color);
+            float[] rgb = PresentationStateReader.colorToLAB(color);
             if (rgb != null) {
                 styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, CIELab.convertToDicomLab(rgb));
             }

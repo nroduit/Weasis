@@ -23,8 +23,6 @@ public class KODocumentModule extends Module {
         super(dcmItems);
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public String getInstanceNumber() {
         return dcmItems.getString(Tag.InstanceNumber);
     }
@@ -40,8 +38,6 @@ public class KODocumentModule extends Module {
     public void setContentDateTime(Date d) {
         dcmItems.setDate(Tag.ContentDateAndTime, d);
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public Collection<ReferencedRequest> getReferencedRequests() {
         return ReferencedRequest.toReferencedRequestMacros(dcmItems.getSequence(Tag.ReferencedRequestSequence));

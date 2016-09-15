@@ -11,7 +11,6 @@
 package org.weasis.dicom.codec.display;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -88,9 +87,6 @@ public class WindowAndPresetsOp extends WindowOp {
         setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pr, pixelPadding));
         setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(pr, pixelPadding));
         setParam(ActionW.LUT_SHAPE.cmd(), p ? preset.getLutShape() : img.getDefaultShape(pixelPadding));
-        // node.setParam(ActionW.IMAGE_PIX_PADDING.cmd(), pixelPadding);
-        // node.setParam(ActionW.INVERT_LUT.cmd(), false);
-        // node.setParam(WindowOp.P_FILL_OUTSIDE_LUT, false);
     }
 
 }

@@ -14,11 +14,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
@@ -28,10 +26,8 @@ import org.dcm4che3.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD.Level;
@@ -60,39 +56,36 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
 
     @Override
     public void addMedia(DicomVideoElement media) {
-        if (media instanceof DicomVideoElement) {
-            DicomVideoElement dcmVideo = (DicomVideoElement) media;
-            if (media.getMediaReader() instanceof DicomMediaIO) {
-                DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
-                width = TagD.getTagValue(dicomImageLoader, Tag.Columns, Integer.class);
-                height = TagD.getTagValue(dicomImageLoader, Tag.Rows, Integer.class);
-                VR.Holder holder = new VR.Holder();
-                Object pixdata = dicomImageLoader.getDicomObject().getValue(Tag.PixelData, holder);
-                if (pixdata instanceof Fragments) {
-                    Fragments fragments = (Fragments) pixdata;
-                    // Should have only 2 fragments: 1) compression marker 2) video stream
-                    // One fragment shall contain the whole video stream.
-                    // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.5.html
-                    for (Object data : fragments) {
-                        if (data instanceof BulkData) {
-                            BulkData bulkData = (BulkData) data;
-                            FileInputStream in = null;
-                            FileOutputStream out = null;
-                            try {
-                                File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                                in = new FileInputStream(dcmVideo.getFile());
-                                out = new FileOutputStream(videoFile);
-                                StreamUtils.skipFully(in, bulkData.offset());
-                                StreamUtils.copy(in, out, bulkData.length());
-                                dcmVideo.setVideoFile(videoFile);
-                                this.add(dcmVideo);
-                                return;
-                            } catch (Exception e) {
-                                LOGGER.error("Cannot extract video stream", e);
-                            } finally {
-                                FileUtil.safeClose(out);
-                                FileUtil.safeClose(in);
-                            }
+        if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
+            DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
+            width = TagD.getTagValue(dicomImageLoader, Tag.Columns, Integer.class);
+            height = TagD.getTagValue(dicomImageLoader, Tag.Rows, Integer.class);
+            VR.Holder holder = new VR.Holder();
+            Object pixdata = dicomImageLoader.getDicomObject().getValue(Tag.PixelData, holder);
+            if (pixdata instanceof Fragments) {
+                Fragments fragments = (Fragments) pixdata;
+                // Should have only 2 fragments: 1) compression marker 2) video stream
+                // One fragment shall contain the whole video stream.
+                // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.5.html
+                for (Object data : fragments) {
+                    if (data instanceof BulkData) {
+                        BulkData bulkData = (BulkData) data;
+                        FileInputStream in = null;
+                        FileOutputStream out = null;
+                        try {
+                            File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                            in = new FileInputStream(media.getFile());
+                            out = new FileOutputStream(videoFile);
+                            StreamUtils.skipFully(in, bulkData.offset());
+                            StreamUtils.copy(in, out, bulkData.length());
+                            media.setVideoFile(videoFile);
+                            this.add(media);
+                            return;
+                        } catch (Exception e) {
+                            LOGGER.error("Cannot extract video stream", e);
+                        } finally {
+                            FileUtil.safeClose(out);
+                            FileUtil.safeClose(in);
                         }
                     }
                 }
@@ -136,7 +129,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
     }
-    
+
     private static String convertSecondsInTime(int totalSecs) {
         int hours = totalSecs / 3600;
         int minutes = (totalSecs % 3600) / 60;

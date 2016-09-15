@@ -912,8 +912,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             Collections.sort(list, DicomSpecialElement.ORDER_BY_DATE);
 
                             JPopupMenu popupMenu = new JPopupMenu();
-                            popupMenu
-                                .add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
+                            popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
                             popupMenu.addSeparator();
 
                             ButtonGroup group = new ButtonGroup();
@@ -1578,8 +1577,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         JMenuItem item4 = new JMenuItem(Messages.getString("DicomExplorer.open")); //$NON-NLS-1$
                         item4.addActionListener(e -> {
                             selList.setOpenningSeries(true);
-                            ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true,
-                                true);
+                            ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true, true);
                             selList.setOpenningSeries(false);
                         });
                         menuFactory.add(item4);
@@ -1589,8 +1587,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             item4 = new JMenuItem(Messages.getString("DicomExplorer.open_win")); //$NON-NLS-1$
                             item4.addActionListener(e -> {
                                 selList.setOpenningSeries(true);
-                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel,
-                                    false, true);
+                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, false,
+                                    true);
                                 selList.setOpenningSeries(false);
                             });
                             menuFactory.add(item4);
@@ -1605,8 +1603,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                     item4 = new JMenuItem(config.getDevice().toString());
                                     item4.addActionListener(e -> {
                                         selList.setOpenningSeries(true);
-                                        ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList,
-                                            dicomModel, false, true, b);
+                                        ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel,
+                                            false, true, b);
                                         selList.setOpenningSeries(false);
                                     });
                                     subMenu.add(item4);
@@ -1619,8 +1617,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             item4 = new JMenuItem(Messages.getString("DicomExplorer.add")); //$NON-NLS-1$
                             item4.addActionListener(e -> {
                                 selList.setOpenningSeries(true);
-                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel,
-                                    true, false);
+                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true,
+                                    false);
                                 selList.setOpenningSeries(false);
                             });
                             menuFactory.add(item4);

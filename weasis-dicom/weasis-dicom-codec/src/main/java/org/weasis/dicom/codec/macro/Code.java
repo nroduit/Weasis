@@ -29,14 +29,12 @@ public class Code extends Module {
         this(new Attributes());
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public static Collection<Code> toCodeMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
             return null;
         }
 
-        ArrayList<Code> list = new ArrayList<Code>(seq.size());
+        ArrayList<Code> list = new ArrayList<>(seq.size());
 
         for (Attributes attr : seq) {
             list.add(new Code(attr));
@@ -44,8 +42,6 @@ public class Code extends Module {
 
         return list;
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public String getCodeValue() {
         return dcmItems.getString(Tag.CodeValue);

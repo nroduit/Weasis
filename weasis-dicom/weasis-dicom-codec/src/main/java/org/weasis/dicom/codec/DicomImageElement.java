@@ -15,7 +15,6 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
-import java.lang.ref.Reference;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -58,21 +57,7 @@ public class DicomImageElement extends ImageElement {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomImageElement.class);
 
-    private static final SoftHashMap<LutParameters, LookupTableJAI> LUT_Cache =
-        new SoftHashMap<LutParameters, LookupTableJAI>() {
-
-            public Reference<? extends LookupTableJAI> getReference(LutParameters key) {
-                return hash.get(key);
-            }
-
-            @Override
-            public void removeElement(Reference<? extends LookupTableJAI> soft) {
-                LutParameters key = reverseLookup.remove(soft);
-                if (key != null) {
-                    hash.remove(key);
-                }
-            }
-        };
+    private static final SoftHashMap<LutParameters, LookupTableJAI> LUT_Cache = new SoftHashMap<>();
 
     private volatile List<PresetWindowLevel> windowingPresetCollection = null;
     private volatile Collection<LutShape> lutShapeCollection = null;
@@ -285,10 +270,10 @@ public class DicomImageElement extends ImageElement {
     public boolean isPhotometricInterpretationMonochrome() {
         String photometricInterpretation = getPhotometricInterpretation();
 
-        return (photometricInterpretation != null && //
+        return photometricInterpretation != null && //
             ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) //$NON-NLS-1$
                 || "MONOCHROME2" //$NON-NLS-1$
-                    .equalsIgnoreCase(photometricInterpretation)));
+                    .equalsIgnoreCase(photometricInterpretation));
     }
 
     /**
@@ -456,25 +441,13 @@ public class DicomImageElement extends ImageElement {
             return null;
         }
 
-        if (getPaddingValue() != null && isPhotometricInterpretationMonochrome()) {
-            /*
-             * When pixel padding is activated, VOI LUT must extend to the min bit stored value when MONOCHROME2 and to
-             * the max bit stored value when MONOCHROME1.
-             *
-             * C.7.5.1.1.2 Pixel Padding Value and Pixel Padding Range Limit If Photometric Interpretation
-             *
-             * (0028,0004) is MONOCHROME2, Pixel Padding Value (0028,0120) shall be less than (closer to or equal to the
-             * minimum possible pixel value) or equal to Pixel Padding Range Limit (0028,0121). If Photometric
-             * Interpretation (0028,0004) is MONOCHROME1, Pixel Padding Value (0028,0120) shall be greater than (closer
-             * to or equal to the maximum possible pixel value) or equal to Pixel Padding Range Limit (0028,0121).
-             */
-
-            // Create a VOI LUT with pixel padding values at the extremity of the allocated values.
-            fillLutOutside = true;
-        }
         int minValue;
         int maxValue;
-        if (fillLutOutside) {
+        /*
+         * When pixel padding is activated, VOI LUT must extend to the min bit stored value when MONOCHROME2 and to the
+         * max bit stored value when MONOCHROME1. See C.7.5.1.1.2
+         */
+        if (fillLutOutside || (getPaddingValue() != null && isPhotometricInterpretationMonochrome())) {
             minValue = getMinAllocatedValue(tagable, pixelPadding);
             maxValue = getMaxAllocatedValue(tagable, pixelPadding);
         } else {

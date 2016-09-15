@@ -19,11 +19,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.UID;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
 
 public class KOSpecialElement extends AbstractKOSpecialElement {
-
 
     public KOSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO);
@@ -61,14 +59,12 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
         setKeyObjectReference(!isSelected, studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
     }
 
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     public boolean setKeyObjectReference(boolean selectedState, DicomImageElement dicomImage) {
         String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
         String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
         String sopInstanceUID = TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class);
         String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
-        
+
         return setKeyObjectReference(selectedState, studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
     }
 
@@ -81,7 +77,6 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
             return removeKeyObject(studyInstanceUID, seriesInstanceUID, sopInstanceUID);
         }
     }
-
 
     public boolean setKeyObjectReference(boolean selectedState, List<DicomImageElement> dicomImageList) {
 
@@ -133,8 +128,5 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
             return removeKeyObjects(studyInstanceUID, seriesInstanceUID, sopInstanceUIDs);
         }
     }
-
-
- 
 
 }
