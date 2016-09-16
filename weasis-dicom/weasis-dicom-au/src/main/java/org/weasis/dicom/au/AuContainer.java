@@ -164,8 +164,8 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     @Override
     public void close() {
-        super.close();
         AuFactory.closeSeriesViewer(this);
+        super.close();
 
         GuiExecutor.instance().execute(() -> {
             if (auview != null) {

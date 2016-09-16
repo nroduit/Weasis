@@ -275,18 +275,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             process = null;
             t.interrupt();
         }
-        super.close();
         MPRFactory.closeSeriesViewer(this);
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                for (ViewCanvas v : view2ds) {
-                    v.disposeView();
-                }
-            }
-        });
-
+        super.close();
     }
 
     @Override

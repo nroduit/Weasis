@@ -201,8 +201,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     @Override
     public void close() {
-        super.close();
         SRFactory.closeSeriesViewer(this);
+        super.close();
 
         GuiExecutor.instance().execute(() -> {
             if (srview != null) {

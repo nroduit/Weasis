@@ -46,6 +46,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
@@ -168,6 +169,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     public ViewCanvas<E> getSelectedImagePane() {
         return selectedImagePane;
     }
+    
+    @Override
+    public void close() {
+        super.close();
+
+        GuiExecutor.instance().execute(() -> {
+            removeComponents();
+            for (ViewCanvas v : view2ds) {
+                resetMaximizedSelectedImagePane(v);
+                v.disposeView();
+            }
+        });
+    }
 
     /**
      * Get the layout of this panel.
@@ -246,11 +260,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
     }
 
+    protected void removeComponents(){
+        for (Component c : components) {
+            if (c instanceof SeriesViewerListener) {
+                eventManager.removeSeriesViewerListener((SeriesViewerListener) c);
+            }
+        }
+        components.clear();
+    }
+    
     /**
      * Set a layout to this view panel. The layout is defined by the provided number corresponding the layout definition
      * in the property file.
      */
-
     @SuppressWarnings("unchecked")
     protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
         this.layoutModel = layoutModel == null ? VIEWS_1x1.copy() : layoutModel.copy();
@@ -272,12 +294,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 oldViews.remove(i).disposeView();
             }
         }
-        for (Component c : components) {
-            if (c instanceof SeriesViewerListener) {
-                eventManager.removeSeriesViewerListener((SeriesViewerListener) c);
-            }
-        }
-        components.clear();
+        removeComponents();
 
         final Map<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
         Iterator<LayoutConstraints> enumVal = elements.keySet().iterator();
