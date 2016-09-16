@@ -38,7 +38,6 @@ import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -200,19 +199,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public void close() {
-        super.close();
         ViewerFactory.closeSeriesViewer(this);
-
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                for (DefaultView2d v : view2ds) {
-                    v.disposeView();
-                }
-            }
-        });
-
+        super.close();
     }
 
     @Override

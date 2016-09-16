@@ -49,7 +49,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -331,20 +330,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public void close() {
-        super.close();
         View2dFactory.closeSeriesViewer(this);
-
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                for (DefaultView2d v : view2ds) {
-                    resetMaximizedSelectedImagePane(v);
-                    v.disposeView();
-                }
-            }
-        });
-
+        super.close();
     }
 
     @Override
