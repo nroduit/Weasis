@@ -32,10 +32,13 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
 
     public GroupRadioMenu() {
         this.itemList = new ArrayList<>();
-        group = new ButtonGroup();
+        this.group = new ButtonGroup();
     }
 
     private void init() {
+        for (RadioMenuItem item : itemList) {
+            group.remove(item);
+        }
         itemList.clear();
         Object selectedItem = dataModel.getSelectedItem();
 
@@ -48,8 +51,8 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
             RadioMenuItem radioMenuItem = new RadioMenuItem(object.toString(), icon, object);
             radioMenuItem.setSelected(object == selectedItem);
             group.add(radioMenuItem);
-            radioMenuItem.addActionListener(this);
             itemList.add(radioMenuItem);
+            radioMenuItem.addActionListener(this);
         }
     }
 
