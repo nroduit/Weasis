@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.core.api.gui.util;
 
+import java.util.Arrays;
+
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JMenu;
@@ -116,7 +118,22 @@ public abstract class ComboItemListener extends BasicActionState implements List
         setDataList(objects, true);
     }
 
+    private boolean isDataEquals(Object[] objects) {
+        if (model.getSize() != objects.length) {
+            return false;
+        }
+        Object[] data = new Object[objects.length];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = model.getElementAt(i);
+        }
+        return Arrays.equals(data, objects);
+    }
+
     protected synchronized void setDataList(Object[] objects, boolean doTriggerAction) {
+        if (isDataEquals(objects)) {
+            // Do not update model and menu model,
+            return;
+        }
         Object oldSelection = model.getSelectedItem();
         model.removeListDataListener(this);
         model.removeAllElements();
