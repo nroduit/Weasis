@@ -371,7 +371,7 @@ public class WeasisWin {
                     }
                     if (p instanceof ImageViewerPlugin && p.getName().equals(factory.getUIName())
                         && group.equals(p.getGroupID())) {
-                        ImageViewerPlugin viewer = ((ImageViewerPlugin) p);
+                        ImageViewerPlugin viewer = (ImageViewerPlugin) p;
                         if (setInSelection && seriesList.size() == 1) {
                             viewer.addSeries(seriesList.get(0));
                         } else {

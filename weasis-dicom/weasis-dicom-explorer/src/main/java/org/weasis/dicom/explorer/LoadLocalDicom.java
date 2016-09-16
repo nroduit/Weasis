@@ -128,17 +128,23 @@ public class LoadLocalDicom extends ExplorerTask {
 
     private SeriesThumbnail buildDicomStructure(DicomMediaIO dicomReader, boolean open) {
         SeriesThumbnail thumb = null;
+        String studyUID = (String) dicomReader.getTagValue(TagD.getUID(Level.STUDY));
         String patientPseudoUID = (String) dicomReader.getTagValue(TagD.getUID(Level.PATIENT));
         MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
         if (patient == null) {
-            patient =
-                new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView());
-            dicomReader.writeMetaData(patient);
-            dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-            LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
+            MediaSeriesGroup study = dicomModel.getStudyNode(studyUID);
+            if (study == null) {
+                patient =
+                    new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView());
+                dicomReader.writeMetaData(patient);
+                dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
+                LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
+            } else {
+                patient = dicomModel.getParent(study, DicomModel.patient);
+                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam.");
+            }
         }
 
-        String studyUID = (String) dicomReader.getTagValue(TagD.getUID(Level.STUDY));
         MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
         if (study == null) {
             study = new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
@@ -234,7 +240,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Build DicomModel",e);
         } finally {
             // dicomReader.reset();
         }

@@ -19,20 +19,29 @@ import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
 import javax.swing.MutableComboBoxModel;
 
-public class ArrayListComboBoxModel extends AbstractListModel implements MutableComboBoxModel, ComboBoxModel {
+@SuppressWarnings("serial")
+public class ArrayListComboBoxModel<E> extends AbstractListModel<E>
+    implements MutableComboBoxModel<E>, ComboBoxModel<E> {
+
     private Object selectedItem;
-    private final List items;
+    private final List<E> items;
+    private Comparator<E> comparator;
 
     public ArrayListComboBoxModel() {
-        items = new ArrayList();
+        this(null, null);
     }
 
-    public ArrayListComboBoxModel(List arrayList) {
-        items = arrayList;
+    public ArrayListComboBoxModel(List<E> items) {
+        this(items, null);
     }
 
-    public int binarySearch(Object value, Comparator comp) {
-        return Collections.binarySearch(items, value, comp);
+    public ArrayListComboBoxModel(Comparator<E> comparator) {
+        this(null, comparator);
+    }
+
+    public ArrayListComboBoxModel(List<E> items, Comparator<E> comparator) {
+        this.items = items == null ? new ArrayList<>() : items;
+        this.comparator = comparator;
     }
 
     @Override
@@ -54,7 +63,7 @@ public class ArrayListComboBoxModel extends AbstractListModel implements Mutable
     }
 
     @Override
-    public Object getElementAt(int index) {
+    public E getElementAt(int index) {
         if (index >= 0 && index < items.size()) {
             return items.get(index);
         } else {
@@ -66,24 +75,22 @@ public class ArrayListComboBoxModel extends AbstractListModel implements Mutable
         return items.indexOf(anObject);
     }
 
-    // implements javax.swing.MutableComboBoxModel
     @Override
-    public void addElement(Object anObject) {
-        items.add(anObject);
-        fireIntervalAdded(this, items.size() - 1, items.size() - 1);
-        if (items.size() == 1 && selectedItem == null && anObject != null) {
-            setSelectedItem(anObject);
+    public void addElement(E anObject) {
+        int index = Collections.binarySearch(items, anObject, comparator);
+        if (index < 0) {
+            insertElementAt(anObject, -(index + 1));
+        } else {
+            insertElementAt(anObject, index);
         }
     }
 
-    // implements javax.swing.MutableComboBoxModel
     @Override
-    public void insertElementAt(Object anObject, int index) {
+    public void insertElementAt(E anObject, int index) {
         items.add(index, anObject);
         fireIntervalAdded(this, index, index);
     }
 
-    // implements javax.swing.MutableComboBoxModel
     @Override
     public void removeElementAt(int index) {
         if (getElementAt(index) == selectedItem) {
@@ -97,7 +104,6 @@ public class ArrayListComboBoxModel extends AbstractListModel implements Mutable
         fireIntervalRemoved(this, index, index);
     }
 
-    // implements javax.swing.MutableComboBoxModel
     @Override
     public void removeElement(Object anObject) {
         int index = items.indexOf(anObject);
@@ -110,7 +116,7 @@ public class ArrayListComboBoxModel extends AbstractListModel implements Mutable
      * Empties the list.
      */
     public void removeAllElements() {
-        if (items.size() > 0) {
+        if (!items.isEmpty()) {
             int firstIndex = 0;
             int lastIndex = items.size() - 1;
             items.clear();

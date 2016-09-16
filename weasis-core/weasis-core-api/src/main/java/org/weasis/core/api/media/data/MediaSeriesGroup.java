@@ -10,20 +10,13 @@
  *******************************************************************************/
 package org.weasis.core.api.media.data;
 
-import java.util.Comparator;
-
 public interface MediaSeriesGroup extends Tagable {
 
     TagW getTagID();
+    
+    boolean matchIdValue(Object value);
 
     TagW getTagElement(int id);
 
-    @Override
-    boolean equals(Object obj);
-
     void dispose();
-
-    void setComparator(Comparator<TagW> comparator);
-
-    Comparator<TagW> getComparator();
 }

@@ -77,6 +77,7 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.Messages;
 import org.xml.sax.SAXException;
 
@@ -125,19 +126,19 @@ public class DownloadManager {
                 return rep;
             }
             if (val1.getPatient() != val2.getPatient()) {
-                rep = DicomModel.PATIENT_COMPARATOR.compare(val1.getPatient(), val2.getPatient());
+                rep = DicomSorter.PATIENT_COMPARATOR.compare(val1.getPatient(), val2.getPatient());
             }
             if (rep != 0) {
                 return rep;
             }
 
             if (val1.getStudy() != val2.getStudy()) {
-                rep = DicomModel.STUDY_COMPARATOR.compare(val1.getStudy(), val2.getStudy());
+                rep = DicomSorter.STUDY_COMPARATOR.compare(val1.getStudy(), val2.getStudy());
             }
             if (rep != 0) {
                 return rep;
             }
-            return DicomModel.SERIES_COMPARATOR.compare(val1.getSeries(), val2.getSeries());
+            return DicomSorter.SERIES_COMPARATOR.compare(val1.getSeries(), val2.getSeries());
         }
     }
 

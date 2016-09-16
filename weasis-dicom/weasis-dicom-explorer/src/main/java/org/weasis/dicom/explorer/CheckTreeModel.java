@@ -118,7 +118,7 @@ public class CheckTreeModel {
         }
 
         List children = Collections.list(studyNode.children());
-        int index = Collections.binarySearch(children, seriesNode, DicomModel.SERIES_COMPARATOR);
+        int index = Collections.binarySearch(children, seriesNode, DicomSorter.SERIES_COMPARATOR);
         if (index < 0) {
             studyNode.insert(seriesNode, -(index + 1));
         } else {
@@ -145,7 +145,7 @@ public class CheckTreeModel {
                         }
                     }
                     List children = Collections.list(patientNode.children());
-                    int index = Collections.binarySearch(children, studyNode, DicomModel.STUDY_COMPARATOR);
+                    int index = Collections.binarySearch(children, studyNode, DicomSorter.STUDY_COMPARATOR);
                     if (index < 0) {
                         patientNode.insert(studyNode, -(index + 1));
                     } else {
@@ -153,7 +153,7 @@ public class CheckTreeModel {
                     }
                 }
                 List children = Collections.list(rootNode.children());
-                int index = Collections.binarySearch(children, patientNode, DicomModel.PATIENT_COMPARATOR);
+                int index = Collections.binarySearch(children, patientNode, DicomSorter.PATIENT_COMPARATOR);
                 if (index < 0) {
                     rootNode.insert(patientNode, -(index + 1));
                 } else {

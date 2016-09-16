@@ -74,11 +74,11 @@ import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.codec.wado.WadoParameters.HttpTag;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
+import org.weasis.dicom.explorer.ThumbnailMouseAndKeyAdapter;
 
 public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
@@ -169,11 +169,11 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             taskResume.setPriority(p);
             Thumbnail thumbnail = (Thumbnail) this.getDicomSeries().getTagValue(TagW.Thumbnail);
             if (thumbnail != null) {
-                LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
-                thumbnail.addMouseListener(
-                    DicomExplorer.createThumbnailMouseAdapter(taskResume.getDicomSeries(), dicomModel, taskResume));
-                thumbnail
-                    .addKeyListener(DicomExplorer.createThumbnailKeyListener(taskResume.getDicomSeries(), dicomModel));
+                LoadSeries.removeThumbnailMouseAndKeyAdapter(thumbnail);
+                ThumbnailMouseAndKeyAdapter thumbAdapter =
+                    new ThumbnailMouseAndKeyAdapter(taskResume.getDicomSeries(), dicomModel, taskResume);
+                thumbnail.addMouseListener(thumbAdapter);
+                thumbnail.addKeyListener(thumbAdapter);
             }
             DownloadManager.addLoadSeries(taskResume, dicomModel, true);
             DownloadManager.removeLoadSeries(this, dicomModel);
@@ -472,28 +472,28 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         }
     }
 
-    public static void removeAnonymousMouseAndKeyListener(Thumbnail tumbnail) {
+    public static void removeThumbnailMouseAndKeyAdapter(Thumbnail tumbnail) {
         MouseListener[] listener = tumbnail.getMouseListeners();
         MouseMotionListener[] motionListeners = tumbnail.getMouseMotionListeners();
         KeyListener[] keyListeners = tumbnail.getKeyListeners();
         MouseWheelListener[] wheelListeners = tumbnail.getMouseWheelListeners();
         for (int i = 0; i < listener.length; i++) {
-            if (listener[i].getClass().isAnonymousClass()) {
+            if (listener[i] instanceof ThumbnailMouseAndKeyAdapter) {
                 tumbnail.removeMouseListener(listener[i]);
             }
         }
         for (int i = 0; i < motionListeners.length; i++) {
-            if (motionListeners[i].getClass().isAnonymousClass()) {
+            if (motionListeners[i] instanceof ThumbnailMouseAndKeyAdapter) {
                 tumbnail.removeMouseMotionListener(motionListeners[i]);
             }
         }
         for (int i = 0; i < wheelListeners.length; i++) {
-            if (wheelListeners[i].getClass().isAnonymousClass()) {
+            if (wheelListeners[i] instanceof ThumbnailMouseAndKeyAdapter) {
                 tumbnail.removeMouseWheelListener(wheelListeners[i]);
             }
         }
         for (int i = 0; i < keyListeners.length; i++) {
-            if (keyListeners[i].getClass().isAnonymousClass()) {
+            if (keyListeners[i] instanceof ThumbnailMouseAndKeyAdapter) {
                 tumbnail.removeKeyListener(keyListeners[i]);
             }
         }
@@ -501,9 +501,10 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
     private static void addListenerToThumbnail(final Thumbnail thumbnail, final LoadSeries loadSeries,
         final DicomModel dicomModel) {
-        final Series<?> series = loadSeries.getDicomSeries();
-        thumbnail.addMouseListener(DicomExplorer.createThumbnailMouseAdapter(series, dicomModel, loadSeries));
-        thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(series, dicomModel));
+        ThumbnailMouseAndKeyAdapter thumbAdapter =
+            new ThumbnailMouseAndKeyAdapter(loadSeries.getDicomSeries(), dicomModel, loadSeries);
+        thumbnail.addMouseListener(thumbAdapter);
+        thumbnail.addKeyListener(thumbAdapter);
     }
 
     public Series<?> getDicomSeries() {
@@ -927,7 +928,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                             taskResume.setPriority(s.getPriority());
                             Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
                             if (thumbnail != null) {
-                                LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
+                                LoadSeries.removeThumbnailMouseAndKeyAdapter(thumbnail);
                                 addListenerToThumbnail(thumbnail, taskResume, dicomModel);
                             }
                             DownloadManager.addLoadSeries(taskResume, dicomModel, true);
