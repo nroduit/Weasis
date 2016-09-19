@@ -36,7 +36,7 @@ import org.weasis.core.ui.model.utils.bean.PanPoint;
 public interface ViewCanvas<E extends ImageElement>
     extends Canvas, Image2DViewer<E>, PropertyChangeListener, FocusListener, ImageLayerChangeListener<E>, KeyListener {
 
-    public static final String zoomTypeCmd = "zoom.type"; //$NON-NLS-1$
+    public static final String ZOOM_TYPE_CMD = "zoom.type"; //$NON-NLS-1$
     public static final ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png")); //$NON-NLS-1$
     public static final int CENTER_POINTER = 1 << 1;
     public static final int HIGHLIGHTED_POINTER = 1 << 2;

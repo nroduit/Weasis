@@ -34,6 +34,7 @@ import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.WtoolBar;
 
+@SuppressWarnings("serial")
 public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
     public ZoomToolBar(final ImageViewerEventManager<E> eventManager, int index, boolean showLens) {

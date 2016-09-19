@@ -20,11 +20,9 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +32,8 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.GzipManager;
 
-@Component(immediate = false)
-@Service
+@org.apache.felix.scr.annotations.Component(immediate = false)
+@org.apache.felix.scr.annotations.Service
 @Properties(value = { @Property(name = "service.name", value = "Media Dicomizer"),
     @Property(name = "service.description", value = "Import media and dicomize them") })
 public class MediaImporterFactory implements DataExplorerViewFactory {
@@ -65,7 +63,7 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
         }
     }
 
-    private void initGlobalTags() {
+    private static void initGlobalTags() {
         String xml = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.patient.context"); //$NON-NLS-1$
 
         if (xml == null) {

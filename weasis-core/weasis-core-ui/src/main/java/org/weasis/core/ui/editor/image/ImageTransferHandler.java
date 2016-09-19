@@ -29,7 +29,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageTransferHandler.class);
 
-    private static final DataFlavor flavors[] = { DataFlavor.imageFlavor };
+    private static final DataFlavor[] flavors = { DataFlavor.imageFlavor };
     private SimpleOpManager disOp;
 
     @Override

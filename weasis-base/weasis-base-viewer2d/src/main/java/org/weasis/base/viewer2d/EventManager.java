@@ -27,7 +27,6 @@ import javax.swing.SwingUtilities;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
@@ -75,7 +74,6 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
-import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 
@@ -90,16 +88,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     /** The single instance of this singleton class. */
     private static EventManager instance;
-
-    /**
-     * Return the single instance of this class. This method guarantees the singleton property of this class.
-     */
-    public static synchronized EventManager getInstance() {
-        if (instance == null) {
-            instance = new EventManager();
-        }
-        return instance;
-    }
 
     /**
      * The default private constructor to guarantee the singleton property of this class.
@@ -156,6 +144,16 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         initializeParameters();
     }
 
+    /**
+     * Return the single instance of this class. This method guarantees the singleton property of this class.
+     */
+    public static synchronized EventManager getInstance() {
+        if (instance == null) {
+            instance = new EventManager();
+        }
+        return instance;
+    }
+
     private void initializeParameters() {
         enableActions(false);
     }
@@ -204,6 +202,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     @Override
     public void keyTyped(KeyEvent e) {
+        // Do nothing
     }
 
     @Override
@@ -263,6 +262,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     @Override
     public void keyReleased(KeyEvent e) {
+        // Do nothing
     }
 
     @Override
@@ -327,22 +327,22 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     @Override
     public void resetDisplay() {
-        reset(ResetTools.All);
+        reset(ResetTools.ALL);
     }
 
     public void reset(ResetTools action) {
         AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
-        if (ResetTools.All.equals(action)) {
+        if (ResetTools.ALL.equals(action)) {
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));
-        } else if (ResetTools.Zoom.equals(action)) {
+        } else if (ResetTools.ZOOM.equals(action)) {
             // Pass the value 0.0 (convention: default value according the zoom type) directly to the property change,
             // otherwise the value is adjusted by the BoundedRangeModel
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
-        } else if (ResetTools.Rotation.equals(action)) {
+        } else if (ResetTools.ROTATION.equals(action)) {
             getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a.setSliderValue(0));
-        } else if (ResetTools.WindowLevel.equals(action)) {
+        } else if (ResetTools.WL.equals(action)) {
             if (selectedView2dContainer != null) {
                 ViewCanvas<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
                 if (defaultView2d != null) {
@@ -357,7 +357,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     }
                 }
             }
-        } else if (ResetTools.Pan.equals(action)) {
+        } else if (ResetTools.PAN.equals(action)) {
             if (selectedView2dContainer != null) {
                 ViewCanvas viewPane = selectedView2dContainer.getSelectedImagePane();
                 if (viewPane != null) {
@@ -391,7 +391,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (!enabledAction) {
             enableActions(true);
         }
-        ImageElement image = view2d.getImage();
         MediaSeries<ImageElement> series = view2d.getSeries();
 
         OpManager dispOp = view2d.getDisplayOpManager();
@@ -479,15 +478,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     public void savePreferences(BundleContext bundleContext) {
         Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
-        // Remove prefs used in Weasis 1.1.0 RC2, has moved to core.ui
-        try {
-            if (prefs.nodeExists(ViewSetting.PREFERENCE_NODE)) {
-                Preferences oldPref = prefs.node(ViewSetting.PREFERENCE_NODE);
-                oldPref.removeNode();
-            }
-        } catch (BackingStoreException e) {
-            // Do nothing
-        }
         zoomSetting.savePreferences(prefs);
         // Mouse buttons preferences
         mouseActions.savePreferences(prefs);

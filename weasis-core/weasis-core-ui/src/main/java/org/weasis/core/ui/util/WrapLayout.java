@@ -19,6 +19,7 @@ import java.awt.Insets;
 /**
  * FlowLayout subclass that fully supports wrapping of components.
  */
+@SuppressWarnings("serial")
 public class WrapLayout extends FlowLayout {
 
     private Dimension preferredLayoutSize;

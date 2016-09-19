@@ -23,8 +23,6 @@ import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 import javax.swing.Box;
@@ -61,21 +59,16 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         BorderLayout borderLayout = new BorderLayout();
         setLayout(borderLayout);
 
-        JPanel panel_2 = new JPanel();
-        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
-        flowLayout_1.setHgap(10);
-        flowLayout_1.setAlignment(FlowLayout.RIGHT);
-        flowLayout_1.setVgap(7);
-        add(panel_2, BorderLayout.SOUTH);
+        JPanel panel2 = new JPanel();
+        FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
+        flowLayout1.setHgap(10);
+        flowLayout1.setAlignment(FlowLayout.RIGHT);
+        flowLayout1.setVgap(7);
+        add(panel2, BorderLayout.SOUTH);
 
         JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
-        panel_2.add(btnNewButton);
-        btnNewButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetoDefaultValues();
-            }
-        });
+        panel2.add(btnNewButton);
+        btnNewButton.addActionListener(e -> resetoDefaultValues());
 
         JPanel panel1 = new JPanel();
         panel1.setBorder(new TitledBorder(null, Messages.getString("ScreenPrefView.settings"), TitledBorder.LEADING, //$NON-NLS-1$

@@ -14,7 +14,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -28,7 +27,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JMenu;
@@ -56,6 +54,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 
 import bibliothek.gui.dock.common.CLocation;
@@ -327,31 +326,24 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                 return null;
             }
 
-            JMenuItem menuItem = new JMenuItem(new AbstractAction(tree.isExpanded(path)
-                ? Messages.getString("DefaultExplorer.collapse") : Messages.getString("DefaultExplorer.expand")) { //$NON-NLS-1$ //$NON-NLS-2$
-
-                @Override
-                public void actionPerformed(final ActionEvent e) {
-                    if (DefaultExplorer.this.clickedPath == null) {
-                        return;
-                    }
-                    if (tree.isExpanded(DefaultExplorer.this.clickedPath)) {
-                        tree.collapsePath(DefaultExplorer.this.clickedPath);
-                    } else {
-                        tree.expandPath(DefaultExplorer.this.clickedPath);
-                    }
-                }
-            });
+            JMenuItem menuItem =
+                new JMenuItem(new DefaultAction(tree.isExpanded(path) ? Messages.getString("DefaultExplorer.collapse") //$NON-NLS-1$
+                    : Messages.getString("DefaultExplorer.expand"), event -> { //$NON-NLS-1$
+                        if (DefaultExplorer.this.clickedPath == null) {
+                            return;
+                        }
+                        if (tree.isExpanded(DefaultExplorer.this.clickedPath)) {
+                            tree.collapsePath(DefaultExplorer.this.clickedPath);
+                        } else {
+                            tree.expandPath(DefaultExplorer.this.clickedPath);
+                        }
+                    }));
             popupMenu.add(menuItem);
 
-            menuItem = new JMenuItem(new AbstractAction(Messages.getString("DefaultExplorer.refresh")) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(final ActionEvent e) {
-                    repaint();
-                    refresh();
-                }
-            });
+            menuItem = new JMenuItem(new DefaultAction(Messages.getString("DefaultExplorer.refresh"), event -> { //$NON-NLS-1$
+                repaint();
+                refresh();
+            }));
             popupMenu.add(menuItem);
             popupMenu.addSeparator();
 
@@ -363,33 +355,23 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                 for (final DataExplorerView dataExplorerView : UIManager.EXPLORER_PLUGINS) {
                     if (dataExplorerView != DefaultExplorer.this) {
                         importAction = true;
-                        JMenuItem item = new JMenuItem(new AbstractAction(dataExplorerView.getUIName()) {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-
-                                final Path selectedDir =
-                                    ((TreeNode) DefaultExplorer.this.tree.getSelectionPath().getLastPathComponent())
-                                        .getNodePath();
-                                if (selectedDir != null) {
-                                    dataExplorerView.importFiles(selectedDir.toFile().listFiles(), false);
-                                }
+                        JMenuItem item = new JMenuItem(new DefaultAction(dataExplorerView.getUIName(), event -> {
+                            final Path selectedDir =
+                                ((TreeNode) DefaultExplorer.this.tree.getSelectionPath().getLastPathComponent())
+                                    .getNodePath();
+                            if (selectedDir != null) {
+                                dataExplorerView.importFiles(selectedDir.toFile().listFiles(), false);
                             }
-                        });
+                        }));
                         scan.add(item);
-                        item = new JMenuItem(new AbstractAction(dataExplorerView.getUIName()) {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-
-                                final Path selectedDir =
-                                    ((TreeNode) DefaultExplorer.this.tree.getSelectionPath().getLastPathComponent())
-                                        .getNodePath();
-                                if (selectedDir != null) {
-                                    dataExplorerView.importFiles(selectedDir.toFile().listFiles(), true);
-                                }
+                        item = new JMenuItem(new DefaultAction(dataExplorerView.getUIName(), event -> {
+                            final Path selectedDir =
+                                ((TreeNode) DefaultExplorer.this.tree.getSelectionPath().getLastPathComponent())
+                                    .getNodePath();
+                            if (selectedDir != null) {
+                                dataExplorerView.importFiles(selectedDir.toFile().listFiles(), true);
                             }
-                        });
+                        }));
                         scansub.add(item);
                     }
                 }

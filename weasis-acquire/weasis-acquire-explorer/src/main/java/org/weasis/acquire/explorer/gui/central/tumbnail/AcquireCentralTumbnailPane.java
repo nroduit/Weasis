@@ -81,7 +81,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
             }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                || support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 return true;
             }
             return false;
@@ -108,11 +108,11 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
             }
             // When dragging a file or group of files from a Gnome or Kde environment
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-            else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+            else if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 try {
                     // Files with spaces in the filename trigger an error
                     // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-                    String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
+                    String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
                     LOGGER.error("Drop image URI", e);

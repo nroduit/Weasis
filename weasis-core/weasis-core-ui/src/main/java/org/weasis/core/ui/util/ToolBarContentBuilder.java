@@ -16,9 +16,6 @@ import java.awt.Graphics;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.SwingConstants;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 
 public class ToolBarContentBuilder {
 
@@ -33,24 +30,12 @@ public class ToolBarContentBuilder {
         return toolBar;
     }
 
-    public static void buildButtonAction(WtoolBar toolBar, AbstractUIAction action) {
-        Border border = new EmptyBorder(2, 9, 2, 9); // top, left, bottom, right
-
-        JButton button = new JButton(action);
-        button.setToolTipText(action.getDescription());
-        button.setBorder(border);
-        button.setVerticalTextPosition(SwingConstants.BOTTOM);
-        button.setHorizontalTextPosition(SwingConstants.CENTER);
-        button.setText(null);
-        button.setFocusable(false);
-        toolBar.add(button);
-    }
-
-    public static JComponent buildToolBarSizerComponent() {
+    private static JComponent buildToolBarSizerComponent() {
         return new JButton(new Icon() {
 
             @Override
             public void paintIcon(Component c, Graphics g, int x, int y) {
+                // Do noting
             }
 
             @Override

@@ -114,7 +114,6 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     public void setPreprocessing(OpManager preprocessing) {
         setImage(sourceImage, preprocessing);
     }
-    
 
     @Override
     public SimpleOpManager getDisplayOpManager() {
@@ -227,8 +226,9 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
         try {
             g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0.0, 0.0));
-        } catch (Throwable t) {
-            if ("java.io.IOException: closed".equals(t.getMessage())) { //$NON-NLS-1$
+        } catch (Exception | OutOfMemoryError e) {
+            LOGGER.error("Draw rendered image", e);//$NON-NLS-1$
+            if ("java.io.IOException: closed".equals(e.getMessage())) { //$NON-NLS-1$
                 // Issue when the stream has been closed of a tiled image (problem that readAsRendered do not read data
                 // immediately)
                 if (sourceImage.isImageInCache()) {
@@ -236,14 +236,14 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
                 }
                 disOpManager.setFirstNode(getSourceRenderedImage());
                 updateDisplayOperations();
-            }
-            // When outOfMemory exception or when tiles are not available anymore (file stream closed)
-            LOGGER.error("Draw rendered image error:", t);//$NON-NLS-1$
-            System.gc();
-            try {
-                // Let garbage collection
-                Thread.sleep(100);
-            } catch (InterruptedException et) {
+            } else if (e instanceof OutOfMemoryError) {
+                // When outOfMemory exception or when tiles are not available anymore (file stream closed)
+                System.gc();
+                try {
+                    // Let garbage collection
+                    Thread.sleep(100);
+                } catch (InterruptedException et) {
+                }
             }
         }
         g2d.setClip(clip);
@@ -358,7 +358,6 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
             fireImageChanged();
         }
     }
-
 
     @Override
     public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit) {

@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
-import java.awt.event.ActionEvent;
+import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -19,10 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -77,6 +77,7 @@ import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -223,7 +224,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImageTool.class), key, true)) {
-                tool = new ImageTool(ImageTool.BUTTON_NAME); 
+                tool = new ImageTool(ImageTool.BUTTON_NAME);
                 TOOLS.add(tool);
             }
 
@@ -441,7 +442,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                             DicomModel model = (DicomModel) event.getSource();
                             for (MediaSeriesGroup s : model.getChildren(group)) {
                                 for (ViewCanvas<DicomImageElement> v : view2ds) {
-                                     MediaSeries<DicomImageElement> series = v.getSeries();
+                                    MediaSeries<DicomImageElement> series = v.getSeries();
                                     if (s.equals(series)) {
                                         v.setSeries(null);
                                     }
@@ -522,7 +523,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         ViewCanvas<DicomImageElement> selectedView = getSelectedImagePane();
 
         if (updatedKOSelection != null && selectedView instanceof View2d) {
-            if (SynchData.Mode.Tile.equals(this.getSynchView().getSynchData().getMode())) {
+            if (SynchData.Mode.TILE.equals(this.getSynchView().getSynchData().getMode())) {
 
                 ActionState koSelection = selectedView.getEventManager().getAction(ActionW.KO_SELECTION);
                 if (koSelection instanceof ComboItemListener) {
@@ -634,94 +635,84 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         List<Action> actions = selectedImagePane == null ? null : selectedImagePane.getExportToClipboardAction();
         // TODO Add option in properties to deactivate this option
         if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
-            AbstractAction importAll = new AbstractAction(Messages.getString("View2dContainer.expOsirixMes"), //$NON-NLS-1$
-                new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    String cmd = "/usr/bin/open -b com.rossetantoine.osirix"; //$NON-NLS-1$
-                    String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
-                    if (baseDir != null) {
-                        String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
-                        if (prop != null) {
-                            String[] dirs = prop.split(","); //$NON-NLS-1$
-                            File[] files = new File[dirs.length];
-                            for (int i = 0; i < files.length; i++) {
-                                File file = new File(baseDir, dirs[i].trim());
-                                if (file.canRead()) {
-                                    cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
-                                }
-                            }
-                        }
-                    } else {
-                        File file = new File(AppProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
-                        if (file.canRead()) {
-                            cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
-                        }
-                    }
-                    System.out.println("Execute cmd:" + cmd); //$NON-NLS-1$
-                    try {
-                        Process p = Runtime.getRuntime().exec(cmd);
-                        BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-                        String data;
-                        while ((data = buffer.readLine()) != null) {
-                            System.out.println(data);
-                        }
-                        int val = 0;
-                        if (p.waitFor() != 0) {
-                            val = p.exitValue();
-                        }
-                        if (val != 0) {
-                            JOptionPane.showMessageDialog(View2dContainer.this,
-                                Messages.getString("View2dContainer.expOsirixTitle"), //$NON-NLS-1$
-                                Messages.getString("View2dContainer.expOsirixMes"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
-                        }
-
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    } catch (InterruptedException e2) {
-                        LOGGER.error("Cannot get the exit status of the open Osirix command: ", e2.getMessage()); //$NON-NLS-1$
-                    }
-                }
-            };
+            DefaultAction action = new DefaultAction(Messages.getString("View2dContainer.expOsirixMes"), //$NON-NLS-1$
+                new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png")), //$NON-NLS-1$
+                event -> exportTosirix(this));
             if (actions == null) {
-                actions = new ArrayList<>(1);
+                return Arrays.asList(action);
             }
-            actions.add(importAll);
+            actions.add(action);
         }
         return actions;
+    }
+
+    private static void exportTosirix(Component parent) {
+        String cmd = "/usr/bin/open -b com.rossetantoine.osirix"; //$NON-NLS-1$
+        String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
+        if (baseDir != null) {
+            String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
+            if (prop != null) {
+                String[] dirs = prop.split(","); //$NON-NLS-1$
+                File[] files = new File[dirs.length];
+                for (int i = 0; i < files.length; i++) {
+                    File file = new File(baseDir, dirs[i].trim());
+                    if (file.canRead()) {
+                        cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+                    }
+                }
+            }
+        } else {
+            File file = new File(AppProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
+            if (file.canRead()) {
+                cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+            }
+        }
+        LOGGER.info("Execute cmd:" + cmd); //$NON-NLS-1$
+        try {
+            Process p = Runtime.getRuntime().exec(cmd);
+            BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+            String data;
+            while ((data = buffer.readLine()) != null) {
+                System.out.println(data);
+            }
+            int val = 0;
+            if (p.waitFor() != 0) {
+                val = p.exitValue();
+            }
+            if (val != 0) {
+                JOptionPane.showMessageDialog(parent, Messages.getString("View2dContainer.expOsirixTitle"), //$NON-NLS-1$
+                    Messages.getString("View2dContainer.expOsirixMes"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+            }
+
+        } catch (IOException e1) {
+            LOGGER.error("Running cmd", e1);
+        } catch (InterruptedException e2) {
+            LOGGER.error("Cannot get the exit status of the open Osirix command", e2); //$NON-NLS-1$
+        }
     }
 
     @Override
     public List<Action> getPrintActions() {
         ArrayList<Action> actions = new ArrayList<>(2);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
-        AbstractAction printStd =
-            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                    PrintDialog<DicomImageElement> dialog =
-                        new PrintDialog<>(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
-                    ColorLayerUI.showCenterScreen(dialog, layer);
-                }
-            };
+        DefaultAction printStd = new DefaultAction(title,
+            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event -> { //$NON-NLS-1$
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
+                PrintDialog<DicomImageElement> dialog =
+                    new PrintDialog<>(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
+                ColorLayerUI.showCenterScreen(dialog, layer);
+            });
         printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
         actions.add(printStd);
 
         final String title2 = Messages.getString("View2dContainer.dcm_print"); //$NON-NLS-1$
-        AbstractAction printStd2 = new AbstractAction(title2, null) {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                DicomPrintDialog<DicomImageElement> dialog = new DicomPrintDialog<>(
-                    SwingUtilities.getWindowAncestor(View2dContainer.this), title2, eventManager);
-                ColorLayerUI.showCenterScreen(dialog, layer);
-            }
-        };
+        DefaultAction printStd2 = new DefaultAction(title2, null, event -> {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
+            DicomPrintDialog<DicomImageElement> dialog =
+                new DicomPrintDialog<>(SwingUtilities.getWindowAncestor(View2dContainer.this), title2, eventManager);
+            ColorLayerUI.showCenterScreen(dialog, layer);
+        });
         actions.add(printStd2);
         return actions;
     }

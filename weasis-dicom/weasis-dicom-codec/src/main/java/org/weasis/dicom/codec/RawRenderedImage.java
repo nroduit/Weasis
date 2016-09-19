@@ -1044,7 +1044,7 @@ public class RawRenderedImage extends SimpleRenderedImage {
 
                             int srcPos = ((ComponentSampleModel) originalSampleModel).getOffset(tx, ty, sourceBands[b]);
                             int skipX = scaleX * pixelStride;
-                            ;
+
                             for (int l = 0, m = y1; l < cTileHeight; l += scaleY, m++) {
                                 if (reader.getAbortRequest()) {
                                     break;

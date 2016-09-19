@@ -70,7 +70,7 @@ public class MipView extends View2d {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.BEST_FIT);
+        actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.BEST_FIT);
         actionsInView.put(MIP_THICKNESS.cmd(), 2);
         actionsInView.put(MipView.MIP.cmd(), MipView.Type.MAX);
         actionsInView.put("no.ko", true); //$NON-NLS-1$

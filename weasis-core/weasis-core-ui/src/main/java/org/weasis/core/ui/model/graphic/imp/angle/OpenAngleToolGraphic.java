@@ -148,8 +148,8 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
         // Do not show decoration when lines are nearly parallel
         // Can cause stack overflow BUG on paint method when drawing infinite line with DashStroke
         if (lineABvalid && lineCDvalid && !linesParallel && Math.abs(angleDeg) > 0.1) {
-
-            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(this, 5));
+            newShape = new AdvancedShape(this, 5);
+            AdvancedShape aShape = (AdvancedShape) newShape;
             aShape.addShape(path);
 
             // Let arcAngle be the partial section of the ellipse that represents the measured angle

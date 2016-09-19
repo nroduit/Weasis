@@ -43,7 +43,6 @@ import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
@@ -116,7 +115,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         }
 
         if (activeMouse > 1) {
-            addSeparator(Toolbar.SEPARATOR_2x24);
+            addSeparator(WtoolBar.SEPARATOR_2x24);
         }
 
         if (props.getBooleanProperty("weasis.toolbar.layoutbouton", true)) { //$NON-NLS-1$

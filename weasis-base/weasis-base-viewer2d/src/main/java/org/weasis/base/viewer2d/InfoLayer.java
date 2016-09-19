@@ -51,7 +51,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     private static final long serialVersionUID = 1782300490253793711L;
     private final HashMap<String, Boolean> displayPreferences = new HashMap<>();
     private boolean visible = true;
-    private final Color color = Color.yellow;
+    private static final Color color = Color.yellow;
     private static final int BORDER = 10;
     private final DefaultView2d view2DPane;
     private PixelInfo pixelInfo = null;
@@ -367,7 +367,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         double scale = image.getPixelSize() / zoomFactor;
         double scaleSizex = ajustShowScale(scale,
             (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
-        if (showBottomScale & scaleSizex > 30.0d) {
+        if (showBottomScale && scaleSizex > 50.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
             g2d.setPaint(color);

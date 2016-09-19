@@ -21,7 +21,7 @@ import javax.swing.JComboBox;
 import org.weasis.core.api.util.LocalUtil;
 
 @SuppressWarnings("serial")
-public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener {
+public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, Refreshable {
 
     public JLocaleFormat() {
         super();
@@ -76,9 +76,6 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener {
                 valueHasChanged();
             }
         }
-    }
-
-    protected void valueHasChanged() {
     }
 
     public void refresh() {

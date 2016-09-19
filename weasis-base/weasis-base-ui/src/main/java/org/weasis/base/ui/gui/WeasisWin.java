@@ -24,6 +24,9 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -37,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
@@ -55,6 +59,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
@@ -64,8 +69,6 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
-import org.weasis.base.ui.action.ExitAction;
-import org.weasis.base.ui.action.OpenPreferencesAction;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -96,6 +99,8 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
@@ -338,8 +343,7 @@ public class WeasisWin {
         if (series != null && treeModel != null && entry != null) {
             for (MediaSeries<?> s : series) {
                 MediaSeriesGroup entry1 = treeModel.getParent(s, entry);
-                List<MediaSeries<?>> seriesList =
-                    Optional.ofNullable(map.get(entry1)).orElse(new ArrayList<>());
+                List<MediaSeries<?>> seriesList = Optional.ofNullable(map.get(entry1)).orElse(new ArrayList<>());
                 seriesList.add(s);
                 map.put(entry1, seriesList);
             }
@@ -916,10 +920,23 @@ public class WeasisWin {
         };
         printMenu.addPopupMenuListener();
         menuFile.add(printMenu);
+
         menuFile.add(new JSeparator());
-        menuFile.add(new JMenuItem(OpenPreferencesAction.getInstance()));
+        Consumer<ActionEvent> prefAction = e -> {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WeasisWin.getInstance().getRootPaneContainer());
+            PreferenceDialog dialog = new PreferenceDialog(WeasisWin.getInstance().getFrame());
+            ColorLayerUI.showCenterScreen(dialog, layer);
+        };
+        DefaultAction preferencesAction =
+            new DefaultAction(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title"), //$NON-NLS-1$
+                prefAction);
+        preferencesAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_MASK));
+        menuFile.add(new JMenuItem(preferencesAction));
+
         menuFile.add(new JSeparator());
-        menuFile.add(new JMenuItem(ExitAction.getInstance()));
+        DefaultAction exitAction = new DefaultAction(Messages.getString("ExitAction.title"), //$NON-NLS-1$
+            e -> WeasisWin.getInstance().closeWindow());
+        menuFile.add(new JMenuItem(exitAction));
     }
 
     private class SequenceHandler extends TransferHandler {
@@ -940,7 +957,7 @@ public class WeasisWin {
             }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                || support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 return true;
             }
             return false;
@@ -966,11 +983,11 @@ public class WeasisWin {
             }
             // When dragging a file or group of files
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-            else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+            else if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 try {
                     // Files with spaces in the filename trigger an error
                     // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-                    String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
+                    String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
                     LOGGER.error("Get dragable URIs", e);

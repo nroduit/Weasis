@@ -12,7 +12,7 @@ package org.weasis.core.ui.model.utils.algo;
 
 import java.awt.Rectangle;
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The Class Contour.
@@ -20,17 +20,18 @@ import java.util.ArrayList;
  * @author Nicolas Roduit
  */
 public class Contour implements Serializable {
-
     private static final long serialVersionUID = 9056317484468365515L;
+    
     public static final int[] DIRX = { 1, 1, 0, -1, -1, -1, 0, 1 };
     public static final int[] DIRY = { 0, -1, -1, -1, 0, 1, 1, 1 };
+    
     private int coordx;
     private int coordy;
     private byte[] codeFreeman;
     private int area;
-    private ArrayList<Double> parameters;
+    private List<Double> parameters;
 
-    public Contour(int coordx, int coordy, byte[] codeFreeman, int area, ArrayList<Double> parameters) {
+    public Contour(int coordx, int coordy, byte[] codeFreeman, int area, List<Double> parameters) {
         this.coordx = coordx;
         this.coordy = coordy;
         this.codeFreeman = codeFreeman;
@@ -54,7 +55,7 @@ public class Contour implements Serializable {
         return area;
     }
 
-    public ArrayList<Double> getParameters() {
+    public List<Double> getParameters() {
         return parameters;
     }
 
@@ -82,7 +83,7 @@ public class Contour implements Serializable {
         return new Rectangle(boundsMinX, boundsMinY, boundsMaxX - boundsMinX + 1, boundsMaxY - boundsMinY + 1);
     }
 
-    private int changeDir(int lastDir, int index) {
+    private static int changeDir(int lastDir, int index) {
         int change = index - lastDir;
         // resolution du passage du 7 au 0
         if (change < -4) {
@@ -131,7 +132,7 @@ public class Contour implements Serializable {
         }
     }
 
-    private void writeNewPosition(byte[][] matrix, int index, int nextDir, int newPos1, int offset, int xdir, int ydir,
+    private static void writeNewPosition(byte[][] matrix, int index, int nextDir, int newPos1, int offset, int xdir, int ydir,
         byte[] border) {
         int[] dirX = DIRX;
         int[] dirY = DIRY;
@@ -156,7 +157,7 @@ public class Contour implements Serializable {
         }
     }
 
-    private void writeNewPositionWithNoRestriction(byte[][] matrix, int newPos1, int offset, int xdir, int ydir,
+    private static void writeNewPositionWithNoRestriction(byte[][] matrix, int newPos1, int offset, int xdir, int ydir,
         byte[] border) {
         int[] dirX = DIRX;
         int[] dirY = DIRY;
@@ -181,7 +182,7 @@ public class Contour implements Serializable {
         }
     }
 
-    private boolean canWriteInDir(int index, int nextDir, int newPos) {
+    private static boolean canWriteInDir(int index, int nextDir, int newPos) {
         return (newPos - (index - 4) + 8) % 8 < (nextDir - (index - 4) + 8) % 8;
     }
 
@@ -356,7 +357,7 @@ public class Contour implements Serializable {
         return matrix;
     }
 
-    public static Contour getContourFromChainListCoord(ArrayList<ChainPoint> chain) {
+    public static Contour getContourFromChainListCoord(List<ChainPoint> chain) {
         byte[] val = new byte[chain.size()];
         ChainPoint last = chain.get(0);
         for (int j = 1; j < chain.size(); j++) {

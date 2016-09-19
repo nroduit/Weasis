@@ -10,12 +10,10 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer.gui.list;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-import javax.swing.AbstractAction;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
@@ -27,6 +25,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.ui.util.DefaultAction;
 
 @SuppressWarnings("serial")
 public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList<E> {
@@ -55,15 +54,11 @@ public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList
         List<ImageElement> medias = AcquireManager.toImageElement(getSelected(e));
         if (!medias.isEmpty()) {
             JPopupMenu popupMenu = new JPopupMenu();
-
-            popupMenu.add(new JMenuItem(new AbstractAction("Import selection") {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    AcquireImportDialog dialog = new AcquireImportDialog(AcquireThumbnailList.this.mainPanel, medias);
-                    JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
-                }
-            }));
+            
+            popupMenu.add(new JMenuItem(new DefaultAction("Import selection", event -> {
+                AcquireImportDialog dialog = new AcquireImportDialog(AcquireThumbnailList.this.mainPanel, medias);
+                JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
+            })));
 
             return popupMenu;
         }

@@ -17,6 +17,9 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 public class PointAdapter {
+    
+    private PointAdapter() {
+    }
 
     static class Pt {
         @XmlAttribute(required = true)

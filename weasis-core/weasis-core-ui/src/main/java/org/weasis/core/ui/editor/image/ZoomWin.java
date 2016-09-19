@@ -499,7 +499,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         if (ActionW.SYNCH.cmd().equals(command) && value instanceof SynchEvent) {
             if (!(value instanceof SynchCineEvent)) {
                 SynchData synchData = (SynchData) view2d.getActionValue(ActionW.SYNCH_LINK.cmd());
-                if (synchData != null && Mode.None.equals(synchData.getMode())) {
+                if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
                     return;
                 }
 

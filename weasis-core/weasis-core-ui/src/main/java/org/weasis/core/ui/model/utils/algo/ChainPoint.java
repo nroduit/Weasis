@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.ui.model.utils.algo;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The Class ChainPoint.
@@ -24,19 +24,18 @@ public class ChainPoint implements Comparable<ChainPoint> {
     public final int y;
     private float segLength;
 
+    public ChainPoint(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    // get the length of the segment between the current point and the next one.
     public float getSegLength() {
         return segLength;
     }
 
-    // get the length of the segment between the current point and the next one.
     public void setSegLength(float segLength) {
         this.segLength = segLength;
-    }
-
-    // Constructors
-    public ChainPoint(int x, int y) {
-        this.x = x;
-        this.y = y;
     }
 
     @Override
@@ -45,24 +44,41 @@ public class ChainPoint implements Comparable<ChainPoint> {
             : (this.y == anotherPoint.y ? (this.x < anotherPoint.x ? -1 : (this.x == anotherPoint.x ? 0 : 1)) : 1));
     }
 
-    public boolean equals(ChainPoint point) {
-        return (this.y == point.y) && (this.x == point.x);
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + x;
+        result = prime * result + y;
+        return result;
     }
 
-    public boolean equals(int x, int y) {
-        return (this.y == y) && (this.x == x);
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ChainPoint other = (ChainPoint) obj;
+        if (x != other.x)
+            return false;
+        if (y != other.y)
+            return false;
+        return true;
     }
 
-    public static double[] regression(ArrayList<ChainPoint> list) {
-        double mean_x = 0.0;
-        double mean_y = 0.0;
+    public static double[] regression(List<ChainPoint> list) {
+        double meanx = 0.0;
+        double meany = 0.0;
         for (int i = 0; i < list.size(); i++) {
             ChainPoint p = list.get(i);
-            mean_x += p.x;
-            mean_y += p.y;
+            meanx += p.x;
+            meany += p.y;
         }
-        mean_x /= list.size();
-        mean_y /= list.size();
+        meanx /= list.size();
+        meany /= list.size();
         /*
          * We have to solve two equations with two unknows:
          *
@@ -75,33 +91,33 @@ public class ChainPoint implements Comparable<ChainPoint> {
          *
          * where dx=x-mean(x). In this case mean(dx)==0.
          */
-        double mean_x2 = 0;
-        double mean_y2 = 0;
-        double mean_xy = 0;
+        double meanx2 = 0;
+        double meany2 = 0;
+        double meanxy = 0;
         for (int i = 0; i < list.size(); i++) {
             ChainPoint p = list.get(i);
             double xi = p.x;
             double yi = p.y;
-            xi -= mean_x;
-            mean_x2 += xi * xi;
-            mean_y2 += yi * yi;
-            mean_xy += xi * yi;
+            xi -= meanx;
+            meanx2 += xi * xi;
+            meany2 += yi * yi;
+            meanxy += xi * yi;
         }
-        mean_x2 /= list.size();
-        mean_y2 /= list.size();
-        mean_xy /= list.size();
+        meanx2 /= list.size();
+        meany2 /= list.size();
+        meanxy /= list.size();
         /*
          * Assuming that 'mean(x)==0', then the correlation coefficient can be approximate by:
          *
          * R = mean(xy) / sqrt( mean(x²) * (mean(y²) - mean(y)²) )
          */
         double[] val = new double[3];
-        val[0] = mean_xy / mean_x2; // slope
+        val[0] = meanxy / meanx2; // slope
         if (Double.isNaN(val[0])) {
             val[0] = 0.0;
         }
-        val[1] = mean_y - mean_x * val[0]; // y0 or b
-        val[2] = mean_xy / Math.sqrt(mean_x2 * (mean_y2 - mean_y * mean_y)); // R
+        val[1] = meany - meanx * val[0]; // y0 or b
+        val[2] = meanxy / Math.sqrt(meanx2 * (meany2 - meany * meany)); // R
         if (Double.isInfinite(val[2]) || Double.isNaN(val[2])) {
             val[2] = 1;
         }

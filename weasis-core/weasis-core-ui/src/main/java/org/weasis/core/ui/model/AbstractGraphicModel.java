@@ -232,13 +232,13 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             return Collections.emptyList();
         }
 
-        ArrayList<GraphicLayer> layers = new ArrayList<>();
+        ArrayList<GraphicLayer> layerType = new ArrayList<>();
         synchronized (models) {
             for (Graphic g : models) {
                 LayerType type = g.getLayer().getType();
 
                 boolean notInGroup = true;
-                for (GraphicLayer glayer : layers) {
+                for (GraphicLayer glayer : layerType) {
                     if (Objects.equals(glayer.getType(), type)) {
                         notInGroup = false;
                         break;
@@ -246,12 +246,12 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
                 }
 
                 if (notInGroup) {
-                    layers.add(g.getLayer());
+                    layerType.add(g.getLayer());
                 }
             }
         }
 
-        return layers;
+        return layerType;
     }
 
     @Override

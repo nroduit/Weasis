@@ -312,7 +312,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public Boolean intersects(Rectangle rectangle, AffineTransform transform) {
-        return Optional.ofNullable(rectangle).map(r -> getArea(transform).intersects(r)).orElse(false);
+        return Optional.ofNullable(rectangle).map(getArea(transform)::intersects).orElse(false);
     }
 
     @Override
@@ -360,7 +360,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         Consumer<Shape> applyShape = s -> {
             Rectangle2D rect;
 
-            if (s instanceof AdvancedShape && ((AdvancedShape) s).shapeList.size() > 0) {
+            if (s instanceof AdvancedShape && !((AdvancedShape) s).shapeList.isEmpty()) {
                 // Assuming first shape is the user drawing path, else stands for decoration
                 Shape generalPath = ((AdvancedShape) s).shapeList.get(0).getShape();
                 rect = generalPath.getBounds2D();

@@ -119,7 +119,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
     @Override
     public void showDockable() {
-        GuiExecutor.instance().execute(() -> updateVisibleState());
+        GuiExecutor.instance().execute(this::updateVisibleState);
     }
 
     private void updateVisibleState() {

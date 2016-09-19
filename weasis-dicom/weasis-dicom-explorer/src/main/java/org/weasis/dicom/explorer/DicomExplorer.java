@@ -22,13 +22,13 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.font.FontRenderContext;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,7 +41,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -94,6 +93,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -159,34 +159,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final JToggleButton btnMoreOptions = new JToggleButton(Messages.getString("DicomExplorer.more_opt")); //$NON-NLS-1$
     private boolean verticalLayout = true;
 
-    private final AbstractAction importAction = new AbstractAction(BUTTON_NAME) {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
-            DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
-            dialog.showPage(BUTTON_NAME);
-            ColorLayerUI.showCenterScreen(dialog, layer);
-        }
-    };
-    private final AbstractAction exportAction = new AbstractAction(BUTTON_NAME) {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
-                DicomExport dialog = new DicomExport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
-                dialog.showPage(BUTTON_NAME);
-                ColorLayerUI.showCenterScreen(dialog, layer);
-            } else {
-                JOptionPane.showMessageDialog((Component) e.getSource(),
-                    Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
-            }
-        }
-    };
-
-    private final JButton btnExport = new JButton(exportAction);
-    private final JButton btnImport = new JButton(importAction);
+    private final JButton btnExport;
+    private final JButton btnImport;
     private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), new ImageIcon( //$NON-NLS-1$
         DicomExplorer.class.getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
 
@@ -203,6 +177,24 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         this.selectionList = new SeriesSelectionModel(patientContainer);
         thumnailView.getVerticalScrollBar().setUnitIncrement(16);
         thumnailView.setViewportView(patientContainer);
+
+        this.btnImport = new JButton(new DefaultAction(BUTTON_NAME, event -> {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
+            DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
+            dialog.showPage(BUTTON_NAME);
+            ColorLayerUI.showCenterScreen(dialog, layer);
+        }));
+        this.btnExport = new JButton(new DefaultAction(BUTTON_NAME, event -> {
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
+                DicomExport dialog = new DicomExport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
+                dialog.showPage(BUTTON_NAME);
+                ColorLayerUI.showCenterScreen(dialog, layer);
+            } else {
+                JOptionPane.showMessageDialog((Component) event.getSource(),
+                    Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
+            }
+        }));
         changeToolWindowAnchor(getDockable().getBaseLocation());
 
     }
@@ -1434,23 +1426,15 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     @Override
     public List<Action> getOpenExportDialogAction() {
-        ArrayList<Action> actions = new ArrayList<>(1);
-        actions.add(exportAction);
-        return actions;
+        return Arrays.asList(btnExport.getAction());
     }
 
     @Override
     public List<Action> getOpenImportDialogAction() {
         ArrayList<Action> actions = new ArrayList<>(2);
-        actions.add(importAction);
-        AbstractAction importCDAction =
-            new AbstractAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png"))) { //$NON-NLS-1$ //$NON-NLS-2$
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    openImportDialogAction((String) this.getValue(Action.NAME));
-                }
-            };
+        actions.add(btnImport.getAction());
+        DefaultAction importCDAction =
+            new DefaultAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), event ->  openImportDialogAction("DICOM CD")); //$NON-NLS-1$ //$NON-NLS-2$
         actions.add(importCDAction);
         return actions;
     }

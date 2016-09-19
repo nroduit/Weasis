@@ -45,6 +45,7 @@ import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RasterFactory;
 import javax.media.jai.RenderedOp;
+import javax.media.jai.operator.TranslateDescriptor;
 import javax.media.jai.operator.TransposeDescriptor;
 import javax.media.jai.operator.TransposeType;
 import javax.swing.JOptionPane;
@@ -143,7 +144,7 @@ public class SeriesBuilder {
                             }
 
                             if (SliceOrientation.SAGITTAL.equals(type1)) {
-                                // The reference image is the first of the saggital stack (Left)
+                                // The reference image is the first of the sagittal stack (Left)
                                 rotate(vc, vr, Math.toRadians(270), resr);
                                 recParams[0] = new ViewParameter(".2", SliceOrientation.AXIAL, false, null, //$NON-NLS-1$
                                     new double[] { resr.x, resr.y, resr.z, row[0], row[1], row[2] }, true, true,
@@ -203,20 +204,16 @@ public class SeriesBuilder {
                                         needBuild[i] = group == null;
                                         if (!needBuild[i]) {
                                             final MprView mprView = recView[i];
-                                            GuiExecutor.instance().execute(new Runnable() {
-
-                                                @Override
-                                                public void run() {
-                                                    mprView.setSeries((MediaSeries<DicomImageElement>) group);
-                                                    // Copy the synch values from the main view
-                                                    for (String action : MPRContainer.DEFAULT_MPR.getSynchData()
-                                                        .getActions().keySet()) {
-                                                        mprView.setActionsInView(action, view.getActionValue(action));
-                                                    }
-                                                    mprView.zoom(mainView.getViewModel().getViewScale());
-                                                    mprView.center();
-                                                    mprView.repaint();
+                                            GuiExecutor.instance().execute(() -> {
+                                                mprView.setSeries((MediaSeries<DicomImageElement>) group);
+                                                // Copy the synch values from the main view
+                                                for (String action : MPRContainer.DEFAULT_MPR.getSynchData()
+                                                    .getActions().keySet()) {
+                                                    mprView.setActionsInView(action, view.getActionValue(action));
                                                 }
+                                                mprView.zoom(mainView.getViewModel().getViewScale());
+                                                mprView.center();
+                                                mprView.repaint();
                                             });
                                         }
                                     }
@@ -225,22 +222,18 @@ public class SeriesBuilder {
 
                             final int size = series.size(filter);
                             final JProgressBar[] bar = new JProgressBar[2];
-                            GuiExecutor.instance().invokeAndWait(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    for (int i = 0; i < 2; i++) {
-                                        if (needBuild[i]) {
-                                            bar[i] = new JProgressBar(0, size);
-                                            Dimension dim = new Dimension(recView[i].getWidth() / 2, 30);
-                                            bar[i].setSize(dim);
-                                            bar[i].setPreferredSize(dim);
-                                            bar[i].setMaximumSize(dim);
-                                            bar[i].setValue(0);
-                                            bar[i].setStringPainted(true);
-                                            recView[i].setProgressBar(bar[i]);
-                                            recView[i].repaint();
-                                        }
+                            GuiExecutor.instance().invokeAndWait(() -> {
+                                for (int i = 0; i < 2; i++) {
+                                    if (needBuild[i]) {
+                                        bar[i] = new JProgressBar(0, size);
+                                        Dimension dim = new Dimension(recView[i].getWidth() / 2, 30);
+                                        bar[i].setSize(dim);
+                                        bar[i].setPreferredSize(dim);
+                                        bar[i].setMaximumSize(dim);
+                                        bar[i].setValue(0);
+                                        bar[i].setStringPainted(true);
+                                        recView[i].setProgressBar(bar[i]);
+                                        recView[i].repaint();
                                     }
                                 }
                             });
@@ -293,21 +286,17 @@ public class SeriesBuilder {
                                             }
                                         }
 
-                                        GuiExecutor.instance().execute(new Runnable() {
-
-                                            @Override
-                                            public void run() {
-                                                mprView.setProgressBar(null);
-                                                mprView.setSeries(dicomSeries);
-                                                // Copy the synch values from the main view
-                                                for (String action : MPRContainer.DEFAULT_MPR.getSynchData()
-                                                    .getActions().keySet()) {
-                                                    mprView.setActionsInView(action, view.getActionValue(action));
-                                                }
-                                                mprView.zoom(mainView.getViewModel().getViewScale());
-                                                mprView.center();
-                                                mprView.repaint();
+                                        GuiExecutor.instance().execute(() -> {
+                                            mprView.setProgressBar(null);
+                                            mprView.setSeries(dicomSeries);
+                                            // Copy the synch values from the main view
+                                            for (String action : MPRContainer.DEFAULT_MPR.getSynchData()
+                                                .getActions().keySet()) {
+                                                mprView.setActionsInView(action, view.getActionValue(action));
                                             }
+                                            mprView.zoom(mainView.getViewModel().getViewScale());
+                                            mprView.center();
+                                            mprView.repaint();
                                         });
                                     }
                                 }
@@ -335,16 +324,12 @@ public class SeriesBuilder {
 
         if (params.rotateOutputImg) {
             if (bar != null) {
-                GuiExecutor.instance().execute(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        bar.setMaximum(newSeries.length);
-                        bar.setValue(0);
-                        // Force to reset the progress bar (substance)
-                        bar.updateUI();
-                        view.repaint();
-                    }
+                GuiExecutor.instance().execute(() -> {
+                    bar.setMaximum(newSeries.length);
+                    bar.setValue(0);
+                    // Force to reset the progress bar (substance)
+                    bar.updateUI();
+                    view.repaint();
                 });
             }
 
@@ -460,13 +445,9 @@ public class SeriesBuilder {
                     writToFile(inFile, byteBuffer);
                 }
                 if (bar != null) {
-                    GuiExecutor.instance().execute(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            bar.setValue(bar.getValue() + 1);
-                            view.repaint();
-                        }
+                    GuiExecutor.instance().execute(() -> {
+                        bar.setValue(bar.getValue() + 1);
+                        view.repaint();
                     });
                 }
             }
@@ -570,10 +551,11 @@ public class SeriesBuilder {
                 if (sp == null && !abort[1]) {
                     confirmMessage(view, Messages.getString("SeriesBuilder.space_missing"), abort); //$NON-NLS-1$
                 } else {
-                    double pos = (sp[0] + sp[1] + sp[2]);
+                    double pos = sp[0] + sp[1] + sp[2];
                     if (index > 0) {
                         double space = Math.abs(pos - lastPos);
-                        if (!abort[1] && (space == 0.0 || (index > 1 && lastSpace - space > epsilon))) {
+                        if (!abort[1]
+                            && (MathUtil.isEqualToZero(space) || (index > 1 && lastSpace - space > epsilon))) {
                             confirmMessage(view, Messages.getString("SeriesBuilder.space"), abort); //$NON-NLS-1$
                         }
                         lastSpace = space;
@@ -581,13 +563,9 @@ public class SeriesBuilder {
                     lastPos = pos;
                     index++;
                     if (bar != null) {
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                bar.setValue(bar.getValue() + 1);
-                                view.repaint();
-                            }
+                        GuiExecutor.instance().execute(() -> {
+                            bar.setValue(bar.getValue() + 1);
+                            view.repaint();
                         });
                     }
                 }
@@ -599,7 +577,7 @@ public class SeriesBuilder {
                     throw new IIOException("Cannot read an image!"); //$NON-NLS-1$
                 }
 
-                if (dcm.getRescaleX() != dcm.getRescaleY()) {
+                if (MathUtil.isDifferent(dcm.getRescaleX(), dcm.getRescaleY())) {
                     ParameterBlock pb = new ParameterBlock();
                     pb.addSource(image);
                     pb.add((float) dcm.getRescaleX()).add((float) dcm.getRescaleY()).add(0.0f).add(0.0f);
@@ -627,7 +605,7 @@ public class SeriesBuilder {
             DataBuffer dataBuffer = image.getRaster().getDataBuffer();
             int width = image.getWidth();
             int height = newSeries.length;
-            byte[] bytesOut = null;
+            byte[] bytesOut;
             if (dataBuffer instanceof DataBufferByte) {
                 bytesOut = ((DataBufferByte) dataBuffer).getData();
                 for (int j = 0; j < height; j++) {
@@ -682,20 +660,13 @@ public class SeriesBuilder {
             source = PlanarImage.wrapRenderedImage(source);
         }
         // use Transpose operation
-        ParameterBlock pb = new ParameterBlock();
-        pb.addSource(source);
-        pb.add(rotate);
-        result = JAI.create("transpose", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+        result = TransposeDescriptor.create(source, rotate, ImageToolkit.NOCACHE_HINT);
         // Handle non square images. Translation is necessary because the transpose operator keeps the same
         // origin (top left not the center of the image)
         float diffw = source.getWidth() / 2.0f - result.getWidth() / 2.0f;
         float diffh = source.getHeight() / 2.0f - result.getHeight() / 2.0f;
-        if (diffw != 0.0f || diffh != 0.0f) {
-            pb = new ParameterBlock();
-            pb.addSource(result);
-            pb.add(diffw);
-            pb.add(diffh);
-            result = JAI.create("translate", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+        if (MathUtil.isDifferentFromZero(diffw) || MathUtil.isDifferentFromZero(diffh) ) {
+            result = TranslateDescriptor.create(result, diffw, diffh, null, ImageToolkit.NOCACHE_HINT);
         }
         return result.getAsBufferedImage();
     }
@@ -712,15 +683,11 @@ public class SeriesBuilder {
 
     private static void removeAllPrivateTags(Attributes item) throws Exception {
         // TODO remove them or skip when reading?
-        Visitor visitor = new Visitor() {
-
-            @Override
-            public boolean visit(Attributes item, int tag, VR vr, Object value) {
-                if (TagUtils.isPrivateTag(tag)) {
-                    item.setNull(tag, vr);
-                }
-                return true;
+        Visitor visitor = (item1, tag, vr, value) -> {
+            if (TagUtils.isPrivateTag(tag)) {
+                item1.setNull(tag, vr);
             }
+            return true;
         };
         item.accept(visitor, true);
     }
@@ -758,19 +725,14 @@ public class SeriesBuilder {
     }
 
     public static void confirmMessage(final Component view, final String message, final boolean[] abort) {
-        GuiExecutor.instance().invokeAndWait(new Runnable() {
-
-            @Override
-            public void run() {
-                int usrChoice =
-                    JOptionPane.showConfirmDialog(view, message + Messages.getString("SeriesBuilder.add_warn"), //$NON-NLS-1$
-                        MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (usrChoice == JOptionPane.NO_OPTION) {
-                    abort[0] = true;
-                } else {
-                    // bypass for other similar messages
-                    abort[1] = true;
-                }
+        GuiExecutor.instance().invokeAndWait(() -> {
+            int usrChoice = JOptionPane.showConfirmDialog(view, message + Messages.getString("SeriesBuilder.add_warn"), //$NON-NLS-1$
+                MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (usrChoice == JOptionPane.NO_OPTION) {
+                abort[0] = true;
+            } else {
+                // bypass for other similar messages
+                abort[1] = true;
             }
         });
         if (abort[0]) {

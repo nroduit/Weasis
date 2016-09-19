@@ -391,27 +391,23 @@ public class WeasisLauncher {
                 }
             }
 
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    m_tracker.open();
-                    Object commandSession = getCommandSession(m_tracker.getService());
-                    if (commandSession != null) {
-                        // execute the commands from main argv
-                        for (StringBuilder command : commandList) {
-                            commandSession_execute(commandSession, command);
-                        }
-                        commandSession_close(commandSession);
+            SwingUtilities.invokeLater(() -> {
+                m_tracker.open();
+                Object commandSession = getCommandSession(m_tracker.getService());
+                if (commandSession != null) {
+                    // execute the commands from main argv
+                    for (StringBuilder command : commandList) {
+                        commandSession_execute(commandSession, command);
                     }
-
-                    m_tracker.close();
+                    commandSession_close(commandSession);
                 }
+
+                m_tracker.close();
             });
 
             String mainUI = serverProp.getProperty("weasis.main.ui", ""); //$NON-NLS-1$ //$NON-NLS-2$
             mainUI = mainUI.trim();
-            if (!mainUI.equals("")) { //$NON-NLS-1$
+            if (!"".equals(mainUI)) { //$NON-NLS-1$
                 boolean uiStarted = false;
                 for (Bundle b : m_felix.getBundleContext().getBundles()) {
                     if (b.getSymbolicName().equals(mainUI) && b.getState() == Bundle.ACTIVE) {
@@ -420,7 +416,7 @@ public class WeasisLauncher {
                     }
                 }
                 if (!uiStarted) {
-                    throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
+                    throw new IllegalStateException("Main User Interface bundle cannot be started"); //$NON-NLS-1$
                 }
             }
             frameworkLoaded = true;

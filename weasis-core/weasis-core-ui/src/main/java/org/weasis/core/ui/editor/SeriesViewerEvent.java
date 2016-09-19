@@ -17,7 +17,7 @@ public class SeriesViewerEvent {
 
     public enum EVENT {
         SELECT, ADD, LAYOUT, SELECT_VIEW, ANONYM, TOOGLE_INFO, ADD_LAYER, REMOVE_LAYER
-    };
+    }
 
     private final SeriesViewer<? extends MediaElement> seriesViewer;
     private final MediaSeries<? extends MediaElement> series;

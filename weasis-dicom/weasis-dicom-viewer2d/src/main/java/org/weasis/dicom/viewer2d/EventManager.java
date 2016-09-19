@@ -633,7 +633,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private void koAction(ActionW action, Object selected) {
         Optional<ComboItemListener> synchAction = getAction(ActionW.SYNCH, ComboItemListener.class);
         SynchView synchView = synchAction.isPresent() ? (SynchView) synchAction.get().getSelectedItem() : null;
-        boolean tileMode = synchView != null && SynchData.Mode.Tile.equals(synchView.getSynchData().getMode());
+        boolean tileMode = synchView != null && SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
         ViewCanvas<DicomImageElement> selectedView = getSelectedViewPane();
         if (tileMode) {
             if (selectedView2dContainer instanceof View2dContainer && selectedView != null) {
@@ -1092,7 +1092,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     newList.addAll(lutShapeList);
                     lutShapeList = newList;
                 }
-                lutShapeAction.get().setDataListWithoutTriggerAction(lutShapeList.toArray());
+                lutShapeAction.get().setDataListWithoutTriggerAction(lutShapeList == null ? null : lutShapeList.toArray());
                 lutShapeAction.get().setSelectedItemWithoutTriggerAction(lutShapeItem);
             }
         }
@@ -1163,7 +1163,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     }
                 } else {
                     // TODO if Pan is activated than rotation is required
-                    if (Mode.Stack.equals(synch.getMode())) {
+                    if (Mode.STACK.equals(synch.getMode())) {
                         String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
                         DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
                         double[] val = img == null ? null : (double[]) img.getTagValue(TagW.SlicePosition);
@@ -1226,7 +1226,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         // Force to draw crosslines without changing the slice position
                         cineAction.ifPresent(a -> a.stateChanged(a.getSliderModel()));
 
-                    } else if (Mode.Tile.equals(synch.getMode())) {
+                    } else if (Mode.TILE.equals(synch.getMode())) {
                         Object selectedKO = viewPane.getActionValue(ActionW.KO_SELECTION.cmd());
                         Boolean enableFilter = (Boolean) viewPane.getActionValue(ActionW.KO_FILTER.cmd());
                         int frameIndex = JMVUtils.getNULLtoFalse(enableFilter) ? 0

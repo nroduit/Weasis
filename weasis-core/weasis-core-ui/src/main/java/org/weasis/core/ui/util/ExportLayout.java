@@ -38,9 +38,9 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         adaptLayoutModel(layoutModel);
     }
 
-    public ExportLayout(ViewCanvas<E> IViewCanvas) {
+    public ExportLayout(ViewCanvas<E> viewCanvas) {
         initGrid();
-        adaptLayoutModel(IViewCanvas);
+        adaptLayoutModel(viewCanvas);
 
     }
 
@@ -62,13 +62,13 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         return layoutModel;
     }
 
-    private void adaptLayoutModel(ViewCanvas<E> IViewCanvas) {
+    private void adaptLayoutModel(ViewCanvas<E> viewCanvas) {
         final Map<LayoutConstraints, Component> map = new LinkedHashMap<>(1);
         this.layoutModel = new GridBagLayoutModel(map, "exp_tmp", "", null);
 
-        ExportImage<E> export = new ExportImage<>(IViewCanvas);
+        ExportImage<E> export = new ExportImage<>(viewCanvas);
         export.getInfoLayer().setBorder(3);
-        LayoutConstraints e = new LayoutConstraints(IViewCanvas.getClass().getName(), 0, 0, 0, 1, 1, 1.0, 1.0,
+        LayoutConstraints e = new LayoutConstraints(viewCanvas.getClass().getName(), 0, 0, 0, 1, 1, 1.0, 1.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH);
         map.put(e, export);
         grid.add(export, e);
@@ -87,7 +87,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
             LayoutConstraints constraint = e.copy();
 
             if (v instanceof ViewCanvas) {
-                ExportImage<E> export = new ExportImage<>((ViewCanvas<E>)v);
+                ExportImage<?> export = new ExportImage<>((ViewCanvas) v);
                 export.getInfoLayer().setBorder(3);
                 map.put(constraint, export);
                 v = export;

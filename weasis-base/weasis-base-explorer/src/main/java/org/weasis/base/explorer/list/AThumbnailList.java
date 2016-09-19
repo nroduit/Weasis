@@ -22,7 +22,6 @@ import java.awt.dnd.DragSource;
 import java.awt.dnd.DragSourceDragEvent;
 import java.awt.dnd.DragSourceDropEvent;
 import java.awt.dnd.DragSourceEvent;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -40,7 +39,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.Icon;
@@ -69,6 +67,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.util.DefaultAction;
 
 @SuppressWarnings("serial")
 public abstract class AThumbnailList<E extends MediaElement> extends JList<E> implements IThumbnailList<E> {
@@ -228,12 +227,12 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
         final Rectangle thumBounds = getCellBounds(index, index);
 
         if (thumBounds == null || !thumBounds.contains(pt)) {
-            return null; 
+            return null;
         }
 
         final E item = getModel().getElementAt(index);
         if (item == null || item.getName() == null) {
-            return null; 
+            return null;
         }
 
         StringBuilder toolTips = new StringBuilder();
@@ -516,13 +515,10 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
 
     public Action buildRefreshAction() {
         // TODO set this action in toolbar
-        return new AbstractAction(Messages.getString("JIThumbnailList.refresh_list")) { //$NON-NLS-1$
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                final Thread runner = new Thread(AThumbnailList.this.getThumbnailListModel()::reload);
-                runner.start();
-            }
-        };
+        return new DefaultAction(Messages.getString("JIThumbnailList.refresh_list"), event -> { //$NON-NLS-1$
+            final Thread runner = new Thread(AThumbnailList.this.getThumbnailListModel()::reload);
+            runner.start();
+        });
     }
 
     public int getLastSelectedIndex() {

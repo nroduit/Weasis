@@ -12,15 +12,13 @@ package org.weasis.dicom.viewer2d.pref;
 
 import java.util.Hashtable;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
-@Component(immediate = false)
-@Service
+@org.apache.felix.scr.annotations.Component(immediate = false)
+@org.apache.felix.scr.annotations.Service
 public class ViewerPrefFactory implements PreferencesPageFactory {
 
     @Override

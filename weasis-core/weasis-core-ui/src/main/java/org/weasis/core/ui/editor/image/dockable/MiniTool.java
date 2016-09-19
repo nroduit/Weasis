@@ -50,7 +50,6 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     }
 
     private void jbInit() {
-        // boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
         setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
 
         Dimension dim = new Dimension(5, 5);
@@ -80,7 +79,6 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     public abstract SliderChangeListener[] getActions();
 
     public static JSliderW createSlider(final SliderChangeListener action, boolean vertical) {
-        // boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
         JSliderW slider = new JSliderW(action.getSliderMin(), action.getSliderMax(), action.getSliderValue());
         slider.setdisplayValueInTitle(false);
         slider.setInverted(vertical);
@@ -97,10 +95,8 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         int w = getWidth();
         int h = getHeight();
         if (w != 0 && h != 0) {
-            boolean vertical = h >= w;
+            vertical = h >= w;
             if (vertical != slider.getInverted()) {
-                // UIManager.DOCKING_CONTROL.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.LEFT_OF_DOCKABLE);
-
                 setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
                 slider.getParent()
                     .setLayout(new BoxLayout(slider.getParent(), vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
@@ -121,7 +117,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         for (int i = 0; i < actions.length; i++) {
             JRadioButtonMenuItem radio = new JRadioButtonMenuItem(actions[i].toString(),
                 actions[i].getActionW().getSmallIcon(), actions[i].equals(currentAction));
-            radio.setActionCommand("" + i); //$NON-NLS-1$
+            radio.setActionCommand(Integer.toString(i));
             radio.addActionListener(this);
             popupMouseScroll.add(radio);
             groupButtons.add(radio);
@@ -137,16 +133,15 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
             if (item.getParent() instanceof JPopupMenu) {
 
                 SliderChangeListener newAction = getAction(e.getActionCommand());
-                if (currentAction == newAction) {
+                if (newAction == null || currentAction == newAction) {
                     return;
                 }
                 if (currentAction != null) {
                     currentAction.unregisterActionState(slider);
                 }
-                if (newAction != null) {
-                    newAction.registerActionState(slider);
-                    // SliderChangeListener.setSliderLabelValues(slider, newAction.getMin(), newAction.getMax());
-                }
+                newAction.registerActionState(slider);
+                // SliderChangeListener.setSliderLabelValues(slider, newAction.getMin(), newAction.getMax());
+
                 currentAction = newAction;
 
                 JPopupMenu pop = (JPopupMenu) item.getParent();

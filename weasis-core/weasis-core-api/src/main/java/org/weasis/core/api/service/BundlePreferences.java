@@ -11,6 +11,7 @@
 package org.weasis.core.api.service;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import org.osgi.framework.BundleContext;
@@ -178,5 +179,18 @@ public class BundlePreferences {
                 pref.putLong(key, value);
             }
         }
+    }
+
+    public static boolean isNullStaticFieldValue(Class<?> clazz, String fieldName) {
+        try {
+            Field instance = clazz.getDeclaredField(fieldName);
+            if (instance != null) {
+                instance.setAccessible(true);
+                return instance.get(null) == null;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Checking static field value", e);
+        }
+        return false;
     }
 }

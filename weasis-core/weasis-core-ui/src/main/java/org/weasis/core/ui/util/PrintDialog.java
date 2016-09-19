@@ -32,7 +32,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
  *
- * @author Marcelo Porto (marcelo@animati.com.br)
+ * @author Marcelo Porto (marcelo@animati.com.br), Nicolas Roduit
  */
 @SuppressWarnings("serial")
 public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {

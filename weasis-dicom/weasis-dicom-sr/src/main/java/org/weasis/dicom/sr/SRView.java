@@ -30,7 +30,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
@@ -82,22 +81,19 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         htmlPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
         htmlPanel.setContentType("text/html"); //$NON-NLS-1$
         htmlPanel.setEditable(false);
-        htmlPanel.addHyperlinkListener(new HyperlinkListener() {
-            @Override
-            public void hyperlinkUpdate(HyperlinkEvent e) {
-                JTextPane pane = (JTextPane) e.getSource();
-                if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-                    pane.setToolTipText(e.getDescription());
-                } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-                    pane.setToolTipText(null);
-                } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    String desc = e.getDescription();
-                    URL url = e.getURL();
-                    if (url == null && desc != null && desc.startsWith("#")) { //$NON-NLS-1$
-                        htmlPanel.scrollToReference(desc.substring(1));
-                    } else {
-                        openRelatedSeries(e.getURL().getHost());
-                    }
+        htmlPanel.addHyperlinkListener(e -> {
+            JTextPane pane = (JTextPane) e.getSource();
+            if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+                pane.setToolTipText(e.getDescription());
+            } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+                pane.setToolTipText(null);
+            } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                String desc = e.getDescription();
+                URL url = e.getURL();
+                if (url == null && desc != null && desc.startsWith("#")) { //$NON-NLS-1$
+                    htmlPanel.scrollToReference(desc.substring(1));
+                } else {
+                    openRelatedSeries(e.getURL().getHost());
                 }
             }
         });
@@ -251,14 +247,14 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         }
     }
 
-    private Series<?> findSOPInstanceReference(DicomModel model, MediaSeriesGroup patient, MediaSeriesGroup study,
-        String sopUID) {
+    private static Series<?> findSOPInstanceReference(DicomModel model, MediaSeriesGroup patient,
+        MediaSeriesGroup study, String sopUID) {
         if (model != null && patient != null && sopUID != null) {
-            Series<?> series = null;
+            Series<?> s = null;
             if (study != null) {
-                series = findSOPInstanceReference(model, study, sopUID);
-                if (series != null) {
-                    return series;
+                s = findSOPInstanceReference(model, study, sopUID);
+                if (s != null) {
+                    return s;
                 }
             }
 
@@ -267,10 +263,10 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
                     MediaSeriesGroup st = it.next();
                     if (st != study) {
-                        series = findSOPInstanceReference(model, st, sopUID);
+                        s = findSOPInstanceReference(model, st, sopUID);
                     }
-                    if (series != null) {
-                        return series;
+                    if (s != null) {
+                        return s;
                     }
                 }
             }
@@ -298,7 +294,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         return null;
     }
 
-    private Series<?> findSOPInstanceReference(DicomModel model, MediaSeriesGroup study, String sopUID) {
+    private static Series<?> findSOPInstanceReference(DicomModel model, MediaSeriesGroup study, String sopUID) {
         if (model != null && study != null) {
             TagW sopTag = TagD.getUID(Level.INSTANCE);
             Collection<MediaSeriesGroup> seriesList = model.getChildren(study);

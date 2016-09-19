@@ -29,9 +29,9 @@ import org.weasis.core.api.media.data.MediaReader;
 
 import com.sun.media.imageioimpl.plugins.raw.RawImageReaderSpi;
 
-@Component(immediate = false)
-@Service
-@Property(name = "service.name", value = "DICOM (dcm4chee toolkit)")
+@org.apache.felix.scr.annotations.Component(immediate = false)
+@org.apache.felix.scr.annotations.Service
+@org.apache.felix.scr.annotations.Property(name = "service.name", value = "DICOM (dcm4chee toolkit)")
 public class DicomCodec implements Codec {
     public static final DicomImageReaderSpi DicomImageReaderSpi = new DicomImageReaderSpi();
     public static final RLEImageReaderSpi RLEImageReaderSpi = new RLEImageReaderSpi();

@@ -17,8 +17,8 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -63,6 +63,7 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
@@ -167,10 +168,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 TOOLS.add(tool);
             }
 
-            
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImageTool.class), key, true)) {
-                tool = new ImageTool(ImageTool.BUTTON_NAME); 
+                tool = new ImageTool(ImageTool.BUTTON_NAME);
                 TOOLS.add(tool);
             }
 
@@ -376,17 +376,14 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public List<Action> getPrintActions() {
         ArrayList<Action> actions = new ArrayList<>(1);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
-        AbstractAction printStd =
-            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                    PrintDialog dialog =
-                        new PrintDialog(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
-                    ColorLayerUI.showCenterScreen(dialog, layer);
-                }
-            };
+        Consumer<ActionEvent> event = e -> {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
+            PrintDialog<?> dialog =
+                new PrintDialog<>(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
+            ColorLayerUI.showCenterScreen(dialog, layer);
+        };
+        DefaultAction printStd = new DefaultAction(title,
+            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event);
         printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
         actions.add(printStd);
         return actions;

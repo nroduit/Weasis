@@ -18,7 +18,7 @@ import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.explorer.DicomFieldsView;
 
 @SuppressWarnings("serial")
-public class AuToolBar<DicomImageElement> extends WtoolBar {
+public class AuToolBar extends WtoolBar {
 
     public AuToolBar(int index) {
         super("Main Bar", index); //$NON-NLS-1$

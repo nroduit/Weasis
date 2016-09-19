@@ -125,7 +125,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(AuToolBar.class), key, true)) {
-                TOOLBARS.add(new AuToolBar<DicomImageElement>(10));
+                TOOLBARS.add(new AuToolBar(10));
             }
         }
     }

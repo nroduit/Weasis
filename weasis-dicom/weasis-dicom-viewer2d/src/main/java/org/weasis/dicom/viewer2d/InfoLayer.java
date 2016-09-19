@@ -1199,7 +1199,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         double scale = image.getPixelSize() / zoomFactor;
         double scaleSizex = ajustShowScale(scale,
             (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
-        if (showBottomScale && scaleSizex > 30.0d) {
+        if (showBottomScale && scaleSizex > 50.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
             g2d.setStroke(new BasicStroke(1.0F));
@@ -1457,7 +1457,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             Point2D.Float midy =
                 new Point2D.Float(positions[1].x, (float) (view2DPane.getHeight() * 0.5 - (height - space) * 0.5));
             SynchData synchData = (SynchData) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
-            boolean tile = synchData != null && SynchData.Mode.Tile.equals(synchData.getMode());
+            boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
 
             for (ViewButton b : view2DPane.getViewButtons()) {
                 if (b.isVisible() && (tile && b.getIcon() == View2d.KO_ICON) == false) {

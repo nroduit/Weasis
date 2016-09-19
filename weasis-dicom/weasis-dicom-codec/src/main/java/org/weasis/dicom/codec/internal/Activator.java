@@ -73,13 +73,7 @@ public class Activator implements BundleActivator, ServiceListener {
                 .getServiceReferences(DicomSpecialElementFactory.class, null)) {
                 DicomSpecialElementFactory factory = bundleContext.getService(service);
                 if (factory != null) {
-                    for (String modality : factory.getModalities()) {
-                        DicomSpecialElementFactory prev = DicomMediaIO.DCM_ELEMENT_FACTORIES.put(modality, factory);
-                        if (prev != null) {
-                            LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass()); //$NON-NLS-1$
-                        }
-                        LOGGER.info("Register DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
-                    }
+                    registerDicomSpecialElementFactory(factory);
                 }
             }
         } catch (InvalidSyntaxException e) {
@@ -107,26 +101,31 @@ public class Activator implements BundleActivator, ServiceListener {
         }
 
         if (event.getType() == ServiceEvent.REGISTERED) {
-            for (String modality : factory.getModalities()) {
-                DicomSpecialElementFactory prev = DicomMediaIO.DCM_ELEMENT_FACTORIES.put(modality, factory);
-                if (prev != null) {
-                    LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass()); //$NON-NLS-1$
-                }
-                LOGGER.info("Register DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
-            }
-
+            registerDicomSpecialElementFactory(factory);
         } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+            String name = factory.getClass().getName();
             for (String modality : factory.getModalities()) {
                 DicomSpecialElementFactory f = DicomMediaIO.DCM_ELEMENT_FACTORIES.get(modality);
                 if (factory.equals(f)) {
                     DicomMediaIO.DCM_ELEMENT_FACTORIES.remove(modality);
+                    LOGGER.info("Unregister DicomSpecialElementFactory: {} => {}", modality, name); //$NON-NLS-1$
                 } else {
-                    LOGGER.warn("Cannot unregister {}, {} is registered instead", factory.getClass(), f.getClass()); //$NON-NLS-1$
+                    LOGGER.warn("{}: Unregistering {} has no effect, {} is registered instead", modality, name, f.getClass().getName()); //$NON-NLS-1$
                 }
-                LOGGER.info("Unregister DicomSpecialElementFactory: {}", factory.getClass()); //$NON-NLS-1$
             }
             // Unget service object and null references.
             context.ungetService(mef);
+        }
+    }
+    
+    private static void registerDicomSpecialElementFactory(DicomSpecialElementFactory factory) {
+        String name = factory.getClass().getName();
+        for (String modality : factory.getModalities()) {
+            DicomSpecialElementFactory prev = DicomMediaIO.DCM_ELEMENT_FACTORIES.put(modality, factory);
+            if (prev != null) {
+                LOGGER.warn("{} factory has been replaced by {}", prev.getClass().getName(), name); //$NON-NLS-1$
+            }
+            LOGGER.info("Register DicomSpecialElementFactory: {} => {}", modality, name); //$NON-NLS-1$
         }
     }
 

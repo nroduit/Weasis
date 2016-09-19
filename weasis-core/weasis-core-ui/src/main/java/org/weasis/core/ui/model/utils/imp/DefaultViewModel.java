@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
+import org.weasis.core.api.gui.util.MathUtil;
 
 /**
  * The Class DefaultViewModel.
@@ -87,7 +88,8 @@ public class DefaultViewModel implements ViewModel {
 
     @Override
     public void setModelOffset(double modelOffsetX, double modelOffsetY) {
-        if (this.modelOffsetX != modelOffsetX || this.modelOffsetY != modelOffsetY) {
+        if (MathUtil.isDifferent(this.modelOffsetX, modelOffsetX)
+            || MathUtil.isDifferent(this.modelOffsetY, modelOffsetY)) {
             this.modelOffsetX = modelOffsetX;
             this.modelOffsetY = modelOffsetY;
             fireViewModelChanged();
@@ -96,11 +98,13 @@ public class DefaultViewModel implements ViewModel {
 
     @Override
     public void setModelOffset(double modelOffsetX, double modelOffsetY, double viewScale) {
-        viewScale = maybeCropViewScale(viewScale);
-        if (this.modelOffsetX != modelOffsetX || this.modelOffsetY != modelOffsetY || this.viewScale != viewScale) {
+        double scale = maybeCropViewScale(viewScale);
+        if (MathUtil.isDifferent(this.modelOffsetX, modelOffsetX)
+            || MathUtil.isDifferent(this.modelOffsetY, modelOffsetY)
+            || MathUtil.isDifferent(this.viewScale, scale)) {
             this.modelOffsetX = modelOffsetX;
             this.modelOffsetY = modelOffsetY;
-            this.viewScale = viewScale;
+            this.viewScale = scale;
             fireViewModelChanged();
         }
     }
@@ -112,9 +116,9 @@ public class DefaultViewModel implements ViewModel {
 
     @Override
     public void setViewScale(double viewScale) {
-        viewScale = maybeCropViewScale(viewScale);
-        if (this.viewScale != viewScale) {
-            this.viewScale = viewScale;
+        double scale = maybeCropViewScale(viewScale);
+        if (MathUtil.isDifferent(this.viewScale, scale)) {
+            this.viewScale = scale;
             fireViewModelChanged();
         }
     }
@@ -186,9 +190,9 @@ public class DefaultViewModel implements ViewModel {
     public static double cropViewScale(double viewScale, final double viewScaleMin, final double viewScaleMax) {
         if (viewScaleMax > 1.0) {
             if (viewScale < viewScaleMin) {
-                viewScale = viewScaleMin;
+                return viewScaleMin;
             } else if (viewScale > viewScaleMax) {
-                viewScale = viewScaleMax;
+                return viewScaleMax;
             }
         }
         return viewScale;

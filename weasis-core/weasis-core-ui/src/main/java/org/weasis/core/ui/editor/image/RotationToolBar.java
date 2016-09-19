@@ -22,6 +22,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.WtoolBar;
 
+@SuppressWarnings("serial")
 public class RotationToolBar<E extends ImageElement> extends WtoolBar {
 
     public RotationToolBar(final ImageViewerEventManager<E> eventManager, int index) {

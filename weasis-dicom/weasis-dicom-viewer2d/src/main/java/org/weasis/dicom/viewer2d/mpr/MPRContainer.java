@@ -13,7 +13,6 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
-import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -72,6 +70,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -112,7 +111,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         actions.put(ActionW.LUT.cmd(), true);
         actions.put(ActionW.INVERT_LUT.cmd(), true);
         actions.put(ActionW.FILTER.cmd(), true);
-        DEFAULT_MPR = new SynchView("MPR synch", "mpr", SynchData.Mode.Stack, //$NON-NLS-1$ //$NON-NLS-2$
+        DEFAULT_MPR = new SynchView("MPR synch", "mpr", SynchData.Mode.STACK, //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
 
         SYNCH_LIST.add(DEFAULT_MPR);
@@ -391,30 +390,22 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     public List<Action> getPrintActions() {
         ArrayList<Action> actions = new ArrayList<>(1);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
-        AbstractAction printStd =
-            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
-                    PrintDialog<DicomImageElement> dialog =
-                        new PrintDialog<>(SwingUtilities.getWindowAncestor(MPRContainer.this), title, eventManager);
-                    ColorLayerUI.showCenterScreen(dialog, layer);
-                }
-            };
+        DefaultAction printStd = new DefaultAction(title,
+            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event -> { //$NON-NLS-1$
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
+                PrintDialog<DicomImageElement> dialog =
+                    new PrintDialog<>(SwingUtilities.getWindowAncestor(MPRContainer.this), title, eventManager);
+                ColorLayerUI.showCenterScreen(dialog, layer);
+            });
         actions.add(printStd);
 
         final String title2 = Messages.getString("View2dContainer.dcm_print"); //$NON-NLS-1$
-        AbstractAction printStd2 = new AbstractAction(title2, null) {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
-                DicomPrintDialog dialog =
-                    new DicomPrintDialog(SwingUtilities.getWindowAncestor(MPRContainer.this), title2, eventManager);
-                ColorLayerUI.showCenterScreen(dialog, layer);
-            }
-        };
+        DefaultAction printStd2 = new DefaultAction(title2, null, event -> {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
+            DicomPrintDialog<?> dialog =
+                new DicomPrintDialog<>(SwingUtilities.getWindowAncestor(MPRContainer.this), title2, eventManager);
+            ColorLayerUI.showCenterScreen(dialog, layer);
+        });
         actions.add(printStd2);
         return actions;
     }
@@ -518,7 +509,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         }
     }
 
-    public static void showErrorMessage(ArrayList<ViewCanvas<DicomImageElement>> view2ds,
+    public static void showErrorMessage(List<ViewCanvas<DicomImageElement>> view2ds,
         DefaultView2d<DicomImageElement> view, String message) {
         for (ViewCanvas<DicomImageElement> v : view2ds) {
             if (v != view && v instanceof MprView) {
@@ -541,7 +532,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     @Override
     public void addSeriesList(List<MediaSeries<DicomImageElement>> seriesList, boolean removeOldSeries) {
-        if (seriesList != null && seriesList.size() > 0) {
+        if (seriesList != null && !seriesList.isEmpty()) {
             addSeries(seriesList.get(0));
         }
     }
@@ -551,7 +542,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         // Do it in addSeries()
     }
 
-    public MprView selectLayoutPositionForAddingSeries(MediaSeries s) {
+    public MprView selectLayoutPositionForAddingSeries(MediaSeries<DicomImageElement> s) {
         if (s != null) {
             Object img = s.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
             if (img instanceof DicomImageElement) {

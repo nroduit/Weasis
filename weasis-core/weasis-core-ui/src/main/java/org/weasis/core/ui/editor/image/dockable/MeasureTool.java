@@ -19,8 +19,6 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -207,47 +205,44 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
         if (drawOnceAction instanceof ToggleButtonListener) {
             transform.add(Box.createVerticalStrut(5));
-            JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-            transform.add(panel_1);
+            JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            transform.add(panel1);
             JCheckBox checkDraw =
                 ((ToggleButtonListener) drawOnceAction).createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
             checkDraw.setSelected(viewSetting.isDrawOnlyOnce());
             checkDraw.setAlignmentX(Component.LEFT_ALIGNMENT);
-            panel_1.add(checkDraw);
+            panel1.add(checkDraw);
         }
-        JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        transform.add(panel_1);
+        JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        transform.add(panel1);
         JCheckBox chckbxBasicImageStatistics =
             new JCheckBox(Messages.getString("MeasureTool.pix_stats"), viewSetting.isBasicStatistics()); //$NON-NLS-1$
         chckbxBasicImageStatistics.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel_1.add(chckbxBasicImageStatistics);
-        chckbxBasicImageStatistics.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JCheckBox box = (JCheckBox) e.getSource();
-                boolean sel = box.isSelected();
-                viewSetting.setBasicStatistics(sel);
-                // Force also advanced statistics
-                viewSetting.setMoreStatistics(sel);
-                for (Measurement m : ImageStatistics.ALL_MEASUREMENTS) {
-                    m.setComputed(sel);
-                }
-                synchronized (UIManager.VIEWER_PLUGINS) {
-                    for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                        ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
-                        if (p instanceof ImageViewerPlugin) {
-                            for (Object v : ((ImageViewerPlugin<?>) p).getImagePanels()) {
-                                if (v instanceof ViewCanvas) {
-                                    ViewCanvas<?> view = (ViewCanvas<?>) v;
-                                    view.getGraphicManager().updateLabels(true, view);
-                                }
+        panel1.add(chckbxBasicImageStatistics);
+        chckbxBasicImageStatistics.addActionListener(e -> {
+            JCheckBox box = (JCheckBox) e.getSource();
+            boolean sel = box.isSelected();
+            viewSetting.setBasicStatistics(sel);
+            // Force also advanced statistics
+            viewSetting.setMoreStatistics(sel);
+            for (Measurement m : ImageStatistics.ALL_MEASUREMENTS) {
+                m.setComputed(sel);
+            }
+            synchronized (UIManager.VIEWER_PLUGINS) {
+                for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
+                    ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
+                    if (p instanceof ImageViewerPlugin) {
+                        for (Object v : ((ImageViewerPlugin<?>) p).getImagePanels()) {
+                            if (v instanceof ViewCanvas) {
+                                ViewCanvas<?> view = (ViewCanvas<?>) v;
+                                view.getGraphicManager().updateLabels(true, view);
                             }
                         }
                     }
                 }
             }
         });
-        panel_1.add(chckbxBasicImageStatistics);
+        panel1.add(chckbxBasicImageStatistics);
 
         ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
         if (spUnitAction instanceof ComboItemListener) {
@@ -262,24 +257,24 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         }
 
         transform.add(Box.createVerticalStrut(5));
-        JPanel panel_2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        transform.add(panel_2);
+        JPanel panel2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        transform.add(panel2);
         final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.more_options")); //$NON-NLS-1$
         btnGerenralOptions.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel_2.add(btnGerenralOptions);
+        panel2.add(btnGerenralOptions);
         btnGerenralOptions.addActionListener(e -> {
             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MeasureTool.this);
             PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(MeasureTool.this));
             dialog.showPage(LABEL_PREF_NAME);
             ColorLayerUI.showCenterScreen(dialog, layer);
         });
-        transform.add(panel_2);
+        transform.add(panel2);
         transform.add(Box.createVerticalStrut(5));
 
         return transform;
     }
 
-    private void updateMeasureProperties(final ViewSetting setting) {
+    private static void updateMeasureProperties(final ViewSetting setting) {
         if (setting != null) {
             MeasureToolBar.measureGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
         }
@@ -294,8 +289,8 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
             BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("MeasureTool.sel"), //$NON-NLS-1$
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
-        JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        transform.add(panel_1);
+        JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        transform.add(panel1);
         transform.add(Box.createVerticalStrut(5));
         jtable = createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
         jtable.setFont(FontTools.getFont10());

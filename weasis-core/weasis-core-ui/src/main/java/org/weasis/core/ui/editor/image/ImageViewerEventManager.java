@@ -663,7 +663,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     public boolean isSelectedView2dContainerInTileMode() {
         ImageViewerPlugin<E> container = selectedView2dContainer;
         if (container != null) {
-            return SynchData.Mode.Tile.equals(container.getSynchView().getSynchData().getMode());
+            return SynchData.Mode.TILE.equals(container.getSynchView().getSynchData().getMode());
         }
         return false;
     }
@@ -686,7 +686,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                     for (int i = 0; i < panes.size(); i++) {
                         panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
                     }
-                } else if (Mode.Stack.equals(synch.getMode())) {
+                } else if (Mode.STACK.equals(synch.getMode())) {
                     // TODO if Pan is activated than rotation is required
                     boolean hasLink = false;
                     for (int i = 0; i < panes.size(); i++) {
@@ -697,7 +697,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                             addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
                         }
                     }
-                } else if (Mode.Tile.equals(synch.getMode())) {
+                } else if (Mode.TILE.equals(synch.getMode())) {
                     for (int i = 0; i < panes.size(); i++) {
                         panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.copy());
                         addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));

@@ -212,7 +212,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     @Override
     public void addSeries(MediaSeries<E> sequence) {
         if (sequence != null && selectedImagePane != null) {
-            if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
+            if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode())) {
                 selectedImagePane.setSeries(sequence, null);
                 updateTileOffset();
                 return;
@@ -333,7 +333,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             selectedImagePane = view2ds.get(0);
 
             MouseActions mouseActions = eventManager.getMouseActions();
-            boolean tiledMode = SynchData.Mode.Tile.equals(synchView.getSynchData().getMode());
+            boolean tiledMode = SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
             for (int i = 0; i < view2ds.size(); i++) {
                 ViewCanvas<E> v = view2ds.get(i);
                 // Close lens because update does not work
@@ -392,7 +392,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     selectedImagePane = view2ds.get(0);
                 }
                 MouseActions mouseActions = eventManager.getMouseActions();
-                boolean tiledMode = SynchData.Mode.Tile.equals(synchView);
+                boolean tiledMode = SynchData.Mode.TILE.equals(synchView);
                 for (int i = 0; i < view2ds.size(); i++) {
                     ViewCanvas<E> v = view2ds.get(i);
                     // Close lens because update does not work
@@ -609,7 +609,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     @SuppressWarnings("unchecked")
     public void updateTileOffset() {
-        if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode()) && selectedImagePane != null) {
+        if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode()) && selectedImagePane != null) {
             MediaSeries<E> series = null;
             ViewCanvas<E> selectedView = selectedImagePane;
             if (selectedImagePane.getSeries() != null) {
@@ -692,7 +692,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     public void addSeriesList(List<MediaSeries<E>> seriesList, boolean bestDefaultLayout) {
         if (seriesList != null && !seriesList.isEmpty()) {
-            if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
+            if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode())) {
                 addSeries(seriesList.get(0));
                 return;
             }

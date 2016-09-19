@@ -38,7 +38,7 @@ public class ViewSetting {
     private int lineWidth;
     private boolean basicStatistics;
     private boolean moreStatistics;
-    private final List<Monitor> monitors = new ArrayList<Monitor>(2);
+    private final List<Monitor> monitors = new ArrayList<>(2);
 
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
@@ -145,11 +145,11 @@ public class ViewSetting {
         }
     }
 
-    private boolean isTrueValue(String val) {
+    private static boolean isTrueValue(String val) {
         return "1".equals(val.trim()); //$NON-NLS-1$
     }
 
-    private void writeLabels(StringBuilder buffer, Measurement m) {
+    private static void writeLabels(StringBuilder buffer, Measurement m) {
         buffer.append(m.getId());
         buffer.append(":"); //$NON-NLS-1$
         buffer.append(m.getGraphicLabel() ? "1" : "0"); //$NON-NLS-1$ //$NON-NLS-2$

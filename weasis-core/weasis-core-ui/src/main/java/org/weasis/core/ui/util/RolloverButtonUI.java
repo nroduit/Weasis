@@ -18,9 +18,10 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
 
-public class VLButtonUI extends BasicToggleButtonUI {
+public class RolloverButtonUI extends BasicToggleButtonUI {
 
-    public VLButtonUI() {
+    public RolloverButtonUI() {
+        super();
     }
 
     @Override
