@@ -86,7 +86,7 @@ public class CalibrationView extends JPanel {
         }
     }
 
-    void jbInit() throws Exception {
+    void jbInit() {
         gridBagLayout2.rowWeights = new double[] { 1.0, 0.0 };
         gridBagLayout2.columnWeights = new double[] { 0.0, 1.0, 0.0, 0.0 };
         jPanelMode.setLayout(gridBagLayout2);
@@ -166,7 +166,7 @@ public class CalibrationView extends JPanel {
     public void removeCalibration() {
         applyCalibration(1.0, Unit.PIXEL);
     }
-    
+
     private void applyCalibration(double ratio, Unit unit) {
         ImageElement image = view2d.getImage();
         if (image != null) {
@@ -187,7 +187,6 @@ public class CalibrationView extends JPanel {
             }
             image.setPixelSize(ratio);
             image.setPixelSpacingUnit(unit);
-
 
             if (view2d.getEventManager().getSelectedViewPane() == view2d) {
                 ActionState spUnitAction = view2d.getEventManager().getAction(ActionW.SPATIAL_UNIT);

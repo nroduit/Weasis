@@ -54,136 +54,153 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
 
-        Dictionary<String, Object> dict = new Hashtable<String, Object>();
+        Dictionary<String, Object> dict = new Hashtable<>();
         dict.put(CommandProcessor.COMMAND_SCOPE, "dcmview2d"); //$NON-NLS-1$
         dict.put(CommandProcessor.COMMAND_FUNCTION, EventManager.functions);
         bundleContext.registerService(EventManager.class.getName(), EventManager.getInstance(), dict);
 
-        try {
-            for (ServiceReference<InsertableFactory> serviceReference : bundleContext
-                .getServiceReferences(InsertableFactory.class, null)) {
-                // The View2dContainer name should be referenced as a property in the provided service
-                if (Boolean.valueOf((String) serviceReference.getProperty(View2dContainer.class.getName()))) {
-                    registerComponent(bundleContext, bundleContext.getService(serviceReference));
-                }
-            }
-        } catch (InvalidSyntaxException e1) {
-            e1.printStackTrace();
-        }
+        registerExistingComponents(bundleContext);
 
         // Add listener for getting new service events
         try {
             bundleContext.addServiceListener(Activator.this, "(" + Constants.OBJECTCLASS + "=" //$NON-NLS-1$ //$NON-NLS-2$
                 + InsertableFactory.class.getName() + ")"); //$NON-NLS-1$
         } catch (InvalidSyntaxException e) {
-            e.printStackTrace();
+            LOGGER.error("Add service listener", e);
         }
     }
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
+        // Save preferences
         ImageViewerPlugin<DicomImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
         if (container instanceof MPRContainer) {
             // Remove crosshair tool
             container.setSelected(false);
         }
-        // Save preferences
         EventManager.getInstance().savePreferences(bundleContext);
+
         UIManager.closeSeriesViewerType(MPRContainer.class);
         UIManager.closeSeriesViewerType(View2dContainer.class);
     }
 
     @Override
     public synchronized void serviceChanged(final ServiceEvent event) {
-        // TODO add MPRContainer service
-        final ServiceReference<?> m_ref = event.getServiceReference();
+        // Tools and Toolbars (with non immediate instance) must be instantiate in the EDT
+        GuiExecutor.instance().execute(() -> dataExplorerChanged(event));
+    }
+
+    private void dataExplorerChanged(final ServiceEvent event) {
+
+        final ServiceReference<?> mref = event.getServiceReference();
         // The View2dContainer name should be referenced as a property in the provided service
-        if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
+        if (Boolean.valueOf((String) mref.getProperty(View2dContainer.class.getName()))) {
             final BundleContext context = FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
-            Object service = context.getService(m_ref);
+            Object service = context.getService(mref);
             if (service instanceof InsertableFactory) {
                 InsertableFactory factory = (InsertableFactory) service;
                 if (event.getType() == ServiceEvent.REGISTERED) {
-                    registerComponent(context, factory);
+                    registerComponent(factory);
                 } else if (event.getType() == ServiceEvent.UNREGISTERING) {
                     if (Type.TOOLBAR.equals(factory.getType())) {
-                        boolean updateGUI = false;
-                        synchronized (View2dContainer.TOOLBARS) {
-                            for (int i = View2dContainer.TOOLBARS.size() - 1; i >= 0; i--) {
-                                Insertable b = View2dContainer.TOOLBARS.get(i);
-                                if (factory.isComponentCreatedByThisFactory(b)) {
-                                    Preferences prefs = BundlePreferences.getDefaultPreferences(context);
-                                    if (prefs != null) {
-                                        List<Insertable> list = Arrays.asList(b);
-                                        InsertableUtil.savePreferences(list,
-                                            prefs.node(View2dContainer.class.getSimpleName().toLowerCase()),
-                                            Type.TOOLBAR);
-                                    }
-
-                                    View2dContainer.TOOLBARS.remove(i);
-                                    factory.dispose(b);
-                                    updateGUI = true;
-                                }
-                            }
-                        }
-                        if (updateGUI) {
-                            updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
-                        }
+                        unregisterToolBar(factory, context);
                     } else if (Type.TOOL.equals(factory.getType())) {
-                        synchronized (View2dContainer.TOOLS) {
-                            for (int i = View2dContainer.TOOLS.size() - 1; i >= 0; i--) {
-                                DockableTool t = View2dContainer.TOOLS.get(i);
-                                if (factory.isComponentCreatedByThisFactory(t)) {
-                                    Preferences prefs = BundlePreferences.getDefaultPreferences(context);
-                                    if (prefs != null) {
-                                        Preferences containerNode =
-                                            prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
-                                        InsertableUtil.savePreferences(Arrays.asList(t), containerNode, Type.TOOL);
-                                    }
-
-                                    View2dContainer.TOOLS.remove(i);
-                                    factory.dispose(t);
-                                    t.closeDockable();
-                                }
-                            }
-                        }
+                        unregisterTool(factory, context);
                     }
                 }
             }
         }
     }
 
-    private void registerComponent(final BundleContext bundleContext, final InsertableFactory factory) {
-        // Instantiate UI components in EDT (necessary with Substance Theme)
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                if (factory != null) {
-                    if (Type.TOOLBAR.equals(factory.getType())) {
-                        Insertable instance = factory.createInstance(null);
-                        if (instance instanceof Toolbar && !View2dContainer.TOOLBARS.contains(instance)) {
-                            Toolbar bar = (Toolbar) instance;
-                            View2dContainer.TOOLBARS.add(bar);
-                            updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
-                            LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName()); //$NON-NLS-1$
-                        }
-                    } else if (Type.TOOL.equals(factory.getType())) {
-                        Insertable instance = factory.createInstance(null);
-                        if (instance instanceof DockableTool && !View2dContainer.TOOLS.contains(factory)) {
-                            DockableTool tool = (DockableTool) instance;
-                            View2dContainer.TOOLS.add(tool);
-                            ImageViewerPlugin<DicomImageElement> view =
-                                EventManager.getInstance().getSelectedView2dContainer();
-                            if (view instanceof View2dContainer) {
-                                tool.showDockable();
-                            }
-                            LOGGER.debug("Add Tool [{}] for {}", tool, View2dContainer.class.getName()); //$NON-NLS-1$
-                        }
-                    }
+    private static void registerExistingComponents(BundleContext bundleContext) {
+        try {
+            for (ServiceReference<InsertableFactory> serviceReference : bundleContext
+                .getServiceReferences(InsertableFactory.class, null)) {
+                // The View2dContainer name should be referenced as a property in the provided service
+                if (Boolean.valueOf((String) serviceReference.getProperty(View2dContainer.class.getName()))) {
+                    // Instantiate UI components in EDT (necessary with Substance Theme)
+                    GuiExecutor.instance().execute(() -> registerComponent(bundleContext.getService(serviceReference)));
                 }
             }
-        });
+        } catch (InvalidSyntaxException e1) {
+            LOGGER.error("Register tool and toolbar", e1);
+        }
+    }
+
+    private static void registerComponent(final InsertableFactory factory) {
+        if (factory == null) {
+            return;
+        }
+
+        if (Type.TOOLBAR.equals(factory.getType())) {
+            registerToolBar(factory.createInstance(null));
+        } else if (Type.TOOL.equals(factory.getType())) {
+            registerTool(factory.createInstance(null));
+        }
+    }
+
+    private static void registerToolBar(Insertable instance) {
+        if (instance instanceof Toolbar && !View2dContainer.TOOLBARS.contains(instance)) {
+            Toolbar bar = (Toolbar) instance;
+            View2dContainer.TOOLBARS.add(bar);
+            updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
+            LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName()); //$NON-NLS-1$
+        }
+    }
+
+    private static void registerTool(Insertable instance) {
+        if (instance instanceof DockableTool && !View2dContainer.TOOLS.contains(instance)) {
+            DockableTool tool = (DockableTool) instance;
+            View2dContainer.TOOLS.add(tool);
+            ImageViewerPlugin<DicomImageElement> view = EventManager.getInstance().getSelectedView2dContainer();
+            if (view instanceof View2dContainer) {
+                tool.showDockable();
+            }
+            LOGGER.debug("Add Tool [{}] for {}", tool, View2dContainer.class.getName()); //$NON-NLS-1$
+        }
+    }
+
+    private static void unregisterToolBar(InsertableFactory factory, final BundleContext context) {
+        boolean updateGUI = false;
+        synchronized (View2dContainer.TOOLBARS) {
+            for (int i = View2dContainer.TOOLBARS.size() - 1; i >= 0; i--) {
+                Insertable b = View2dContainer.TOOLBARS.get(i);
+                if (factory.isComponentCreatedByThisFactory(b)) {
+                    Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+                    if (prefs != null) {
+                        List<Insertable> list = Arrays.asList(b);
+                        InsertableUtil.savePreferences(list,
+                            prefs.node(View2dContainer.class.getSimpleName().toLowerCase()), Type.TOOLBAR);
+                    }
+
+                    View2dContainer.TOOLBARS.remove(i);
+                    factory.dispose(b);
+                    updateGUI = true;
+                }
+            }
+        }
+        if (updateGUI) {
+            updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
+        }
+    }
+
+    private static void unregisterTool(InsertableFactory factory, final BundleContext context) {
+        synchronized (View2dContainer.TOOLS) {
+            for (int i = View2dContainer.TOOLS.size() - 1; i >= 0; i--) {
+                DockableTool t = View2dContainer.TOOLS.get(i);
+                if (factory.isComponentCreatedByThisFactory(t)) {
+                    Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+                    if (prefs != null) {
+                        Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
+                        InsertableUtil.savePreferences(Arrays.asList(t), containerNode, Type.TOOL);
+                    }
+
+                    View2dContainer.TOOLS.remove(i);
+                    factory.dispose(t);
+                    t.closeDockable();
+                }
+            }
+        }
     }
 
     private static void updateViewerUI(BasicAction action) {

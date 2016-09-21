@@ -32,7 +32,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
  * 
  */
 public abstract class AbstractAcquireAction extends AcquireObject implements AcquireAction {
-    protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAcquireAction.class);
 
     protected final AcquireActionPanel centralPanel;
 

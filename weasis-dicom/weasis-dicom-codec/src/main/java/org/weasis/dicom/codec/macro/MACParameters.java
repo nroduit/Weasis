@@ -28,14 +28,12 @@ public class MACParameters extends Module {
         super(new Attributes());
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public static Collection<MACParameters> toMACParametersMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
             return null;
         }
 
-        ArrayList<MACParameters> list = new ArrayList<MACParameters>(seq.size());
+        ArrayList<MACParameters> list = new ArrayList<>(seq.size());
 
         for (Attributes attr : seq) {
             list.add(new MACParameters(attr));
@@ -43,8 +41,6 @@ public class MACParameters extends Module {
 
         return list;
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public int getMACIDNumber() {
         return dcmItems.getInt(Tag.MACIDNumber, -1);

@@ -33,6 +33,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.explorer.DicomModel;
 
 import br.com.animati.texture.codec.TextureDicomSeries;
@@ -237,12 +238,11 @@ public class InfoLayer3d extends AbstractInfoLayer {
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
                     if (hideMin || infos[j].containsTag(TagD.get(Tag.PatientName))) {
-                        Object value = null;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                value = DisplayUtils.getTagValue(tag, patient, study, series, null);
+                                Object value = DisplayUtils.getTagValue(tag, patient, study, series, null);
                                 if (value != null) {
-                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2d, str, border, drawY);
                                         drawY += fontHeight;
@@ -275,7 +275,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                 }
 
                                 if (value != null) {
-                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2d, str,
                                             bound.width - g2d.getFontMetrics().stringWidth(str) - (float) border,
@@ -312,7 +312,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                                 }
 
                                 if (value != null) {
-                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2d, str,
                                             bound.width - g2d.getFontMetrics().stringWidth(str) - border, drawY);
@@ -457,9 +457,9 @@ public class InfoLayer3d extends AbstractInfoLayer {
     private String getOwnerContentOrientationLabel() {
         double[] v = owner.getImagePatientOrientation();
         if (v != null && v.length == 6) {
-            String imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1],
+            Label imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1],
                 v[2], v[3], v[4], v[5]);
-            return imgOrientation;
+            return imgOrientation.toString();
         }
         return null;
     }

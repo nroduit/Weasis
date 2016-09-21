@@ -78,7 +78,7 @@
 				<plugin>
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-bundle-plugin</artifactId>
-					<version>3.0.1</version>
+					<version>3.2.0</version>
 					<extensions>true</extensions>
 					<configuration>
 						<obrRepository>${settings.localRepository}/repository.xml</obrRepository>
@@ -192,7 +192,7 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.scr.annotations</artifactId>
-			<version>1.10.0</version>
+			<version>1.11.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

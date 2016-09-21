@@ -51,7 +51,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     private static final long serialVersionUID = 1782300490253793711L;
     private final HashMap<String, Boolean> displayPreferences = new HashMap<>();
     private boolean visible = true;
-    private final Color color = Color.yellow;
+    private static final Color color = Color.yellow;
     private static final int BORDER = 10;
     private final DefaultView2d view2DPane;
     private PixelInfo pixelInfo = null;
@@ -231,11 +231,17 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             // g2.draw(pixelInfoBound);
         }
         if (getDisplayPreferences(WINDOW_LEVEL)) {
-            DefaultGraphicLabel.paintFontOutline(g2,
-                Messages.getString("InfoLayer.wl") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                    + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) + "/" //$NON-NLS-1$
-                    + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()),
-                border, drawY);
+            StringBuilder sb = new StringBuilder();
+            Number window = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
+            Number level = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
+            if (window != null && level != null) {
+                sb.append(ActionW.WINLEVEL.getTitle());
+                sb.append(StringUtil.COLON_AND_SPACE);
+                sb.append(DecFormater.oneDecimal(window));
+                sb.append("/");//$NON-NLS-1$
+                sb.append(DecFormater.oneDecimal(level));
+            }
+            DefaultGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
@@ -361,7 +367,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         double scale = image.getPixelSize() / zoomFactor;
         double scaleSizex = ajustShowScale(scale,
             (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
-        if (showBottomScale & scaleSizex > 30.0d) {
+        if (showBottomScale && scaleSizex > 50.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
             g2d.setPaint(color);

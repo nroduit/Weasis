@@ -177,7 +177,7 @@ public class PresentationStateReader implements Tagable {
         return new Color(conv);
     }
 
-    public static float[] ColorToLAB(Color color) {
+    public static float[] colorToLAB(Color color) {
         float[] rgb = new float[3];
         rgb[0] = color.getRed() / 255.f;
         rgb[1] = color.getGreen() / 255.f;

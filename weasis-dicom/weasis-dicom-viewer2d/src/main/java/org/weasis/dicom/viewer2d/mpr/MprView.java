@@ -35,7 +35,7 @@ public class MprView extends View2d {
 
     public enum SliceOrientation {
         AXIAL, CORONAL, SAGITTAL
-    };
+    }
 
     private SliceOrientation sliceOrientation;
     private JProgressBar progressBar;
@@ -52,7 +52,7 @@ public class MprView extends View2d {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.CURRENT);
+        actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
         /*
          * Get the radiologist way to see stack (means in axial, the first image is from feet and last image is in the
          * head direction) This option may not be changed. Sorting stack must be disabled from menu in UI.

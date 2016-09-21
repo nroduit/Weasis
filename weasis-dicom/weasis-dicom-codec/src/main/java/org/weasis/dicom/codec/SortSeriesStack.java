@@ -127,6 +127,9 @@ public final class SortSeriesStack {
             }
         };
 
+    private SortSeriesStack() {
+    }
+
     public static SeriesComparator<DicomImageElement>[] getValues() {
         return new SeriesComparator[] { instanceNumber, slicePosition, sliceLocation, contentTime, acquisitionTime,
             diffusionBValue };

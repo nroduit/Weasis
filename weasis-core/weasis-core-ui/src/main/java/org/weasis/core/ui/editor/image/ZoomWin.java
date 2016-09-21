@@ -102,8 +102,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
         ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
         if (zoomAction instanceof SliderChangeListener) {
-            actionsInView.put(ActionW.ZOOM.cmd(),
-                ImageViewerEventManager.sliderValueToViewScale(((SliderChangeListener) zoomAction).getValue()));
+            actionsInView.put(ActionW.ZOOM.cmd(), ((SliderChangeListener) zoomAction).getRealValue());
         }
 
         this.popup = new PopUpMenuOnZoom(this);
@@ -418,8 +417,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                 ImageViewerEventManager<E> manager = view2d.getEventManager();
                 ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
                 if (zoomAction instanceof SliderChangeListener) {
-                    ((SliderChangeListener) zoomAction)
-                        .setValue(ImageViewerEventManager.viewScaleToSliderValue(view2d.getViewModel().getViewScale()));
+                    ((SliderChangeListener) zoomAction).setRealValue(view2d.getViewModel().getViewScale());
                 }
             }
         }
@@ -501,7 +499,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         if (ActionW.SYNCH.cmd().equals(command) && value instanceof SynchEvent) {
             if (!(value instanceof SynchCineEvent)) {
                 SynchData synchData = (SynchData) view2d.getActionValue(ActionW.SYNCH_LINK.cmd());
-                if (synchData != null && Mode.None.equals(synchData.getMode())) {
+                if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
                     return;
                 }
 

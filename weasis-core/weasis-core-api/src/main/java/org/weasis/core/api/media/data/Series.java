@@ -102,9 +102,6 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
             if (sorted == null) {
                 sorted = new ArrayList<>(medias);
                 Collections.sort(sorted, comparator);
-                // synchronized (this) {
-                // sorted = medias.stream().sorted(comparator).collect(Collectors.toList());
-                // }
                 sortedMedias.put(comparator, sorted);
             }
             return sorted;
@@ -354,7 +351,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         toolTips.append(title);
         toolTips.append(StringUtil.COLON_AND_SPACE);
         if (tag != null) {
-            toolTips.append(tag.getFormattedText(getTagValue(tag)));
+            toolTips.append(tag.getFormattedTagValue(getTagValue(tag), null));
         }
         toolTips.append("<br>"); //$NON-NLS-1$
     }

@@ -10,13 +10,9 @@
  *******************************************************************************/
 package org.weasis.core.ui.util;
 
-import java.awt.Dimension;
-
 import org.weasis.core.api.gui.Insertable;
 
 public interface Toolbar extends Insertable {
-
-    public static final Dimension SEPARATOR_2x24 = new Dimension(2, 24);
 
     @Override
     Type getType();

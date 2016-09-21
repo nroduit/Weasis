@@ -28,8 +28,6 @@ import javax.media.jai.TiledImage;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
@@ -48,7 +46,6 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
 public class ShutterOp extends AbstractOp {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ShutterOp.class);
 
     public static final String OP_NAME = ActionW.IMAGE_SHUTTER.getTitle();
 
@@ -137,7 +134,6 @@ public class ShutterOp extends AbstractOp {
         if (shutter && params.get(P_PS_VALUE) != null && (pr instanceof PRSpecialElement)) {
             DicomMediaIO prReader = ((PRSpecialElement) pr).getMediaReader();
             RenderedImage imgOverlay = null;
-            int transperency = 255;
             ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
             boolean overlays = JMVUtils.getNULLtoFalse(prReader.getTagValue(TagW.HasOverlay));
 
@@ -155,7 +151,7 @@ public class ShutterOp extends AbstractOp {
                         PlanarImage alpha = PlanarImage.wrapRenderedImage(
                             OverlayUtils.getShutterOverlay(attributes, frame, width, height, shuttOverlayGroup));
                         if (color.length == 1) {
-                            transperency = color[0];
+                            int transperency = color[0];
                             imgOverlay = MergeImgOp.combineTwoImages(result, alpha, transperency);
                         } else {
                             imgOverlay = MergeImgOp.combineTwoImages(result,
@@ -170,15 +166,6 @@ public class ShutterOp extends AbstractOp {
         params.put(Param.OUTPUT_IMG, result);
     }
 
-    private boolean isBlack(Byte[] color) {
-        for (Byte i : color) {
-            if (i != 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private Byte[] getShutterColor() {
         Color color = (Color) params.get(P_RGB_COLOR);
         if (color == null) {
@@ -190,12 +177,20 @@ public class ShutterOp extends AbstractOp {
             Integer val = (Integer) params.get(P_PS_VALUE);
             return val == null ? new Byte[] { 0 } : new Byte[] { (byte) (val >> 8) };
         } else {
-            Byte[] bandValues = { (byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue() };
-            return bandValues;
+            return new Byte[] { (byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue() };
         }
     }
 
-    private PlanarImage getAsImage(Area shape, RenderedImage source) {
+    private static boolean isBlack(Byte[] color) {
+        for (Byte i : color) {
+            if (i != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static PlanarImage getAsImage(Area shape, RenderedImage source) {
         SampleModel sm =
             new MultiPixelPackedSampleModel(DataBuffer.TYPE_BYTE, source.getWidth(), source.getHeight(), 1);
         TiledImage ti = new TiledImage(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight(),

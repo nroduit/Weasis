@@ -31,8 +31,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 
 import org.dcm4che3.data.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.core.api.media.data.TagW;
@@ -45,9 +43,7 @@ import com.github.lgooddatepicker.tableeditors.TimeTableEditor;
 
 public abstract class AcquireMetadataPanel extends JPanel implements TableModelListener {
     private static final long serialVersionUID = -3479636894557525448L;
-
-    protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
-
+    
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
     protected String title;
@@ -128,11 +124,18 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     public static class TagRenderer extends DefaultTableCellRenderer {
 
         @Override
-        public void setValue(Object value) {
-            setText((value == null) ? "" : TagW.getFormattedText(value, null));
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+            int row, int column) {
+            Component val = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+            Object tag = table.getModel().getValueAt(row, 0);
+            if (tag instanceof TagW) {
+                setValue(((TagW) tag).getFormattedTagValue(value, null));
+            }
+            return val;
         }
     }
-    
+
     @SuppressWarnings("serial")
     public static class AcquireImageCellEditor extends AbstractCellEditor implements TableCellEditor {
         private static final JComboBox<BodyPartExaminated> bodyParts = new JComboBox<>(BodyPartExaminated.values());
@@ -169,7 +172,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
                 cellEditor = teditor;
             } else if (time) {
                 TimeTableEditor teditor = new TimeTableEditor(false, true, true);
-                table.setRowHeight(row, (int)teditor.getTimePicker().getPreferredSize().getHeight());
+                table.setRowHeight(row, (int) teditor.getTimePicker().getPreferredSize().getHeight());
                 cellEditor = teditor;
             } else {
                 cellEditor = new DefaultCellEditor(new JTextField());

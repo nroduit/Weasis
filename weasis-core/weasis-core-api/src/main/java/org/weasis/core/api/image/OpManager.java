@@ -11,7 +11,9 @@
 package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
+import java.util.List;
 
+import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.util.Copyable;
 
 public interface OpManager extends OpEventListener, Copyable<OpManager> {
@@ -21,6 +23,8 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
     void clearNodeParams();
 
     void clearNodeIOCache();
+    
+    List<ImageOpNode> getOperations();
 
     void setFirstNode(RenderedImage imgSource);
 
@@ -42,6 +46,14 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
 
     void removeParam(String opName, String param);
     
-    boolean needProcessing();
+    default boolean needProcessing() {
+        for (ImageOpNode op : getOperations()) {
+            if (op.getParam(Param.INPUT_IMG) == null || op.getParam(Param.OUTPUT_IMG) == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 }

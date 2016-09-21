@@ -48,7 +48,7 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
         { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String[] paramNames = { "roi", "color" }; //$NON-NLS-1$ //$NON-NLS-2$
-    private static final Class[] paramClasses = { ROIShape.class, Byte[].class };
+    private static final Class<?>[] paramClasses = { ROIShape.class, Byte[].class };
     private static final Object[] paramDefaults = { null, null };
 
     public ShutterDescriptor() {
@@ -104,7 +104,7 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
     }
 
     public boolean validateSources(ParameterBlock parameterblock) {
-        return (parameterblock.getRenderedSource(0) != null);
+        return parameterblock.getRenderedSource(0) != null;
     }
 
     public static RenderedOp create(RenderedImage source0, ROIShape roi, Byte[] bandValues, RenderingHints hints) {

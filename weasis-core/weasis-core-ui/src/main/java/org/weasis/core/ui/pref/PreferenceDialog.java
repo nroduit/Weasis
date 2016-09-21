@@ -25,13 +25,17 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.ui.Messages;
 
+@SuppressWarnings("serial")
 public class PreferenceDialog extends AbstractWizardDialog {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PreferenceDialog.class);
 
     public PreferenceDialog(Window parentWin) {
         super(parentWin, Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, //$NON-NLS-1$
@@ -72,7 +76,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
                 }
             }
         } catch (InvalidSyntaxException e) {
-            e.printStackTrace();
+            LOGGER.error("Get Preference pages from service", e);
         }
 
         InsertableUtil.sortInsertable(list);

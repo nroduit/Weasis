@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.weasis.dicom.codec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.dicom.codec.utils.DicomImageUtils;
+
 public enum TransferSyntax {
     NONE(null, "None", null), //$NON-NLS-1$
 
@@ -32,6 +36,8 @@ public enum TransferSyntax {
     JPEG2000_LOSSLESS("1.2.840.10008.1.2.4.90", "JPEG 2000 (Lossless Only)", null), //$NON-NLS-1$ //$NON-NLS-2$
 
     JPEG2000("1.2.840.10008.1.2.4.91", "JPEG 2000", 75); //$NON-NLS-1$ //$NON-NLS-2$
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransferSyntax.class);
 
     private final String label;
     private final String transferSyntaxUID;
@@ -71,11 +77,11 @@ public enum TransferSyntax {
         try {
             return TransferSyntax.valueOf(tsuid);
         } catch (Exception e) {
+            LOGGER.error("Cannot get TransferSyntax from {}", tsuid, e);
         }
         return NONE;
     }
 
-    // TODO needs to be adapted
     public static boolean requiresNativeImageioCodecs(String tsuid) {
         if (tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) { //$NON-NLS-1$
             try {
@@ -84,9 +90,16 @@ public enum TransferSyntax {
                     return true;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Cannot parse {}", tsuid, e);
             }
         }
         return false;
+    }
+
+    public static boolean containsImageioCodec(String tsuid) {
+        if (requiresNativeImageioCodecs(tsuid)) {
+            return DicomImageUtils.hasImageReader(tsuid);
+        }
+        return true;
     }
 }

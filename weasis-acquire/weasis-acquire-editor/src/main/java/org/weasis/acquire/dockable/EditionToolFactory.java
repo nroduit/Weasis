@@ -13,10 +13,7 @@ package org.weasis.acquire.dockable;
 import java.util.Hashtable;
 
 import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +30,9 @@ import org.weasis.core.api.gui.util.ActionW;
  * @since v2.5.0 - 2016-04-06 - ylar - creation
  * 
  */
-@Component(immediate = false)
-@Service
-@Property(name = "org.weasis.base.viewer2d.View2dContainer", value = "true")
+@org.apache.felix.scr.annotations.Component(immediate = false)
+@org.apache.felix.scr.annotations.Service
+@org.apache.felix.scr.annotations.Property(name = "org.weasis.base.viewer2d.View2dContainer", value = "true")
 public class EditionToolFactory implements InsertableFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
 

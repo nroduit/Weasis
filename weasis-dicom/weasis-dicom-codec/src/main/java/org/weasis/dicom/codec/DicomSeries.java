@@ -12,7 +12,6 @@ package org.weasis.dicom.codec;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -24,12 +23,11 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagView;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD.Level;
@@ -152,7 +150,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                         bestDiff = diff;
                         nearest = dcm;
                         bestIndex = index;
-                        if (diff == 0.0) {
+                        if (MathUtil.isEqualToZero(diff)) {
                             break;
                         }
                     }
@@ -182,7 +180,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                     if (diff < bestDiff) {
                         bestDiff = diff;
                         bestIndex = index;
-                        if (diff == 0.0) {
+                        if (MathUtil.isEqualToZero(diff)) {
                             break;
                         }
                     }
@@ -247,7 +245,7 @@ public class DicomSeries extends Series<DicomImageElement> {
             this.preloading = preloading;
         }
 
-        private void freeMemory() {
+        private static void freeMemory() {
             System.gc();
             try {
                 Thread.sleep(50);
@@ -255,7 +253,7 @@ public class DicomSeries extends Series<DicomImageElement> {
             }
         }
 
-        private long evaluateImageSize(DicomImageElement image) {
+        private static long evaluateImageSize(DicomImageElement image) {
             Integer allocated = TagD.getTagValue(image, Tag.BitsAllocated, Integer.class);
             Integer sample = TagD.getTagValue(image, Tag.SamplesPerPixel, Integer.class);
             Integer rows = TagD.getTagValue(image, Tag.Rows, Integer.class);
@@ -283,7 +281,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                                 try {
                                     i.getTile(ti, tj);
                                 } catch (OutOfMemoryError e) {
-                                    LOGGER.error("Out of memory when loading image: {}", img); //$NON-NLS-1$
+                                    LOGGER.error("Out of memory when loading image: {}", img, e); //$NON-NLS-1$
                                     freeMemory();
                                     return;
                                 }
@@ -291,7 +289,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                         }
                     }
                     long stop = System.currentTimeMillis();
-                    LOGGER.debug("Reading time: {} ms of image: {}", (stop - start), img); //$NON-NLS-1$
+                    LOGGER.debug("Reading time: {} ms of image: {}", stop - start, img); //$NON-NLS-1$
                     if (model != null) {
                         model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
                             new SeriesEvent(SeriesEvent.Action.PRELOADING, series, img)));

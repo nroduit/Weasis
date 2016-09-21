@@ -25,6 +25,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,6 +48,7 @@ import org.dcm4che3.util.DateUtils;
 import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
@@ -167,34 +169,38 @@ public class TagD extends TagW {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (!super.equals(obj))
+        }
+        if (!super.equals(obj)) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         TagD other = (TagD) obj;
         if (privateCreatorID == null) {
-            if (other.privateCreatorID != null)
+            if (other.privateCreatorID != null) {
                 return false;
-        } else if (!privateCreatorID.equals(other.privateCreatorID))
+            }
+        } else if (!privateCreatorID.equals(other.privateCreatorID)) {
             return false;
-        if (vr != other.vr)
+        }
+        if (vr != other.vr) {
             return false;
+        }
         return true;
     }
 
     @Override
     public Object getValue(Object data) {
-        Object value;
+        Object value = null;
         if (data instanceof Attributes) {
             value = readValue((Attributes) data);
         } else if (data instanceof XMLStreamReader) {
             value = readValue((XMLStreamReader) data);
         } else if (data instanceof String) {
             value = readValue((String) data);
-        } else {
-            value = super.getValue(data);
         }
         return value;
     }
@@ -358,6 +364,22 @@ public class TagD extends TagW {
         return TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type)
             || TagType.DICOM_PERSON_NAME.equals(type) || TagType.DICOM_PERIOD.equals(type)
             || TagType.DICOM_SEX.equals(type);
+    }
+
+    @Override
+    public String getFormattedTagValue(Object value, String format) {
+        if (value == null) {
+            return StringUtil.EMPTY_STRING;
+        }
+
+        if (TagType.DICOM_PERSON_NAME.equals(type)) {
+            return getDicomPersonName(value.toString());
+        } else if (TagType.DICOM_PERIOD.equals(type)) {
+            return getDicomPeriod(value.toString());
+        } else if (TagType.DICOM_SEX.equals(type)) {
+            return getDicomPatientSex(value.toString());
+        }
+        return super.getFormattedTagValue(value, format);
     }
 
     public static TagW get(String keyword) {
@@ -703,14 +725,14 @@ public class TagD extends TagW {
         if (date != null) {
             return DICOM_DATE.format(date);
         }
-        return ""; //$NON-NLS-1$
+        return StringUtil.EMPTY_STRING;
     }
 
     public static String formatDicomTime(LocalTime time) {
         if (time != null) {
             return DICOM_TIME.format(time);
         }
-        return ""; //$NON-NLS-1$
+        return StringUtil.EMPTY_STRING;
     }
 
     public static TemporalAccessor getDateFromElement(XMLStreamReader xmler, String attribute, TagType type,
@@ -756,4 +778,96 @@ public class TagD extends TagW {
         }
         return defaultValue;
     }
+
+    public static String getDicomPeriod(String value) {
+        if (!StringUtil.hasText(value)) {
+            return StringUtil.EMPTY_STRING;
+        }
+
+        // 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
+        // For ex: DICOM (0010,1010) = 031Y
+        if (value.length() < 2) {
+            return ""; //$NON-NLS-1$
+        }
+
+        String unit;
+        switch (value.charAt(value.length() - 1)) {
+            case 'Y':
+                unit = ChronoUnit.YEARS.toString();
+                break;
+            case 'M':
+                unit = ChronoUnit.MONTHS.toString();
+                break;
+            case 'W':
+                unit = ChronoUnit.WEEKS.toString();
+                break;
+            case 'D':
+                unit = ChronoUnit.DAYS.toString();
+                break;
+            default:
+                LOGGER.error("Get period format: \"{}\" is not valid", value);
+                return StringUtil.EMPTY_STRING;
+        }
+
+        // Remove the last character and leading 0
+        StringBuilder builder = new StringBuilder(value.substring(0, value.length() - 1).replaceFirst("^0+(?!$)", ""));
+        builder.append(" ");
+        builder.append(unit);
+        return builder.toString();
+    }
+
+    /**
+     * @param name
+     * @return return the name (e.g. Smith, John), representing the "lexical name order"
+     */
+    public static String getDicomPersonName(String name) {
+        if (!StringUtil.hasText(name)) {
+            return StringUtil.EMPTY_STRING;
+        }
+        /*
+         * Further internationalization issues arise in countries where the language has a phonetic or ideographic
+         * representation, such as in Japan and Korea. For these situations, DICOM allows up to three “component
+         * groups,” the first a single-byte representation as is used for western languages, then an ideographic (Kanji
+         * or Hanga) representation and then a phonetic representation (Hiragana or Hangul). These are separated by ‘=’
+         * (0x3d) characters.
+         */
+        StringBuilder buf = new StringBuilder();
+        String[] names = name.split("="); //$NON-NLS-1$
+        for (int k = 0; k < names.length; k++) {
+            if (k > 0) {
+                buf.append("="); //$NON-NLS-1$
+            }
+            /*
+             * In DICOM “family name^given name^middle name^prefix^suffix”
+             *
+             * In HL7 “family name^given name^middle name^suffix^prefix^ degree”
+             */
+            String[] vals = names[k].split("\\^"); //$NON-NLS-1$
+
+            for (int i = 0; i < vals.length; i++) {
+                if (StringUtil.hasText(vals[i])) {
+                    if (i == 1 || i >= 3) {
+                        buf.append(", "); //$NON-NLS-1$
+                    } else {
+                        buf.append(" "); //$NON-NLS-1$
+                    }
+                    buf.append(vals[i]);
+                } else if (i == 0) {
+                    buf.append(TagW.NO_VALUE);
+                }
+            }
+
+        }
+        return buf.toString().trim();
+    }
+
+    public static String getDicomPatientSex(String val) {
+        if (!StringUtil.hasText(val)) {
+            return StringUtil.EMPTY_STRING;
+        }
+        // Sex attribute can have the following values: M(male), F(female), or O(other)
+        return val.toUpperCase().startsWith("F") ? Messages.getString("TagW.female") //$NON-NLS-1$ //$NON-NLS-2$
+            : val.toUpperCase().startsWith("M") ? Messages.getString("TagW.Male") : Messages.getString("TagW.other"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    }
+
 }

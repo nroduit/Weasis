@@ -152,7 +152,7 @@ public class SRReader {
         }
     }
 
-    private void convertContentToHTML(StringBuilder html, SRDocumentContent c, boolean continuous, boolean noCodeName,
+    private  static void convertContentToHTML(StringBuilder html, SRDocumentContent c, boolean continuous, boolean noCodeName,
         Map<String, SRImageReference> map, String level) {
         if (c != null) {
             html.append("<A name=\""); //$NON-NLS-1$
@@ -168,7 +168,7 @@ public class SRReader {
                 addCodeMeaning(html, c.getConceptCode(), null, null);
             } else if ("PNAME".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
-                convertTextToHTML(html, TagUtil.buildDicomPersonName(c.getPersonName()));
+                convertTextToHTML(html, TagD.getDicomPersonName(c.getPersonName()));
             } else if ("NUM".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : " = "); //$NON-NLS-1$ //$NON-NLS-2$
                 Attributes val = c.getMeasuredValue();
@@ -195,15 +195,6 @@ public class SRReader {
                     if (imgRef.getSopInstanceReference() == null) {
                         imgRef.setSopInstanceReference(new SOPInstanceReference(item));
                     }
-
-                    // int[] frames = ref.getReferencedFrameNumber();
-                    // if (frames == null || frames.length == 0) {
-                    // html.append("<img align=\"top\"
-                    // src=\"http://localhost:8080/wado?requestType=WADO&studyUID=1&seriesUID=1&objectUID=");
-                    // html.append(ref.getReferencedSOPInstanceUID());
-                    // html.append("\">");
-                    // html.append("<BR>");
-                    // }
 
                     html.append("<a href=\"http://"); //$NON-NLS-1$
                     html.append(level);
@@ -301,7 +292,7 @@ public class SRReader {
         }
     }
 
-    private String getReferencedContentItemIdentifier(int[] refs) {
+    private static String getReferencedContentItemIdentifier(int[] refs) {
         if (refs != null) {
             StringBuilder r = new StringBuilder();
             for (int j = 0; j < refs.length - 1; j++) {
@@ -316,7 +307,7 @@ public class SRReader {
         return null;
     }
 
-    private void addContent(StringBuilder html, SRDocumentContent c, Map<String, SRImageReference> map, String level) {
+    private static void addContent(StringBuilder html, SRDocumentContent c, Map<String, SRImageReference> map, String level) {
         Sequence cts = c.getContent();
         if (cts != null) {
             boolean continuity = "CONTINUOUS".equals(c.getContinuityOfContent()); //$NON-NLS-1$
@@ -342,7 +333,7 @@ public class SRReader {
         }
     }
 
-    private void addCodeMeaning(StringBuilder html, Code code, String startTag, String endTag) {
+    private static void addCodeMeaning(StringBuilder html, Code code, String startTag, String endTag) {
         if (code != null) {
             if (startTag != null) {
                 html.append(startTag);
@@ -354,7 +345,7 @@ public class SRReader {
         }
     }
 
-    private void convertTextToHTML(StringBuilder html, String text) {
+    private static void convertTextToHTML(StringBuilder html, String text) {
         if (text != null) {
             String[] lines = EscapeChars.convertToLines(text);
             if (lines.length > 0) {
@@ -374,7 +365,7 @@ public class SRReader {
             html.append(tag.getDisplayedName());
             html.append("</B>"); //$NON-NLS-1$
             html.append(StringUtil.COLON_AND_SPACE);
-            html.append(tag.getFormattedText(tag.getValue(dcmItems), null));
+            html.append(tag.getFormattedTagValue(tag.getValue(dcmItems), null));
         }
     }
 
@@ -402,12 +393,12 @@ public class SRReader {
                 html.append(StringUtil.COLON);
                 html.append("<BR>"); //$NON-NLS-1$
                 for (Attributes v : seq) {
-                    TemporalAccessor date =  (TemporalAccessor) TagD.get(Tag.VerificationDateTime).getValue(v);
+                    TemporalAccessor date = (TemporalAccessor) TagD.get(Tag.VerificationDateTime).getValue(v);
                     if (date != null) {
                         html.append(" * "); //$NON-NLS-1$
                         html.append(TagUtil.formatDateTime(date));
                         html.append(" - "); //$NON-NLS-1$
-                        String name = TagUtil.buildDicomPersonName(v.getString(Tag.VerifyingObserverName));
+                        String name = TagD.getDicomPersonName(v.getString(Tag.VerifyingObserverName));
                         if (name != null) {
                             html.append(name);
                             html.append(", "); //$NON-NLS-1$

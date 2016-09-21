@@ -10,7 +10,10 @@
  *******************************************************************************/
 package org.weasis.base.viewer2d;
 
-import java.util.ArrayList;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,35 +21,44 @@ import java.util.Map;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.util.DefaultAction;
 
-@Component(immediate = false)
-@Service
-@Property(name = "service.pluginName", value = "Image Viewer")
+@org.apache.felix.scr.annotations.Component(immediate = false)
+@org.apache.felix.scr.annotations.Service
+@org.apache.felix.scr.annotations.Property(name = "service.pluginName", value = "Image Viewer")
 public class ViewerFactory implements SeriesViewerFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
 
     public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/image-x-generic.png")); //$NON-NLS-1$
+
+    private static final DefaultAction preferencesAction =
+        new DefaultAction(Messages.getString("OpenImageAction.img"), ViewerFactory::getOpenImageAction);
 
     public ViewerFactory() {
         super();
@@ -64,7 +76,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return ""; //$NON-NLS-1$
+        return NAME;
     }
 
     @Override
@@ -156,9 +168,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public List<Action> getOpenActions() {
-        ArrayList<Action> actions = new ArrayList<>(1);
-        actions.add(OpenImageAction.getInstance());
-        return actions;
+        return Arrays.asList(preferencesAction);
     }
 
     @Override
@@ -169,5 +179,54 @@ public class ViewerFactory implements SeriesViewerFactory {
     @Override
     public boolean canExternalizeSeries() {
         return true;
+    }
+
+    private static void getOpenImageAction(ActionEvent e) {
+        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
+        JFileChooser fileChooser = new JFileChooser(directory);
+
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(true);
+        // TODO add format from plugins
+        FileFormatFilter.setImageDecodeFilters(fileChooser);
+        File[] selectedFiles;
+        if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION
+            || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
+            return;
+        } else {
+            MediaSeries<MediaElement> series = null;
+            for (File file : selectedFiles) {
+                String mimeType = MimeInspector.getMimeType(file);
+                if (mimeType != null && mimeType.startsWith("image")) { //$NON-NLS-1$
+                    Codec codec = BundleTools.getCodec(mimeType, null);
+                    if (codec != null) {
+                        MediaReader reader = codec.getMediaIO(file.toURI(), mimeType, null);
+                        if (reader != null) {
+                            if (series == null) {
+                                // TODO improve group model for image, uid for group ?
+                                series = reader.getMediaSeries();
+                            } else {
+                                MediaElement[] elements = reader.getMediaElement();
+                                if (elements != null) {
+                                    for (MediaElement media : elements) {
+                                        series.addMedia(media);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (series != null && series.size(null) > 0) {
+                ViewerPluginBuilder.openSequenceInDefaultPlugin(series, ViewerPluginBuilder.DefaultDataModel, true,
+                    false);
+            } else {
+                Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
+                JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"),
+                    Messages.getString("OpenImageAction.open_img"), JOptionPane.WARNING_MESSAGE);
+            }
+            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
+        }
     }
 }

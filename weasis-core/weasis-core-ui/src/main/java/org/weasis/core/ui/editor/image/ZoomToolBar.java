@@ -12,8 +12,6 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.GraphicsConfiguration;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +34,7 @@ import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.WtoolBar;
 
+@SuppressWarnings("serial")
 public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
     public ZoomToolBar(final ImageViewerEventManager<E> eventManager, int index, boolean showLens) {
@@ -83,17 +82,13 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
     public static List<JMenuItem> getZoomListMenuItems(final ImageViewerEventManager<?> eventManager) {
 
-        List<JMenuItem> list = new ArrayList<JMenuItem>();
+        List<JMenuItem> list = new ArrayList<>();
         final JMenuItem actualZoomMenu = new JMenuItem(Messages.getString("ViewerToolBar.zoom_1"), //$NON-NLS-1$
             new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$
-        actualZoomMenu.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ActionState zoom = eventManager.getAction(ActionW.ZOOM);
-                if (zoom instanceof SliderChangeListener) {
-                    ((SliderChangeListener) zoom).setValue(ImageViewerEventManager.viewScaleToSliderValue(1.0));
-                }
+        actualZoomMenu.addActionListener(e -> {
+            ActionState zoom = eventManager.getAction(ActionW.ZOOM);
+            if (zoom instanceof SliderChangeListener) {
+                ((SliderChangeListener) zoom).setRealValue(1.0);
             }
         });
         list.add(actualZoomMenu);
@@ -109,17 +104,14 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
                     final JMenuItem realSizeMenu =
                         new JMenuItem(Messages.getString("ZoomToolBar.real_zoom"), new ImageIcon( //$NON-NLS-1$
                             MouseActions.class.getResource("/icon/22x22/zoom-real.png"))); //$NON-NLS-1$
-                    realSizeMenu.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            // Pass the value -100.0 (convention: -100.0 => real world size) directly to the property
-                            // change,
-                            // otherwise the value is adjusted by the BoundedRangeModel
-                            eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null,
-                                new SynchEvent(null, ActionW.ZOOM.cmd(), -100.0));
-                            AuditLog.LOGGER.info("action:{} val:-100.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
-                        }
+                    realSizeMenu.addActionListener(e -> {
+                        /*
+                         * Pass the value -100.0 (convention: -100.0 => real world size) directly to the property
+                         * change, otherwise the value is adjusted by the BoundedRangeModel
+                         */
+                        eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null,
+                            new SynchEvent(null, ActionW.ZOOM.cmd(), -100.0));
+                        AuditLog.LOGGER.info("action:{} val:-100.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
                     });
                     list.add(realSizeMenu);
                 }
@@ -128,16 +120,12 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
         final JMenuItem bestFitMenu = new JMenuItem(Messages.getString("ViewerToolBar.zoom_b"), //$NON-NLS-1$
             new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-bestfit.png"))); //$NON-NLS-1$
-        bestFitMenu.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Pass the value -200.0 (convention: -200.0 = > best fit zoom value) directly to the property change,
-                // otherwise the value is adjusted by the BoundedRangeModel
-                eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null,
-                    new SynchEvent(null, ActionW.ZOOM.cmd(), -200.0));
-                AuditLog.LOGGER.info("action:{} val:-200.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
-            }
+        bestFitMenu.addActionListener(e -> {
+            // Pass the value -200.0 (convention: -200.0 = > best fit zoom value) directly to the property change,
+            // otherwise the value is adjusted by the BoundedRangeModel
+            eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null,
+                new SynchEvent(null, ActionW.ZOOM.cmd(), -200.0));
+            AuditLog.LOGGER.info("action:{} val:-200.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
         });
         list.add(bestFitMenu);
 

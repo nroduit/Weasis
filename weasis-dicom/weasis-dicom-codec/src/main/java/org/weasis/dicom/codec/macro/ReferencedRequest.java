@@ -27,14 +27,12 @@ public class ReferencedRequest extends Module {
         super(new Attributes());
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public static Collection<ReferencedRequest> toReferencedRequestMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
             return null;
         }
 
-        ArrayList<ReferencedRequest> list = new ArrayList<ReferencedRequest>(seq.size());
+        ArrayList<ReferencedRequest> list = new ArrayList<>(seq.size());
 
         for (Attributes attr : seq) {
             list.add(new ReferencedRequest(attr));
@@ -42,8 +40,6 @@ public class ReferencedRequest extends Module {
 
         return list;
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public String getStudyInstanceUID() {
         return dcmItems.getString(Tag.StudyInstanceUID);

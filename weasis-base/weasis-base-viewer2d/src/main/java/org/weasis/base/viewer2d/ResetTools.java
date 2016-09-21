@@ -10,23 +10,20 @@
  *******************************************************************************/
 package org.weasis.base.viewer2d;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 public enum ResetTools {
-    All(Messages.getString("ResetTools.all")), //$NON-NLS-1$
+    ALL(Messages.getString("ResetTools.all")), //$NON-NLS-1$
 
-    WindowLevel(Messages.getString("ResetTools.wl")), //$NON-NLS-1$
+    WL(Messages.getString("ResetTools.wl")), //$NON-NLS-1$
 
-    Zoom(Messages.getString("ResetTools.zoom")), //$NON-NLS-1$
+    ZOOM(Messages.getString("ResetTools.zoom")), //$NON-NLS-1$
 
-    Rotation(Messages.getString("ResetTools.rotation")), //$NON-NLS-1$
+    ROTATION(Messages.getString("ResetTools.rotation")), //$NON-NLS-1$
 
-    Pan(Messages.getString("ResetTools.pan")); //$NON-NLS-1$
+    PAN(Messages.getString("ResetTools.pan")); //$NON-NLS-1$
 
     private final String name;
 
@@ -44,13 +41,7 @@ public enum ResetTools {
         JMenu menu = new JMenu(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
         for (final ResetTools action : values()) {
             final JMenuItem item = new JMenuItem(action.toString());
-            item.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    EventManager.getInstance().reset(action);
-                }
-            });
+            item.addActionListener(e -> EventManager.getInstance().reset(action));
             menu.add(item);
             group.add(item);
         }

@@ -28,14 +28,12 @@ public class SeriesAndInstanceReference extends Module {
         super(new Attributes());
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public static Collection<SeriesAndInstanceReference> toSeriesAndInstanceReferenceMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
             return null;
         }
 
-        ArrayList<SeriesAndInstanceReference> list = new ArrayList<SeriesAndInstanceReference>(seq.size());
+        ArrayList<SeriesAndInstanceReference> list = new ArrayList<>(seq.size());
 
         for (Attributes attr : seq) {
             list.add(new SeriesAndInstanceReference(attr));
@@ -43,8 +41,6 @@ public class SeriesAndInstanceReference extends Module {
 
         return list;
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public String getSeriesInstanceUID() {
         return dcmItems.getString(Tag.SeriesInstanceUID);

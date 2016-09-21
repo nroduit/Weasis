@@ -85,13 +85,13 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
         return flavor.equals(DataFlavor.imageFlavor);
     }
 
-    private PlanarImage createComponentImage(DefaultView2d canvas) {
-        TiledImage image = ImageFiler.getEmptyTiledImage(Color.BLACK, canvas.getWidth(), canvas.getHeight());
+    private static PlanarImage createComponentImage(DefaultView2d canvas) {
+        TiledImage img = ImageFiler.getEmptyTiledImage(Color.BLACK, canvas.getWidth(), canvas.getHeight());
         ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(canvas);
         try {
             exportImage.getInfoLayer().setDisplayPreferencesValue(LayerAnnotation.ANONYM_ANNOTATIONS, true);
             exportImage.getInfoLayer().setBorder(3);
-            Graphics2D g = image.createGraphics();
+            Graphics2D g = img.createGraphics();
             if (g != null) {
                 ViewModel originViewModel = canvas.getViewModel();
                 ViewModel viewModel = exportImage.getViewModel();
@@ -111,7 +111,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
         } finally {
             exportImage.disposeView();
         }
-        return image;
+        return img;
     }
 
 }

@@ -120,12 +120,12 @@ public abstract class NativeImage {
             if (outBuf.hasArray()) {
                 ouputStream.write(outBuf.array(), 0, bytesWritten);
             } else {
-                for (int i = 0; i < bytesWritten; i++) {
-                    if (outBuf.hasRemaining()) {
-                        ouputStream.write(outBuf.get());
-                    } else {
-                        break;
-                    }
+                int limit = outBuf.limit() - outBuf.position();
+                if (limit > bytesWritten) {
+                    limit = bytesWritten;
+                }
+                for (int i = 0; i < limit; i++) {
+                    ouputStream.write(outBuf.get());
                 }
             }
         }

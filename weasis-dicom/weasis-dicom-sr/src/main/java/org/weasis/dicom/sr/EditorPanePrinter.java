@@ -38,7 +38,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
 public class EditorPanePrinter extends JPanel implements Pageable, Printable {
-    public static int PAGE_SHIFT = 20;
+    public static final int PAGE_SHIFT = 20;
 
     JEditorPane sourcePane;
 
@@ -72,7 +72,6 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
         paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
         pageFormat.setPaper(paper);
 
-        // updateUIToRemoveLF(this);
         doPagesLayout();
     }
 
@@ -100,7 +99,7 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
     }
 
     protected void calculatePageInfo() {
-        pages = new ArrayList<PagePanel>();
+        pages = new ArrayList<>();
         int startY = 0;
         int endPageY = getEndPageY(startY);
         while (startY + pageHeight - margins.top - margins.bottom < sourcePane.getHeight()) {
@@ -145,7 +144,7 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
         return realY;
     }
 
-    private void updateUIToRemoveLF(JPanel panel) {
+    private static void updateUIToRemoveLF(JPanel panel) {
         panel.setUI(new javax.swing.plaf.PanelUI() {
         });
         panel.setBackground(Color.WHITE);
@@ -218,12 +217,12 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
     }
 
     @Override
-    public PageFormat getPageFormat(int pageIndex) throws IndexOutOfBoundsException {
+    public PageFormat getPageFormat(int pageIndex) {
         return pageFormat;
     }
 
     @Override
-    public Printable getPrintable(int pageIndex) throws IndexOutOfBoundsException {
+    public Printable getPrintable(int pageIndex) {
         return this;
     }
 

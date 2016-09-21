@@ -29,7 +29,6 @@ import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.color.ColorSpace;
-import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -59,7 +58,6 @@ import java.util.Optional;
 import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
@@ -129,6 +127,7 @@ import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 
@@ -238,7 +237,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void initActionWState() {
         actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
-        actionsInView.put(zoomTypeCmd, ZoomType.BEST_FIT);
+        actionsInView.put(ZOOM_TYPE_CMD, ZoomType.BEST_FIT);
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
         actionsInView.put(ActionW.DRAWINGS.cmd(), true);
@@ -301,7 +300,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 getViewButtons().add(synchButton);
             }
             SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
-            synchButton.setVisible(!SynchData.Mode.None.equals(synch.getMode()));
+            synchButton.setVisible(!SynchData.Mode.NONE.equals(synch.getMode()));
         } else {
             getViewButtons().remove(synchButton);
         }
@@ -339,12 +338,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         pixelInfo.setChannelNames(getChannelNames(image));
                     }
 
-                } catch (Throwable e) {
-                    // when image tile is not available anymore (file stream closed)
-                    System.gc();
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException et) {
+                } catch (Exception | OutOfMemoryError e) {
+                    LOGGER.error("Get pixel value", e);//$NON-NLS-1$
+                    if (e instanceof OutOfMemoryError) {
+                        // when image tile is not available anymore (file stream closed)
+                        System.gc();
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException et) {
+                        }
                     }
                 }
             }
@@ -681,26 +683,25 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected double adjustViewScale(double viewScale) {
+        double ratio = viewScale;
+        if (ratio < DefaultViewModel.SCALE_MIN) {
+            ratio = DefaultViewModel.SCALE_MIN;
+        } else if (ratio > DefaultViewModel.SCALE_MAX) {
+            ratio = DefaultViewModel.SCALE_MAX;
+        }
         ActionState zoom = eventManager.getAction(ActionW.ZOOM);
         if (zoom instanceof SliderChangeListener) {
             SliderChangeListener z = (SliderChangeListener) zoom;
             // Adjust the best fit value according to the possible range of the model zoom action.
-            int sliderValue = ImageViewerEventManager.viewScaleToSliderValue(viewScale);
             if (eventManager.getSelectedViewPane() == this) {
                 // Set back the value to UI components as this value cannot be computed early.
-                z.setValueWithoutTriggerAction(sliderValue);
-                viewScale = ImageViewerEventManager.sliderValueToViewScale(z.getValue());
+                z.setRealValue(ratio, false);
+                ratio = z.getRealValue();
             } else {
-                DefaultBoundedRangeModel model = z.getModel();
-                if (sliderValue < model.getMinimum()) {
-                    sliderValue = model.getMinimum();
-                } else if (sliderValue > model.getMaximum()) {
-                    sliderValue = model.getMaximum();
-                }
-                viewScale = ImageViewerEventManager.sliderValueToViewScale(sliderValue);
+                ratio = z.toModelValue(z.toSliderValue(ratio));
             }
         }
-        return viewScale;
+        return ratio;
     }
 
     @SuppressWarnings("rawtypes")
@@ -915,7 +916,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void zoom(Double viewScale) {
         boolean defSize = MathUtil.isEqualToZero(viewScale);
-        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
         double ratio = viewScale;
         if (defSize) {
             if (ZoomType.BEST_FIT.equals(type)) {
@@ -993,7 +994,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
         } catch (NoninvertibleTransformException e) {
-            e.printStackTrace();
+            LOGGER.error("Create inverse transform",e);
         }
     }
 
@@ -1086,10 +1087,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 // Avoid to reset zoom when the mode is not best fit
                 if (zoomFactor != null && zoomFactor >= 0.0) {
-                    Object zoomType = actionsInView.get(ViewCanvas.zoomTypeCmd);
-                    actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.CURRENT);
+                    Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+                    actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
                     setImage(imgElement);
-                    actionsInView.put(ViewCanvas.zoomTypeCmd, zoomType);
+                    actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
                 } else {
                     setImage(imgElement);
                 }
@@ -1118,7 +1119,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     private void propertyChange(final SynchEvent synch) {
         SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-        if (synchData != null && Mode.None.equals(synchData.getMode())) {
+        if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
             return;
         }
 
@@ -1130,7 +1131,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 continue;
             }
             if (command.equals(ActionW.WINDOW.cmd()) || command.equals(ActionW.LEVEL.cmd())) {
-                if (manager.setParamValue(WindowOp.OP_NAME, command, ((Integer) entry.getValue()).doubleValue())) {
+                if (manager.setParamValue(WindowOp.OP_NAME, command, ((Number) entry.getValue()).doubleValue())) {
                     imageLayer.updateDisplayOperations();
                 }
             } else if (command.equals(ActionW.ROTATION.cmd())) {
@@ -1146,11 +1147,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (MathUtil.isDifferent(val, -200.0) && MathUtil.isDifferent(val, -100.0)) {
                     zoom(val);
                 } else {
-                    Object zoomType = actionsInView.get(ViewCanvas.zoomTypeCmd);
-                    actionsInView.put(ViewCanvas.zoomTypeCmd,
+                    Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+                    actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD,
                         MathUtil.isEqual(val, -100.0) ? ZoomType.REAL : ZoomType.BEST_FIT);
                     zoom(0.0);
-                    actionsInView.put(ViewCanvas.zoomTypeCmd, zoomType);
+                    actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
                 }
             } else if (command.equals(ActionW.LENSZOOM.cmd())) {
                 if (lens != null) {
@@ -1456,29 +1457,22 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public List<Action> getExportToClipboardAction() {
         List<Action> list = new ArrayList<>();
 
-        AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        AbstractAction exportToClipboardAction =
+            new DefaultAction(Messages.getString("DefaultView2d.clipboard"), event -> { //$NON-NLS-1$
                 final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
                 imageTransferHandler.exportToClipboard(DefaultView2d.this,
                     Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
-            }
-        };
+            });
         exportToClipboardAction.putValue(Action.ACCELERATOR_KEY,
             KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
         list.add(exportToClipboardAction);
 
         // TODO exclude big images?
-        exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard_real")) { //$NON-NLS-1$
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final ImageTransferHandler imageTransferHandler = new ImageTransferHandler();
-                imageTransferHandler.exportToClipboard(DefaultView2d.this,
-                    Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
-            }
-        };
+        exportToClipboardAction = new DefaultAction(Messages.getString("DefaultView2d.clipboard_real"), event -> { //$NON-NLS-1$
+            final ImageTransferHandler imageTransferHandler = new ImageTransferHandler();
+            imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit().getSystemClipboard(),
+                TransferHandler.COPY);
+        });
         list.add(exportToClipboardAction);
 
         return list;
@@ -1496,7 +1490,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void resetZoom() {
-        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
         if (!ZoomType.CURRENT.equals(type)) {
             zoom(0.0);
         }

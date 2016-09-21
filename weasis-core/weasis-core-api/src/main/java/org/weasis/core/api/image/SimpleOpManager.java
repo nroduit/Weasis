@@ -72,6 +72,7 @@ public class SimpleOpManager implements OpManager {
         return name;
     }
 
+    @Override
     public List<ImageOpNode> getOperations() {
         return operations;
     }
@@ -278,16 +279,6 @@ public class SimpleOpManager implements OpManager {
     @Override
     public SimpleOpManager copy() {
         return new SimpleOpManager(this);
-    }
-
-    @Override
-    public boolean needProcessing() {
-        for (ImageOpNode op : operations) {
-            if (op.getParam(Param.INPUT_IMG) == null || op.getParam(Param.OUTPUT_IMG) == null) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }

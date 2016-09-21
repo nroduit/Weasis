@@ -10,10 +10,10 @@
  *******************************************************************************/
 package org.weasis.core.api.media.data;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.weasis.core.api.Messages;
 
@@ -23,17 +23,12 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
     private final TagW tagID;
     private final TagView displayTag;
-    private final HashMap<TagW, Object> tags;
-    private Comparator<TagW> comparator;
+    private final HashMap<TagW, Object> tags = new HashMap<>();
 
     public MediaSeriesGroupNode(TagW tagID, Object identifier, TagView displayTag) {
-        if (tagID == null || identifier == null) {
-            throw new IllegalArgumentException("tagID or identifier cannot be null"); //$NON-NLS-1$
-        }
+        this.tagID = Objects.requireNonNull(tagID);
+        tags.put(tagID, Objects.requireNonNull(identifier));
         this.displayTag = displayTag == null ? new TagView(tagID) : displayTag;
-        this.tags = new HashMap<>();
-        this.tagID = tagID;
-        tags.put(tagID, identifier);
     }
 
     @Override
@@ -47,38 +42,45 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     }
 
     @Override
-    public String toString() {
-        String val = displayTag.getFormattedText(false, this);
-        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val"): val; //$NON-NLS-1$
+    public boolean matchIdValue(Object valueID) {
+        Object v = tags.get(tagID);
+        if (v == valueID)
+            return true;
+        if (v == null) {
+            return false;
+        }
+        return v.equals(valueID);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        Object value1 = tags.get(tagID);
-        if (value1 == obj) {
-            return true;
-        }
-        if (value1 == null) {
-            return false;
-        }
-        if (obj instanceof MediaSeriesGroupNode) {
-            Object value2 = ((MediaSeriesGroupNode) obj).tags.get(tagID);
-            return value1.equals(value2);
-        }
-        return value1.equals(obj);
+    public String toString() {
+        String val = displayTag.getFormattedText(false, this);
+        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") : val; //$NON-NLS-1$
     }
 
     @Override
     public int hashCode() {
+        final int prime = 31;
+        int result = 1;
         Object val = tags.get(tagID);
-        if (val instanceof Integer) {
-            return (Integer) val;
+        result = prime * result + ((val == null) ? tags.hashCode() : val.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Object value1 = tags.get(tagID);
+        if (value1 == null) {
+            return tags.equals(((MediaSeriesGroupNode) obj).tags);
         }
-        // Should never happens, but it does very rarely ?
-        if (val == null) {
-            return tags.hashCode();
-        }
-        return val.hashCode();
+        Object value2 = ((MediaSeriesGroupNode) obj).tags.get(tagID);
+        return value1.equals(value2);
     }
 
     @Override
@@ -126,18 +128,6 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public void dispose() {
         // Nothing to dispose
-    }
-
-    // can be null
-    @Override
-    public Comparator<TagW> getComparator() {
-        return comparator;
-    }
-
-    @Override
-    public void setComparator(Comparator<TagW> comparator) {
-        this.comparator = comparator;
-
     }
 
 }

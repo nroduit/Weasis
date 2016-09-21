@@ -27,7 +27,6 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -82,6 +81,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
@@ -382,7 +382,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             Number level = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
             boolean outside = false;
             if (window != null && level != null) {
-                sb.append(Messages.getString("InfoLayer.wl"));//$NON-NLS-1$
+                sb.append(ActionW.WINLEVEL.getTitle());
                 sb.append(StringUtil.COLON_AND_SPACE);
                 sb.append(DecFormater.oneDecimal(window));
                 sb.append("/");//$NON-NLS-1$
@@ -464,7 +464,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
                                 value = getTagValue(tag, patient, study, series, dcm);
                                 if (value != null) {
-                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2, str, border, drawY);
                                         drawY += fontHeight;
@@ -489,7 +489,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
                                 value = getTagValue(tag, patient, study, series, dcm);
                                 if (value != null) {
-                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2, str,
                                             bound.width - g2.getFontMetrics().stringWidth(str) - (float) border, drawY);
@@ -515,7 +515,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
                                 value = getTagValue(tag, patient, study, series, dcm);
                                 if (value != null) {
-                                    String str = tag.getFormattedText(value, infos[j].getFormat());
+                                    String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2, str,
                                             bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
@@ -552,11 +552,10 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             String rowTop = null;
             if (getDisplayPreferences(IMAGE_ORIENTATION) && v != null && v.length == 6) {
                 orientation.append(" - ");//$NON-NLS-1$
-                String imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
+                Label imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
                     v[1], v[2], v[3], v[4], v[5]);
-                if (imgOrientation != null) {
-                    orientation.append(imgOrientation);
-                }
+                orientation.append(imgOrientation);
+                
                 // Set the opposite vector direction (otherwise label should be placed in mid-right and mid-bottom
                 Vector3d vr = new Vector3d(-v[0], -v[1], -v[2]);
                 Vector3d vc = new Vector3d(-v[3], -v[4], -v[5]);
@@ -617,7 +616,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 Font oldFont = g2.getFont();
                 Font bigFont = oldFont.deriveFont(oldFont.getSize() + 5.0f);
                 g2.setFont(bigFont);
-                Map<TextAttribute, Object> map = new Hashtable<>(1);
+                Map<TextAttribute, Object> map = new HashMap<>(1);
                 map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
                 String fistLetter = rowTop.substring(0, 1);
                 DefaultGraphicLabel.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
@@ -652,7 +651,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         drawExtendedActions(g2, positions);
     }
 
-    private void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
+    private static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
         axis.normalize();
         vDst.x = axis.x * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
             + vSrc.x * Math.cos(angle) + (-axis.z * vSrc.y + axis.y * vSrc.z) * Math.sin(angle);
@@ -1200,7 +1199,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         double scale = image.getPixelSize() / zoomFactor;
         double scaleSizex = ajustShowScale(scale,
             (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
-        if (showBottomScale && scaleSizex > 30.0d) {
+        if (showBottomScale && scaleSizex > 50.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
             g2d.setStroke(new BasicStroke(1.0F));
@@ -1458,7 +1457,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             Point2D.Float midy =
                 new Point2D.Float(positions[1].x, (float) (view2DPane.getHeight() * 0.5 - (height - space) * 0.5));
             SynchData synchData = (SynchData) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
-            boolean tile = synchData != null && SynchData.Mode.Tile.equals(synchData.getMode());
+            boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
 
             for (ViewButton b : view2DPane.getViewButtons()) {
                 if (b.isVisible() && (tile && b.getIcon() == View2d.KO_ICON) == false) {

@@ -57,11 +57,7 @@ public class Activator implements BundleActivator, ServiceListener {
         bundleContext.registerService(BackingStore.class.getName(), new DataFileBackingStoreImpl(bundleContext), null);
 
         for (ServiceReference<Codec> service : bundleContext.getServiceReferences(Codec.class, null)) {
-            Codec codec = bundleContext.getService(service);
-            if (codec != null && !BundleTools.CODEC_PLUGINS.contains(codec)) {
-                BundleTools.CODEC_PLUGINS.add(codec);
-                LOGGER.info("Register Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
-            }
+            registerCodecPlugins(bundleContext.getService(service));
         }
 
         bundleContext.addServiceListener(this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()));//$NON-NLS-1$
@@ -83,7 +79,7 @@ public class Activator implements BundleActivator, ServiceListener {
         JAIUtil.registerOp(or, new RectifyUShortToShortDataDescriptor());
 
         // Set 1/4 of the total memory for TileCache
-        jai.getTileCache().setMemoryCapacity(Runtime.getRuntime().maxMemory()/4);
+        jai.getTileCache().setMemoryCapacity(Runtime.getRuntime().maxMemory() / 4);
 
         RecyclingTileFactory recyclingTileFactory = new RecyclingTileFactory();
         RenderingHints rh = jai.getRenderingHints();
@@ -120,13 +116,10 @@ public class Activator implements BundleActivator, ServiceListener {
 
         // TODO manage when several identical MimeType, register the default one
         if (event.getType() == ServiceEvent.REGISTERED) {
-            if (!BundleTools.CODEC_PLUGINS.contains(codec)) {
-                BundleTools.CODEC_PLUGINS.add(codec);
-                LOGGER.info("Register Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
-            }
+            registerCodecPlugins(codec);
         } else if (event.getType() == ServiceEvent.UNREGISTERING) {
             if (BundleTools.CODEC_PLUGINS.contains(codec)) {
-                LOGGER.info("Unregister Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
+                LOGGER.info("Unregister Image Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
                 BundleTools.CODEC_PLUGINS.remove(codec);
             }
             // Unget service object and null references.
@@ -134,7 +127,14 @@ public class Activator implements BundleActivator, ServiceListener {
         }
     }
 
-    private void initLoggerAndAudit(BundleContext bundleContext) throws IOException {
+    private static void registerCodecPlugins(Codec codec) {
+        if (codec != null && !BundleTools.CODEC_PLUGINS.contains(codec)) {
+            BundleTools.CODEC_PLUGINS.add(codec);
+            LOGGER.info("Register Image Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
+        }
+    }
+
+    private static void initLoggerAndAudit(BundleContext bundleContext) throws IOException {
         // Audit log for giving statistics about usage of Weasis
         String loggerKey = "audit.log"; //$NON-NLS-1$
         String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" }; //$NON-NLS-1$

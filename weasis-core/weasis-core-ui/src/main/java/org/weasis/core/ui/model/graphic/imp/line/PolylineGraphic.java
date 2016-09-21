@@ -43,23 +43,11 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(PolylineGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
 
-    public static final Measurement FIRST_POINT_X =
-        new Measurement(Messages.getString("measure.firstx"), 1, true, true, false); //$NON-NLS-1$
-    public static final Measurement FIRST_POINT_Y =
-        new Measurement(Messages.getString("measure.firsty"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement LAST_POINT_X =
-        new Measurement(Messages.getString("measure.lastx"), 3, true, true, false); //$NON-NLS-1$
-    public static final Measurement LAST_POINT_Y =
-        new Measurement(Messages.getString("measure.lasty"), 4, true, true, false); //$NON-NLS-1$
     public static final Measurement LINE_LENGTH =
         new Measurement(Messages.getString("measure.length"), 5, true, true, true); //$NON-NLS-1$
 
     protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
     static {
-        MEASUREMENT_LIST.add(FIRST_POINT_X);
-        MEASUREMENT_LIST.add(FIRST_POINT_Y);
-        MEASUREMENT_LIST.add(LAST_POINT_X);
-        MEASUREMENT_LIST.add(LAST_POINT_Y);
         MEASUREMENT_LIST.add(LINE_LENGTH);
     }
 
@@ -172,37 +160,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
                         handlePointListcopy.add((Point2D.Double) handlePt.clone());
                     }
                 }
-                Point2D ptA = null;
-                Point2D ptB = null;
 
-                if (FIRST_POINT_X.getComputed()) {
-                    if (!handlePointListcopy.isEmpty()) {
-                        ptA = handlePointListcopy.get(0);
-                    }
-                    measVal.add(
-                        new MeasureItem(FIRST_POINT_X, adapter.getXCalibratedValue(ptA.getX()), adapter.getUnit()));
-                }
-                if (FIRST_POINT_Y.getComputed()) {
-                    if (!handlePointListcopy.isEmpty()) {
-                        ptA = handlePointListcopy.get(0);
-                    }
-                    measVal.add(
-                        new MeasureItem(FIRST_POINT_Y, adapter.getXCalibratedValue(ptA.getY()), adapter.getUnit()));
-                }
-                if (LAST_POINT_X.getComputed()) {
-                    if (!handlePointListcopy.isEmpty()) {
-                        ptB = handlePointListcopy.get(pts.size() - 1);
-                    }
-                    measVal
-                        .add(new MeasureItem(LAST_POINT_X, adapter.getXCalibratedValue(ptB.getX()), adapter.getUnit()));
-                }
-                if (LAST_POINT_Y.getComputed()) {
-                    if (!handlePointListcopy.isEmpty()) {
-                        ptB = handlePointListcopy.get(pts.size() - 1);
-                    }
-                    measVal
-                        .add(new MeasureItem(LAST_POINT_Y, adapter.getXCalibratedValue(ptB.getY()), adapter.getUnit()));
-                }
                 if (LINE_LENGTH.getComputed()) {
                     Double val = (handlePointListcopy.size() > 1) ? getPerimeter(handlePointListcopy) * ratio : null;
                     measVal.add(new MeasureItem(LINE_LENGTH, val, unitStr));

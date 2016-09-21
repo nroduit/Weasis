@@ -51,7 +51,6 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         if (e.getStateChange() == ItemEvent.SELECTED) {
             selectTool((Graphic) e.getItem());
         }
-
     };
 
     public LabelsPrefView() {

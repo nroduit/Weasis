@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Objects;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
@@ -33,94 +34,51 @@ import org.weasis.core.ui.editor.image.ZoomWin.SyncType;
  */
 public class PopUpMenuOnZoom extends JPopupMenu {
 
+    private static final int[] magnify = { 1, 2, 3, 4, 6 };
+
     /** The display image zone */
     private final ZoomWin zoomWin;
     private final JMenuItem jMenuItemZoom = new JMenuItem();
     private final ButtonGroup buttonMagnify = new ButtonGroup();
-    private final int[] magnify = { 1, 2, 3, 4, 6 };
     private JRadioButtonMenuItem[] jRadioButtonMenuItemMagnify;
-    private final ActionListener magnifyListener = new java.awt.event.ActionListener() {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            magnifyActionPerformed(e);
-        }
-    };
     private final JMenu jMenuMagnify = new JMenu();
     private final JMenu jMenuImage = new JMenu();
     private final JRadioButtonMenuItem jMenuItemMagnifyOther = new JRadioButtonMenuItem();
     private final JCheckBoxMenuItem jCheckBoxMenuItemDraw = new JCheckBoxMenuItem();
     private final JCheckBoxMenuItem jCheckBoxMenutemSychronize = new JCheckBoxMenuItem();
     private final JMenuItem resetFreeze = new JMenuItem(Messages.getString("PopUpMenuOnZoom.reset")); //$NON-NLS-1$
+    private final ActionListener magnifyListener;
 
     public PopUpMenuOnZoom(ZoomWin zoomWin) {
-        if (zoomWin == null) {
-            throw new IllegalArgumentException("ZoomWin cannot be null"); //$NON-NLS-1$
-        }
-        this.zoomWin = zoomWin;
-        try {
-            jbInit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        this.zoomWin = Objects.requireNonNull(zoomWin);
+        magnifyListener = this::magnifyActionPerformed;
+        init();
     }
 
-    private void jbInit() throws Exception {
+    private void init() {
         jMenuItemZoom.setText(Messages.getString("PopUpMenuOnZoom.hide")); //$NON-NLS-1$
-        jMenuItemZoom.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                zoomWin.hideZoom();
-            }
-        });
+        jMenuItemZoom.addActionListener(e -> zoomWin.hideZoom());
         jCheckBoxMenuItemDraw.setText(Messages.getString("PopUpMenuOnZoom.showDraw")); //$NON-NLS-1$
-        jCheckBoxMenuItemDraw.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                zoomWin.setActionInView(ActionW.DRAWINGS.cmd(), jCheckBoxMenuItemDraw.isSelected());
-                zoomWin.repaint();
-            }
+        jCheckBoxMenuItemDraw.addActionListener(e -> {
+            zoomWin.setActionInView(ActionW.DRAWINGS.cmd(), jCheckBoxMenuItemDraw.isSelected());
+            zoomWin.repaint();
         });
         jMenuImage.setText(Messages.getString("PopUpMenuOnZoom.image")); //$NON-NLS-1$
         final JMenuItem freezParams = new JMenuItem(Messages.getString("PopUpMenuOnZoom.freeze")); //$NON-NLS-1$
-        freezParams.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(SyncType.PARENT_PARAMETERS);
-            }
-        });
+        freezParams.addActionListener(e -> zoomWin.setFreezeImage(SyncType.PARENT_PARAMETERS));
         jMenuImage.add(freezParams);
         final JMenuItem freeze = new JMenuItem(Messages.getString("PopUpMenuOnZoom.freezeImg")); //$NON-NLS-1$
-        freeze.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(SyncType.PARENT_IMAGE);
-            }
-        });
+        freeze.addActionListener(e -> zoomWin.setFreezeImage(SyncType.PARENT_IMAGE));
         jMenuImage.add(freeze);
         jMenuImage.addSeparator();
-        resetFreeze.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(null);
-            }
-        });
+        resetFreeze.addActionListener(e -> zoomWin.setFreezeImage(null));
         jMenuImage.add(resetFreeze);
 
         jMenuMagnify.setText(Messages.getString("PopUpMenuOnZoom.magnify")); //$NON-NLS-1$
         jCheckBoxMenutemSychronize.setText(Messages.getString("PopUpMenuOnZoom.synch")); //$NON-NLS-1$
-        jCheckBoxMenutemSychronize.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                zoomWin.setActionInView(ZoomWin.SYNCH_CMD, jCheckBoxMenutemSychronize.isSelected());
-                zoomWin.updateZoom();
-            }
+        jCheckBoxMenutemSychronize.addActionListener(e -> {
+            zoomWin.setActionInView(ZoomWin.SYNCH_CMD, jCheckBoxMenutemSychronize.isSelected());
+            zoomWin.updateZoom();
         });
         this.add(jMenuItemZoom);
         this.addSeparator();
@@ -196,8 +154,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
                     ImageViewerEventManager<?> manager = zoomWin.getView2d().getEventManager();
                     ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
                     if (zoomAction instanceof SliderChangeListener) {
-                        ((SliderChangeListener) zoomAction)
-                            .setValue(ImageViewerEventManager.viewScaleToSliderValue(magnify[i]));
+                        ((SliderChangeListener) zoomAction).setRealValue(magnify[i]);
                     }
                     break;
                 }

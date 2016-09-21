@@ -46,7 +46,7 @@ final class NativeJLSImageWriter extends NativeImageWriter {
             throw new IllegalStateException("input cannot be null");
         }
 
-        OutputStreamAdapter stream = null;
+        OutputStreamAdapter stream;
         if (output instanceof ImageOutputStream) {
             stream = new OutputStreamAdapter((ImageOutputStream) output);
         } else {

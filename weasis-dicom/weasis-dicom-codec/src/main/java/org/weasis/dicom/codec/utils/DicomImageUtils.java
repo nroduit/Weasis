@@ -14,28 +14,36 @@ import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.imageio.ImageIO;
-import javax.media.jai.JAI;
+import javax.imageio.ImageReader;
 import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
+import javax.media.jai.operator.LookupDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.image.PaletteColorModel;
+import org.dcm4che3.imageio.codec.ImageReaderFactory;
+import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TransferSyntax;
 
 /**
  *
- * @author Benoit Jacquemoud
+ * @author Benoit Jacquemoud, Nicolas Roduit
  *
  * @version $Rev$ $Date$
  */
 public class DicomImageUtils {
+
+    private DicomImageUtils() {
+    }
 
     public static PlanarImage getRGBImageFromPaletteColorModel(RenderedImage source, Attributes ds) {
         if (source == null) {
@@ -43,27 +51,23 @@ public class DicomImageUtils {
         }
 
         // Convert images with PaletteColorModel to RGB model
-        if (source.getColorModel() instanceof PaletteColorModel) {
-            if (ds != null) {
-                int[] rDesc = DicomImageUtils.lutDescriptor(ds, Tag.RedPaletteColorLookupTableDescriptor);
-                int[] gDesc = DicomImageUtils.lutDescriptor(ds, Tag.GreenPaletteColorLookupTableDescriptor);
-                int[] bDesc = DicomImageUtils.lutDescriptor(ds, Tag.BluePaletteColorLookupTableDescriptor);
-                byte[] r = DicomImageUtils.lutData(ds, rDesc, Tag.RedPaletteColorLookupTableData,
-                    Tag.SegmentedRedPaletteColorLookupTableData);
-                byte[] g = DicomImageUtils.lutData(ds, gDesc, Tag.GreenPaletteColorLookupTableData,
-                    Tag.SegmentedGreenPaletteColorLookupTableData);
-                byte[] b = DicomImageUtils.lutData(ds, bDesc, Tag.BluePaletteColorLookupTableData,
-                    Tag.SegmentedBluePaletteColorLookupTableData);
-                LookupTableJAI lut = new LookupTableJAI(new byte[][] { r, g, b });
+        if (source.getColorModel() instanceof PaletteColorModel && ds != null) {
+            int[] rDesc = DicomImageUtils.lutDescriptor(ds, Tag.RedPaletteColorLookupTableDescriptor);
+            int[] gDesc = DicomImageUtils.lutDescriptor(ds, Tag.GreenPaletteColorLookupTableDescriptor);
+            int[] bDesc = DicomImageUtils.lutDescriptor(ds, Tag.BluePaletteColorLookupTableDescriptor);
+            byte[] r = DicomImageUtils.lutData(ds, rDesc, Tag.RedPaletteColorLookupTableData,
+                Tag.SegmentedRedPaletteColorLookupTableData);
+            byte[] g = DicomImageUtils.lutData(ds, gDesc, Tag.GreenPaletteColorLookupTableData,
+                Tag.SegmentedGreenPaletteColorLookupTableData);
+            byte[] b = DicomImageUtils.lutData(ds, bDesc, Tag.BluePaletteColorLookupTableData,
+                Tag.SegmentedBluePaletteColorLookupTableData);
+            LookupTableJAI lut = new LookupTableJAI(new byte[][] { r, g, b });
 
-                // Replace the original image with the RGB image.
-                return JAI.create("lookup", source, lut); //$NON-NLS-1$
-            }
+            // Replace the original image with the RGB image.
+            return LookupDescriptor.create(source, lut, null);
         }
         return PlanarImage.wrapRenderedImage(source);
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Minimum output is given for input value below (level - window/2)<br>
@@ -109,17 +113,9 @@ public class DicomImageUtils {
         Object outLut = bStored <= 8 ? new byte[numEntries] : new short[numEntries];
 
         if (lutShape.getFunctionType() != null) {
-
             switch (lutShape.getFunctionType()) {
                 case LINEAR:
                     setWindowLevelLinearLut(win, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
-
-                    // TODO - do this test below
-                    // setWindowLevelLinearLutLegacy(window, level, minInValue, outLut, minOutValue, maxOutValue,
-                    // inverse);
-                    // Object outLut2 = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
-                    // setWindowLevelLinearLut(window, level, minInValue, outLut2, minOutValue, maxOutValue, inverse);
-                    // compareDataLuts(outLut, outLut2);
                     break;
                 case SIGMOID:
                     setWindowLevelSigmoidLut(win, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
@@ -133,7 +129,6 @@ public class DicomImageUtils {
                 case LOG_INV:
                     setWindowLevelExponentialLut(win, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
                     break;
-
                 default:
                     return null;
             }
@@ -142,8 +137,8 @@ public class DicomImageUtils {
                 maxOutValue, inverse);
         }
 
-        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, (int) minInValue) : //
-            new LookupTableJAI((short[]) outLut, (int) minInValue, isSigned);
+        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, minInValue) : //
+            new LookupTableJAI((short[]) outLut, minInValue, isSigned);
     }
 
     /**
@@ -166,24 +161,18 @@ public class DicomImageUtils {
     public static LookupTableJAI createRescaleRampLut(double intercept, double slope, int minValue, int maxValue,
         int bitsStored, boolean isSigned, boolean inverse, boolean outputSigned, int bitsOutput) {
 
-        bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
+        int stored = (bitsStored > 16) ? 16 : ((bitsStored < 1) ? 1 : bitsStored);
 
         int bitsOutLut = bitsOutput <= 8 ? 8 : 16;
         int outRangeSize = (1 << bitsOutLut) - 1;
         int maxOutValue = outputSigned ? (1 << (bitsOutLut - 1)) - 1 : outRangeSize;
         int minOutValue = outputSigned ? -(maxOutValue + 1) : 0;
 
-        int minInValue = isSigned ? -(1 << (bitsStored - 1)) : 0;
-        int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : (1 << bitsStored) - 1;
+        int minInValue = isSigned ? -(1 << (stored - 1)) : 0;
+        int maxInValue = isSigned ? (1 << (stored - 1)) - 1 : (1 << stored) - 1;
 
-        if (maxValue < minValue) {
-            int tmpMaxValue = minValue;
-            minValue = maxValue;
-            maxValue = tmpMaxValue;
-        }
-
-        minInValue = Math.max(minInValue, minValue);
-        maxInValue = Math.min(maxInValue, maxValue);
+        minInValue = Math.max(minInValue, maxValue < minValue ? maxValue : minValue);
+        maxInValue = Math.min(maxInValue, maxValue < minValue ? minValue : maxValue);
 
         int numEntries = maxInValue - minInValue + 1;
         Object outLut = (bitsOutLut == 8) ? new byte[numEntries] : new short[numEntries];
@@ -191,8 +180,8 @@ public class DicomImageUtils {
         for (int i = 0; i < numEntries; i++) {
             int value = (int) Math.round((i + minInValue) * slope + intercept);
 
-            value = ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
-            value = (inverse ? (maxOutValue + minOutValue - value) : value);
+            value = (value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value);
+            value = inverse ? (maxOutValue + minOutValue - value) : value;
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
@@ -260,7 +249,7 @@ public class DicomImageUtils {
                 paddingValuesStartIndex = 0;
             }
 
-            Object inLut = null;
+            Object inLut;
             // if FALSE DataBuffer Type is supposed to be either TYPE_SHORT or TYPE_USHORT
             final boolean isDataTypeByte = modalityLookup.getDataType() == DataBuffer.TYPE_BYTE;
             if (isDataTypeByte) {
@@ -282,8 +271,6 @@ public class DicomImageUtils {
         }
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     private static void setWindowLevelLinearLutLegacy(double window, double level, int minInValue, Object outLut,
         int minOutValue, int maxOutValue, boolean inverse) {
 
@@ -297,16 +284,16 @@ public class DicomImageUtils {
             int value;
 
             if ((i + minInValue) <= lowLevel) {
-                value = (int) minOutValue;
+                value = minOutValue;
             } else if ((i + minInValue) > highLevel) {
-                value = (int) maxOutValue;
+                value = maxOutValue;
             } else {
                 value = (int) ((((i + minInValue) - (level - 0.5)) / (window - 1.0) + 0.5) * (maxOutValue - minOutValue)
                     + minOutValue);
             }
 
-            value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
-            value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);
+            value = (value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value);
+            value = inverse ? (maxOutValue + minOutValue - value) : value;
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
@@ -315,8 +302,6 @@ public class DicomImageUtils {
             }
         }
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private static void setWindowLevelLinearLut(double window, double level, int minInValue, Object outLut,
         int minOutValue, int maxOutValue, boolean inverse) {
@@ -327,8 +312,8 @@ public class DicomImageUtils {
         for (int i = 0; i < Array.getLength(outLut); i++) {
             int value = (int) ((i + minInValue) * slope + intercept);
 
-            value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
-            value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);
+            value = (value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value);
+            value = inverse ? (maxOutValue + minOutValue - value) : value;
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
@@ -338,7 +323,6 @@ public class DicomImageUtils {
         }
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private static void setWindowLevelSigmoidLut(double width, double center, int minInValue, Object outLut,
         int minOutValue, int maxOutValue, boolean inverse) {
 
@@ -349,17 +333,18 @@ public class DicomImageUtils {
         int minOutValue, int maxOutValue, boolean inverse, boolean normalize) {
 
         double nFactor = -20d; // factor defined by default in Dicom standard ( -20*2/10 = -4 )
-        double outRange = maxOutValue - minOutValue;
+        double outRange = maxOutValue - (double) minOutValue;
 
-        double minValue = 0, maxValue = 0, outRescaleRatio = 1;
+        double minValue = 0;
+        double outRescaleRatio = 1;
 
         if (normalize) {
             double lowLevel = center - width / 2d;
             double highLevel = center + width / 2d;
 
             minValue = minOutValue + outRange / (1d + Math.exp((2d * nFactor / 10d) * (lowLevel - center) / width));
-            maxValue = minOutValue + outRange / (1d + Math.exp((2d * nFactor / 10d) * (highLevel - center) / width));
-
+            double maxValue =
+                minOutValue + outRange / (1d + Math.exp((2d * nFactor / 10d) * (highLevel - center) / width));
             outRescaleRatio = (maxOutValue - minOutValue) / Math.abs(maxValue - minValue);
         }
 
@@ -382,8 +367,6 @@ public class DicomImageUtils {
         }
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     private static void setWindowLevelExponentialLut(double width, double center, int minInValue, Object outLut,
         int minOutValue, int maxOutValue, boolean inverse) {
 
@@ -394,17 +377,17 @@ public class DicomImageUtils {
         int minOutValue, int maxOutValue, boolean inverse, boolean normalize) {
 
         double nFactor = 20d;
-        double outRange = maxOutValue - minOutValue;
+        double outRange = maxOutValue - (double) minOutValue;
 
-        double minValue = 0, maxValue = 0, outRescaleRatio = 1;
+        double minValue = 0;
+        double outRescaleRatio = 1;
 
         if (normalize) {
             double lowLevel = center - width / 2d;
             double highLevel = center + width / 2d;
 
             minValue = minOutValue + outRange * Math.exp((nFactor / 10d) * (lowLevel - center) / width);
-            maxValue = minOutValue + outRange * Math.exp((nFactor / 10d) * (highLevel - center) / width);
-
+            double maxValue = minOutValue + outRange * Math.exp((nFactor / 10d) * (highLevel - center) / width);
             outRescaleRatio = (maxOutValue - minOutValue) / Math.abs(maxValue - minValue);
         }
 
@@ -428,8 +411,6 @@ public class DicomImageUtils {
 
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     private static void setWindowLevelLogarithmicLut(double width, double center, int minInValue, Object outLut,
         int minOutValue, int maxOutValue, boolean inverse) {
 
@@ -440,10 +421,9 @@ public class DicomImageUtils {
         int minOutValue, int maxOutValue, boolean inverse, boolean normalize) {
 
         double nFactor = 20d;
-        double outRange = maxOutValue - minOutValue;
+        double outRange = maxOutValue - (double) minOutValue;
 
         double minValue = 0;
-        double  maxValue = 0;
         double outRescaleRatio = 1;
 
         if (normalize) {
@@ -451,7 +431,7 @@ public class DicomImageUtils {
             double highLevel = center + width / 2d;
 
             minValue = minOutValue + outRange * Math.log((nFactor / 10d) * (1 + (lowLevel - center) / width));
-            maxValue = minOutValue + outRange * Math.log((nFactor / 10d) * (1 + (highLevel - center) / width));
+            double maxValue = minOutValue + outRange * Math.log((nFactor / 10d) * (1 + (highLevel - center) / width));
 
             outRescaleRatio = (maxOutValue - minOutValue) / Math.abs(maxValue - minValue);
         }
@@ -475,7 +455,6 @@ public class DicomImageUtils {
         }
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private static Object getLutDataArray(LookupTableJAI lookup) {
         Object lutDataArray = null;
         if (lookup != null) {
@@ -487,8 +466,6 @@ public class DicomImageUtils {
         }
         return lutDataArray;
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * @param width
@@ -513,8 +490,8 @@ public class DicomImageUtils {
         }
 
         // Use this mask to get positive value assuming inLutData value is always unsigned
-        final int lutDataValueMask = (inLutDataArray instanceof byte[] ? 0x000000FF
-            : (inLutDataArray instanceof short[] ? 0x0000FFFF : 0xFFFFFFFF));
+        final int lutDataValueMask = inLutDataArray instanceof byte[] ? 0x000000FF
+            : (inLutDataArray instanceof short[] ? 0x0000FFFF : 0xFFFFFFFF);
 
         double lowLevel = center - width / 2.0;
         double highLevel = center + width / 2.0;
@@ -555,15 +532,13 @@ public class DicomImageUtils {
             int valueUp = lutDataValueMask & Array.getInt(inLutDataArray, inValueRoundUp);
 
             // Linear Interpolation of the output value with respect to the rescaled ratio
-            value = (int) ((inValueRoundUp == inValueRoundDown) ? valueDown : //
-                Math.round(valueDown + (inValueRescaled - inValueRoundDown) * (valueUp - valueDown)
-                    / (inValueRoundUp - inValueRoundDown)));
+            value = (int) ((inValueRoundUp == inValueRoundDown) ? valueDown : Math.round(valueDown
+                + (inValueRescaled - inValueRoundDown) * (valueUp - valueDown) / (inValueRoundUp - inValueRoundDown)));
 
             value = (int) Math.round(value * outRescaleRatio);
-            // }
 
-            value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
-            value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);
+            value = (value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value);
+            value = inverse ? (maxOutValue + minOutValue - value) : value;
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
@@ -573,124 +548,38 @@ public class DicomImageUtils {
         }
     }
 
-    static void compareDataLuts(Object outLut, Object outLut2) {
+    public static boolean hasPlatformAllImageioCodecs() {
+        TransferSyntax[] syntaxes = { TransferSyntax.JPEG_LOSSY_12, TransferSyntax.JPEG_LOSSLESS_57,
+            TransferSyntax.JPEG_LOSSLESS_70, TransferSyntax.JPEGLS_LOSSLESS, TransferSyntax.JPEGLS_NEAR_LOSSLESS };
+        for (TransferSyntax tsuid : syntaxes) {
+            if (!DicomImageUtils.hasImageReader(tsuid.getTransferSyntaxUID())) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-        int countDiff = 0;
-        for (int i = 0; i < Array.getLength(outLut); i++) {
-            if (outLut instanceof byte[]) {
-                int value1 = ((Byte) Array.get(outLut, i)).intValue();
-                int value2 = ((Byte) Array.get(outLut2, i)).intValue();
-                if (value1 != value2) {
-                    countDiff++;
-                    System.out.println("value1 /value2 : " + value1 + "/" + value2); //$NON-NLS-1$ //$NON-NLS-2$
-                }
-            } else if (outLut instanceof short[]) {
-                int value1 = ((Short) Array.get(outLut, i)).intValue();
-                int value2 = ((Short) Array.get(outLut2, i)).intValue();
-                if (value1 != value2) {
-                    countDiff++;
-                    System.out.println("value1 /value2 : " + value1 + "/" + value2); //$NON-NLS-1$ //$NON-NLS-2$
+    public static boolean hasImageReader(String tsuid) {
+        ImageReaderFactory factory = ImageReaderFactory.getDefault();
+        if (factory != null) {
+            List<ImageReaderParam> list = factory.get(tsuid);
+            if (list != null) {
+                synchronized (list) {
+                    for (Iterator<ImageReaderParam> it = list.iterator(); it.hasNext();) {
+                        ImageReaderParam imageParam = it.next();
+                        String cl = imageParam.className;
+                        Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName(imageParam.formatName);
+                        while (iter.hasNext()) {
+                            ImageReader reader = iter.next();
+                            if (cl == null || reader.getClass().getName().equals(cl)) {
+                                return true;
+                            }
+                        }
+                    }
                 }
             }
         }
-        if (countDiff > 0) {
-            System.out.println("countDiff : " + countDiff); //$NON-NLS-1$
-        }
-
-    };
-
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // TODO make test class instead
-    public static void main(String[] args) {
-        short sh = -1;
-        int in = sh;
-
-        in = 65500;
-        sh = (short) in;
-
-        in = sh & 0x0000FFFF;
-
-        byte by = (byte) 200;
-        in = by;
-        in = by & 0x00FF;
-
-        in = -100;
-        by = (byte) in;
-
-        int bitsStored = 16;
-        boolean signed = true;
-        float outRangeSize = (1 << bitsStored) - 1;
-        float maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-        signed = false;
-        maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-        bitsStored = 8;
-        outRangeSize = (1 << bitsStored) - 1;
-        maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-        signed = true;
-        maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-
-        // maxOutValue = (maxOutValue << 2);
-
-        System.out.println(4095);
-
-        int castTest = (int) 2.95f;
-        castTest = (int) 2.55f;
-        castTest = (int) 9.49f;
-        castTest = (int) -7.72f;
-        castTest = (int) -2.2;
-        castTest = -5;
-
-        double db = Math.ceil(11.1);
-        db = Math.ceil(11.9);
-        db = Math.floor(12.1);
-        db = Math.floor(12.55);
-
-        System.out.println(Math.log(0));
-        System.out.println(Math.log(Math.E));
-        System.out.println(Math.log10(1));
-        System.out.println(Math.log10(10));
-        // System.out.println(Math.log1p(1));
-        // System.out.println(Math.log1p(Math.E));
-        System.out.println(Math.E);
-        System.out.println(Math.exp(-2));
-        System.out.println();
-
-        double factor = 20;
-
-        double firstVal = 1d / (1d + Math.exp(0.2d * factor * -0.5d));
-        double lastVal = 1d / (1d + Math.exp(0.2d * factor * 0.5d));
-
-        double realLast = (lastVal - firstVal) / (firstVal * lastVal);
-
-        System.out.println(firstVal);
-        System.out.println(lastVal);
-        System.out.println(firstVal * lastVal);
-        System.out.println(realLast);
-
-        System.out.println(Math.log10(10000));
-        System.out.println(Math.pow(10, 4));
-        System.out.println(Math.log(10000));
-        System.out.println(Math.exp(9.210340371976184));
-        System.out.println(Math.log1p(0));
-        System.out.println(Math.log1p(1));
-        System.out.println(Math.log1p(10));
-        System.out.println(Math.log1p(100));
-        System.out.println(Math.log1p(1000));
-        System.out.println(Math.log10(1));
-        System.out.println(Math.log10(2));
-        System.out.println(Math.log10(11));
-        System.out.println(Math.log10(101));
-        System.out.println(Math.log10(1001));
-
-        System.out.println();
-
-    }
-
-    // TODO needs to be adapted with new codecs (only works with native sun decoders)
-    public static boolean hasPlatformNativeImageioCodecs() {
-        return ImageIO.getImageReadersByFormatName("JPEG-LS").hasNext(); //$NON-NLS-1$
+        return false;
     }
 
     public static double pixel2rescale(TagReadable tagable, double pixelValue) {

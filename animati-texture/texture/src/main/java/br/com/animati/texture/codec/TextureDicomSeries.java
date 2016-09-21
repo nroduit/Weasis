@@ -51,8 +51,6 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
 
     private TagW tagID;
     private Map<TagW, Object> tags;
-    private Comparator<TagW> comparator;
-
     /** Original series. */
     private MediaSeries<E> series;
     /** Information about the build process of the series`s texture. */
@@ -95,7 +93,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         this.series = series;
         textureLogInfo = new TextureLogInfo();
 
-        tags = new HashMap<TagW, Object>();
+        tags = new HashMap<>();
         tagID = series.getTagID();
         tags.put(tagID, series.getTagValue(tagID));
 
@@ -192,13 +190,14 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     }
 
     @Override
-    public void setComparator(Comparator<TagW> comparator) {
-        this.comparator = comparator;
-    }
-
-    @Override
-    public Comparator<TagW> getComparator() {
-        return comparator;
+    public boolean matchIdValue(Object valueID) {
+        Object v = tags.get(tagID);
+        if (v == valueID)
+            return true;
+        if (v == null) {
+            return false;
+        }
+        return v.equals(valueID);
     }
 
     @Override
@@ -217,7 +216,7 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
      */
     protected void addZSpacingOccurence(double space) {
         if (zSpacings == null) {
-            zSpacings = new HashMap<String, Integer>();
+            zSpacings = new HashMap<>();
         }
         String sp = DF3.format(space);
         Integer number = zSpacings.get(sp);
@@ -331,8 +330,9 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         // TODO VoiLut !!
 
         // AutoLevel
-        PresetWindowLevel autoLevel = new PresetWindowLevel(PresetWindowLevel.fullDynamicExplanation,
-            getFullDynamicWidth(pixelPadding), getFullDynamicCenter(pixelPadding), defaultLutShape);
+        PresetWindowLevel autoLevel =
+            new PresetWindowLevel(org.weasis.dicom.codec.Messages.getString("PresetWindowLevel.full"),
+                getFullDynamicWidth(pixelPadding), getFullDynamicCenter(pixelPadding), defaultLutShape);
         presetList.add(autoLevel);
 
         // Arbitrary Presets by Modality

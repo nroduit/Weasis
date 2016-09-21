@@ -16,7 +16,7 @@ import org.dcm4che3.data.Tag;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.AudioVideoElement;
 
-public class DicomVideoElement extends AudioVideoElement  implements FileExtractor {
+public class DicomVideoElement extends AudioVideoElement implements FileExtractor {
 
     public static final String MPEG_MIMETYPE = "video/mpeg"; //$NON-NLS-1$
 

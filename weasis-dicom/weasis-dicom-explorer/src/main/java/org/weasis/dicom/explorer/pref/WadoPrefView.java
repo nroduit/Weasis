@@ -15,8 +15,6 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -39,19 +37,15 @@ import org.weasis.dicom.explorer.wado.DicomManager;
 
 public class WadoPrefView extends AbstractItemDialogPage {
 
-    private final ItemListener changeViewListener = new ItemListener() {
-
-        @Override
-        public void itemStateChanged(final ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                selectTSUID((TransferSyntax) comboBox.getSelectedItem());
-            }
-        }
-    };
     private final JPanel panel = new JPanel();
-    private JComboBox comboBox;
+    private JComboBox<TransferSyntax> comboBox;
     private final JSpinner spinnerScroll = new JSpinner();
     private JLabel lblCompression;
+    private final ItemListener changeViewListener = e -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            selectTSUID((TransferSyntax) comboBox.getSelectedItem());
+        }
+    };
 
     public WadoPrefView() {
         super("WADO"); //$NON-NLS-1$
@@ -64,50 +58,50 @@ public class WadoPrefView extends AbstractItemDialogPage {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         lblCompression = new JLabel("Compression" + StringUtil.COLON); //$NON-NLS-1$
         add(panel);
-        GridBagLayout gbl_panel = new GridBagLayout();
-        gbl_panel.columnWidths = new int[] { 0, 0, 0, 0 };
-        gbl_panel.rowHeights = new int[] { 0, 0, 0, 0 };
-        gbl_panel.columnWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
-        gbl_panel.rowWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
-        panel.setLayout(gbl_panel);
+        GridBagLayout gblpanel = new GridBagLayout();
+        gblpanel.columnWidths = new int[] { 0, 0, 0, 0 };
+        gblpanel.rowHeights = new int[] { 0, 0, 0, 0 };
+        gblpanel.columnWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
+        gblpanel.rowWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
+        panel.setLayout(gblpanel);
         panel.setBorder(new TitledBorder(null, "Compression", TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
 
         final JLabel lblTranscodingTo = new JLabel("Transcoding to" + StringUtil.COLON); //$NON-NLS-1$
-        GridBagConstraints gbc_lblTranscodingTo = new GridBagConstraints();
-        gbc_lblTranscodingTo.insets = new Insets(0, 0, 5, 5);
-        gbc_lblTranscodingTo.anchor = GridBagConstraints.WEST;
-        gbc_lblTranscodingTo.gridx = 0;
-        gbc_lblTranscodingTo.gridy = 0;
-        panel.add(lblTranscodingTo, gbc_lblTranscodingTo);
+        GridBagConstraints gbclblTranscodingTo = new GridBagConstraints();
+        gbclblTranscodingTo.insets = new Insets(0, 0, 5, 5);
+        gbclblTranscodingTo.anchor = GridBagConstraints.WEST;
+        gbclblTranscodingTo.gridx = 0;
+        gbclblTranscodingTo.gridy = 0;
+        panel.add(lblTranscodingTo, gbclblTranscodingTo);
 
         comboBox = new JComboBox(TransferSyntax.values());
         comboBox.addItemListener(changeViewListener);
-        GridBagConstraints gbc_comboBox = new GridBagConstraints();
-        gbc_comboBox.anchor = GridBagConstraints.WEST;
-        gbc_comboBox.insets = new Insets(0, 2, 5, 5);
-        gbc_comboBox.gridx = 1;
-        gbc_comboBox.gridy = 0;
-        panel.add(comboBox, gbc_comboBox);
+        GridBagConstraints gbcComboBox = new GridBagConstraints();
+        gbcComboBox.anchor = GridBagConstraints.WEST;
+        gbcComboBox.insets = new Insets(0, 2, 5, 5);
+        gbcComboBox.gridx = 1;
+        gbcComboBox.gridy = 0;
+        panel.add(comboBox, gbcComboBox);
 
-        GridBagConstraints gbc_lblstrut = new GridBagConstraints();
-        gbc_lblstrut.insets = new Insets(0, 0, 5, 0);
-        gbc_lblstrut.anchor = GridBagConstraints.WEST;
-        gbc_lblstrut.fill = GridBagConstraints.HORIZONTAL;
-        gbc_lblstrut.weightx = 1.0;
-        gbc_lblstrut.gridx = 2;
-        gbc_lblstrut.gridy = 0;
-        panel.add(Box.createHorizontalStrut(2), gbc_lblstrut);
+        GridBagConstraints gbcLblstrut = new GridBagConstraints();
+        gbcLblstrut.insets = new Insets(0, 0, 5, 0);
+        gbcLblstrut.anchor = GridBagConstraints.WEST;
+        gbcLblstrut.fill = GridBagConstraints.HORIZONTAL;
+        gbcLblstrut.weightx = 1.0;
+        gbcLblstrut.gridx = 2;
+        gbcLblstrut.gridy = 0;
+        panel.add(Box.createHorizontalStrut(2), gbcLblstrut);
 
         JTextArea txtpnNoteWhenThe = new JTextArea(
             "Note: When the WADO server cannot apply the Transfer Syntax, it should return an uncompressed image (1.2.840.10008.1.2.1) or it triggers an error."); //$NON-NLS-1$
 
-        GridBagConstraints gbc_txtpnNoteWhenThe = new GridBagConstraints();
-        gbc_txtpnNoteWhenThe.weighty = 1.0;
-        gbc_txtpnNoteWhenThe.fill = GridBagConstraints.BOTH;
-        gbc_txtpnNoteWhenThe.anchor = GridBagConstraints.NORTHWEST;
-        gbc_txtpnNoteWhenThe.gridwidth = 3;
-        gbc_txtpnNoteWhenThe.gridx = 0;
-        gbc_txtpnNoteWhenThe.gridy = 2;
+        GridBagConstraints gbctxtpnNoteWhenThe = new GridBagConstraints();
+        gbctxtpnNoteWhenThe.weighty = 1.0;
+        gbctxtpnNoteWhenThe.fill = GridBagConstraints.BOTH;
+        gbctxtpnNoteWhenThe.anchor = GridBagConstraints.NORTHWEST;
+        gbctxtpnNoteWhenThe.gridwidth = 3;
+        gbctxtpnNoteWhenThe.gridx = 0;
+        gbctxtpnNoteWhenThe.gridy = 2;
         txtpnNoteWhenThe.setPreferredSize(new Dimension(250, 25));
         txtpnNoteWhenThe.setEditable(false);
         txtpnNoteWhenThe.setBorder(new EmptyBorder(2, 2, 2, 2));
@@ -116,43 +110,38 @@ public class WadoPrefView extends AbstractItemDialogPage {
         txtpnNoteWhenThe.setWrapStyleWord(true);
         txtpnNoteWhenThe.setBackground(lblTranscodingTo.getBackground());
         txtpnNoteWhenThe.setForeground(lblTranscodingTo.getForeground());
-        panel.add(txtpnNoteWhenThe, gbc_txtpnNoteWhenThe);
+        panel.add(txtpnNoteWhenThe, gbctxtpnNoteWhenThe);
 
         comboBox.setSelectedItem(DicomManager.getInstance().getWadoTSUID());
 
-        JPanel panel_2 = new JPanel();
-        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
-        flowLayout_1.setHgap(10);
-        flowLayout_1.setAlignment(FlowLayout.RIGHT);
-        flowLayout_1.setVgap(7);
-        add(panel_2);
+        JPanel panel2 = new JPanel();
+        FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
+        flowLayout1.setHgap(10);
+        flowLayout1.setAlignment(FlowLayout.RIGHT);
+        flowLayout1.setVgap(7);
+        add(panel2);
 
         JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
-        panel_2.add(btnNewButton);
-        btnNewButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetoDefaultValues();
-            }
-        });
+        panel2.add(btnNewButton);
+        btnNewButton.addActionListener(e -> resetoDefaultValues());
     }
 
     private void selectTSUID(TransferSyntax tsuid) {
         if (tsuid != null && tsuid.getCompression() != null) {
-            GridBagConstraints gbc_lblCompression = new GridBagConstraints();
-            gbc_lblCompression.anchor = GridBagConstraints.EAST;
-            gbc_lblCompression.insets = new Insets(0, 0, 5, 5);
-            gbc_lblCompression.gridx = 0;
-            gbc_lblCompression.gridy = 1;
-            panel.add(lblCompression, gbc_lblCompression);
+            GridBagConstraints gbcLblCompression = new GridBagConstraints();
+            gbcLblCompression.anchor = GridBagConstraints.EAST;
+            gbcLblCompression.insets = new Insets(0, 0, 5, 5);
+            gbcLblCompression.gridx = 0;
+            gbcLblCompression.gridy = 1;
+            panel.add(lblCompression, gbcLblCompression);
 
             spinnerScroll.setModel(new SpinnerNumberModel((int) tsuid.getCompression(), 0, 100, 1));
-            GridBagConstraints gbc_spinner_1 = new GridBagConstraints();
-            gbc_spinner_1.anchor = GridBagConstraints.WEST;
-            gbc_spinner_1.insets = new Insets(0, 2, 5, 5);
-            gbc_spinner_1.gridx = 1;
-            gbc_spinner_1.gridy = 1;
-            panel.add(spinnerScroll, gbc_spinner_1);
+            GridBagConstraints gbcSpinner1 = new GridBagConstraints();
+            gbcSpinner1.anchor = GridBagConstraints.WEST;
+            gbcSpinner1.insets = new Insets(0, 2, 5, 5);
+            gbcSpinner1.gridx = 1;
+            gbcSpinner1.gridy = 1;
+            panel.add(spinnerScroll, gbcSpinner1);
         } else {
             panel.remove(lblCompression);
             panel.remove(spinnerScroll);

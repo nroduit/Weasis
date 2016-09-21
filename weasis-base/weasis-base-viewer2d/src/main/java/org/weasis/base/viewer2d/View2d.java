@@ -152,7 +152,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     protected void initActionWState() {
         super.initActionWState();
         actionsInView.put(ActionW.ZOOM.cmd(), -1.0);
-        actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.PIXEL_SIZE);
+        actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.PIXEL_SIZE);
     }
 
     @Override
@@ -161,10 +161,6 @@ public class View2d extends DefaultView2d<ImageElement> {
         if (series == null) {
             return;
         }
-        // if (evt.getPropertyName().equals(ActionW.INVERSESTACK.cmd())) {
-        // actionsInView.put(ActionW.INVERSESTACK.cmd(), evt.getNewValue());
-        // sortStack();
-        // }
     }
 
     @Override
@@ -485,7 +481,6 @@ public class View2d extends DefaultView2d<ImageElement> {
 
             JMVUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom")); //$NON-NLS-1$
             JMVUtils.addItemToMenu(popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation")); //$NON-NLS-1$
-            // JMVUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
 
             if (count < popupMenu.getComponentCount()) {
                 popupMenu.add(new JSeparator());
@@ -549,7 +544,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                || support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 return true;
             }
             return false;
@@ -575,11 +570,11 @@ public class View2d extends DefaultView2d<ImageElement> {
             }
             // When dragging a file or group of files
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-            else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+            else if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 try {
                     // Files with spaces in the filename trigger an error
                     // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-                    String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
+                    String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
                     LOGGER.error("Get dragable URIs", e);
@@ -600,13 +595,11 @@ public class View2d extends DefaultView2d<ImageElement> {
                     TreeModel treeModel = (TreeModel) model;
 
                     MediaSeriesGroup p1 = treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
-                    MediaSeriesGroup p2 = null;
                     ViewerPlugin openPlugin = null;
                     if (p1 != null) {
                         if (selPlugin instanceof View2dContainer
                             && ((View2dContainer) selPlugin).isContainingView(View2d.this)
                             && p1.equals(selPlugin.getGroupID())) {
-                            p2 = p1;
                         } else {
                             synchronized (UIManager.VIEWER_PLUGINS) {
                                 plugin: for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
@@ -641,7 +634,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                 return false;
             }
 
-            if (selPlugin != null && SynchData.Mode.Tile.equals(selPlugin.getSynchView().getSynchData().getMode())) {
+            if (selPlugin != null && SynchData.Mode.TILE.equals(selPlugin.getSynchView().getSynchData().getMode())) {
                 selPlugin.addSeries(seq);
                 return true;
             }

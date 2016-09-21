@@ -25,7 +25,8 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
@@ -57,6 +59,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
@@ -66,8 +69,6 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
-import org.weasis.base.ui.action.ExitAction;
-import org.weasis.base.ui.action.OpenPreferencesAction;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -98,6 +99,8 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
@@ -166,6 +169,7 @@ public class WeasisWin {
 
         @Override
         public void focusLost(CDockable dockable) {
+            // Do nothing
         }
     };
 
@@ -267,7 +271,7 @@ public class WeasisWin {
     }
 
     public void destroyOnClose(final CControl control) {
-        runOnClose(() -> control.destroy());
+        runOnClose(control::destroy);
     }
 
     public void createMainPanel() throws Exception {
@@ -297,7 +301,7 @@ public class WeasisWin {
             Color inactiveColor = DockUI.getColor(LookAndFeelColors.TITLE_BACKGROUND).darker();
             Color inactiveColorGradient = DockUI.getColor(LookAndFeelColors.PANEL_BACKGROUND);
             Color activeColor = selection.darker();
-            Color ActiveTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground"); //$NON-NLS-1$
+            Color activeTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground"); //$NON-NLS-1$
 
             colors.put(Priority.CLIENT, "stack.tab.border.selected", inactiveColorGradient); //$NON-NLS-1$
             colors.put(Priority.CLIENT, "stack.tab.border.selected.focused", selection); //$NON-NLS-1$
@@ -312,11 +316,11 @@ public class WeasisWin {
             colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focuslost", inactiveColor); //$NON-NLS-1$
 
             colors.put(Priority.CLIENT, "stack.tab.text.selected", RexSystemColor.getInactiveTextColor()); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", ActiveTextColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", activeTextColor); //$NON-NLS-1$
             colors.put(Priority.CLIENT, "stack.tab.text.selected.focuslost", RexSystemColor.getInactiveTextColor()); //$NON-NLS-1$
 
             colors.put(Priority.CLIENT, "title.flap.active", selection); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "title.flap.active.text", ActiveTextColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "title.flap.active.text", activeTextColor); //$NON-NLS-1$
             colors.put(Priority.CLIENT, "title.flap.active.knob.highlight", Colors.brighter(selection)); //$NON-NLS-1$
             colors.put(Priority.CLIENT, "title.flap.active.knob.shadow", Colors.darker(selection)); //$NON-NLS-1$
         }
@@ -339,8 +343,7 @@ public class WeasisWin {
         if (series != null && treeModel != null && entry != null) {
             for (MediaSeries<?> s : series) {
                 MediaSeriesGroup entry1 = treeModel.getParent(s, entry);
-                List<MediaSeries<?>> seriesList =
-                    Optional.ofNullable(map.get(entry1)).orElse(new ArrayList<>());
+                List<MediaSeries<?>> seriesList = Optional.ofNullable(map.get(entry1)).orElse(new ArrayList<>());
                 seriesList.add(s);
                 map.put(entry1, seriesList);
             }
@@ -372,7 +375,7 @@ public class WeasisWin {
                     }
                     if (p instanceof ImageViewerPlugin && p.getName().equals(factory.getUIName())
                         && group.equals(p.getGroupID())) {
-                        ImageViewerPlugin viewer = ((ImageViewerPlugin) p);
+                        ImageViewerPlugin viewer = (ImageViewerPlugin) p;
                         if (setInSelection && seriesList.size() == 1) {
                             viewer.addSeries(seriesList.get(0));
                         } else {
@@ -419,7 +422,7 @@ public class WeasisWin {
                     // });
                 }
             }
-            if (group == null && model instanceof TreeModel && seriesList.size() > 0
+            if (group == null && model instanceof TreeModel && !seriesList.isEmpty()
                 && model.getTreeModelNodeForNewPlugin() != null) {
                 TreeModel treeModel = (TreeModel) model;
                 MediaSeries s = seriesList.get(0);
@@ -506,7 +509,7 @@ public class WeasisWin {
         }
     }
 
-    private boolean registerDetachWindow(final ViewerPlugin plugin, Rectangle screenBound) {
+    private static boolean registerDetachWindow(final ViewerPlugin plugin, Rectangle screenBound) {
         if (plugin != null && screenBound != null) {
             ViewerPlugin oldWin = null;
 
@@ -621,7 +624,7 @@ public class WeasisWin {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Toolkit kit = Toolkit.getDefaultToolkit();
 
-        Rectangle bound = null;
+        Rectangle bound;
 
         GraphicsConfiguration config = ge.getDefaultScreenDevice().getDefaultConfiguration();
         Rectangle b;
@@ -665,14 +668,11 @@ public class WeasisWin {
         final String helpURL = System.getProperty("weasis.help.url"); //$NON-NLS-1$
         if (helpURL != null) {
             final JMenuItem helpContentMenuItem = new JMenuItem(Messages.getString("WeasisWin.guide")); //$NON-NLS-1$
-            helpContentMenuItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        JMVUtils.openInDefaultBrowser(helpContentMenuItem, new URL(helpURL));
-                    } catch (MalformedURLException e1) {
-                        e1.printStackTrace();
-                    }
+            helpContentMenuItem.addActionListener(e -> {
+                try {
+                    JMVUtils.openInDefaultBrowser(helpContentMenuItem, new URL(helpURL));
+                } catch (MalformedURLException e1) {
+                    LOGGER.error("Open URL in default browser", e);
                 }
             });
             helpMenuItem.add(helpContentMenuItem);
@@ -684,7 +684,7 @@ public class WeasisWin {
                 URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")); //$NON-NLS-1$
                 JMVUtils.openInDefaultBrowser(webMenuItem, url);
             } catch (MalformedURLException e1) {
-                e1.printStackTrace();
+                LOGGER.error("Open URL in default browser", e);
             }
         });
         helpMenuItem.add(webMenuItem);
@@ -695,7 +695,7 @@ public class WeasisWin {
                 URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")); //$NON-NLS-1$
                 JMVUtils.openInDefaultBrowser(websiteMenuItem, url);
             } catch (MalformedURLException e1) {
-                e1.printStackTrace();
+                LOGGER.error("Open URL in default browser", e);
             }
         });
         helpMenuItem.add(websiteMenuItem);
@@ -716,14 +716,10 @@ public class WeasisWin {
         for (final Toolbar bar : bars) {
             if (!Insertable.Type.EMPTY.equals(bar.getType())) {
                 JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
-                item.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (e.getSource() instanceof JCheckBoxMenuItem) {
-                            toolbarContainer.displayToolbar(bar.getComponent(),
-                                ((JCheckBoxMenuItem) e.getSource()).isSelected());
-                        }
+                item.addActionListener(e -> {
+                    if (e.getSource() instanceof JCheckBoxMenuItem) {
+                        toolbarContainer.displayToolbar(bar.getComponent(),
+                            ((JCheckBoxMenuItem) e.getSource()).isSelected());
                     }
                 });
                 toolBarMenu.add(item);
@@ -924,10 +920,23 @@ public class WeasisWin {
         };
         printMenu.addPopupMenuListener();
         menuFile.add(printMenu);
+
         menuFile.add(new JSeparator());
-        menuFile.add(new JMenuItem(OpenPreferencesAction.getInstance()));
+        Consumer<ActionEvent> prefAction = e -> {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WeasisWin.getInstance().getRootPaneContainer());
+            PreferenceDialog dialog = new PreferenceDialog(WeasisWin.getInstance().getFrame());
+            ColorLayerUI.showCenterScreen(dialog, layer);
+        };
+        DefaultAction preferencesAction =
+            new DefaultAction(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title"), //$NON-NLS-1$
+                prefAction);
+        preferencesAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_MASK));
+        menuFile.add(new JMenuItem(preferencesAction));
+
         menuFile.add(new JSeparator());
-        menuFile.add(new JMenuItem(ExitAction.getInstance()));
+        DefaultAction exitAction = new DefaultAction(Messages.getString("ExitAction.title"), //$NON-NLS-1$
+            e -> WeasisWin.getInstance().closeWindow());
+        menuFile.add(new JMenuItem(exitAction));
     }
 
     private class SequenceHandler extends TransferHandler {
@@ -948,7 +957,7 @@ public class WeasisWin {
             }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                || support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 return true;
             }
             return false;
@@ -974,11 +983,11 @@ public class WeasisWin {
             }
             // When dragging a file or group of files
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-            else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+            else if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 try {
                     // Files with spaces in the filename trigger an error
                     // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-                    String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
+                    String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
                     LOGGER.error("Get dragable URIs", e);

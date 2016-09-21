@@ -103,7 +103,7 @@ public class LoadDicomObjects extends ExplorerTask {
         }
 
         for (final SeriesThumbnail t : thumbs) {
-             MediaSeries<MediaElement> series = t.getSeries();
+            MediaSeries<MediaElement> series = t.getSeries();
             // Avoid to rebuild most of CR series thumbnail
             if (series != null && series.size(null) > 2) {
                 GuiExecutor.instance().execute(t::reBuildThumbnail);
@@ -145,9 +145,9 @@ public class LoadDicomObjects extends ExplorerTask {
                     for (MediaElement media : medias) {
                         dicomModel.applySplittingRules(dicomSeries, media);
                     }
-                }
-                if (medias.length > 0) {
-                    dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
+                    if (medias.length > 0) {
+                        dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
+                    }
                 }
 
                 // Load image and create thumbnail in this Thread

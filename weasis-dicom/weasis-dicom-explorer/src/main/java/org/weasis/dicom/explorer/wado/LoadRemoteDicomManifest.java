@@ -15,8 +15,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.service.BundleTools;
@@ -73,7 +73,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
                     if (uri == null) {
                         uri = new URL(xmlFiles[i]).toURI();
                     }
-                    ArrayList<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
+                    List<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
 
                     if (wadoTasks != null) {
                         boolean downloadImmediately = BundleTools.SYSTEM_PREFERENCES

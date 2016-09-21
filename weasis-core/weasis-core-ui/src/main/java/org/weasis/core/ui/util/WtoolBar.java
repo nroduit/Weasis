@@ -26,8 +26,11 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
+@SuppressWarnings("serial")
 public class WtoolBar extends JPanel implements Toolbar {
 
+    public static final Dimension SEPARATOR_2x24 = new Dimension(2, 24);
+    
     private final String barName;
 
     private int barPosition = 100;
@@ -138,7 +141,7 @@ public class WtoolBar extends JPanel implements Toolbar {
      */
     public static void installButtonUI(AbstractButton button) {
         button.setMargin(new Insets(2, 2, 2, 2));
-        button.setUI(new VLButtonUI());
+        button.setUI(new RolloverButtonUI());
         button.setBorder(new ToolBarButtonBorder());
     }
 

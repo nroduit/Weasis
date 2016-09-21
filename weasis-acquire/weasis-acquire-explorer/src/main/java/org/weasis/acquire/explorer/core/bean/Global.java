@@ -51,6 +51,6 @@ public class Global extends AbstractTagable {
     @Override
     public String toString() {
         TagW name = TagD.get(Tag.PatientName);
-        return TagW.getFormattedText(getTagValue(name), null);
+        return name.getFormattedTagValue(getTagValue(name), null);
     }
 }

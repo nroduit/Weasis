@@ -11,6 +11,7 @@
 package org.weasis.core.ui.editor.image;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -19,15 +20,15 @@ import org.weasis.core.api.util.Copyable;
 public class SynchData implements Copyable<SynchData> {
 
     public enum Mode {
-        None, Stack, Tile
+        NONE, STACK, TILE
     }
 
-    protected final HashMap<String, Boolean> actions;
+    protected final Map<String, Boolean> actions;
     protected final Mode mode;
 
     private boolean original;
 
-    public SynchData(Mode mode, HashMap<String, Boolean> actions) {
+    public SynchData(Mode mode, Map<String, Boolean> actions) {
         if (actions == null) {
             throw new IllegalArgumentException("A parameter is null!"); //$NON-NLS-1$
         }
@@ -43,7 +44,7 @@ public class SynchData implements Copyable<SynchData> {
         this.original = synchData.original;
     }
 
-    public HashMap<String, Boolean> getActions() {
+    public Map<String, Boolean> getActions() {
         return actions;
     }
 

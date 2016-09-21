@@ -185,9 +185,10 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
             if (!ptD.equals(ptA) && !ptD.equals(ptB)) {
                 // Check D is outside of AB segment
-                if (Math.signum(GeomUtil.getAngleDeg(ptD, ptA)) == Math.signum(GeomUtil.getAngleDeg(ptD, ptB))) {
-                    Point2D E = ptD.distance(ptA) < ptD.distance(ptB) ? ptA : ptB;
-                    aShape.addShape(new Line2D.Double(ptD, E), getDashStroke(1.0f), true);
+                if (MathUtil.isEqual(Math.signum(GeomUtil.getAngleDeg(ptD, ptA)),
+                    Math.signum(GeomUtil.getAngleDeg(ptD, ptB)))) {
+                    Point2D ptE = ptD.distance(ptA) < ptD.distance(ptB) ? ptA : ptB;
+                    aShape.addShape(new Line2D.Double(ptD, ptE), getDashStroke(1.0f), true);
                 }
             }
 
@@ -249,8 +250,8 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
         ptC = getHandlePoint(2);
         ptD = getHandlePoint(3);
 
-        lineABvalid = (ptA != null && ptB != null && !ptB.equals(ptA));
-        lineCDvalid = (ptC != null && ptD != null && !ptC.equals(ptD));
+        lineABvalid = ptA != null && ptB != null && !ptB.equals(ptA);
+        lineCDvalid = ptC != null && ptD != null && !ptC.equals(ptD);
     }
 
     @Override

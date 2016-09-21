@@ -159,7 +159,16 @@ public final class FileUtil {
                 }
             }
         }
-        return fileOrDirectory.delete();
+        try {
+            if (!fileOrDirectory.delete()) {
+                LOGGER.warn("Cannot delete {}", fileOrDirectory.getPath()); //$NON-NLS-1$
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Cannot delete", e); //$NON-NLS-1$
+            return false;
+        }
+        return true;
     }
 
     public static void recursiveDelete(File rootDir) {

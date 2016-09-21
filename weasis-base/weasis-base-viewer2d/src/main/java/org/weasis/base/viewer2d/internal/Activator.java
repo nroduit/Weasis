@@ -60,8 +60,10 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
-        // Save preferences
-        EventManager.getInstance().savePreferences(bundleContext);
+        // Save preferences only if EventManager has been initialized
+        if (!BundlePreferences.isNullStaticFieldValue(EventManager.class, "instance")) {
+            EventManager.getInstance().savePreferences(bundleContext);
+        }
         UIManager.closeSeriesViewerType(View2dContainer.class);
     }
 

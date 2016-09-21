@@ -32,6 +32,7 @@ public class ToolBarButtonBorder implements Border {
     private Insets insets = new Insets(2, 2, 2, 2);
 
     public ToolBarButtonBorder() {
+        super();
     }
 
     @Override

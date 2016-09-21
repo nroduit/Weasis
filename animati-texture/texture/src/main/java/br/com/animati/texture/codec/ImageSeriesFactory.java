@@ -41,6 +41,7 @@ import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.ImageSeriesSliceAddedListener;
@@ -82,7 +83,7 @@ public class ImageSeriesFactory {
     public static final String TEXTURE_ERROR = "texture.error";
 
     private static final SoftHashMap<MediaSeries, TextureDicomSeries> texCache =
-        new SoftHashMap<MediaSeries, TextureDicomSeries>();
+        new SoftHashMap<>();
     private static final ImageSeriesSliceAddedListener addSliceListener = new ImageSeriesSliceAddedListener() {
 
         @Override
@@ -532,7 +533,7 @@ public class ImageSeriesFactory {
                     }
                 } else {
                     max = value;
-                    keysWithSameOccurrence = new ArrayList<Integer>();
+                    keysWithSameOccurrence = new ArrayList<>();
                     keysWithSameOccurrence.add(key);
                 }
             }
@@ -543,7 +544,7 @@ public class ImageSeriesFactory {
     private static double[] getHigherOccurrenceOfValues(ArrayList<double[]> listValues, int size) {
         double[] higherOccurrenceValues = new double[size];
         for (int i = 0; i < size; i++) {
-            HashMap<Integer, Integer> mapOfOccurrence = new HashMap<Integer, Integer>();
+            HashMap<Integer, Integer> mapOfOccurrence = new HashMap<>();
             for (double[] values : listValues) {
                 int value = (int) values[i];
                 if (mapOfOccurrence.containsKey(value)) {
@@ -640,12 +641,12 @@ public class ImageSeriesFactory {
     // See ImageOrientation.hasSameOrientation
     private static boolean isSameOrientation(double[] v1, double[] v2) {
         if (v1 != null && v1.length == 6 && v2 != null && v2.length == 6) {
-            String label1 = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v1[0], v1[1], v1[2],
+            Label label1 = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v1[0], v1[1], v1[2],
                 v1[3], v1[4], v1[5]);
-            String label2 = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1], v2[2],
+            Label label2 = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1], v2[2],
                 v2[3], v2[4], v2[5]);
 
-            if (label1 != null && !label1.equals(ImageOrientation.LABELS[4])) {
+            if (label1 != null && !label1.equals(ImageOrientation.Label.OBLIQUE)) {
                 return label1.equals(label2);
             }
             // If oblique search if the plan has approximately the same orientation
@@ -743,8 +744,8 @@ public class ImageSeriesFactory {
 
         double[] tagWidth = TagD.getTagValue(seriesToLoad, Tag.WindowWidth, double[].class);
         double[] tagCenter = TagD.getTagValue(seriesToLoad, Tag.WindowCenter, double[].class);
-        ArrayList<double[]> listWidth = new ArrayList<double[]>();
-        ArrayList<double[]> listCenter = new ArrayList<double[]>();
+        ArrayList<double[]> listWidth = new ArrayList<>();
+        ArrayList<double[]> listCenter = new ArrayList<>();
         if (tagWidth != null && tagCenter != null) {
             listWidth.add(tagWidth);
             listCenter.add(tagCenter);
@@ -816,8 +817,8 @@ public class ImageSeriesFactory {
 
         @Override
         protected Void doInBackground() throws Exception {
-            ArrayList<double[]> windowValues = new ArrayList<double[]>();
-            ArrayList<double[]> levelValues = new ArrayList<double[]>();
+            ArrayList<double[]> windowValues = new ArrayList<>();
+            ArrayList<double[]> levelValues = new ArrayList<>();
 
             String lastInfo = "";
 

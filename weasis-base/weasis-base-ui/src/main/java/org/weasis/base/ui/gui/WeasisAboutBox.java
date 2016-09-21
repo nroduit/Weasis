@@ -70,21 +70,17 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
     public WeasisAboutBox() {
         super(WeasisWin.getInstance().getFrame(),
             String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true); //$NON-NLS-1$
-        try {
-            sysTable = new JTable(new SimpleTableModel(
-                new String[] { Messages.getString("WeasisAboutBox.prop"), //$NON-NLS-1$
-                    Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$
-                createSysInfo()));
-            sysTable.getColumnModel().setColumnMargin(5);
-            JMVUtils.formatTableHeaders(sysTable, SwingConstants.CENTER);
-            jbInit();
-            pack();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        sysTable = new JTable(new SimpleTableModel(
+            new String[] { Messages.getString("WeasisAboutBox.prop"), //$NON-NLS-1$
+                Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$
+            createSysInfo()));
+        sysTable.getColumnModel().setColumnMargin(5);
+        JMVUtils.formatTableHeaders(sysTable, SwingConstants.CENTER);
+        init();
+        pack();
     }
 
-    private void jbInit() throws Exception {
+    private void init() {
         this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         this.setModal(true);
         jpanelRoot.setLayout(borderLayout1);
@@ -171,22 +167,16 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
         }
     }
 
-    private Object[][] createSysInfo() {
-        Properties sysProps = null;
-        try {
-            sysProps = System.getProperties();
-        } catch (RuntimeException e) {
+    private static Object[][] createSysInfo() {
+        Properties sysProps = System.getProperties();
+        Object[][] dataArray = new String[sysProps.size()][2];
+        Enumeration<?> enumer = sysProps.propertyNames();
+        for (int i = 0; i < dataArray.length; i++) {
+            dataArray[i][0] = enumer.nextElement();
+            dataArray[i][1] = sysProps.getProperty(dataArray[i][0].toString());
         }
-        if (sysProps != null) {
-            String[][] dataArray = new String[sysProps.size()][2];
-            Enumeration enumer = sysProps.propertyNames();
-            for (int i = 0; i < dataArray.length; i++) {
-                dataArray[i][0] = enumer.nextElement().toString();
-                dataArray[i][1] = sysProps.getProperty(dataArray[i][0]);
-            }
-            return dataArray;
-        }
-        return null;
+        return dataArray;
+
     }
 
 }

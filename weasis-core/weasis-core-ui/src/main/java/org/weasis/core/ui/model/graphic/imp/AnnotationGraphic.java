@@ -103,14 +103,11 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     protected void setHandlePointList(Point2D.Double ptAnchor, Point2D.Double ptBox) {
-        if (ptBox == null && ptAnchor != null) {
-            ptBox = ptAnchor;
-        }
-        if (ptBox != null && ptBox.equals(ptAnchor)) {
-            ptAnchor = null;
-        }
-        setHandlePoint(0, ptAnchor == null ? null : (Point2D.Double) ptAnchor.clone());
-        setHandlePoint(1, ptBox == null ? null : (Point2D.Double) ptBox.clone());
+        Point2D.Double pt2 = (ptBox == null && ptAnchor != null) ? ptAnchor : ptBox;
+        Point2D.Double pt1 = (pt2 != null && pt2.equals(ptAnchor)) ? null : ptAnchor;
+
+        setHandlePoint(0, pt1 == null ? null : (Point2D.Double) pt1.clone());
+        setHandlePoint(1, pt2 == null ? null : (Point2D.Double) pt2.clone());
         buildShape(null);
     }
 
@@ -199,7 +196,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
             labelBounds = new Rectangle.Double();
             labelBounds.setFrameFromCenter(ptBox.getX(), ptBox.getY(),
                 ptBox.getX() + labelWidth / 2 + DefaultGraphicLabel.GROWING_BOUND,
-                ptBox.getY() + labelHeight * labels.length / 2 + DefaultGraphicLabel.GROWING_BOUND);
+                ptBox.getY() + labelHeight * (labels == null ? 1 : labels.length / 2) + DefaultGraphicLabel.GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, DefaultGraphicLabel.GROWING_BOUND);
             if (line != null) {
                 newShape.addLinkSegmentToInvariantShape(line, ptBox, labelBounds, getDashStroke(lineThickness), false);

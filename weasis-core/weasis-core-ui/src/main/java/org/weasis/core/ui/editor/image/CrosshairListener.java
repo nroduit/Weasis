@@ -101,7 +101,7 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         return basicState.getActionW().getTitle();
     }
 
-    private ViewCanvas<?> getIViewCanvas(InputEvent e) {
+    private static ViewCanvas<?> getViewCanvas(InputEvent e) {
         Object source = e.getSource();
         if (source instanceof ViewCanvas) {
             return (ViewCanvas<?>) source;
@@ -114,7 +114,7 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if (basicState.isActionEnabled()) {
             int buttonMask = getButtonMaskEx();
             if ((e.getModifiersEx() & buttonMask) != 0) {
-                ViewCanvas<?> panner = getIViewCanvas(e);
+                ViewCanvas<?> panner = getViewCanvas(e);
                 if (Objects.nonNull(panner)) {
                     pickPoint = e.getPoint();
                     setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
@@ -128,7 +128,7 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if (basicState.isActionEnabled()) {
             int buttonMask = getButtonMaskEx();
             if ((e.getModifiersEx() & buttonMask) != 0) {
-                ViewCanvas<?> panner = getIViewCanvas(e);
+                ViewCanvas<?> panner = getViewCanvas(e);
                 if (Objects.nonNull(panner) && Objects.nonNull(pickPoint)) {
                     setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
                 }
@@ -141,7 +141,7 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if (basicState.isActionEnabled()) {
             int buttonMask = getButtonMask();
             if ((e.getModifiers() & buttonMask) != 0) {
-                ViewCanvas<?> panner = getIViewCanvas(e);
+                ViewCanvas<?> panner = getViewCanvas(e);
                 Optional.ofNullable(panner).ifPresent(p -> p.getJComponent().repaint());
             }
         }

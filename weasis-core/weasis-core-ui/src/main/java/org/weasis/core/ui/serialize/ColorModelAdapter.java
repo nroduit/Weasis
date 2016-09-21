@@ -19,6 +19,9 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 import org.weasis.core.api.service.WProperties;
 
 public class ColorModelAdapter {
+    
+    private ColorModelAdapter() {
+    }
 
     static class ColorModel {
         @XmlAttribute(required = true)

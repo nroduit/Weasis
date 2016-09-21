@@ -71,7 +71,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     @SuppressWarnings("serial")
     private final JLocaleFormat comboBoxFormat = new JLocaleFormat() {
         @Override
-        protected void valueHasChanged() {
+        public void valueHasChanged() {
             txtpnNote.setText(getText());
         }
     };
@@ -117,14 +117,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
         } catch (Exception e) {
             LOGGER.error("Cannot initialize GeneralSetting", e); //$NON-NLS-1$
         }
-        // Object comp = jComboBoxlnf.getUI().getAccessibleChild(jComboBoxlnf, 0);
-        // if (comp instanceof BasicComboPopup) {
-        // BasicComboPopup popup = (BasicComboPopup) comp;
-        // popup.getList().getSelectionModel().addListSelectionListener(listSelectionListener);
-        // }
     }
 
-    private void jbInit() throws Exception {
+    private void jbInit() {
         this.setLayout(gridBagLayout1);
         jLabelMLook.setText(Messages.getString("GeneralSetting.lf") + StringUtil.COLON); //$NON-NLS-1$
 
@@ -270,7 +265,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     }
 
-    private String getText() {
+    private static String getText() {
         ZonedDateTime now = ZonedDateTime.now();
         return String.format(Messages.getString("GeneralSetting.txtNote"), //$NON-NLS-1$
             new Object[] { LocalUtil.getDateTimeFormatter(FormatStyle.SHORT).format(now),

@@ -128,6 +128,7 @@ import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.codec.geometry.IntersectSlice;
 import org.weasis.dicom.codec.geometry.IntersectVolume;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
@@ -261,8 +262,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (name.equals(ActionW.SYNCH.cmd())) {
             SynchEvent synch = (SynchEvent) evt.getNewValue();
             SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-            boolean tile = synchData != null && SynchData.Mode.Tile.equals(synchData.getMode());
-            if (synchData != null && Mode.None.equals(synchData.getMode())) {
+            boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
+            if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
                 return;
             }
             for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
@@ -493,10 +494,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Double zoom = (Double) actionsInView.get(PRManager.TAG_PR_ZOOM);
         // Special Cases: -200.0 => best fit, -100.0 => real world size
         if (zoom != null && MathUtil.isDifferent(zoom, -200.0) && MathUtil.isDifferent(zoom, -100.0)) {
-            actionsInView.put(ViewCanvas.zoomTypeCmd, ZoomType.CURRENT);
+            actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
             zoom(zoom);
         } else if (zoom != null) {
-            actionsInView.put(ViewCanvas.zoomTypeCmd,
+            actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD,
                 MathUtil.isEqual(zoom, -100.0) ? ZoomType.REAL : ZoomType.BEST_FIT);
             zoom(0.0);
         } else if (changePixConfig || spatialTransformation) {
@@ -937,13 +938,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (img instanceof DicomImageElement) {
                 double[] v = TagD.getTagValue((DicomImageElement) img, Tag.ImageOrientationPatient, double[].class);
                 if (v != null && v.length == 6) {
-                    String orientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
+                    Label orientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
                         v[1], v[2], v[3], v[4], v[5]);
-                    if (ImageOrientation.LABELS[1].equals(orientation)) {
+                    if (ImageOrientation.Label.AXIAL.equals(orientation)) {
                         sliceOrientation = SliceOrientation.AXIAL;
-                    } else if (ImageOrientation.LABELS[3].equals(orientation)) {
+                    } else if (ImageOrientation.Label.CORONAL.equals(orientation)) {
                         sliceOrientation = SliceOrientation.CORONAL;
-                    } else if (ImageOrientation.LABELS[2].equals(orientation)) {
+                    } else if (ImageOrientation.Label.SAGITTAL.equals(orientation)) {
                         sliceOrientation = SliceOrientation.SAGITTAL;
                     }
                 }
@@ -1274,7 +1275,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                || support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 return true;
             }
             return false;
@@ -1300,11 +1301,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
             // When dragging a file or group of files
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-            else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+            else if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
                 try {
                     // Files with spaces in the filename trigger an error
                     // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-                    String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
+                    String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
                     LOGGER.error("Get dragable URIs", e);
@@ -1369,7 +1370,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 selList.setOpenningSeries(true);
             }
 
-            if (SynchData.Mode.Tile.equals(selPlugin.getSynchView().getSynchData().getMode())) {
+            if (SynchData.Mode.TILE.equals(selPlugin.getSynchView().getSynchData().getMode())) {
                 selPlugin.addSeries(seq);
                 if (selList != null) {
                     selList.setOpenningSeries(false);

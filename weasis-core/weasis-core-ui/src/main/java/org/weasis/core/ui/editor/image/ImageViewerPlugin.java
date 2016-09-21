@@ -46,6 +46,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
@@ -168,6 +169,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     public ViewCanvas<E> getSelectedImagePane() {
         return selectedImagePane;
     }
+    
+    @Override
+    public void close() {
+        super.close();
+
+        GuiExecutor.instance().execute(() -> {
+            removeComponents();
+            for (ViewCanvas v : view2ds) {
+                resetMaximizedSelectedImagePane(v);
+                v.disposeView();
+            }
+        });
+    }
 
     /**
      * Get the layout of this panel.
@@ -198,7 +212,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     @Override
     public void addSeries(MediaSeries<E> sequence) {
         if (sequence != null && selectedImagePane != null) {
-            if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
+            if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode())) {
                 selectedImagePane.setSeries(sequence, null);
                 updateTileOffset();
                 return;
@@ -246,11 +260,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
     }
 
+    protected void removeComponents(){
+        for (Component c : components) {
+            if (c instanceof SeriesViewerListener) {
+                eventManager.removeSeriesViewerListener((SeriesViewerListener) c);
+            }
+        }
+        components.clear();
+    }
+    
     /**
      * Set a layout to this view panel. The layout is defined by the provided number corresponding the layout definition
      * in the property file.
      */
-
     @SuppressWarnings("unchecked")
     protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
         this.layoutModel = layoutModel == null ? VIEWS_1x1.copy() : layoutModel.copy();
@@ -272,12 +294,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 oldViews.remove(i).disposeView();
             }
         }
-        for (Component c : components) {
-            if (c instanceof SeriesViewerListener) {
-                eventManager.removeSeriesViewerListener((SeriesViewerListener) c);
-            }
-        }
-        components.clear();
+        removeComponents();
 
         final Map<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
         Iterator<LayoutConstraints> enumVal = elements.keySet().iterator();
@@ -316,7 +333,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             selectedImagePane = view2ds.get(0);
 
             MouseActions mouseActions = eventManager.getMouseActions();
-            boolean tiledMode = SynchData.Mode.Tile.equals(synchView.getSynchData().getMode());
+            boolean tiledMode = SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
             for (int i = 0; i < view2ds.size(); i++) {
                 ViewCanvas<E> v = view2ds.get(i);
                 // Close lens because update does not work
@@ -375,7 +392,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     selectedImagePane = view2ds.get(0);
                 }
                 MouseActions mouseActions = eventManager.getMouseActions();
-                boolean tiledMode = SynchData.Mode.Tile.equals(synchView);
+                boolean tiledMode = SynchData.Mode.TILE.equals(synchView);
                 for (int i = 0; i < view2ds.size(); i++) {
                     ViewCanvas<E> v = view2ds.get(i);
                     // Close lens because update does not work
@@ -592,7 +609,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     @SuppressWarnings("unchecked")
     public void updateTileOffset() {
-        if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode()) && selectedImagePane != null) {
+        if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode()) && selectedImagePane != null) {
             MediaSeries<E> series = null;
             ViewCanvas<E> selectedView = selectedImagePane;
             if (selectedImagePane.getSeries() != null) {
@@ -675,7 +692,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     public void addSeriesList(List<MediaSeries<E>> seriesList, boolean bestDefaultLayout) {
         if (seriesList != null && !seriesList.isEmpty()) {
-            if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
+            if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode())) {
                 addSeries(seriesList.get(0));
                 return;
             }

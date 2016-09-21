@@ -46,7 +46,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 
 import javax.swing.ButtonGroup;
-import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -412,7 +411,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     private void propertyChange(final SynchEvent synch) {
         SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-        if (synchData != null && Mode.None.equals(synchData.getMode())) {
+        if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
             return;
         }
 
@@ -452,10 +451,10 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 if (value != -200.0 && value != -100.0) {
                     zoom(value);
                 } else {
-                    Object zoomType = actionsInView.get(ViewCanvas.zoomTypeCmd);
-                    actionsInView.put(ViewCanvas.zoomTypeCmd, value == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
+                    Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+                    actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, value == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
                     zoom(0.0);
-                    actionsInView.put(ViewCanvas.zoomTypeCmd, zoomType);
+                    actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
                 }
             } else if (command.equals(ActionW.PAN.cmd())) {
                 if (val instanceof PanPoint) {
@@ -556,7 +555,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     protected void initActionWState() {
         // set unit when texture load (middle image)
         actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
-        actionsInView.put(zoomTypeCmd, ZoomType.BEST_FIT);
+        actionsInView.put(ZOOM_TYPE_CMD, ZoomType.BEST_FIT);
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
         actionsInView.put(ActionW.DRAWINGS.cmd(), true);
@@ -1468,25 +1467,19 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     protected double adjustViewScale(double viewScale) {
         ActionState zoom = eventManager.getAction(ActionW.ZOOM);
+        double ratio = viewScale;
         if (zoom instanceof SliderChangeListener) {
             SliderChangeListener z = (SliderChangeListener) zoom;
             // Adjust the best fit value according to the possible range of the model zoom action.
-            int sliderValue = ImageViewerEventManager.viewScaleToSliderValue(viewScale);
             if (eventManager.getSelectedViewPane() == this) {
                 // Set back the value to UI components as this value cannot be computed early.
-                z.setValueWithoutTriggerAction(sliderValue);
-                viewScale = ImageViewerEventManager.sliderValueToViewScale(z.getValue());
+                z.setRealValue(ratio, false);
+                ratio = z.getRealValue();
             } else {
-                DefaultBoundedRangeModel model = z.getModel();
-                if (sliderValue < model.getMinimum()) {
-                    sliderValue = model.getMinimum();
-                } else if (sliderValue > model.getMaximum()) {
-                    sliderValue = model.getMaximum();
-                }
-                viewScale = ImageViewerEventManager.sliderValueToViewScale(sliderValue);
+                ratio = z.toModelValue(z.toSliderValue(ratio));
             }
         }
-        return viewScale;
+        return ratio;
     }
 
     @Override
@@ -1630,7 +1623,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void resetZoom() {
-        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
         if (!ZoomType.CURRENT.equals(type)) {
             zoom(0.0);
         }
@@ -1673,7 +1666,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     @Override
     public void zoom(Double viewScale) {
         boolean defSize = viewScale == 0.0;
-        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
         if (defSize) {
             if (ZoomType.BEST_FIT.equals(type)) {
                 viewScale = -getBestFitViewScale();

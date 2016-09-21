@@ -13,6 +13,8 @@ package org.weasis.dicom.codec;
 import java.io.File;
 import java.util.List;
 
+@FunctionalInterface
 public interface FilesExtractor {
-	List<File> getExtractFiles();
+
+    List<File> getExtractFiles();
 }

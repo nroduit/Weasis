@@ -14,8 +14,6 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
@@ -26,7 +24,6 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
 
 public class SplittingModalityRules {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SplittingModalityRules.class);
 
     private final Modality modality;
     private final List<Rule> singleFrameTags;
@@ -200,7 +197,6 @@ public class SplittingModalityRules {
             }
             return tag.getValue(value);
         }
-
 
         @Override
         public boolean match(MediaElement media) {

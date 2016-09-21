@@ -17,9 +17,6 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
@@ -30,9 +27,9 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.FilesExtractor;
 
-@Component(immediate = false)
-@Service
-@Property(name = "service.pluginName", value = "Default System Application")
+@org.apache.felix.scr.annotations.Component(immediate = false)
+@org.apache.felix.scr.annotations.Service
+@org.apache.felix.scr.annotations.Property(name = "service.pluginName", value = "Default System Application")
 public class MimeSystemAppFactory implements SeriesViewerFactory {
 
     public static final String NAME = Messages.getString("MimeSystemAppViewer.app"); //$NON-NLS-1$

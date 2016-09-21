@@ -182,7 +182,7 @@ public abstract class AbstractDicomNode {
         final BundleContext context = FrameworkUtil.getBundle(AbstractDicomNode.class).getBundleContext();
         try {
             writer = factory.createXMLStreamWriter(
-                new FileOutputStream(new File(BundlePreferences.getDataFolder(context), type.getFilename())), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+                new FileOutputStream(new File(BundlePreferences.getDataFolder(context), type.getFilename())), "UTF-8"); //$NON-NLS-1$
 
             writer.writeStartDocument("UTF-8", "1.0"); //$NON-NLS-1$ //$NON-NLS-2$
             writer.writeStartElement(T_NODES);

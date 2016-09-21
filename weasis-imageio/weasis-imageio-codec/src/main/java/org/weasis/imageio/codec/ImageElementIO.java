@@ -157,7 +157,6 @@ public class ImageElementIO implements MediaReader {
 
     @Override
     public boolean delegate(DataExplorerModel explorerModel) {
-        // TODO Auto-generated method stub
         return false;
     }
 

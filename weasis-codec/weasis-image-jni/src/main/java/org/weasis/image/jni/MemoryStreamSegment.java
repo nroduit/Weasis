@@ -53,7 +53,7 @@ class MemoryStreamSegment extends StreamSegment {
                     return (ByteArrayInputStream) fid.get(inputStream);
                 }
             } catch (Exception e) {
-                LOGGER.error(e.getMessage());
+                LOGGER.error("Cannot get inputstream", e);
             }
         }
         return null;

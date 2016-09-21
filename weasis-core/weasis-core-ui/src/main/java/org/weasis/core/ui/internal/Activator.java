@@ -54,11 +54,7 @@ public class Activator implements BundleActivator, ServiceListener {
             try {
                 for (ServiceReference<SeriesViewerFactory> service : bundleContext
                     .getServiceReferences(SeriesViewerFactory.class, null)) {
-                    SeriesViewerFactory factory = bundleContext.getService(service);
-                    if (factory != null && !UIManager.SERIES_VIEWER_FACTORIES.contains(factory)) {
-                        UIManager.SERIES_VIEWER_FACTORIES.add(factory);
-                        LOGGER.info("Register series viewer plug-in: {}", factory.getUIName());
-                    }
+                    registerSeriesViewerFactory(bundleContext.getService(service));
                 }
             } catch (InvalidSyntaxException e) {
                 LOGGER.error("", e);
@@ -92,18 +88,22 @@ public class Activator implements BundleActivator, ServiceListener {
             Objects.requireNonNull(viewerFactory);
 
             if (event.getType() == ServiceEvent.REGISTERED) {
-                if (!UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
-                    UIManager.SERIES_VIEWER_FACTORIES.add(viewerFactory);
-                    LOGGER.info("Register series viewer plug-in: {}", viewerFactory.getUIName());
-                }
+                registerSeriesViewerFactory(viewerFactory);
             } else if (event.getType() == ServiceEvent.UNREGISTERING) {
                 if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
-                    LOGGER.info("Unregister series viewer plug-in: {}", viewerFactory.getUIName());
+                    LOGGER.info("Unregister series viewer plug-in: {}", viewerFactory.getDescription());
                     UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
                 }
                 context.ungetService(service);
             }
         });
+    }
+
+    private static void registerSeriesViewerFactory(SeriesViewerFactory factory) {
+        if (factory != null && !UIManager.SERIES_VIEWER_FACTORIES.contains(factory)) {
+            UIManager.SERIES_VIEWER_FACTORIES.add(factory);
+            LOGGER.info("Register series viewer plug-in: {}", factory.getDescription());
+        }
     }
 
     private static void registerCommands(BundleContext context) {

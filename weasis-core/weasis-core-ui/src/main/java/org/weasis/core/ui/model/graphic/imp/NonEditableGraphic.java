@@ -93,7 +93,7 @@ public class NonEditableGraphic extends AbstractGraphic {
 
     @Override
     public String getDescription() {
-        return ""; //$NON-NLS-1$
+        return getUIName();
     }
 
     @Override

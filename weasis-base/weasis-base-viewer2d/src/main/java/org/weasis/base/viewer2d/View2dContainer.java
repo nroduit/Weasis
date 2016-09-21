@@ -17,8 +17,8 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -40,7 +40,6 @@ import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -64,6 +63,7 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
@@ -101,7 +101,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
-    private static volatile boolean INI_COMPONENTS = false;
+    private static volatile boolean initComponents = false;
 
     public View2dContainer() {
         this(VIEWS_1x1, null);
@@ -110,8 +110,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public View2dContainer(GridBagLayoutModel layoutModel, String uid) {
         super(EventManager.getInstance(), layoutModel, uid, ViewerFactory.NAME, ViewerFactory.ICON, null);
         setSynchView(SynchView.DEFAULT_STACK);
-        if (!INI_COMPONENTS) {
-            INI_COMPONENTS = true;
+        if (!initComponents) {
+            initComponents = true;
 
             // Add standard toolbars
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -168,10 +168,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 TOOLS.add(tool);
             }
 
-            
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImageTool.class), key, true)) {
-                tool = new ImageTool(ImageTool.BUTTON_NAME); 
+                tool = new ImageTool(ImageTool.BUTTON_NAME);
                 TOOLS.add(tool);
             }
 
@@ -238,19 +237,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public void close() {
-        super.close();
         ViewerFactory.closeSeriesViewer(this);
-
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                for (ViewCanvas v : view2ds) {
-                    v.disposeView();
-                }
-            }
-        });
-
+        super.close();
     }
 
     @Override
@@ -287,7 +275,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                                             view2DPane.setSeries(series, null);
                                         }
                                         if (imgIndex >= 0) {
-                                            sliceAction.setMinMaxValue(1, series.size(filter), imgIndex + 1);
+                                            sliceAction.setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
                                         }
                                     }
                                 }
@@ -388,17 +376,14 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public List<Action> getPrintActions() {
         ArrayList<Action> actions = new ArrayList<>(1);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
-        AbstractAction printStd =
-            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-                    PrintDialog dialog =
-                        new PrintDialog(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
-                    ColorLayerUI.showCenterScreen(dialog, layer);
-                }
-            };
+        Consumer<ActionEvent> event = e -> {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
+            PrintDialog<?> dialog =
+                new PrintDialog<>(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
+            ColorLayerUI.showCenterScreen(dialog, layer);
+        };
+        DefaultAction printStd = new DefaultAction(title,
+            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event);
         printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
         actions.add(printStd);
         return actions;

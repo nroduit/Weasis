@@ -33,9 +33,9 @@ import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape.ScaleInvariantShape;
-import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
+import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 @XmlType(name = "pixelInfo")
@@ -119,8 +119,8 @@ public class PixelInfoGraphic extends AnnotationGraphic {
             }
             labelBounds = new Rectangle.Double();
             labelBounds.setFrameFromCenter(ptBox.getX(), ptBox.getY(),
-                ptBox.getX() + labelWidth / 2 + DefaultGraphicLabel.GROWING_BOUND,
-                ptBox.getY() + labelHeight * labels.length / 2 + DefaultGraphicLabel.GROWING_BOUND);
+                ptBox.getX() + labelWidth / 2 + DefaultGraphicLabel.GROWING_BOUND, ptBox.getY()
+                    + labelHeight * (labels == null ? 1 : labels.length / 2) + DefaultGraphicLabel.GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, DefaultGraphicLabel.GROWING_BOUND);
             if (line != null) {
                 newShape.addLinkSegmentToInvariantShape(line, ptBox, labelBounds, getDashStroke(lineThickness), true);

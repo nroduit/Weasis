@@ -28,14 +28,12 @@ public class HierachicalSOPInstanceReference extends Module {
         super(new Attributes());
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public static Collection<HierachicalSOPInstanceReference> toHierachicalSOPInstanceReferenceMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
             return null;
         }
 
-        ArrayList<HierachicalSOPInstanceReference> list = new ArrayList<HierachicalSOPInstanceReference>(seq.size());
+        ArrayList<HierachicalSOPInstanceReference> list = new ArrayList<>(seq.size());
 
         for (Attributes attr : seq) {
             list.add(new HierachicalSOPInstanceReference(attr));
@@ -43,8 +41,6 @@ public class HierachicalSOPInstanceReference extends Module {
 
         return list;
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public String getStudyInstanceUID() {
         return dcmItems.getString(Tag.StudyInstanceUID);

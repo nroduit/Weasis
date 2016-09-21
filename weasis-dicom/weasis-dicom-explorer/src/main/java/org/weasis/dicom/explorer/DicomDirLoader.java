@@ -175,18 +175,16 @@ public class DicomDirLoader {
                 } else {
                     WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
                     if (wado == null) {
-                        // Should not happen
+                        // Should never happen
                         dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
                     }
                 }
 
                 List<DicomInstance> dicomInstances =
                     (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
-                boolean containsInstance = false;
                 if (dicomInstances == null) {
-                    dicomSeries.setTag(TagW.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
-                } else if (!dicomInstances.isEmpty()) {
-                    containsInstance = true;
+                    dicomInstances = new ArrayList<>();
+                    dicomSeries.setTag(TagW.WadoInstanceReferenceList, dicomInstances);
                 }
 
                 // Icon Image Sequence (0088,0200).This Icon Image is representative of the Series. It may or may not
@@ -201,7 +199,7 @@ public class DicomDirLoader {
 
                     if (sopInstanceUID != null) {
                         DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
-                        if (containsInstance && dicomInstances.contains(dcmInstance)) {
+                        if (dicomInstances.contains(dcmInstance)) {
                             LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                         } else {
                             File file = toFileName(instance, reader);

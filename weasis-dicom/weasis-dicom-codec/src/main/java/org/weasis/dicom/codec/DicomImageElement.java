@@ -15,7 +15,6 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
-import java.lang.ref.Reference;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -27,7 +26,9 @@ import javax.media.jai.LookupTableJAI;
 import javax.media.jai.OpImage;
 import javax.media.jai.ROI;
 import javax.media.jai.RenderedOp;
+import javax.media.jai.operator.FormatDescriptor;
 import javax.media.jai.operator.LookupDescriptor;
+import javax.media.jai.operator.RescaleDescriptor;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -56,21 +57,7 @@ public class DicomImageElement extends ImageElement {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomImageElement.class);
 
-    private static final SoftHashMap<LutParameters, LookupTableJAI> LUT_Cache =
-        new SoftHashMap<LutParameters, LookupTableJAI>() {
-
-            public Reference<? extends LookupTableJAI> getReference(LutParameters key) {
-                return hash.get(key);
-            }
-
-            @Override
-            public void removeElement(Reference<? extends LookupTableJAI> soft) {
-                LutParameters key = reverseLookup.remove(soft);
-                if (key != null) {
-                    hash.remove(key);
-                }
-            }
-        };
+    private static final SoftHashMap<LutParameters, LookupTableJAI> LUT_Cache = new SoftHashMap<>();
 
     private volatile List<PresetWindowLevel> windowingPresetCollection = null;
     private volatile Collection<LutShape> lutShapeCollection = null;
@@ -103,7 +90,7 @@ public class DicomImageElement extends ImageElement {
             if (val == null || val.length != 2) {
                 val = TagD.getTagValue(mediaIO, Tag.NominalScannedPixelSpacing, double[].class);
             }
-            
+
             if (val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
                 /*
                  * Pixel Spacing = Row Spacing \ Column Spacing => (Y,X) The first value is the row spacing in mm, that
@@ -122,7 +109,7 @@ public class DicomImageElement extends ImageElement {
             // HU = Hounsfield Units (CT)
             // US = Unspecified
             // Other values are permitted, but are not defined by the DICOM Standard.
-            pixelValueUnit =  TagD.getTagValue(this, Tag.RescaleType, String.class);
+            pixelValueUnit = TagD.getTagValue(this, Tag.RescaleType, String.class);
             if (pixelValueUnit == null) {
                 // For some other modalities like PET
                 pixelValueUnit = TagD.getTagValue(this, Tag.Units, String.class);
@@ -238,16 +225,16 @@ public class DicomImageElement extends ImageElement {
         return slope == null ? 1.0 : slope;
     }
 
-    public int pixel2mLUT(Number pixelValue, TagReadable tagable, boolean pixelPadding) {
+    public double pixel2mLUT(Number pixelValue, TagReadable tagable, boolean pixelPadding) {
         if (pixelValue != null) {
-            int val = pixelValue.intValue();
             LookupTableJAI lookup = getModalityLookup(tagable, pixelPadding);
             if (lookup != null) {
+                int val = pixelValue.intValue();
                 if (val >= lookup.getOffset() && val < lookup.getOffset() + lookup.getNumEntries()) {
                     return lookup.lookup(0, val);
                 }
             }
-            return val;
+            return pixelValue.doubleValue();
         }
         return 0;
     }
@@ -283,10 +270,10 @@ public class DicomImageElement extends ImageElement {
     public boolean isPhotometricInterpretationMonochrome() {
         String photometricInterpretation = getPhotometricInterpretation();
 
-        return (photometricInterpretation != null && //
+        return photometricInterpretation != null && //
             ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) //$NON-NLS-1$
                 || "MONOCHROME2" //$NON-NLS-1$
-                    .equalsIgnoreCase(photometricInterpretation)));
+                    .equalsIgnoreCase(photometricInterpretation));
     }
 
     /**
@@ -454,25 +441,13 @@ public class DicomImageElement extends ImageElement {
             return null;
         }
 
-        if (getPaddingValue() != null && isPhotometricInterpretationMonochrome()) {
-            /*
-             * When pixel padding is activated, VOI LUT must extend to the min bit stored value when MONOCHROME2 and to
-             * the max bit stored value when MONOCHROME1.
-             *
-             * C.7.5.1.1.2 Pixel Padding Value and Pixel Padding Range Limit If Photometric Interpretation
-             *
-             * (0028,0004) is MONOCHROME2, Pixel Padding Value (0028,0120) shall be less than (closer to or equal to the
-             * minimum possible pixel value) or equal to Pixel Padding Range Limit (0028,0121). If Photometric
-             * Interpretation (0028,0004) is MONOCHROME1, Pixel Padding Value (0028,0120) shall be greater than (closer
-             * to or equal to the maximum possible pixel value) or equal to Pixel Padding Range Limit (0028,0121).
-             */
-
-            // Create a VOI LUT with pixel padding values at the extremity of the allocated values.
-            fillLutOutside = true;
-        }
         int minValue;
         int maxValue;
-        if (fillLutOutside) {
+        /*
+         * When pixel padding is activated, VOI LUT must extend to the min bit stored value when MONOCHROME2 and to the
+         * max bit stored value when MONOCHROME1. See C.7.5.1.1.2
+         */
+        if (fillLutOutside || (getPaddingValue() != null && isPhotometricInterpretationMonochrome())) {
             minValue = getMinAllocatedValue(tagable, pixelPadding);
             maxValue = getMaxAllocatedValue(tagable, pixelPadding);
         } else {
@@ -799,26 +774,18 @@ public class DicomImageElement extends ImageElement {
 
         } else if (datatype == DataBuffer.TYPE_INT || datatype == DataBuffer.TYPE_FLOAT
             || datatype == DataBuffer.TYPE_DOUBLE) {
-            double low = minLevel;
-            double high = maxLevel;
+            double low = levelValue - windowValue / 2.0;
+            double high = levelValue + windowValue / 2.0;
             double range = high - low;
-            if (range < 1.0) {
+            if (range < 1.0 && datatype == DataBuffer.TYPE_INT) {
                 range = 1.0;
             }
             double slope = 255.0 / range;
             double yint = 255.0 - slope * high;
 
-            ParameterBlock pb = new ParameterBlock();
-            pb.addSource(imageSource);
-            pb.add(new double[] { slope });
-            pb.add(new double[] { yint });
-            RenderedOp rescale = JAI.create("rescale", pb, null); //$NON-NLS-1$
-
-            // produce a byte image
-            pb = new ParameterBlock();
-            pb.addSource(rescale);
-            pb.add(DataBuffer.TYPE_BYTE);
-            return JAI.create("format", pb, null); //$NON-NLS-1$
+            RenderedOp rescale =
+                RescaleDescriptor.create(imageSource, new double[] { slope }, new double[] { yint }, null);
+            return FormatDescriptor.create(rescale, DataBuffer.TYPE_BYTE, null);
         }
         return null;
     }

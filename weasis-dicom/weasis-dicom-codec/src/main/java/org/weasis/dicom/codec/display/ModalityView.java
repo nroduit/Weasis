@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 import javax.xml.stream.XMLInputFactory;
@@ -37,8 +37,9 @@ import org.weasis.dicom.codec.TagD;
 public class ModalityView {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModalityView.class);
 
-    public static final Map<Modality, ModalityInfoData> MODALITY_VIEW_MAP = new HashMap<>();
-    public static final ModalityInfoData DEFAULT_MODALITY_VIEW = new ModalityInfoData(Modality.Default, null);
+    static final Map<Modality, ModalityInfoData> MODALITY_VIEW_MAP = new EnumMap<>(Modality.class);
+
+    public static final ModalityInfoData DEFAULT_MODALITY_VIEW = new ModalityInfoData(Modality.DEFAULT, null);
 
     static {
         // Format associated to DICOM field:
@@ -89,14 +90,17 @@ public class ModalityView {
          * Spacing Between Slices (0018,0088), if present, else a value derived from successive values of Image Position
          * (Patient) (0020,0032) perpendicular to the Image Orientation (Patient) (0020,0037)
          */
-        MODALITY_VIEW_MAP.put(Modality.Default, DEFAULT_MODALITY_VIEW);
+        MODALITY_VIEW_MAP.put(Modality.DEFAULT, DEFAULT_MODALITY_VIEW);
         readTagDisplayByModality();
+    }
+
+    private ModalityView() {
     }
 
     public static ModalityInfoData getModlatityInfos(Modality mod) {
         ModalityInfoData mdata = MODALITY_VIEW_MAP.get(mod);
         if (mdata == null) {
-            mdata = MODALITY_VIEW_MAP.get(Modality.Default);
+            mdata = MODALITY_VIEW_MAP.get(Modality.DEFAULT);
         }
         if (mdata == null) {
             mdata = DEFAULT_MODALITY_VIEW;
@@ -153,10 +157,8 @@ public class ModalityView {
             stream = new FileInputStream(file); // $NON-NLS-1$
             xmler = xmlif.createXMLStreamReader(stream);
 
-            int eventType;
             while (xmler.hasNext()) {
-                eventType = xmler.next();
-                switch (eventType) {
+                switch (xmler.next()) {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
                         if ("modalities".equals(key)) { //$NON-NLS-1$
@@ -179,8 +181,7 @@ public class ModalityView {
 
     private static void readModalities(XMLStreamReader xmler) throws XMLStreamException {
         while (xmler.hasNext()) {
-            int eventType = xmler.next();
-            switch (eventType) {
+            switch (xmler.next()) {
                 case XMLStreamConstants.START_ELEMENT:
                     String key = xmler.getName().getLocalPart();
                     if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
@@ -206,11 +207,9 @@ public class ModalityView {
     }
 
     private static void readModality(ModalityInfoData data, XMLStreamReader xmler) throws XMLStreamException {
-        int eventType;
         boolean state = true;
         while (xmler.hasNext() && state) {
-            eventType = xmler.next();
-            switch (eventType) {
+            switch (xmler.next()) {
                 case XMLStreamConstants.START_ELEMENT:
                     if ("corner".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
                         String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
@@ -236,13 +235,11 @@ public class ModalityView {
 
         TagView[] disElements = data.getCornerInfo(corner).getInfos();
 
-        int eventType;
         boolean state = true;
         int index = -1;
         String format = null;
         while (xmler.hasNext() && state) {
-            eventType = xmler.next();
-            switch (eventType) {
+            switch (xmler.next()) {
                 case XMLStreamConstants.CHARACTERS:
                     if (index > 0 && index <= 7) {
                         disElements[index - 1] = getTag(xmler.getText(), format);

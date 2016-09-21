@@ -22,7 +22,6 @@ import java.awt.dnd.DragSource;
 import java.awt.dnd.DragSourceDragEvent;
 import java.awt.dnd.DragSourceDropEvent;
 import java.awt.dnd.DragSourceEvent;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -40,7 +39,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.Icon;
@@ -50,8 +48,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.JIUtility;
 import org.weasis.base.explorer.Messages;
@@ -71,10 +67,10 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.util.DefaultAction;
 
 @SuppressWarnings("serial")
 public abstract class AThumbnailList<E extends MediaElement> extends JList<E> implements IThumbnailList<E> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AThumbnailList.class);
 
     public static final String SECTION_CHANGED = "SECTION_CHANGED"; //$NON-NLS-1$
     public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; //$NON-NLS-1$
@@ -92,7 +88,6 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
     private boolean changed;
     private Point dragPressed = null;
     private DragSource dragSource = null;
-    private MediaElement lastSelectedDiskObject = null;
 
     public AThumbnailList() {
         this(HORIZONTAL_WRAP);
@@ -232,12 +227,12 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
         final Rectangle thumBounds = getCellBounds(index, index);
 
         if (thumBounds == null || !thumBounds.contains(pt)) {
-            return null; 
+            return null;
         }
 
         final E item = getModel().getElementAt(index);
         if (item == null || item.getName() == null) {
-            return null; 
+            return null;
         }
 
         StringBuilder toolTips = new StringBuilder();
@@ -246,7 +241,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
         toolTips.append("<br>"); //$NON-NLS-1$
         toolTips.append(Messages.getString("JIThumbnailList.size")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(FileUtil.formatSize((item.getLength())));
+        toolTips.append(FileUtil.formatSize(item.getLength()));
         toolTips.append("<br>"); //$NON-NLS-1$
 
         toolTips.append(Messages.getString("JIThumbnailList.date")); //$NON-NLS-1$
@@ -520,13 +515,10 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
 
     public Action buildRefreshAction() {
         // TODO set this action in toolbar
-        return new AbstractAction(Messages.getString("JIThumbnailList.refresh_list")) { //$NON-NLS-1$
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                final Thread runner = new Thread(AThumbnailList.this.getThumbnailListModel()::reload);
-                runner.start();
-            }
-        };
+        return new DefaultAction(Messages.getString("JIThumbnailList.refresh_list"), event -> { //$NON-NLS-1$
+            final Thread runner = new Thread(AThumbnailList.this.getThumbnailListModel()::reload);
+            runner.start();
+        });
     }
 
     public int getLastSelectedIndex() {
@@ -535,7 +527,6 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
 
     @Override
     public void listValueChanged(final ListSelectionEvent e) {
-        this.lastSelectedDiskObject = null;
         setChanged();
         notifyObservers(SECTION_CHANGED);
         clearChanged();

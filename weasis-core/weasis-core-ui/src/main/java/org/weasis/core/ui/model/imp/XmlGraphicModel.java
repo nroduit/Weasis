@@ -34,10 +34,10 @@ public class XmlGraphicModel extends AbstractGraphicModel {
     }
     
     private static List<ReferencedSeries> buildReferences(ImageElement img) {
-        String UUID = (String) img.getTagValue(TagW.get("SOPInstanceUID"));
-        if (UUID == null) {
-            UUID =  java.util.UUID.randomUUID().toString();
-            img.setTag(TagW.get("SOPInstanceUID"), UUID);
+        String uid = (String) img.getTagValue(TagW.get("SOPInstanceUID"));
+        if (uid == null) {
+            uid =  java.util.UUID.randomUUID().toString();
+            img.setTag(TagW.get("SOPInstanceUID"), uid);
         }
         
         String seriesUUID = (String) img.getTagValue(TagW.get("SeriesInstanceUID"));
@@ -46,7 +46,7 @@ public class XmlGraphicModel extends AbstractGraphicModel {
             img.setTag(TagW.get("SeriesInstanceUID"), seriesUUID);
         }
         
-        List<ReferencedImage> images = Arrays.asList(new ReferencedImage(UUID));
+        List<ReferencedImage> images = Arrays.asList(new ReferencedImage(uid));
         return Arrays.asList(new ReferencedSeries(seriesUUID, images));
     }
 }

@@ -68,7 +68,7 @@ import com.sun.media.jai.util.ImageUtil;
 public class RawImageIO implements DcmMediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawImageIO.class);
 
-    private static final String mimeType = "image/raw"; //$NON-NLS-1$
+    private static final String MIME_TYPE = "image/raw"; //$NON-NLS-1$
     private static final int[] OFFSETS_0 = { 0 };
     private static final int[] OFFSETS_0_0_0 = { 0, 0, 0 };
     private static final int[] OFFSETS_0_1_2 = { 0, 1, 2 };
@@ -105,7 +105,7 @@ public class RawImageIO implements DcmMediaReader {
             out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
             return tmpFile;
         } catch (IOException e) {
-            LOGGER.error("Cannot write dicom file: {}", e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Cannot write dicom file", e); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(out);
         }
@@ -127,15 +127,6 @@ public class RawImageIO implements DcmMediaReader {
             // Information for series ToolTips
             group.setTagNoNull(TagD.get(Tag.PatientName), getTagValue(TagD.get(Tag.PatientName)));
             group.setTagNoNull(TagD.get(Tag.StudyDescription), header.getString(Tag.StudyDescription));
-
-            // if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
-            // MediaElement[] elements = getMediaElement();
-            // if (elements != null) {
-            // for (MediaElement m : elements) {
-            // m.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
-            // }
-            // }
-            // }
         }
     }
 
@@ -210,7 +201,7 @@ public class RawImageIO implements DcmMediaReader {
 
     @Override
     public String getMediaFragmentMimeType() {
-        return mimeType;
+        return MIME_TYPE;
     }
 
     @Override

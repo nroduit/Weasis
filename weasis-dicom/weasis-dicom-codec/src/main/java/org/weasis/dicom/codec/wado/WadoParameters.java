@@ -15,11 +15,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.StringUtil;
 
 public class WadoParameters {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WadoParameters.class);
 
     public static final String TAG_DOCUMENT_ROOT = "wado_query"; //$NON-NLS-1$
     public static final String TAG_WADO_URL = "wadoURL"; //$NON-NLS-1$
@@ -43,7 +46,7 @@ public class WadoParameters {
             throw new IllegalArgumentException("wadoURL cannot be null"); //$NON-NLS-1$
         }
         this.wadoURL = wadoURL;
-        this.httpTaglist = new ArrayList<WadoParameters.HttpTag>(3);
+        this.httpTaglist = new ArrayList<>(3);
         // Add possible session tags
         if (BundleTools.SESSION_TAGS_FILE.size() > 0) {
             for (Iterator<Entry<String, String>> iter = BundleTools.SESSION_TAGS_FILE.entrySet().iterator(); iter
@@ -63,7 +66,7 @@ public class WadoParameters {
                 try {
                     overrideDicomTagIDList[i] = Integer.decode(val[i].trim());
                 } catch (NumberFormatException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Cannot read dicom tag list", e);
                 }
             }
         } else {

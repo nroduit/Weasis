@@ -14,6 +14,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 import java.util.Vector;
 
@@ -62,16 +63,6 @@ public class BlobAnalyse2D {
         this.dwidth = binary.getWidth();
         this.dheight = binary.getHeight();
         this.firstPoint = new Point();
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        this.shape = null;
-        this.src.done();
-        this.src = null;
-        this.source.dispose();
-        this.source = null;
-        super.finalize();
     }
 
     private void iniToVisited(RandomIter data, int val) {
@@ -134,7 +125,7 @@ public class BlobAnalyse2D {
             }
         }
         holes.trimToSize();
-        holes = holes.size() == 0 ? null : holes;
+        holes = holes.isEmpty() ? null : holes;
         return holes;
     }
 
@@ -148,7 +139,7 @@ public class BlobAnalyse2D {
         int row = y;
         int col = x;
         int lastdir = 6; // dernière direction
-        Vector<Byte> chain = new Vector<>();
+        List<Byte> chain = new ArrayList<>();
         int[] pix = { 0 };
         src.getPixel(x, y, pix);
         // initalise val avec la valeur d'intensité du blob
@@ -170,7 +161,7 @@ public class BlobAnalyse2D {
                 }
             }
             if (foundPix) { /* Found a next pixel ... */
-                chain.addElement(direction); /* Save direction as code */
+                chain.add(direction); /* Save direction as code */
                 row += dy[direction.intValue()];
                 col += dx[direction.intValue()];
                 lastdir = (direction + 5) % 8;
@@ -278,13 +269,12 @@ public class BlobAnalyse2D {
     }
 
     public static double computePerimeter(byte[] chain) {
-        double perimeter = 0;
         int corner = 0;
         int evenCode = 0;
         int oddCode = 0;
         // si le blob mesure 1 pixel, il y a que le point de départ et la chaine est nulle
         if (chain.length == 0) {
-            return perimeter = 2d;
+            return 2d;
         }
         // process le 1er élément de la chaine
         if ((chain[0] % 2) != 0) {
@@ -310,11 +300,10 @@ public class BlobAnalyse2D {
         // No = Number of odd chain codes
         // Nc = Number of "corners" (where the chain code changes)
         // Perimeter = (0.980) Ne + (1.406) No - (0.091) Nc
-        perimeter = (0.98d * evenCode) + (1.406d * oddCode) - (0.091d * corner);
-        return perimeter;
+        return (0.98d * evenCode) + (1.406d * oddCode) - (0.091d * corner);
     }
 
-    public ArrayList<Point> getBlobSumCoorXY() {
+    public List<Point> getBlobSumCoorXY() {
         getArea();
         return blob;
     }
@@ -331,7 +320,7 @@ public class BlobAnalyse2D {
         int row = y;
         int col = x;
         int lastdir = 4; // dernière direction
-        Vector<Byte> chain = new Vector<>();
+        List<Byte> chain = new ArrayList<>();
         // intialise les valeurs de la boundingBox
         int maxX = imgbound.x + imgbound.width;
         int maxY = imgbound.y + imgbound.height;
@@ -358,7 +347,7 @@ public class BlobAnalyse2D {
                 }
             }
             if (foundPix) { /* Found a next pixel ... */
-                chain.addElement(direction); /* Save direction as code */
+                chain.add(direction); /* Save direction as code */
                 row += dy[direction.intValue()];
                 col += dx[direction.intValue()];
                 lastdir = (direction + 5) % 8;
@@ -475,7 +464,7 @@ public class BlobAnalyse2D {
         return size;
     }
 
-    public static ArrayList<Double> getStatValue(ArrayList<Point> blobXY) {
+    public static List<Double> getStatValue(List<Point> blobXY) {
         ArrayList<Double> list = new ArrayList<>(11);
         int sumX = 0;
         int sumY = 0;

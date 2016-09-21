@@ -152,13 +152,12 @@ public final class KOManager {
         }
 
         if (newDicomKO != null) {
-            if (view2d != null) {
-                // Deactivate filter for new KO
-                ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
-                if (koFilterAction instanceof ToggleButtonListener) {
-                    ((ToggleButtonListener) koFilterAction).setSelected(false);
-                }
+            // Deactivate filter for new KO
+            ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
+            if (koFilterAction instanceof ToggleButtonListener) {
+                ((ToggleButtonListener) koFilterAction).setSelected(false);
             }
+
             newKOSelection = loadDicomKeyObject(view2d.getSeries(), newDicomKO);
         }
 
@@ -459,7 +458,7 @@ public final class KOManager {
                     ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
                     if (seqAction instanceof SliderCineListener) {
                         SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
-                        moveTroughSliceAction.setMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter),
+                        moveTroughSliceAction.setSliderMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter),
                             newImageIndex + 1);
                     }
                 }

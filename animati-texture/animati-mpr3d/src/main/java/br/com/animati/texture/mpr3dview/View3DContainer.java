@@ -121,7 +121,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         actions.put(ActionWA.MIP_OPTION.cmd(), true);
         actions.put(ActionWA.MIP_DEPTH.cmd(), true);
         actions.put(ActionWA.SMOOTHING.cmd(), true);
-        DEFAULT_MPR = new SynchView("MPR synch", "mpr", SynchData.Mode.Stack, //$NON-NLS-1$ //$NON-NLS-2$
+        DEFAULT_MPR = new SynchView("MPR synch", "mpr", SynchData.Mode.STACK, //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
 
         SYNCH_LIST.add(DEFAULT_MPR);

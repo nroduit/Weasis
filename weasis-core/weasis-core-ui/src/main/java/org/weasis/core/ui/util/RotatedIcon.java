@@ -67,8 +67,7 @@ public class RotatedIcon implements Icon {
             double radians = Math.toRadians(angle);
             double sin = Math.abs(Math.sin(radians));
             double cos = Math.abs(Math.cos(radians));
-            int width = (int) Math.floor(icon.getIconWidth() * cos + icon.getIconHeight() * sin);
-            return width;
+            return (int) Math.floor(icon.getIconWidth() * cos + icon.getIconHeight() * sin);
         } else if (rotate == Rotate.UPSIDE_DOWN) {
             return icon.getIconWidth();
         } else {
@@ -82,8 +81,7 @@ public class RotatedIcon implements Icon {
             double radians = Math.toRadians(angle);
             double sin = Math.abs(Math.sin(radians));
             double cos = Math.abs(Math.cos(radians));
-            int height = (int) Math.floor(icon.getIconHeight() * cos + icon.getIconWidth() * sin);
-            return height;
+            return (int) Math.floor(icon.getIconHeight() * cos + icon.getIconWidth() * sin);
         } else if (rotate == Rotate.UPSIDE_DOWN) {
             return icon.getIconHeight();
         } else {
@@ -117,8 +115,8 @@ public class RotatedIcon implements Icon {
             AffineTransform original = g2.getTransform();
             AffineTransform at = new AffineTransform();
             at.concatenate(original);
-            at.translate((getIconWidth() - icon.getIconWidth()) / 2, (getIconHeight() - icon.getIconHeight()) / 2);
-            at.rotate(Math.toRadians(angle), x + cWidth, y + cHeight);
+            at.translate((getIconWidth() - icon.getIconWidth()) / 2.0, (getIconHeight() - icon.getIconHeight()) / 2.0);
+            at.rotate(Math.toRadians(angle), x + icon.getIconWidth() / 2.0, y + icon.getIconHeight() / 2.0);
             g2.setTransform(at);
             icon.paintIcon(c, g2, x, y);
             g2.setTransform(original);

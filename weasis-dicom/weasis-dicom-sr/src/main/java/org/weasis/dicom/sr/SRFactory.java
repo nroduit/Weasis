@@ -15,9 +15,6 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -29,15 +26,16 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
-@Component(immediate = false)
-@Service
-@Property(name = "service.name", value = "DICOM SR Viewer")
+@org.apache.felix.scr.annotations.Component(immediate = false)
+@org.apache.felix.scr.annotations.Service
+@org.apache.felix.scr.annotations.Property(name = "service.name", value = "DICOM SR Viewer")
 public class SRFactory implements SeriesViewerFactory {
 
     public static final String NAME = Messages.getString("SRFactory.viewer"); //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MediaElement.class.getResource("/icon/22x22/text-x-generic.png")); //$NON-NLS-1$
 
     public SRFactory() {
+        super();
     }
 
     @Override

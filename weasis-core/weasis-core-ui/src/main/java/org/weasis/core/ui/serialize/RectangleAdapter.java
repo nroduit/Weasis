@@ -17,6 +17,9 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 public class RectangleAdapter {
+    
+    private RectangleAdapter() {
+    }
 
     static class RectanglePt {
         @XmlAttribute(required = true)
@@ -33,7 +36,7 @@ public class RectangleAdapter {
 
         @Override
         public RectanglePt marshal(Rectangle2D v) throws Exception {
-            if(Objects.isNull(v)) {
+            if (Objects.isNull(v)) {
                 return null;
             }
             RectanglePt p = new RectanglePt();

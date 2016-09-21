@@ -56,8 +56,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
     private final String tooltips;
     private final DefaultSingleCDockable dockable;
 
-    public ViewerPlugin(String PluginName) {
-        this(null, PluginName, null, null);
+    public ViewerPlugin(String pluginName) {
+        this(null, pluginName, null, null);
     }
 
     public ViewerPlugin(String uid, String pluginName, Icon icon, String tooltips) {
@@ -150,15 +150,10 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
 
     @Override
     public void close() {
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                UIManager.VIEWER_PLUGINS.remove(ViewerPlugin.this);
-                UIManager.DOCKING_CONTROL.removeDockable(dockable);
-            }
+        GuiExecutor.instance().execute(() -> {
+            UIManager.VIEWER_PLUGINS.remove(ViewerPlugin.this);
+            UIManager.DOCKING_CONTROL.removeDockable(dockable);
         });
-
     }
 
     public Component getComponent() {
@@ -170,21 +165,17 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
     }
 
     public void showDockable() {
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                if (!dockable.isVisible()) {
-                    if (!UIManager.VIEWER_PLUGINS.contains(ViewerPlugin.this)) {
-                        UIManager.VIEWER_PLUGINS.add(ViewerPlugin.this);
-                    }
-                    dockable.add(getComponent());
-                    dockable.setFocusComponent(ViewerPlugin.this);
-                    UIManager.MAIN_AREA.add(getDockable());
-                    dockable.setDefaultLocation(ExtendedMode.NORMALIZED,
-                        CLocation.working(UIManager.MAIN_AREA).stack());
-                    dockable.setVisible(true);
+        GuiExecutor.instance().execute(() -> {
+            if (!dockable.isVisible()) {
+                if (!UIManager.VIEWER_PLUGINS.contains(ViewerPlugin.this)) {
+                    UIManager.VIEWER_PLUGINS.add(ViewerPlugin.this);
                 }
+                dockable.add(getComponent());
+                dockable.setFocusComponent(ViewerPlugin.this);
+                UIManager.MAIN_AREA.add(getDockable());
+                dockable.setDefaultLocation(ExtendedMode.NORMALIZED,
+                    CLocation.working(UIManager.MAIN_AREA).stack());
+                dockable.setVisible(true);
             }
         });
     }

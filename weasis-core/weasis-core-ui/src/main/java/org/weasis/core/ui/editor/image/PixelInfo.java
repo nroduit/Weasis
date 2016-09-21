@@ -81,7 +81,7 @@ public class PixelInfo {
                         ? Messages.getString("PixelInfo.unknown") : channelNames[i].substring(0, //$NON-NLS-1$
                             1));
                     text.append("=");//$NON-NLS-1$
-                    text.append(DecFormater.oneDecimal(values[i]));
+                    text.append(DecFormater.twoDecimal(values[i]));
                 }
                 return text.toString();
             }

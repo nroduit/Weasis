@@ -157,7 +157,7 @@ public abstract class StreamSegment {
                     return (byte[]) fid.get(inputStream);
                 }
             } catch (Exception e) {
-                LOGGER.error(e.getMessage());
+                LOGGER.error("Cannot get bytes from inputstream", e);
             }
         }
         return null;

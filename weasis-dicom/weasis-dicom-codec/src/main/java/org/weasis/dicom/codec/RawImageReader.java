@@ -41,19 +41,19 @@ public class RawImageReader extends ImageReader {
     private RawImageInputStream iis = null;
 
     /**
+     * Constructs <code>RawImageReader</code> from the provided <code>ImageReaderSpi</code>.
+     */
+    public RawImageReader(ImageReaderSpi originator) {
+        super(originator);
+    }
+
+    /**
      * Wrapper for the protected method <code>computeRegions</code>. So it can be access from the classes which are not
      * in <code>ImageReader</code> hierachy.
      */
     public static void computeRegionsWrapper(ImageReadParam param, int srcWidth, int srcHeight, BufferedImage image,
         Rectangle srcRegion, Rectangle destRegion) {
         computeRegions(param, srcWidth, srcHeight, image, srcRegion, destRegion);
-    }
-
-    /**
-     * Constructs <code>RawImageReader</code> from the provided <code>ImageReaderSpi</code>.
-     */
-    public RawImageReader(ImageReaderSpi originator) {
-        super(originator);
     }
 
     /**

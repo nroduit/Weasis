@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.Component;
 
+@FunctionalInterface
 public interface ShowPopup {
 
     void showPopup(Component invoker, int x, int y);

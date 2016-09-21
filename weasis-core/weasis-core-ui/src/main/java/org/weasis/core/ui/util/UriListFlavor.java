@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
 public class UriListFlavor {
     private static final Logger LOGGER = LoggerFactory.getLogger(UriListFlavor.class);
 
-    public static final DataFlavor uriListFlavor = createConstant("text/uri-list;class=java.lang.String", null);
+    public static final DataFlavor flavor = createConstant("text/uri-list;class=java.lang.String", null);
 
-    private static final DataFlavor[] flavors = new DataFlavor[] { DataFlavor.javaFileListFlavor, uriListFlavor };
+    private static final DataFlavor[] flavors = new DataFlavor[] { DataFlavor.javaFileListFlavor, flavor };
 
     private UriListFlavor() {
     }

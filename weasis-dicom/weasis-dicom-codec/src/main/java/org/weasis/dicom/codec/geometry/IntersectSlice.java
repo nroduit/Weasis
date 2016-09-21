@@ -22,7 +22,7 @@ public class IntersectSlice extends LocalizerPoster {
         super(geometry);
     }
 
-    private boolean allTrue(boolean[] array) {
+    private static boolean allTrue(boolean[] array) {
         boolean all = true;
         for (int i = 0; i < array.length; ++i) {
             if (!array[i]) {
@@ -33,20 +33,19 @@ public class IntersectSlice extends LocalizerPoster {
         return all;
     }
 
-    private boolean oppositeEdges(boolean[] array) {
+    private static boolean oppositeEdges(boolean[] array) {
         return array[0] && array[2] || array[1] && array[3];
     }
 
-    private boolean adjacentEdges(boolean[] array) {
+    private static boolean adjacentEdges(boolean[] array) {
         return array[0] && array[1] || array[1] && array[2] || array[2] && array[3] || array[3] && array[0];
     }
 
-    private boolean[] classifyCornersOfRectangleIntoEdgesCrossingZPlane(Point3d[] corners) {
+    private static boolean[] classifyCornersOfRectangleIntoEdgesCrossingZPlane(Point3d[] corners) {
         int size = corners.length;
         boolean classification[] = new boolean[size];
         for (int i = 0; i < size; ++i) {
             int next = (i == size - 1) ? 0 : i + 1;
-            // System.err.print("["+i+","+next+"] ");
             classification[i] = classifyCornersIntoEdgeCrossingZPlane(corners[i], corners[next]);
         }
         return classification;
@@ -70,22 +69,19 @@ public class IntersectSlice extends LocalizerPoster {
             // Edges with both Z values +ve or both -ve don't cross the localizer plane
         }
 
-        boolean edges[] = classifyCornersOfRectangleIntoEdgesCrossingZPlane(corners);
+        boolean[] edges = classifyCornersOfRectangleIntoEdgesCrossingZPlane(corners);
 
         if (allTrue(edges)) {
-            // System.err.println("Source in exactly the same plane as the localizer");
+            // "Source in exactly the same plane as the localizer
             return drawOutlineOnLocalizer(corners); // draw a rectangle
         } else if (oppositeEdges(edges)) {
-            // System.err.println("Opposite edges cross the localizer");
             // draw line between where two edges cross (have zero Z value)
             return drawLinesBetweenAnyPointsWhichIntersectPlaneWhereZIsZero(corners);
         } else if (adjacentEdges(edges)) {
-            // System.err.println("Adjacent edges cross the localizer");
             // draw line between where two edges cross (have zero Z value)
             return drawLinesBetweenAnyPointsWhichIntersectPlaneWhereZIsZero(corners);
         } else {
-            // System.err.println("No edges cross the localizer");
-            // draw nothing
+            // No edges cross the localizer
             return null;
         }
     }

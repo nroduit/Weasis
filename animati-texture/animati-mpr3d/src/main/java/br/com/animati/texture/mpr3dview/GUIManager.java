@@ -40,6 +40,7 @@ import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
@@ -196,7 +197,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                setValue(getValue() + e.getWheelRotation());
+                setSliderValue(getSliderValue() + e.getWheelRotation());
             }
         };
     }
@@ -211,8 +212,9 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         };
     }
 
-    private ComboItemListener newFilterAction() {
-        return new ComboItemListener(ActionW.FILTER, kernelList.toArray()) {
+    private ComboItemListener<StaticHelpers.TextureKernel> newFilterAction() {
+        return new ComboItemListener<StaticHelpers.TextureKernel>(ActionW.FILTER,
+            kernelList.toArray(new StaticHelpers.TextureKernel[kernelList.size()])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -253,9 +255,9 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         if (ActionW.PRESET.cmd().equals(command) && object instanceof PresetWindowLevel) {
             preset = (PresetWindowLevel) object;
             getAction(ActionW.WINDOW, SliderChangeListener.class)
-                .ifPresent(a -> a.setValueWithoutTriggerAction(preset.getWindow().intValue()));
+                .ifPresent(a -> a.setSliderValue(a.toSliderValue(preset.getWindow()), false));
             getAction(ActionW.LEVEL, SliderChangeListener.class)
-                .ifPresent(a -> a.setValueWithoutTriggerAction(preset.getLevel().intValue()));
+                .ifPresent(a -> a.setSliderValue(a.toSliderValue(preset.getLevel()), false));
             // getAction(ActionW.LUT_SHAPE, ComboItemListener.class)
             // .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(preset.getLutShape()));
         } else {
@@ -268,8 +270,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         firePropertyChange(ActionW.SYNCH.cmd(), null, evt);
     };
 
-    private ComboItemListener newPresetAction() {
-        return new ComboItemListener(ActionW.PRESET, null) {
+    private ComboItemListener<PresetWindowLevel> newPresetAction() {
+        return new ComboItemListener<PresetWindowLevel>(ActionW.PRESET, null) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -278,8 +280,9 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         };
     }
 
-    private ComboItemListener newLutShapeAction() {
-        return new ComboItemListener(ActionW.LUT_SHAPE, LutShape.DEFAULT_FACTORY_FUNCTIONS.toArray()) {
+    private ComboItemListener<LutShape> newLutShapeAction() {
+        return new ComboItemListener<LutShape>(ActionW.LUT_SHAPE,
+            LutShape.DEFAULT_FACTORY_FUNCTIONS.toArray(new LutShape[LutShape.DEFAULT_FACTORY_FUNCTIONS.size()])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -288,9 +291,10 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         };
     }
 
-    private ComboItemListener newLutAction() {
+    private ComboItemListener<ColorMask> newLutAction() {
 
-        return new ComboItemListener(ActionW.LUT, colorMaskList.toArray()) {
+        return new ComboItemListener<ColorMask>(ActionW.LUT,
+            colorMaskList.toArray(new ColorMask[colorMaskList.size()])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -300,8 +304,9 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         };
     }
 
-    private ComboItemListener newSortStackAction() {
-        return new ComboItemListener(ActionW.SORTSTACK, SortSeriesStack.getValues()) {
+    private ComboItemListener<SeriesComparator<DicomImageElement>> newSortStackAction() {
+        return new ComboItemListener<SeriesComparator<DicomImageElement>>(ActionW.SORTSTACK,
+            SortSeriesStack.getValues()) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -327,9 +332,9 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         };
     }
 
-    private ComboItemListener newMipOption() {
+    private ComboItemListener<TextureImageCanvas.MipOption> newMipOption() {
 
-        return new ComboItemListener(ActionWA.MIP_OPTION,
+        return new ComboItemListener<TextureImageCanvas.MipOption>(ActionWA.MIP_OPTION,
             new TextureImageCanvas.MipOption[] { TextureImageCanvas.MipOption.None,
                 TextureImageCanvas.MipOption.Minimum, TextureImageCanvas.MipOption.Average,
                 TextureImageCanvas.MipOption.Maximum }) {
@@ -555,27 +560,27 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         getAction(ActionW.FILTER, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.FILTER.cmd())));
         getAction(ActionW.ROTATION, SliderChangeListener.class)
-            .ifPresent(a -> a.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionW.ROTATION.cmd())));
+            .ifPresent(a -> a.setSliderValue((Integer) view2d.getActionValue(ActionW.ROTATION.cmd())));
         getAction(ActionW.FLIP, ToggleButtonListener.class)
             .ifPresent(a -> a.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.FLIP.cmd())));
 
         getAction(ActionWA.SMOOTHING, ToggleButtonListener.class).ifPresent(
             a -> a.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionWA.SMOOTHING.cmd())));
 
-        getAction(ActionW.ZOOM, SliderChangeListener.class).ifPresent(a -> a.setValueWithoutTriggerAction(
-            viewScaleToSliderValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd())))));
+        getAction(ActionW.ZOOM, SliderChangeListener.class)
+            .ifPresent(a -> a.setRealValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd()))));
         getAction(ActionW.SPATIAL_UNIT, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd())));
 
         getAction(ActionWA.MIP_OPTION, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionWA.MIP_OPTION.cmd())));
 
-        cineAction.ifPresent(a -> a.setMinMaxValueWithoutTriggerAction(1,
-            ((TextureImageCanvas) view2d).getTotalSlices(), view2d.getFrameIndex()));
+        cineAction.ifPresent(a -> a.setSliderMinMaxValue(1, ((TextureImageCanvas) view2d).getTotalSlices(),
+            view2d.getFrameIndex(), false));
 
-        getAction(ActionWA.MIP_DEPTH, SliderChangeListener.class).ifPresent(
-            a -> a.setMinMaxValueWithoutTriggerAction(1, cineAction.isPresent() ? cineAction.get().getMax() : 1,
-                (Integer) view2d.getActionValue(ActionWA.MIP_DEPTH.cmd())));
+        getAction(ActionWA.MIP_DEPTH, SliderChangeListener.class)
+            .ifPresent(a -> a.setSliderMinMaxValue(1, cineAction.isPresent() ? cineAction.get().getSliderMax() : 1,
+                (Integer) view2d.getActionValue(ActionWA.MIP_DEPTH.cmd()), false));
 
         boolean volume = ViewType.VOLUME3D.equals(((ViewTexture) view2d).getViewType());
         Optional<ToggleButtonListener> volumeLighting = getAction(ActionWA.VOLUM_LIGHT, ToggleButtonListener.class);
@@ -587,8 +592,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                 a -> a.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionWA.VOLUM_LIGHT.cmd())));
             volumeSlicing.ifPresent(a -> a
                 .setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionWA.VOLUM_CENTER_SLICING.cmd())));
-            volumeQuality.ifPresent(
-                a -> a.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionWA.VOLUM_QUALITY.cmd())));
+            volumeQuality
+                .ifPresent(a -> a.setSliderValue((Integer) view2d.getActionValue(ActionWA.VOLUM_QUALITY.cmd()), false));
         }
         volumeLighting.ifPresent(a -> a.enableAction(volume));
         volumeSlicing.ifPresent(a -> a.enableAction(volume));
@@ -622,15 +627,16 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
             int fullDynamicWidth = series.windowingMaxInValue - series.windowingMinInValue;
 
             getAction(ActionW.WINDOW, SliderChangeListener.class)
-                .ifPresent(a -> a.setMinMaxValueWithoutTriggerAction(1, fullDynamicWidth, view2d.windowingWindow));
+                .ifPresent(a -> a.setRealMinMaxValue(1, fullDynamicWidth, view2d.windowingWindow, false));
             getAction(ActionW.LEVEL, SliderChangeListener.class)
-                .ifPresent(a -> a.setMinMaxValueWithoutTriggerAction(series.windowingMinInValue,
-                    series.windowingMaxInValue, view2d.windowingLevel));
+                .ifPresent(a -> a.setRealMinMaxValue(series.windowingMinInValue, series.windowingMaxInValue,
+                    view2d.windowingLevel, false));
 
             Optional<ComboItemListener> presetAction = getAction(ActionW.PRESET, ComboItemListener.class);
             List<PresetWindowLevel> presetList = series.getPresetList(true, false);
             if (presetList != null) {
-                presetAction.ifPresent(a -> a.setDataListWithoutTriggerAction(presetList.toArray()));
+                presetAction.ifPresent(
+                    a -> a.setDataListWithoutTriggerAction(presetList == null ? null : presetList.toArray()));
             }
             presetAction
                 .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.PRESET.cmd())));
@@ -654,7 +660,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                 new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
 
         } else if (ResetTools.Rotation.equals(action)) {
-            getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a.setValue(0));
+            getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a.setSliderValue(0));
         } else if (ResetTools.WindowLevel.equals(action)) {
             getAction(ActionW.PRESET, ComboItemListener.class).ifPresent(a -> a.setSelectedItem(a.getFirstItem()));
         } else if (ResetTools.Pan.equals(action)) {
@@ -707,7 +713,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                     }
                 } else {
                     // TODO if Pan is activated than rotation is required
-                    if (Mode.Stack.equals(synch.getMode())) {
+                    if (Mode.STACK.equals(synch.getMode())) {
                         for (int i = 0; i < panes.size(); i++) {
                             ViewCanvas<DicomImageElement> pane = panes.get(i);
                             pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
@@ -818,19 +824,19 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
                 if (rotateAction.get().isActionEnabled()) {
                     JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-                    menuItem.addActionListener(e -> rotateAction.get().setValue(0));
+                    menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
                     menuItem.addActionListener(
-                        e -> rotateAction.get().setValue((rotateAction.get().getValue() - 90 + 360) % 360));
+                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() - 90 + 360) % 360));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
                     menuItem.addActionListener(
-                        e -> rotateAction.get().setValue((rotateAction.get().getValue() + 90) % 360));
+                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 90) % 360));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
                     menuItem.addActionListener(
-                        e -> rotateAction.get().setValue((rotateAction.get().getValue() + 180) % 360));
+                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 180) % 360));
                     menu.add(menuItem);
 
                     Optional<ToggleButtonListener> flipAction = getAction(ActionW.FLIP, ToggleButtonListener.class);

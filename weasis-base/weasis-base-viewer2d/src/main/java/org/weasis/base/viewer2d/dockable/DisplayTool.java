@@ -215,7 +215,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private void treeValueChanged(TreeCheckingEvent e) {
         if (!initPathSelection) {
             TreePath path = e.getPath();
-            Object source = e.getSource();
             boolean selected = e.isCheckedPath();
             Object selObject = path.getLastPathComponent();
             Object parent = null;
@@ -236,49 +235,48 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     }
                 }
             }
-            if (views != null) {
-                if (rootNode.equals(parent)) {
-                    if (image.equals(selObject)) {
-                        for (ViewCanvas<ImageElement> v : views) {
-                            if (selected != v.getImageLayer().getVisible()) {
-                                v.getImageLayer().setVisible(selected);
-                                v.getJComponent().repaint();
-                            }
-                        }
-                    } else if (info.equals(selObject)) {
-                        for (ViewCanvas<ImageElement> v : views) {
-                            if (selected != v.getInfoLayer().getVisible()) {
-                                v.getInfoLayer().setVisible(selected);
-                                v.getJComponent().repaint();
-                            }
-                        }
-                    } else if (drawings.equals(selObject)) {
-                        for (ViewCanvas<ImageElement> v : views) {
-                            v.setDrawingsVisibility(selected);
+            if (views == null) {
+                return;
+            }
+            
+            if (rootNode.equals(parent)) {
+                if (image.equals(selObject)) {
+                    for (ViewCanvas<ImageElement> v : views) {
+                        if (selected != v.getImageLayer().getVisible()) {
+                            v.getImageLayer().setVisible(selected);
+                            v.getJComponent().repaint();
                         }
                     }
+                } else if (info.equals(selObject)) {
+                    for (ViewCanvas<ImageElement> v : views) {
+                        if (selected != v.getInfoLayer().getVisible()) {
+                            v.getInfoLayer().setVisible(selected);
+                            v.getJComponent().repaint();
+                        }
+                    }
+                } else if (drawings.equals(selObject)) {
+                    for (ViewCanvas<ImageElement> v : views) {
+                        v.setDrawingsVisibility(selected);
+                    }
+                }
 
-                } else if (info.equals(parent)) {
-                    if (selObject != null) {
-                        for (ViewCanvas<ImageElement> v : views) {
-                            LayerAnnotation layer = v.getInfoLayer();
-                            if (layer != null) {
-                                if (layer.setDisplayPreferencesValue(selObject.toString(), selected)) {
-                                    v.getJComponent().repaint();
-                                }
-                            }
+            } else if (info.equals(parent)) {
+                if (selObject != null) {
+                    for (ViewCanvas<ImageElement> v : views) {
+                        LayerAnnotation layer = v.getInfoLayer();
+                        if (layer != null && layer.setDisplayPreferencesValue(selObject.toString(), selected)) {
+                            v.getJComponent().repaint();
                         }
                     }
-                } else if (drawings.equals(parent)) {
-                    if (selObject instanceof DefaultMutableTreeNode) {
-                        if (((DefaultMutableTreeNode) selObject).getUserObject() instanceof LayerType) {
-                            Layer layer = (Layer) ((DefaultMutableTreeNode) selObject).getUserObject();
-                            for (ViewCanvas<ImageElement> v : views) {
-                                if (!Objects.equals(layer.getVisible(), selected)) {
-                                    layer.setVisible(selected);
-                                    v.getJComponent().repaint();
-                                }
-                            }
+                }
+            } else if (drawings.equals(parent)) {
+                if (selObject instanceof DefaultMutableTreeNode
+                    && ((DefaultMutableTreeNode) selObject).getUserObject() instanceof LayerType) {
+                    Layer layer = (Layer) ((DefaultMutableTreeNode) selObject).getUserObject();
+                    for (ViewCanvas<ImageElement> v : views) {
+                        if (!Objects.equals(layer.getVisible(), selected)) {
+                            layer.setVisible(selected);
+                            v.getJComponent().repaint();
                         }
                     }
                 }

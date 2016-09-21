@@ -11,6 +11,8 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
+import org.weasis.core.api.gui.util.MathUtil;
+
 /**
  * <p>
  * An abstract class that provides the basis for posting the position of specified slices and volumes on (usually
@@ -92,7 +94,7 @@ public abstract class LocalizerPoster {
      * @throws IllegalArgumentException
      *             thrown if not
      */
-    public static void validateDirectionCosines(Vector3d row, Vector3d column) throws IllegalArgumentException {
+    public static void validateDirectionCosines(Vector3d row, Vector3d column) {
         if (Math.abs(row.lengthSquared() - 1) > 0.001) {
             throw new IllegalArgumentException("Row not a unit vector");
         }
@@ -126,9 +128,9 @@ public abstract class LocalizerPoster {
 
         validateDirectionCosines(row, column);
 
-        double spacingArray[] = new double[3];
+        double[] spacingArray = new double[3];
         voxelSpacing.get(spacingArray);
-        double dimensionsArray[] = new double[3];
+        double[] dimensionsArray = new double[3];
         dimensions.get(dimensionsArray);
 
         Vector3d distanceAlongRow = new Vector3d(row);
@@ -147,9 +149,7 @@ public abstract class LocalizerPoster {
         brhc.add(distanceAlongRow);
         brhc.add(distanceAlongColumn);
 
-        Point3d[] corners = { tlhc, trhc, brhc, blhc };
-
-        return corners;
+        return new Point3d[] { tlhc, trhc, brhc, blhc };
     }
 
     /**
@@ -179,9 +179,9 @@ public abstract class LocalizerPoster {
         Vector3d normal = new Vector3d();
         normal.cross(row, column); // the normal to the plane is the cross product of the row and column
 
-        double spacingArray[] = new double[3];
+        double[] spacingArray = new double[3];
         voxelSpacing.get(spacingArray);
-        double dimensionsArray[] = new double[3];
+        double[] dimensionsArray = new double[3];
         dimensions.get(dimensionsArray);
 
         Vector3d distanceAlongRow = new Vector3d(row);
@@ -218,9 +218,7 @@ public abstract class LocalizerPoster {
         brhcB.add(distanceAlongRow);
         brhcB.add(distanceAlongColumn);
 
-        Point3d[] corners = { tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB };
-
-        return corners;
+        return new Point3d[] { tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB };
     }
 
     /**
@@ -257,42 +255,30 @@ public abstract class LocalizerPoster {
      * @return an array of 2 values in which the column, then the row location on the image is returned
      */
     protected Point2D.Double transformPointInLocalizerPlaneIntoImageSpace(Point3d point) {
-        double scaleSubPixelHeightOfColumn = (localizerDimensionsArray[0] - 1) / localizerDimensionsArray[0]; // number
-                                                                                                              // of rows
-        double scaleSubPixelWidthOfRow = (localizerDimensionsArray[1] - 1) / localizerDimensionsArray[1]; // number of
-                                                                                                          // cols
-        Point2D.Double location =
-            new Point2D.Double(point.x / localizerVoxelSpacingArray[1] * scaleSubPixelHeightOfColumn + 0.5, // NB.
-                                                                                                            // x is
-                                                                                                            // the
-                                                                                                            // column;
-                                                                                                            // use
-                                                                                                            // as
-                                                                                                            // height
-                                                                                                            // number
-                                                                                                            // of
-                                                                                                            // rows
-                                                                                                            // *
-                                                                                                            // spacing
-                                                                                                            // between
-                                                                                                            // rows
-                point.y / localizerVoxelSpacingArray[0] * scaleSubPixelWidthOfRow + 0.5); // NB. y is the row; use
-                                                                                          // as width number of
-                                                                                          // cols * spacing between
-                                                                                          // cols
-        return location;
+        // number of rows
+        double scaleSubPixelHeightOfColumn = (localizerDimensionsArray[0] - 1) / localizerDimensionsArray[0];
+        // number of cols
+        double scaleSubPixelWidthOfRow = (localizerDimensionsArray[1] - 1) / localizerDimensionsArray[1];
+
+        /*
+         * NB. x is the column; use as height number of rows spacing between rows
+         *
+         * NB. y is the row; use as width number of cols * spacing between cols
+         */
+        return new Point2D.Double(point.x / localizerVoxelSpacingArray[1] * scaleSubPixelHeightOfColumn + 0.5,
+            point.y / localizerVoxelSpacingArray[0] * scaleSubPixelWidthOfRow + 0.5);
     }
 
     protected List<Point2D.Double> drawOutlineOnLocalizer(List<Point3d> corners) {
-        if (corners != null && corners.size() > 0) {
+        if (corners != null && !corners.isEmpty()) {
             Point3d[] cornersArray = new Point3d[corners.size()];
-            return drawOutlineOnLocalizer((corners.toArray(cornersArray)));
+            return drawOutlineOnLocalizer(corners.toArray(cornersArray));
         }
         return null;
     }
 
     protected List<Point2D.Double> drawOutlineOnLocalizer(Point3d[] corners) {
-        ArrayList<Point2D.Double> shapes = new ArrayList<Point2D.Double>();
+        ArrayList<Point2D.Double> shapes = new ArrayList<>();
         for (int i = 0; i < corners.length; ++i) {
             shapes.add(transformPointInLocalizerPlaneIntoImageSpace(corners[i]));
         }
@@ -302,8 +288,9 @@ public abstract class LocalizerPoster {
     protected Point3d intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(double[] a, double[] b) {
         double[] u = new double[3];
         // be careful not to divide by zero when slope infinite (and unnecessary, since multiplicand is then zero)
-        u[1] = (b[2] == a[2]) ? a[1] : (b[1] - a[1]) / (b[2] - a[2]) * (0 - a[2]) + a[1]; // Z of unknown point is zero
-        u[0] = (b[1] == a[1]) ? a[0] : (b[0] - a[0]) / (b[1] - a[1]) * (u[1] - a[1]) + a[0];
+        // Z of unknown point is zero
+        u[1] = (MathUtil.isEqual(b[2], a[2])) ? a[1] : (b[1] - a[1]) / (b[2] - a[2]) * (0 - a[2]) + a[1];
+        u[0] = (MathUtil.isEqual(b[1], a[1])) ? a[0] : (b[0] - a[0]) / (b[1] - a[1]) * (u[1] - a[1]) + a[0];
         u[2] = 0;
         return new Point3d(u);
     }
@@ -332,26 +319,24 @@ public abstract class LocalizerPoster {
                 intersections.add(intersection);
             }
         }
-        return intersections.size() > 0 ? drawOutlineOnLocalizer(intersections) : null;
+        return !intersections.isEmpty() ? drawOutlineOnLocalizer(intersections) : null;
     }
 
     protected static boolean classifyCornersIntoEdgeCrossingZPlane(Point3d startCorner, Point3d endCorner) {
         double[] startArray = new double[3];
         double[] endArray = new double[3];
-        boolean classification = false;
         startCorner.get(startArray);
         double startZ = startArray[2];
         endCorner.get(endArray);
         double endZ = endArray[2];
-        classification = (startZ <= 0 && endZ >= 0) || (startZ >= 0 && endZ <= 0);
-        return classification;
+        return (startZ <= 0 && endZ >= 0) || (startZ >= 0 && endZ <= 0);
     }
 
     protected List<Point3d> getIntersectionsOfCubeWithZPlane(Point3d[] corners) {
         ArrayList<Point3d> intersections = new ArrayList<>(4);
 
         // the check and traversal order are very dependent on the order of the
-        // corners which are { tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB }
+        // corners which are: tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB
         // as established in LocalizerPoster.getCornersOfSourceCubeInSourceSpace()
 
         // traverse each of the (three) possibilities for which opposite edges intersect the Z plane ...
@@ -364,7 +349,6 @@ public abstract class LocalizerPoster {
             && classifyCornersIntoEdgeCrossingZPlane(corners[2], corners[3])
             && classifyCornersIntoEdgeCrossingZPlane(corners[4], corners[5])
             && classifyCornersIntoEdgeCrossingZPlane(corners[6], corners[7])) {
-            // System.err.println("LocalizerPoster.getIntersectionsOfCubeWithZPlane(): adding 0,1 2,3 4,5 6,7");
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[0], corners[1]));
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[2], corners[3]));
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[6], corners[7]));
@@ -373,7 +357,6 @@ public abstract class LocalizerPoster {
             && classifyCornersIntoEdgeCrossingZPlane(corners[1], corners[2])
             && classifyCornersIntoEdgeCrossingZPlane(corners[4], corners[7])
             && classifyCornersIntoEdgeCrossingZPlane(corners[5], corners[6])) {
-            // System.err.println("LocalizerPoster.getIntersectionsOfCubeWithZPlane(): adding 0,3 1,2 4,7 5,6");
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[0], corners[3]));
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[1], corners[2]));
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[5], corners[6]));
@@ -382,7 +365,6 @@ public abstract class LocalizerPoster {
             && classifyCornersIntoEdgeCrossingZPlane(corners[1], corners[5])
             && classifyCornersIntoEdgeCrossingZPlane(corners[2], corners[6])
             && classifyCornersIntoEdgeCrossingZPlane(corners[3], corners[7])) {
-            // System.err.println("LocalizerPoster.getIntersectionsOfCubeWithZPlane(): adding 0,4 1,5 2,6 3,7");
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[0], corners[4]));
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[1], corners[5]));
             intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[2], corners[6]));

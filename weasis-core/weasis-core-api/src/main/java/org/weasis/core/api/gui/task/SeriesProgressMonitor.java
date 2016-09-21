@@ -33,8 +33,8 @@ public class SeriesProgressMonitor extends FilterInputStream {
         this.series = Objects.requireNonNull(series);
         try {
             size = in.available();
-        } catch (IOException ioe) {
-            size = 0;
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
     }
 
