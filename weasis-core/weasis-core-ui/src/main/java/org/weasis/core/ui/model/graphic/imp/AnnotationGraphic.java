@@ -194,8 +194,8 @@ public class AnnotationGraphic extends AbstractDragGraphic {
             }
             labelBounds = new Rectangle.Double();
             labelBounds.setFrameFromCenter(ptBox.getX(), ptBox.getY(),
-                ptBox.getX() + labelWidth / 2 + DefaultGraphicLabel.GROWING_BOUND, ptBox.getY()
-                    + labelHeight * (labels == null ? 1 : labels.length / 2) + DefaultGraphicLabel.GROWING_BOUND);
+                ptBox.getX() + labelWidth / 2.0 + DefaultGraphicLabel.GROWING_BOUND, ptBox.getY()
+                    + labelHeight * (labels == null ? 1 : labels.length) / 2.0 + DefaultGraphicLabel.GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, DefaultGraphicLabel.GROWING_BOUND);
             if (line != null) {
                 newShape.addLinkSegmentToInvariantShape(line, ptBox, labelBounds, getDashStroke(lineThickness), false);
@@ -321,11 +321,9 @@ public class AnnotationGraphic extends AbstractDragGraphic {
             updateBoundsSize(defaultFont, fontRenderContext);
 
             labelBounds = new Rectangle.Double();
-            labelBounds.setFrameFromCenter(pos.getX(), pos.getY(), (labelWidth + DefaultGraphicLabel.GROWING_BOUND) / 2,
-                ((labelHeight * labels.length) + DefaultGraphicLabel.GROWING_BOUND) * 2);
             labelBounds.setFrameFromCenter(pos.getX(), pos.getY(),
-                ptBox.getX() + labelWidth / 2 + DefaultGraphicLabel.GROWING_BOUND,
-                ptBox.getY() + labelHeight * this.labels.length / 2 + DefaultGraphicLabel.GROWING_BOUND);
+                ptBox.getX() + labelWidth / 2.0 + DefaultGraphicLabel.GROWING_BOUND,
+                ptBox.getY() + labelHeight * this.labels.length / 2.0 + DefaultGraphicLabel.GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, DefaultGraphicLabel.GROWING_BOUND);
         }
         buildShape(null);

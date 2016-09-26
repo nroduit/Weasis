@@ -82,7 +82,7 @@ import bibliothek.gui.dock.common.CLocation;
 public class MeasureTool extends PluginTool implements GraphicSelectionListener {
     private static final long serialVersionUID = 1117961156637401550L;
 
-    public static final String BUTTON_NAME = Messages.getString("Tools.meas"); //$NON-NLS-1$
+    public static final String BUTTON_NAME = ActionW.DRAW + " & " + ActionW.MEASURE;
     public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img"); //$NON-NLS-1$
     public static final int DockableWidth = javax.swing.UIManager.getLookAndFeel() != null
         ? javax.swing.UIManager.getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205; //$NON-NLS-1$
