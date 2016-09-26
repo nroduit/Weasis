@@ -459,10 +459,9 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
                     if (hideMin || infos[j].containsTag(TagD.get(Tag.PatientName))) {
-                        Object value;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                value = getTagValue(tag, patient, study, series, dcm);
+                                Object value = getTagValue(tag, patient, study, series, dcm);
                                 if (value != null) {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {

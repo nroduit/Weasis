@@ -32,8 +32,6 @@ public class ContructorNoArgumentsSuite extends ModelListHelper {
 
         assertThat(actual.getSelectGraphic()).isEqualTo(Optional.empty());
 
-        assertThat(actual.getCreateGraphic()).isNull();
-
         assertThat(actual.getLayerCount()).isEqualTo(0);
     } 
 }

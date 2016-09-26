@@ -34,6 +34,7 @@ public class CalibrationAction extends AbstractAcquireAction {
     @Override
     public void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view) {
         imageInfo.removeLayer(view);
+        this.centralPanel.restoreLastAction();
     }
 
     @Override

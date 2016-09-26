@@ -170,16 +170,17 @@ public class RectifyAction extends AbstractAcquireAction {
     @Override
     public void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view) {
         imageInfo.removeLayer(view);
+        this.centralPanel.restoreLastAction();
 
         if (view.getImageLayer() instanceof RenderedImageLayer && currentCropArea != null) {
-            imageInfo.getCurrentValues().setCropZone(null); // Force dirty value
+            imageInfo.getCurrentValues().setCropZone(null); // Force dirty value, rotation is always apply in post process
             imageInfo.getNextValues()
                 .setCropZone(adaptToValidateCropArea(view, currentCropArea.getShape().getBounds()).getBounds());
             view.getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
             view.getDisplayOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
             imageInfo.applyPostProcess(view);
             view.getImage().setTag(TagW.ThumbnailPath, null);
-            Panner panner = view.getPanner();
+            Panner<?> panner = view.getPanner();
             if (panner != null) {
                 panner.updateImage();
             }

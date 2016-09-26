@@ -169,7 +169,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     public ViewCanvas<E> getSelectedImagePane() {
         return selectedImagePane;
     }
-    
+
     @Override
     public void close() {
         super.close();
@@ -260,7 +260,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
     }
 
-    protected void removeComponents(){
+    protected void removeComponents() {
         for (Component c : components) {
             if (c instanceof SeriesViewerListener) {
                 eventManager.removeSeriesViewerListener((SeriesViewerListener) c);
@@ -268,7 +268,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
         components.clear();
     }
-    
+
     /**
      * Set a layout to this view panel. The layout is defined by the provided number corresponding the layout definition
      * in the property file.
@@ -344,12 +344,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 }
                 v.enableMouseAndKeyListener(mouseActions);
             }
-            Graphic graphic = null;
-            ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
-            if (action instanceof ComboItemListener) {
-                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-            }
-            setDrawActions(graphic);
             selectedImagePane.setSelected(true);
             eventManager.updateComponentsListener(selectedImagePane);
             if (selectedImagePane.getSeries() instanceof Series) {
@@ -403,20 +397,14 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     }
                     v.enableMouseAndKeyListener(mouseActions);
                 }
-                Graphic graphic = null;
-                ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
-                if (action instanceof ComboItemListener) {
-                    graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-                }
-                setDrawActions(graphic);
                 selectedImagePane.setSelected(true);
                 eventManager.updateComponentsListener(selectedImagePane);
             }
         }
     }
 
-    public void setSelectedImagePaneFromFocus(ViewCanvas<E> IViewCanvas) {
-        setSelectedImagePane(IViewCanvas);
+    public void setSelectedImagePaneFromFocus(ViewCanvas<E> viewCanvas) {
+        setSelectedImagePane(viewCanvas);
     }
 
     public void setSelectedImagePane(ViewCanvas<E> viewCanvas) {
@@ -446,12 +434,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             new SeriesViewerEvent(this, viewCanvas == null ? null : viewCanvas.getSeries(), null, EVENT.SELECT_VIEW));
     }
 
-    public void resetMaximizedSelectedImagePane(final ViewCanvas<E> IViewCanvas) {
+    public void resetMaximizedSelectedImagePane(final ViewCanvas<E> viewCanvas) {
         if (grid.getComponentCount() == 1) {
             Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
             if (fullscreenDialog != null
                 && fullscreenDialog.getTitle().equals(Messages.getString("ImageViewerPlugin.fullscreen"))) { //$NON-NLS-1$
-                maximizedSelectedImagePane(IViewCanvas, null);
+                maximizedSelectedImagePane(viewCanvas, null);
             }
         }
     }
@@ -543,10 +531,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
 
         defaultView2d.getJComponent().requestFocusInWindow();
-    }
-
-    public synchronized void setDrawActions(Graphic graphic) {
-        getImagePanels().stream().map(v -> v.getGraphicManager()).forEach(lm -> lm.setCreateGraphic(graphic));
     }
 
     /** Return the image in the image display panel. */
@@ -975,4 +959,5 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
         setSelectedImagePane(view2ds.get(pos));
     }
+
 }

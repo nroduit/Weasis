@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -824,29 +825,20 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
     }
 
-    protected MouseActionAdapter getMouseAdapter(String action) {
-        if (action.equals(ActionW.MEASURE.cmd()) || action.equals(ActionW.DRAW.cmd())) {
-            return graphicMouseHandler;
-        } else if (action.equals(ActionW.PAN.cmd())) {
-            return getAction(ActionW.PAN);
-        } else if (action.equals(ActionW.CONTEXTMENU.cmd())) {
+    protected MouseActionAdapter getMouseAdapter(String command) {
+        if (command.equals(ActionW.CONTEXTMENU.cmd())) {
             return contextMenuHandler;
-        } else if (action.equals(ActionW.WINDOW.cmd())) {
-            return getAction(ActionW.WINDOW);
-        } else if (action.equals(ActionW.LEVEL.cmd())) {
-            return getAction(ActionW.LEVEL);
-        } else if (action.equals(ActionW.WINLEVEL.cmd())) {
-            return getAction(ActionW.LEVEL);
-        } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
-            return getAction(ActionW.SCROLL_SERIES);
-        } else if (action.equals(ActionW.ZOOM.cmd())) {
-            return getAction(ActionW.ZOOM);
-        } else if (action.equals(ActionW.CROSSHAIR.cmd())) {
-            return getAction(ActionW.CROSSHAIR);
-        } else if (action.equals(ActionW.ROTATION.cmd())) {
-            return getAction(ActionW.ROTATION);
         }
-        return null;
+
+        Optional<ActionW> actionKey = eventManager.getActionKey(command);
+        if (!actionKey.isPresent()) {
+            return null;
+        }
+        
+        if (actionKey.get().isDrawingAction()) {
+            return graphicMouseHandler;
+        }
+        return eventManager.getAction(actionKey.get(), MouseActionAdapter.class).orElse(null);
     }
 
     public void computeCrosshair(Point3d p3) {

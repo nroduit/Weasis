@@ -337,17 +337,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     if (c != null && c.length >= 1) {
                         pixelInfo.setChannelNames(getChannelNames(image));
                     }
-
-                } catch (Exception | OutOfMemoryError e) {
+                } catch (OutOfMemoryError e) {
                     LOGGER.error("Get pixel value", e);//$NON-NLS-1$
-                    if (e instanceof OutOfMemoryError) {
-                        // when image tile is not available anymore (file stream closed)
-                        System.gc();
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException et) {
-                        }
+                    // when image tile is not available anymore (file stream closed)
+                    System.gc();
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException et) {
                     }
+
+                } catch (Exception  e) {
+                    LOGGER.error("Get pixel value", e);//$NON-NLS-1$
                 }
             }
         }
@@ -994,7 +994,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
         } catch (NoninvertibleTransformException e) {
-            LOGGER.error("Create inverse transform",e);
+            LOGGER.error("Create inverse transform", e);
         }
     }
 
@@ -1421,24 +1421,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 return;
             }
 
-            int modifiers = evt.getModifiersEx();
-            MouseActions mouseActions = eventManager.getMouseActions();
-            Optional<ActionW> action = Optional.empty();
-            // left mouse button, always active
-            if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
-                action = eventManager.getActionFromCommand(mouseActions.getLeft());
-            }
-            // middle mouse button
-            else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0
-                && ((mouseActions.getActiveButtons() & InputEvent.BUTTON2_DOWN_MASK) != 0)) {
-                action = eventManager.getActionFromCommand(mouseActions.getMiddle());
-            }
-            // right mouse button
-            else if ((modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0
-                && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
-                action = eventManager.getActionFromCommand(mouseActions.getRight());
-            }
-
+            Optional<ActionW> action = eventManager.getMouseAction(evt.getModifiersEx());
             DefaultView2d.this.setCursor(action.isPresent() ? action.get().getCursor() : DefaultView2d.DEFAULT_CURSOR);
         }
 

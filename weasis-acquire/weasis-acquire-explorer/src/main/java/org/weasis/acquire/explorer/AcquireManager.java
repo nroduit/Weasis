@@ -205,7 +205,7 @@ public class AcquireManager {
         return info;
     }
 
-    private void readTags(ImageElement element) {
+    private static void readTags(ImageElement element) {
         Optional<File> file = element.getFileCache().getOriginalFile();
         if (file.isPresent()) {
             Date date = null;

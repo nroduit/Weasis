@@ -35,7 +35,6 @@ import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.RadioMenuItem;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
@@ -63,7 +62,7 @@ import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 
 @SuppressWarnings("serial")
-public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
+public class MeasureToolBar extends WtoolBar {
     private static final long serialVersionUID = -6672565963157176685L;
 
     public static final SelectGraphic selectionGraphic = new SelectGraphic();
@@ -74,7 +73,6 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final List<Graphic> drawGraphicList = new ArrayList<>();
 
     static {
-        selectionGraphic.setLayerType(LayerType.TEMP_DRAW);
         WProperties p = BundleTools.SYSTEM_PREFERENCES;
         if (p.getBooleanProperty("weasis.measure.selection", true)) { //$NON-NLS-1$
             measureGraphicList.add(selectionGraphic);
@@ -118,8 +116,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         if (p.getBooleanProperty("weasis.measure.pixelinfo", true)) { //$NON-NLS-1$
             measureGraphicList.add(new PixelInfoGraphic());
         }
-        measureGraphicList.stream().filter(g -> Objects.isNull(g.getLayerType()))
-            .forEach(g -> g.setLayerType(LayerType.MEASURE));
+        measureGraphicList.forEach(g -> g.setLayerType(LayerType.MEASURE));
 
         if (p.getBooleanProperty("weasis.draw.selection", true)) { //$NON-NLS-1$
             drawGraphicList.add(selectionGraphic);
@@ -152,23 +149,26 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
                 }
             });
         }
-        drawGraphicList.forEach(g -> g.setLabelVisible(false));
+        drawGraphicList.forEach(g -> {
+            g.setLayerType(LayerType.DRAW);
+            g.setLabelVisible(false);
+        });
+
         if (p.getBooleanProperty("weasis.draw.textGrahic", true)) { //$NON-NLS-1$
             Graphic graphic = new AnnotationGraphic();
             graphic.setLayerType(LayerType.ANNOTATION);
             drawGraphicList.add(graphic);
         }
-        drawGraphicList.stream().filter(g -> Objects.isNull(g.getLayerType()))
-            .forEach(g -> g.setLayerType(LayerType.DRAW));
+        selectionGraphic.setLayerType(LayerType.TEMP_DRAW);
     }
 
     protected final JButton jButtondelete = new JButton();
     protected final JButton jButtonText = new JButton();
     protected final Component measureButtonGap = Box.createRigidArea(new Dimension(10, 0));
-    protected final ImageViewerEventManager<E> eventManager;
+    protected final ImageViewerEventManager<?> eventManager;
 
     @SuppressWarnings("rawtypes")
-    public MeasureToolBar(final ImageViewerEventManager<E> eventManager, int index) {
+    public MeasureToolBar(final ImageViewerEventManager<?> eventManager, int index) {
         super(Messages.getString("MeasureToolBar.title"), index); //$NON-NLS-1$
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
@@ -248,7 +248,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
         // when user press the measure icon, set the action to measure
         dropDownButton.addActionListener(e -> {
-            ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
+            ImageViewerPlugin<?> view = eventManager.getSelectedView2dContainer();
             if (view != null) {
                 @SuppressWarnings("rawtypes")
                 final ViewerToolBar toolBar = view.getViewerToolBar();

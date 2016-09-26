@@ -776,7 +776,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
         // If isMultiSelection is false, it should return all enable computed measurements when
         // quickComputing is enable or when releasedEvent is true
-        if (labelVisible || !isMultiSelection) {
+        if ((labelVisible || !isMultiSelection) && getLayerType() == LayerType.MEASURE) {
             Unit displayUnit = view2d == null ? null : (Unit) view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd());
             measList = computeMeasurements(layer, releasedEvent, displayUnit);
         }
@@ -907,8 +907,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public void setLayerType(LayerType layerType) {
-        Objects.requireNonNull(layerType, NULL_MSG);
-        this.layerType = layerType;
+        this.layerType = Objects.requireNonNull(layerType, NULL_MSG);
     }
 
     static class Adapter extends XmlAdapter<AbstractGraphic, Graphic> {

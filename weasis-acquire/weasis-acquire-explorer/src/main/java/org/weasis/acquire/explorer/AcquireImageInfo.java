@@ -67,16 +67,9 @@ public class AcquireImageInfo {
 
     private String comment;
 
-    public List<AcquireImageValues> getSteps() {
-        return steps;
-    }
-
     public AcquireImageInfo(ImageElement image) {
-        if (image == null) {
-            throw new IllegalArgumentException("image cannot be null");
-        }
+        this.image = Objects.requireNonNull(image);
         this.setStatus(AcquireImageStatus.TO_PUBLISH);
-        this.image = image;
         this.attributes = new Attributes();
         this.preProcessOpManager = new SimpleOpManager();
         this.postProcessOpManager = new SimpleOpManager();
@@ -88,11 +81,15 @@ public class AcquireImageInfo {
         this.postProcessOpManager.addImageOperationAction(new ZoomOp());
 
         defaultValues = new AcquireImageValues();
-        currentValues = (AcquireImageValues) defaultValues.clone();
-        nextValues = (AcquireImageValues) defaultValues.clone();
+        currentValues = defaultValues.copy();
+        nextValues = defaultValues.copy();
 
         steps = new ArrayList<>();
         steps.add(currentValues);
+    }
+
+    public List<AcquireImageValues> getSteps() {
+        return steps;
     }
 
     public String getUID() {
@@ -119,11 +116,11 @@ public class AcquireImageInfo {
         return this.postProcessOpManager;
     }
 
-    private void addImageOperationAction(SimpleOpManager manager, ImageOpNode action) {
+    private static void addImageOperationAction(SimpleOpManager manager, ImageOpNode action) {
         manager.addImageOperationAction(action);
     }
 
-    private void removeImageOpertationAction(SimpleOpManager manager, Class<? extends ImageOpNode> cls) {
+    private static void removeImageOpertationAction(SimpleOpManager manager, Class<? extends ImageOpNode> cls) {
         for (ImageOpNode op : manager.getOperations()) {
             if (cls.isInstance(op)) {
                 manager.removeImageOperationAction(op);
@@ -148,10 +145,9 @@ public class AcquireImageInfo {
         boolean dirty = isDirty();
 
         if (dirty) {
-            if (nextValues.getFullRotation() != currentValues.getFullRotation()) {
-                postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE,
-                    nextValues.getFullRotation());
-            }
+
+            postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, nextValues.getFullRotation());
+
             if (!Objects.equals(nextValues.getCropZone(), currentValues.getCropZone())) {
                 Rectangle area = nextValues.getCropZone();
                 postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, area);
@@ -163,8 +159,8 @@ public class AcquireImageInfo {
                     view.setActionsInView(DefaultView2d.PROP_LAYER_OFFSET, new Point(area.x, area.y));
                     view.resetZoom();
                 }
-            }            
-            
+            }
+
             if (nextValues.getBrightness() != currentValues.getBrightness()
                 || nextValues.getContrast() != currentValues.getContrast()) {
                 postProcessOpManager.setParamValue(BrightnessOp.OP_NAME, BrightnessOp.P_BRIGTNESS_VALUE,
@@ -193,8 +189,8 @@ public class AcquireImageInfo {
 
             // Next value become the current value. Register the step.
             currentValues = nextValues;
-            nextValues = (AcquireImageValues) currentValues.clone();
-            steps.add((AcquireImageValues) currentValues.clone());
+            nextValues = currentValues.copy();
+            steps.add(currentValues.copy());
         }
     }
 
@@ -214,10 +210,8 @@ public class AcquireImageInfo {
         if (view != null) {
             GraphicModel gm = view.getGraphicManager();
             gm.deleteByLayerType(LayerType.ACQUIRE);
-            gm.setCreateGraphic(null);
             view.getJComponent().repaint();
         }
-
     }
 
     private void updateTags(ImageElement image) {
@@ -270,8 +264,8 @@ public class AcquireImageInfo {
 
         steps.clear();
         steps.add(defaultValues);
-        currentValues = (AcquireImageValues) defaultValues.clone();
-        nextValues = (AcquireImageValues) defaultValues.clone();
+        currentValues = defaultValues.copy();
+        nextValues = defaultValues.copy();
 
         return defaultValues;
     }
@@ -282,7 +276,7 @@ public class AcquireImageInfo {
 
     public void setSerie(Serie serie) {
         this.serie = serie;
-        if(serie != null){
+        if (serie != null) {
             image.setTag(TagD.get(Tag.SeriesInstanceUID), serie.getUID());
         }
     }

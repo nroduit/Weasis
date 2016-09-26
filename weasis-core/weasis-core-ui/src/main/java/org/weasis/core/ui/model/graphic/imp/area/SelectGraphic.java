@@ -109,6 +109,6 @@ public class SelectGraphic extends RectangleGraphic {
     @Override
     public List<MeasureItem> computeMeasurements(MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
         return Collections.emptyList();
-    };
+    }
 
 }

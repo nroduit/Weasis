@@ -115,10 +115,6 @@ public interface GraphicModel extends UUIDable {
 
     int getLayerCount();
 
-    void setCreateGraphic(Graphic graphic);
-
-    Graphic getCreateGraphic();
-
     void removeGraphic(Graphic graphic);
 
     void addGraphicChangeHandler(PropertyChangeListener graphicsChangeHandler);

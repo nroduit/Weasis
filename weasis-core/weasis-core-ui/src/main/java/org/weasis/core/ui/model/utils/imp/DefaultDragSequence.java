@@ -80,7 +80,8 @@ public class DefaultDragSequence implements Draggable {
     public Boolean completeDrag(MouseEventDouble mouseEvent) {
         if (mouseEvent != null) {
             if (!graphic.isGraphicComplete()) {
-                if (graphic.getPtsNumber() == DragGraphic.UNDEFINED && mouseEvent.getClickCount() == 2) {
+                if (graphic.getPtsNumber() == DragGraphic.UNDEFINED && mouseEvent.getClickCount() == 2 && !mouseEvent.isConsumed()) {
+                    mouseEvent.consume();
                     List<Point2D.Double> handlePointList = graphic.getPts();
                     if (!graphic.isLastPointValid()) {
                         handlePointList.remove(handlePointList.size() - 1);
@@ -99,7 +100,8 @@ public class DefaultDragSequence implements Draggable {
                 graphic.setResizeOrMoving(Boolean.FALSE);
                 graphic.setShape(null, mouseEvent);
                 graphic.buildShape(mouseEvent);
-                if (mouseEvent.getClickCount() == 2) {
+                if (mouseEvent.getClickCount() == 2  && !mouseEvent.isConsumed()) {
+                    mouseEvent.consume();
                     ViewCanvas<?> graphPane = graphic.getDefaultView2d(mouseEvent);
                     if (graphPane != null) {
                         // Do not open properties dialog for graphic with undefined points (like polyline) => double
@@ -119,7 +121,8 @@ public class DefaultDragSequence implements Draggable {
                                 }
                             }
                         }
-                        if (!isEditingGraph) {
+                        
+                        if (!isEditingGraph && graphPane.getGraphicManager().getSelectedGraphics().size() == 1) {
                             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(graphPane.getJComponent());
                             final ArrayList<DragGraphic> list = new ArrayList<>();
                             list.add(graphic);
@@ -128,9 +131,9 @@ public class DefaultDragSequence implements Draggable {
                         }
                     }
                 }
-                return true;
+                return  Boolean.TRUE;
             }
         }
-        return false;
+        return  Boolean.FALSE;
     }
 }

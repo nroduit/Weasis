@@ -88,7 +88,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     private final ArrayList<GraphicSelectionListener> selectedGraphicsListeners = new ArrayList<>();
     private final ArrayList<GraphicModelChangeListener> listeners = new ArrayList<>();
     private Boolean changeFireingSuspended = Boolean.FALSE;
-    private Graphic createGraphic;
 
     private Function<Graphic, GraphicLayer> getLayer = g -> g.getLayer();
     private Function<Graphic, DragGraphic> castToDragGraphic = DragGraphic.class::cast;
@@ -534,9 +533,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
         g2d.translate(0.5, 0.5);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
-        // g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         models.forEach(g -> applyPaint(g, g2d, transform, bound));
-        // g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
         g2d.translate(-0.5, -0.5);
     }
@@ -623,26 +620,13 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     }
 
     @Override
-    public void setCreateGraphic(Graphic graphic) {
-        createGraphic = graphic;
-    }
-
-    @Override
-    public Graphic getCreateGraphic() {
-        return createGraphic;
-    }
-
-    @Override
     public List<GraphicSelectionListener> getGraphicSelectionListeners() {
         return selectedGraphicsListeners;
     }
 
-    public static Graphic drawFromCurrentGraphic(ViewCanvas canvas) {
+    public static Graphic drawFromCurrentGraphic(ViewCanvas<?> canvas, Graphic graphicCreator) {
         Objects.requireNonNull(canvas);
-        GraphicModel modelList = canvas.getGraphicManager();
-        Objects.requireNonNull(modelList);
-
-        Graphic newGraphic = Optional.ofNullable(modelList.getCreateGraphic()).orElse(MeasureToolBar.selectionGraphic);
+        Graphic newGraphic = Optional.ofNullable(graphicCreator).orElse(MeasureToolBar.selectionGraphic);
         GraphicLayer layer = getOrBuildLayer(canvas, newGraphic.getLayerType());
 
         if (!layer.getVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAWINGS.cmd())) {
@@ -662,7 +646,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         }
     }
 
-    public static void addGraphicToModel(ViewCanvas canvas, GraphicLayer layer, Graphic graphic) {
+    public static void addGraphicToModel(ViewCanvas<?> canvas, GraphicLayer layer, Graphic graphic) {
         GraphicModel gm = canvas.getGraphicManager();
         graphic.updateLabel(Boolean.TRUE, canvas);
         graphic.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
@@ -670,11 +654,11 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         gm.addGraphic(graphic);
     }
 
-    public static void addGraphicToModel(ViewCanvas canvas, Graphic graphic) {
+    public static void addGraphicToModel(ViewCanvas<?> canvas, Graphic graphic) {
         AbstractGraphicModel.addGraphicToModel(canvas, null, graphic);
     }
 
-    public static GraphicLayer getOrBuildLayer(ViewCanvas canvas, LayerType layerType) {
+    public static GraphicLayer getOrBuildLayer(ViewCanvas<?> canvas, LayerType layerType) {
         return canvas.getGraphicManager().findLayerByType(layerType).orElse(new DefaultLayer(layerType));
     }
 

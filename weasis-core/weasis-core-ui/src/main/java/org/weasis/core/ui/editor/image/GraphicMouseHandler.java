@@ -120,11 +120,21 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         }
 
         if (ds == null) {
-            Graphic graph = AbstractGraphicModel.drawFromCurrentGraphic(vImg);
-            if (graph instanceof DragGraphic) {
-                ds = ((DragGraphic) graph).createResizeDrag();
-                if (!(graph instanceof SelectGraphic)) {
-                    vImg.getGraphicManager().setSelectedGraphic(Arrays.asList(graph));
+            ImageViewerEventManager<E> eventManager = vImg.getEventManager();
+            Optional<ActionW> action = eventManager.getMouseAction(e.getModifiersEx());
+            if (action.isPresent() && action.get().isDrawingAction()) {
+                Optional<ComboItemListener> items =
+                    eventManager.getAction(ActionW.DRAW_CMD_PREFIX + action.get().cmd(), ComboItemListener.class);
+                if (items.isPresent()) {
+                    Object item = items.get().getSelectedItem();
+                    Graphic graph = AbstractGraphicModel.drawFromCurrentGraphic(vImg,
+                        (Graphic) (item instanceof Graphic ? item : null));
+                    if (graph instanceof DragGraphic) {
+                        ds = ((DragGraphic) graph).createResizeDrag();
+                        if (!(graph instanceof SelectGraphic)) {
+                            vImg.getGraphicManager().setSelectedGraphic(Arrays.asList(graph));
+                        }
+                    }
                 }
             }
         }
@@ -274,12 +284,15 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
     @Override
     public void mouseMoved(MouseEvent e) {
-
+        if (e.isConsumed()) {
+            return;
+        }
+        
         // Convert mouse event point to real image coordinate point (without geometric transformation)
         MouseEventDouble mouseEvt = new MouseEventDouble(e);
         mouseEvt.setImageCoordinates(vImg.getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
-        if (ds != null) {
+        if (ds != null && (e.getModifiersEx() & getButtonMaskEx()) != 0) {
             ds.drag(mouseEvt);
         } else {
 

@@ -149,7 +149,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         setAction(new BasicActionState(ActionW.WINLEVEL));
         setAction(new BasicActionState(ActionW.CONTEXTMENU));
         setAction(new BasicActionState(ActionW.NO_ACTION));
-        // setAction(new BasicActionState(ActionW.DRAW));
+        setAction(new BasicActionState(ActionW.DRAW));
         setAction(new BasicActionState(ActionW.MEASURE));
 
         setAction(getMoveTroughSliceAction(20, TIME.SECOND, 0.1));
@@ -178,6 +178,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
         setAction(newMeasurementAction(
             MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
+        setAction(
+            newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[MeasureToolBar.drawGraphicList.size()])));
         setAction(newSpatialUnit(Unit.values()));
         setAction(newPanAction());
         setAction(newCrosshairAction());
@@ -732,6 +734,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     @Override
     public void keyTyped(KeyEvent e) {
+        // Do nothing
     }
 
     @Override
@@ -761,34 +764,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         } else {
-            Optional<ComboItemListener> measure = getAction(ActionW.DRAW_MEASURE, ComboItemListener.class);
-            if (measure.isPresent() && measure.get().isActionEnabled()) {
-                ComboItemListener measureAction = measure.get();
-                for (Object obj : measureAction.getAllItem()) {
-                    if (obj instanceof Graphic) {
-                        Graphic g = (Graphic) obj;
-                        if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
-                            ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-                            if (view != null) {
-                                final ViewerToolBar toolBar = view.getViewerToolBar();
-                                if (toolBar != null) {
-                                    String cmd = ActionW.MEASURE.cmd();
-                                    if (!toolBar.isCommandActive(cmd)) {
-                                        mouseActions.setAction(MouseActions.LEFT, cmd);
-                                        if (view != null) {
-                                            view.setMouseActions(mouseActions);
-                                        }
-                                        toolBar.changeButtonState(MouseActions.LEFT, cmd);
-                                    }
-                                }
-                            }
-                            measureAction.setSelectedItem(obj);
-                            return;
-                        }
-                    }
-                }
-            }
-
             Optional<ComboItemListener> presetAction = getAction(ActionW.PRESET, ComboItemListener.class);
             if (modifiers == 0 && presetAction.isPresent() && presetAction.get().isActionEnabled()) {
                 ComboItemListener presetComboListener = presetAction.get();
@@ -801,21 +776,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     }
                 }
             }
+
+            triggerDrawingToolKeyEvent(keyEvent, modifiers);
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
+        // Do nothing
     }
 
     @Override
     public void setSelectedView2dContainer(ImageViewerPlugin<DicomImageElement> selectedView2dContainer) {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
-            this.selectedView2dContainer.setDrawActions(null);
             getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(a -> a.stop());
-
         }
+        
         ImageViewerPlugin<DicomImageElement> oldContainer = this.selectedView2dContainer;
         this.selectedView2dContainer = selectedView2dContainer;
 
@@ -840,12 +817,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 a -> a.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getOriginalLayoutModel()));
             updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
             selectedView2dContainer.setMouseActions(mouseActions);
-            Graphic graphic = null;
-            ActionState action = getAction(ActionW.DRAW_MEASURE);
-            if (action instanceof ComboItemListener) {
-                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-            }
-            selectedView2dContainer.setDrawActions(graphic);
             ViewCanvas<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
                 pane.setFocused(true);
@@ -1092,7 +1063,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     newList.addAll(lutShapeList);
                     lutShapeList = newList;
                 }
-                lutShapeAction.get().setDataListWithoutTriggerAction(lutShapeList == null ? null : lutShapeList.toArray());
+                lutShapeAction.get()
+                    .setDataListWithoutTriggerAction(lutShapeList == null ? null : lutShapeList.toArray());
                 lutShapeAction.get().setSelectedItemWithoutTriggerAction(lutShapeItem);
             }
         }
