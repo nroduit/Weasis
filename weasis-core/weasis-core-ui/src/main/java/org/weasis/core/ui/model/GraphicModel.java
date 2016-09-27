@@ -130,4 +130,6 @@ public interface GraphicModel extends UUIDable {
     List<GraphicLayer> groupLayerByType();
 
     void deleteByLayer(GraphicLayer type);
+
+    void deleteNonSerializableGraphics();
 }

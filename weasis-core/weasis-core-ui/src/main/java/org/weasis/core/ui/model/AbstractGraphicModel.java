@@ -283,6 +283,19 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             layers.removeIf(l -> Objects.equals(l.getType(), type));
         }
     }
+    
+    @Override
+    public void deleteNonSerializableGraphics() {
+        synchronized (models) {
+            for (Graphic g : models) {
+                if (!g.getLayer().getType().getSerializable()) {
+                    g.removeAllPropertyChangeListener();
+                }
+            }
+            models.removeIf(g -> !g.getLayer().getType().getSerializable());
+            layers.removeIf(l -> !l.getType().getSerializable());
+        }
+    }
 
     @Override
     public List<Graphic> getAllGraphics() {

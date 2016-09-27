@@ -136,7 +136,7 @@ public final class Transform2Dicom {
                 attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB,
                     GzipManager.gzipCompressToByte(outputStream.toByteArray()));
             } catch (Exception e) {
-                LOGGER.error("Cannot save xml: ", e);
+                LOGGER.error("Cannot save model in private tag", e);
             }
         }
     }

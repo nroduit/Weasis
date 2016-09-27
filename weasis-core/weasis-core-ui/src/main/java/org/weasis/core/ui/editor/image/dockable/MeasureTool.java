@@ -84,8 +84,6 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
     public static final String BUTTON_NAME = ActionW.DRAW + " & " + ActionW.MEASURE;
     public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img"); //$NON-NLS-1$
-    public static final int DockableWidth = javax.swing.UIManager.getLookAndFeel() != null
-        ? javax.swing.UIManager.getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205; //$NON-NLS-1$
     public static final ViewSetting viewSetting = new ViewSetting();
 
     protected final ImageViewerEventManager<? extends ImageElement> eventManager;
@@ -100,7 +98,9 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         this.eventManager = eventManager;
         this.rootPane = new JScrollPane();
         dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png"))); //$NON-NLS-1$
-        setDockableWidth(DockableWidth);
+        setDockableWidth(javax.swing.UIManager.getLookAndFeel() != null
+            ? javax.swing.UIManager.getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 //$NON-NLS-1$
+            : 205);
         jbInit();
     }
 
