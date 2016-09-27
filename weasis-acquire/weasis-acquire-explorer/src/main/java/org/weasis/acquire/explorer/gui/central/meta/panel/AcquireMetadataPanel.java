@@ -121,6 +121,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         // DO NOTHING
     }
 
+    @SuppressWarnings("serial")
     public static class TagRenderer extends DefaultTableCellRenderer {
 
         @Override

@@ -28,11 +28,13 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -373,6 +375,9 @@ public class TagD extends TagW {
         }
 
         if (TagType.DICOM_PERSON_NAME.equals(type)) {
+            if(value instanceof String[]){
+                return Arrays.asList((String[]) value).stream().map(TagD::getDicomPersonName).collect(Collectors.joining(", "));
+            }
             return getDicomPersonName(value.toString());
         } else if (TagType.DICOM_PERIOD.equals(type)) {
             return getDicomPeriod(value.toString());
