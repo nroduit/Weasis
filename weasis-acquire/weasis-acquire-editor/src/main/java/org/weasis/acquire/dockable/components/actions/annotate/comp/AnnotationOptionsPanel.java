@@ -42,7 +42,6 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.pref.ViewSetting;
 
 @SuppressWarnings("serial")
@@ -126,9 +125,8 @@ public class AnnotationOptionsPanel extends JPanel {
 
     private void updateMeasureProperties(final ViewSetting setting) {
         if (setting != null) {
-            for (Graphic graphic : MeasureToolBar.measureGraphicList) {
-                MeasureToolBar.applyDefaultSetting(setting, graphic);
-            }
+            MeasureToolBar.measureGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
+            MeasureToolBar.drawGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
         }
     }
 

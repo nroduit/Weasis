@@ -230,6 +230,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     private static void updateMeasureProperties(final ViewSetting setting) {
         if (setting != null) {
             MeasureToolBar.measureGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
+            MeasureToolBar.drawGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
         }
     }
 

@@ -15,9 +15,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 
 import javax.swing.AbstractButton;
 import javax.swing.Box;
@@ -175,10 +173,8 @@ public class MeasureToolBar extends WtoolBar {
         }
         this.eventManager = eventManager;
 
-        // Do not apply to textGrahic
-        for (int i = 1; i < measureGraphicList.size() - 1; i++) {
-            applyDefaultSetting(MeasureTool.viewSetting, measureGraphicList.get(i));
-        }
+        MeasureToolBar.measureGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
+        MeasureToolBar.drawGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
 
         Optional<ComboItemListener> measure = eventManager.getAction(ActionW.DRAW_MEASURE, ComboItemListener.class);
         Optional<ComboItemListener> draw = eventManager.getAction(ActionW.DRAW_GRAPHICS, ComboItemListener.class);
@@ -310,14 +306,6 @@ public class MeasureToolBar extends WtoolBar {
                 return bckIcon.getIconHeight();
             }
         });
-    }
-
-    public static Graphic getGraphic(String action) {
-        return Optional.ofNullable(action).flatMap(firstSameAction(measureGraphicList)).orElse(null);
-    }
-
-    private static Function<String, Optional<Graphic>> firstSameAction(List<Graphic> list) {
-        return action -> list.stream().filter(graphic -> Objects.equals(action, graphic.toString())).findFirst();
     }
 
     static class MeasureGroupMenu extends GroupRadioMenu<Graphic> {
