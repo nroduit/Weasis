@@ -228,8 +228,10 @@ public class View2d extends DefaultView2d<ImageElement> {
     protected MouseActionAdapter getMouseAdapter(String command) {
         if (command.equals(ActionW.CONTEXTMENU.cmd())) {
             return contextMenuHandler;
+        } else if (command.equals(ActionW.WINLEVEL.cmd())) {
+            return getAction(ActionW.LEVEL);
         }
-
+        
         Optional<ActionW> actionKey = eventManager.getActionKey(command);
         if (!actionKey.isPresent()) {
             return null;
