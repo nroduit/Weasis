@@ -31,6 +31,7 @@ import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
 import org.weasis.core.ui.model.utils.Draggable;
+import org.weasis.core.ui.model.utils.imp.DefaultDragSequence;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdapter {
@@ -292,7 +293,8 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         MouseEventDouble mouseEvt = new MouseEventDouble(e);
         mouseEvt.setImageCoordinates(vImg.getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
-        if (ds != null && (e.getModifiersEx() & getButtonMaskEx()) != 0) {
+        // Handle special case when drawing in mode [click > release > move/drag > release] instead of [click + drag > release]
+        if (ds instanceof DefaultDragSequence) {
             ds.drag(mouseEvt);
         } else {
 
