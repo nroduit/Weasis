@@ -267,16 +267,22 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         }
     }
 
-    @XmlElement(name = "label", required = false)
+    @XmlElement(name = "graphicLabel", required = false)
     @Override
     public GraphicLabel getGraphicLabel() {
         return graphicLabel;
+    }
+
+    public void setGraphicLabel(GraphicLabel graphicLabel) {
+        this.graphicLabel = graphicLabel;
     }
 
     @Override
     public void setLayer(GraphicLayer layer) {
         Objects.requireNonNull(layer, NULL_MSG);
         this.layer = layer;
+        // Adapt the default layerType
+        setLayerType(layer.getType());
     }
 
     @XmlIDREF
@@ -765,11 +771,9 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
             releasedEvent = (Boolean) source;
         }
 
-        boolean isMultiSelection = false; // default is single selection
-
         List<Graphic> selectedGraphics =
             view2d == null ? Collections.emptyList() : view2d.getGraphicManager().getSelectedGraphics();
-        isMultiSelection = selectedGraphics.size() > 1;
+        boolean isMultiSelection = selectedGraphics.size() > 1;
 
         List<MeasureItem> measList = null;
         String[] labels = null;

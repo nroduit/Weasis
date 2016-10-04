@@ -64,8 +64,15 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         mouseEvt.setImageCoordinates(vImg.getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
         // Do nothing and return if current dragSequence is not completed
-        if (ds != null && !ds.completeDrag(mouseEvt)) {
-            return;
+        if (ds != null) {
+            Boolean c = ds.completeDrag(mouseEvt);
+            if (c == null) {
+                c = Boolean.FALSE;
+                ds = null;
+            }
+            if (!c) {
+                return;
+            }
         }
 
         Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
@@ -288,12 +295,13 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         if (e.isConsumed()) {
             return;
         }
-        
+
         // Convert mouse event point to real image coordinate point (without geometric transformation)
         MouseEventDouble mouseEvt = new MouseEventDouble(e);
         mouseEvt.setImageCoordinates(vImg.getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
-        // Handle special case when drawing in mode [click > release > move/drag > release] instead of [click + drag > release]
+        // Handle special case when drawing in mode [click > release > move/drag > release] instead of [click + drag >
+        // release]
         if (ds instanceof DefaultDragSequence) {
             ds.drag(mouseEvt);
         } else {

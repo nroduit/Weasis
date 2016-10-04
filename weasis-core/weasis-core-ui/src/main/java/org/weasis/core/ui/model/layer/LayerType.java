@@ -31,7 +31,7 @@ public enum LayerType {
 
     POINTS(90, "Points", Boolean.TRUE, Boolean.TRUE, Boolean.TRUE),
 
-    DICOM_PR(100, "DCIOM PR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE);
+    DICOM_PR(100, "DICOM PR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE);
 
     private final Integer level;
     private final Boolean visible;

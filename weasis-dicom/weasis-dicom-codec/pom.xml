@@ -116,8 +116,8 @@
 			<version>1.5.2</version>
 			<scope>provided</scope>
 		</dependency>
-		
-				<!-- FOR TESTS -->
+
+		<!-- FOR TESTS -->
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>

@@ -116,7 +116,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     public void applyChange() {
         final DefaultDicomNode node = (DefaultDicomNode) comboNode.getSelectedItem();
-        SendDicomFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
+        if (node != null) {
+            SendDicomFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
+        }
     }
 
     protected void updateChanges() {

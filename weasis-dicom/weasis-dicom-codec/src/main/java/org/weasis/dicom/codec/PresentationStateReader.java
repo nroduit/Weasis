@@ -105,7 +105,7 @@ public class PresentationStateReader implements Tagable {
             for (Attributes sop : sops) {
                 if (imgSop.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
                     int[] frames = DicomMediaUtils.getIntAyrrayFromDicomElement(sop, Tag.ReferencedFrameNumber, null);
-                    if (frames == null) {
+                    if (frames == null || frames.length == 0) {
                         return true;
                     }
                     int frame = 0;
