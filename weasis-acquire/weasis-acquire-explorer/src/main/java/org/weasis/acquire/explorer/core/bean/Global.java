@@ -48,6 +48,37 @@ public class Global extends AbstractTagable {
         }
     }
 
+    public boolean containSameTagsValues(Document xml) {
+        if (xml == null) {
+            throw new IllegalArgumentException("empty xml parameter");
+        }
+
+        NodeList nodes = xml.getChildNodes();
+        if (nodes == null) {
+            return false;
+        }
+
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            if (node != null) {
+                TagW tag = TagD.get(node.getNodeName());
+                if (tag != null) {
+                    Object tagVal = getTagValue(tag);
+                    String xmlTagContent = node.getTextContent();
+                    if (xmlTagContent != null && xmlTagContent.trim().length() == 0) {
+                        xmlTagContent = null;
+                    }
+                    if ((tagVal == null && xmlTagContent == null) || (tagVal != null && tagVal.equals(xmlTagContent))) {
+                        continue;
+                    }
+                }
+                return false;
+            }
+        }
+        return true;
+
+    }
+
     @Override
     public String toString() {
         TagW name = TagD.get(Tag.PatientName);
