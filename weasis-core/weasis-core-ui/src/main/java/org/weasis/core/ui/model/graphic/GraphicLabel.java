@@ -68,4 +68,8 @@ public interface GraphicLabel extends Copyable<GraphicLabel> {
     Area getArea(AffineTransform transform);
 
     void move(Double deltaX, Double deltaY);
+
+    Double getOffsetX();
+
+    Double getOffsetY();
 }

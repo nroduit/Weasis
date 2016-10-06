@@ -30,6 +30,7 @@ import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 
 public class SeriesSelectionModel extends ArrayList<Series<?>> {
+    private static final long serialVersionUID = -7481872614518038371L;
 
     private final PatientContainerPane patientContainer;
 

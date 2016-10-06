@@ -48,6 +48,7 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.explorer.pr.PrSerializer;
 import org.weasis.dicom.op.CStore;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
@@ -104,12 +105,19 @@ public final class Transform2Dicom {
                                 * Unit.MILLIMETER.getConversionRatio(img.getPixelSpacingUnit().getConvFactor());
                             attrs.setDouble(Tag.PixelSpacing, VR.DS, unitRatio, unitRatio);
                         }
-                        writeModelInPrivateTags(img, attrs);
 
                         try {
                             Dicomizer.jpeg(attrs, imgFile, new File(exportDirDicom, uid), false);
                         } catch (IOException e) {
                             LOGGER.error("Cannot dicomize {}", img.getName(), e);
+                            continue;
+                        }
+                        
+                        GraphicModel grModel = (GraphicModel) img.getTagValue(TagW.PresentationModel);
+                        if (grModel != null && grModel.hasSerializableGraphics()) {
+                            String prUid = UIDUtils.createUID();
+                            File outputFile = new File(exportDirDicom, prUid);
+                            PrSerializer.writePresentation(grModel, attrs, outputFile, prUid);
                         }
                     }
                 }

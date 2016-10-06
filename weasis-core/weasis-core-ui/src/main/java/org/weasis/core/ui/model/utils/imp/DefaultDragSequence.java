@@ -128,6 +128,7 @@ public class DefaultDragSequence implements Draggable {
                             list.add(graphic);
                             JDialog dialog = new MeasureDialog(graphPane, list);
                             ColorLayerUI.showCenterScreen(dialog, layer);
+                            return null;
                         }
                     }
                 }

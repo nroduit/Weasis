@@ -31,6 +31,7 @@ import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
 import org.weasis.core.ui.model.utils.Draggable;
+import org.weasis.core.ui.model.utils.imp.DefaultDragSequence;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdapter {
@@ -63,8 +64,15 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         mouseEvt.setImageCoordinates(vImg.getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
         // Do nothing and return if current dragSequence is not completed
-        if (ds != null && !ds.completeDrag(mouseEvt)) {
-            return;
+        if (ds != null) {
+            Boolean c = ds.completeDrag(mouseEvt);
+            if (c == null) {
+                c = Boolean.FALSE;
+                ds = null;
+            }
+            if (!c) {
+                return;
+            }
         }
 
         Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
@@ -287,12 +295,14 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         if (e.isConsumed()) {
             return;
         }
-        
+
         // Convert mouse event point to real image coordinate point (without geometric transformation)
         MouseEventDouble mouseEvt = new MouseEventDouble(e);
         mouseEvt.setImageCoordinates(vImg.getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
-        if (ds != null && (e.getModifiersEx() & getButtonMaskEx()) != 0) {
+        // Handle special case when drawing in mode [click > release > move/drag > release] instead of [click + drag >
+        // release]
+        if (ds instanceof DefaultDragSequence) {
             ds.drag(mouseEvt);
         } else {
 

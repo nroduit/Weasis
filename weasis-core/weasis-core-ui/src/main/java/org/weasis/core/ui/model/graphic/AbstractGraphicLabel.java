@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 import org.weasis.core.api.gui.util.GeomUtil;
@@ -68,10 +69,36 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
         labelWidth = 0d;
     }
 
+    @XmlElementWrapper(name = "labels")
     @XmlElement(name = "label", required = false)
     @Override
     public String[] getLabels() {
         return labels;
+    }
+    
+    
+    @XmlElement(name = "offsetX", required = false)
+    @Override
+    public Double getOffsetX() {
+        return offsetX;
+    }
+
+    @XmlElement(name = "offsetY", required = false)
+    @Override
+    public Double getOffsetY() {
+        return offsetY;
+    }
+
+    public void setLabels(String[] labels) {
+        this.labels = labels;
+    }
+
+    public void setOffsetX(Double offsetX) {
+        this.offsetX = offsetX;
+    }
+
+    public void setOffsetY(Double offsetY) {
+        this.offsetY = offsetY;
     }
 
     @Override

@@ -190,7 +190,7 @@ public class DicomSpecialElement extends MediaElement {
                     if (seq2 != null) {
                         for (Attributes sop : seq2) {
                             if (sopUID.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
-                                if (frameNumber != null && frameNumber > 1) {
+                                if (frameNumber != null) {
                                     int[] seqFrame = DicomMediaUtils.getIntAyrrayFromDicomElement(sop,
                                         Tag.ReferencedFrameNumber, null);
                                     if (seqFrame == null || seqFrame.length == 0) {
@@ -347,12 +347,10 @@ public class DicomSpecialElement extends MediaElement {
                 PRSpecialElement prElement = (PRSpecialElement) element;
                 Attributes[] seq = TagD.getTagValue(prElement, Tag.ReferencedSeriesSequence, Attributes[].class);
                 if (isSopuidInReferencedSeriesSequence(seq, seriesUID, sopUID, frameNumber)) {
-
                     if (prList == null) {
                         prList = new ArrayList<>();
                     }
                     prList.add(prElement);
-
                 }
             }
         }

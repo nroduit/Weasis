@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 import java.util.Objects;
 
 import javax.imageio.ImageIO;
@@ -109,7 +110,10 @@ public class ImageElementIO implements MediaReader {
             PlanarImage img = readImage(file, imgCachePath == null);
 
             if (imgCachePath != null) {
-                file = uncompress(imgCachePath, img);
+                File rawFile = uncompress(imgCachePath, img);
+                if( rawFile != null){
+                    file = rawFile;
+                }
                 cache.setTransformedFile(file);
                 img = readImage(file, true);
             }

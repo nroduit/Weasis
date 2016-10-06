@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.ui.model.imp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,21 +33,26 @@ public class XmlGraphicModel extends AbstractGraphicModel {
     public XmlGraphicModel(ImageElement img) {
         super(buildReferences(img));
     }
-    
+
     private static List<ReferencedSeries> buildReferences(ImageElement img) {
-        String uid = (String) img.getTagValue(TagW.get("SOPInstanceUID"));
-        if (uid == null) {
-            uid =  java.util.UUID.randomUUID().toString();
-            img.setTag(TagW.get("SOPInstanceUID"), uid);
-        }
-        
         String seriesUUID = (String) img.getTagValue(TagW.get("SeriesInstanceUID"));
         if (seriesUUID == null) {
             seriesUUID = java.util.UUID.randomUUID().toString();
             img.setTag(TagW.get("SeriesInstanceUID"), seriesUUID);
         }
-        
-        List<ReferencedImage> images = Arrays.asList(new ReferencedImage(uid));
-        return Arrays.asList(new ReferencedSeries(seriesUUID, images));
+
+        String uid = (String) img.getTagValue(TagW.get("SOPInstanceUID"));
+        if (uid == null) {
+            uid = java.util.UUID.randomUUID().toString();
+            img.setTag(TagW.get("SOPInstanceUID"), uid);
+        }
+
+        List<Integer> frameList = new ArrayList<>(1);
+        int frames = img.getMediaReader().getMediaElementNumber();
+        if (frames > 1 && img.getKey() instanceof Integer) {
+            frameList.add((Integer) img.getKey());
+        }
+
+        return Arrays.asList(new ReferencedSeries(seriesUUID, Arrays.asList(new ReferencedImage(uid, frameList))));
     }
 }

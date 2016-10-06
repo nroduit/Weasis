@@ -563,16 +563,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     private void writeImageValues(Attributes header) {
         if (header != null && hasPixel) {
-            if (PresentationStateReader.PR_MODEL_ID
-                .equals(header.getString(PresentationStateReader.PRIVATE_CREATOR_TAG))) {
-                try {
-                    setTagNoNull(TagW.PresentationModelBirary,
-                        header.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG));
-                } catch (IOException e) {
-                    LOGGER.error("Extracting xml binary model", e);
-                }
-            }
-
             TagD.get(Tag.ImagePositionPatient).readValue(header, this);
             TagD.get(Tag.ImageOrientationPatient).readValue(header, this);
             setTagNoNull(TagW.ImageOrientationPlane,

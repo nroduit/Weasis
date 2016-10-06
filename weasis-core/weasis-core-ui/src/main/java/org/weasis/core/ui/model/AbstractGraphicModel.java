@@ -85,8 +85,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     private volatile List<GraphicLayer> layers;
     protected volatile List<Graphic> models;
 
-    private final ArrayList<GraphicSelectionListener> selectedGraphicsListeners = new ArrayList<>();
-    private final ArrayList<GraphicModelChangeListener> listeners = new ArrayList<>();
+    private final List<GraphicSelectionListener> selectedGraphicsListeners = new ArrayList<>();
+    private final List<GraphicModelChangeListener> listeners = new ArrayList<>();
     private Boolean changeFireingSuspended = Boolean.FALSE;
 
     private Function<Graphic, GraphicLayer> getLayer = g -> g.getLayer();
@@ -170,14 +170,12 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
                 layers.add(layer);
             }
             models.add(graphic);
-            LOGGER.trace("add graphic {})", graphic);
         }
     }
 
     @Override
     public void removeGraphic(Graphic graphic) {
         if (graphic != null) {
-            LOGGER.trace("romoving graphic({})", graphic);
             models.remove(graphic);
             graphic.removeAllPropertyChangeListener();
 
@@ -256,7 +254,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     @Override
     public void deleteByLayer(GraphicLayer layer) {
         Objects.requireNonNull(layer);
-
+        if (models.isEmpty()) {
+            return;
+        }
         synchronized (models) {
             models.removeIf(g -> {
                 boolean delete = layer.equals(g.getLayer());
@@ -272,7 +272,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     @Override
     public void deleteByLayerType(LayerType type) {
         Objects.requireNonNull(type);
-
+        if (models.isEmpty()) {
+            return;
+        }
         synchronized (models) {
             for (Graphic g : models) {
                 if (g.getLayer().getType().equals(type)) {
@@ -283,9 +285,12 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             layers.removeIf(l -> Objects.equals(l.getType(), type));
         }
     }
-    
+
     @Override
     public void deleteNonSerializableGraphics() {
+        if (models.isEmpty()) {
+            return;
+        }
         synchronized (models) {
             for (Graphic g : models) {
                 if (!g.getLayer().getType().getSerializable()) {
@@ -295,6 +300,25 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             models.removeIf(g -> !g.getLayer().getType().getSerializable());
             layers.removeIf(l -> !l.getType().getSerializable());
         }
+    }
+
+    @Override
+    public boolean hasSerializableGraphics() {
+        if (models.isEmpty()) {
+            return false;
+        }
+        synchronized (models) {
+            for (Graphic g : models) {
+                /*
+                 * Exclude non serializable layer and graphics without points like NonEditableGraphic (not strictly the
+                 * jaxb serialization process that use the annotations from getModels())
+                 */
+                if (g.getLayer().getType().getSerializable() && !g.getPts().isEmpty()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -588,8 +612,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     }
 
     @Override
-    public GraphicModelChangeListener[] getChangeListeners() {
-        return listeners.toArray(new GraphicModelChangeListener[listeners.size()]);
+    public List<GraphicModelChangeListener> getChangeListeners() {
+        return listeners;
     }
 
     @Override
@@ -661,9 +685,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     public static void addGraphicToModel(ViewCanvas<?> canvas, GraphicLayer layer, Graphic graphic) {
         GraphicModel gm = canvas.getGraphicManager();
+        graphic.setLayer(Optional.ofNullable(layer).orElse(getOrBuildLayer(canvas, graphic.getLayerType())));
         graphic.updateLabel(Boolean.TRUE, canvas);
         graphic.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
-        graphic.setLayer(Optional.ofNullable(layer).orElse(getOrBuildLayer(canvas, graphic.getLayerType())));
         gm.addGraphic(graphic);
     }
 
