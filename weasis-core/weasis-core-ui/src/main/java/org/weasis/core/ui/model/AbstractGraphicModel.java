@@ -86,7 +86,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     protected volatile List<Graphic> models;
 
     private final List<GraphicSelectionListener> selectedGraphicsListeners = new ArrayList<>();
-    private final List<GraphicModelChangeListener> listeners = new ArrayList<>();
+    private final List<GraphicModelChangeListener> modelListeners = new ArrayList<>();
+    private final List<PropertyChangeListener> graphicsListeners = new ArrayList<>();
     private Boolean changeFireingSuspended = Boolean.FALSE;
 
     private Function<Graphic, GraphicLayer> getLayer = g -> g.getLayer();
@@ -204,12 +205,24 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @Override
     public void addGraphicChangeHandler(PropertyChangeListener graphicsChangeHandler) {
-        models.forEach(g -> g.addPropertyChangeListener(graphicsChangeHandler));
+        if (Objects.nonNull(graphicsChangeHandler) && !graphicsListeners.contains(graphicsChangeHandler)) {
+            graphicsListeners.add(graphicsChangeHandler);
+            models.forEach(g -> g.addPropertyChangeListener(graphicsChangeHandler));
+        }
     }
 
     @Override
     public void removeGraphicChangeHandler(PropertyChangeListener graphicsChangeHandler) {
-        models.forEach(g -> g.removePropertyChangeListener(graphicsChangeHandler));
+        if (Objects.nonNull(graphicsChangeHandler) && graphicsListeners.contains(graphicsChangeHandler)) {
+            graphicsListeners.remove(graphicsChangeHandler);
+            models.forEach(g -> g.removePropertyChangeListener(graphicsChangeHandler));
+        }
+    }
+    
+
+    @Override
+    public List<PropertyChangeListener> getGraphicsListeners() {
+        return graphicsListeners;
     }
 
     @Override
@@ -613,25 +626,25 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @Override
     public List<GraphicModelChangeListener> getChangeListeners() {
-        return listeners;
+        return modelListeners;
     }
 
     @Override
     public void addChangeListener(GraphicModelChangeListener listener) {
-        if (Objects.nonNull(listener) && !listeners.contains(listener)) {
-            listeners.add(listener);
+        if (Objects.nonNull(listener) && !modelListeners.contains(listener)) {
+            modelListeners.add(listener);
         }
     }
 
     @Override
     public void removeChangeListener(GraphicModelChangeListener listener) {
-        Optional.ofNullable(listener).ifPresent(listeners::remove);
+        Optional.ofNullable(listener).ifPresent(modelListeners::remove);
     }
 
     @Override
     public void fireChanged() {
         if (!changeFireingSuspended) {
-            listeners.stream().forEach(l -> l.handleModelChanged(this));
+            modelListeners.stream().forEach(l -> l.handleModelChanged(this));
         }
     }
 
@@ -647,7 +660,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @Override
     public void dispose() {
-        listeners.clear();
+        modelListeners.clear();
+        graphicsListeners.clear();
         selectedGraphicsListeners.clear();
     }
 
@@ -675,7 +689,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             Graphic graph = newGraphic.copy();
             if (graph != null) {
                 graph.updateLabel(Boolean.TRUE, canvas);
-                graph.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
+                for (PropertyChangeListener listener : canvas.getGraphicManager().getGraphicsListeners()) {
+                    graph.addPropertyChangeListener(listener);
+                }
                 graph.setLayer(layer);
                 canvas.getGraphicManager().addGraphic(graph);
             }
@@ -687,7 +703,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         GraphicModel gm = canvas.getGraphicManager();
         graphic.setLayer(Optional.ofNullable(layer).orElse(getOrBuildLayer(canvas, graphic.getLayerType())));
         graphic.updateLabel(Boolean.TRUE, canvas);
-        graphic.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
+        for (PropertyChangeListener listener : canvas.getGraphicManager().getGraphicsListeners()) {
+            graphic.addPropertyChangeListener(listener);
+        }
         gm.addGraphic(graphic);
     }
 

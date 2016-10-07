@@ -134,4 +134,6 @@ public interface GraphicModel extends UUIDable {
     void deleteNonSerializableGraphics();
 
     boolean hasSerializableGraphics();
+
+    List<PropertyChangeListener> getGraphicsListeners();
 }

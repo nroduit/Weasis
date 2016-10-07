@@ -424,6 +424,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             lens.showLens(false);
             this.remove(lens);
             actionsInView.put(ActionW.LENS.cmd(), false);
+            lens = null;
         }
     }
 
@@ -1227,6 +1228,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         removeFocusListener(this);
         ToolTipManager.sharedInstance().unregisterComponent(this);
         imageLayer.removeLayerChangeListener(this);
+        Optional.ofNullable(lens).ifPresent(l -> l.showLens(false));
         if (series != null) {
             closingSeries(series);
             series = null;
@@ -1253,9 +1255,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         for (int i = 0; i < wheelListeners.length; i++) {
             this.removeMouseWheelListener(wheelListeners[i]);
         }
-        if (lens != null) {
-            lens.disableMouseAndKeyListener();
-        }
+        Optional.ofNullable(lens).ifPresent(l -> l.disableMouseAndKeyListener());
     }
 
     @Override

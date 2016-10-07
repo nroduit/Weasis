@@ -137,7 +137,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     private void refreshZoomWin() {
         Point loc = getLocation();
-        if ((loc.x == -1 && loc.y == -1)) {
+        if (loc.x == -1 && loc.y == -1) {
             centerZoomWin();
             return;
         }
@@ -152,6 +152,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     public void updateImage() {
+        view2d.graphicManager.addGraphicChangeHandler(graphicsChangeHandler);
         imageLayer.setImage(view2d.getImage(), (OpManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
         getViewModel().setModelArea(view2d.getViewModel().getModelArea());
         SyncType type = (SyncType) actionsInView.get(ZoomWin.FREEZE_CMD);
@@ -172,6 +173,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             setVisible(true);
         } else {
             setVisible(false);
+            view2d.graphicManager.removeGraphicChangeHandler(graphicsChangeHandler);
             disableMouseAndKeyListener();
         }
     }
@@ -230,7 +232,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
-            graphicManager.draw(g2d, transform, inverseTransform,
+            view2d.getGraphicManager().draw(g2d, transform, inverseTransform,
                 new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
                     modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
         }
@@ -445,7 +447,6 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                         zoom(getCenterX(), getCenterY(), getViewModel().getViewScale());
                 }
                 setCursor(Cursor.getPredefinedCursor(cursor));
-
             }
         }
 
