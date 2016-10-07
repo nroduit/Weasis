@@ -19,6 +19,12 @@ public interface GraphicLayer extends Layer {
 
     void setLocked(Boolean locked);
 
-    boolean isSelectable();
+    Boolean getSelectable();
+
+    void setSelectable(Boolean selectable);
+
+    Boolean getSerializable();
+
+    void setSerializable(Boolean serializable);
 
 }

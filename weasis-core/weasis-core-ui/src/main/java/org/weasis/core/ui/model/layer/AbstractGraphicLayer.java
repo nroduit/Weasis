@@ -26,12 +26,16 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
     private Boolean visible;
     private Boolean locked;
     private Integer level; // Layers are sorted by level number (ascending order)
+    private Boolean serializable;
+    private Boolean selectable;
 
     public AbstractGraphicLayer(LayerType type) {
         setType(type);
         this.level = type.getLevel();
         this.visible = type.getVisible();
         this.locked = type.getLocked();
+        this.serializable = type.getSerializable();
+        this.selectable = type.getSelectable();
     }
 
     @XmlAttribute
@@ -89,14 +93,30 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         this.type = Objects.requireNonNull(type);
     }
 
+    @XmlAttribute
+    @Override
+    public Boolean getSelectable() {
+        return selectable;
+    }
+
+    @Override
+    public void setSelectable(Boolean selectable) {
+        this.selectable = selectable;
+    }
+
+    @Override
+    public Boolean getSerializable() {
+        return serializable;
+    }
+
+    @Override
+    public void setSerializable(Boolean serializable) {
+        this.serializable = serializable;
+    }
+
     @Override
     public String toString() {
         return Optional.ofNullable(getName()).orElse(getType().getDefaultName());
-    }
-    
-    @Override
-    public boolean isSelectable() {
-        return !locked || getType().getSelectable();
     }
 
     static class Adapter extends XmlAdapter<AbstractGraphicLayer, Layer> {

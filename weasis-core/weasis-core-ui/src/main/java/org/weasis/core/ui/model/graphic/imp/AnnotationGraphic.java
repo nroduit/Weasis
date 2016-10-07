@@ -159,7 +159,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void updateLabel(Object source, ViewCanvas<?> view2d, Point2D pos) {
+    public void updateLabel(ViewCanvas<?> view2d, Point2D pos, boolean releasedEvent) {
         setLabel(labels, view2d, pos);
     }
 

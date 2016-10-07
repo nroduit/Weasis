@@ -13,6 +13,7 @@ package org.weasis.dicom.codec.display;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Optional;
 
 import javax.media.jai.PlanarImage;
 
@@ -64,10 +65,8 @@ public class OverlayOp extends AbstractOp {
         } else if (OpEvent.ApplyPR.equals(type)) {
             HashMap<String, Object> p = event.getParams();
             if (p != null) {
-                Object prReader = p.get(ActionW.PR_STATE.cmd());
-                PRSpecialElement pr = (prReader instanceof PresentationStateReader)
-                    ? ((PresentationStateReader) prReader).getDicom() : null;
-                setParam(P_PR_ELEMENT, pr);
+                setParam(P_PR_ELEMENT, Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))
+                    .filter(PRSpecialElement.class::isInstance).orElse(null));
                 setParam(P_IMAGE_ELEMENT, event.getImage());
             }
         }

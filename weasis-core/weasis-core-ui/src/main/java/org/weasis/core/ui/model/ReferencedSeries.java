@@ -42,6 +42,6 @@ public class ReferencedSeries extends DefaultUUID {
     }
 
     public void setImages(List<ReferencedImage> images) {
-        this.images = Optional.ofNullable(images).orElse(new ArrayList<>());
+        this.images = Optional.ofNullable(images).orElseGet(ArrayList::new);
     }
 }

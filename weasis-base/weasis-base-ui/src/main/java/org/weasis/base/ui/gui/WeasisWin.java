@@ -100,8 +100,8 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.pref.PreferenceDialog;
-import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.UriListFlavor;
@@ -343,7 +343,7 @@ public class WeasisWin {
         if (series != null && treeModel != null && entry != null) {
             for (MediaSeries<?> s : series) {
                 MediaSeriesGroup entry1 = treeModel.getParent(s, entry);
-                List<MediaSeries<?>> seriesList = Optional.ofNullable(map.get(entry1)).orElse(new ArrayList<>());
+                List<MediaSeries<?>> seriesList = Optional.ofNullable(map.get(entry1)).orElseGet(ArrayList::new);
                 seriesList.add(s);
                 map.put(entry1, seriesList);
             }

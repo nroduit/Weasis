@@ -17,6 +17,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,10 +34,14 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.image.CropOp;
+import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.EscapeChars;
@@ -44,8 +49,10 @@ import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.AbstractGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
+import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
@@ -66,7 +73,7 @@ public class PRManager {
     public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
     public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel"; //$NON-NLS-1$
     public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
-    public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers"; //$NON-NLS-1$
+    public static final String TAG_DICOM_LAYERS = "pr.layers"; //$NON-NLS-1$
 
     public static void applyPresentationState(ViewCanvas<DicomImageElement> view, PresentationStateReader reader,
         DicomImageElement img) {
@@ -79,6 +86,12 @@ public class PRManager {
         reader.applySpatialTransformationModule(actionsInView);
         List<PresetWindowLevel> presets = reader.getPresetCollection(img);
         if (presets != null && !presets.isEmpty()) {
+            ImageOpNode node = view.getDisplayOpManager().getNode(WindowOp.OP_NAME);
+            if (node != null) {
+                List<PresetWindowLevel> presetList =
+                    img.getPresetList(JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
+                presets.addAll(presetList);
+            }
             PresetWindowLevel p = presets.get(0);
             actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
@@ -91,7 +104,7 @@ public class PRManager {
         applyPixelSpacing(view, reader, img);
 
         GraphicModel graphicModel = PrGraphicUtil.getPresentationModel(reader.getDcmobj());
-       // GraphicModel graphicModel =  null;
+        // GraphicModel graphicModel = null;
         List<GraphicLayer> layers =
             graphicModel == null ? readGraphicAnnotation(view, reader, img) : readXmlModel(view, graphicModel);
 
@@ -194,14 +207,13 @@ public class PRManager {
         ArrayList<GraphicLayer> layers = new ArrayList<>();
         int k = 0;
         for (GraphicLayer layer : graphicModel.getLayers()) {
-            layer.setName(Optional.ofNullable(layer.getName()).orElse(layer.getType().getDefaultName()) + " [DICOM]");
+            layer.setName(Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName) + " [DICOM]");
             layer.setLocked(true);
+            layer.setSerializable(false);
             layer.setLevel(270 + k++);
-            layer.setType(LayerType.DICOM_PR);
             layers.add(layer);
         }
-        
-        
+
         for (Graphic g : graphicModel.getModels()) {
             AbstractGraphicModel.addGraphicToModel(view, g.getLayer(), g);
         }
@@ -261,8 +273,10 @@ public class PRManager {
                     }
 
                     GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
-                    layer.setName(graphicLayerName);
+                    layer.setName(graphicLayerName+ " [DICOM]");
+                    layer.setSerializable(false);
                     layer.setLocked(true);
+                    layer.setSelectable(false);
                     layer.setLevel(310 + glm.getInt(Tag.GraphicLayerOrder, 0));
                     layers.add(layer);
 
@@ -293,6 +307,16 @@ public class PRManager {
                     Sequence txos = gram.getSequence(Tag.TextObjectSequence);
                     if (txos != null) {
                         for (Attributes txo : txos) {
+                            Attributes style = txo.getNestedDataset(Tag.LineStyleSequence);
+                            Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
+                            Boolean dashed = style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern)); //$NON-NLS-1$
+                            if (style != null) {
+                                float[] lab = CIELab.convertToFloatLab(style.getInts(Tag.PatternOnColorCIELabValue));
+                                if (lab != null) {
+                                    rgb = PresentationStateReader.getRGBColor(255, lab, (int[]) null);
+                                }
+                            }
+                            
                             String[] textLines = EscapeChars.convertToLines(txo.getString(Tag.UnformattedTextValue));
                             // MATRIX not implemented
                             boolean isDisp = "DISPLAY".equalsIgnoreCase(txo.getString(Tag.BoundingBoxAnnotationUnits)); //$NON-NLS-1$
@@ -316,9 +340,6 @@ public class PRManager {
                                 }
                             }
 
-                            Point2D.Double ptAnchor = null;
-                            Point2D.Double ptBox = null;
-
                             float[] anchor = txo.getFloats(Tag.AnchorPoint);
                             if (anchor != null && anchor.length == 2) {
                                 // MATRIX not implemented
@@ -326,12 +347,12 @@ public class PRManager {
                                     "DISPLAY".equalsIgnoreCase(txo.getString(Tag.AnchorPointAnnotationUnits)); //$NON-NLS-1$
                                 double x = disp ? anchor[0] * width : anchor[0];
                                 double y = disp ? anchor[1] * height : anchor[1];
-                                ptAnchor = new Point2D.Double(x, y);
+                                Point2D.Double ptAnchor = new Point2D.Double(x, y);
                                 /*
                                  * Use the center of the box. Do not follow DICOM specs: displaying the bounding box
                                  * even the text doesn't match. Does not make sense!
                                  */
-                                ptBox =
+                                Point2D.Double ptBox =
                                     rect == null ? ptAnchor : new Point2D.Double(rect.getCenterX(), rect.getCenterY());
                                 if (!PrGraphicUtil.getBooleanValue(txo, Tag.AnchorPointVisibility)) {
                                     ptAnchor = null;
@@ -339,21 +360,29 @@ public class PRManager {
                                 if (ptAnchor != null && ptAnchor.equals(ptBox)) {
                                     ptBox = new Point2D.Double(ptAnchor.getX() + 20, ptAnchor.getY() + 50);
                                 }
-                            } else if (rect != null) {
-                                ptBox = new Point2D.Double(rect.getCenterX(), rect.getCenterY());
-                            }
-
-                            if (ptBox != null) {
-                                Graphic g;
+                                
                                 try {
                                     List<Point2D.Double> pts = new ArrayList<>(2);
                                     pts.add(ptAnchor);
                                     pts.add(ptBox);
-                                    g = new AnnotationGraphic().buildGraphic(pts);
+                                    Graphic g = new AnnotationGraphic().buildGraphic(pts);
                                     g.setPaint(rgb);
+                                    g.setLineThickness(thickness);
                                     g.setLabelVisible(Boolean.TRUE);
                                     g.setLabel(textLines, view);
                                     AbstractGraphicModel.addGraphicToModel(view, layer, g);
+                                } catch (InvalidShapeException e) {
+                                    LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
+                                }
+                            } else if (rect != null) {
+                                try {
+                                    Point2D.Double point = new Point2D.Double(rect.getMinX(), rect.getMinY());
+                                    AbstractGraphic pt = (AbstractGraphic) new PointGraphic().buildGraphic(Arrays.asList(point));
+                                    pt.setLineThickness(thickness);
+                                    pt.setLabelVisible(Boolean.TRUE);
+                                    AbstractGraphicModel.addGraphicToModel(view, layer, pt);
+                                    pt.setShape(null, null);
+                                    pt.setLabel(textLines, view, point);
                                 } catch (InvalidShapeException e) {
                                     LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
                                 }
@@ -386,10 +415,8 @@ public class PRManager {
             if (!prList.isEmpty()) {
                 Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
                 if (!ActionState.NoneLabel.NONE_SERIES.equals(oldPR)) {
-                    int index = prList.indexOf(oldPR);
-                    index = index == -1 ? 0 : index;
                     // Set the previous selected value, otherwise set the more recent PR by default
-                    view.setPresentationState(prList.get(index));
+                    view.setPresentationState(prList.indexOf(oldPR) == -1 ? prList.get(0) : oldPR, true);
                 }
 
                 int offset = series.size(null) > 1 ? 2 : 1;
@@ -403,10 +430,6 @@ public class PRManager {
                 }
                 ViewButton prButton = new ViewButton((invoker, x, y) -> {
                     Object pr = view.getActionValue(ActionW.PR_STATE.cmd());
-                    if (pr == null) {
-                        pr = ActionState.NoneLabel.NONE;
-                    }
-                    pr = (pr instanceof PresentationStateReader) ? ((PresentationStateReader) pr).getDicom() : pr;
                     JPopupMenu popupMenu = new JPopupMenu();
                     TitleMenuItem itemTitle = new TitleMenuItem(ActionW.PR_STATE.getTitle(), popupMenu.getInsets());
                     popupMenu.add(itemTitle);
@@ -419,7 +442,7 @@ public class PRManager {
                             if (e.getSource() instanceof RadioMenuItem) {
                                 RadioMenuItem item = (RadioMenuItem) e.getSource();
                                 Object val = item.getUserObject();
-                                view.setPresentationState(val);
+                                view.setPresentationState(val, false);
                             }
                         });
                         groupButtons.add(menuItem);

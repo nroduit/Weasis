@@ -78,7 +78,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
     @Override
     public Component getToolComponent() {
         JViewport viewPort = rootPane.getViewport();
-        rootPane.setViewport(Optional.ofNullable(viewPort).orElse(new JViewport()));
+        rootPane.setViewport(Optional.ofNullable(viewPort).orElseGet(JViewport::new));
 
         if (viewPort.getView() != this) {
             viewPort.setView(this);

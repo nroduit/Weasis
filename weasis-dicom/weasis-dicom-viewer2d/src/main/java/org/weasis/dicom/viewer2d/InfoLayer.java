@@ -347,10 +347,6 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             }
         }
 
-        Object val = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
-        PresentationStateReader prReader =
-            (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
-
         if (getDisplayPreferences(PIXEL) && hideMin) {
             StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel")); //$NON-NLS-1$
             sb.append(StringUtil.COLON_AND_SPACE);
@@ -377,6 +373,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 sb.append("/");//$NON-NLS-1$
                 sb.append(DecFormater.oneDecimal(level));
                 if (dcm != null) {
+                    PresentationStateReader prReader = (PresentationStateReader) view2DPane.getActionValue(PresentationStateReader.TAG_PR_READER);
                     boolean pixelPadding =
                         (Boolean) disOp.getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd());
                     double minModLUT = image.getMinValue(prReader, pixelPadding);
@@ -811,9 +808,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         final double lowLevel = Math.round(level - window / 2);
         final double highLevel = Math.round(level + window / 2);
 
-        Object val = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
-        PresentationStateReader prReader =
-            (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
+        PresentationStateReader prReader = (PresentationStateReader) view2DPane.getActionValue(PresentationStateReader.TAG_PR_READER);
 
         int lowInputValue = (int) (image.getMinValue(prReader, pixelPadding) < lowLevel ? lowLevel
             : image.getMinValue(prReader, pixelPadding));

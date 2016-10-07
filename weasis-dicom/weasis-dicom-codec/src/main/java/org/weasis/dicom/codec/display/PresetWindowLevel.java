@@ -42,6 +42,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.Messages;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.TagD;
 
 public class PresetWindowLevel {
@@ -219,18 +220,20 @@ public class PresetWindowLevel {
             }
         }
 
-        PresetWindowLevel autoLevel = new PresetWindowLevel(Messages.getString("PresetWindowLevel.full"), //$NON-NLS-1$
-            image.getFullDynamicWidth(tagable, pixelPadding), image.getFullDynamicCenter(tagable, pixelPadding),
-            defaultLutShape);
-        // Set O shortcut for auto levels
-        autoLevel.setKeyCode(KeyEvent.VK_0);
-        presetList.add(autoLevel);
+        if (!(tagable instanceof PRSpecialElement)) {
+            PresetWindowLevel autoLevel = new PresetWindowLevel(Messages.getString("PresetWindowLevel.full"), //$NON-NLS-1$
+                image.getFullDynamicWidth(tagable, pixelPadding), image.getFullDynamicCenter(tagable, pixelPadding),
+                defaultLutShape);
+            // Set O shortcut for auto levels
+            autoLevel.setKeyCode(KeyEvent.VK_0);
+            presetList.add(autoLevel);
 
-        // Exclude Secondary Capture CT
-        if (image.getBitsStored() > 8) {
-            List<PresetWindowLevel> modPresets = presetListByModality.get(TagD.getTagValue(image, Tag.Modality));
-            if (modPresets != null) {
-                presetList.addAll(modPresets);
+            // Exclude Secondary Capture CT
+            if (image.getBitsStored() > 8) {
+                List<PresetWindowLevel> modPresets = presetListByModality.get(TagD.getTagValue(image, Tag.Modality));
+                if (modPresets != null) {
+                    presetList.addAll(modPresets);
+                }
             }
         }
 

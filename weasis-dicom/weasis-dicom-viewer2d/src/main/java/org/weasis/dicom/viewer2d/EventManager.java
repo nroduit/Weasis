@@ -349,10 +349,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     Double levelMax =
                         (Double) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MAX.cmd());
 
-                    Object val = view2d.getActionValue(ActionW.PR_STATE.cmd());
-                    PresentationStateReader prReader =
-                        (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
-
+                    PresentationStateReader prReader = (PresentationStateReader) view2d.getActionValue(PresentationStateReader.TAG_PR_READER);
                     if (levelMin == null || levelMax == null) {
                         levelMin = Math.min(levelValue - windowValue / 2.0, image.getMinValue(prReader, pixelPadding));
                         levelMax = Math.max(levelValue + windowValue / 2.0, image.getMaxValue(prReader, pixelPadding));
@@ -1001,9 +998,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             Double levelValue = (Double) node.getParam(ActionW.LEVEL.cmd());
             LutShape lutShapeItem = (LutShape) node.getParam(ActionW.LUT_SHAPE.cmd());
             boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-            Object val = view2d.getActionValue(ActionW.PR_STATE.cmd());
-            PresentationStateReader prReader =
-                (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
+            PresentationStateReader prReader = (PresentationStateReader) view2d.getActionValue(PresentationStateReader.TAG_PR_READER);
 
             getAction(ActionW.DEFAULT_PRESET, ToggleButtonListener.class)
                 .ifPresent(a -> a.setSelectedWithoutTriggerAction(defaultPreset));
@@ -1040,7 +1035,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             if (prReader != null) {
                 List<PresetWindowLevel> prPresets =
                     (List<PresetWindowLevel>) view2d.getActionValue(PRManager.PR_PRESETS);
-                if (prPresets != null) {
+                if (prPresets != null && !prPresets.isEmpty()) {
                     presetList = prPresets;
                 }
             }
@@ -1153,7 +1148,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                     if (ImageOrientation.hasSameOrientation(series, s)) {
                                         pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                                         // Only fully synch if no PR is applied (because can change pixel size)
-                                        if (pane.getActionValue(ActionW.PR_STATE.cmd()) == null
+                                        if (pane.getActionValue(PresentationStateReader.TAG_PR_READER) == null
                                             && hasSameSize(series, s)) {
                                             // If the image has the same reference and the same spatial calibration, all
                                             // the actions are synchronized

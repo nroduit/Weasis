@@ -489,7 +489,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                     TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class),
                                     TagD.getTagValue(img, Tag.SOPInstanceUID, String.class), (Integer) img.getKey())) {
                                     ((View2d) view).updatePR();
-
                                 }
                             }
                         }

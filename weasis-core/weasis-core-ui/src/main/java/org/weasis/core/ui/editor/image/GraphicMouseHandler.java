@@ -90,7 +90,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
                 if (!locked && selectedDragGraphList.contains(dragGraph)) {
 
-                    if (selectedDragGraphList.size() > 1) {
+                    if (selectedDragGraphList.size() > 1 && selectedDragGraphList.stream().allMatch(g -> !g.getLayer().getLocked())) {
                         ds = new BulkDragSequence(selectedDragGraphList, mouseEvt);
                         newCursor = DefaultView2d.MOVE_CURSOR;
 

@@ -71,7 +71,7 @@ public class GraphicsPane extends JComponent implements Canvas {
 
         this.viewModelHandler = new ViewModelHandler();
 
-        this.viewModel = Optional.ofNullable(viewModel).orElse(new DefaultViewModel());
+        this.viewModel = Optional.ofNullable(viewModel).orElseGet(DefaultViewModel::new);
         this.viewModel.addViewModelChangeListener(viewModelHandler);
     }
 

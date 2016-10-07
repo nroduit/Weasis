@@ -31,12 +31,15 @@ import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class PresentationStateReader implements Tagable {
-    private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
+    public static final String TAG_PR_READER = "pr.reader"; //$NON-NLS-1$
+    
     public static final int PRIVATE_CREATOR_TAG = 0x71070070;
     public static final int PR_MODEL_PRIVATE_TAG = 0x71077001;
     public static final String PR_MODEL_ID = "weasis/model/xml/2.5";
 
+    private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
+    
     private final PRSpecialElement prSpecialElement;
     private final Attributes dcmobj;
     private final HashMap<TagW, Object> tags = new HashMap<>();

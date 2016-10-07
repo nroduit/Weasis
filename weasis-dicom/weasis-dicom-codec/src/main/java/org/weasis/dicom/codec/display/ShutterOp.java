@@ -21,6 +21,7 @@ import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.util.HashMap;
+import java.util.Optional;
 
 import javax.media.jai.PlanarImage;
 import javax.media.jai.ROIShape;
@@ -89,9 +90,8 @@ public class ShutterOp extends AbstractOp {
         } else if (OpEvent.ApplyPR.equals(type)) {
             HashMap<String, Object> p = event.getParams();
             if (p != null) {
-                Object prReader = p.get(ActionW.PR_STATE.cmd());
-                PRSpecialElement pr = (prReader instanceof PresentationStateReader)
-                    ? ((PresentationStateReader) prReader).getDicom() : null;
+                PRSpecialElement pr = Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))
+                    .filter(PRSpecialElement.class::isInstance).map(PRSpecialElement.class::cast).orElse(null);
                 setParam(P_SHAPE, pr == null ? null : pr.getTagValue(TagW.ShutterFinalShape));
                 setParam(P_PS_VALUE, pr == null ? null : pr.getTagValue(TagW.ShutterPSValue));
                 setParam(P_RGB_COLOR, pr == null ? null : pr.getTagValue(TagW.ShutterRGBColor));

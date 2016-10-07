@@ -227,7 +227,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void buildPanner() {
-        panner = Optional.ofNullable(panner).orElse(new Panner<>(this));
+        panner = Optional.ofNullable(panner).orElseGet(() -> new Panner<>(this));
     }
 
     @Override

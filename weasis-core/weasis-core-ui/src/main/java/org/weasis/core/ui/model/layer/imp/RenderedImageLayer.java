@@ -69,7 +69,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     }
 
     public RenderedImageLayer(SimpleOpManager disOpManager, boolean buildIterator) {
-        this.disOpManager = Optional.ofNullable(disOpManager).orElse(new SimpleOpManager());
+        this.disOpManager = Optional.ofNullable(disOpManager).orElseGet(SimpleOpManager::new);
         this.listenerList = new ArrayList<>();
         this.opListeners = new ArrayList<>();
         this.buildIterator = buildIterator;

@@ -44,7 +44,7 @@ public class ReferencedImage extends DefaultUUID {
     }
 
     public void setFrames(List<Integer> frames) {
-        this.frames = Optional.ofNullable(frames).orElse(new ArrayList<>());
+        this.frames = Optional.ofNullable(frames).orElseGet(ArrayList::new);
     }
 
 }

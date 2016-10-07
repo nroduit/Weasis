@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBContext;
@@ -42,6 +43,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.ReferencedImage;
 import org.weasis.core.ui.model.ReferencedSeries;
@@ -101,17 +103,15 @@ public class PrSerializer {
     }
 
     private static GraphicModel getModelForSerialization(GraphicModel model) {
-        // if this model is open in a view, copy it and remove non serializable graphics
-        if (!model.getChangeListeners().isEmpty()) {
-            XmlGraphicModel xmlModel = new XmlGraphicModel();
-            xmlModel.setReferencedSeries(model.getReferencedSeries());
-            for (Graphic g : model.getModels()) {
-                if (g.getLayer().getType().getSerializable() && !g.getPts().isEmpty()) {
-                    xmlModel.addGraphic(g);
-                }
+        // Remove non serializable graphics
+        XmlGraphicModel xmlModel = new XmlGraphicModel();
+        xmlModel.setReferencedSeries(model.getReferencedSeries());
+        for (Graphic g : model.getModels()) {
+            if (g.getLayer().getSerializable() && !g.getPts().isEmpty()) {
+                xmlModel.addGraphic(g);
             }
         }
-        return model;
+        return xmlModel;
     }
 
     private static void writePrivateTags(GraphicModel model, Attributes attributes) {
@@ -180,17 +180,22 @@ public class PrSerializer {
         for (int i = 0; i < layers.size(); i++) {
             GraphicLayer layer = layers.get(i);
 
-            if (layer.getType().getSerializable()) {
+            if (layer.getSerializable()) {
                 String layerName = layer.getType().name();
+                List<Graphic> graphics = getGraphicsByLayer(model, layer.getUuid());
 
                 Attributes l = new Attributes(2);
                 l.setString(Tag.GraphicLayer, VR.CS, layerName);
                 l.setInt(Tag.GraphicLayerOrder, VR.IS, i);
+                float[] lab = PresentationStateReader.colorToLAB(Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW));
+                if (lab != null) {
+                    l.setInt(Tag.GraphicLayerRecommendedDisplayCIELabValue, VR.US, CIELab.convertToDicomLab(lab));
+                }
+                l.setString(Tag.GraphicLayerDescription, VR.LO, layer.toString());
                 layerSeq.add(l);
 
                 Attributes a = new Attributes(2);
                 a.setString(Tag.GraphicLayer, VR.CS, layerName);
-                List<Graphic> graphics = getGraphicsByLayer(model, layer.getUuid());
                 Sequence graphicSeq = a.newSequence(Tag.GraphicObjectSequence, graphics.size());
                 Sequence textSeq = a.newSequence(Tag.TextObjectSequence, graphics.size());
 
@@ -201,7 +206,7 @@ public class PrSerializer {
             }
         }
     }
-
+    
     private static List<Graphic> getGraphicsByLayer(GraphicModel model, String layerUid) {
         return model.getModels().stream().filter(g -> layerUid.equals(g.getLayer().getUuid()))
             .collect(Collectors.toList());
@@ -277,8 +282,7 @@ public class PrSerializer {
             pts = Arrays.asList(graphic.getPts().get(0));
         } else if (graphic instanceof AnnotationGraphic) {
             AnnotationGraphic g = (AnnotationGraphic) graphic;
-            Attributes attributes = bluildLabelAndAnchor(g.getLabelBounds(), g.getAnchorPoint(),
-                Arrays.stream(g.getLabels()).collect(Collectors.joining("\r\n")));
+            Attributes attributes = bluildLabelAndAnchor(g);
             textSeq.add(attributes);
             return;
         } else {
@@ -307,11 +311,27 @@ public class PrSerializer {
         }
     }
 
-    private static Attributes bluildLabelAndAnchor(Rectangle2D bound, Point2D anchor, String text) {
-        Attributes attributes = new Attributes(5);
+    private static Attributes bluildLabelAndAnchor(AnnotationGraphic g) {
+        Rectangle2D bound = g.getLabelBounds(); 
+        Point2D anchor=g.getAnchorPoint(); 
+        String text = Arrays.stream(g.getLabels()).collect(Collectors.joining("\r\n"));
+        
+        Attributes attributes = new Attributes(7);
         attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
         attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());
         attributes.setString(Tag.AnchorPointVisibility, VR.CS, "Y");
+        Sequence style = attributes.newSequence(Tag.LineStyleSequence, 1);
+        Attributes styles = new Attributes();
+        styles.setFloat(Tag.LineThickness, VR.FL, g.getLineThickness());
+
+        if (g.getColorPaint() instanceof Color) {
+            Color color = (Color) g.getColorPaint();
+            float[] rgb = PresentationStateReader.colorToLAB(color);
+            if (rgb != null) {
+                styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, CIELab.convertToDicomLab(rgb));
+            }
+        }
+        style.add(styles);
         attributes.setDouble(Tag.BoundingBoxTopLeftHandCorner, VR.FL,
             new double[] { bound.getMinX(), bound.getMinY() });
         attributes.setDouble(Tag.BoundingBoxBottomRightHandCorner, VR.FL,

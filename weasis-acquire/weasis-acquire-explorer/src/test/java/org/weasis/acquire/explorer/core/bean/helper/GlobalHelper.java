@@ -121,7 +121,7 @@ public class GlobalHelper extends MockHelper {
         }
         
         public void prepareMock() {
-            Optional.ofNullable(patient).orElse(mock(Element.class));
+            Optional.ofNullable(patient).orElseGet(() -> mock(Element.class));
             
             tagW = mock(TagW.class);
             nodeList = mock(NodeList.class);

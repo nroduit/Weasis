@@ -40,7 +40,7 @@ public class DefaultUUID implements UUIDable {
 
     @Override
     public void setUuid(String uuid) {
-        this.uuid = Optional.ofNullable(uuid).orElse(UUID.randomUUID().toString());
+        this.uuid = Optional.ofNullable(uuid).orElseGet(UUID.randomUUID()::toString);
     }
 
     @Override
