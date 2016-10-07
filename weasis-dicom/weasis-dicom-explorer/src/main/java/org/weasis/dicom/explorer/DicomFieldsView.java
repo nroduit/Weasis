@@ -57,7 +57,6 @@ import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -345,11 +344,10 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         } catch (BadLocationException e) {
             LOGGER.error("Clear document", e);
         }
-        if (media != null) {
-            DataExplorerView dicomView = org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
-
-            if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
-                DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
+        if (series != null && media != null) {
+            Object tagValue = series.getTagValue(TagW.ExplorerModel);
+            if (tagValue instanceof DicomModel) {
+                DicomModel model = (DicomModel) tagValue;
 
                 MediaReader loader = media.getMediaReader();
                 if (loader instanceof DcmMediaReader) {
