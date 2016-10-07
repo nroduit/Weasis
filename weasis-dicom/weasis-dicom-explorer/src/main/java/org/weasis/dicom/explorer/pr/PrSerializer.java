@@ -73,7 +73,7 @@ public class PrSerializer {
         String sopInstanceUID) {
         Objects.requireNonNull(model);
         Objects.requireNonNull(outputFile);
-        
+
         if (parentAttributes != null) {
             try {
                 GraphicModel m = getModelForSerialization(model);
@@ -120,7 +120,7 @@ public class PrSerializer {
             Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             jaxbMarshaller.marshal(model, outputStream);
-            jaxbMarshaller.marshal(model, System.out);
+            // jaxbMarshaller.marshal(model, System.out);
             attributes.setString(PresentationStateReader.PRIVATE_CREATOR_TAG, VR.LO,
                 PresentationStateReader.PR_MODEL_ID);
             attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB,

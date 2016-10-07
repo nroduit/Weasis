@@ -80,8 +80,8 @@ public class DefaultDragSequence implements Draggable {
     public Boolean completeDrag(MouseEventDouble mouseEvent) {
         if (mouseEvent != null) {
             if (!graphic.isGraphicComplete()) {
-                if (graphic.getPtsNumber() == DragGraphic.UNDEFINED && mouseEvent.getClickCount() == 2 && !mouseEvent.isConsumed()) {
-                    mouseEvent.consume();
+                if (graphic.getPtsNumber() == DragGraphic.UNDEFINED && mouseEvent.getClickCount() == 2
+                    && !mouseEvent.isConsumed()) {
                     List<Point2D.Double> handlePointList = graphic.getPts();
                     if (!graphic.isLastPointValid()) {
                         handlePointList.remove(handlePointList.size() - 1);
@@ -100,15 +100,13 @@ public class DefaultDragSequence implements Draggable {
                 graphic.setResizeOrMoving(Boolean.FALSE);
                 graphic.setShape(null, mouseEvent);
                 graphic.buildShape(mouseEvent);
-                if (mouseEvent.getClickCount() == 2  && !mouseEvent.isConsumed()) {
-                    mouseEvent.consume();
+                if (mouseEvent.getClickCount() == 2 && !mouseEvent.isConsumed()) {
                     ViewCanvas<?> graphPane = graphic.getDefaultView2d(mouseEvent);
                     if (graphPane != null) {
                         // Do not open properties dialog for graphic with undefined points (like polyline) => double
                         // click conflict
                         boolean isEditingGraph = false;
-                        Optional<Graphic> first =
-                            graphPane.getGraphicManager().getFirstGraphicIntersecting(mouseEvent);
+                        Optional<Graphic> first = graphPane.getGraphicManager().getFirstGraphicIntersecting(mouseEvent);
                         if (first.isPresent() && first.get() instanceof AbstractDragGraphic) {
                             AbstractDragGraphic dragGraph = (AbstractDragGraphic) first.get();
                             if (dragGraph.getSelected() && dragGraph.getVariablePointsNumber()) {
@@ -121,20 +119,20 @@ public class DefaultDragSequence implements Draggable {
                                 }
                             }
                         }
-                        
+
                         if (!isEditingGraph && graphPane.getGraphicManager().getSelectedGraphics().size() == 1) {
                             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(graphPane.getJComponent());
                             final ArrayList<DragGraphic> list = new ArrayList<>();
                             list.add(graphic);
                             JDialog dialog = new MeasureDialog(graphPane, list);
                             ColorLayerUI.showCenterScreen(dialog, layer);
-                            return null;
+                            mouseEvent.consume();
                         }
                     }
                 }
-                return  Boolean.TRUE;
+                return Boolean.TRUE;
             }
         }
-        return  Boolean.FALSE;
+        return Boolean.FALSE;
     }
 }

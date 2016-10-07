@@ -421,13 +421,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         boolean spatialTransformation = actionsInView.get(ActionW.PREPROCESSING.cmd()) != null;
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
-        // Delete previous PR Layers
-        List<GraphicLayer> dcmLayers = (List<GraphicLayer>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
-        if (dcmLayers != null) {
-            PRManager.deleteDicomLayers(dcmLayers, graphicManager);
-            actionsInView.remove(PRManager.TAG_DICOM_LAYERS);
-        }
-
         DicomImageElement m = getImage();
         // Reset display parameter
         ((DefaultViewModel) getViewModel()).setEnableViewModelChangeListeners(false);
@@ -624,6 +617,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void setImage(DicomImageElement img) {
         boolean newImg = img != null && !img.equals(imageLayer.getSourceImage());
         if (newImg) {
+            // Delete previous PR Layers
+            List<GraphicLayer> dcmLayers = (List<GraphicLayer>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
+            if (dcmLayers != null) {
+                PRManager.deleteDicomLayers(dcmLayers, graphicManager);
+                actionsInView.remove(PRManager.TAG_DICOM_LAYERS);
+            }
             PrGraphicUtil.applyPresentationModel(img);
         }
         super.setImage(img);

@@ -627,7 +627,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         int nearestHandlePtIndex = -1;
         final Point2D mousePoint = Optional.ofNullable(mouseEvent).map(evt -> evt.getImageCoordinates()).orElse(null);
 
-        if (mousePoint != null && !pts.isEmpty()) {
+        if (mousePoint != null && !pts.isEmpty() && !layer.getLocked()) {
             double minHandleDistance = Double.MAX_VALUE;
             double maxHandleDistance =
                 HANDLE_SIZE * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
@@ -635,7 +635,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
             for (int index = 0; index < pts.size(); index++) {
                 Point2D handlePoint = pts.get(index);
                 double handleDistance =
-                    Optional.ofNullable(handlePoint).map(pt -> mousePoint.distance(pt)).orElse(Double.MAX_VALUE);
+                    Optional.ofNullable(handlePoint).map(mousePoint::distance).orElse(Double.MAX_VALUE);
 
                 if (handleDistance <= maxHandleDistance && handleDistance < minHandleDistance) {
                     minHandleDistance = handleDistance;
@@ -650,7 +650,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         Map<Double, Integer> indexByDistanceMap = new TreeMap<>();
         final Point2D mousePoint = Optional.ofNullable(mouseEvent).map(evt -> evt.getImageCoordinates()).orElse(null);
 
-        if (mousePoint != null && !pts.isEmpty()) {
+        if (mousePoint != null && !pts.isEmpty() && !layer.getLocked()) {
             double maxHandleDistance =
                 HANDLE_SIZE * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
 

@@ -93,6 +93,11 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
     public String toString() {
         return Optional.ofNullable(getName()).orElse(getType().getDefaultName());
     }
+    
+    @Override
+    public boolean isSelectable() {
+        return !locked || getType().getSelectable();
+    }
 
     static class Adapter extends XmlAdapter<AbstractGraphicLayer, Layer> {
 

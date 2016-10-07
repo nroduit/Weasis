@@ -335,7 +335,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
                 for (int i = models.size() - 1; i >= 0; i--) {
                     Graphic graphic = models.get(i);
                     GraphicLayer layer = graphic.getLayer();
-                    if (layer.getVisible() && !layer.getLocked()) {
+                    if (layer.getVisible() && layer.isSelectable()) {
 
                         Rectangle graphBounds = graphic.getBounds(transform);
 
@@ -372,7 +372,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
                 for (int i = models.size() - 1; i >= 0; i--) {
                     Graphic graphic = models.get(i);
                     GraphicLayer layer = graphic.getLayer();
-                    if (layer.getVisible() && !layer.getLocked()) {
+                    if (layer.getVisible() && layer.isSelectable()) {
 
                         List<Area> selectedAreaList = new ArrayList<>();
 
@@ -427,7 +427,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             for (int i = models.size() - 1; i >= 0; i--) {
                 Graphic g = models.get(i);
                 GraphicLayer l = g.getLayer();
-                if (l.getVisible() && !l.getLocked()) {
+                if (l.getVisible() && l.isSelectable()) {
                     if (g.isOnGraphicLabel(mouseEvent)) {
                         if (g.getSelected()) {
                             return Optional.of(g);

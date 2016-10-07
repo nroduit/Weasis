@@ -207,6 +207,7 @@ public class PRManager {
             layer.setName(Optional.ofNullable(layer.getName()).orElse(layer.getType().getDefaultName()) + " [DICOM]");
             layer.setLocked(true);
             layer.setLevel(270 + k++);
+            layer.setType(LayerType.DICOM_PR);
             layers.add(layer);
         }
         
