@@ -241,6 +241,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
         actionsInView.put(ActionW.DRAWINGS.cmd(), true);
+        actionsInView.put(LayerType.CROSSLINES.name(), true);
         actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
 
@@ -346,7 +347,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     } catch (InterruptedException et) {
                     }
 
-                } catch (Exception  e) {
+                } catch (Exception e) {
                     LOGGER.error("Get pixel value", e);//$NON-NLS-1$
                 }
             }
@@ -1061,8 +1062,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 } else if (value.getLocation() != null) {
                     Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
                     if (cutlines != null && cutlines) {
-                        // Compute cutlines from the location of selected image
-                        computeCrosslines(value.getLocation().doubleValue());
+                        if (JMVUtils.getNULLtoTrue(actionsInView.get(LayerType.CROSSLINES.name()))) {
+                            // Compute cutlines from the location of selected image
+                            computeCrosslines(value.getLocation().doubleValue());
+                        }
                     } else {
                         double location = value.getLocation().doubleValue();
                         // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and related

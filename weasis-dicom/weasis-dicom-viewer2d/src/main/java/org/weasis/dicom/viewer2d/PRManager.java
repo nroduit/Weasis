@@ -40,8 +40,6 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.EscapeChars;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -49,7 +47,6 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
-import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
@@ -99,13 +96,6 @@ public class PRManager {
             graphicModel == null ? readGraphicAnnotation(view, reader, img) : readXmlModel(view, graphicModel);
 
         if (layers != null) {
-            EventManager eventManager = EventManager.getInstance();
-            SeriesViewerEvent event =
-                new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.ADD_LAYER);
-            for (Layer layer : layers) {
-                event.setShareObject(layer);
-                eventManager.fireSeriesViewerListeners(event);
-            }
             view.setActionsInView(PRManager.TAG_DICOM_LAYERS, layers);
         }
     }
@@ -380,12 +370,7 @@ public class PRManager {
 
     public static void deleteDicomLayers(List<GraphicLayer> layers, GraphicModel graphicManager) {
         if (layers != null) {
-            EventManager eventManager = EventManager.getInstance();
-            SeriesViewerEvent event =
-                new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.REMOVE_LAYER);
             for (GraphicLayer layer : layers) {
-                event.setShareObject(layer);
-                eventManager.fireSeriesViewerListeners(event);
                 graphicManager.deleteByLayer(layer);
             }
         }

@@ -370,7 +370,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                         continue;
                                     }
                                     if (v instanceof View2d
-                                        && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
+                                        && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
+                                        && JMVUtils.getNULLtoTrue(actionsInView.get(LayerType.CROSSLINES.name()))) {
                                         ((View2d) v).computeCrosshair(p3);
                                         v.getJComponent().repaint();
                                     }
@@ -830,12 +831,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (command.equals(ActionW.WINLEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
         }
-        
+
         Optional<ActionW> actionKey = eventManager.getActionKey(command);
         if (!actionKey.isPresent()) {
             return null;
         }
-        
+
         if (actionKey.get().isDrawingAction()) {
             return graphicMouseHandler;
         }

@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
@@ -32,6 +32,7 @@ import javax.swing.tree.TreePath;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
@@ -43,8 +44,6 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.layer.GraphicLayer;
-import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -79,6 +78,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private DefaultMutableTreeNode imageNode;
     private DefaultMutableTreeNode dicomInfo;
     private DefaultMutableTreeNode drawings;
+    private DefaultMutableTreeNode crosslines;
     private DefaultMutableTreeNode minAnnotations;
     private TreePath rootPath;
     private JPanel panelFoot;
@@ -118,6 +118,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         rootNode.add(dicomInfo);
         drawings = new DefaultMutableTreeNode(ActionW.DRAWINGS, true);
         rootNode.add(drawings);
+        crosslines = new DefaultMutableTreeNode(LayerType.CROSSLINES, false);
+        drawings.add(crosslines);
 
         DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
         tree.setModel(model);
@@ -169,10 +171,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     views = container.getImagePanels();
                 } else {
                     views = new ArrayList<>(1);
-                    ViewCanvas<DicomImageElement> view = container.getSelectedImagePane();
-                    if (view != null) {
-                        views.add(view);
-                    }
+                    Optional.ofNullable(container.getSelectedImagePane()).ifPresent(views::add);
                 }
             }
             if (views != null) {
@@ -226,17 +225,22 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                             Series<?> series = (Series<?>) v.getSeries();
                             EventManager.getInstance().fireSeriesViewerListeners(
                                 new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
-
                         }
                     }
                 } else if (drawings.equals(parent)) {
-                    if (selObject instanceof DefaultMutableTreeNode) {
-                        Layer layer = (Layer) ((DefaultMutableTreeNode) selObject).getUserObject();
-                        if (layer != null) {
-                            for (ViewCanvas<DicomImageElement> v : views) {
-                                if (!Objects.equals(layer.getVisible(), selected)) {
-                                    layer.setVisible(selected);
+                    if (selObject == crosslines) {
+                        for (ViewCanvas<DicomImageElement> v : views) {
+                            if ((Boolean) v.getActionValue(LayerType.CROSSLINES.name()) != selected) {
+                                v.setActionsInView(LayerType.CROSSLINES.name(), selected);
+                                if (!selected) {
+                                    v.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
                                     v.getJComponent().repaint();
+                                } else {
+                                    // Force to redraw crosslines
+                                    Optional
+                                        .ofNullable(
+                                            (SliderChangeListener) v.getEventManager().getAction(ActionW.SCROLL_SERIES))
+                                        .ifPresent(a -> a.stateChanged(a.getSliderModel()));
                                 }
                             }
                         }
@@ -246,7 +250,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         }
     }
 
-    private void sendPropertyChangeEvent(List<ViewCanvas<DicomImageElement>> views, String cmd, boolean selected) {
+    private static void sendPropertyChangeEvent(List<ViewCanvas<DicomImageElement>> views, String cmd,
+        boolean selected) {
         for (ViewCanvas<DicomImageElement> v : views) {
             v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
         }
@@ -324,24 +329,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     private void initLayers(ViewCanvas<?> view) {
-        // Drawings node
-        drawings.removeAllChildren();
-        Boolean draw = (Boolean) view.getActionValue(ActionW.DRAWINGS.cmd());
-        TreePath drawingsPath = getTreePath(drawings);
-        initPathSelection(getTreePath(drawings), draw == null ? true : draw);
-
-        List<GraphicLayer> layers = view.getGraphicManager().getLayers();
-        layers.removeIf(l -> l.getType() == LayerType.TEMP_DRAW);
-        for (GraphicLayer layer : layers) {
-            DefaultMutableTreeNode treeNode = new DefaultMutableTreeNode(layer, true);
-            drawings.add(treeNode);
-            initPathSelection(getTreePath(treeNode), layer.getVisible());
-        }
-
-        // Reload tree node as model does not fire any events to UI
-        DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
-        dtm.reload(drawings);
-        tree.expandPath(drawingsPath);
+        initPathSelection(getTreePath(drawings), JMVUtils.getNULLtoTrue(view.getActionValue(ActionW.DRAWINGS.cmd())));
+        initPathSelection(getTreePath(crosslines),
+            JMVUtils.getNULLtoTrue(view.getActionValue(LayerType.CROSSLINES.name())));
     }
 
     private static TreePath getTreePath(TreeNode node) {
@@ -417,38 +407,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 model.addCheckingPath(path);
                 model.removeCheckingPath(new TreePath(minAnnotations.getPath()));
             }
-        } else if (EVENT.ADD_LAYER.equals(e)) {
-            Object obj = event.getSharedObject();
-            if (obj instanceof Layer) {
-                DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
-                DefaultMutableTreeNode node = new DefaultMutableTreeNode(obj, true);
-                drawings.add(node);
-                dtm.nodesWereInserted(drawings, new int[] { drawings.getIndex(node) });
-                if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
-                    ViewCanvas<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
-                    if (pane != null && ((Layer) obj).getVisible()) {
-                        tree.addCheckingPath(getTreePath(node));
-                    }
-                }
-            }
-        } else if (EVENT.REMOVE_LAYER.equals(e)) {
-            Object obj = event.getSharedObject();
-            if (obj instanceof Layer) {
-                Layer layer = (Layer) obj;
-                Enumeration<?> en = drawings.children();
-                while (en.hasMoreElements()) {
-                    Object node = en.nextElement();
-                    if (node instanceof DefaultMutableTreeNode
-                        && layer.equals(((DefaultMutableTreeNode) node).getUserObject())) {
-                        DefaultMutableTreeNode n = (DefaultMutableTreeNode) node;
-                        TreeNode parent = n.getParent();
-                        int index = parent.getIndex(n);
-                        n.removeFromParent();
-                        DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
-                        dtm.nodesWereRemoved(parent, new int[] { index }, new TreeNode[] { n });
-                    }
-                }
-            }
         }
     }
 
@@ -456,10 +414,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         for (Enumeration<?> children = start.children(); children.hasMoreElements();) {
             DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
             if (!dtm.isLeaf()) {
-                //
                 TreePath tp = new TreePath(dtm.getPath());
                 tree.expandPath(tp);
-                //
                 expandTree(tree, dtm);
             }
         }

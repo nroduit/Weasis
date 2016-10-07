@@ -54,6 +54,11 @@ public enum LayerType {
         return level;
     }
 
+    @Override
+    public String toString() {
+        return defaultName;
+    }
+
     public String getDefaultName() {
         return defaultName;
     }
