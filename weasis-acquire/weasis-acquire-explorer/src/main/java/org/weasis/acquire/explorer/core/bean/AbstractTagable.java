@@ -21,36 +21,44 @@ import org.weasis.core.api.media.data.Tagable;
 
 public abstract class AbstractTagable implements Tagable {
     protected final Map<TagW, Object> tags = new HashMap<>();
-    
-    @Override
-    public boolean containTagKey(TagW tag) {
-        return tags.containsKey(tag);
-    }
 
-    @Override
-    public Object getTagValue(TagW tag) {
-        return tag == null ? null : tags.get(tag);
-    }
+	@Override
+	public boolean containTagKey(TagW tag) {
+		return tags.containsKey(tag);
+	}
 
-    @Override
-    public void setTag(TagW tag, Object value) {
-        tags.put(tag, value);
-    }
+	@Override
+	public Object getTagValue(TagW tag) {
+		return tag == null ? null : tags.get(tag);
+	}
 
-    @Override
-    public void setTagNoNull(TagW tag, Object value) {
-        if (value != null) {
-            setTag(tag, value);
-        }
+	@Override
+	public void setTag(TagW tag, Object value) {
+		tags.put(tag, value);
+	}
 
-    }
+	@Override
+	public void setTagNoNull(TagW tag, Object value) {
+		if (value != null) {
+			setTag(tag, value);
+		}
 
-    @Override
-    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
-        return tags.entrySet().iterator();
-    }
+	}
 
-    public Set<Entry<TagW, Object>> getTagEntrySet() {
-        return tags.entrySet();
-    }
+	@Override
+	public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
+		return tags.entrySet().iterator();
+	}
+
+	public Set<Entry<TagW, Object>> getTagEntrySet() {
+		return tags.entrySet();
+	}
+
+	public void clear() {
+		tags.clear();
+	}
+	
+	public boolean isEmpty(){
+		return tags.isEmpty();
+	}
 }

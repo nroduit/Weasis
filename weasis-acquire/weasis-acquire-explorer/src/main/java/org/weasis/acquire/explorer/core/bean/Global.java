@@ -24,64 +24,76 @@ import org.weasis.dicom.codec.TagD;
 
 public class Global extends AbstractTagable {
 
-    public void init(Document xml) {
-        tags.put(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
-        Optional.of(xml).map(o -> o.getDocumentElement()).ifPresent(init);
-    }
+	public void init(Document xml) {
+		tags.put(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
+		Optional.of(xml).map(o -> o.getDocumentElement()).ifPresent(init);
+	}
 
-    private final Consumer<Element> init = e -> {
-        NodeList nodes = e.getChildNodes();
-        if (nodes != null) {
-            for (int i = 0; i < nodes.getLength(); i++) {
-                Node node = nodes.item(i);
-                setTag(node);
-            }
-        }
-    };
+	private final Consumer<Element> init = e -> {
+		NodeList nodes = e.getChildNodes();
+		if (nodes != null) {
+			for (int i = 0; i < nodes.getLength(); i++) {
+				Node node = nodes.item(i);
+				setTag(node);
+			}
+		}
+	};
 
-    private void setTag(Node node) {
-        if (node != null) {
-            TagW tag = TagD.get(node.getNodeName());
-            if (tag != null) {
-                tag.readValue(node.getTextContent(), this);
-            }
-        }
-    }
+	private void setTag(Node node) {
+		if (node != null) {
+			TagW tag = TagD.get(node.getNodeName());
+			if (tag != null) {
+				tag.readValue(node.getTextContent(), this);
+			}
+		}
+	}
 
-    public boolean containSameTagsValues(Document xml) {
-        if (xml == null) {
-            throw new IllegalArgumentException("empty xml parameter");
-        }
+	/**
+	 * Check if all tag values in the given document XML are equals to the
+	 * global DICOM Tags According to the TagD data Model
+	 * 
+	 * @param xmlDoc
+	 * @return
+	 */
+	public boolean containSameTagsValues(Document xmlDoc) {
 
-        NodeList nodes = xml.getChildNodes();
-        if (nodes == null) {
-            return false;
-        }
+		Optional<NodeList> nodeList = Optional.of(xmlDoc).map(Document::getDocumentElement).map(Element::getChildNodes);
 
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node node = nodes.item(i);
-            if (node != null) {
-                TagW tag = TagD.get(node.getNodeName());
-                if (tag != null) {
-                    Object tagVal = getTagValue(tag);
-                    String xmlTagContent = node.getTextContent();
-                    if (xmlTagContent != null && xmlTagContent.trim().length() == 0) {
-                        xmlTagContent = null;
-                    }
-                    if ((tagVal == null && xmlTagContent == null) || (tagVal != null && tagVal.equals(xmlTagContent))) {
-                        continue;
-                    }
-                }
-                return false;
-            }
-        }
-        return true;
+		if (!nodeList.isPresent() || nodeList.get().getLength() == 0)
+			return this.isEmpty();
 
-    }
+		for (int nodeIndex = 0; nodeIndex < nodeList.get().getLength(); nodeIndex++) {
+			Node node = nodeList.get().item(nodeIndex);
+			TagW tag = TagD.get(Optional.ofNullable(node).map(Node::getNodeName).orElse(null));
 
-    @Override
-    public String toString() {
-        TagW name = TagD.get(Tag.PatientName);
-        return name.getFormattedTagValue(getTagValue(name), null);
-    }
+			if (this.containTagKey(tag)) {
+
+				Optional<?> globalTagVal = Optional.ofNullable(this.getTagValue(tag));
+				int vmGlobalTag = globalTagVal.map(v -> TagW.getValueMultiplicity(v)).orElse(0);
+
+				Optional<?> xmlTagVal = Optional.ofNullable(node).map(Node::getTextContent).map(s -> tag.getValue(s));
+				int vmXmlTag = xmlTagVal.map(v -> TagW.getValueMultiplicity(v)).orElse(0);
+
+				if (vmGlobalTag != vmXmlTag) {
+					return false;
+				} else if (vmGlobalTag > 0) {
+					for (int tagIndex = 0; tagIndex < vmGlobalTag; tagIndex++) {
+						final int index = tagIndex;
+						if (!globalTagVal.map(v -> TagW.getValueFromIndex(v, index))
+								.equals(xmlTagVal.map(v -> TagW.getValueFromIndex(v, index))))
+							return false;
+					}
+				}
+			}
+		}
+
+		return true;
+
+	}
+
+	@Override
+	public String toString() {
+		TagW name = TagD.get(Tag.PatientName);
+		return name.getFormattedTagValue(getTagValue(name), null);
+	}
 }

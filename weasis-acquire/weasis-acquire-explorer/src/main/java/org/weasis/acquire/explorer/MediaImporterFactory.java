@@ -39,87 +39,50 @@ import org.weasis.core.api.util.GzipManager;
 @org.apache.felix.scr.annotations.Component(immediate = false)
 @org.apache.felix.scr.annotations.Service
 @Properties(value = { @Property(name = "service.name", value = "Media Dicomizer"),
-    @Property(name = "service.description", value = "Import media and dicomize them") })
+		@Property(name = "service.description", value = "Import media and dicomize them") })
 public class MediaImporterFactory implements DataExplorerViewFactory {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MediaImporterFactory.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(MediaImporterFactory.class);
 
-    private AcquisitionView explorer = null;
+	private AcquisitionView explorer = null;
 
-    @Override
-    public AcquisitionView createDataExplorerView(Hashtable<String, Object> properties) {
-        if (explorer == null) {
-            explorer = new AcquisitionView();
-            explorer.initImageGroupPane();
-        }
-        return explorer;
-    }
+	@Override
+	public AcquisitionView createDataExplorerView(Hashtable<String, Object> properties) {
+		if (explorer == null) {
+			explorer = new AcquisitionView();
+			explorer.initImageGroupPane();
+		}
+		return explorer;
+	}
 
-    @Activate
-    protected void activate(ComponentContext context) {
-        registerCommands(context);
-    }
+	@Activate
+	protected void activate(ComponentContext context) {
+		registerCommands(context);
+	}
 
-    @Deactivate
-    protected void deactivate(ComponentContext context) {
-        if (explorer != null) {
-            explorer.saveLastPath();
-        }
-    }
+	@Deactivate
+	protected void deactivate(ComponentContext context) {
+		if (explorer != null) {
+			explorer.saveLastPath();
+		}
+	}
 
-    private void registerCommands(ComponentContext context) {
-        if (context != null) {
-            ServiceReference<?>[] val = null;
+	private void registerCommands(ComponentContext context) {
+		if (context != null) {
+			ServiceReference<?>[] val = null;
 
-            String serviceClassName = AcquireManager.class.getName();
-            try {
-                val = context.getBundleContext().getServiceReferences(serviceClassName, null);
-            } catch (InvalidSyntaxException e) {
-                // Do nothing
-            }
-            if (val == null || val.length == 0) {
-                Dictionary<String, Object> dict = new Hashtable<>();
-                dict.put(CommandProcessor.COMMAND_SCOPE, "acquire");
-                dict.put(CommandProcessor.COMMAND_FUNCTION, AcquireManager.functions);
-                context.getBundleContext().registerService(serviceClassName, AcquireManager.getInstance(), dict);
-            }
-        }
-    }
-
-    private static void initGlobalTags() {
-        String xml = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.patient.context"); //$NON-NLS-1$
-
-        if (xml == null) {
-            // TODO read service
-        } else {
-
-            InputStream stream = null;
-            try {
-                byte[] buf = null;
-                boolean isPatientContextGzip =
-                    Boolean.valueOf(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.patient.context.gzip", "TRUE"));
-
-                if (isPatientContextGzip) {
-                    // byte[] byteArray = Base64.getDecoder().decode(xml.getBytes(StandardCharsets.UTF_8));
-                    byte[] byteArray = Base64.getUrlDecoder().decode(xml.getBytes(StandardCharsets.UTF_8));
-
-                    buf = GzipManager.gzipUncompressToByte(byteArray);
-                } else {
-                    buf = xml.getBytes(StandardCharsets.UTF_8);
-                }
-                stream = new ByteArrayInputStream(buf);
-                // LOGGER.debug("xml:\n{}", new String(buf));
-
-                DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-                Document doc = dBuilder.parse(stream);
-
-                AcquireManager.GLOBAL.init(doc);
-            } catch (Exception e) {
-                LOGGER.error("Loading gobal tags", e);
-            } finally {
-                FileUtil.safeClose(stream);
-            }
-        }
-    }
+			String serviceClassName = AcquireManager.class.getName();
+			try {
+				val = context.getBundleContext().getServiceReferences(serviceClassName, null);
+			} catch (InvalidSyntaxException e) {
+				// Do nothing
+			}
+			if (val == null || val.length == 0) {
+				Dictionary<String, Object> dict = new Hashtable<>();
+				dict.put(CommandProcessor.COMMAND_SCOPE, "acquire");
+				dict.put(CommandProcessor.COMMAND_FUNCTION, AcquireManager.functions);
+				context.getBundleContext().registerService(serviceClassName, AcquireManager.getInstance(), dict);
+			}
+		}
+	}
 
 }
