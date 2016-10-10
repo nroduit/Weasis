@@ -326,13 +326,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // realPoint to handle special case: non square pixel image
             Point realPoint = new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5),
                 (int) Math.ceil(p.y / imageElement.getRescaleY() - 0.5));
-            if (image != null && realPoint.x >= 0 && realPoint.y >= 0 && realPoint.x < image.getWidth()
-                && realPoint.y < image.getHeight()) {
+
+            Rectangle2D area = viewModel.getModelArea();
+            Point offset = (Point) getActionValue(DefaultView2d.PROP_LAYER_OFFSET);
+            if (offset != null) {
+                // Offset used for Crop operation
+                area.setRect(offset.getX(), offset.getY(), area.getWidth(), area.getHeight());
+            }
+
+            if (image != null && area.contains(realPoint)) {
                 try {
                     pixelInfo.setPosition(p);
                     pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
                     pixelInfo.setPixelSize(imageElement.getPixelSize());
-                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null);
+                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x - (int) area.getX(),
+                        realPoint.y - (int) area.getY(), (double[]) null);
                     pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
                     fillPixelInfo(pixelInfo, imageElement, c);
                     if (c != null && c.length >= 1) {
@@ -989,7 +997,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         Point offset = (Point) actionsInView.get(PROP_LAYER_OFFSET);
         if (offset != null) {
-            // TODO not consistent with image coordinates after crop
             affineTransform.translate(-offset.getX(), -offset.getY());
         }
 
