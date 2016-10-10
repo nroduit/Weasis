@@ -406,7 +406,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public void reset() {
         super.reset();
-        setPresentationState(null, false);
+        setPresentationState(ActionState.NoneLabel.NONE, false);
     }
 
     void setPresentationState(Object val, boolean newImage) {
@@ -649,7 +649,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (prButton != null) {
                 getViewButtons().add(prButton);
             } else if (oldPR instanceof PRSpecialElement) {
-                setPresentationState(oldPR, newImg);
+                setPresentationState(null, newImg);
+                actionsInView.put(ActionW.PR_STATE.cmd(), oldPR);
             } else if (ActionState.NoneLabel.NONE.equals(oldPR)) {
                 // No persistence for NONE
                 actionsInView.put(ActionW.PR_STATE.cmd(), null);

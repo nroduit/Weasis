@@ -273,7 +273,7 @@ public class PRManager {
                     }
 
                     GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
-                    layer.setName(graphicLayerName+ " [DICOM]");
+                    layer.setName(graphicLayerName + " [DICOM]");
                     layer.setSerializable(false);
                     layer.setLocked(true);
                     layer.setSelectable(false);
@@ -282,8 +282,8 @@ public class PRManager {
 
                     Color rgb = PresentationStateReader.getRGBColor(
                         glm.getInt(Tag.GraphicLayerRecommendedDisplayGrayscaleValue, 255),
-                        DicomMediaUtils.getFloatArrayFromDicomElement(glm,
-                            Tag.GraphicLayerRecommendedDisplayCIELabValue, null),
+                        CIELab.convertToFloatLab(DicomMediaUtils.getIntAyrrayFromDicomElement(glm,
+                            Tag.GraphicLayerRecommendedDisplayCIELabValue, null)),
                         DicomMediaUtils.getIntAyrrayFromDicomElement(glm, Tag.GraphicLayerRecommendedDisplayRGBValue,
                             null));
 
@@ -309,14 +309,13 @@ public class PRManager {
                         for (Attributes txo : txos) {
                             Attributes style = txo.getNestedDataset(Tag.LineStyleSequence);
                             Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
-                            Boolean dashed = style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern)); //$NON-NLS-1$
                             if (style != null) {
                                 float[] lab = CIELab.convertToFloatLab(style.getInts(Tag.PatternOnColorCIELabValue));
                                 if (lab != null) {
                                     rgb = PresentationStateReader.getRGBColor(255, lab, (int[]) null);
                                 }
                             }
-                            
+
                             String[] textLines = EscapeChars.convertToLines(txo.getString(Tag.UnformattedTextValue));
                             // MATRIX not implemented
                             boolean isDisp = "DISPLAY".equalsIgnoreCase(txo.getString(Tag.BoundingBoxAnnotationUnits)); //$NON-NLS-1$
@@ -360,7 +359,7 @@ public class PRManager {
                                 if (ptAnchor != null && ptAnchor.equals(ptBox)) {
                                     ptBox = new Point2D.Double(ptAnchor.getX() + 20, ptAnchor.getY() + 50);
                                 }
-                                
+
                                 try {
                                     List<Point2D.Double> pts = new ArrayList<>(2);
                                     pts.add(ptAnchor);
@@ -377,7 +376,8 @@ public class PRManager {
                             } else if (rect != null) {
                                 try {
                                     Point2D.Double point = new Point2D.Double(rect.getMinX(), rect.getMinY());
-                                    AbstractGraphic pt = (AbstractGraphic) new PointGraphic().buildGraphic(Arrays.asList(point));
+                                    AbstractGraphic pt =
+                                        (AbstractGraphic) new PointGraphic().buildGraphic(Arrays.asList(point));
                                     pt.setLineThickness(thickness);
                                     pt.setLabelVisible(Boolean.TRUE);
                                     AbstractGraphicModel.addGraphicToModel(view, layer, pt);
