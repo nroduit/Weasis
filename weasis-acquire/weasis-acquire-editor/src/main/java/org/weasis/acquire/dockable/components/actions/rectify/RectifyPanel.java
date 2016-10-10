@@ -63,6 +63,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         this.rectifyAction = Objects.requireNonNull(rectifyAction);
         setLayout(new BorderLayout());
         orientationPanel = new OrientationSliderComponent(this);
+        orientationPanel.setVisible(false); // TODO need improvement
         rotate90btn = new Rotate90Button(rectifyAction);
         rotate270btn = new Rotate270Button(rectifyAction);
         flipActionListener = new FlipActionListener(rectifyAction);

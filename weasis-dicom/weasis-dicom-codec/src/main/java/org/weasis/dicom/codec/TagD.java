@@ -677,7 +677,7 @@ public class TagD extends TagW {
                 try {
                     StringBuilder buf = new StringBuilder(8);
                     // Try to fix old format HH:MM:SS.frac (prior DICOM3.0)
-                    time.chars().filter(i -> !(':' == (char) i)).forEachOrdered(i -> buf.append((char) i));
+                    time.chars().filter(i -> ':' != (char) i).forEachOrdered(i -> buf.append((char) i));
                     return LocalTime.parse(buf.toString().trim(), DICOM_TIME);
                 } catch (Exception e1) {
                     LOGGER.error("Parse DICOM time", e1);

@@ -53,7 +53,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.GraphicLayer;
@@ -150,7 +149,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public void setPts(List<Point2D.Double> pts) {
-        this.pts = Optional.ofNullable(pts).orElse(new ArrayList<Point2D.Double>(
+        this.pts = Optional.ofNullable(pts).orElseGet(() -> new ArrayList<>(
             Optional.ofNullable(getPtsNumber()).filter(v -> v >= 0).orElse(DEFAULT_PTS_SIZE)));
     }
 
@@ -385,7 +384,14 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public void updateLabel(Object source, ViewCanvas<?> view2d) {
-        this.updateLabel(source, view2d, null);
+        boolean releasedEvent = false;
+
+        if (source instanceof MouseEvent) {
+            releasedEvent = ((MouseEvent) source).getID() == MouseEvent.MOUSE_RELEASED;
+        } else if (source instanceof Boolean) {
+            releasedEvent = (Boolean) source;
+        }
+        this.updateLabel(view2d, null,releasedEvent);
     }
 
     @Override
@@ -627,7 +633,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         int nearestHandlePtIndex = -1;
         final Point2D mousePoint = Optional.ofNullable(mouseEvent).map(evt -> evt.getImageCoordinates()).orElse(null);
 
-        if (mousePoint != null && !pts.isEmpty()) {
+        if (mousePoint != null && !pts.isEmpty() && !layer.getLocked()) {
             double minHandleDistance = Double.MAX_VALUE;
             double maxHandleDistance =
                 HANDLE_SIZE * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
@@ -635,7 +641,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
             for (int index = 0; index < pts.size(); index++) {
                 Point2D handlePoint = pts.get(index);
                 double handleDistance =
-                    Optional.ofNullable(handlePoint).map(pt -> mousePoint.distance(pt)).orElse(Double.MAX_VALUE);
+                    Optional.ofNullable(handlePoint).map(mousePoint::distance).orElse(Double.MAX_VALUE);
 
                 if (handleDistance <= maxHandleDistance && handleDistance < minHandleDistance) {
                     minHandleDistance = handleDistance;
@@ -650,7 +656,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         Map<Double, Integer> indexByDistanceMap = new TreeMap<>();
         final Point2D mousePoint = Optional.ofNullable(mouseEvent).map(evt -> evt.getImageCoordinates()).orElse(null);
 
-        if (mousePoint != null && !pts.isEmpty()) {
+        if (mousePoint != null && !pts.isEmpty() && !layer.getLocked()) {
             double maxHandleDistance =
                 HANDLE_SIZE * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
 
@@ -761,16 +767,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         }
     }
 
-    public void updateLabel(Object source, ViewCanvas<?> view2d, Point2D pos) {
-        boolean releasedEvent = false;
-        MeasurableLayer layer = view2d == null ? null : view2d.getMeasurableLayer();
-
-        if (source instanceof MouseEvent) {
-            releasedEvent = ((MouseEvent) source).getID() == MouseEvent.MOUSE_RELEASED;
-        } else if (source instanceof Boolean) {
-            releasedEvent = (Boolean) source;
-        }
-
+    public void updateLabel(ViewCanvas<?> view2d, Point2D pos, boolean releasedEvent) {
         List<Graphic> selectedGraphics =
             view2d == null ? Collections.emptyList() : view2d.getGraphicManager().getSelectedGraphics();
         boolean isMultiSelection = selectedGraphics.size() > 1;
@@ -782,7 +779,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         // quickComputing is enable or when releasedEvent is true
         if ((labelVisible || !isMultiSelection) && getLayerType() == LayerType.MEASURE) {
             Unit displayUnit = view2d == null ? null : (Unit) view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd());
-            measList = computeMeasurements(layer, releasedEvent, displayUnit);
+            measList = computeMeasurements(view2d == null ? null : view2d.getMeasurableLayer(), releasedEvent, displayUnit);
         }
 
         if (labelVisible && measList != null && !measList.isEmpty()) {

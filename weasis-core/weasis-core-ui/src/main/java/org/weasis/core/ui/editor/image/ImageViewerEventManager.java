@@ -405,7 +405,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     protected ComboItemListener<GridBagLayoutModel> newLayoutAction(GridBagLayoutModel[] layouts) {
         return new ComboItemListener<GridBagLayoutModel>(ActionW.LAYOUT,
-            Optional.ofNullable(layouts).orElse(new GridBagLayoutModel[0])) {
+            Optional.ofNullable(layouts).orElseGet(() -> new GridBagLayoutModel[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -429,7 +429,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     protected ComboItemListener<SynchView> newSynchAction(SynchView[] synchViewList) {
         return new ComboItemListener<SynchView>(ActionW.SYNCH,
-            Optional.ofNullable(synchViewList).orElse(new SynchView[0])) {
+            Optional.ofNullable(synchViewList).orElseGet(() -> new SynchView[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -454,7 +454,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     protected static ComboItemListener<Graphic> newMeasurementAction(Graphic[] graphics) {
         return new ComboItemListener<Graphic>(ActionW.DRAW_MEASURE,
-            Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+            Optional.ofNullable(graphics).orElseGet(() -> new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -465,7 +465,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     protected static ComboItemListener<Graphic> newDrawAction(Graphic[] graphics) {
         return new ComboItemListener<Graphic>(ActionW.DRAW_GRAPHICS,
-            Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+            Optional.ofNullable(graphics).orElseGet(() -> new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -487,7 +487,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     protected ComboItemListener<Unit> newSpatialUnit(Unit[] units) {
-        return new ComboItemListener<Unit>(ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElse(new Unit[0])) {
+        return new ComboItemListener<Unit>(ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElseGet(() -> new Unit[0])) {
 
             @Override
             public void itemStateChanged(Object object) {

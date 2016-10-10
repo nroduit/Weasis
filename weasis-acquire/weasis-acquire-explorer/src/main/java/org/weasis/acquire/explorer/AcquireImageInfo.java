@@ -283,7 +283,7 @@ public class AcquireImageInfo {
 
     @Override
     public String toString() {
-        return Optional.ofNullable(image).map(ImageElement::getName).orElse("");
+        return Optional.ofNullable(image).map(ImageElement::getName).orElseGet(() -> "");
     }
 
     public String getComment() {

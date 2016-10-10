@@ -1171,7 +1171,9 @@ public class DicomMediaUtils {
         // TODO implement other ColorSoftcopyPresentationStateStorageSOPClass...
         pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorageSOPClass);
         pr.setString(Tag.SOPInstanceUID, VR.UI, StringUtil.hasText(sopInstanceUID) ? sopInstanceUID : UIDUtils.createUID());
-        pr.setDate(Tag.PresentationCreationDateAndTime, new Date());
+        Date now = new Date();
+        pr.setDate(Tag.PresentationCreationDateAndTime, now);
+        pr.setDate(Tag.ContentDateAndTime, now);
         pr.setString(Tag.Modality, VR.CS, "PR"); //$NON-NLS-1$
         pr.setString(Tag.SeriesInstanceUID, VR.UI,
             StringUtil.hasText(seriesInstanceUID) ? seriesInstanceUID : UIDUtils.createUID());

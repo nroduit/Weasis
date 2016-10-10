@@ -11,6 +11,7 @@
 package org.weasis.dicom.codec.display;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -60,10 +61,8 @@ public class WindowAndPresetsOp extends WindowOp {
                 boolean pixelPadding = JMVUtils.getNULLtoTrue(getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
                 HashMap<String, Object> p = event.getParams();
                 if (p != null) {
-                    Object prReader = p.get(ActionW.PR_STATE.cmd());
-                    PRSpecialElement pr = (prReader instanceof PresentationStateReader)
-                        ? ((PresentationStateReader) prReader).getDicom() : null;
-                    setParam(P_PR_ELEMENT, pr);
+                    setParam(P_PR_ELEMENT, Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))
+                        .filter(PRSpecialElement.class::isInstance).orElse(null));
 
                     PresetWindowLevel preset = (PresetWindowLevel) p.get(ActionW.PRESET.cmd());
                     if (preset == null && img instanceof DicomImageElement) {
