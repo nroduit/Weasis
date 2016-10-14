@@ -146,7 +146,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
         operationsMenu.add(new JMenuItem(new DefaultAction(label,
             event -> medias.stream().filter(ImageElement.class::isInstance).map(ImageElement.class::cast).forEach(i -> {
                 AcquireImageInfo info = AcquireManager.findByImage(i);
-                
+
                 int change = (info.getNextValues().getFullRotation() + angle >= 0)
                     ? info.getNextValues().getRotation() + angle : info.getNextValues().getRotation() + 360 + angle;
                 info.getNextValues().setRotation(change);

@@ -22,10 +22,9 @@ public class AcquireImageMeta extends AcquireMetadataTableModel {
     private static final long serialVersionUID = 8912202268139591519L;
 
     public static final TagW[] TAGS_TO_DISPLAY =
-        TagD.getTagFromIDs(Tag.ImageComments,  Tag.ContentDate, Tag.ContentTime);
-
-    private static final TagW[] TAGS_EDITABLE =
         TagD.getTagFromIDs(Tag.ImageComments, Tag.ContentDate, Tag.ContentTime);
+
+    private static final TagW[] TAGS_EDITABLE = TagD.getTagFromIDs(Tag.ImageComments, Tag.ContentDate, Tag.ContentTime);
 
     public AcquireImageMeta(AcquireImageInfo imageInfo) {
         super((imageInfo == null) ? null : imageInfo.getImage());

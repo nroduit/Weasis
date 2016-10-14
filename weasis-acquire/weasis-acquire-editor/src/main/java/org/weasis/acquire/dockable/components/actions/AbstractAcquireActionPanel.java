@@ -30,6 +30,7 @@ public abstract class AbstractAcquireActionPanel extends JPanel implements Acqui
         return lastActionCommand;
     }
 
+    @Override
     public void setLastActionCommand(String lastActionCommand) {
         this.lastActionCommand = lastActionCommand;
     }

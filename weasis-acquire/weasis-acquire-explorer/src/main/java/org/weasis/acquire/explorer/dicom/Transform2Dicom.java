@@ -112,7 +112,7 @@ public final class Transform2Dicom {
                             LOGGER.error("Cannot dicomize {}", img.getName(), e);
                             continue;
                         }
-                        
+
                         GraphicModel grModel = (GraphicModel) img.getTagValue(TagW.PresentationModel);
                         if (grModel != null && grModel.hasSerializableGraphics()) {
                             String prUid = UIDUtils.createUID();

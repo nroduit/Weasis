@@ -24,11 +24,11 @@ import org.weasis.core.ui.model.graphic.imp.NonEditableGraphic;
 import org.weasis.core.ui.model.layer.LayerType;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-12 - ylar - Creation
- * 
+ *
  */
 public class GraphicHelper {
 
@@ -40,7 +40,7 @@ public class GraphicHelper {
     /**
      * Create a new layer with a grid line. Lines are centralize vertically and horizontally. The grid is a little bit
      * bigger in case of rotation occurs.
-     * 
+     *
      * @param view
      *            Image view (will retrieve width and height)
      * @return The new layer
@@ -85,7 +85,7 @@ public class GraphicHelper {
 
     /**
      * Create a new stroke line
-     * 
+     *
      * @param p1
      *            Start point
      * @param p2

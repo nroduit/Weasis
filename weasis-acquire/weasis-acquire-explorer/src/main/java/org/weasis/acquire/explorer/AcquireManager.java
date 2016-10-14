@@ -66,6 +66,7 @@ import org.xml.sax.SAXException;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifDirectoryBase;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 
@@ -531,20 +532,20 @@ public class AcquireManager {
                 if (metadata != null) {
                     ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
                     if (directory != null) {
-                        date = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+                        date = directory.getDate(ExifDirectoryBase.TAG_DATETIME_ORIGINAL);
                         if (date == null) {
-                            date = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME);
+                            date = directory.getDate(ExifDirectoryBase.TAG_DATETIME);
                         }
 
                         element.setTagNoNull(TagD.get(Tag.DateOfSecondaryCapture),
-                            directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_DIGITIZED));
+                            directory.getDate(ExifDirectoryBase.TAG_DATETIME_DIGITIZED));
 
                     }
                     ExifIFD0Directory ifd0 = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
                     if (ifd0 != null) {
-                        element.setTagNoNull(TagD.get(Tag.Manufacturer), ifd0.getString(ExifIFD0Directory.TAG_MAKE));
+                        element.setTagNoNull(TagD.get(Tag.Manufacturer), ifd0.getString(ExifDirectoryBase.TAG_MAKE));
                         element.setTagNoNull(TagD.get(Tag.ManufacturerModelName),
-                            ifd0.getString(ExifIFD0Directory.TAG_MODEL));
+                            ifd0.getString(ExifDirectoryBase.TAG_MODEL));
 
                         // try {
                         // int orientation =

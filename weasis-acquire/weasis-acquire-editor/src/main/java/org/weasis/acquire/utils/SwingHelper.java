@@ -24,17 +24,17 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.util.FontTools;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-08 - ylar - Creation
- * 
+ *
  */
 public class SwingHelper {
     private SwingHelper() {
         // Cannot use constructor
     }
-    
+
     /**
      * @return A new JPanel
      * @since 2.5.0
@@ -44,7 +44,7 @@ public class SwingHelper {
     }
 
     /**
-     * 
+     *
      * @param element
      * @param height
      * @return
@@ -66,9 +66,9 @@ public class SwingHelper {
         private Layout() {
             // Cannot use Layout() constructor
         }
-        
+
         /**
-         * 
+         *
          * @param element
          * @return
          * @since 2.5.0
@@ -79,7 +79,7 @@ public class SwingHelper {
         }
 
         /**
-         * 
+         *
          * @param element
          * @return
          * @since 2.5.0
@@ -89,7 +89,7 @@ public class SwingHelper {
         }
 
         /**
-         * 
+         *
          * @param element
          * @param columns
          * @return
@@ -102,7 +102,7 @@ public class SwingHelper {
     }
 
     /**
-     * 
+     *
      * @param value
      * @param min
      * @param max
@@ -114,7 +114,7 @@ public class SwingHelper {
     }
 
     /**
-     * 
+     *
      * @param value
      * @param min
      * @param max
@@ -133,7 +133,7 @@ public class SwingHelper {
     }
 
     /**
-     * 
+     *
      * @param slider
      * @param div
      * @since 2.5.0

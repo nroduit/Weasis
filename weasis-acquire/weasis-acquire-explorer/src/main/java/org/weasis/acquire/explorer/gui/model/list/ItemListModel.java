@@ -63,7 +63,7 @@ public class ItemListModel<T> extends AbstractListModel<T> {
     public T getElementAt(int index) {
         return itemList == null ? null : itemList.getItem(index);
     }
-    
+
     protected PropertyChangeListener getPropertyChangeListener() {
         return evt -> {
             if (evt.getNewValue() instanceof Interval) {

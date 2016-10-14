@@ -29,7 +29,7 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-12 - ylar - Creation

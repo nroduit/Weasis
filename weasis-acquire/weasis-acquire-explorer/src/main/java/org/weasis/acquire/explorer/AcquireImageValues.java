@@ -19,7 +19,7 @@ import org.weasis.core.api.util.Copyable;
 
 /**
  * Store all modifiables values. Enable to compare two objects for dirty check.
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-18 - ylar - Creation

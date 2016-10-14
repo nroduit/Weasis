@@ -16,8 +16,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 
 import org.weasis.acquire.dockable.components.actions.AcquireAction;
-import org.weasis.acquire.dockable.components.actions.AcquireActionPanel;
 import org.weasis.acquire.dockable.components.actions.AcquireAction.Cmd;
+import org.weasis.acquire.dockable.components.actions.AcquireActionPanel;
 
 public class AcquireActionButton extends JButton {
     private static final long serialVersionUID = -4757730607905567863L;
@@ -29,7 +29,7 @@ public class AcquireActionButton extends JButton {
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         setActionCommand(cmd.name());
     }
-    
+
     public AcquireActionButton(String title, AcquireAction action) {
         this(title, Cmd.INIT);
         setAcquireAction(action);
