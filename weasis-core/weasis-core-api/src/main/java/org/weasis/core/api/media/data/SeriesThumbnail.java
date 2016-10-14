@@ -330,25 +330,27 @@ public class SeriesThumbnail extends Thumbnail
 
                 // Draw in the top right corner
                 SeriesImporter seriesLoader = series.getSeriesLoader();
-                boolean stopped = seriesLoader.isStopped();
+                if (seriesLoader != null) {
+                    boolean stopped = seriesLoader.isStopped();
 
-                g2d.translate(-shiftx, -shifty);
-                shiftx = thumbnailSize - stopButton.width;
-                shifty = 5;
-                g2d.translate(shiftx, shifty);
-                g2d.setColor(Color.RED);
-                g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
-                g2d.fill(stopButton);
+                    g2d.translate(-shiftx, -shifty);
+                    shiftx = thumbnailSize - stopButton.width;
+                    shifty = 5;
+                    g2d.translate(shiftx, shifty);
+                    g2d.setColor(Color.RED);
+                    g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
+                    g2d.fill(stopButton);
 
-                g2d.translate(-shiftx, -shifty);
-                shiftx = shiftx - 3 * BUTTON_SIZE_HALF;
-                shifty = 5;
-                g2d.translate(shiftx, shifty);
-                g2d.setColor(Color.GREEN);
-                g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
-                g2d.fill(startButton);
+                    g2d.translate(-shiftx, -shifty);
+                    shiftx = shiftx - 3 * BUTTON_SIZE_HALF;
+                    shifty = 5;
+                    g2d.translate(shiftx, shifty);
+                    g2d.setColor(Color.GREEN);
+                    g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
+                    g2d.fill(startButton);
 
-                g2d.translate(-shiftx, -shifty);
+                    g2d.translate(-shiftx, -shifty);
+                }
             }
         }
     }
