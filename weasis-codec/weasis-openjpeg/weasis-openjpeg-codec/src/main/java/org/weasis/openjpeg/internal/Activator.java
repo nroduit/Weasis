@@ -23,7 +23,7 @@ public class Activator implements BundleActivator {
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
         // Give the priority to this j2k codecs
-        ImageioUtil.registerServiceProviderPriority(NativeJ2kImageReaderSpi.class, ImageReaderSpi.class, "jpeg2000");
+        ImageioUtil.registerServiceProviderInHighestPriority(NativeJ2kImageReaderSpi.class, ImageReaderSpi.class, "jpeg2000");
         // ImageioUtil.registerServiceProvider(NativeJ2kImageWriterSpi.class);
     }
 
