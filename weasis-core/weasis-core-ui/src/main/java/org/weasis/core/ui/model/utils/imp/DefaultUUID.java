@@ -33,7 +33,7 @@ public class DefaultUUID implements UUIDable {
 
     @Override
     @XmlID
-    @XmlAttribute
+    @XmlAttribute(name = "uuid", required = true)
     public String getUuid() {
         return uuid;
     }

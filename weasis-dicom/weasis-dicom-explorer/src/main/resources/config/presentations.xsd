@@ -3,6 +3,17 @@
 	xmlns="http://www.weasis.org/xsd/2.5" targetNamespace="http://www.weasis.org/xsd/2.5"
 	elementFormDefault="qualified">
 
+
+	<xsd:complexType name="layer">
+		<xsd:attribute name="uuid" use="required" />
+		<xsd:attribute name="type" use="required" />
+		<xsd:attribute name="locked" />
+		<xsd:attribute name="visible" />
+		<xsd:attribute name="level" />
+		<xsd:attribute name="name" />
+		<xsd:attribute name="selectable" />
+	</xsd:complexType>
+
 	<xsd:simpleType name="rgb">
 		<xsd:restriction base="xsd:string">
 			<xsd:maxLength value="8" />
@@ -25,49 +36,77 @@
 
 	</xsd:complexType>
 
-	<xsd:complexType name="text">
+	<xsd:complexType name="graphicLabel">
 		<xsd:sequence>
-			<xsd:element name="string" type="xsd:string" minOccurs="0"
+			<xsd:element name="label" type="xsd:string" minOccurs="0"
 				maxOccurs="unbounded" />
 		</xsd:sequence>
 	</xsd:complexType>
 
-	<xsd:element name="pixelInfo">
-		<xsd:complexType>
-			<xsd:sequence>
-				<xsd:element name="pts" type="pts" minOccurs="1"
-					maxOccurs="1" />
-				<xsd:element name="paint" type="paint" minOccurs="0"
-					maxOccurs="1" />
-				<xsd:element name="text" type="text" minOccurs="0"
-					maxOccurs="1" />
-			</xsd:sequence>
-			<xsd:attribute type="xsd:int" name="class_id" />
-			<xsd:attribute type="xsd:boolean" name="fill" />
-			<xsd:attribute type="xsd:int" name="handle_pts_nb" />
-			<xsd:attribute type="xsd:boolean" name="label_visible" />
-			<xsd:attribute type="xsd:float" name="thickness" />
-		</xsd:complexType>
-	</xsd:element>
-
-	<xsd:complexType name="graphicList">
+	<xsd:element name="anyOfGraphicType" type="graphic" abstract="true" />
+	<xsd:complexType name="graphic">
 		<xsd:sequence>
-			<xsd:element name="pixelInfo" minOccurs="0" maxOccurs="unbounded" />
+			<xsd:element name="paint" type="paint" minOccurs="0"
+				maxOccurs="1" />
+			<xsd:element name="graphicLabel" type="graphicLabel"
+				minOccurs="0" maxOccurs="1" />
+			<xsd:element name="layer" type="layer" minOccurs="1"
+				maxOccurs="1" />
+			<xsd:element name="pts" type="pts" minOccurs="1"
+				maxOccurs="1" />
+		</xsd:sequence>
+		<xsd:attribute name="uuid" use="required" />
+		<xsd:attribute type="xsd:int" name="classId" />
+		<xsd:attribute type="xsd:boolean" name="fill" />
+		<xsd:attribute type="xsd:boolean" name="showLabel" />
+		<xsd:attribute type="xsd:float" name="thickness" />
+	</xsd:complexType>
+
+	<xsd:complexType name="graphics">
+		<xsd:sequence>
+			<xsd:element ref="anyOfGraphicType" minOccurs="0"
+				maxOccurs="unbounded" />
 		</xsd:sequence>
 	</xsd:complexType>
-	
-	<xsd:complexType name="layer">
+
+
+	<xsd:complexType name="layers">
 		<xsd:sequence>
-			<xsd:element name="graphicList" type="graphicList" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="layer" type="layer" minOccurs="0"
+				maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="series">
+		<xsd:sequence>
+			<xsd:element name="image" minOccurs="0" maxOccurs="unbounded">
+				<xsd:complexType>
+					<xsd:attribute name="uuid" use="required" />
+					<xsd:attribute name="frames" />
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+		<xsd:attribute name="uuid" use="required" />
+	</xsd:complexType>
+
+
+	<xsd:complexType name="references">
+		<xsd:sequence>
+			<xsd:element name="series" type="series" minOccurs="0"
+				maxOccurs="unbounded" />
 		</xsd:sequence>
 	</xsd:complexType>
 
 	<xsd:complexType name="presentation">
 		<xsd:sequence>
-			<xsd:element name="image" minOccurs="0" maxOccurs="1" />
-			<xsd:element name="layer" type="layer" minOccurs="0"
-				maxOccurs="unbounded" />
+			<xsd:element name="references" type="references"
+				minOccurs="0" maxOccurs="1" />
+			<xsd:element name="layers" type="layers" minOccurs="0"
+				maxOccurs="1" />
+			<xsd:element name="graphics" type="graphics" minOccurs="0"
+				maxOccurs="1" />
 		</xsd:sequence>
+		<xsd:attribute name="uuid" use="required" />
 	</xsd:complexType>
 
 	<xsd:complexType name="presentations">
@@ -77,7 +116,5 @@
 		</xsd:sequence>
 	</xsd:complexType>
 
-
 	<xsd:element name="presentations" type="presentations" />
-
 </xsd:schema>

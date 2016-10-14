@@ -41,7 +41,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         this.selectable = type.getSelectable();
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "locked")
     @Override
     public Boolean getLocked() {
         return locked;
@@ -57,7 +57,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         this.visible = Optional.ofNullable(visible).orElse(getType().getVisible());
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "visible")
     @Override
     public Boolean getVisible() {
         return visible;
@@ -68,7 +68,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         this.level = Optional.ofNullable(level).orElse(getType().getLevel());
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "level")
     @Override
     public Integer getLevel() {
         return level;
@@ -79,13 +79,13 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         this.name = name;
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "name")
     @Override
     public String getName() {
         return name;
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "type")
     @Override
     public LayerType getType() {
         return type;
@@ -96,7 +96,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         this.type = Objects.requireNonNull(type);
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "selectable")
     @Override
     public Boolean getSelectable() {
         return selectable;
@@ -104,7 +104,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
 
     @Override
     public void setSelectable(Boolean selectable) {
-        this.selectable = selectable;
+        this.selectable = Optional.ofNullable(selectable).orElse(getType().getSelectable());
     }
 
     @Override
