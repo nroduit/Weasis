@@ -42,11 +42,11 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import bibliothek.gui.dock.common.CLocation;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-06 - ylar - Creation
- * 
+ *
  */
 public class EditionTool extends PluginTool implements SeriesViewerListener {
     private static final long serialVersionUID = -3662409181835644699L;

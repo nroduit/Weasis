@@ -42,11 +42,11 @@ import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-08 - ylar - Creation
- * 
+ *
  */
 public class RectifyAction extends AbstractAcquireAction {
     private static final Logger LOGGER = LoggerFactory.getLogger(RectifyAction.class);
@@ -104,8 +104,9 @@ public class RectifyAction extends AbstractAcquireAction {
     }
 
     static Rectangle adaptToinitCropArea(Rectangle2D area) {
-        if (area == null)
+        if (area == null) {
             return null;
+        }
         ViewCanvas<ImageElement> view = getView();
         AffineTransform transform = AffineTransform.getScaleInstance(1.0, 1.0);
         buildAffineTransform(transform, view.getDisplayOpManager(), view.getViewModel().getModelArea(), null);
@@ -173,7 +174,8 @@ public class RectifyAction extends AbstractAcquireAction {
         this.centralPanel.restoreLastAction();
 
         if (view.getImageLayer() instanceof RenderedImageLayer && currentCropArea != null) {
-            imageInfo.getCurrentValues().setCropZone(null); // Force dirty value, rotation is always apply in post process
+            imageInfo.getCurrentValues().setCropZone(null); // Force dirty value, rotation is always apply in post
+                                                            // process
             imageInfo.getNextValues()
                 .setCropZone(adaptToValidateCropArea(view, currentCropArea.getShape().getBounds()).getBounds());
             view.getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);

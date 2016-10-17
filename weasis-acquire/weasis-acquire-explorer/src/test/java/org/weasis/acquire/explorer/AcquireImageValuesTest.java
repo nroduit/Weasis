@@ -17,14 +17,13 @@ import org.weasis.core.api.image.util.Unit;
 
 public class AcquireImageValuesTest {
     private AcquireImageValues a1;
-    
-    
+
     @Test
     public void testConstructor() {
         assertThat(a1).isNull();
-        
+
         a1 = new AcquireImageValues();
-        
+
         assertThat(a1).isNotNull();
         assertThat(a1.getBrightness()).isEqualTo(0);
         assertThat(a1.getCalibrationRatio()).isEqualTo(1.0);

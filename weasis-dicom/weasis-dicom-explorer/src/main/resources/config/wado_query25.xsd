@@ -3,8 +3,6 @@
 	xmlns="http://www.weasis.org/xsd/2.5" targetNamespace="http://www.weasis.org/xsd/2.5"
 	elementFormDefault="qualified">
 
-	<xs:include schemaLocation="presentations.xsd"/>
-
 	<!-- DICOM VALUE REPRESENTATIONS -->
 
 	<!-- IS (Integer String) Restriction: leading and/or trailing spaces are 
@@ -108,8 +106,7 @@
 		<xsd:sequence>
 			<xsd:element name="arcQuery" type="ArcQuery" minOccurs="0"
 				maxOccurs="unbounded" />
-			<xsd:element name="presentations" type="presentations"
-				minOccurs="0" maxOccurs="1" />
+			<xsd:element name="presentations" minOccurs="0" maxOccurs="1"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ArcQuery">

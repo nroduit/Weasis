@@ -110,7 +110,7 @@ public class AnnotationOptionsPanel extends JPanel {
 
     private JPanel createUnitPanel() {
         final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
-        
+
         ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
         if (spUnitAction instanceof ComboItemListener) {
             JLabel label = new JLabel(Messages.getString("MeasureTool.unit") + StringUtil.COLON); //$NON-NLS-1$

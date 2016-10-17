@@ -21,9 +21,11 @@ import org.weasis.dicom.codec.TagD;
 public class AcquireSerieMeta extends AcquireMetadataTableModel {
     private static final long serialVersionUID = 8912202268139591519L;
 
-    private static final TagW[] TAGS_TO_DISPLAY = TagD.getTagFromIDs(Tag.Modality, Tag.OperatorsName, Tag.ReferringPhysicianName,Tag.BodyPartExamined, Tag.SeriesDescription);
+    private static final TagW[] TAGS_TO_DISPLAY = TagD.getTagFromIDs(Tag.Modality, Tag.OperatorsName,
+        Tag.ReferringPhysicianName, Tag.BodyPartExamined, Tag.SeriesDescription);
 
-    private static final TagW[] TAGS_EDITABLE = TagD.getTagFromIDs(Tag.ReferringPhysicianName, Tag.BodyPartExamined, Tag.SeriesDescription);
+    private static final TagW[] TAGS_EDITABLE =
+        TagD.getTagFromIDs(Tag.ReferringPhysicianName, Tag.BodyPartExamined, Tag.SeriesDescription);
 
     public AcquireSerieMeta(Serie serie) {
         super(serie);

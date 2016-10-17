@@ -43,7 +43,7 @@ import com.github.lgooddatepicker.tableeditors.TimeTableEditor;
 
 public abstract class AcquireMetadataPanel extends JPanel implements TableModelListener {
     private static final long serialVersionUID = -3479636894557525448L;
-    
+
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
     protected String title;

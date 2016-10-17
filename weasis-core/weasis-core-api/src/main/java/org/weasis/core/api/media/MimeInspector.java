@@ -106,6 +106,23 @@ public class MimeInspector {
         return false;
     }
 
+    public static boolean isMatchingMimeTypeFromMagicNumber(final byte[] byteArray, String mimeType) {
+        if (byteArray == null || byteArray.length == 0 || mimeType == null) {
+            return false;
+        }
+        MagicMimeEntry me = getMagicMimeEntry(mimeType);
+        if (me != null) {
+            try {
+                if (mimeType.equals(me.getMatch(byteArray))) {
+                    return true;
+                }
+            } catch (IOException e) {
+                LOGGER.error("", e);
+            }
+        }
+        return false;
+    }
+
     public static String getMimeTypeFromMagicNumber(final File file) {
         if (file == null || !file.canRead()) {
             return null;

@@ -103,32 +103,40 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         Serie other = (Serie) obj;
         if (date == null) {
-            if (other.date != null)
+            if (other.date != null) {
                 return false;
+            }
         } else {
             if (other.date == null) {
                 return false;
             } else {
-                if (!date.atZone(ZoneId.systemDefault()).equals(other.date.atZone(ZoneId.systemDefault())))
+                if (!date.atZone(ZoneId.systemDefault()).equals(other.date.atZone(ZoneId.systemDefault()))) {
                     return false;
+                }
             }
         }
 
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false;
-        if (type != other.type)
+        }
+        if (type != other.type) {
             return false;
+        }
         return true;
     }
 
@@ -145,37 +153,47 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
         // this optimization is usually worthwhile, and can
         // always be added
-        if (this == that)
+        if (this == that) {
             return EQUAL;
+        }
 
         // Check Type
-        if (this.type.equals(Type.NONE) && !that.type.equals(Type.NONE))
+        if (this.type.equals(Type.NONE) && !that.type.equals(Type.NONE)) {
             return BEFORE;
-        if (this.type.equals(Type.DATE) && that.type.equals(Type.NONE))
+        }
+        if (this.type.equals(Type.DATE) && that.type.equals(Type.NONE)) {
             return AFTER;
-        if (this.type.equals(Type.DATE) && that.type.equals(Type.NAME))
+        }
+        if (this.type.equals(Type.DATE) && that.type.equals(Type.NAME)) {
             return BEFORE;
+        }
 
         // Check Dates
-        if (this.date != null && that.date == null)
+        if (this.date != null && that.date == null) {
             return BEFORE;
-        if (this.date == null && that.date != null)
+        }
+        if (this.date == null && that.date != null) {
             return AFTER;
+        }
         if (this.date != null && that.date != null) {
             int comp = this.date.compareTo(that.date);
-            if (comp != EQUAL)
+            if (comp != EQUAL) {
                 return comp;
+            }
         }
 
         // Check Names
-        if (this.name != null && that.name == null)
+        if (this.name != null && that.name == null) {
             return BEFORE;
-        if (this.name == null && that.name != null)
+        }
+        if (this.name == null && that.name != null) {
             return AFTER;
+        }
         if (this.name != null && that.name != null) {
             int comp = this.name.compareTo(that.name);
-            if (comp != EQUAL)
+            if (comp != EQUAL) {
                 return comp;
+            }
         }
 
         // Check equals

@@ -236,7 +236,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         }
     }
 
-    @XmlAttribute(name = "classId")
+    @XmlAttribute(name = "classId", required = false)
     @Override
     public Integer getClassID() {
         return classID;

@@ -76,7 +76,7 @@ public class ContrastPanel extends AbstractAcquireActionPanel implements ChangeL
     public void initValues(AcquireImageInfo info, AcquireImageValues values) {
         ViewCanvas<ImageElement> view = EventManager.getInstance().getSelectedViewPane();
         info.clearPreProcess();
-        
+
         AcquireImageValues next = info.getNextValues();
         next.setContrast(values.getContrast());
         next.setBrightness(values.getBrightness());
@@ -94,7 +94,7 @@ public class ContrastPanel extends AbstractAcquireActionPanel implements ChangeL
 
         applyNextValues();
         autoLevelListener.applyNextValues();
-        
+
         info.applyPreProcess(view);
     }
 

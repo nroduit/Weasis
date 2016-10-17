@@ -34,11 +34,11 @@ import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since v2.5.0 - 2016-04-08 - ylar - creation
- * 
+ *
  */
 public class CropRectangleGraphic extends RectangleGraphic {
     private static final long serialVersionUID = -933393713355235688L;
@@ -83,8 +83,8 @@ public class CropRectangleGraphic extends RectangleGraphic {
             node.clearIOCache();
         }
         node.setParam(MaskOp.P_SHOW, true);
-        Rectangle area =  imageInfo.getNextValues().getCropZone();
-        node.setParam(MaskOp.P_SHAPE, area == null ? null :new Area(area));
+        Rectangle area = imageInfo.getNextValues().getCropZone();
+        node.setParam(MaskOp.P_SHAPE, area == null ? null : new Area(area));
         node.setParam(MaskOp.P_GRAY_TRANSPARENCY, 255);
     }
 

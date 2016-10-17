@@ -24,8 +24,8 @@ public class Activator implements BundleActivator {
 
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
-        // Should give the priority to other jpeg codecs
-        ImageioUtil.registerServiceProviderPriority(NativeJPEGImageReaderSpi.class, ImageReaderSpi.class, "jpeg");
+        // Must be used in the lowest priority (problem with tiles). In DICOM used explicitly.
+        ImageioUtil.registerServiceProviderInLowestPriority(NativeJPEGImageReaderSpi.class, ImageReaderSpi.class, "jpeg");
         ImageioUtil.registerServiceProvider(NativeJLSImageReaderSpi.class);
         ImageioUtil.registerServiceProvider(NativeJLSImageWriterSpi.class);
 

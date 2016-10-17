@@ -24,7 +24,7 @@ public class ResizePanel extends AbstractAcquireActionPanel {
 
     public ResizePanel() {
         super();
-        
+
         int width = 100;
         int height = 150;
 

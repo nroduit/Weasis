@@ -39,12 +39,12 @@ public class SerieTest {
 
     @Mock
     TagW modality;
-    
+
     @Before
     public void setUp() {
         PowerMockito.mockStatic(TagD.class);
         PowerMockito.when(TagD.get(Tag.Modality)).thenReturn(modality);
-        
+
         s1 = new Serie();
         s2 = new Serie(today);
         s3 = new Serie("test serie 3");

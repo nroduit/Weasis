@@ -42,7 +42,7 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.dicom.codec.TagD;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-11 - ylar - Creation

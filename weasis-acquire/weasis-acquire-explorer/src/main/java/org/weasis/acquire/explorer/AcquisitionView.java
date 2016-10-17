@@ -33,6 +33,7 @@ import org.weasis.acquire.explorer.media.MediaSource;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -76,11 +77,11 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
         this.acquireThumbnailListPane.loadDirectory(systemDrive.getID());
 
         String ptName = TagD.getDicomPersonName(TagD.getTagValue(AcquireManager.GLOBAL, Tag.PatientName, String.class));
-        if(!org.weasis.core.api.util.StringUtil.hasLength(ptName)){
-            ptName = TagD.NO_VALUE;
+        if (!org.weasis.core.api.util.StringUtil.hasLength(ptName)) {
+            ptName = TagW.NO_VALUE;
         }
         centralPane.setPluginName(ptName);
-        
+
         // Remove dropping capabilities in the central area (limit to import from browse panel)
         UIManager.MAIN_AREA.getComponent().setTransferHandler(null);
     }

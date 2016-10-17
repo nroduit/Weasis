@@ -12,7 +12,6 @@ package org.weasis.acquire.dockable;
 
 import java.awt.event.KeyEvent;
 import java.util.Hashtable;
-import java.util.Optional;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -31,11 +30,11 @@ import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 
 /**
- * 
+ *
  * @author Yannick LARVOR, Nicolas Roduit
  * @version 2.5.0
  * @since v2.5.0 - 2016-04-06 - ylar - creation
- * 
+ *
  */
 @org.apache.felix.scr.annotations.Component(immediate = false)
 @org.apache.felix.scr.annotations.Service
@@ -79,7 +78,7 @@ public class EditionToolFactory implements InsertableFactory {
             eventManager.removeAction(ActionW.SYNCH);
             eventManager.setAction(new BasicActionState(EDITON));
             eventManager.setAction(new ComboItemListener<Graphic>(DRAW_EDITON,
-                new Graphic[] {MeasureToolBar.selectionGraphic, CalibrationPanel.CALIBRATION_LINE_GRAPHIC }) {
+                new Graphic[] { MeasureToolBar.selectionGraphic, CalibrationPanel.CALIBRATION_LINE_GRAPHIC }) {
 
                 @Override
                 public void itemStateChanged(Object object) {

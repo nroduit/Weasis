@@ -18,11 +18,11 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-08 - ylar - Creation
- * 
+ *
  */
 public class AnnotateAction extends AbstractAcquireAction {
 
