@@ -61,10 +61,10 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
@@ -96,7 +96,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     private final HashMap<String, Boolean> displayPreferences = new HashMap<>();
     private Boolean visible = Boolean.TRUE;
     private static final int BORDER = 10;
-    private final DefaultView2d<DicomImageElement> view2DPane;
+    private final ViewCanvas<DicomImageElement> view2DPane;
     private PixelInfo pixelInfo = null;
     private final Rectangle pixelInfoBound;
     private final Rectangle preloadingProgressBound;
@@ -106,7 +106,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
     private String name;
 
-    public InfoLayer(DefaultView2d<DicomImageElement> view2DPane) {
+    public InfoLayer(ViewCanvas<DicomImageElement> view2DPane) {
         this.view2DPane = view2DPane;
         displayPreferences.put(ANNOTATIONS, true);
         displayPreferences.put(ANONYM_ANNOTATIONS, false);
@@ -125,7 +125,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     }
 
     @Override
-    public LayerAnnotation getLayerCopy(DefaultView2d view2DPane) {
+    public LayerAnnotation getLayerCopy(ViewCanvas view2DPane) {
         InfoLayer layer = new InfoLayer(view2DPane);
         HashMap<String, Boolean> prefs = layer.displayPreferences;
         prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
@@ -251,7 +251,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         Modality mod = Modality.getModality(TagD.getTagValue(view2DPane.getSeries(), Tag.Modality, String.class));
         modality = ModalityView.getModlatityInfos(mod);
 
-        final Rectangle bound = view2DPane.getBounds();
+        final Rectangle bound = view2DPane.getJComponent().getBounds();
         float midx = bound.width / 2f;
         float midy = bound.height / 2f;
         thickLength = g2.getFont().getSize() * 1.5f; // font 10 => 15 pixels
@@ -1448,7 +1448,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             }
 
             Point2D.Float midy =
-                new Point2D.Float(positions[1].x, (float) (view2DPane.getHeight() * 0.5 - (height - space) * 0.5));
+                new Point2D.Float(positions[1].x, (float) (view2DPane.getJComponent().getHeight() * 0.5 - (height - space) * 0.5));
             SynchData synchData = (SynchData) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
             boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
 
@@ -1482,7 +1482,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                         b.y = midy.y;
                         midy.y += icon.getIconHeight() + 5;
                     }
-                    icon.paintIcon(view2DPane, g2d, (int) b.x, (int) b.y);
+                    icon.paintIcon(view2DPane.getJComponent(), g2d, (int) b.x, (int) b.y);
                 }
             }
         }

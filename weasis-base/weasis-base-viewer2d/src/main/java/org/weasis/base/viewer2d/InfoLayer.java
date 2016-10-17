@@ -35,8 +35,8 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
@@ -53,7 +53,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     private boolean visible = true;
     private static final Color color = Color.yellow;
     private static final int BORDER = 10;
-    private final DefaultView2d view2DPane;
+    private final ViewCanvas view2DPane;
     private PixelInfo pixelInfo = null;
     private final Rectangle pixelInfoBound;
     private final Rectangle preloadingProgressBound;
@@ -61,7 +61,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     private boolean showBottomScale = true;
     private String name;
 
-    public InfoLayer(DefaultView2d view2DPane) {
+    public InfoLayer(ViewCanvas view2DPane) {
         this.view2DPane = view2DPane;
         displayPreferences.put(ANNOTATIONS, true);
         displayPreferences.put(IMAGE_ORIENTATION, true);
@@ -182,7 +182,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         }
 
         OpManager disOp = view2DPane.getDisplayOpManager();
-        final Rectangle bound = view2DPane.getBounds();
+        final Rectangle bound = view2DPane.getJComponent().getBounds();
         float midx = bound.width / 2f;
         float midy = bound.height / 2f;
 
@@ -562,7 +562,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     }
 
     @Override
-    public LayerAnnotation getLayerCopy(DefaultView2d view2dPane) {
+    public LayerAnnotation getLayerCopy(ViewCanvas view2dPane) {
         InfoLayer layer = new InfoLayer(view2DPane);
         HashMap<String, Boolean> prefs = layer.displayPreferences;
         prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
