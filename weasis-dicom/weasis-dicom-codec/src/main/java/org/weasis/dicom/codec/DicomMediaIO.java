@@ -1154,39 +1154,17 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             RenderedImage bi;
             if (decompressor != null) {
                 decompressor.setInput(iisOfFrame(frameIndex));
-                bi = decompressor.readAsRenderedImage(0, decompressParam(param));
+                if (isRLELossless() && (pmi.isSubSambled() || pmi.name().startsWith("YBR"))) { //$NON-NLS-1$
+                    bi = convertSubSambledAndYBR(frameIndex, param);
+                }
+                else {
+                    bi = decompressor.readAsRenderedImage(0, decompressParam(param));     
+                }
             } else {
                 // Rewrite image with subsampled model (otherwise cannot not be displayed as RenderedImage)
                 // Convert YBR_FULL into RBG as the ybr model is not well supported.
                 if (pmi.isSubSambled() || pmi.name().startsWith("YBR")) { //$NON-NLS-1$
-                    // TODO improve this
-                    WritableRaster raster = (WritableRaster) readRaster(frameIndex, param);
-                    ColorModel cm = createColorModel(bitsStored, dataType);
-                    ColorModel cmodel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB),
-                        new int[] { 8, 8, 8 }, false, // has alpha
-                        false, // alpha premultipled
-                        Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
-                    int width = raster.getWidth();
-                    int height = raster.getHeight();
-                    SampleModel sampleModel = cmodel.createCompatibleSampleModel(width, height);
-                    DataBuffer dataBuffer = sampleModel.createDataBuffer();
-                    WritableRaster rasterDst = Raster.createWritableRaster(sampleModel, dataBuffer, null);
-
-                    ColorSpace cs = cm.getColorSpace();
-                    for (int i = 0; i < height; i++) {
-                        for (int j = 0; j < width; j++) {
-                            byte[] ba = (byte[]) raster.getDataElements(j, i, null);
-                            float[] fba =
-                                new float[] { (ba[0] & 0xFF) / 255f, (ba[1] & 0xFF) / 255f, (ba[2] & 0xFF) / 255f };
-                            float[] rgb = cs.toRGB(fba);
-                            ba[0] = (byte) (rgb[0] * 255);
-                            ba[1] = (byte) (rgb[1] * 255);
-                            ba[2] = (byte) (rgb[2] * 255);
-                            rasterDst.setDataElements(j, i, ba);
-                        }
-                    }
-                    bi = new BufferedImage(cmodel, rasterDst, false, null);
-                    readingImage = true;
+                    bi = convertSubSambledAndYBR(frameIndex, param);
                 } else {
                     ImageReader reader = initRawImageReader();
                     bi = reader.readAsRenderedImage(frameIndex, param);
@@ -1199,6 +1177,39 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
              * readAsRenderedImage() do not read data immediately: RenderedImage delays the image reading
              */
         }
+    }
+
+    private BufferedImage convertSubSambledAndYBR(int frameIndex, ImageReadParam param) throws IOException {
+        // TODO improve this
+        WritableRaster raster = (WritableRaster) readRaster(frameIndex, param);
+        ColorModel cm = createColorModel(bitsStored, dataType);
+        ColorModel cmodel =
+            new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[] { 8, 8, 8 }, false, // has
+                                                                                                              // alpha
+                false, // alpha premultipled
+                Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+        int width = raster.getWidth();
+        int height = raster.getHeight();
+        SampleModel sampleModel = cmodel.createCompatibleSampleModel(width, height);
+        DataBuffer dataBuffer = sampleModel.createDataBuffer();
+        WritableRaster rasterDst = Raster.createWritableRaster(sampleModel, dataBuffer, null);
+
+        ColorSpace cs = cm.getColorSpace();
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                byte[] ba = (byte[]) raster.getDataElements(j, i, null);
+                float[] fba = new float[] { (ba[0] & 0xFF) / 255f, (ba[1] & 0xFF) / 255f, (ba[2] & 0xFF) / 255f };
+                float[] rgb = cs.toRGB(fba);
+                ba[0] = (byte) (rgb[0] * 255);
+                ba[1] = (byte) (rgb[1] * 255);
+                ba[2] = (byte) (rgb[2] * 255);
+                rasterDst.setDataElements(j, i, ba);
+            }
+        }
+        BufferedImage bi = new BufferedImage(cmodel, rasterDst, false, null);
+        readingImage = true;
+
+        return bi;
     }
 
     public RenderedImage validateSignedShortDataBuffer(RenderedImage source) {
