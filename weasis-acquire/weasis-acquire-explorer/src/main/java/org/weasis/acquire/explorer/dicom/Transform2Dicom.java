@@ -53,6 +53,7 @@ import org.weasis.dicom.op.CStore;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
+import org.weasis.dicom.tool.Dicomizer;
 
 public final class Transform2Dicom {
 
