@@ -85,6 +85,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -483,11 +484,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         if (view instanceof View2d) {
                             DicomImageElement img = view.getImage();
                             if (img != null) {
-                                Attributes[] seq =
-                                    TagD.getTagValue(specialElement, Tag.ReferencedSeriesSequence, Attributes[].class);
-                                if (DicomSpecialElement.isSopuidInReferencedSeriesSequence(seq,
-                                    TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class),
-                                    TagD.getTagValue(img, Tag.SOPInstanceUID, String.class), (Integer) img.getKey())) {
+                                if (PresentationStateReader.isModuleAppicable(TagD.getTagValue(specialElement, Tag.ReferencedSeriesSequence, Attributes[].class), img)) {
                                     ((View2d) view).updatePR();
                                 }
                             }

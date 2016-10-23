@@ -848,7 +848,7 @@ public class DicomMediaUtils {
                      * be ignored from the perspective of applying window values, and for those SOP Classes, window
                      * values shall be applied directly to the stored pixel values without rescaling.
                      */
-                    LOGGER.info("Do not apply RescaleSlope and RescaleIntercept to {}", modlality);//$NON-NLS-1$
+                    LOGGER.trace("Do not apply RescaleSlope and RescaleIntercept to {}", modlality);//$NON-NLS-1$
                 } else {
                     TagD.get(Tag.RescaleSlope).readValue(mLutItems, tagable);
                     TagD.get(Tag.RescaleIntercept).readValue(mLutItems, tagable);
@@ -856,7 +856,7 @@ public class DicomMediaUtils {
                 }
 
             } else if (seqParentTag != null) {
-                LOGGER.info("Cannot apply Modality LUT from {} with inconsistent attributes", //$NON-NLS-1$
+                LOGGER.warn("Cannot apply Modality LUT from {} with inconsistent attributes", //$NON-NLS-1$
                     TagUtils.toString(seqParentTag));
             }
 
@@ -891,7 +891,7 @@ public class DicomMediaUtils {
                 }
             }
 
-            if (LOGGER.isDebugEnabled()) {
+            if (LOGGER.isTraceEnabled()) {
 
                 // The output range of the Modality LUT Module depends on whether or not Rescale Slope and Rescale
                 // Intercept or the Modality LUT Sequence are used.
@@ -909,10 +909,10 @@ public class DicomMediaUtils {
 
                 if (tagable.getTagValue(TagW.ModalityLUTData) != null) {
                     if (TagD.getTagValue(tagable, Tag.RescaleIntercept) != null) {
-                        LOGGER.debug("Modality LUT Sequence shall NOT be present if Rescale Intercept is present"); //$NON-NLS-1$
+                        LOGGER.trace("Modality LUT Sequence shall NOT be present if Rescale Intercept is present"); //$NON-NLS-1$
                     }
                     if (TagD.getTagValue(tagable, Tag.ModalityLUTType) == null) {
-                        LOGGER.debug("Modality Type is required if Modality LUT Sequence is present. "); //$NON-NLS-1$
+                        LOGGER.trace("Modality Type is required if Modality LUT Sequence is present. "); //$NON-NLS-1$
                     }
                 } else if (TagD.getTagValue(tagable, Tag.RescaleIntercept) != null) {
                     if (TagD.getTagValue(tagable, Tag.RescaleSlope) == null) {
@@ -923,7 +923,7 @@ public class DicomMediaUtils {
                     if ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         || !"PT".equals(modlality)) { //$NON-NLS-1$
                         LOGGER
-                            .debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
+                            .trace("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
                     }
                 }
             }

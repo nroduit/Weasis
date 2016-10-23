@@ -264,11 +264,9 @@ public class PRManager {
                 layers = new ArrayList<>();
 
                 for (Attributes gram : gams) {
-                    // TODO filter sop
-                    Sequence refImgs = gram.getSequence(Tag.ReferencedImageSequence);
                     String graphicLayerName = gram.getString(Tag.GraphicLayer);
                     Attributes glm = glms.get(graphicLayerName);
-                    if (glm == null) {
+                    if (glm == null || !PresentationStateReader.isModuleAppicable(gram, img)) {
                         continue;
                     }
 

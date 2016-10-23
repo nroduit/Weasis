@@ -25,6 +25,8 @@ import org.dcm4che3.data.Tag;
  * Title valued (113037, DCM, "Rejected for Patient Safety Reasons"), (113038, DCM, “Incorrect Modality Worklist
  * Entry”), or (113039, DCM, “Data Retention Policy Expired”), it shall suppress the KOS and its referenced
  * rejected instances from presentation.
+ * 
+ * See  http://hl7.org/fhir/ValueSet/kos-title
  */
 public class RejectedKOSpecialElement extends AbstractKOSpecialElement {
 
