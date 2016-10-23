@@ -406,7 +406,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public void reset() {
         super.reset();
-        setPresentationState(ActionState.NoneLabel.NONE, false);
+        DicomImageElement img = getImage();
+        if (img != null) {
+            Object key = img.getKey();
+            List<PRSpecialElement> prList =
+                DicomModel.getPrSpecialElements(series, TagD.getTagValue(img, Tag.SOPInstanceUID, String.class),
+                    key instanceof Integer ? (Integer) key + 1 : null);
+            if (!prList.isEmpty()) {
+                setPresentationState( prList.get(0), false);
+            }
+        }
     }
 
     void setPresentationState(Object val, boolean newImage) {
@@ -456,9 +465,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             // Keeps KO properties (series level)
             Object ko = actionsInView.get(ActionW.KO_SELECTION.cmd());
             Object filter = actionsInView.get(ActionW.FILTERED_SERIES.cmd());
+            OpManager disOp = getDisplayOpManager();
+            Object preset = disOp.getParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd());
             initActionWState();
             setActionsInView(ActionW.KO_SELECTION.cmd(), ko);
             setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
+            disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), preset);
+            resetZoom();
+            resetPan();
         } else {
             PRManager.applyPresentationState(this, pr, m);
         }

@@ -13,12 +13,14 @@ package org.weasis.dicom.codec;
 import java.awt.Color;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.dcm4che3.data.Attributes;
@@ -141,7 +143,7 @@ public class PresentationStateReader implements Tagable {
     }
 
     public List<PresetWindowLevel> getPresetCollection(DicomImageElement img) {
-        return PresetWindowLevel.getPresetCollection(img, prSpecialElement, true);
+        return Optional.ofNullable(PresetWindowLevel.getPresetCollection(img, prSpecialElement, true, "[PR]")).orElseGet(ArrayList::new);
     }
 
     public void applySpatialTransformationModule(Map<String, Object> actionsInView) {

@@ -316,12 +316,8 @@ public class ImageElement extends MediaElement {
     }
 
     public synchronized PlanarImage getImage(OpManager manager, boolean findMinMax) {
-        PlanarImage cacheImage;
         try {
-            cacheImage = startImageLoading();
-            if (findMinMax) {
-                findMinMaxValues(cacheImage, true);
-            }
+            return getCacheImage(startImageLoading(), manager, findMinMax);
         } catch (OutOfMemoryError e1) {
             /*
              * Appends when loading a big image without tiling, the memory left is not enough for the renderedop (like
@@ -330,15 +326,19 @@ public class ImageElement extends MediaElement {
             LOGGER.warn("Out of MemoryError: {}", this, e1); //$NON-NLS-1$
             mCache.expungeStaleEntries();
             System.gc();
+            System.gc();
             try {
                 Thread.sleep(100);
             } catch (InterruptedException et) {
                 // Do nothing
             }
-            cacheImage = startImageLoading();
-            if (findMinMax) {
-                findMinMaxValues(cacheImage, true);
-            }
+            return getCacheImage(startImageLoading(), manager, findMinMax);
+        }
+    }
+    
+    private PlanarImage getCacheImage(PlanarImage cacheImage, OpManager manager, boolean findMinMax) {
+        if (findMinMax) {
+            findMinMaxValues(cacheImage, true);
         }
         if (manager != null && cacheImage != null) {
             RenderedImage img = manager.getLastNodeOutputImage();
@@ -348,7 +348,7 @@ public class ImageElement extends MediaElement {
             }
 
             if (img != null) {
-                cacheImage = PlanarImage.wrapRenderedImage(img);
+                return PlanarImage.wrapRenderedImage(img);
             }
         }
         return cacheImage;

@@ -59,6 +59,7 @@ import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
@@ -85,21 +86,25 @@ public class PRManager {
         Map<String, Object> actionsInView = view.getActionsInView();
         reader.applySpatialTransformationModule(actionsInView);
         List<PresetWindowLevel> presets = reader.getPresetCollection(img);
-        if (presets != null && !presets.isEmpty()) {
-            ImageOpNode node = view.getDisplayOpManager().getNode(WindowOp.OP_NAME);
-            if (node != null) {
-                List<PresetWindowLevel> presetList =
-                    img.getPresetList(JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
-                presets.addAll(presetList);
+        ImageOpNode node = view.getDisplayOpManager().getNode(WindowOp.OP_NAME);
+        if (node != null) {
+            List<PresetWindowLevel> presetList =
+                img.getPresetList(JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
+            PresetWindowLevel auto = presets.remove(presets.size() - 1);
+            if (!presetList.get(presetList.size() - 1).equals(auto)) {
+                // It happens when PR contains a new Modality LUT
+                String name = Messages.getString("PresetWindowLevel.full"); //$NON-NLS-1$
+                presets.add(new PresetWindowLevel(name + " [PR]", auto.getWindow(), auto.getLevel(), auto.getShape()));
             }
-            PresetWindowLevel p = presets.get(0);
-            actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
-            actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
-            actionsInView.put(PRManager.PR_PRESETS, presets);
-            actionsInView.put(ActionW.PRESET.cmd(), p);
-            actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());
-            actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
+            presets.addAll(presetList);
         }
+        PresetWindowLevel p = presets.get(0);
+        actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
+        actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
+        actionsInView.put(PRManager.PR_PRESETS, presets);
+        actionsInView.put(ActionW.PRESET.cmd(), p);
+        actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());
+        actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
 
         applyPixelSpacing(view, reader, img);
 
