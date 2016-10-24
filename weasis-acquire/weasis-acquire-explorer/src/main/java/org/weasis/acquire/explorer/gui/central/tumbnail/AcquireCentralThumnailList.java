@@ -142,9 +142,9 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
         })));
     }
 
-    private void operationRotate(JMenu operationsMenu, final List<E> medias, String label, int angle) {
-        operationsMenu.add(new JMenuItem(new DefaultAction(label, event -> {
-            medias.stream().filter(m -> m instanceof ImageElement).map(ImageElement.class::cast).forEach(i -> {
+    private void operationRotate(JMenu operationsMenu, final List<E> medias, String label, final int angle) {
+        operationsMenu.add(new JMenuItem(new DefaultAction(label,
+            event -> medias.stream().filter(ImageElement.class::isInstance).map(ImageElement.class::cast).forEach(i -> {
                 AcquireImageInfo info = AcquireManager.findByImage(i);
 
                 int change = (info.getNextValues().getFullRotation() + angle >= 0)
@@ -159,8 +159,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
                     node.clearIOCache();
                 }
                 node.setParam(RotationOp.P_ROTATE, info.getNextValues().getFullRotation());
-            });
-        })));
+            }))));
     }
 
     @Override

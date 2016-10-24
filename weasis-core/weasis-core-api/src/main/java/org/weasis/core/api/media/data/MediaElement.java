@@ -36,7 +36,7 @@ public abstract class MediaElement implements Tagable {
     public <E> MediaElement(MediaReader mediaIO, Object key) {
         this.mediaIO = Objects.requireNonNull(mediaIO);
         this.key = key;
-        this.tags = Optional.ofNullable(mediaIO.getMediaFragmentTags(key)).orElse(new HashMap<TagW, Object>());
+        this.tags = Optional.ofNullable(mediaIO.getMediaFragmentTags(key)).orElseGet(HashMap::new);
     }
 
     public MediaReader getMediaReader() {

@@ -25,11 +25,11 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-08 - ylar - Creation
- * 
+ *
  */
 public abstract class AbstractAcquireAction extends AcquireObject implements AcquireAction {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAcquireAction.class);

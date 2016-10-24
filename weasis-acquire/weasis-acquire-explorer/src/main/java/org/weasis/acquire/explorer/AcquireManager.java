@@ -10,13 +10,25 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
@@ -26,28 +38,40 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import org.weasis.acquire.explorer.core.bean.Global;
 import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.core.api.command.Option;
+import org.weasis.core.api.command.Options;
+import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
+import org.xml.sax.SAXException;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifDirectoryBase;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-13 - ylar - Creation
@@ -55,6 +79,8 @@ import com.drew.metadata.exif.ExifSubIFDDirectory;
 public class AcquireManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
     private static final AcquireManager instance = new AcquireManager();
+
+    public static final String[] functions = { "patient" };
 
     public static final Global GLOBAL = new Global();
 
@@ -83,7 +109,8 @@ public class AcquireManager {
 
     public static void setCurrentView(ViewCanvas<ImageElement> view) {
         getInstance().currentView = view;
-        // Remove capabilities to open a view by dragging a thumbnail from the import panel. 
+        // Remove capabilities to open a view by dragging a thumbnail from the
+        // import panel.
         view.getJComponent().setTransferHandler(null);
     }
 
@@ -178,7 +205,298 @@ public class AcquireManager {
             .collect(Collectors.toList());
     }
 
-    /* ===================================== PRIVATE METHODS ===================================== */
+    /**
+     * Set a new Patient Context and in case current state job is not finished ask user if cleaning unpublished images
+     * should be done or canceled.
+     *
+     * @param argv
+     * @throws IOException
+     */
+    public void patient(String[] argv) throws IOException {
+        final String[] usage = { "Load Patient Context", "Usage: acquire:patient [Options] SOURCE",
+            "  -x --xml       Open Patient Context from an XML data containing all DICOM Tags ",
+            "  -i --inbound       Open Patient Context from an XML data containing all DICOM Tags, supported syntax is [Base64/GZip]",
+            "  -u --url       Open Patient Context from an XML (URL) file containing all DICOM TAGs",
+            "  -? --help       show help" };
+
+        final Option opt = Options.compile(usage).parse(argv);
+        final List<String> args = opt.args();
+
+        if (opt.isSet("help") || args.isEmpty()) {
+            opt.usage();
+            return;
+        }
+
+        GuiExecutor.instance().execute(() -> {
+            patientCommand(opt, args.get(0));
+        });
+    }
+
+    private void patientCommand(Option opt, String arg) {
+
+        Document newPatientContext = null;
+
+        if (opt.isSet("xml")) {
+            newPatientContext = getPatientContext(arg, OPT_NONE);
+        } else if (opt.isSet("inbound")) {
+            newPatientContext = getPatientContext(arg, OPT_B64ZIP);
+        } else if (opt.isSet("url")) {
+            newPatientContext = getPatientContextFromUrl(arg);
+        }
+
+        if (newPatientContext != null) {
+            if (isPatientContextIdentical(newPatientContext)) {
+                return;
+            }
+
+            if (!isAcquireImagesAllPublished()) {
+                // TODO ask user to clean unpublished job or not
+
+                // if cancel
+                return;
+            }
+
+            AcquireManager.GLOBAL.init(newPatientContext);
+        }
+    }
+
+    /**
+     * Evaluates if patientContext currently loaded is identical to the one that's expected to be loaded
+     *
+     * @return
+     */
+
+    private boolean isPatientContextIdentical(Document newPatientContext) {
+        return AcquireManager.GLOBAL.containSameTagsValues(newPatientContext);
+    }
+
+    /**
+     * Evaluate if acquire images job has work in progress.
+     *
+     * @return
+     */
+    private boolean isAcquireImagesAllPublished() {
+
+        // TODO evaluer l'état de publication
+        return true;
+    }
+
+    /**
+     */
+    private static final short OPT_NONE = 0;
+    private static final short OPT_B64 = 1;
+    private static final short OPT_ZIP = 2;
+    private static final short OPT_URLSAFE = 4;
+
+    private static final short OPT_B64ZIP = 3;
+    private static final short OPT_B64URLSAFE = 5;
+    private static final short OPT_B64URLSAFEZIP = 7;
+
+    /**
+     *
+     * @param inputString
+     * @param codeOption
+     * @return
+     */
+    private static Document getPatientContext(String inputString, short codeOption) {
+        return getPatientContext(inputString.getBytes(StandardCharsets.UTF_8), codeOption);
+    }
+
+    /**
+     *
+     * @param byteArray
+     * @param codeOption
+     * @return
+     */
+    private static Document getPatientContext(byte[] byteArray, short codeOption) {
+        if (byteArray == null || byteArray.length == 0) {
+            throw new IllegalArgumentException("empty byteArray parameter");
+        }
+
+        if (codeOption != OPT_NONE) {
+            try {
+                if ((codeOption & OPT_B64) == OPT_B64) {
+                    if ((codeOption & OPT_URLSAFE) == OPT_URLSAFE) {
+                        byteArray = Base64.getUrlDecoder().decode(byteArray);
+                    } else {
+                        byteArray = Base64.getDecoder().decode(byteArray);
+                    }
+                }
+
+                if ((codeOption & OPT_ZIP) == OPT_ZIP) {
+                    byteArray = GzipManager.gzipUncompressToByte(byteArray);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Decode Patient Context", e);
+                return null;
+            }
+        }
+
+        Document patientContext = null;
+
+        try (InputStream inputStream = new ByteArrayInputStream(byteArray)) {
+            LOGGER.debug("Source XML :\n{}", new String(byteArray));
+
+            patientContext = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
+        } catch (SAXException | IOException | ParserConfigurationException e) {
+            LOGGER.error("Parsing Patient Context XML", e);
+        }
+
+        return patientContext;
+    }
+
+    /**
+     *
+     * @param uri
+     * @return
+     */
+    private static Document getPatientContextFromUri(URI uri) {
+        if (uri == null) {
+            throw new IllegalArgumentException("empty URI parameter");
+        }
+
+        // TODO could be more secure to limit the loading buffer size !!!
+        byte[] byteArray = getURIContent(uri);
+        String uriPath = uri.getPath();
+
+        if (uriPath.endsWith(".gz") || (uriPath.endsWith(".xml") == false
+            && MimeInspector.isMatchingMimeTypeFromMagicNumber(byteArray, "application/x-gzip"))) {
+            return getPatientContext(byteArray, OPT_ZIP);
+        } else {
+            return getPatientContext(byteArray, OPT_NONE);
+        }
+    }
+
+    /**
+     *
+     * @param url
+     * @return
+     */
+    private static Document getPatientContextFromUrl(String url) {
+        return getPatientContextFromUri(getURIFromURL(url));
+    }
+
+    /**
+     *
+     * @param urlStr
+     * @return
+     */
+    private static URI getURIFromURL(String urlStr) {
+        if (urlStr == null || urlStr.isEmpty()) {
+            throw new IllegalArgumentException("empty urlString parameter");
+        }
+
+        URI uri = null;
+
+        if (urlStr.startsWith("http") == false) {
+            try {
+                File file = new File(urlStr);
+                if (file.canRead()) {
+                    uri = file.toURI();
+                }
+            } catch (Exception e) {
+                LOGGER.error("{} is supposed to be a file URL but cannot be converted to a valid URI", urlStr, e);
+            }
+        }
+        if (uri == null) {
+            try {
+                uri = new URL(urlStr).toURI();
+            } catch (MalformedURLException | URISyntaxException e) {
+                LOGGER.error("getURIFromURL : {}", urlStr, e);
+            }
+        }
+
+        return uri;
+    }
+
+    /**
+     *
+     * @param uri
+     * @return
+     */
+    private static byte[] getURIContent(URI uri) {
+
+        if (uri == null) {
+            throw new IllegalArgumentException("empty URI parameter");
+        }
+
+        byte[] byteArray = null;
+
+        URLConnection urlConnection = null;
+        try {
+            URL url = uri.toURL();
+            urlConnection = url.openConnection();
+
+            LOGGER.debug("download from URL: {}", url);
+            logHttpError(urlConnection);
+
+            // TODO urlConnection.setRequestProperty with session TAG ??
+            // @see >>
+            // org.weasis.dicom.explorer.wado.downloadmanager.buildDicomSeriesFromXml
+
+            // note: fastest way to convert inputStream to string according to :
+            // http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
+            try (InputStream inputStream = urlConnection.getInputStream()) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, length);
+                }
+
+                byteArray = outputStream.toByteArray();
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("getURIContent from : {}", uri.getPath(), e);
+        }
+
+        return byteArray;
+    }
+
+    /**
+     * @param urlConnection
+     */
+    private static void logHttpError(URLConnection urlConnection) {
+        // TODO same method as in dicom.explorer.wado.downloadmanager => move
+        // this in a common place
+
+        if (urlConnection instanceof HttpURLConnection) {
+            HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
+            httpURLConnection.setConnectTimeout(5000);
+
+            try {
+                int responseCode = httpURLConnection.getResponseCode();
+                if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
+                    // Following is only intended LOG more info about Http
+                    // Server Error
+
+                    InputStream errorStream = httpURLConnection.getErrorStream();
+                    if (errorStream != null) {
+                        try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8");
+                                        BufferedReader reader = new BufferedReader(inputStream)) {
+                            StringBuilder stringBuilder = new StringBuilder();
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                stringBuilder.append(line);
+                            }
+                            String errorDescription = stringBuilder.toString();
+                            if (StringUtil.hasText(errorDescription)) {
+                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " [" //$NON-NLS-2$
+                                    + httpURLConnection.getResponseMessage() + "]", errorDescription);
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("lOG http response message", e);
+            }
+        }
+    }
+
+    /*
+     * ===================================== PRIVATE METHODS =====================================
+     */
 
     private static List<AcquireImageInfo> getAcquireImageInfoList() {
         return getInstance().images.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList());
@@ -205,7 +523,7 @@ public class AcquireManager {
         return info;
     }
 
-    private void readTags(ImageElement element) {
+    private static void readTags(ImageElement element) {
         Optional<File> file = element.getFileCache().getOriginalFile();
         if (file.isPresent()) {
             Date date = null;
@@ -214,28 +532,30 @@ public class AcquireManager {
                 if (metadata != null) {
                     ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
                     if (directory != null) {
-                        date = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+                        date = directory.getDate(ExifDirectoryBase.TAG_DATETIME_ORIGINAL);
                         if (date == null) {
-                            date = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME);
+                            date = directory.getDate(ExifDirectoryBase.TAG_DATETIME);
                         }
 
                         element.setTagNoNull(TagD.get(Tag.DateOfSecondaryCapture),
-                            directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_DIGITIZED));
+                            directory.getDate(ExifDirectoryBase.TAG_DATETIME_DIGITIZED));
 
                     }
                     ExifIFD0Directory ifd0 = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
                     if (ifd0 != null) {
-                        element.setTagNoNull(TagD.get(Tag.Manufacturer), ifd0.getString(ExifIFD0Directory.TAG_MAKE));
+                        element.setTagNoNull(TagD.get(Tag.Manufacturer), ifd0.getString(ExifDirectoryBase.TAG_MAKE));
                         element.setTagNoNull(TagD.get(Tag.ManufacturerModelName),
-                            ifd0.getString(ExifIFD0Directory.TAG_MODEL));
+                            ifd0.getString(ExifDirectoryBase.TAG_MODEL));
 
                         // try {
-                        // int orientation = ifd0.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+                        // int orientation =
+                        // ifd0.getInt(ExifIFD0Directory.TAG_ORIENTATION);
                         // } catch (MetadataException e) {
                         // e.printStackTrace();
                         // }
 
-                        // AffineTransform affineTransform = new AffineTransform();
+                        // AffineTransform affineTransform = new
+                        // AffineTransform();
                         //
                         // switch (orientation) {
                         // case 1:
@@ -274,11 +594,15 @@ public class AcquireManager {
                         // break;
                         // }
                         //
-                        // AffineTransformOp affineTransformOp = new AffineTransformOp(affineTransform,
+                        // AffineTransformOp affineTransformOp = new
+                        // AffineTransformOp(affineTransform,
                         // AffineTransformOp.TYPE_BILINEAR);
-                        // BufferedImage destinationImage = new BufferedImage(originalImage.getHeight(),
+                        // BufferedImage destinationImage = new
+                        // BufferedImage(originalImage.getHeight(),
                         // originalImage.getWidth(), originalImage.getType());
-                        // destinationImage = affineTransformOp.filter(originalImage, destinationImage);
+                        // destinationImage =
+                        // affineTransformOp.filter(originalImage,
+                        // destinationImage);
                     }
                 }
             } catch (ImageProcessingException | IOException e) {

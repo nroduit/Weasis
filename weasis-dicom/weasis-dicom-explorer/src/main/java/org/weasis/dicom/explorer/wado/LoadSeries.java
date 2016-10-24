@@ -232,7 +232,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         } else {
             final List<DicomInstance> sopList =
                 (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
-            if (!sopList.isEmpty() && sopList.get(0).getDirectDownloadFile() != null) {
+            if (sopList != null && !sopList.isEmpty() && sopList.get(0).getDirectDownloadFile() != null) {
                 return "URL"; //$NON-NLS-1$
             }
             return "WADO"; //$NON-NLS-1$

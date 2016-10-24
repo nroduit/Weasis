@@ -72,7 +72,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         super();
         this.mainPanel = mainPanel;
         this.mediaList = mediaList;
-        
+
         int maxRange = 60;
         Preferences prefs =
             BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
@@ -81,7 +81,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
             maxRange = p.getInt(P_MAX_RANGE, maxRange);
         }
         spinner = new JSpinner(new SpinnerNumberModel(maxRange, 1, 5256000, 5));
-        
+
         optionPane = new JOptionPane(initPanel(), JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null,
             options, options[0]);
         optionPane.addPropertyChangeListener(this);

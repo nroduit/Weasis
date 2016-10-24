@@ -33,6 +33,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -136,8 +138,8 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
-import org.weasis.dicom.explorer.PrGraphicUtil;
 import org.weasis.dicom.explorer.SeriesSelectionModel;
+import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
@@ -228,7 +230,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void initActionWState() {
         super.initActionWState();
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
-        actionsInView.put(ActionW.PR_STATE.cmd(), null);
 
         // Preprocessing
         actionsInView.put(ActionW.CROP.cmd(), null);
@@ -282,18 +283,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         ImageOpNode node = disOp.getNode(WindowOp.OP_NAME);
 
                         if (node != null) {
-                            // boolean pixelPadding =
-                            // JMVUtils.getNULLtoTrue(disOp.getParamValue(WindowOp.OP_NAME,
-                            // ActionW.IMAGE_PIX_PADDING.cmd()));
                             node.setParam(ActionW.WINDOW.cmd(), preset.getWindow());
                             node.setParam(ActionW.LEVEL.cmd(), preset.getLevel());
-                            // node.setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pixelPadding));
-                            // node.setParam(ActionW.LEVEL_MAX.cmd(), img.getMinValue(pixelPadding));
                             node.setParam(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
                             // When series synchronization, do not synch preset from other series
-                            // TODO should search to the complete list when PR is applied
-                            node.setParam(ActionW.PRESET.cmd(),
-                                (img == null || !img.containsPreset(preset)) ? null : preset);
+                            if (img == null || !img.containsPreset(preset)) {
+                                List<PresetWindowLevel> presets =
+                                    (List<PresetWindowLevel>) actionsInView.get(PRManager.PR_PRESETS);
+                                if (presets == null || !presets.contains(preset)) {
+                                    preset = null;
+                                }
+                            }
+                            node.setParam(ActionW.PRESET.cmd(), preset);
                         }
                         imageLayer.updateDisplayOperations();
                     }
@@ -369,7 +370,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                         continue;
                                     }
                                     if (v instanceof View2d
-                                        && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
+                                        && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
+                                        && JMVUtils.getNULLtoTrue(actionsInView.get(LayerType.CROSSLINES.name()))) {
                                         ((View2d) v).computeCrosshair(p3);
                                         v.getJComponent().repaint();
                                     }
@@ -404,28 +406,31 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public void reset() {
         super.reset();
-        setPresentationState(null);
+        DicomImageElement img = getImage();
+        if (img != null) {
+            Object key = img.getKey();
+            List<PRSpecialElement> prList =
+                DicomModel.getPrSpecialElements(series, TagD.getTagValue(img, Tag.SOPInstanceUID, String.class),
+                    key instanceof Integer ? (Integer) key + 1 : null);
+            if (!prList.isEmpty()) {
+                setPresentationState( prList.get(0), false);
+            }
+        }
     }
 
-    void setPresentationState(Object val) {
+    void setPresentationState(Object val, boolean newImage) {
 
         Object old = actionsInView.get(ActionW.PR_STATE.cmd());
-        if (val == null && old == null
-            || (old instanceof PresentationStateReader && ((PresentationStateReader) old).getDicom() == val)) {
+        if (!newImage && Objects.equals(old, val)) {
             return;
         }
+
+        actionsInView.put(ActionW.PR_STATE.cmd(), val);
         PresentationStateReader pr =
             val instanceof PRSpecialElement ? new PresentationStateReader((PRSpecialElement) val) : null;
-        actionsInView.put(ActionW.PR_STATE.cmd(), pr == null ? val : pr);
+        actionsInView.put(PresentationStateReader.TAG_PR_READER, pr);
         boolean spatialTransformation = actionsInView.get(ActionW.PREPROCESSING.cmd()) != null;
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
-
-        // Delete previous PR Layers
-        List<GraphicLayer> dcmLayers = (List<GraphicLayer>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
-        if (dcmLayers != null) {
-            PRManager.deleteDicomLayers(dcmLayers, graphicManager);
-            actionsInView.remove(PRManager.TAG_DICOM_LAYERS);
-        }
 
         DicomImageElement m = getImage();
         // Reset display parameter
@@ -443,6 +448,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     ((ComboItemListener) spUnitAction).setSelectedItem(m.getPixelSpacingUnit());
                 }
             }
+            deletePrLayers();
 
             // Restore presets
             actionsInView.remove(PRManager.PR_PRESETS);
@@ -459,15 +465,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             // Keeps KO properties (series level)
             Object ko = actionsInView.get(ActionW.KO_SELECTION.cmd());
             Object filter = actionsInView.get(ActionW.FILTERED_SERIES.cmd());
+            OpManager disOp = getDisplayOpManager();
+            Object preset = disOp.getParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd());
             initActionWState();
             setActionsInView(ActionW.KO_SELECTION.cmd(), ko);
             setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
-            if (ActionState.NoneLabel.NONE_SERIES.equals(val)) {
-                // Keeps no PS property (for all the series)
-                actionsInView.put(ActionW.PR_STATE.cmd(), val);
-            }
-            // setDefautWindowLevel(getImage());
-            // setShutter(m);
+            disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), preset);
+            resetZoom();
+            resetPan();
         } else {
             PRManager.applyPresentationState(this, pr, m);
         }
@@ -623,6 +628,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void setImage(DicomImageElement img) {
         boolean newImg = img != null && !img.equals(imageLayer.getSourceImage());
         if (newImg) {
+            deletePrLayers();
             PrGraphicUtil.applyPresentationModel(img);
         }
         super.setImage(img);
@@ -630,6 +636,15 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         updatePrButtonState(img, newImg);
         if (newImg) {
             updateKOselectedState(img);
+        }
+    }
+
+    private void deletePrLayers() {
+        // Delete previous PR Layers
+        List<GraphicLayer> dcmLayers = (List<GraphicLayer>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
+        if (dcmLayers != null) {
+            PRManager.deleteDicomLayers(dcmLayers, graphicManager);
+            actionsInView.remove(PRManager.TAG_DICOM_LAYERS);
         }
     }
 
@@ -641,18 +656,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     private synchronized void updatePrButtonState(DicomImageElement img, boolean newImg) {
-        if (img == null) {
-            // Remove old PR button
-            getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
-        }
         if (newImg) {
             Object oldPR = getActionValue(ActionW.PR_STATE.cmd());
             ViewButton prButton = PRManager.buildPrSelection(this, series, img);
+            getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
             if (prButton != null) {
-                getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
                 getViewButtons().add(prButton);
-            } else if (oldPR != null) {
-                setPresentationState(null);
+            } else if (oldPR instanceof PRSpecialElement) {
+                setPresentationState(null, newImg);
+                actionsInView.put(ActionW.PR_STATE.cmd(), oldPR);
+            } else if (ActionState.NoneLabel.NONE.equals(oldPR)) {
+                // No persistence for NONE
+                actionsInView.put(ActionW.PR_STATE.cmd(), null);
             }
         }
     }
@@ -824,29 +839,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
     }
 
-    protected MouseActionAdapter getMouseAdapter(String action) {
-        if (action.equals(ActionW.MEASURE.cmd()) || action.equals(ActionW.DRAW.cmd())) {
-            return graphicMouseHandler;
-        } else if (action.equals(ActionW.PAN.cmd())) {
-            return getAction(ActionW.PAN);
-        } else if (action.equals(ActionW.CONTEXTMENU.cmd())) {
+    protected MouseActionAdapter getMouseAdapter(String command) {
+        if (command.equals(ActionW.CONTEXTMENU.cmd())) {
             return contextMenuHandler;
-        } else if (action.equals(ActionW.WINDOW.cmd())) {
-            return getAction(ActionW.WINDOW);
-        } else if (action.equals(ActionW.LEVEL.cmd())) {
+        } else if (command.equals(ActionW.WINLEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
-        } else if (action.equals(ActionW.WINLEVEL.cmd())) {
-            return getAction(ActionW.LEVEL);
-        } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
-            return getAction(ActionW.SCROLL_SERIES);
-        } else if (action.equals(ActionW.ZOOM.cmd())) {
-            return getAction(ActionW.ZOOM);
-        } else if (action.equals(ActionW.CROSSHAIR.cmd())) {
-            return getAction(ActionW.CROSSHAIR);
-        } else if (action.equals(ActionW.ROTATION.cmd())) {
-            return getAction(ActionW.ROTATION);
         }
-        return null;
+
+        Optional<ActionW> actionKey = eventManager.getActionKey(command);
+        if (!actionKey.isPresent()) {
+            return null;
+        }
+
+        if (actionKey.get().isDrawingAction()) {
+            return graphicMouseHandler;
+        }
+        return eventManager.getAction(actionKey.get(), MouseActionAdapter.class).orElse(null);
     }
 
     public void computeCrosshair(Point3d p3) {
@@ -978,10 +986,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             boolean pixelPadding = JMVUtils
                 .getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
 
-            Object val = getActionValue(ActionW.PR_STATE.cmd());
             PresentationStateReader prReader =
-                (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
-
+                (PresentationStateReader) getActionValue(PresentationStateReader.TAG_PR_READER);
             for (int i = 0; i < c.length; i++) {
                 c[i] = imageElement.pixel2mLUT(c[i], prReader, pixelPadding);
             }

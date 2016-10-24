@@ -84,13 +84,13 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>jai_imageio</artifactId>
-			<version>1.2.3</version>
+			<version>1.2.4</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.bytedeco</groupId>
 			<artifactId>javacpp</artifactId>
-			<version>1.2.2</version>
+			<version>1.2.4</version>
 		</dependency>
 	</dependencies>	
 </project>

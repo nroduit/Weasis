@@ -22,6 +22,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 
+import org.weasis.acquire.dockable.EditionToolFactory;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.dockable.components.actions.rectify.lib.AbstractRectifyButton;
 import org.weasis.acquire.dockable.components.actions.rectify.lib.OrientationSliderComponent;
@@ -32,7 +33,7 @@ import org.weasis.acquire.explorer.AcquireImageValues;
 import org.weasis.acquire.operations.impl.FlipActionListener;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
 import org.weasis.base.viewer2d.EventManager;
-import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.FlipOp;
@@ -40,6 +41,7 @@ import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
@@ -61,6 +63,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         this.rectifyAction = Objects.requireNonNull(rectifyAction);
         setLayout(new BorderLayout());
         orientationPanel = new OrientationSliderComponent(this);
+        orientationPanel.setVisible(false); // TODO need improvement
         rotate90btn = new Rotate90Button(rectifyAction);
         rotate270btn = new Rotate270Button(rectifyAction);
         flipActionListener = new FlipActionListener(rectifyAction);
@@ -108,6 +111,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         next.setFlip(values.isFlip());
         next.setOrientation(values.getOrientation());
         next.setRotation(values.getRotation());
+        next.setCropZone(values.getCropZone());
 
         flipCheckBox.removeActionListener(flipActionListener);
         RectifyOrientationChangeListener listener = orientationPanel.getListener();
@@ -119,21 +123,26 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         repaint();
 
         // Remove the crop before super.init() to get the entire image.
-        info.getPostProcessOpManager().setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
-        info.getPostProcessOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
-        info.getPostProcessOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
+        info.getPostProcessOpManager().setParamValue(CropOp.OP_NAME, CropOp.P_AREA,
+            info.getDefaultValues().getCropZone());
+        info.getPostProcessOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE,
+            info.getDefaultValues().getFullRotation());
+        info.getPostProcessOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, info.getDefaultValues().isFlip());
         view.updateCanvas(false);
         view.getActionsInView().remove(DefaultView2d.PROP_LAYER_OFFSET);
         view.resetZoom();
 
-        view.getGraphicManager().setCreateGraphic(null);
-        ImageViewerPlugin container = WinUtil.getParentOfClass(view.getJComponent(), ImageViewerPlugin.class);
+        view.getEventManager().getAction(EditionToolFactory.DRAW_EDITON, ComboItemListener.class)
+            .ifPresent(a -> a.setSelectedItem(MeasureToolBar.selectionGraphic));
+
+        ImageViewerPlugin<?> container = WinUtil.getParentOfClass(view.getJComponent(), ImageViewerPlugin.class);
         if (container != null) {
-            final ViewerToolBar toolBar = container.getViewerToolBar();
+            final ViewerToolBar<?> toolBar = container.getViewerToolBar();
             if (toolBar != null) {
-                String cmd = ActionW.DRAW.cmd();
-                if (!toolBar.isCommandActive(cmd)) {
-                    MouseActions mouseActions = EventManager.getInstance().getMouseActions();
+                String cmd = EditionToolFactory.EDITON.cmd();
+                MouseActions mouseActions = EventManager.getInstance().getMouseActions();
+                if (!cmd.equals(mouseActions.getLeft())) {
+                    setLastActionCommand(mouseActions.getLeft());
                     mouseActions.setAction(MouseActions.LEFT, cmd);
                     container.setMouseActions(mouseActions);
                     toolBar.changeButtonState(MouseActions.LEFT, cmd);
@@ -144,8 +153,8 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         flipActionListener.applyNextValues();
         listener.applyNextValues();
 
-        Rectangle2D area = Optional.ofNullable((Rectangle2D) info.getNextValues().getCropZone())
-            .orElse(view.getViewModel().getModelArea());
+        Rectangle2D area =
+            Optional.ofNullable((Rectangle2D) next.getCropZone()).orElse(view.getViewModel().getModelArea());
         next.setCropZone(RectifyAction.adaptToinitCropArea(area));
         rectifyAction.updateCropGraphic();
 

@@ -27,7 +27,6 @@ import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -35,9 +34,9 @@ import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.WtoolBar;
 
 @SuppressWarnings("serial")
-public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
+public class ZoomToolBar extends WtoolBar {
 
-    public ZoomToolBar(final ImageViewerEventManager<E> eventManager, int index, boolean showLens) {
+    public ZoomToolBar(final ImageViewerEventManager<?> eventManager, int index, boolean showLens) {
         super(Messages.getString("ZoomToolBar.zoomBar"), index); //$NON-NLS-1$
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
@@ -72,7 +71,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
     }
 
     private JPopupMenu getZoomPopupMenuButton(DropDownButton dropDownButton,
-        final ImageViewerEventManager<E> eventManager) {
+        final ImageViewerEventManager<?> eventManager) {
         JPopupMenu popupMouseButtons = new JPopupMenu();
         for (JMenuItem jMenuItem : getZoomListMenuItems(eventManager)) {
             popupMouseButtons.add(jMenuItem);

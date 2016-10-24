@@ -59,8 +59,7 @@ public class ItemListComboBoxModel<T> extends ItemListModel<T> implements ComboB
             fireContentsChanged(this, -1, -1);
         }
     }
-    
-    
+
     @Override
     protected PropertyChangeListener getPropertyChangeListener() {
         return evt -> {

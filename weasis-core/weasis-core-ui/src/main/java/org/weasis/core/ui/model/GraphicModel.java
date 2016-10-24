@@ -95,7 +95,7 @@ public interface GraphicModel extends UUIDable {
     /**
      * Gets all layer manager listeners of this layer.
      */
-    GraphicModelChangeListener[] getChangeListeners();
+    List<GraphicModelChangeListener> getChangeListeners();
 
     /**
      * Adds a layer manager listener to this layer.
@@ -115,10 +115,6 @@ public interface GraphicModel extends UUIDable {
 
     int getLayerCount();
 
-    void setCreateGraphic(Graphic graphic);
-
-    Graphic getCreateGraphic();
-
     void removeGraphic(Graphic graphic);
 
     void addGraphicChangeHandler(PropertyChangeListener graphicsChangeHandler);
@@ -133,5 +129,11 @@ public interface GraphicModel extends UUIDable {
 
     List<GraphicLayer> groupLayerByType();
 
-    void deleteByLayer(GraphicLayer type);
+    void deleteByLayer(GraphicLayer layer);
+
+    void deleteNonSerializableGraphics();
+
+    boolean hasSerializableGraphics();
+
+    List<PropertyChangeListener> getGraphicsListeners();
 }

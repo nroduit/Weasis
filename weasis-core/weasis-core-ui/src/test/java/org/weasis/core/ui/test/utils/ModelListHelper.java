@@ -17,7 +17,7 @@ public class ModelListHelper extends XmlSerialisationHelper {
     @Mock protected MediaReader mediaIO;
     @Mock protected Object key;
     
-    protected ImageElement mockImage(String uuid, String seriesUuid) {
+    protected ImageElement mockImage( String seriesUuid, String uuid) {
         ImageElement img = PowerMockito.mock(ImageElement.class);
         
         if(Objects.isNull(uuid) && Objects.isNull(seriesUuid)) {
@@ -27,6 +27,11 @@ public class ModelListHelper extends XmlSerialisationHelper {
         } else {
             PowerMockito.when(img.getTagValue(Mockito.any())).thenReturn(uuid, seriesUuid);
         }
+        
+        MediaReader mediaReader = PowerMockito.mock(MediaReader.class);
+        PowerMockito.when(img.getMediaReader()).thenReturn(mediaReader);
+        PowerMockito.when(mediaReader.getMediaElementNumber()).thenReturn(1);
+        PowerMockito.when(img.getKey()).thenReturn(0);
         return img;
     }
 }

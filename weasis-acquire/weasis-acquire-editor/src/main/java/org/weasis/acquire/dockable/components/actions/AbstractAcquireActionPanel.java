@@ -15,11 +15,23 @@ import javax.swing.JPanel;
 public abstract class AbstractAcquireActionPanel extends JPanel implements AcquireActionPanel {
     private static final long serialVersionUID = -8562722948334410446L;
 
+    private String lastActionCommand;
+
     public AbstractAcquireActionPanel() {
         super();
     }
 
     public boolean needValidationPanel() {
         return false;
+    }
+
+    @Override
+    public String getLastActionCommand() {
+        return lastActionCommand;
+    }
+
+    @Override
+    public void setLastActionCommand(String lastActionCommand) {
+        this.lastActionCommand = lastActionCommand;
     }
 }

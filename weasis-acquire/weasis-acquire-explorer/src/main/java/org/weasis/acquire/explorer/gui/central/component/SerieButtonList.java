@@ -19,6 +19,7 @@ import java.util.TreeSet;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class SerieButtonList extends JScrollPane {
     private JPanel publishPanel = new AcquirePublishPanel();
 
     public SerieButtonList() {
-        super(panel1, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        super(panel1, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         JMVUtils.setPreferredWidth(panel1, 200);
         JMVUtils.setPreferredHeight(panel1, 300);
 

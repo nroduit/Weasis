@@ -18,11 +18,11 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-08 - ylar - Creation
- * 
+ *
  */
 public class CalibrationAction extends AbstractAcquireAction {
 
@@ -34,6 +34,7 @@ public class CalibrationAction extends AbstractAcquireAction {
     @Override
     public void validate(AcquireImageInfo imageInfo, ViewCanvas<ImageElement> view) {
         imageInfo.removeLayer(view);
+        this.centralPanel.restoreLastAction();
     }
 
     @Override

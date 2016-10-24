@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.core.ui.model.utils.imp;
 
-import java.io.Serializable;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,7 +18,7 @@ import javax.xml.bind.annotation.XmlID;
 
 import org.weasis.core.ui.model.utils.UUIDable;
 
-public class DefaultUUID implements UUIDable, Serializable {
+public class DefaultUUID implements UUIDable {
     private static final long serialVersionUID = -3178169761934642523L;
 
     private String uuid;
@@ -34,14 +33,14 @@ public class DefaultUUID implements UUIDable, Serializable {
 
     @Override
     @XmlID
-    @XmlAttribute
+    @XmlAttribute(name = "uuid", required = true)
     public String getUuid() {
         return uuid;
     }
 
     @Override
     public void setUuid(String uuid) {
-        this.uuid = Optional.ofNullable(uuid).orElse(UUID.randomUUID().toString());
+        this.uuid = Optional.ofNullable(uuid).orElseGet(UUID.randomUUID()::toString);
     }
 
     @Override

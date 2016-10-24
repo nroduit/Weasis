@@ -227,7 +227,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void buildPanner() {
-        panner = Optional.ofNullable(panner).orElse(new Panner<>(this));
+        panner = Optional.ofNullable(panner).orElseGet(() -> new Panner<>(this));
     }
 
     @Override
@@ -241,6 +241,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
         actionsInView.put(ActionW.DRAWINGS.cmd(), true);
+        actionsInView.put(LayerType.CROSSLINES.name(), true);
         actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
 
@@ -325,29 +326,37 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // realPoint to handle special case: non square pixel image
             Point realPoint = new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5),
                 (int) Math.ceil(p.y / imageElement.getRescaleY() - 0.5));
-            if (image != null && realPoint.x >= 0 && realPoint.y >= 0 && realPoint.x < image.getWidth()
-                && realPoint.y < image.getHeight()) {
+
+            Rectangle2D area = viewModel.getModelArea();
+            Point offset = (Point) getActionValue(DefaultView2d.PROP_LAYER_OFFSET);
+            if (offset != null) {
+                // Offset used for Crop operation
+                area.setRect(offset.getX(), offset.getY(), area.getWidth(), area.getHeight());
+            }
+
+            if (image != null && area.contains(realPoint)) {
                 try {
                     pixelInfo.setPosition(p);
                     pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
                     pixelInfo.setPixelSize(imageElement.getPixelSize());
-                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null);
+                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x - (int) area.getX(),
+                        realPoint.y - (int) area.getY(), (double[]) null);
                     pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
                     fillPixelInfo(pixelInfo, imageElement, c);
                     if (c != null && c.length >= 1) {
                         pixelInfo.setChannelNames(getChannelNames(image));
                     }
-
-                } catch (Exception | OutOfMemoryError e) {
+                } catch (OutOfMemoryError e) {
                     LOGGER.error("Get pixel value", e);//$NON-NLS-1$
-                    if (e instanceof OutOfMemoryError) {
-                        // when image tile is not available anymore (file stream closed)
-                        System.gc();
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException et) {
-                        }
+                    // when image tile is not available anymore (file stream closed)
+                    System.gc();
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException et) {
                     }
+
+                } catch (Exception e) {
+                    LOGGER.error("Get pixel value", e);//$NON-NLS-1$
                 }
             }
         }
@@ -424,6 +433,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             lens.showLens(false);
             this.remove(lens);
             actionsInView.put(ActionW.LENS.cmd(), false);
+            lens = null;
         }
     }
 
@@ -987,14 +997,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         Point offset = (Point) actionsInView.get(PROP_LAYER_OFFSET);
         if (offset != null) {
-            // TODO not consistent with image coordinates after crop
             affineTransform.translate(-offset.getX(), -offset.getY());
         }
 
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
         } catch (NoninvertibleTransformException e) {
-            LOGGER.error("Create inverse transform",e);
+            LOGGER.error("Create inverse transform", e);
         }
     }
 
@@ -1060,8 +1069,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 } else if (value.getLocation() != null) {
                     Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
                     if (cutlines != null && cutlines) {
-                        // Compute cutlines from the location of selected image
-                        computeCrosslines(value.getLocation().doubleValue());
+                        if (JMVUtils.getNULLtoTrue(actionsInView.get(LayerType.CROSSLINES.name()))) {
+                            // Compute cutlines from the location of selected image
+                            computeCrosslines(value.getLocation().doubleValue());
+                        }
                     } else {
                         double location = value.getLocation().doubleValue();
                         // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and related
@@ -1227,6 +1238,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         removeFocusListener(this);
         ToolTipManager.sharedInstance().unregisterComponent(this);
         imageLayer.removeLayerChangeListener(this);
+        Optional.ofNullable(lens).ifPresent(l -> l.showLens(false));
         if (series != null) {
             closingSeries(series);
             series = null;
@@ -1253,9 +1265,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         for (int i = 0; i < wheelListeners.length; i++) {
             this.removeMouseWheelListener(wheelListeners[i]);
         }
-        if (lens != null) {
-            lens.disableMouseAndKeyListener();
-        }
+        Optional.ofNullable(lens).ifPresent(l -> l.disableMouseAndKeyListener());
     }
 
     @Override
@@ -1421,24 +1431,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 return;
             }
 
-            int modifiers = evt.getModifiersEx();
-            MouseActions mouseActions = eventManager.getMouseActions();
-            Optional<ActionW> action = Optional.empty();
-            // left mouse button, always active
-            if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
-                action = eventManager.getActionFromCommand(mouseActions.getLeft());
-            }
-            // middle mouse button
-            else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0
-                && ((mouseActions.getActiveButtons() & InputEvent.BUTTON2_DOWN_MASK) != 0)) {
-                action = eventManager.getActionFromCommand(mouseActions.getMiddle());
-            }
-            // right mouse button
-            else if ((modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0
-                && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
-                action = eventManager.getActionFromCommand(mouseActions.getRight());
-            }
-
+            Optional<ActionW> action = eventManager.getMouseAction(evt.getModifiersEx());
             DefaultView2d.this.setCursor(action.isPresent() ? action.get().getCursor() : DefaultView2d.DEFAULT_CURSOR);
         }
 

@@ -90,11 +90,10 @@ public class AcquireTabPanel extends JPanel {
     private void remove(Serie s) {
         btnMap.remove(s);
         Optional<SerieButton> nextBtn = serieList.removeBySerie(s);
-        if(nextBtn.isPresent()){
+        if (nextBtn.isPresent()) {
             btnGrp.setSelected(nextBtn.get().getModel(), true);
-            setSelected(nextBtn.get());          
-        }
-        else if(btnMap.isEmpty()) {
+            setSelected(nextBtn.get());
+        } else if (btnMap.isEmpty()) {
             selected = null;
         }
     }

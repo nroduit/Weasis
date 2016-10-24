@@ -21,7 +21,7 @@ import org.weasis.core.api.media.data.Tagable;
 
 public abstract class AbstractTagable implements Tagable {
     protected final Map<TagW, Object> tags = new HashMap<>();
-    
+
     @Override
     public boolean containTagKey(TagW tag) {
         return tags.containsKey(tag);
@@ -52,5 +52,13 @@ public abstract class AbstractTagable implements Tagable {
 
     public Set<Entry<TagW, Object>> getTagEntrySet() {
         return tags.entrySet();
+    }
+
+    public void clear() {
+        tags.clear();
+    }
+
+    public boolean isEmpty() {
+        return tags.isEmpty();
     }
 }

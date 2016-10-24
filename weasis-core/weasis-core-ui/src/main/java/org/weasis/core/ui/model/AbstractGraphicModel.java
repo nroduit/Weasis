@@ -85,10 +85,10 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     private volatile List<GraphicLayer> layers;
     protected volatile List<Graphic> models;
 
-    private final ArrayList<GraphicSelectionListener> selectedGraphicsListeners = new ArrayList<>();
-    private final ArrayList<GraphicModelChangeListener> listeners = new ArrayList<>();
+    private final List<GraphicSelectionListener> selectedGraphicsListeners = new ArrayList<>();
+    private final List<GraphicModelChangeListener> modelListeners = new ArrayList<>();
+    private final List<PropertyChangeListener> graphicsListeners = new ArrayList<>();
     private Boolean changeFireingSuspended = Boolean.FALSE;
-    private Graphic createGraphic;
 
     private Function<Graphic, GraphicLayer> getLayer = g -> g.getLayer();
     private Function<Graphic, DragGraphic> castToDragGraphic = DragGraphic.class::cast;
@@ -148,7 +148,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             this.referencedSeries = Collections.synchronizedList(referencedSeries);
         }
         this.referencedSeries =
-            Optional.ofNullable(referencedSeries).orElse(Collections.synchronizedList(new ArrayList<>()));
+            Optional.ofNullable(referencedSeries).orElseGet(() -> Collections.synchronizedList(new ArrayList<>()));
     }
 
     @Override
@@ -164,21 +164,19 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         if (graphic != null) {
             GraphicLayer layer = graphic.getLayer();
             if (layer == null) {
-                layer = findLayerByType(graphic.getLayerType()).orElse(new DefaultLayer(graphic.getLayerType()));
+                layer = findLayerByType(graphic.getLayerType()).orElseGet(() -> new DefaultLayer(graphic.getLayerType()));
                 graphic.setLayer(layer);
             }
             if (!layers.contains(layer)) {
                 layers.add(layer);
             }
             models.add(graphic);
-            LOGGER.trace("add graphic {})", graphic);
         }
     }
 
     @Override
     public void removeGraphic(Graphic graphic) {
         if (graphic != null) {
-            LOGGER.trace("romoving graphic({})", graphic);
             models.remove(graphic);
             graphic.removeAllPropertyChangeListener();
 
@@ -207,12 +205,24 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @Override
     public void addGraphicChangeHandler(PropertyChangeListener graphicsChangeHandler) {
-        models.forEach(g -> g.addPropertyChangeListener(graphicsChangeHandler));
+        if (Objects.nonNull(graphicsChangeHandler) && !graphicsListeners.contains(graphicsChangeHandler)) {
+            graphicsListeners.add(graphicsChangeHandler);
+            models.forEach(g -> g.addPropertyChangeListener(graphicsChangeHandler));
+        }
     }
 
     @Override
     public void removeGraphicChangeHandler(PropertyChangeListener graphicsChangeHandler) {
-        models.forEach(g -> g.removePropertyChangeListener(graphicsChangeHandler));
+        if (Objects.nonNull(graphicsChangeHandler) && graphicsListeners.contains(graphicsChangeHandler)) {
+            graphicsListeners.remove(graphicsChangeHandler);
+            models.forEach(g -> g.removePropertyChangeListener(graphicsChangeHandler));
+        }
+    }
+    
+
+    @Override
+    public List<PropertyChangeListener> getGraphicsListeners() {
+        return graphicsListeners;
     }
 
     @Override
@@ -257,7 +267,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     @Override
     public void deleteByLayer(GraphicLayer layer) {
         Objects.requireNonNull(layer);
-
+        if (models.isEmpty()) {
+            return;
+        }
         synchronized (models) {
             models.removeIf(g -> {
                 boolean delete = layer.equals(g.getLayer());
@@ -273,7 +285,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     @Override
     public void deleteByLayerType(LayerType type) {
         Objects.requireNonNull(type);
-
+        if (models.isEmpty()) {
+            return;
+        }
         synchronized (models) {
             for (Graphic g : models) {
                 if (g.getLayer().getType().equals(type)) {
@@ -283,6 +297,41 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             models.removeIf(g -> Objects.equals(g.getLayer().getType(), type));
             layers.removeIf(l -> Objects.equals(l.getType(), type));
         }
+    }
+
+    @Override
+    public void deleteNonSerializableGraphics() {
+        if (models.isEmpty()) {
+            return;
+        }
+        synchronized (models) {
+            for (Graphic g : models) {
+                if (!g.getLayer().getSerializable()) {
+                    g.removeAllPropertyChangeListener();
+                }
+            }
+            models.removeIf(g -> !g.getLayer().getSerializable());
+            layers.removeIf(l -> !l.getSerializable());
+        }
+    }
+
+    @Override
+    public boolean hasSerializableGraphics() {
+        if (models.isEmpty()) {
+            return false;
+        }
+        synchronized (models) {
+            for (Graphic g : models) {
+                /*
+                 * Exclude non serializable layer and graphics without points like NonEditableGraphic (not strictly the
+                 * jaxb serialization process that use the annotations from getModels())
+                 */
+                if (g.getLayer().getSerializable() && !g.getPts().isEmpty()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -299,7 +348,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
                 for (int i = models.size() - 1; i >= 0; i--) {
                     Graphic graphic = models.get(i);
                     GraphicLayer layer = graphic.getLayer();
-                    if (layer.getVisible() && !layer.getLocked()) {
+                    if (layer.getVisible() && layer.getSelectable()) {
 
                         Rectangle graphBounds = graphic.getBounds(transform);
 
@@ -336,7 +385,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
                 for (int i = models.size() - 1; i >= 0; i--) {
                     Graphic graphic = models.get(i);
                     GraphicLayer layer = graphic.getLayer();
-                    if (layer.getVisible() && !layer.getLocked()) {
+                    if (layer.getVisible() && layer.getSelectable()) {
 
                         List<Area> selectedAreaList = new ArrayList<>();
 
@@ -391,7 +440,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             for (int i = models.size() - 1; i >= 0; i--) {
                 Graphic g = models.get(i);
                 GraphicLayer l = g.getLayer();
-                if (l.getVisible() && !l.getLocked()) {
+                if (l.getVisible() && l.getSelectable()) {
                     if (g.isOnGraphicLabel(mouseEvent)) {
                         if (g.getSelected()) {
                             return Optional.of(g);
@@ -534,9 +583,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
         g2d.translate(0.5, 0.5);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
-        // g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         models.forEach(g -> applyPaint(g, g2d, transform, bound));
-        // g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
         g2d.translate(-0.5, -0.5);
     }
@@ -578,26 +625,26 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     }
 
     @Override
-    public GraphicModelChangeListener[] getChangeListeners() {
-        return listeners.toArray(new GraphicModelChangeListener[listeners.size()]);
+    public List<GraphicModelChangeListener> getChangeListeners() {
+        return modelListeners;
     }
 
     @Override
     public void addChangeListener(GraphicModelChangeListener listener) {
-        if (Objects.nonNull(listener) && !listeners.contains(listener)) {
-            listeners.add(listener);
+        if (Objects.nonNull(listener) && !modelListeners.contains(listener)) {
+            modelListeners.add(listener);
         }
     }
 
     @Override
     public void removeChangeListener(GraphicModelChangeListener listener) {
-        Optional.ofNullable(listener).ifPresent(listeners::remove);
+        Optional.ofNullable(listener).ifPresent(modelListeners::remove);
     }
 
     @Override
     public void fireChanged() {
         if (!changeFireingSuspended) {
-            listeners.stream().forEach(l -> l.handleModelChanged(this));
+            modelListeners.stream().forEach(l -> l.handleModelChanged(this));
         }
     }
 
@@ -613,7 +660,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @Override
     public void dispose() {
-        listeners.clear();
+        modelListeners.clear();
+        graphicsListeners.clear();
         selectedGraphicsListeners.clear();
     }
 
@@ -623,26 +671,13 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     }
 
     @Override
-    public void setCreateGraphic(Graphic graphic) {
-        createGraphic = graphic;
-    }
-
-    @Override
-    public Graphic getCreateGraphic() {
-        return createGraphic;
-    }
-
-    @Override
     public List<GraphicSelectionListener> getGraphicSelectionListeners() {
         return selectedGraphicsListeners;
     }
 
-    public static Graphic drawFromCurrentGraphic(ViewCanvas canvas) {
+    public static Graphic drawFromCurrentGraphic(ViewCanvas<?> canvas, Graphic graphicCreator) {
         Objects.requireNonNull(canvas);
-        GraphicModel modelList = canvas.getGraphicManager();
-        Objects.requireNonNull(modelList);
-
-        Graphic newGraphic = Optional.ofNullable(modelList.getCreateGraphic()).orElse(MeasureToolBar.selectionGraphic);
+        Graphic newGraphic = Optional.ofNullable(graphicCreator).orElse(MeasureToolBar.selectionGraphic);
         GraphicLayer layer = getOrBuildLayer(canvas, newGraphic.getLayerType());
 
         if (!layer.getVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAWINGS.cmd())) {
@@ -654,7 +689,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             Graphic graph = newGraphic.copy();
             if (graph != null) {
                 graph.updateLabel(Boolean.TRUE, canvas);
-                graph.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
+                for (PropertyChangeListener listener : canvas.getGraphicManager().getGraphicsListeners()) {
+                    graph.addPropertyChangeListener(listener);
+                }
                 graph.setLayer(layer);
                 canvas.getGraphicManager().addGraphic(graph);
             }
@@ -662,23 +699,26 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         }
     }
 
-    public static void addGraphicToModel(ViewCanvas canvas, GraphicLayer layer, Graphic graphic) {
+    public static void addGraphicToModel(ViewCanvas<?> canvas, GraphicLayer layer, Graphic graphic) {
         GraphicModel gm = canvas.getGraphicManager();
+        graphic.setLayer(Optional.ofNullable(layer).orElseGet(() -> getOrBuildLayer(canvas, graphic.getLayerType())));
         graphic.updateLabel(Boolean.TRUE, canvas);
-        graphic.addPropertyChangeListener(canvas.getGraphicsChangeHandler());
-        graphic.setLayer(Optional.ofNullable(layer).orElse(getOrBuildLayer(canvas, graphic.getLayerType())));
+        for (PropertyChangeListener listener : canvas.getGraphicManager().getGraphicsListeners()) {
+            graphic.addPropertyChangeListener(listener);
+        }
         gm.addGraphic(graphic);
     }
 
-    public static void addGraphicToModel(ViewCanvas canvas, Graphic graphic) {
+    public static void addGraphicToModel(ViewCanvas<?> canvas, Graphic graphic) {
         AbstractGraphicModel.addGraphicToModel(canvas, null, graphic);
     }
 
-    public static GraphicLayer getOrBuildLayer(ViewCanvas canvas, LayerType layerType) {
-        return canvas.getGraphicManager().findLayerByType(layerType).orElse(new DefaultLayer(layerType));
+    public static GraphicLayer getOrBuildLayer(ViewCanvas<?> canvas, LayerType layerType) {
+        return canvas.getGraphicManager().findLayerByType(layerType).orElseGet(() -> new DefaultLayer(layerType));
     }
 
     private static Predicate<GraphicLayer> isLayerTypeEquals(LayerType type) {
-        return layer -> Objects.equals(layer.getType(), type);
+        // Compare type and if the layer name is null => default layer
+        return layer -> Objects.equals(layer.getType(), type) && layer.getName() == null;
     }
 }

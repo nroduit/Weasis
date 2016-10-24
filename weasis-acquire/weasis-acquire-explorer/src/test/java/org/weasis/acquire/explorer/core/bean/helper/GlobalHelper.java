@@ -37,7 +37,7 @@ public class GlobalHelper extends MockHelper {
     protected static String studyDateValue = "20160603";
     protected static String studyInstanceUIDValue = "2.25.35.13108031698769009477890994130583367923";
     protected static String modalityValue = "Lorem ipsum";
-    
+
     @Mock
     protected static Document xml;
     @Mock
@@ -95,22 +95,26 @@ public class GlobalHelper extends MockHelper {
     protected static Node modalityNode;
 
     protected enum GlobalTag {
-        patientId(Tag.PatientID, patientIdW, patientIdNodeList, patientIdNode, TagType.STRING, patientIdValue), 
-        patientName(Tag.PatientName, patientNameW, patientNameNodeList, patientNameNode, TagType.STRING, patientNameValue), 
-        issuerOfPatientId(Tag.IssuerOfPatientID, issuerOfPatientIdW, issuerOfPatientIdNodeList, issuerOfPatientIdNode, TagType.STRING, issuerOfPatientIdValue), 
-        patientBirthDate(Tag.PatientBirthDate, patientBirthDateW, patientBirthDateNodeList, patientBirthDateNode, TagType.DATE, patientBirthDateValue), 
-        patientSex(Tag.PatientSex, patientSexW, patientSexNodeList, patientSexNode, TagType.DICOM_SEX, patientSexValue), 
-        studyDate(Tag.StudyDate, studyDateW, studyDateNodeList, studyDateNode, TagType.DATE, studyDateValue), 
-        studyinstanceUID(Tag.StudyInstanceUID, studyInstanceUIDW, studyInstanceUIDNodeList, studyInstanceUIDNode, TagType.STRING, studyInstanceUIDValue), 
+        patientId(Tag.PatientID, patientIdW, patientIdNodeList, patientIdNode, TagType.STRING, patientIdValue),
+        patientName(Tag.PatientName, patientNameW, patientNameNodeList, patientNameNode, TagType.STRING,
+                        patientNameValue),
+        issuerOfPatientId(Tag.IssuerOfPatientID, issuerOfPatientIdW, issuerOfPatientIdNodeList, issuerOfPatientIdNode,
+                        TagType.STRING, issuerOfPatientIdValue),
+        patientBirthDate(Tag.PatientBirthDate, patientBirthDateW, patientBirthDateNodeList, patientBirthDateNode,
+                        TagType.DATE, patientBirthDateValue),
+        patientSex(Tag.PatientSex, patientSexW, patientSexNodeList, patientSexNode, TagType.DICOM_SEX, patientSexValue),
+        studyDate(Tag.StudyDate, studyDateW, studyDateNodeList, studyDateNode, TagType.DATE, studyDateValue),
+        studyinstanceUID(Tag.StudyInstanceUID, studyInstanceUIDW, studyInstanceUIDNodeList, studyInstanceUIDNode,
+                        TagType.STRING, studyInstanceUIDValue),
         modality(Tag.Modality, modalityW, modalityNodeList, modalityNode, TagType.STRING, modalityValue);
-        
+
         public int tagId;
         public TagW tagW;
         public NodeList nodeList;
         public Node node;
         public TagType type;
         public String value;
-        
+
         private GlobalTag(int tagId, TagW tagW, NodeList nodeList, Node node, TagType type, String value) {
             this.tagId = tagId;
             this.tagW = tagW;
@@ -119,28 +123,25 @@ public class GlobalHelper extends MockHelper {
             this.type = type;
             this.value = value;
         }
-        
+
         public void prepareMock() {
-            Optional.ofNullable(patient).orElse(mock(Element.class));
-            
+            Optional.ofNullable(patient).orElseGet(() -> mock(Element.class));
+
             tagW = mock(TagW.class);
             nodeList = mock(NodeList.class);
             node = mock(Node.class);
-            
+
             when(TagD.get(eq(tagId))).thenReturn(tagW);
             when(tagW.getType()).thenReturn(type);
             when(tagW.getKeyword()).thenReturn(name());
-            
+
             when(patient.getElementsByTagName(eq(tagW.getKeyword()))).thenReturn(nodeList);
             when(nodeList.getLength()).thenReturn(1);
             when(nodeList.item(anyInt())).thenReturn(node);
-            
+
             when(node.getTextContent()).thenReturn(value);
         }
-        
-        
-        
+
     }
-    
-    
+
 }

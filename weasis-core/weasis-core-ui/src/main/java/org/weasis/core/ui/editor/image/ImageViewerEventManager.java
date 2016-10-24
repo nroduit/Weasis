@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
+import java.awt.event.InputEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
@@ -25,6 +26,8 @@ import java.util.stream.Collectors;
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.SwingPropertyChangeSupport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -51,6 +54,8 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
 
 public abstract class ImageViewerEventManager<E extends ImageElement> implements KeyListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImageViewerEventManager.class);
+
     public static final int WINDOW_SMALLEST = 0;
     public static final int WINDOW_LARGEST = 4096;
     public static final int WINDOW_DEFAULT = 700;
@@ -62,11 +67,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     protected final MouseActions mouseActions = new MouseActions(null);
     protected final ZoomSetting zoomSetting = new ZoomSetting();
     protected final WProperties options = new WProperties();
-    protected ImageViewerPlugin<E> selectedView2dContainer;
     // Manages all PropertyChangeListeners in EDT
     protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
     protected final HashMap<ActionW, ActionState> actions = new HashMap<>();
-    protected boolean enabledAction = true;
+
+    protected volatile boolean enabledAction = true;
+    protected volatile ImageViewerPlugin<E> selectedView2dContainer;
 
     public ImageViewerEventManager() {
         super();
@@ -399,7 +405,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     protected ComboItemListener<GridBagLayoutModel> newLayoutAction(GridBagLayoutModel[] layouts) {
         return new ComboItemListener<GridBagLayoutModel>(ActionW.LAYOUT,
-            Optional.ofNullable(layouts).orElse(new GridBagLayoutModel[0])) {
+            Optional.ofNullable(layouts).orElseGet(() -> new GridBagLayoutModel[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -423,7 +429,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     protected ComboItemListener<SynchView> newSynchAction(SynchView[] synchViewList) {
         return new ComboItemListener<SynchView>(ActionW.SYNCH,
-            Optional.ofNullable(synchViewList).orElse(new SynchView[0])) {
+            Optional.ofNullable(synchViewList).orElseGet(() -> new SynchView[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -446,29 +452,24 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         };
     }
 
-    protected ComboItemListener<Graphic> newMeasurementAction(Graphic[] graphics) {
+    protected static ComboItemListener<Graphic> newMeasurementAction(Graphic[] graphics) {
         return new ComboItemListener<Graphic>(ActionW.DRAW_MEASURE,
-            Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+            Optional.ofNullable(graphics).orElseGet(() -> new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
-                if (object instanceof Graphic && selectedView2dContainer != null) {
-                    selectedView2dContainer.setDrawActions((Graphic) object);
-                }
+                // Do nothing
             }
-
         };
     }
 
-    protected ComboItemListener<Graphic> newDrawAction(Graphic[] graphics) {
+    protected static ComboItemListener<Graphic> newDrawAction(Graphic[] graphics) {
         return new ComboItemListener<Graphic>(ActionW.DRAW_GRAPHICS,
-            Optional.ofNullable(graphics).orElse(new Graphic[0])) {
+            Optional.ofNullable(graphics).orElseGet(() -> new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
-                if (object instanceof Graphic && selectedView2dContainer != null) {
-                    selectedView2dContainer.setDrawActions((Graphic) object);
-                }
+                // Do nothing
             }
         };
     }
@@ -486,7 +487,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     protected ComboItemListener<Unit> newSpatialUnit(Unit[] units) {
-        return new ComboItemListener<Unit>(ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElse(new Unit[0])) {
+        return new ComboItemListener<Unit>(ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElseGet(() -> new Unit[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -579,22 +580,31 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         if (val == null || type.isAssignableFrom(val.getClass())) {
             return Optional.ofNullable((T) val);
         }
-        throw new IllegalStateException("The class doesn't match to the object!");
+        LOGGER.error("The request class [{}] doesn't match to the object [{}]", type, val.getClass());
+        return Optional.empty();
     }
 
-    public Optional<ActionW> getActionFromCommand(String command) {
+    public Optional<ActionW> getActionKey(String command) {
         if (command == null) {
             return Optional.empty();
         }
-        return actions.keySet().stream().filter(Objects::nonNull).filter(a -> a.cmd().equals(command)).findFirst();
+        return actions.keySet().stream().filter(k -> k != null && k.cmd().equals(command)).findFirst();
+    }
+
+    public <T> Optional<T> getAction(String command, Class<T> type) {
+        Objects.requireNonNull(command);
+        Objects.requireNonNull(type);
+
+        return actions.keySet().stream().filter(k -> k != null && k.cmd().equals(command)).findFirst().map(actions::get)
+            .filter(type::isInstance).map(type::cast);
     }
 
     public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
         if (keyEvent == 0) {
             return Optional.empty();
         }
-        return actions.keySet().stream().filter(Objects::nonNull)
-            .filter(a -> a.getKeyCode() == keyEvent && a.getModifier() == modifier).findFirst();
+        return actions.keySet().stream()
+            .filter(k -> k != null && k.getKeyCode() == keyEvent && k.getModifier() == modifier).findFirst();
     }
 
     public void changeLeftMouseAction(String command) {
@@ -623,6 +633,25 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 changeLeftMouseAction(command);
             }
         }
+    }
+
+    public Optional<ActionW> getMouseAction(int modifiers) {
+        Optional<ActionW> action = Optional.empty();
+        // left mouse button, always active
+        if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
+            action = getActionKey(mouseActions.getLeft());
+        }
+        // middle mouse button
+        else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0
+            && ((mouseActions.getActiveButtons() & InputEvent.BUTTON2_DOWN_MASK) != 0)) {
+            action = getActionKey(mouseActions.getMiddle());
+        }
+        // right mouse button
+        else if ((modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0
+            && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
+            action = getActionKey(mouseActions.getRight());
+        }
+        return action;
     }
 
     public Collection<ActionState> getAllActionValues() {
@@ -708,6 +737,37 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         }
     }
 
+    protected void triggerDrawingToolKeyEvent(int keyEvent, int modifiers) {
+        triggerDrawActionKeyEvent(ActionW.DRAW_MEASURE, ActionW.MEASURE.cmd(), keyEvent, modifiers);
+        triggerDrawActionKeyEvent(ActionW.DRAW_GRAPHICS, ActionW.DRAW.cmd(), keyEvent, modifiers);
+    }
+
+    private void triggerDrawActionKeyEvent(ActionW action, String cmd, int keyEvent, int modifiers) {
+        Optional<ComboItemListener> drawAction = getAction(action, ComboItemListener.class);
+        if (drawAction.isPresent() && drawAction.get().isActionEnabled()) {
+            for (Object obj : drawAction.get().getAllItem()) {
+                if (obj instanceof Graphic) {
+                    Graphic g = (Graphic) obj;
+                    if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
+                        ImageViewerPlugin<E> view = getSelectedView2dContainer();
+                        if (view != null) {
+                            final ViewerToolBar<?> toolBar = view.getViewerToolBar();
+                            if (toolBar != null) {
+                                if (!toolBar.isCommandActive(cmd)) {
+                                    mouseActions.setAction(MouseActions.LEFT, cmd);
+                                    view.setMouseActions(mouseActions);
+                                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                                }
+                            }
+                        }
+                        drawAction.get().setSelectedItem(obj);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     protected boolean isCompatible(MediaSeries<E> series, MediaSeries<E> series2) {
         return true;
     }
@@ -715,17 +775,11 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     public void setSelectedView2dContainer(ImageViewerPlugin<E> selectedView2dContainer) {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
-            this.selectedView2dContainer.setDrawActions(null);
         }
+
         this.selectedView2dContainer = selectedView2dContainer;
         if (selectedView2dContainer != null) {
             selectedView2dContainer.setMouseActions(mouseActions);
-            Graphic graphic = null;
-            ActionState action = getAction(ActionW.DRAW_MEASURE);
-            if (action instanceof ComboItemListener) {
-                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-            }
-            selectedView2dContainer.setDrawActions(graphic);
         }
     }
 

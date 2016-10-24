@@ -489,27 +489,27 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public static RejectedKOSpecialElement getRejectionKoSpecialElement(MediaSeries<DicomImageElement> dicomSeries,
-        String sopUID, Integer frameNumber) {
+        String sopUID, Integer dicomFrameNumber) {
         // Get all DicomSpecialElement at patient level
         List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
         if (specialElementList != null) {
             String referencedSeriesInstanceUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
             return DicomSpecialElement.getRejectionKoSpecialElement(specialElementList, referencedSeriesInstanceUID,
-                sopUID, frameNumber);
+                sopUID, dicomFrameNumber);
         }
         return null;
     }
 
     public static List<PRSpecialElement> getPrSpecialElements(MediaSeries<DicomImageElement> dicomSeries, String sopUID,
-        Integer frameNumber) {
+        Integer dicomFrameNumber) {
         // Get all DicomSpecialElement at patient level
         List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
         if (!specialElementList.isEmpty()) {
             String referencedSeriesInstanceUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
             return DicomSpecialElement.getPRSpecialElements(specialElementList, referencedSeriesInstanceUID, sopUID,
-                frameNumber);
+                dicomFrameNumber);
         }
         return Collections.emptyList();
     }

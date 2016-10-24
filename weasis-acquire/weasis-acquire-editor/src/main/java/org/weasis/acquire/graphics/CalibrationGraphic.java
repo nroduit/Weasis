@@ -18,9 +18,11 @@ import javax.swing.Icon;
 import javax.swing.JOptionPane;
 
 import org.weasis.acquire.AcquireObject;
+import org.weasis.acquire.dockable.EditionToolFactory;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -77,7 +79,9 @@ public class CalibrationGraphic extends LineGraphic {
                     }
                 }
             }
-            view.getGraphicManager().setCreateGraphic(CalibrationPanel.CALIBRATION_LINE_GRAPHIC);
+
+            view.getEventManager().getAction(EditionToolFactory.DRAW_EDITON, ComboItemListener.class)
+                .ifPresent(a -> a.setSelectedItem(CalibrationPanel.CALIBRATION_LINE_GRAPHIC));
         }
     }
 

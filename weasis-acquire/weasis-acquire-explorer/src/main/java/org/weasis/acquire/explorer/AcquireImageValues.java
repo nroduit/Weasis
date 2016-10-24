@@ -12,17 +12,19 @@ package org.weasis.acquire.explorer;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.Optional;
 
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.Copyable;
 
 /**
  * Store all modifiables values. Enable to compare two objects for dirty check.
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-18 - ylar - Creation
  */
-public class AcquireImageValues implements Cloneable {
+public class AcquireImageValues implements Copyable<AcquireImageValues> {
     private Rectangle cropZone = null;
     private Point layerOffset = null;
     private int orientation = 0;
@@ -34,6 +36,24 @@ public class AcquireImageValues implements Cloneable {
     private Unit calibrationUnit = Unit.PIXEL;
     private double calibrationRatio = 1.0;
     private Double ratio = null;
+
+    public AcquireImageValues() {
+        super();
+    }
+
+    public AcquireImageValues(AcquireImageValues object) {
+        setCropZone(Optional.ofNullable(object.cropZone).map(r -> r.getBounds()).orElse(null));
+        setLayerOffset(Optional.ofNullable(object.layerOffset).map(p -> p.getLocation()).orElse(null));
+        setOrientation(object.orientation);
+        setRotation(object.rotation);
+        setBrightness(object.brightness);
+        setContrast(object.contrast);
+        setAutoLevel(object.autoLevel);
+        setFlip(object.flip);
+        setCalibrationUnit(object.calibrationUnit);
+        setCalibrationRatio(object.calibrationRatio);
+        setRatio(object.ratio);
+    }
 
     public int getOrientation() {
         return orientation;
@@ -96,17 +116,8 @@ public class AcquireImageValues implements Cloneable {
     }
 
     @Override
-    public Object clone() {
-        AcquireImageValues clone = null;
-        try {
-            clone = (AcquireImageValues) super.clone();
-            if (cropZone != null) {
-                clone.cropZone = (Rectangle) cropZone.clone();
-            }
-        } catch (CloneNotSupportedException e) {
-             return null;
-        }
-        return clone;
+    public AcquireImageValues copy() {
+        return new AcquireImageValues(this);
     }
 
     public boolean isAutoLevel() {
@@ -148,7 +159,7 @@ public class AcquireImageValues implements Cloneable {
     public void setRatio(Double ratio) {
         this.ratio = ratio;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -166,7 +177,7 @@ public class AcquireImageValues implements Cloneable {
         result = prime * result + orientation;
         result = prime * result + rotation;
         result = prime * result + ((ratio == null) ? 0 : ratio.hashCode());
-        
+
         return result;
     }
 
@@ -253,7 +264,5 @@ public class AcquireImageValues implements Cloneable {
         builder.append(ratio);
         return builder.toString();
     }
-
-    
 
 }

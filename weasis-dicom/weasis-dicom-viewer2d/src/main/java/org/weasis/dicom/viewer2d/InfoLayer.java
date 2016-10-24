@@ -38,7 +38,7 @@ import javax.swing.Icon;
 import javax.vecmath.Vector3d;
 
 import org.dcm4che3.data.Tag;
-import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
@@ -61,11 +61,10 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
-import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
@@ -82,7 +81,6 @@ import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
 /**
@@ -98,8 +96,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     private final HashMap<String, Boolean> displayPreferences = new HashMap<>();
     private Boolean visible = Boolean.TRUE;
     private static final int BORDER = 10;
-    private final DefaultView2d<DicomImageElement> view2DPane;
-    private final DicomModel model;
+    private final ViewCanvas<DicomImageElement> view2DPane;
     private PixelInfo pixelInfo = null;
     private final Rectangle pixelInfoBound;
     private final Rectangle preloadingProgressBound;
@@ -109,7 +106,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
     private String name;
 
-    public InfoLayer(DefaultView2d<DicomImageElement> view2DPane) {
+    public InfoLayer(ViewCanvas<DicomImageElement> view2DPane) {
         this.view2DPane = view2DPane;
         displayPreferences.put(ANNOTATIONS, true);
         displayPreferences.put(ANONYM_ANNOTATIONS, false);
@@ -125,18 +122,10 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         displayPreferences.put(MIN_ANNOTATIONS, false);
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
-
-        // FIXME when config with no DICOM Explorer
-        DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-        if (dicomView != null) {
-            model = (DicomModel) dicomView.getDataExplorerModel();
-        } else {
-            model = null;
-        }
     }
 
     @Override
-    public LayerAnnotation getLayerCopy(DefaultView2d view2DPane) {
+    public LayerAnnotation getLayerCopy(ViewCanvas view2DPane) {
         InfoLayer layer = new InfoLayer(view2DPane);
         HashMap<String, Boolean> prefs = layer.displayPreferences;
         prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
@@ -173,7 +162,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     public void setShowBottomScale(Boolean showBottomScale) {
         this.showBottomScale = showBottomScale;
     }
-    
+
     @Override
     public Boolean getVisible() {
         return visible;
@@ -262,7 +251,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         Modality mod = Modality.getModality(TagD.getTagValue(view2DPane.getSeries(), Tag.Modality, String.class));
         modality = ModalityView.getModlatityInfos(mod);
 
-        final Rectangle bound = view2DPane.getBounds();
+        final Rectangle bound = view2DPane.getJComponent().getBounds();
         float midx = bound.width / 2f;
         float midy = bound.height / 2f;
         thickLength = g2.getFont().getSize() * 1.5f; // font 10 => 15 pixels
@@ -358,10 +347,6 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             }
         }
 
-        Object val = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
-        PresentationStateReader prReader =
-            (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
-
         if (getDisplayPreferences(PIXEL) && hideMin) {
             StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel")); //$NON-NLS-1$
             sb.append(StringUtil.COLON_AND_SPACE);
@@ -388,6 +373,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 sb.append("/");//$NON-NLS-1$
                 sb.append(DecFormater.oneDecimal(level));
                 if (dcm != null) {
+                    PresentationStateReader prReader = (PresentationStateReader) view2DPane.getActionValue(PresentationStateReader.TAG_PR_READER);
                     boolean pixelPadding =
                         (Boolean) disOp.getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd());
                     double minModLUT = image.getMinValue(prReader, pixelPadding);
@@ -450,8 +436,8 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
         if (getDisplayPreferences(ANNOTATIONS) && dcm != null) {
             Series series = (Series) view2DPane.getSeries();
-            MediaSeriesGroup study = model.getParent(series, DicomModel.study);
-            MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
+            MediaSeriesGroup study = getParent(series, DicomModel.study);
+            MediaSeriesGroup patient = getParent(series, DicomModel.patient);
             CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
             boolean anonymize = getDisplayPreferences(ANONYM_ANNOTATIONS);
             drawY = fontHeight;
@@ -459,10 +445,9 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
                     if (hideMin || infos[j].containsTag(TagD.get(Tag.PatientName))) {
-                        Object value;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                value = getTagValue(tag, patient, study, series, dcm);
+                                Object value = getTagValue(tag, patient, study, series, dcm);
                                 if (value != null) {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
@@ -555,7 +540,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 Label imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
                     v[1], v[2], v[3], v[4], v[5]);
                 orientation.append(imgOrientation);
-                
+
                 // Set the opposite vector direction (otherwise label should be placed in mid-right and mid-bottom
                 Vector3d vr = new Vector3d(-v[0], -v[1], -v[2]);
                 Vector3d vc = new Vector3d(-v[3], -v[4], -v[5]);
@@ -649,6 +634,16 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             positions[2] = new Point2D.Float(bound.width - border, bound.height - border);
         }
         drawExtendedActions(g2, positions);
+    }
+
+    private MediaSeriesGroup getParent(Series series, TreeModelNode node) {
+        if (series != null) {
+            Object tagValue = series.getTagValue(TagW.ExplorerModel);
+            if (tagValue instanceof DicomModel) {
+                return ((DicomModel) tagValue).getParent(series, node);
+            }
+        }
+        return null;
     }
 
     private static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
@@ -813,9 +808,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         final double lowLevel = Math.round(level - window / 2);
         final double highLevel = Math.round(level + window / 2);
 
-        Object val = view2DPane.getActionValue(ActionW.PR_STATE.cmd());
-        PresentationStateReader prReader =
-            (PresentationStateReader) (val instanceof PresentationStateReader ? val : null);
+        PresentationStateReader prReader = (PresentationStateReader) view2DPane.getActionValue(PresentationStateReader.TAG_PR_READER);
 
         int lowInputValue = (int) (image.getMinValue(prReader, pixelPadding) < lowLevel ? lowLevel
             : image.getMinValue(prReader, pixelPadding));
@@ -1455,7 +1448,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             }
 
             Point2D.Float midy =
-                new Point2D.Float(positions[1].x, (float) (view2DPane.getHeight() * 0.5 - (height - space) * 0.5));
+                new Point2D.Float(positions[1].x, (float) (view2DPane.getJComponent().getHeight() * 0.5 - (height - space) * 0.5));
             SynchData synchData = (SynchData) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
             boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
 
@@ -1489,7 +1482,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                         b.y = midy.y;
                         midy.y += icon.getIconHeight() + 5;
                     }
-                    icon.paintIcon(view2DPane, g2d, (int) b.x, (int) b.y);
+                    icon.paintIcon(view2DPane.getJComponent(), g2d, (int) b.x, (int) b.y);
                 }
             }
         }

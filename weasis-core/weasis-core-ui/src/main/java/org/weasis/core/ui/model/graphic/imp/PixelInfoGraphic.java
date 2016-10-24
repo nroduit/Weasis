@@ -119,8 +119,8 @@ public class PixelInfoGraphic extends AnnotationGraphic {
             }
             labelBounds = new Rectangle.Double();
             labelBounds.setFrameFromCenter(ptBox.getX(), ptBox.getY(),
-                ptBox.getX() + labelWidth / 2 + DefaultGraphicLabel.GROWING_BOUND, ptBox.getY()
-                    + labelHeight * (labels == null ? 1 : labels.length / 2) + DefaultGraphicLabel.GROWING_BOUND);
+                ptBox.getX() + labelWidth / 2.0 + DefaultGraphicLabel.GROWING_BOUND, ptBox.getY()
+                    + labelHeight * (labels == null ? 1 : labels.length)  / 2.0 + DefaultGraphicLabel.GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, DefaultGraphicLabel.GROWING_BOUND);
             if (line != null) {
                 newShape.addLinkSegmentToInvariantShape(line, ptBox, labelBounds, getDashStroke(lineThickness), true);

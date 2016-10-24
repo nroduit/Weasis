@@ -88,13 +88,15 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         }
 
         if ((activeMouse & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK) {
-            add(mouseMiddle = buildMouseButton(actions, MouseActions.MIDDLE));
+            mouseMiddle = buildMouseButton(actions, MouseActions.MIDDLE);
+            add(mouseMiddle);
         } else {
             mouseMiddle = null;
         }
 
         if ((activeMouse & InputEvent.BUTTON3_DOWN_MASK) == InputEvent.BUTTON3_DOWN_MASK) {
-            add(mouseRight = buildMouseButton(actions, MouseActions.RIGHT));
+            mouseRight = buildMouseButton(actions, MouseActions.RIGHT);
+            add(mouseRight);
         } else {
             mouseRight = null;
         }
@@ -273,8 +275,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     private static boolean checkButtonCommand(String cmd, JButton button) {
-        return ((button == null) ? false : cmd.equals(button.getActionCommand()));
-
+        return (button == null) ? false : cmd.equals(button.getActionCommand());
     }
 
     public void changeButtonState(String type, String action) {
@@ -361,7 +362,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return button;
     }
 
-    private Icon buildSynchIcon(SynchView synch) {
+    private static Icon buildSynchIcon(SynchView synch) {
         final Icon mouseIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/synch.png")); //$NON-NLS-1$
         final Icon smallIcon = synch.getIcon();
         return new DropButtonIcon(new Icon() {
@@ -431,7 +432,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return null;
     }
 
-    private Icon getMouseIcon(String type) {
+    private static Icon getMouseIcon(String type) {
         if (MouseActions.LEFT.equals(type)) {
             return MouseLeftIcon;
         } else if (MouseActions.RIGHT.equals(type)) {

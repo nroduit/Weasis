@@ -21,8 +21,8 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.PixelInfo;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.dicom.codec.DicomSeries;
@@ -418,7 +418,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
     }
 
     @Override
-    public LayerAnnotation getLayerCopy(DefaultView2d view2DPane) {
+    public LayerAnnotation getLayerCopy(ViewCanvas view2DPane) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

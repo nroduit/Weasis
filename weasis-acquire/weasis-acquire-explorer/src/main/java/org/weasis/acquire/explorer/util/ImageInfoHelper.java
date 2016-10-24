@@ -27,10 +27,10 @@ public class ImageInfoHelper {
     private ImageInfoHelper() {
         super();
     }
-    
+
     /**
      * Calculate the ratio between the image and the given resolution
-     * 
+     *
      * @param imgInfo
      * @param resolution
      * @return
@@ -40,7 +40,7 @@ public class ImageInfoHelper {
             Objects.requireNonNull(imgInfo);
             Objects.requireNonNull(resolution);
             Objects.requireNonNull(max);
-            
+
             Double expectedImageSize;
             switch (resolution) {
                 case hd:
@@ -52,12 +52,13 @@ public class ImageInfoHelper {
                 default:
                     return null;
             }
-    
-            ImageElement imgElt =imgInfo.getImage();
+
+            ImageElement imgElt = imgInfo.getImage();
             Integer width = (Integer) imgElt.getTagValue(TagW.ImageWidth);
-            Integer height = (Integer) imgElt.getTagValue(TagW.ImageHeight);           
+            Integer height = (Integer) imgElt.getTagValue(TagW.ImageHeight);
             Double currentImageSize = (double) Math.max(width, height);
-            return BigDecimal.valueOf(expectedImageSize / currentImageSize).setScale(5, RoundingMode.HALF_UP).doubleValue();
+            return BigDecimal.valueOf(expectedImageSize / currentImageSize).setScale(5, RoundingMode.HALF_UP)
+                .doubleValue();
         } catch (NullPointerException e) {
             LOGGER.warn("An error occurs when calculate ratio for : " + imgInfo + ", resolution=> " + resolution, e);
             return null;

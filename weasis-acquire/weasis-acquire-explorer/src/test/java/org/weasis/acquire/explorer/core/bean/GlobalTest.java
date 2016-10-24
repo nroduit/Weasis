@@ -46,14 +46,14 @@ public class GlobalTest extends GlobalHelper {
     @Before
     public void setUp() throws Exception {
         global = null;
-    
+
         xml = PowerMockito.mock(Document.class);
         patient = PowerMockito.mock(Element.class);
-        
+
         PowerMockito.mockStatic(LocalUtil.class);
         PowerMockito.when(LocalUtil.getDateFormatter()).thenReturn(dateformat);
         PowerMockito.when(LocalUtil.getLocaleFormat()).thenReturn(Locale.ENGLISH);
-        
+
         PowerMockito.mockStatic(TagD.class);
         Arrays.stream(GlobalTag.values()).forEach(e -> e.prepareMock());
     }
@@ -102,22 +102,16 @@ public class GlobalTest extends GlobalHelper {
         global.init(xml);
 
         // Tests
-        assertThat(global.getTagEntrySet()).containsExactlyInAnyOrder(
-            entry(GlobalTag.patientId),
-            entry(GlobalTag.patientName),
-            entry(GlobalTag.issuerOfPatientId),
-            entry(GlobalTag.patientBirthDate),
-            entry(GlobalTag.patientSex),
-            entry(GlobalTag.studyDate),
-            entry(GlobalTag.modality)
-        );
+        assertThat(global.getTagEntrySet()).containsExactlyInAnyOrder(entry(GlobalTag.patientId),
+            entry(GlobalTag.patientName), entry(GlobalTag.issuerOfPatientId), entry(GlobalTag.patientBirthDate),
+            entry(GlobalTag.patientSex), entry(GlobalTag.studyDate), entry(GlobalTag.modality));
     }
 
-    private MapEntry<TagW, Object> entry(GlobalTag tag) throws ParseException{
+    private MapEntry<TagW, Object> entry(GlobalTag tag) throws ParseException {
         Object value;
-        
-        if(tag.type.equals(TagType.DATE)) {
-           value = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()).parse(tag.value);
+
+        if (tag.type.equals(TagType.DATE)) {
+            value = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()).parse(tag.value);
         } else {
             value = tag.value;
         }

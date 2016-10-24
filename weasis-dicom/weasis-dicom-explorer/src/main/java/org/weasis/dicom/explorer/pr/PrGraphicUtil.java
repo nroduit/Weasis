@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.dicom.explorer;
+package org.weasis.dicom.explorer.pr;
 
 import java.awt.Color;
 import java.awt.Shape;
@@ -55,6 +55,9 @@ public class PrGraphicUtil {
     public static final String CIRCLE = "CIRCLE"; //$NON-NLS-1$
     public static final String ELLIPSE = "ELLIPSE"; //$NON-NLS-1$
 
+    private PrGraphicUtil() {
+    }
+    
     public static Graphic buildGraphic(Attributes go, Color color, boolean labelVisible, double width, double height,
         boolean canBeEdited, AffineTransform inverse, boolean dcmSR) throws InvalidShapeException {
         /*

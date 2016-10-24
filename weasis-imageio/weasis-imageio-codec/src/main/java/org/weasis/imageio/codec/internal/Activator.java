@@ -64,10 +64,10 @@ public class Activator implements BundleActivator {
         }
 
         // Set priority to these codec which have better performance to the one in JRE
-        ImageioUtil.registerServiceProviderPriority(CLibJPEGImageReaderSpi.class, ImageReaderSpi.class, "jpeg");
-        ImageioUtil.registerServiceProviderPriority(CLibJPEGImageWriterSpi.class, ImageWriterSpi.class, "jpeg");
-        ImageioUtil.registerServiceProviderPriority(CLibPNGImageReaderSpi.class, ImageReaderSpi.class, "png");
-        ImageioUtil.registerServiceProviderPriority(CLibPNGImageWriterSpi.class, ImageWriterSpi.class, "png");
+        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageReaderSpi.class, ImageReaderSpi.class, "jpeg");
+        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageWriterSpi.class, ImageWriterSpi.class, "jpeg");
+        ImageioUtil.registerServiceProviderInHighestPriority(CLibPNGImageReaderSpi.class, ImageReaderSpi.class, "png");
+        ImageioUtil.registerServiceProviderInHighestPriority(CLibPNGImageWriterSpi.class, ImageWriterSpi.class, "png");
 
         // TODO Should be in properties?
         // Unregister sun native jpeg codec

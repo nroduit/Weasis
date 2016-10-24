@@ -148,7 +148,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
         if (dataModel != null) {
             dataModel.removeListDataListener(this);
         }
-        this.dataModel = Optional.ofNullable(dataModel).orElse(new DefaultComboBoxModel<T>());
+        this.dataModel = Optional.ofNullable(dataModel).orElseGet(DefaultComboBoxModel::new);
         init();
         this.dataModel.addListDataListener(this);
     }

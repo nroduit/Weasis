@@ -42,6 +42,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.Messages;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.TagD;
 
 public class PresetWindowLevel {
@@ -132,12 +133,12 @@ public class PresetWindowLevel {
     }
 
     public static List<PresetWindowLevel> getPresetCollection(DicomImageElement image, TagReadable tagable,
-        boolean pixelPadding) {
+        boolean pixelPadding, String type) {
         if (image == null || tagable == null) {
             return null;
         }
 
-        String dicomKeyWord = " " + Messages.getString("PresetWindowLevel.dcm_preset"); //$NON-NLS-1$ //$NON-NLS-2$
+        String dicomKeyWord = " " + type; //$NON-NLS-1$
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<>();
 

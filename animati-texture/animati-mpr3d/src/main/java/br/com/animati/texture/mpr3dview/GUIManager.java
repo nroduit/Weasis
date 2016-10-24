@@ -431,34 +431,6 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         if (keyEvent == KeyEvent.VK_ESCAPE) {
             resetDisplay();
         } else {
-            Optional<ComboItemListener> measure = getAction(ActionW.DRAW_MEASURE, ComboItemListener.class);
-            if (measure.isPresent() && measure.get().isActionEnabled()) {
-                ComboItemListener measureAction = measure.get();
-                for (Object obj : measureAction.getAllItem()) {
-                    if (obj instanceof Graphic) {
-                        Graphic g = (Graphic) obj;
-                        if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
-                            ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-                            if (view != null) {
-                                final ViewerToolBar toolBar = view.getViewerToolBar();
-                                if (toolBar != null) {
-                                    String cmd = ActionW.MEASURE.cmd();
-                                    if (!toolBar.isCommandActive(cmd)) {
-                                        mouseActions.setAction(MouseActions.LEFT, cmd);
-                                        if (view != null) {
-                                            view.setMouseActions(mouseActions);
-                                        }
-                                        toolBar.changeButtonState(MouseActions.LEFT, cmd);
-                                    }
-                                }
-                            }
-                            measureAction.setSelectedItem(obj);
-                            return;
-                        }
-                    }
-                }
-            }
-
             Optional<ComboItemListener> presetAction = getAction(ActionW.PRESET, ComboItemListener.class);
             if (modifiers == 0 && presetAction.isPresent() && presetAction.get().isActionEnabled()) {
                 ComboItemListener presetComboListener = presetAction.get();
@@ -471,11 +443,14 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
                     }
                 }
             }
+
+            triggerDrawingToolKeyEvent(keyEvent, modifiers);
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
+        // Do nothing
     }
 
     public DicomModel getActiveDicomModel() {
@@ -487,8 +462,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
     public void setSelectedView2dContainer(ImageViewerPlugin<DicomImageElement> selectedView2dContainer) {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
-            this.selectedView2dContainer.setDrawActions(null);
         }
+        
         ImageViewerPlugin<DicomImageElement> oldContainer = this.selectedView2dContainer;
         this.selectedView2dContainer = selectedView2dContainer;
 
@@ -511,15 +486,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
             synchAction.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getSynchView()));
             layoutAction.ifPresent(
                 a -> a.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getOriginalLayoutModel()));
-
             updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
             selectedView2dContainer.setMouseActions(mouseActions);
-            Graphic graphic = null;
-            ActionState action = getAction(ActionW.DRAW_MEASURE);
-            if (action instanceof ComboItemListener) {
-                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-            }
-            selectedView2dContainer.setDrawActions(graphic);
             ViewCanvas<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
                 pane.setFocused(true);
@@ -752,13 +720,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
             if (menu.isEnabled()) {
                 for (final ResetTools action : ResetTools.values()) {
                     final JMenuItem item = new JMenuItem(action.toString());
-                    item.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            reset(action);
-                        }
-                    });
+                    item.addActionListener(e -> reset(action));
                     menu.add(item);
                     group.add(item);
                 }

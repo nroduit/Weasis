@@ -137,7 +137,8 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
         @SuppressWarnings("rawtypes")
         private void addToSerie(MediaElement media) {
             if (media instanceof ImageElement) {
-                AcquireCentralThumnailList tumbList = (AcquireCentralThumnailList) AcquireCentralTumbnailPane.this.thumbnailList;
+                AcquireCentralThumnailList tumbList =
+                    (AcquireCentralThumnailList) AcquireCentralTumbnailPane.this.thumbnailList;
                 AcquireImageInfo info = AcquireManager.findByImage((ImageElement) media);
                 SerieButton btn = tumbList.getSelectedSerie();
                 if (btn != null) {

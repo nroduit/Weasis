@@ -2083,24 +2083,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             // request the focus even it is the same pane selected
             requestFocusInWindow();
 
-            int modifiers = evt.getModifiersEx();
-            MouseActions mouseActions = eventManager.getMouseActions();
-            Optional<ActionW> action = Optional.empty();
-            // left mouse button, always active
-            if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
-                action = eventManager.getActionFromCommand(mouseActions.getLeft());
-            }
-            // middle mouse button
-            else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0
-                && ((mouseActions.getActiveButtons() & InputEvent.BUTTON2_DOWN_MASK) != 0)) {
-                action = eventManager.getActionFromCommand(mouseActions.getMiddle());
-            }
-            // right mouse button
-            else if ((modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0
-                && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
-                action = eventManager.getActionFromCommand(mouseActions.getRight());
-            }
-
+            Optional<ActionW> action = eventManager.getMouseAction(evt.getModifiersEx());
             ViewTexture.this.setCursor(action.isPresent() ? action.get().getCursor() : DefaultView2d.DEFAULT_CURSOR);
         }
 

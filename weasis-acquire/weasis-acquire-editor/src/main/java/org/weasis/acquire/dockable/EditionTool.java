@@ -42,11 +42,11 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import bibliothek.gui.dock.common.CLocation;
 
 /**
- * 
+ *
  * @author Yannick LARVOR
  * @version 2.5.0
  * @since 2.5.0 - 2016-04-06 - ylar - Creation
- * 
+ *
  */
 public class EditionTool extends PluginTool implements SeriesViewerListener {
     private static final long serialVersionUID = -3662409181835644699L;
@@ -78,7 +78,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
     @Override
     public Component getToolComponent() {
         JViewport viewPort = rootPane.getViewport();
-        rootPane.setViewport(Optional.ofNullable(viewPort).orElse(new JViewport()));
+        rootPane.setViewport(Optional.ofNullable(viewPort).orElseGet(JViewport::new));
 
         if (viewPort.getView() != this) {
             viewPort.setView(this);

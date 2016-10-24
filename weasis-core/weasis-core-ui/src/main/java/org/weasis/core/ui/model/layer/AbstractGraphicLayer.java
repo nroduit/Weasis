@@ -13,11 +13,14 @@ package org.weasis.core.ui.model.layer;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 
+@XmlAccessorType(XmlAccessType.NONE)
 public abstract class AbstractGraphicLayer extends DefaultUUID implements GraphicLayer {
     private static final long serialVersionUID = 845033167886327915L;
 
@@ -26,15 +29,19 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
     private Boolean visible;
     private Boolean locked;
     private Integer level; // Layers are sorted by level number (ascending order)
+    private Boolean serializable;
+    private Boolean selectable;
 
     public AbstractGraphicLayer(LayerType type) {
         setType(type);
         this.level = type.getLevel();
         this.visible = type.getVisible();
         this.locked = type.getLocked();
+        this.serializable = type.getSerializable();
+        this.selectable = type.getSelectable();
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "locked")
     @Override
     public Boolean getLocked() {
         return locked;
@@ -50,7 +57,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         this.visible = Optional.ofNullable(visible).orElse(getType().getVisible());
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "visible")
     @Override
     public Boolean getVisible() {
         return visible;
@@ -61,7 +68,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         this.level = Optional.ofNullable(level).orElse(getType().getLevel());
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "level")
     @Override
     public Integer getLevel() {
         return level;
@@ -72,13 +79,13 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
         this.name = name;
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "name")
     @Override
     public String getName() {
         return name;
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "type")
     @Override
     public LayerType getType() {
         return type;
@@ -87,6 +94,27 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
     @Override
     public void setType(LayerType type) {
         this.type = Objects.requireNonNull(type);
+    }
+
+    @XmlAttribute(name = "selectable")
+    @Override
+    public Boolean getSelectable() {
+        return selectable;
+    }
+
+    @Override
+    public void setSelectable(Boolean selectable) {
+        this.selectable = Optional.ofNullable(selectable).orElse(getType().getSelectable());
+    }
+
+    @Override
+    public Boolean getSerializable() {
+        return serializable;
+    }
+
+    @Override
+    public void setSerializable(Boolean serializable) {
+        this.serializable = serializable;
     }
 
     @Override

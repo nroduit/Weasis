@@ -30,7 +30,6 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -66,11 +65,9 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
-import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
@@ -227,36 +224,12 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             ImageViewerPlugin<ImageElement> view = getSelectedView2dContainer();
             if (view != null) {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
-                PrintDialog dialog = new PrintDialog(SwingUtilities.getWindowAncestor(view),
+                PrintDialog<?> dialog = new PrintDialog<>(SwingUtilities.getWindowAncestor(view),
                     Messages.getString("View2dContainer.print_layout"), this); //$NON-NLS-1$
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         } else {
-            Optional<ComboItemListener> measure = getAction(ActionW.DRAW_MEASURE, ComboItemListener.class);
-            if (measure.isPresent() && measure.get().isActionEnabled()) {
-                ComboItemListener measureAction = measure.get();
-                for (Object obj : measureAction.getAllItem()) {
-                    if (obj instanceof Graphic) {
-                        Graphic g = (Graphic) obj;
-                        if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
-                            ImageViewerPlugin<ImageElement> view = getSelectedView2dContainer();
-                            if (view != null) {
-                                final ViewerToolBar toolBar = view.getViewerToolBar();
-                                if (toolBar != null) {
-                                    String cmd = ActionW.MEASURE.cmd();
-                                    if (!toolBar.isCommandActive(cmd)) {
-                                        mouseActions.setAction(MouseActions.LEFT, cmd);
-                                        view.setMouseActions(mouseActions);
-                                        toolBar.changeButtonState(MouseActions.LEFT, cmd);
-                                    }
-                                }
-                            }
-                            measureAction.setSelectedItem(obj);
-                            return;
-                        }
-                    }
-                }
-            }
+            triggerDrawingToolKeyEvent(keyEvent, modifiers);
         }
     }
 
@@ -269,10 +242,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     public void setSelectedView2dContainer(ImageViewerPlugin<ImageElement> selectedView2dContainer) {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
-            this.selectedView2dContainer.setDrawActions(null);
             getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(a -> a.stop());
-
         }
+        
         ImageViewerPlugin<ImageElement> oldContainer = this.selectedView2dContainer;
         this.selectedView2dContainer = selectedView2dContainer;
         if (selectedView2dContainer != null) {
@@ -295,12 +267,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 a -> a.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getOriginalLayoutModel()));
             updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
             selectedView2dContainer.setMouseActions(mouseActions);
-            Graphic graphic = null;
-            ActionState action = getAction(ActionW.DRAW_MEASURE);
-            if (action instanceof ComboItemListener) {
-                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-            }
-            selectedView2dContainer.setDrawActions(graphic);
             ViewCanvas<ImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
                 fireSeriesViewerListeners(

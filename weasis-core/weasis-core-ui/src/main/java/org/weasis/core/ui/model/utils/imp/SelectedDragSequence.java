@@ -10,17 +10,21 @@
  *******************************************************************************/
 package org.weasis.core.ui.model.utils.imp;
 
+import java.awt.event.MouseEvent;
+
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class SelectedDragSequence extends DefaultDragSequence {
-     public SelectedDragSequence(DragGraphic graphic) {
+    public SelectedDragSequence(DragGraphic graphic) {
         super(graphic);
     }
 
     @Override
     public Boolean completeDrag(MouseEventDouble mouseEvent) {
-        graphic.fireRemoveAndRepaintAction();
-        return true;
+        if (mouseEvent != null && mouseEvent.getID() == MouseEvent.MOUSE_RELEASED) {
+            graphic.fireRemoveAndRepaintAction();
+        }
+        return  Boolean.TRUE;
     }
 }

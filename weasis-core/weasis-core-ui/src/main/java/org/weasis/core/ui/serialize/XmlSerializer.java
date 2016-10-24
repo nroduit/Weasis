@@ -60,7 +60,7 @@ public class XmlSerializer {
                 // output pretty printed
                 jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-                jaxbMarshaller.marshal(model, System.out);
+                // jaxbMarshaller.marshal(model, System.out);
                 jaxbMarshaller.marshal(model, gpxFile);
             } catch (Exception e) {
                 LOGGER.error("Cannot save xml: ", e);

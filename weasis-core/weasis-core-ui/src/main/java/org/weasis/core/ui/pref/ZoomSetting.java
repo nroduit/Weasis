@@ -42,7 +42,6 @@ public class ZoomSetting {
         if (prefs != null) {
             Preferences p = prefs.node(ZoomSetting.PREFERENCE_NODE);
             BundlePreferences.putIntPreferences(p, "interpolation", interpolation); //$NON-NLS-1$
-
         }
     }
 

@@ -16,10 +16,10 @@ import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 
 public class AcquireGlobalMetaPanel extends AcquireMetadataPanel {
     private static final long serialVersionUID = -2751941971479265507L;
-        
+
     public AcquireGlobalMetaPanel(String title) {
-       super(title);
-       setMetaVisible(true);
+        super(title);
+        setMetaVisible(true);
     }
 
     @Override

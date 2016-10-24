@@ -23,7 +23,7 @@
 
 		<pack200.ext></pack200.ext>
 
-		<felix.framework.version>5.4.0-p1</felix.framework.version>
+		<felix.framework.version>5.6.0-p1</felix.framework.version>
 		<felix.gogo.version>0.16.2</felix.gogo.version>
 		<felix.gogo.shell.version>0.12.0</felix.gogo.shell.version>
 		<felix.gogo.command.version>0.16.0</felix.gogo.command.version>
@@ -42,8 +42,8 @@
 		<jai.version>1.1.4-b07</jai.version>
 		<jai.native.version>1.1.4-b03</jai.native.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
-		<weasis.jpeg.native.version>1.0.5-6b</weasis.jpeg.native.version>
-		<weasis.openjpeg.native.version>2.1.7</weasis.openjpeg.native.version>
+		<weasis.jpeg.native.version>1.0.7-6b</weasis.jpeg.native.version>
+		<weasis.openjpeg.native.version>2.1.8</weasis.openjpeg.native.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 

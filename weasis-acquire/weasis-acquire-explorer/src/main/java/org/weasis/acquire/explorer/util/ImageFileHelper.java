@@ -31,9 +31,8 @@ import org.slf4j.LoggerFactory;
 public final class ImageFileHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageFileHelper.class);
 
-    private static final  String GLOBAL_FILE_DESCRIPTION = "All Image Files";
+    private static final String GLOBAL_FILE_DESCRIPTION = "All Image Files";
     private static final Map<String, String> readerFileExtensionMap = createReaderFileExtensionMap();
-
 
     private ImageFileHelper() {
     }
@@ -69,7 +68,6 @@ public final class ImageFileHelper {
     public static String getReaderFileDescription(String extension) {
         return readerFileExtensionMap.get(extension);
     }
-
 
     public static ImageIcon createImageIcon(URL url) {
         return (url != null) ? new ImageIcon(url) : null;

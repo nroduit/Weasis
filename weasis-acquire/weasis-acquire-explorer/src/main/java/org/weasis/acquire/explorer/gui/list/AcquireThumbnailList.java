@@ -54,7 +54,7 @@ public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList
         List<ImageElement> medias = AcquireManager.toImageElement(getSelected(e));
         if (!medias.isEmpty()) {
             JPopupMenu popupMenu = new JPopupMenu();
-            
+
             popupMenu.add(new JMenuItem(new DefaultAction("Import selection", event -> {
                 AcquireImportDialog dialog = new AcquireImportDialog(AcquireThumbnailList.this.mainPanel, medias);
                 JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
