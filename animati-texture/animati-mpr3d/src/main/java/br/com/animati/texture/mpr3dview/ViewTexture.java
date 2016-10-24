@@ -1076,32 +1076,38 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
         return null;
     }
+    
+    private void addModifierMask(String action, int mask) {
+        MouseActionAdapter adapter = getMouseAdapter(action);
+        if (adapter != null) {
+            adapter.setButtonMaskEx(adapter.getButtonMaskEx() | mask);
+            if (ActionW.WINLEVEL.cmd().equals(action)) {
+                MouseActionAdapter win = getMouseAdapter(ActionW.WINDOW.cmd());
+                if (win != null) {
+                    win.setButtonMaskEx(win.getButtonMaskEx() | mask);
+                }
+            }
+        }
+    }
 
-    public MouseActionAdapter getMouseAdapter(String action) {
-        if (action.equals(ActionW.MEASURE.cmd())) {
-            return graphicMouseHandler;
-        } else if (action.equals(ActionW.PAN.cmd())) {
-            return getAction(ActionW.PAN);
-        } else if (action.equals(ActionW.CONTEXTMENU.cmd())) {
+    public MouseActionAdapter getMouseAdapter(String command) {
+        if (command.equals(ActionW.CONTEXTMENU.cmd())) {
             return contextMenuHandler;
-        } else if (action.equals(ActionW.WINDOW.cmd())) {
-            return getAction(ActionW.WINDOW);
-        } else if (action.equals(ActionW.LEVEL.cmd())) {
+        } else if (command.equals(ActionW.WINLEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
-        } else if (action.equals(ActionW.WINLEVEL.cmd())) {
-            return getAction(ActionW.LEVEL);
-        } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
-            return getAction(ActionW.SCROLL_SERIES);
-        } else if (action.equals(ActionW.ZOOM.cmd())) {
-            return getAction(ActionW.ZOOM);
-        } else if (action.equals(ActionW.CROSSHAIR.cmd())) {
-            // return getAction(ActionW.CROSSHAIR);
+        } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
             return crosshairAction;
-        } else if (action.equals(ActionW.ROTATION.cmd())) {
-            return getAction(ActionW.ROTATION);
         }
 
-        return null;
+        Optional<ActionW> actionKey = eventManager.getActionKey(command);
+        if (!actionKey.isPresent()) {
+            return null;
+        }
+
+        if (actionKey.get().isDrawingAction()) {
+            return graphicMouseHandler;
+        }
+        return eventManager.getAction(actionKey.get(), MouseActionAdapter.class).orElse(null);
     }
 
     public TextureDicomSeries getSeriesObject() {
@@ -1171,19 +1177,13 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         addMouseAdapter(actions.getLeft(), InputEvent.BUTTON1_DOWN_MASK); // left mouse button
         if (actions.getMiddle().equals(actions.getLeft())) {
             // If mouse action is already registered, only add the modifier mask
-            MouseActionAdapter adapter = getMouseAdapter(actions.getMiddle());
-            if (adapter != null) {
-                adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON2_DOWN_MASK);
-            }
+            addModifierMask(actions.getMiddle(), InputEvent.BUTTON2_DOWN_MASK);
         } else {
             addMouseAdapter(actions.getMiddle(), InputEvent.BUTTON2_DOWN_MASK);// middle mouse button
         }
         if (actions.getRight().equals(actions.getLeft()) || actions.getRight().equals(actions.getMiddle())) {
             // If mouse action is already registered, only add the modifier mask
-            MouseActionAdapter adapter = getMouseAdapter(actions.getRight());
-            if (adapter != null) {
-                adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON3_DOWN_MASK);
-            }
+            addModifierMask(actions.getRight(), InputEvent.BUTTON3_DOWN_MASK);
         } else {
             addMouseAdapter(actions.getRight(), InputEvent.BUTTON3_DOWN_MASK); // right mouse button
         }

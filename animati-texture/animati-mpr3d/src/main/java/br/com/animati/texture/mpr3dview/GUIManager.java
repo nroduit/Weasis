@@ -6,8 +6,6 @@ package br.com.animati.texture.mpr3dview;
 
 import java.awt.Component;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -29,7 +27,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -52,7 +49,6 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
-import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
@@ -60,7 +56,6 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
@@ -93,14 +88,12 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
     public static List<ColorMask> colorMaskList = StaticHelpers.buildColorMaskList();
     public static List<StaticHelpers.TextureKernel> kernelList = StaticHelpers.buildKernelList();
 
-    protected MouseActions mouseActions = new MouseActions(null);
-
     private GUIManager() {
         // Initialize actions with a null value. These are used by mouse or keyevent actions.
         setAction(new BasicActionState(ActionW.WINLEVEL));
         setAction(new BasicActionState(ActionW.CONTEXTMENU));
         setAction(new BasicActionState(ActionW.NO_ACTION));
-        // setAction(new BasicActionState(ActionW.DRAW));
+        setAction(new BasicActionState(ActionW.DRAW));
         setAction(new BasicActionState(ActionW.MEASURE));
 
         setAction(newScrollSeries());
@@ -131,6 +124,8 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
         setAction(newMeasurementAction(
             MeasureToolBar.measureGraphicList.toArray(new Graphic[MeasureToolBar.measureGraphicList.size()])));
+        setAction(
+            newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[MeasureToolBar.drawGraphicList.size()])));
         setAction(newSpatialUnit(Unit.values()));
         setAction(newMipOption());
 
@@ -408,15 +403,6 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
     private static class GUIManagerHolder {
         private static final GUIManager INSTANCE = new GUIManager();
-    }
-
-    @Override
-    public MouseActions getMouseActions() {
-        return mouseActions;
-    }
-
-    public void setMouseActions(final MouseActions mActions) {
-        mouseActions = mActions;
     }
 
     @Override
