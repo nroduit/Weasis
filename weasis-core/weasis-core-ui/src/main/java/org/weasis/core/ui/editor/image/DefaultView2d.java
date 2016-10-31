@@ -328,7 +328,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 (int) Math.ceil(p.y / imageElement.getRescaleY() - 0.5));
 
             Rectangle2D area = viewModel.getModelArea();
-            Point offset = (Point) getActionValue(DefaultView2d.PROP_LAYER_OFFSET);
+            Point offset = getImageLayer().getOffset();
             if (offset != null) {
                 // Offset used for Crop operation
                 area.setRect(offset.getX(), offset.getY(), area.getWidth(), area.getHeight());
@@ -336,11 +336,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             if (image != null && area.contains(realPoint)) {
                 try {
-                    pixelInfo.setPosition(p);
+                    realPoint.translate(- (int) area.getX(), - (int) area.getY());
+                    pixelInfo.setPosition(realPoint);
                     pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
                     pixelInfo.setPixelSize(imageElement.getPixelSize());
-                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x - (int) area.getX(),
-                        realPoint.y - (int) area.getY(), (double[]) null);
+                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null);
                     pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
                     fillPixelInfo(pixelInfo, imageElement, c);
                     if (c != null && c.length >= 1) {
@@ -995,7 +995,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             affineTransform.scale(-1.0, 1.0);
             affineTransform.translate(-modelArea.getWidth(), 0.0);
         }
-        Point offset = (Point) actionsInView.get(PROP_LAYER_OFFSET);
+        Point offset = getImageLayer().getOffset();
         if (offset != null) {
             affineTransform.translate(-offset.getX(), -offset.getY());
         }

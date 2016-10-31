@@ -48,16 +48,23 @@ public abstract class MediaSource {
     }
 
     @Override
-    public final boolean equals(Object obj) {
-        if (obj instanceof MediaSource) {
-            return getID().equals(((MediaSource) obj).getID());
-        }
-        return super.equals(obj);
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        MediaSource other = (MediaSource) obj;
+        return id.equals(other.id);
     }
 
     @Override
-    public final int hashCode() {
-        return getID().hashCode();
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id.hashCode();
+        return result;
     }
 
     @Override

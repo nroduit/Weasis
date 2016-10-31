@@ -11,6 +11,7 @@
  *******************************************************************************/
 package org.weasis.core.api.image.util;
 
+import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
 
@@ -33,6 +34,10 @@ public interface MeasurableLayer {
     Object getSourceTagValue(TagW tagW);
 
     String getPixelValueUnit();
+
+    Point getOffset();
+
+    void setOffset(Point p);
 
     /**
      * Returns the source image for display. All preprocessing operations has been applied to this image.

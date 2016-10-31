@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer.util;
 
-import static javax.swing.JFileChooser.FILES_AND_DIRECTORIES;
-
 import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
@@ -76,15 +74,15 @@ public final class ImageFileHelper {
     /**
      * @return null if Canceled
      */
-    public static String openImageFileChooser(String path) {// ,Component parent){
+    public static String openImageFileChooser(String path) {
 
         JFileChooser fc = new JFileChooser(path);
 
         fc.setName("openImageFileChooser");
-        fc.setDialogType(javax.swing.JFileChooser.OPEN_DIALOG);
+        fc.setDialogType(JFileChooser.OPEN_DIALOG);
         fc.setControlButtonsAreShown(true);
         fc.setAcceptAllFileFilterUsed(true);
-        fc.setFileSelectionMode(FILES_AND_DIRECTORIES);
+        fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         for (String extension : getReaderFileExtensionSet()) {
             String description = getReaderFileDescription(extension);
@@ -102,6 +100,26 @@ public final class ImageFileHelper {
                 return GLOBAL_FILE_DESCRIPTION;
             }
         });
+
+        int returnVal = fc.showOpenDialog(null);
+        String returnStr = null;
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            try {
+                returnStr = fc.getSelectedFile().toString();
+            } catch (SecurityException e) {
+                LOGGER.warn("system property value cannot be accessed", e);
+            }
+        }
+        return returnStr;
+    }
+
+    public static String openDirectoryChooser(String path) {
+
+        JFileChooser fc = new JFileChooser(path);
+        fc.setDialogType(JFileChooser.OPEN_DIALOG);
+        fc.setControlButtonsAreShown(true);;
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         int returnVal = fc.showOpenDialog(null);
         String returnStr = null;

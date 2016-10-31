@@ -33,7 +33,6 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.layer.Layer;
@@ -156,7 +155,7 @@ public class AcquireImageInfo {
                 if (view != null && area != null && !area.equals(view.getViewModel().getModelArea())) {
                     ((DefaultViewModel) view.getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
                     view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
-                    view.setActionsInView(DefaultView2d.PROP_LAYER_OFFSET, new Point(area.x, area.y));
+                    view.getImageLayer().setOffset(new Point(area.x, area.y));
                     view.resetZoom();
                 }
             }

@@ -73,12 +73,17 @@ public class PrSerializer {
 
     public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,
         String sopInstanceUID) {
+        return writePresentation(model, parentAttributes, outputFile, sopInstanceUID, null);
+    }
+
+    public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,
+        String sopInstanceUID, Point2D offset) {
         Objects.requireNonNull(model);
         Objects.requireNonNull(outputFile);
 
         if (parentAttributes != null) {
             try {
-                GraphicModel m = getModelForSerialization(model);
+                GraphicModel m = getModelForSerialization(model, offset);
                 Attributes attributes = DicomMediaUtils.createDicomPR(parentAttributes, null, sopInstanceUID);
 
                 writeCommonTags(attributes);
@@ -102,13 +107,22 @@ public class PrSerializer {
         return writePresentation(model, imgAttributes, outputFile, sopInstanceUID);
     }
 
-    private static GraphicModel getModelForSerialization(GraphicModel model) {
+    private static GraphicModel getModelForSerialization(GraphicModel model, Point2D offset) {
         // Remove non serializable graphics
         XmlGraphicModel xmlModel = new XmlGraphicModel();
         xmlModel.setReferencedSeries(model.getReferencedSeries());
         for (Graphic g : model.getModels()) {
             if (g.getLayer().getSerializable() && !g.getPts().isEmpty()) {
-                xmlModel.addGraphic(g);
+                if (offset != null) {
+                    Graphic graphic = g.copy();
+                    for (Point2D.Double p : graphic.getPts()) {
+                        p.x -= offset.getX();
+                        p.y -= offset.getY();
+                    }
+                    graphic.buildShape();
+                    xmlModel.addGraphic(graphic);
+                } else
+                    xmlModel.addGraphic(g);
             }
         }
         return xmlModel;
@@ -187,7 +201,8 @@ public class PrSerializer {
                 Attributes l = new Attributes(2);
                 l.setString(Tag.GraphicLayer, VR.CS, layerName);
                 l.setInt(Tag.GraphicLayerOrder, VR.IS, i);
-                float[] lab = PresentationStateReader.colorToLAB(Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW));
+                float[] lab = PresentationStateReader
+                    .colorToLAB(Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW));
                 if (lab != null) {
                     l.setInt(Tag.GraphicLayerRecommendedDisplayCIELabValue, VR.US, CIELab.convertToDicomLab(lab));
                 }
@@ -206,7 +221,7 @@ public class PrSerializer {
             }
         }
     }
-    
+
     private static List<Graphic> getGraphicsByLayer(GraphicModel model, String layerUid) {
         return model.getModels().stream().filter(g -> layerUid.equals(g.getLayer().getUuid()))
             .collect(Collectors.toList());
@@ -312,10 +327,10 @@ public class PrSerializer {
     }
 
     private static Attributes bluildLabelAndAnchor(AnnotationGraphic g) {
-        Rectangle2D bound = g.getLabelBounds(); 
-        Point2D anchor=g.getAnchorPoint(); 
+        Rectangle2D bound = g.getLabelBounds();
+        Point2D anchor = g.getAnchorPoint();
         String text = Arrays.stream(g.getLabels()).collect(Collectors.joining("\r\n"));
-        
+
         Attributes attributes = new Attributes(7);
         attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
         attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());

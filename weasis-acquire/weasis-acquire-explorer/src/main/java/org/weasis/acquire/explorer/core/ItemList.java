@@ -12,7 +12,6 @@ package org.weasis.acquire.explorer.core;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.weasis.acquire.explorer.util.AbstractBean;
 
@@ -22,7 +21,7 @@ public class ItemList<T> extends AbstractBean<ItemList.eProperty> {
         INTERVAL_ADDED, INTERVAL_REMOVED, CONTENT_CHANGED
     }
 
-    protected ArrayList<T> itemList;
+    protected final ArrayList<T> itemList;
 
     public ItemList() {
         itemList = new ArrayList<>();
@@ -73,12 +72,11 @@ public class ItemList<T> extends AbstractBean<ItemList.eProperty> {
     }
 
     public void insertItem(int index, T item) {
-        if (item != null) {
+        if (item != null && !itemList.contains(item)) {
             int insert = index < 0 ? 0 : index >= itemList.size() ? itemList.size() : index;
             itemList.add(insert, item);
             firePropertyChange(eProperty.INTERVAL_ADDED, null, new Interval(insert, insert));
         }
-        this.itemList = itemList.stream().distinct().collect(Collectors.toCollection(ArrayList::new));
     }
 
     public void addItems(List<T> list) {
@@ -100,7 +98,7 @@ public class ItemList<T> extends AbstractBean<ItemList.eProperty> {
     public void removeItem(int index) {
         if (index >= 0 && index < itemList.size()) {
             firePropertyChange(eProperty.INTERVAL_REMOVED, null, new Interval(index, index));
-            itemList.remove(index); // TODO - should not be this way but better to add item in Interval data Structure
+            itemList.remove(index);
         }
     }
 
@@ -113,7 +111,6 @@ public class ItemList<T> extends AbstractBean<ItemList.eProperty> {
     }
 
     public void clear() {
-
         int size = itemList.size();
         if (size > 0) {
             firePropertyChange(eProperty.INTERVAL_REMOVED, null, new Interval(0, size - 1));

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.ui.model.graphic;
 
+import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.image.RenderedImage;
@@ -71,8 +72,15 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         if (image == null) {
                             return null;
                         }
-
                         AffineTransform transform = layer.getShapeTransform();
+                        Point offset = layer.getOffset();
+                        if (offset != null) {
+                            if (transform == null) {
+                                transform = AffineTransform.getTranslateInstance(-offset.getX(), -offset.getY());
+                            } else {
+                                transform.translate(-offset.getX(), -offset.getY());
+                            }
+                        }
                         ROIShape roi;
                         if (transform != null) {
                             // Rescale ROI, if needed

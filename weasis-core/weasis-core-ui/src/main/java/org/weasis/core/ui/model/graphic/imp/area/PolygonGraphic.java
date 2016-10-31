@@ -222,7 +222,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                 }
                 if (TOP_LEFT_POINT_Y.getComputed()) {
                     Double val = Optional.ofNullable(pathArea)
-                        .map(pa -> adapter.getXCalibratedValue(pa.getBounds2D().getY())).orElse(null);
+                        .map(pa -> adapter.getYCalibratedValue(pa.getBounds2D().getY())).orElse(null);
                     measVal.add(new MeasureItem(TOP_LEFT_POINT_Y, val, unitStr));
                 }
                 if (WIDTH.getComputed()) {
@@ -240,7 +240,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         lineSegmentList = getClosedPathSegments(pathArea);
                     }
                     centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
-                    Double val = (centroid != null) ? centroid.getX() * ratio : null;
+                    Double val = (centroid != null) ? adapter.getXCalibratedValue( centroid.getX()) : null;
                     measVal.add(new MeasureItem(CENTROID_X, val, unitStr));
                 }
                 if (CENTROID_Y.getComputed()) {
@@ -248,7 +248,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         lineSegmentList = getClosedPathSegments(pathArea);
                     }
                     centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
-                    Double val = (centroid != null) ? centroid.getY() * ratio : null;
+                    Double val = (centroid != null) ? adapter.getYCalibratedValue( centroid.getY()) : null;
                     measVal.add(new MeasureItem(CENTROID_Y, val, unitStr));
                 }
                 if (AREA.getComputed()) {

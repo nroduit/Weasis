@@ -11,6 +11,7 @@
 package org.weasis.core.ui.model.layer.imp;
 
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
@@ -63,6 +64,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     private RenderedImage displayImage;
     private Boolean visible = true;
     private boolean enableDispOperations = true;
+    private Point offset;
 
     public RenderedImageLayer(boolean buildIterator) {
         this(null, buildIterator);
@@ -362,7 +364,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     @Override
     public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit) {
         if (hasContent()) {
-            return getSourceImage().getMeasurementAdapter(displayUnit);
+            return getSourceImage().getMeasurementAdapter(displayUnit, offset);
         }
         return null;
     }
@@ -396,6 +398,16 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
             return imageElement.getPixelValueUnit();
         }
         return null;
+    }
+
+    @Override
+    public Point getOffset() {
+        return offset;
+    }
+
+    @Override
+    public void setOffset(Point offset) {
+        this.offset = offset;
     }
 
 }

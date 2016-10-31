@@ -39,7 +39,6 @@ import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -129,7 +128,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
             info.getDefaultValues().getFullRotation());
         info.getPostProcessOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, info.getDefaultValues().isFlip());
         view.updateCanvas(false);
-        view.getActionsInView().remove(DefaultView2d.PROP_LAYER_OFFSET);
+        view.getImageLayer().setOffset(null);
         view.resetZoom();
 
         view.getEventManager().getAction(EditionToolFactory.DRAW_EDITON, ComboItemListener.class)

@@ -52,7 +52,7 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
     public static final String P_LAST_DIR = "last.dir"; //$NON-NLS-1$
     public static final String PREFERENCE_NODE = "importer"; //$NON-NLS-1$
 
-    public static final int MEDIASOURCELIST_MAX = 5;
+    public static final int MEDIASOURCELIST_MAX = 10;
 
     private MediaSource systemDrive;
 
@@ -182,6 +182,8 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
     }
 
     public void loadSystemDrive() {
-        acquireThumbnailListPane.loadDirectory(systemDrive.getID());
+        if (systemDrive != null) {
+            acquireThumbnailListPane.loadDirectory(systemDrive.getID());
+        }
     }
 }

@@ -33,7 +33,6 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -92,7 +91,7 @@ public class RectifyAction extends AbstractAcquireAction {
     private static Rectangle2D adaptToValidateCropArea(ViewCanvas<ImageElement> view, Rectangle2D area) {
         AffineTransform transform = AffineTransform.getScaleInstance(1.0, 1.0);
         buildAffineTransform(transform, view.getDisplayOpManager(), view.getViewModel().getModelArea(),
-            (Point) view.getActionValue(DefaultView2d.PROP_LAYER_OFFSET));
+            view.getImageLayer().getOffset());
         Point2D pMin = new Point2D.Double(area.getMinX(), area.getMinY());
         Point2D pMax = new Point2D.Double(area.getMaxX(), area.getMaxY());
         transform.transform(pMin, pMin);

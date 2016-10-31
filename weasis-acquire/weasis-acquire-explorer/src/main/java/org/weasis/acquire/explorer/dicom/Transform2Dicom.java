@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer.dicom;
 
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +37,7 @@ import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -116,9 +119,14 @@ public final class Transform2Dicom {
 
                         GraphicModel grModel = (GraphicModel) img.getTagValue(TagW.PresentationModel);
                         if (grModel != null && grModel.hasSerializableGraphics()) {
+                            Point2D offset = null;
+                            Rectangle crop = (Rectangle) imageInfo.getPostProcessOpManager().getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
+                            if(crop != null){
+                                offset = new Point2D.Double(crop.getX(), crop.getY());
+                            }
                             String prUid = UIDUtils.createUID();
                             File outputFile = new File(exportDirDicom, prUid);
-                            PrSerializer.writePresentation(grModel, attrs, outputFile, prUid);
+                            PrSerializer.writePresentation(grModel, attrs, outputFile, prUid, offset);
                         }
                     }
                 }
