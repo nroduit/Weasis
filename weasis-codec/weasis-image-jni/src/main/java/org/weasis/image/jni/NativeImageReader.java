@@ -72,7 +72,7 @@ public abstract class NativeImageReader extends ImageReader {
      * pixel interleaved and the default color model is CS_GRAY or CS_sRGB and IndexColorModel with palettes.
      */
     protected static final ImageTypeSpecifier createImageType(ImageParameters params, ColorSpace colorSpace, byte[] redPalette, byte[] greenPalette, byte[] bluePalette, byte[] alphaPalette) throws IOException {
-        return createImageType(params, createColorModel(params, null, null, null, null, null));
+        return createImageType(params, createColorModel(params, colorSpace, redPalette, greenPalette, bluePalette, alphaPalette));
     }
 
     protected static final ImageTypeSpecifier createImageType(ImageParameters params, ColorModel colorModel) throws IOException {
