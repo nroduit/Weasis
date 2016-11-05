@@ -143,7 +143,8 @@ public class PresentationStateReader implements Tagable {
     }
 
     public List<PresetWindowLevel> getPresetCollection(DicomImageElement img) {
-        return Optional.ofNullable(PresetWindowLevel.getPresetCollection(img, prSpecialElement, true, "[PR]")).orElseGet(ArrayList::new);
+        return Optional.ofNullable(PresetWindowLevel.getPresetCollection(img, prSpecialElement, true, "[PR]"))
+            .orElseGet(ArrayList::new);
     }
 
     public void applySpatialTransformationModule(Map<String, Object> actionsInView) {

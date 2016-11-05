@@ -550,9 +550,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public static <E> E getFirstSpecialElement(MediaSeriesGroup group, Class<E> clazz) {
         if (group != null && clazz != null && clazz.isAssignableFrom(clazz)) {
-            List<DicomSpecialElement> kos = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
-            if (kos != null) {
-                for (DicomSpecialElement el : kos) {
+            List<DicomSpecialElement> sps = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
+            if (sps != null) {
+                for (DicomSpecialElement el : sps) {
                     if (clazz.isInstance(el)) {
                         return (E) el;
                     }

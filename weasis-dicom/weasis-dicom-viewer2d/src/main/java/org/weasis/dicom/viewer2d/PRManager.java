@@ -129,7 +129,7 @@ public class PRManager {
         double[] prPixSize = TagD.getTagValue(reader, Tag.PresentationPixelSpacing, double[].class);
         if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
             if (trueSize) {
-                img.setPixelSize(prPixSize[0], prPixSize[1]);
+                img.setPixelSize(prPixSize[1], prPixSize[0]);
                 img.setPixelSpacingUnit(Unit.MILLIMETER);
                 actionsInView.put(PRManager.TAG_CHANGE_PIX_CONFIG, true);
                 ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
@@ -168,12 +168,14 @@ public class PRManager {
                 area = area.intersection(
                     new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight()));
                 if (area.width > 1 && area.height > 1 && !area.equals(view.getViewModel().getModelArea())) {
-                    SimpleOpManager manager = new SimpleOpManager();
+                    SimpleOpManager opManager =
+                        Optional.ofNullable((SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()))
+                            .orElseGet(SimpleOpManager::new);
                     CropOp crop = new CropOp();
                     crop.setParam(CropOp.P_AREA, area);
                     crop.setParam(CropOp.P_SHIFT_TO_ORIGIN, true);
-                    manager.addImageOperationAction(crop);
-                    actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
+                    opManager.addImageOperationAction(crop);
+                    actionsInView.put(ActionW.PREPROCESSING.cmd(), opManager);
                 }
             }
             actionsInView.put(ActionW.CROP.cmd(), area);

@@ -413,7 +413,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 DicomModel.getPrSpecialElements(series, TagD.getTagValue(img, Tag.SOPInstanceUID, String.class),
                     key instanceof Integer ? (Integer) key + 1 : null);
             if (!prList.isEmpty()) {
-                setPresentationState( prList.get(0), false);
+                setPresentationState(prList.get(0), false);
             }
         }
     }
@@ -483,7 +483,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
             getImageLayer().setOffset(new Point(area.x, area.y));
         }
-        imageLayer.setPreprocessing((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+
+        SimpleOpManager opManager = (SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd());
+        imageLayer.setPreprocessing(opManager);
+        if(opManager == null && spatialTransformation){
+            // Reset preprocessing cache
+            imageLayer.getDisplayOpManager().setFirstNode(imageLayer.getSourceRenderedImage());
+        }
+        
         if (pr != null) {
             imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ApplyPR, series, m, actionsInView));
             ImageOpNode rotation = imageLayer.getDisplayOpManager().getNode(RotationOp.OP_NAME);

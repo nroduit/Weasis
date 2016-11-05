@@ -13,8 +13,6 @@ package org.weasis.dicom.explorer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
@@ -34,8 +32,6 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
@@ -129,14 +125,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         setPreferredSize(new Dimension(400, 300));
         setMinimumSize(new Dimension(150, 50));
 
-        ChangeListener changeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent changeEvent) {
-                changeDicomInfo(currentSeries, currentMedia);
-            }
-        };
-        this.addChangeListener(changeListener);
-
+        this.addChangeListener(changeEvent -> changeDicomInfo(currentSeries, currentMedia));
     }
 
     public static void addStylesToDocument(StyledDocument doc, Color textColor) {
@@ -472,41 +461,28 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             this.add(new JLabel(Messages.getString("DicomFieldsView.search") + StringUtil.COLON_AND_SPACE)); //$NON-NLS-1$
             final JTextField tf = new JTextField();
             JMVUtils.setPreferredWidth(tf, 300, 100);
-            tf.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent evt) {
-                    currentSearchPattern = tf.getText().trim();
-                    highlight(currentSearchPattern);
-                    if (!searchPostions.isEmpty()) {
-                        try {
-                            textComponent.scrollRectToVisible(textComponent.modelToView(searchPostions.get(0)));
-                            textComponent.requestFocusInWindow();
-                        } catch (BadLocationException e) {
-                            LOGGER.error("Scroll to highight", e);
-                        }
+            tf.addActionListener(evt -> {
+                currentSearchPattern = tf.getText().trim();
+                highlight(currentSearchPattern);
+                if (!searchPostions.isEmpty()) {
+                    try {
+                        textComponent.scrollRectToVisible(textComponent.modelToView(searchPostions.get(0)));
+                        textComponent.requestFocusInWindow();
+                    } catch (BadLocationException e) {
+                        LOGGER.error("Scroll to highight", e);
                     }
                 }
             });
             this.add(tf);
             JButton up = new JButton(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png"))); //$NON-NLS-1$
             up.setToolTipText(Messages.getString("DicomFieldsView.previous")); //$NON-NLS-1$
-            up.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent evt) {
-                    previous();
-                }
-            });
+            up.addActionListener(evt -> previous());
             this.add(up);
             JButton down =
                 new JButton(new RotatedIcon(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")), //$NON-NLS-1$
                     RotatedIcon.Rotate.UPSIDE_DOWN));
             down.setToolTipText(Messages.getString("DicomFieldsView.next")); //$NON-NLS-1$
-            down.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent evt) {
-                    next();
-                }
-            });
+            down.addActionListener(evt -> next());
             this.add(down);
             textComponent.addKeyListener(new KeyListener() {
 
