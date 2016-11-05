@@ -17,6 +17,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
 import java.text.NumberFormat;
+import java.util.Optional;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -224,7 +225,7 @@ public class DicomNodeDialog extends JDialog {
             return;
         }
 
-        UsageType usageType = (UsageType) comboBox.getSelectedItem();
+        UsageType usageType =  Optional.ofNullable(comboBox).map(c -> (UsageType) c.getSelectedItem()).orElse(null);
         boolean addNode = dicomNode == null;
         if (addNode) {
             if (AbstractDicomNode.Type.PRINTER == typeNode) {
