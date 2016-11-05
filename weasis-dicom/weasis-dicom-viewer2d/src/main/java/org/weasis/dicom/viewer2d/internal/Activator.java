@@ -66,7 +66,7 @@ public class Activator implements BundleActivator, ServiceListener {
             bundleContext.addServiceListener(Activator.this, "(" + Constants.OBJECTCLASS + "=" //$NON-NLS-1$ //$NON-NLS-2$
                 + InsertableFactory.class.getName() + ")"); //$NON-NLS-1$
         } catch (InvalidSyntaxException e) {
-            LOGGER.error("Add service listener", e);
+            LOGGER.error("Add service listener", e); //$NON-NLS-1$
         }
     }
 
@@ -123,7 +123,7 @@ public class Activator implements BundleActivator, ServiceListener {
                 }
             }
         } catch (InvalidSyntaxException e1) {
-            LOGGER.error("Register tool and toolbar", e1);
+            LOGGER.error("Register tool and toolbar", e1); //$NON-NLS-1$
         }
     }
 

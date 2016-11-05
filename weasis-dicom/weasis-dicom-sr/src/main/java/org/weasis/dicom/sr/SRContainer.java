@@ -261,7 +261,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e);
+                LOGGER.error("Checking view type", e); //$NON-NLS-1$
             }
         }
         return false;
@@ -286,7 +286,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             }
             return component;
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e);
+            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
         }
         return null;
     }
@@ -300,7 +300,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public List<Action> getPrintActions() {
         final String title = Messages.getString("SRContainer.print_layout"); //$NON-NLS-1$
         return Arrays.asList(
-            new DefaultAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")),
+            new DefaultAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), //$NON-NLS-1$
                 event -> printCurrentView()));
     }
 

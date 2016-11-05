@@ -58,7 +58,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
             String mime = ds.getString(Tag.MIMETypeOfEncapsulatedDocument);
             List<String> extensions = MimeInspector.getExtensions(mime);
             if (!extensions.isEmpty()) {
-                extension = "." + extensions.get(0);
+                extension = "." + extensions.get(0); //$NON-NLS-1$
             }
             // see http://dicom.nema.org/MEDICAL/Dicom/current/output/chtml/part03/sect_C.24.2.html
             Object data = dicomImageLoader.getDicomObject().getValue(Tag.EncapsulatedDocument);
@@ -75,7 +75,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                     media.setDocument(file);
                     this.add(media);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot extract encapsulated document", e);
+                    LOGGER.error("Cannot extract encapsulated document", e); //$NON-NLS-1$
                 } finally {
                     FileUtil.safeClose(out);
                     FileUtil.safeClose(in);

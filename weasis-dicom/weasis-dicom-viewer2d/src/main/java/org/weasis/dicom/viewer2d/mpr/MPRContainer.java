@@ -344,7 +344,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e);
+                LOGGER.error("Checking view type", e); //$NON-NLS-1$
             }
         }
         return false;
@@ -371,7 +371,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             return component;
 
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e);
+            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
         }
         return null;
     }

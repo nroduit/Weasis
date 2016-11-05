@@ -65,7 +65,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
     private static final long serialVersionUID = -5804430771962614157L;
 
-    private static final String patterViews = Messages.getString("ImageViewerPlugin.2");
+    private static final String patterViews = Messages.getString("ImageViewerPlugin.2"); //$NON-NLS-1$
 
     // A model must have at least one view that inherited of DefaultView2d
     public static final Class<?> view2dClass = ViewCanvas.class;

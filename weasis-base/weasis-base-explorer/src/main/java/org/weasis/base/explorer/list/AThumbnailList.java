@@ -279,9 +279,9 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
                     // DICOM is not readable
                     return null;
                 }
-                sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID"));
-                gUID = (String) reader.getTagValue(TagW.get("PatientID"));
-                tname = TagW.get("PatientName");
+                sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID")); //$NON-NLS-1$
+                gUID = (String) reader.getTagValue(TagW.get("PatientID")); //$NON-NLS-1$
+                tname = TagW.get("PatientName"); //$NON-NLS-1$
                 tvalue = (String) reader.getTagValue(tname);
             } else {
                 sUID = mediaElement.getMediaURI().toString();
@@ -320,9 +320,9 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
                         // DICOM is not readable
                         return;
                     }
-                    sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID"));
-                    gUID = (String) reader.getTagValue(TagW.get("PatientID"));
-                    tname = TagW.get("PatientName");
+                    sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID")); //$NON-NLS-1$
+                    gUID = (String) reader.getTagValue(TagW.get("PatientID")); //$NON-NLS-1$
+                    tname = TagW.get("PatientName"); //$NON-NLS-1$
                     tvalue = (String) reader.getTagValue(tname);
                 } else {
                     sUID = oneFile ? mediaElement.getMediaURI().toString()
@@ -412,10 +412,10 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
                                     MediaElement[] ms = mreader.getMediaElement();
                                     if (ms != null) {
                                         for (MediaElement media : ms) {
-                                            media.setTag(TagW.get("SeriesInstanceUID"),
+                                            media.setTag(TagW.get("SeriesInstanceUID"), //$NON-NLS-1$
                                                 series.getTagValue(series.getTagID()));
                                             URI uri = media.getMediaURI();
-                                            media.setTag(TagW.get("SOPInstanceUID"),
+                                            media.setTag(TagW.get("SOPInstanceUID"), //$NON-NLS-1$
                                                 uri == null ? UUID.randomUUID().toString() : uri.toString());
                                             series.addMedia(media);
                                         }

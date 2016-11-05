@@ -330,9 +330,9 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     protected void updateBoundsSize(Font defaultFont, FontRenderContext fontRenderContext) {
-        Optional.ofNullable(defaultFont).orElseThrow(() -> new RuntimeException("Font should not be null"));
+        Optional.ofNullable(defaultFont).orElseThrow(() -> new RuntimeException("Font should not be null")); //$NON-NLS-1$
         Optional.ofNullable(fontRenderContext)
-            .orElseThrow(() -> new RuntimeException("FontRenderContext should not be null"));
+            .orElseThrow(() -> new RuntimeException("FontRenderContext should not be null")); //$NON-NLS-1$
 
         if (labels == null || labels.length == 0) {
             reset();

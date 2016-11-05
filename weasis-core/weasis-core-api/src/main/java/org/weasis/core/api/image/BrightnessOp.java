@@ -21,10 +21,10 @@ import org.slf4j.LoggerFactory;
 public class BrightnessOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrightnessOp.class);
 
-    public static final String OP_NAME = "rescale";
+    public static final String OP_NAME = "rescale"; //$NON-NLS-1$
 
-    public static final String P_BRIGTNESS_VALUE = "rescale.brightness";
-    public static final String P_CONTRAST_VALUE = "rescale.contrast";
+    public static final String P_BRIGTNESS_VALUE = "rescale.brightness"; //$NON-NLS-1$
+    public static final String P_CONTRAST_VALUE = "rescale.contrast"; //$NON-NLS-1$
 
     public BrightnessOp() {
         setName(OP_NAME);
@@ -56,7 +56,7 @@ public class BrightnessOp extends AbstractOp {
             pb.add(constants);
             pb.add(offsets);
 
-            result = JAI.create("rescale", pb, null);
+            result = JAI.create("rescale", pb, null); //$NON-NLS-1$
         }
 
         params.put(Param.OUTPUT_IMG, result);

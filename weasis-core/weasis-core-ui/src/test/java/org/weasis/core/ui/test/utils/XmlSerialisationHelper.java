@@ -52,7 +52,7 @@ public class XmlSerialisationHelper implements XmlTemplate, UuidTemplate {
     }
     
     protected <T> T deserialize(InputStream xmlInput, Class<T> clazz) throws Exception {
-        Reader reader = new InputStreamReader(xmlInput, "UTF-8");    
+        Reader reader = new InputStreamReader(xmlInput, "UTF-8");     //$NON-NLS-1$
         return deserialize(reader, clazz);
     }
     

@@ -329,7 +329,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     public DicomMediaIO(Attributes dcmItems) throws URISyntaxException {
-        this(new URI("data:" + Objects.requireNonNull(dcmItems).getString(Tag.SOPInstanceUID)));
+        this(new URI("data:" + Objects.requireNonNull(dcmItems).getString(Tag.SOPInstanceUID))); //$NON-NLS-1$
         this.dcmMetadata = new DicomMetaData(null, Objects.requireNonNull(dcmItems));
     }
 
@@ -346,7 +346,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
      * @return true when the DICOM Object has no source file (only in memory)
      */
     public boolean isEditableDicom() {
-        return dcmMetadata != null && "data".equals(uri.getScheme());
+        return dcmMetadata != null && "data".equals(uri.getScheme()); //$NON-NLS-1$
     }
 
     public boolean isReadableDicom() {
@@ -354,7 +354,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             // Return true only to display the error message in the view
             return true;
         }
-        if ("data".equals(uri.getScheme()) && dcmMetadata == null) {
+        if ("data".equals(uri.getScheme()) && dcmMetadata == null) { //$NON-NLS-1$
             return false;
         }
 
@@ -910,7 +910,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         if (desc[1] == null) {
             String ts = tsuid;
             if (ts == null) {
-                ts = "unknown";
+                ts = "unknown"; //$NON-NLS-1$
             }
             desc[1] = Messages.getString("DicomMediaIO.msg_no_reader") + StringUtil.COLON_AND_SPACE + ts; //$NON-NLS-1$
         }
@@ -1017,7 +1017,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 // Multi-frames where each frames can have multiple fragments.
                 if (fragmentsPositions.isEmpty()) {
                     if (decompressor == null) {
-                        throw new IOException("no decompressor!");
+                        throw new IOException("no decompressor!"); //$NON-NLS-1$
                     }
 
                     for (int i = 1; i < nbFragments; i++) {
@@ -1043,7 +1043,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                         length[i] = bulkData.length();
                     }
                 } else {
-                    throw new IOException("Cannot match all the fragments to all the frames!");
+                    throw new IOException("Cannot match all the fragments to all the frames!"); //$NON-NLS-1$
                 }
             }
         }

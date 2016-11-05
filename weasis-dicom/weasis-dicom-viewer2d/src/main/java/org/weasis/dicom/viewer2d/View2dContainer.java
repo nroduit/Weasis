@@ -585,7 +585,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view", e);
+                LOGGER.error("Checking view", e); //$NON-NLS-1$
             }
         }
         return false;
@@ -611,7 +611,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             return component;
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e);
+            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
         }
         return null;
     }
@@ -677,7 +677,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
 
         } catch (IOException e1) {
-            LOGGER.error("Running cmd", e1);
+            LOGGER.error("Running cmd", e1); //$NON-NLS-1$
         } catch (InterruptedException e2) {
             LOGGER.error("Cannot get the exit status of the open Osirix command", e2); //$NON-NLS-1$
         }

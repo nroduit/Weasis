@@ -154,7 +154,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
 
-    public static final String PROP_LAYER_OFFSET = "layer.offset";
+    public static final String PROP_LAYER_OFFSET = "layer.offset"; //$NON-NLS-1$
 
     public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
@@ -542,9 +542,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
             boolean nosquarePixel = MathUtil.isDifferent(img.getRescaleX(), img.getRescaleY());
             int width = source == null || nosquarePixel
-                ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns"))) : source.getWidth();
+                ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns"))) : source.getWidth(); //$NON-NLS-1$
             int height = source == null || nosquarePixel
-                ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows"))) : source.getHeight();
+                ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows"))) : source.getHeight(); //$NON-NLS-1$
             return new Rectangle(0, 0, width, height);
         }
         return new Rectangle(0, 0, 512, 512);
@@ -1003,7 +1003,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
         } catch (NoninvertibleTransformException e) {
-            LOGGER.error("Create inverse transform", e);
+            LOGGER.error("Create inverse transform", e); //$NON-NLS-1$
         }
     }
 

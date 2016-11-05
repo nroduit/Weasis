@@ -90,7 +90,7 @@ import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 public class SeriesBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(SeriesBuilder.class);
 
-    static TagW SeriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2);
+    static TagW SeriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2); //$NON-NLS-1$
     public static final File MPR_CACHE_DIR =
         AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mpr"); //$NON-NLS-1$
 
@@ -706,7 +706,7 @@ public class SeriesBuilder {
             byteBuffer.flip();
             return byteBuffer;
         } catch (Exception e) {
-            LOGGER.error("Get bytes", e);
+            LOGGER.error("Get bytes", e); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(is);
         }
@@ -721,7 +721,7 @@ public class SeriesBuilder {
             FileChannel out = os.getChannel();
             out.write(byteBuffer);
         } catch (Exception e) {
-            LOGGER.error("Write bytes", e);
+            LOGGER.error("Write bytes", e); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(os);
         }

@@ -306,9 +306,9 @@ public class GeometryOfSlice {
     public static final String getOrientation(double[] orientation, boolean quadruped) {
         StringBuilder strbuf = new StringBuilder();
         if (orientation != null && orientation.length == 3) {
-            String orientationX = orientation[0] < 0 ? (quadruped ? "Rt" : "R") : (quadruped ? "Le" : "L");
-            String orientationY = orientation[1] < 0 ? (quadruped ? "V" : "A") : (quadruped ? "D" : "P");
-            String orientationZ = orientation[2] < 0 ? (quadruped ? "Cd" : "F") : (quadruped ? "Cr" : "H");
+            String orientationX = orientation[0] < 0 ? (quadruped ? "Rt" : "R") : (quadruped ? "Le" : "L"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            String orientationY = orientation[1] < 0 ? (quadruped ? "V" : "A") : (quadruped ? "D" : "P"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            String orientationZ = orientation[2] < 0 ? (quadruped ? "Cd" : "F") : (quadruped ? "Cr" : "H"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
             double absX = Math.abs(orientation[0]);
             double absY = Math.abs(orientation[1]);

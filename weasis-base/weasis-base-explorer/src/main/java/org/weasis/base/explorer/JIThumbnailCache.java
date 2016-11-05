@@ -43,7 +43,7 @@ public final class JIThumbnailCache {
     private static final LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     // Set only one concurrent thread. The time consuming part is in loading image thread (see ImageElement)
     private static final ExecutorService qExecutor =
-        new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, ThreadUtil.getThreadFactory("Thumbnail Cache"));
+        new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, ThreadUtil.getThreadFactory("Thumbnail Cache")); //$NON-NLS-1$
 
     private static final JIThumbnailCache instance = new JIThumbnailCache();
 
@@ -93,7 +93,7 @@ public final class JIThumbnailCache {
             }
 
         } catch (final Exception e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
         }
         if (!diskObject.isLoading()) {
             loadThumbnail(diskObject, aThumbnailList, index);

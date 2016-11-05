@@ -71,7 +71,7 @@ public class TagD extends TagW {
         .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true).toFormatter();
 
     public enum Level {
-        PATIENT("Patient"), STUDY("Study"), SERIES("Series"), INSTANCE("Instance"), FRAME("Frame");
+        PATIENT(org.weasis.dicom.codec.Messages.getString("TagD.pat")), STUDY(org.weasis.dicom.codec.Messages.getString("TagD.study")), SERIES(org.weasis.dicom.codec.Messages.getString("TagD.series")), INSTANCE(org.weasis.dicom.codec.Messages.getString("TagD.instance")), FRAME(org.weasis.dicom.codec.Messages.getString("TagD.frame")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
         private final String tag;
 
@@ -155,7 +155,7 @@ public class TagD extends TagW {
         try {
             return vr.vmOf(value);
         } catch (Exception e) {
-            LOGGER.error("Cannot evaluate mulitplicity from DICOM VR", e);
+            LOGGER.error("Cannot evaluate mulitplicity from DICOM VR", e); //$NON-NLS-1$
         }
         return getValueMultiplicity(value);
     }
@@ -376,7 +376,7 @@ public class TagD extends TagW {
 
         if (TagType.DICOM_PERSON_NAME.equals(type)) {
             if(value instanceof String[]){
-                return Arrays.asList((String[]) value).stream().map(TagD::getDicomPersonName).collect(Collectors.joining(", "));
+                return Arrays.asList((String[]) value).stream().map(TagD::getDicomPersonName).collect(Collectors.joining(", ")); //$NON-NLS-1$
             }
             return getDicomPersonName(value.toString());
         } else if (TagType.DICOM_PERIOD.equals(type)) {
@@ -503,12 +503,12 @@ public class TagD extends TagW {
                         String disp = xmler.getText();
                         if (StringUtil.hasText(disp)) {
                             try {
-                                if (tag.startsWith("F")) {
+                                if (tag.startsWith("F")) { //$NON-NLS-1$
                                     return;
                                 }
                                 int tagID = Integer.parseInt(tag.replace('x', '0'), 16);
 
-                                String[] vms = vm.split("-", 2);
+                                String[] vms = vm.split("-", 2); //$NON-NLS-1$
                                 int vmMin;
                                 int vmMax;
                                 if (vms.length == 1) {
@@ -537,12 +537,12 @@ public class TagD extends TagW {
                                 }
                                 TagW.addTag(t);
                             } catch (Exception e) {
-                                LOGGER.error("Cannot read {}", disp, e);
+                                LOGGER.error("Cannot read {}", disp, e); //$NON-NLS-1$
                             }
                         }
                     } else {
                         // Exclude delimitation tags
-                        if (tag == null || !tag.startsWith("FFFEE0")) {
+                        if (tag == null || !tag.startsWith("FFFEE0")) { //$NON-NLS-1$
                             LOGGER.error("Missing attribute: {} {} {} {}", //$NON-NLS-1$
                                 new Object[] { tag, keyword, vr, vm }); // $NON-NLS-1$
                         }
@@ -561,7 +561,7 @@ public class TagD extends TagW {
     }
 
     private static int getVM(String val) {
-        if ("n".equals(val) || val.contains("n")) {
+        if ("n".equals(val) || val.contains("n")) { //$NON-NLS-1$ //$NON-NLS-2$
             return Integer.MAX_VALUE;
         }
         return Integer.parseInt(val);
@@ -613,7 +613,7 @@ public class TagD extends TagW {
                 try {
                     return type.cast(tagable.getTagValue(tags.get(key)));
                 } catch (ClassCastException e) {
-                    LOGGER.error("Cannot cast the value of \"{}\" into {}", key, type, e);
+                    LOGGER.error("Cannot cast the value of \"{}\" into {}", key, type, e); //$NON-NLS-1$
                 }
             }
         }
@@ -663,7 +663,7 @@ public class TagD extends TagW {
                 }
                 return LocalDate.parse(date, DICOM_DATE);
             } catch (Exception e) {
-                LOGGER.error("Parse DICOM date", e);
+                LOGGER.error("Parse DICOM date", e); //$NON-NLS-1$
             }
         }
         return null;
@@ -680,7 +680,7 @@ public class TagD extends TagW {
                     time.chars().filter(i -> ':' != (char) i).forEachOrdered(i -> buf.append((char) i));
                     return LocalTime.parse(buf.toString().trim(), DICOM_TIME);
                 } catch (Exception e1) {
-                    LOGGER.error("Parse DICOM time", e1);
+                    LOGGER.error("Parse DICOM time", e1); //$NON-NLS-1$
                 }
             }
         }
@@ -697,7 +697,7 @@ public class TagD extends TagW {
                 Date date = DateUtils.parseDT(tz, value, ceil, new DatePrecision());
                 return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
             } catch (Exception e) {
-                LOGGER.error("Parse DICOM dateTime", e);
+                LOGGER.error("Parse DICOM dateTime", e); //$NON-NLS-1$
             }
         }
         return null;
@@ -759,7 +759,7 @@ public class TagD extends TagW {
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
         TemporalAccessor[] defaultValue) {
-        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\");
+        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\"); //$NON-NLS-1$
     }
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
@@ -810,13 +810,13 @@ public class TagD extends TagW {
                 unit = ChronoUnit.DAYS.toString();
                 break;
             default:
-                LOGGER.error("Get period format: \"{}\" is not valid", value);
+                LOGGER.error("Get period format: \"{}\" is not valid", value); //$NON-NLS-1$
                 return StringUtil.EMPTY_STRING;
         }
 
         // Remove the last character and leading 0
-        StringBuilder builder = new StringBuilder(value.substring(0, value.length() - 1).replaceFirst("^0+(?!$)", ""));
-        builder.append(" ");
+        StringBuilder builder = new StringBuilder(value.substring(0, value.length() - 1).replaceFirst("^0+(?!$)", "")); //$NON-NLS-1$ //$NON-NLS-2$
+        builder.append(" "); //$NON-NLS-1$
         builder.append(unit);
         return builder.toString();
     }

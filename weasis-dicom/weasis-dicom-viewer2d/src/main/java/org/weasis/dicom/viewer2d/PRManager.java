@@ -94,7 +94,7 @@ public class PRManager {
             if (!presetList.get(presetList.size() - 1).equals(auto)) {
                 // It happens when PR contains a new Modality LUT
                 String name = Messages.getString("PresetWindowLevel.full"); //$NON-NLS-1$
-                presets.add(new PresetWindowLevel(name + " [PR]", auto.getWindow(), auto.getLevel(), auto.getShape()));
+                presets.add(new PresetWindowLevel(name + " [PR]", auto.getWindow(), auto.getLevel(), auto.getShape())); //$NON-NLS-1$
             }
             presets.addAll(presetList);
         }
@@ -124,7 +124,7 @@ public class PRManager {
         reader.readDisplayArea(img);
 
         String presentationMode = TagD.getTagValue(reader, Tag.PresentationSizeMode, String.class);
-        boolean trueSize = "TRUE SIZE".equalsIgnoreCase(presentationMode);
+        boolean trueSize = "TRUE SIZE".equalsIgnoreCase(presentationMode); //$NON-NLS-1$
 
         double[] prPixSize = TagD.getTagValue(reader, Tag.PresentationPixelSpacing, double[].class);
         if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
@@ -214,7 +214,7 @@ public class PRManager {
         ArrayList<GraphicLayer> layers = new ArrayList<>();
         int k = 0;
         for (GraphicLayer layer : graphicModel.getLayers()) {
-            layer.setName(Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName) + " [DICOM]");
+            layer.setName(Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName) + " [DICOM]"); //$NON-NLS-1$
             layer.setLocked(true);
             layer.setSerializable(false);
             layer.setLevel(270 + k++);
@@ -278,7 +278,7 @@ public class PRManager {
                     }
 
                     GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
-                    layer.setName(graphicLayerName + " [DICOM]");
+                    layer.setName(graphicLayerName + " [DICOM]"); //$NON-NLS-1$
                     layer.setSerializable(false);
                     layer.setLocked(true);
                     layer.setSelectable(false);

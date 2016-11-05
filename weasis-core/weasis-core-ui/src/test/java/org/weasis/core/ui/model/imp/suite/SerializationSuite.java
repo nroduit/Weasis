@@ -28,7 +28,7 @@ public class SerializationSuite extends ModelListHelper {
         model.setUuid(UUID_1);
         
         String actual = serialize(model);
-        String expected = String.format(TPL_XML_PREFIX + "<presentation uuid=\"%s\"><references/><layers/><graphics/></presentation>", UUID_1);
+        String expected = String.format(TPL_XML_PREFIX + "<presentation uuid=\"%s\"><references/><layers/><graphics/></presentation>", UUID_1); //$NON-NLS-1$
         assertThat(actual).isEqualTo(expected);
     }
     
@@ -45,22 +45,22 @@ public class SerializationSuite extends ModelListHelper {
         
         String actual = serialize(model);
         String expected = String.format(TPL_XML_PREFIX + 
-            "<presentation uuid=\"%1$s\">"
-            +   "<references/>"
-            +   "<layers>"
-            +       "<layer level=\"40\" locked=\"false\" selectable=\"true\" type=\"DRAW\" visible=\"true\" uuid=\"%2$s\"/>"
-            +   "</layers>"
-            +   "<graphics>"
-            +       "<point pointSize=\"1\" fill=\"false\" showLabel=\"true\" thickness=\"3.0\" "
-            +           "uuid=\"%3$s\">"
-            +           "<paint rgb=\"ffff0000\"/>"
-            +           "<layer>%2$s</layer>"
-            +           "<pts>"
-            +               "<pt x=\"1665.5\" y=\"987.0\"/>"
-            +           "</pts>"
-            +       "</point>"
-            +   "</graphics>"
-            + "</presentation>", 
+            "<presentation uuid=\"%1$s\">" //$NON-NLS-1$
+            +   "<references/>" //$NON-NLS-1$
+            +   "<layers>" //$NON-NLS-1$
+            +       "<layer level=\"40\" locked=\"false\" selectable=\"true\" type=\"DRAW\" visible=\"true\" uuid=\"%2$s\"/>" //$NON-NLS-1$
+            +   "</layers>" //$NON-NLS-1$
+            +   "<graphics>" //$NON-NLS-1$
+            +       "<point pointSize=\"1\" fill=\"false\" showLabel=\"true\" thickness=\"3.0\" " //$NON-NLS-1$
+            +           "uuid=\"%3$s\">" //$NON-NLS-1$
+            +           "<paint rgb=\"ffff0000\"/>" //$NON-NLS-1$
+            +           "<layer>%2$s</layer>" //$NON-NLS-1$
+            +           "<pts>" //$NON-NLS-1$
+            +               "<pt x=\"1665.5\" y=\"987.0\"/>" //$NON-NLS-1$
+            +           "</pts>" //$NON-NLS-1$
+            +       "</point>" //$NON-NLS-1$
+            +   "</graphics>" //$NON-NLS-1$
+            + "</presentation>",  //$NON-NLS-1$
             UUID_1, layer.getUuid(), graphic.getUuid());
         
         assertThat(actual).isEqualTo(expected);
@@ -74,15 +74,15 @@ public class SerializationSuite extends ModelListHelper {
         
         String actual = serialize(model);
         String expected = String.format(TPL_XML_PREFIX + 
-            "<presentation uuid=\"%s\">"
-            +   "<references>"
-            +       "<series uuid=\"%s\">"
-            +           "<image frames=\"\" uuid=\"%s\"/>"
-            +       "</series>"
-            +   "</references>"
-            +   "<layers/>"
-            +   "<graphics/>"
-            + "</presentation>", 
+            "<presentation uuid=\"%s\">" //$NON-NLS-1$
+            +   "<references>" //$NON-NLS-1$
+            +       "<series uuid=\"%s\">" //$NON-NLS-1$
+            +           "<image frames=\"\" uuid=\"%s\"/>" //$NON-NLS-1$
+            +       "</series>" //$NON-NLS-1$
+            +   "</references>" //$NON-NLS-1$
+            +   "<layers/>" //$NON-NLS-1$
+            +   "<graphics/>" //$NON-NLS-1$
+            + "</presentation>",  //$NON-NLS-1$
             UUID_1, UUID_3, UUID_2);
         
         assertThat(actual).isEqualTo(expected);
@@ -131,16 +131,16 @@ public class SerializationSuite extends ModelListHelper {
         
         String actual = serialize(model);
         String expected = String.format(TPL_XML_PREFIX + 
-            "<presentation uuid=\"%s\">"
-            +   "<references>"
-            +       "<series uuid=\"%s\">"
-            +           "<image frames=\"\" uuid=\"%s\"/>"
-            +       "</series>"
-            +   "</references>"
-            +   "<layers>"
+            "<presentation uuid=\"%s\">" //$NON-NLS-1$
+            +   "<references>" //$NON-NLS-1$
+            +       "<series uuid=\"%s\">" //$NON-NLS-1$
+            +           "<image frames=\"\" uuid=\"%s\"/>" //$NON-NLS-1$
+            +       "</series>" //$NON-NLS-1$
+            +   "</references>" //$NON-NLS-1$
+            +   "<layers>" //$NON-NLS-1$
             +       serializeWithoutHeader(layer)
-            +   "</layers>"
-            +   "<graphics>"
+            +   "</layers>" //$NON-NLS-1$
+            +   "<graphics>" //$NON-NLS-1$
             +       serializeWithoutHeader(pointGraphic)
             +       serializeWithoutHeader(pixelInfoGraphic)
             +       serializeWithoutHeader(annotationGraphic)
@@ -151,8 +151,8 @@ public class SerializationSuite extends ModelListHelper {
             +       serializeWithoutHeader(rectangleGraphic)
             +       serializeWithoutHeader(angleGraphic)
             +       serializeWithoutHeader(cobbAngleGraphic)
-            +   "</graphics>"
-            + "</presentation>", UUID_1, UUID_3, UUID_2);
+            +   "</graphics>" //$NON-NLS-1$
+            + "</presentation>", UUID_1, UUID_3, UUID_2); //$NON-NLS-1$
         
         assertThat(actual).isEqualTo(expected);
     }
@@ -210,18 +210,18 @@ public class SerializationSuite extends ModelListHelper {
         
         String actual = serialize(model);
         String expected = String.format(TPL_XML_PREFIX + 
-            "<presentation uuid=\"%s\">"
-            +   "<references>"
-            +       "<series uuid=\"%s\">"
-            +           "<image frames=\"\" uuid=\"%s\"/>"
-            +       "</series>"
-            +   "</references>"
-            +   "<layers>"
+            "<presentation uuid=\"%s\">" //$NON-NLS-1$
+            +   "<references>" //$NON-NLS-1$
+            +       "<series uuid=\"%s\">" //$NON-NLS-1$
+            +           "<image frames=\"\" uuid=\"%s\"/>" //$NON-NLS-1$
+            +       "</series>" //$NON-NLS-1$
+            +   "</references>" //$NON-NLS-1$
+            +   "<layers>" //$NON-NLS-1$
             +       serializeWithoutHeader(layer1)
             +       serializeWithoutHeader(layer2)
             +       serializeWithoutHeader(layer3)
-            +   "</layers>"
-            +   "<graphics>"
+            +   "</layers>" //$NON-NLS-1$
+            +   "<graphics>" //$NON-NLS-1$
             +       serializeWithoutHeader(pointGraphic)
             +       serializeWithoutHeader(pixelInfoGraphic)
             +       serializeWithoutHeader(annotationGraphic)
@@ -232,8 +232,8 @@ public class SerializationSuite extends ModelListHelper {
             +       serializeWithoutHeader(rectangleGraphic)
             +       serializeWithoutHeader(angleGraphic)
             +       serializeWithoutHeader(cobbAngleGraphic)
-            +   "</graphics>"
-            + "</presentation>", UUID_1, UUID_3, UUID_2);
+            +   "</graphics>" //$NON-NLS-1$
+            + "</presentation>", UUID_1, UUID_3, UUID_2); //$NON-NLS-1$
         
         assertThat(actual).isEqualTo(expected);
         consoleDisplay(model);

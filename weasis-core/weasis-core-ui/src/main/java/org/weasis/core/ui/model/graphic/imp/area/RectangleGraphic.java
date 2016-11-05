@@ -95,7 +95,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     public RectangleGraphic buildGraphic(Rectangle2D rectangle) throws InvalidShapeException {
-        Optional.ofNullable(rectangle).orElseThrow(() -> new InvalidShapeException("Rectangle2D is null!"));
+        Optional.ofNullable(rectangle).orElseThrow(() -> new InvalidShapeException("Rectangle2D is null!")); //$NON-NLS-1$
         setHandlePointList(rectangle);
         prepareShape();
         return this;
@@ -291,7 +291,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
         static eHandlePoint valueFromIndex(int index) {
             return Optional.ofNullable(map.get(index))
-                .orElseThrow(() -> new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index));
+                .orElseThrow(() -> new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index)); //$NON-NLS-1$
         }
 
         eHandlePoint getVerticalMirror() {

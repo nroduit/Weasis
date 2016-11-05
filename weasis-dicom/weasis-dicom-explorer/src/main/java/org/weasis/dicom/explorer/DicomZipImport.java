@@ -121,7 +121,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                File dicomdir = new File(dir, "DICOMDIR");
+                File dicomdir = new File(dir, "DICOMDIR"); //$NON-NLS-1$
                 if (dicomdir.canRead()) {
                     DicomDirLoader dirImport = new DicomDirLoader(dicomdir, dicomModel, false); // $NON-NLS-1$
                     List<LoadSeries> loadSeries = dirImport.readDicomDir();

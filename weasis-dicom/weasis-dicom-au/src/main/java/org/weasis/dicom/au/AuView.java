@@ -116,7 +116,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                 showPlayer(s);
 
             } catch (Exception e) {
-                LOGGER.error("Build audio player", e);
+                LOGGER.error("Build audio player", e); //$NON-NLS-1$
             }
         }
 
@@ -252,7 +252,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                             AudioSystem.write(stream, AudioFileFormat.Type.AU, new File(filename));
                         }
                     } catch (IOException ex) {
-                        LOGGER.error("Cannot save audio file!", ex);
+                        LOGGER.error("Cannot save audio file!", ex); //$NON-NLS-1$
                     }
                 }
             }
@@ -410,7 +410,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
                         return new AudioInputStream(bulkData.openStream(), audioFormat, bulkData.length() / audioFormat.getFrameSize());
                     } catch (Exception e) {
-                        LOGGER.error("Get audio stream", e);
+                        LOGGER.error("Get audio stream", e); //$NON-NLS-1$
                     }
                 }
             }
@@ -435,7 +435,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                     sourceLine.write(bytesBuffer, 0, bytesRead);
                 }
             } catch (Exception e) {
-                LOGGER.error("Play audio stream", e);
+                LOGGER.error("Play audio stream", e); //$NON-NLS-1$
             } finally {
                 if (sourceLine != null) {
                     sourceLine.drain();

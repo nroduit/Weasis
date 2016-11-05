@@ -99,7 +99,7 @@ public class LoadDicomObjects extends ExplorerTask {
                     }
                 }
             } catch (URISyntaxException e) {
-                LOGGER.debug("", e);
+                LOGGER.debug("", e); //$NON-NLS-1$
             }
 
         }

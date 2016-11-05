@@ -144,7 +144,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @Override
     public void setReferencedSeries(List<ReferencedSeries> referencedSeries) {
-        if (referencedSeries != null && !referencedSeries.getClass().getSimpleName().startsWith("Synchronized")) {
+        if (referencedSeries != null && !referencedSeries.getClass().getSimpleName().startsWith("Synchronized")) { //$NON-NLS-1$
             this.referencedSeries = Collections.synchronizedList(referencedSeries);
         }
         this.referencedSeries =
@@ -553,8 +553,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             int response = 0;
             if (warningMessage) {
                 response = JOptionPane.showConfirmDialog(canvas.getJComponent(),
-                    String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()),
-                    Messages.getString("AbstractLayerModel.del_graphs"), JOptionPane.YES_NO_OPTION,
+                    String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()), //$NON-NLS-1$
+                    Messages.getString("AbstractLayerModel.del_graphs"), JOptionPane.YES_NO_OPTION, //$NON-NLS-1$
                     JOptionPane.WARNING_MESSAGE);
             }
             if (Objects.equals(response, 0)) {

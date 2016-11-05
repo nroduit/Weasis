@@ -11,14 +11,14 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class LineWithGapGraphicTest extends GraphicTester<LineWithGapGraphic> {
-    private static final String XML_0 = "/graphic/lineWithGap/lineWithGap.graphic.0.xml";
-    private static final String XML_1 = "/graphic/lineWithGap/lineWithGap.graphic.1.xml";
+    private static final String XML_0 = "/graphic/lineWithGap/lineWithGap.graphic.0.xml"; //$NON-NLS-1$
+    private static final String XML_1 = "/graphic/lineWithGap/lineWithGap.graphic.1.xml"; //$NON-NLS-1$
     
     static final String BASIC_TPL = 
-        "<lineWithGap gapSize=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"
-      +     "<paint rgb=\"%s\"/>"
-      +     "<pts/>"
-      + "</lineWithGap>";
+        "<lineWithGap gapSize=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
+      +     "<paint rgb=\"%s\"/>" //$NON-NLS-1$
+      +     "<pts/>" //$NON-NLS-1$
+      + "</lineWithGap>"; //$NON-NLS-1$
     
     public static final LineWithGapGraphic COMPLETE_OBJECT =  new LineWithGapGraphic();
     static {

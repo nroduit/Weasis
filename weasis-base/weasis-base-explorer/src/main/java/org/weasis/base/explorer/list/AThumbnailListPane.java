@@ -34,7 +34,7 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
     protected ExecutorService pool;
 
     public AThumbnailListPane(IThumbnailList<E> thumbList) {
-        this.pool = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail List");
+        this.pool = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail List"); //$NON-NLS-1$
 
         this.thumbnailList = thumbList;
         this.thumbnailList.addListSelectionListener(new JIListSelectionAdapter());

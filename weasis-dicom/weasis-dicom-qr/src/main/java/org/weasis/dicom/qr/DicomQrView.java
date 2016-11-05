@@ -38,11 +38,11 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     private JPanel panel;
     private final Component horizontalStrut = Box.createHorizontalStrut(20);
-    private final JLabel lblDest = new JLabel("Archive" + StringUtil.COLON);
+    private final JLabel lblDest = new JLabel(Messages.getString("DicomQrView.arc") + StringUtil.COLON); //$NON-NLS-1$
     private final JComboBox comboNode = new JComboBox();
 
     public DicomQrView() {
-        super("DICOM Query/Retrieve");
+        super(Messages.getString("DicomQrView.title")); //$NON-NLS-1$
         initGUI();
         initialize(true);
     }

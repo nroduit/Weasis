@@ -77,7 +77,7 @@ public enum TransferSyntax {
         try {
             return TransferSyntax.valueOf(tsuid);
         } catch (Exception e) {
-            LOGGER.error("Cannot get TransferSyntax from {}", tsuid, e);
+            LOGGER.error("Cannot get TransferSyntax from {}", tsuid, e); //$NON-NLS-1$
         }
         return NONE;
     }
@@ -90,7 +90,7 @@ public enum TransferSyntax {
                     return true;
                 }
             } catch (Exception e) {
-                LOGGER.error("Cannot parse {}", tsuid, e);
+                LOGGER.error("Cannot parse {}", tsuid, e); //$NON-NLS-1$
             }
         }
         return false;

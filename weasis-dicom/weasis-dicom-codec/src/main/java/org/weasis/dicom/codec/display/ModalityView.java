@@ -149,7 +149,7 @@ public class ModalityView {
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
-            File file = ResourceUtil.getResource("attributes-view.xml");
+            File file = ResourceUtil.getResource("attributes-view.xml"); //$NON-NLS-1$
             if (!file.canRead()) {
                 return;
             }

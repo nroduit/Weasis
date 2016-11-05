@@ -339,7 +339,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             return component;
 
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e);
+            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
         }
         return null;
     }
@@ -366,7 +366,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e);
+                LOGGER.error("Checking view type", e); //$NON-NLS-1$
             }
         }
         return false;
@@ -383,7 +383,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             ColorLayerUI.showCenterScreen(dialog, layer);
         };
         DefaultAction printStd = new DefaultAction(title,
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event);
+            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event); //$NON-NLS-1$
         printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
         actions.add(printStd);
         return actions;

@@ -77,7 +77,7 @@ public class Activator implements BundleActivator, ServiceListener {
                 }
             }
         } catch (InvalidSyntaxException e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
         }
 
         bundleContext.addServiceListener(this,

@@ -143,7 +143,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
             } else {
                 patient = dicomModel.getParent(study, DicomModel.patient);
-                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam.");
+                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam."); //$NON-NLS-1$
             }
         }
 
@@ -246,7 +246,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Build DicomModel", e);
+            LOGGER.error("Build DicomModel", e); //$NON-NLS-1$
         } finally {
             // dicomReader.reset();
         }

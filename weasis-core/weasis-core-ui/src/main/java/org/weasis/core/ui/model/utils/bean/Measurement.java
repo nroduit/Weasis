@@ -26,7 +26,7 @@ public class Measurement {
     }
 
     public Measurement(String name, Integer id, Boolean quickComputing, Boolean computed, Boolean graphicLabel) {
-        this.name = Objects.requireNonNull(name, "Name cannot be null!");
+        this.name = Objects.requireNonNull(name, "Name cannot be null!"); //$NON-NLS-1$
         this.id = id;
         this.quickComputing = quickComputing;
         this.computed = computed;

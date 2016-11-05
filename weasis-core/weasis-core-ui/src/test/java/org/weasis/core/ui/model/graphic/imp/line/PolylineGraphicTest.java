@@ -8,14 +8,14 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class PolylineGraphicTest extends GraphicTester<PolylineGraphic> {
-    private static final String XML_0 = "/graphic/polyline/polyline.graphic.0.xml";
-    private static final String XML_1 = "/graphic/polyline/polyline.graphic.1.xml";
+    private static final String XML_0 = "/graphic/polyline/polyline.graphic.0.xml"; //$NON-NLS-1$
+    private static final String XML_1 = "/graphic/polyline/polyline.graphic.1.xml"; //$NON-NLS-1$
     
     static final String BASIC_TPL =
-        "<polyline fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"
-       +     "<paint rgb=\"%s\"/>"
-       +     "<pts/>"
-       + "</polyline>";
+        "<polyline fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
+       +     "<paint rgb=\"%s\"/>" //$NON-NLS-1$
+       +     "<pts/>" //$NON-NLS-1$
+       + "</polyline>"; //$NON-NLS-1$
 
     public static final PolylineGraphic COMPLETE_OBJECT =  new PolylineGraphic();
     static {

@@ -47,7 +47,7 @@ public final class TagUtil {
                 }
                 return Date.from(Instant.from(t));
             } catch (Exception e) {
-                LOGGER.error("Date conversion", e);
+                LOGGER.error("Date conversion", e); //$NON-NLS-1$
             }
         }
         return null;
@@ -70,7 +70,7 @@ public final class TagUtil {
                 LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
                 return datetime.toLocalDate();
             } catch (Exception e) {
-                LOGGER.error("Date conversion", e);
+                LOGGER.error("Date conversion", e); //$NON-NLS-1$
             }
         }
         return null;
@@ -82,7 +82,7 @@ public final class TagUtil {
                 LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
                 return datetime.toLocalTime();
             } catch (Exception e) {
-                LOGGER.error("Time conversion", e);
+                LOGGER.error("Time conversion", e); //$NON-NLS-1$
             }
         }
         return null;
@@ -93,7 +93,7 @@ public final class TagUtil {
             try {
                 return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
             } catch (Exception e) {
-                LOGGER.error("DateTime conversion", e);
+                LOGGER.error("DateTime conversion", e); //$NON-NLS-1$
             }
         }
         return null;
@@ -156,7 +156,7 @@ public final class TagUtil {
     }
 
     public static String[] getStringArrayTagAttribute(XMLStreamReader xmler, String attribute, String[] defaultValue) {
-        return getStringArrayTagAttribute(xmler, attribute, defaultValue, "\\");
+        return getStringArrayTagAttribute(xmler, attribute, defaultValue, "\\"); //$NON-NLS-1$
     }
 
     public static String[] getStringArrayTagAttribute(XMLStreamReader xmler, String attribute, String[] defaultValue,
@@ -199,7 +199,7 @@ public final class TagUtil {
     }
 
     public static int[] getIntArrayTagAttribute(XMLStreamReader xmler, String attribute, int[] defaultValue) {
-        return getIntArrayTagAttribute(xmler, attribute, defaultValue, "\\");
+        return getIntArrayTagAttribute(xmler, attribute, defaultValue, "\\"); //$NON-NLS-1$
     }
 
     public static int[] getIntArrayTagAttribute(XMLStreamReader xmler, String attribute, int[] defaultValue,
@@ -233,7 +233,7 @@ public final class TagUtil {
     }
 
     public static double[] getDoubleArrayTagAttribute(XMLStreamReader xmler, String attribute, double[] defaultValue) {
-        return getDoubleArrayTagAttribute(xmler, attribute, defaultValue, "\\");
+        return getDoubleArrayTagAttribute(xmler, attribute, defaultValue, "\\"); //$NON-NLS-1$
     }
 
     public static double[] getDoubleArrayTagAttribute(XMLStreamReader xmler, String attribute, double[] defaultValue,
@@ -267,7 +267,7 @@ public final class TagUtil {
     }
 
     public static float[] getFloatArrayTagAttribute(XMLStreamReader xmler, String attribute, float[] defaultValue) {
-        return getFloatArrayTagAttribute(xmler, attribute, defaultValue, "\\");
+        return getFloatArrayTagAttribute(xmler, attribute, defaultValue, "\\"); //$NON-NLS-1$
     }
 
     public static float[] getFloatArrayTagAttribute(XMLStreamReader xmler, String attribute, float[] defaultValue,
@@ -300,7 +300,7 @@ public final class TagUtil {
                         return LocalDate.parse(val);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Parse date", e);
+                    LOGGER.error("Parse date", e); //$NON-NLS-1$
                 }
             }
         }
@@ -309,7 +309,7 @@ public final class TagUtil {
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
         TemporalAccessor[] defaultValue) {
-        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\");
+        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\"); //$NON-NLS-1$
     }
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
@@ -329,7 +329,7 @@ public final class TagUtil {
                             vals[i] = LocalDate.parse(strs[i]);
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Parse date", e);
+                        LOGGER.error("Parse date", e); //$NON-NLS-1$
                     }
                 }
                 return vals;

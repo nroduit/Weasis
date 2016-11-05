@@ -718,15 +718,15 @@ public class WeasisLauncher {
         // Read the properties file
         Properties props = null;
         if (propURI != null) {
-            System.out.println(CONFIG_PROPERTIES_PROP + ": " + propURI);
+            System.out.println(CONFIG_PROPERTIES_PROP + ": " + propURI); //$NON-NLS-1$
             props = readProperties(propURI, null);
         } else {
-            System.err.println("No config.properties path found, Weasis cannot start!");
+            System.err.println("No config.properties path found, Weasis cannot start!"); //$NON-NLS-1$
         }
 
         propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
         if (propURI != null) {
-            System.out.println(EXTENDED_PROPERTIES_PROP + ": " + propURI);
+            System.out.println(EXTENDED_PROPERTIES_PROP + ": " + propURI); //$NON-NLS-1$
             // Extended properties, add or override existing properties
             props = readProperties(propURI, props);
         }
@@ -1125,7 +1125,7 @@ public class WeasisLauncher {
             }
         } catch (Exception e) {
             cacheDir = null;
-            System.err.println(e.getMessage() + "\n");
+            System.err.println(e.getMessage() + "\n"); //$NON-NLS-1$
         }
         if (cacheDir == null) {
             if (portable != null) {

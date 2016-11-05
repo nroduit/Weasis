@@ -396,11 +396,11 @@ public class DicomMediaUtils {
         if (years < 2) {
             long months = ChronoUnit.MONTHS.between(first, last);
             if (months < 2) {
-                return String.format("%03dD", ChronoUnit.DAYS.between(first, last));
+                return String.format("%03dD", ChronoUnit.DAYS.between(first, last)); //$NON-NLS-1$
             }
-            return String.format("%03dM", months);
+            return String.format("%03dM", months); //$NON-NLS-1$
         }
-        return String.format("%03dY", years);
+        return String.format("%03dY", years); //$NON-NLS-1$
     }
 
     public static Float getFloatFromDicomElement(Attributes dicom, int tag, Float defaultValue) {
@@ -1038,7 +1038,7 @@ public class DicomMediaUtils {
                     tagable.setTag(TagW.PRLUTsData, createLut(presentationLUT));
                     tagable.setTag(TagW.PRLUTsExplanation,
                         getStringFromDicomElement(presentationLUT, Tag.LUTExplanation));
-                    tagable.setTagNoNull(TagD.get(Tag.PresentationLUTShape), "IDENTITY");
+                    tagable.setTagNoNull(TagD.get(Tag.PresentationLUTShape), "IDENTITY"); //$NON-NLS-1$
                 } else {
                     // value: INVERSE, IDENTITY
                     // INVERSE => must inverse values (same as monochrome 1)
@@ -1368,7 +1368,7 @@ public class DicomMediaUtils {
         }
 
         catch (XMLStreamException e) {
-            LOGGER.error("Reading KO Codes", e);
+            LOGGER.error("Reading KO Codes", e); //$NON-NLS-1$
             codeByValue = null;
         } finally {
             FileUtil.safeClose(xmler);
@@ -1523,7 +1523,7 @@ public class DicomMediaUtils {
 
     public static TemporalAccessor[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,
         TemporalAccessor[] defaultValue) {
-        return getDatesFromDicomElement(xmler, attribute, type, defaultValue, "\\");
+        return getDatesFromDicomElement(xmler, attribute, type, defaultValue, "\\"); //$NON-NLS-1$
     }
 
     public static TemporalAccessor[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,

@@ -319,7 +319,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             return false;
         }
         ExecutorService imageDownloader =
-            ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader");
+            ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader"); //$NON-NLS-1$
         ArrayList<Callable<Boolean>> tasks = new ArrayList<>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
         GuiExecutor.instance().execute(() -> progressBar.setValue(0));
@@ -838,7 +838,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             } catch (InterruptedIOException e) {
                 return e.bytesTransferred;
             } catch (Exception e) {
-                LOGGER.error("Error when writing DICOM temp file", e);
+                LOGGER.error("Error when writing DICOM temp file", e); //$NON-NLS-1$
                 return 0;
             } finally {
                 SafeClose.close(dos);

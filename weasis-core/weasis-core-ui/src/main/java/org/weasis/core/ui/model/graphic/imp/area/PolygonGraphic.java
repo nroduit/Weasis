@@ -151,7 +151,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
             }
 
             if (!isShapeValid() || pts.size() < 3) {
-                throw new InvalidShapeException("This Polygon cannot be drawn");
+                throw new InvalidShapeException("This Polygon cannot be drawn"); //$NON-NLS-1$
             }
             buildShape(null);
         }

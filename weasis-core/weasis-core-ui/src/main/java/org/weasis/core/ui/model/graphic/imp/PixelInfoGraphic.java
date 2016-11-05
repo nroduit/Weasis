@@ -148,7 +148,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
             lbs = labels;
         }
         if (lbs == null) {
-            lbs = new String[] { "No info" };
+            lbs = new String[] { Messages.getString("PixelInfoGraphic.no_val") }; //$NON-NLS-1$
         }
         super.setLabel(lbs, view2d, pos);
         // MeasurableLayer layer = view2d == null ? null : view2d.getMeasurableLayer();

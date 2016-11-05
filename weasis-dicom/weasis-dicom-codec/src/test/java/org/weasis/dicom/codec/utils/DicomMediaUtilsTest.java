@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.weasis.dicom.codec.TagD;
 
 public class DicomMediaUtilsTest {
-    public static final String[] STRING_ARRAY = { "RECTANGULAR", "CIRCULAR", "POLYGONAL" };
+    public static final String[] STRING_ARRAY = { "RECTANGULAR", "CIRCULAR", "POLYGONAL" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     private Attributes attributes = new Attributes();
 
@@ -23,25 +23,25 @@ public class DicomMediaUtilsTest {
 
     @Test
     public void testGetPeriod() throws Exception {
-        assertEquals("050Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("19610625"), TagD.getDicomDate("20120624")));
-        assertEquals("051Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("19610625"), TagD.getDicomDate("20120625")));
-        assertEquals("050Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("19610714"), TagD.getDicomDate("20120625")));
+        assertEquals("050Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("19610625"), TagD.getDicomDate("20120624"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("051Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("19610625"), TagD.getDicomDate("20120625"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("050Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("19610714"), TagD.getDicomDate("20120625"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-        assertEquals("005M", DicomMediaUtils.getPeriod(TagD.getDicomDate("20120103"), TagD.getDicomDate("20120625")));
-        assertEquals("031D", DicomMediaUtils.getPeriod(TagD.getDicomDate("20120525"), TagD.getDicomDate("20120625")));
-        assertEquals("003D", DicomMediaUtils.getPeriod(TagD.getDicomDate("20120622"), TagD.getDicomDate("20120625")));
+        assertEquals("005M", DicomMediaUtils.getPeriod(TagD.getDicomDate("20120103"), TagD.getDicomDate("20120625"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("031D", DicomMediaUtils.getPeriod(TagD.getDicomDate("20120525"), TagD.getDicomDate("20120625"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("003D", DicomMediaUtils.getPeriod(TagD.getDicomDate("20120622"), TagD.getDicomDate("20120625"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-        assertEquals("011Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20110301")));
-        assertEquals("010Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20110228")));
-        assertEquals("011Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20120228")));
-        assertEquals("012Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20120229")));
-        assertEquals("012Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20120301")));
-        assertEquals("012Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000228"), TagD.getDicomDate("20120228")));
-        assertEquals("012Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000228"), TagD.getDicomDate("20120229")));
+        assertEquals("011Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20110301"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("010Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20110228"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("011Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20120228"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("012Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20120229"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("012Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20120301"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("012Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000228"), TagD.getDicomDate("20120228"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertEquals("012Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000228"), TagD.getDicomDate("20120229"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         try {
-            assertEquals("050Y",
-                DicomMediaUtils.getPeriod(TagD.getDicomDate("19612506"), TagD.getDicomDate("20122406")));
+            assertEquals("050Y", //$NON-NLS-1$
+                DicomMediaUtils.getPeriod(TagD.getDicomDate("19612506"), TagD.getDicomDate("20122406"))); //$NON-NLS-1$ //$NON-NLS-2$
         } catch (Exception e) {
             assertThat(e).isInstanceOf(NullPointerException.class);
         }
@@ -50,7 +50,7 @@ public class DicomMediaUtilsTest {
     @Test
     public void testGetStringFromDicomElement() throws Exception {
 
-        assertEquals("RECTANGULAR\\CIRCULAR\\POLYGONAL",
+        assertEquals("RECTANGULAR\\CIRCULAR\\POLYGONAL", //$NON-NLS-1$
             DicomMediaUtils.getStringFromDicomElement(attributes, Tag.ShutterShape));
         assertEquals(null, DicomMediaUtils.getStringFromDicomElement(attributes, Tag.ShutterPresentationValue));
     }

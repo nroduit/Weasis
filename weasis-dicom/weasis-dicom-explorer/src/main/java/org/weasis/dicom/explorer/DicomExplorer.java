@@ -1306,7 +1306,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                         if (splitNb != null) {
                             updateSplitSeries(series);
-                        } else if ("KO".equals(TagD.getTagValue(series, Tag.Modality, String.class))) {
+                        } else if ("KO".equals(TagD.getTagValue(series, Tag.Modality, String.class))) { //$NON-NLS-1$
                             MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
                             koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
                         }
@@ -1412,7 +1412,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         try {
             result = future.get();
         } catch (InterruptedException | ExecutionException e) {
-            LOGGER.error("Building Series thumbnail", e);
+            LOGGER.error("Building Series thumbnail", e); //$NON-NLS-1$
         }
         return result;
     }
@@ -1434,7 +1434,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         ArrayList<Action> actions = new ArrayList<>(2);
         actions.add(btnImport.getAction());
         DefaultAction importCDAction =
-            new DefaultAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), event ->  openImportDialogAction("DICOM CD")); //$NON-NLS-1$ //$NON-NLS-2$
+            new DefaultAction(Messages.getString("DicomExplorer.dcmCD"), new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), event ->  openImportDialogAction(Messages.getString("DicomExplorer.dcmCD")));  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
         actions.add(importCDAction);
         return actions;
     }

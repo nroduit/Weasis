@@ -72,7 +72,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     private static final long serialVersionUID = -8152071576417041112L;
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGraphic.class);
     
-    protected static final String NULL_MSG = "Null is not allowed";
+    protected static final String NULL_MSG = "Null is not allowed"; //$NON-NLS-1$
 
     protected Integer pointNumber;
     protected List<Point2D.Double> pts;
@@ -114,7 +114,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
             initCopy(graphic);
             buildGraphic(ptsList);
         } catch (InvalidShapeException e) {
-            LOGGER.error("Building graphic", e);
+            LOGGER.error("Building graphic", e); //$NON-NLS-1$
         }
     }
 
@@ -293,7 +293,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public String getDescription() {
-        return "";
+        return ""; //$NON-NLS-1$
     }
 
     @Override

@@ -1485,7 +1485,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Zoom command: {}", args.get(0), e);
+            LOGGER.error("Zoom command: {}", args.get(0), e); //$NON-NLS-1$
         }
     }
 
@@ -1513,7 +1513,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     levelAction.get().setSliderValue(level);
                 }
             } catch (Exception e) {
-                LOGGER.error("Window/level command: {} {}", args.get(0), args.get(1), e);
+                LOGGER.error("Window/level command: {} {}", args.get(0), args.get(1), e); //$NON-NLS-1$
             }
         });
     }
@@ -1538,7 +1538,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     .ifPresent(a -> a.setPoint(new PanPoint(PanPoint.State.MOVE, valx, valy)));
 
             } catch (Exception e) {
-                LOGGER.error("Move (x,y) command: {} {}", args.get(0), args.get(1), e);
+                LOGGER.error("Move (x,y) command: {} {}", args.get(0), args.get(1), e); //$NON-NLS-1$
             }
         });
     }
@@ -1575,7 +1575,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Scroll command: {}", args.get(0), e);
+                LOGGER.error("Scroll command: {}", args.get(0), e); //$NON-NLS-1$
             }
         });
     }
@@ -1610,7 +1610,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Layout command: {}", args.get(0), e);
+                LOGGER.error("Layout command: {}", args.get(0), e); //$NON-NLS-1$
             }
         });
     }
@@ -1638,7 +1638,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         excecuteMouseAction(command);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Mouse command: {}", command, e);
+                    LOGGER.error("Mouse command: {}", command, e); //$NON-NLS-1$
                 }
             }
         });
@@ -1698,7 +1698,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             throw new IllegalArgumentException(command + " not found!"); //$NON-NLS-1$
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Synch command: {}", command, e);
+                        LOGGER.error("Synch command: {}", command, e); //$NON-NLS-1$
                     }
                 }
             }
@@ -1733,7 +1733,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         reset(ResetTools.All);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Reset command: {}", command, e);
+                    LOGGER.error("Reset command: {}", command, e); //$NON-NLS-1$
                 }
             }
         });

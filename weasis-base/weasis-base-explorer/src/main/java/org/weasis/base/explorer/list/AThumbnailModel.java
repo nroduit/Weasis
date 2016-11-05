@@ -47,7 +47,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
     public AThumbnailModel(final JList<E> list) {
         this.list = list;
         // Fix list reselection interval when dragging
-        this.list.putClientProperty("List.isFileList", Boolean.TRUE);
+        this.list.putClientProperty("List.isFileList", Boolean.TRUE); //$NON-NLS-1$
         listModel = new DefaultListModel<>();
         list.setModel(listModel);
     }
@@ -148,7 +148,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
                     }
                 });
         } catch (IOException e) {
-            LOGGER.error("Building child directories", e);
+            LOGGER.error("Building child directories", e); //$NON-NLS-1$
         }
     }
 

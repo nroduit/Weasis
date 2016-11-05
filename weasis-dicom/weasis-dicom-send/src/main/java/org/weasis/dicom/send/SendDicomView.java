@@ -1,4 +1,4 @@
-package org.weasis.dicom;
+package org.weasis.dicom.send;
 /*******************************************************************************
  * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
@@ -61,7 +61,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomView.class);
 
-    private static final String LAST_SEL_NODE = "lastSelNode";
+    private static final String LAST_SEL_NODE = "lastSelNode"; //$NON-NLS-1$
 
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
@@ -70,7 +70,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public SendDicomView(DicomModel dicomModel, CheckTreeModel treeModel) {
-        super("DICOM Send");
+        super(Messages.getString("SendDicomView.title")); //$NON-NLS-1$
         this.dicomModel = dicomModel;
         this.exportTree = new ExportTree(treeModel);
         initGUI();
@@ -83,7 +83,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEFT);
 
-        final JLabel lblDest = new JLabel("Destination" + StringUtil.COLON);
+        final JLabel lblDest = new JLabel(Messages.getString("SendDicomView.destination") + StringUtil.COLON); //$NON-NLS-1$
         panel.add(lblDest);
         AbstractDicomNode.addTooltipToComboList(comboNode);
         panel.add(comboNode);
@@ -157,7 +157,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     private boolean sendDicomFiles(final CheckTreeModel model, final ExplorerTask t) throws IOException {
         dicomModel
             .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, t));
-        File exportDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "send"));
+        File exportDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "send")); //$NON-NLS-1$ //$NON-NLS-2$
         try {
             writeDicom(t, exportDir, model);
 
@@ -189,7 +189,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                 final DicomState state =
                     CStore.process(new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
                 if (state.getStatus() != Status.Success) {
-                    LOGGER.error("Dicom send error: {}", state.getMessage());
+                    LOGGER.error("Dicom send error: {}", state.getMessage()); //$NON-NLS-1$
                     GuiExecutor.instance().execute(() -> JOptionPane.showOptionDialog(exportTree, state.getMessage(),
                         null, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null));
                 }
