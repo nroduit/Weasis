@@ -80,7 +80,7 @@ public class AcquireManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
     private static final AcquireManager instance = new AcquireManager();
 
-    public static final String[] functions = { "patient" };
+    public static final String[] functions = { "patient" }; //$NON-NLS-1$
 
     public static final Global GLOBAL = new Global();
 
@@ -213,16 +213,16 @@ public class AcquireManager {
      * @throws IOException
      */
     public void patient(String[] argv) throws IOException {
-        final String[] usage = { "Load Patient Context", "Usage: acquire:patient [Options] SOURCE",
-            "  -x --xml       Open Patient Context from an XML data containing all DICOM Tags ",
-            "  -i --inbound       Open Patient Context from an XML data containing all DICOM Tags, supported syntax is [Base64/GZip]",
-            "  -u --url       Open Patient Context from an XML (URL) file containing all DICOM TAGs",
-            "  -? --help       show help" };
+        final String[] usage = { "Load Patient Context", "Usage: acquire:patient [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
+            "  -x --xml       Open Patient Context from an XML data containing all DICOM Tags ", //$NON-NLS-1$
+            "  -i --inbound       Open Patient Context from an XML data containing all DICOM Tags, supported syntax is [Base64/GZip]", //$NON-NLS-1$
+            "  -u --url       Open Patient Context from an XML (URL) file containing all DICOM TAGs", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$
 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || args.isEmpty()) {
+        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
             opt.usage();
             return;
         }
@@ -236,11 +236,11 @@ public class AcquireManager {
 
         Document newPatientContext = null;
 
-        if (opt.isSet("xml")) {
+        if (opt.isSet("xml")) { //$NON-NLS-1$
             newPatientContext = getPatientContext(arg, OPT_NONE);
-        } else if (opt.isSet("inbound")) {
+        } else if (opt.isSet("inbound")) { //$NON-NLS-1$
             newPatientContext = getPatientContext(arg, OPT_B64ZIP);
-        } else if (opt.isSet("url")) {
+        } else if (opt.isSet("url")) { //$NON-NLS-1$
             newPatientContext = getPatientContextFromUrl(arg);
         }
 
@@ -310,7 +310,7 @@ public class AcquireManager {
      */
     private static Document getPatientContext(byte[] byteArray, short codeOption) {
         if (byteArray == null || byteArray.length == 0) {
-            throw new IllegalArgumentException("empty byteArray parameter");
+            throw new IllegalArgumentException("empty byteArray parameter"); //$NON-NLS-1$
         }
 
         if (codeOption != OPT_NONE) {
@@ -327,7 +327,7 @@ public class AcquireManager {
                     byteArray = GzipManager.gzipUncompressToByte(byteArray);
                 }
             } catch (Exception e) {
-                LOGGER.error("Decode Patient Context", e);
+                LOGGER.error("Decode Patient Context", e); //$NON-NLS-1$
                 return null;
             }
         }
@@ -335,11 +335,11 @@ public class AcquireManager {
         Document patientContext = null;
 
         try (InputStream inputStream = new ByteArrayInputStream(byteArray)) {
-            LOGGER.debug("Source XML :\n{}", new String(byteArray));
+            LOGGER.debug("Source XML :\n{}", new String(byteArray)); //$NON-NLS-1$
 
             patientContext = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
         } catch (SAXException | IOException | ParserConfigurationException e) {
-            LOGGER.error("Parsing Patient Context XML", e);
+            LOGGER.error("Parsing Patient Context XML", e); //$NON-NLS-1$
         }
 
         return patientContext;
@@ -352,15 +352,15 @@ public class AcquireManager {
      */
     private static Document getPatientContextFromUri(URI uri) {
         if (uri == null) {
-            throw new IllegalArgumentException("empty URI parameter");
+            throw new IllegalArgumentException("empty URI parameter"); //$NON-NLS-1$
         }
 
         // TODO could be more secure to limit the loading buffer size !!!
         byte[] byteArray = getURIContent(uri);
         String uriPath = uri.getPath();
 
-        if (uriPath.endsWith(".gz") || (uriPath.endsWith(".xml") == false
-            && MimeInspector.isMatchingMimeTypeFromMagicNumber(byteArray, "application/x-gzip"))) {
+        if (uriPath.endsWith(".gz") || (uriPath.endsWith(".xml") == false //$NON-NLS-1$ //$NON-NLS-2$
+            && MimeInspector.isMatchingMimeTypeFromMagicNumber(byteArray, "application/x-gzip"))) { //$NON-NLS-1$
             return getPatientContext(byteArray, OPT_ZIP);
         } else {
             return getPatientContext(byteArray, OPT_NONE);
@@ -383,26 +383,26 @@ public class AcquireManager {
      */
     private static URI getURIFromURL(String urlStr) {
         if (urlStr == null || urlStr.isEmpty()) {
-            throw new IllegalArgumentException("empty urlString parameter");
+            throw new IllegalArgumentException("empty urlString parameter"); //$NON-NLS-1$
         }
 
         URI uri = null;
 
-        if (urlStr.startsWith("http") == false) {
+        if (urlStr.startsWith("http") == false) { //$NON-NLS-1$
             try {
                 File file = new File(urlStr);
                 if (file.canRead()) {
                     uri = file.toURI();
                 }
             } catch (Exception e) {
-                LOGGER.error("{} is supposed to be a file URL but cannot be converted to a valid URI", urlStr, e);
+                LOGGER.error("{} is supposed to be a file URL but cannot be converted to a valid URI", urlStr, e); //$NON-NLS-1$
             }
         }
         if (uri == null) {
             try {
                 uri = new URL(urlStr).toURI();
             } catch (MalformedURLException | URISyntaxException e) {
-                LOGGER.error("getURIFromURL : {}", urlStr, e);
+                LOGGER.error("getURIFromURL : {}", urlStr, e); //$NON-NLS-1$
             }
         }
 
@@ -417,7 +417,7 @@ public class AcquireManager {
     private static byte[] getURIContent(URI uri) {
 
         if (uri == null) {
-            throw new IllegalArgumentException("empty URI parameter");
+            throw new IllegalArgumentException("empty URI parameter"); //$NON-NLS-1$
         }
 
         byte[] byteArray = null;
@@ -427,7 +427,7 @@ public class AcquireManager {
             URL url = uri.toURL();
             urlConnection = url.openConnection();
 
-            LOGGER.debug("download from URL: {}", url);
+            LOGGER.debug("download from URL: {}", url); //$NON-NLS-1$
             logHttpError(urlConnection);
 
             // TODO urlConnection.setRequestProperty with session TAG ??
@@ -448,7 +448,7 @@ public class AcquireManager {
             }
 
         } catch (Exception e) {
-            LOGGER.error("getURIContent from : {}", uri.getPath(), e);
+            LOGGER.error("getURIContent from : {}", uri.getPath(), e); //$NON-NLS-1$
         }
 
         return byteArray;
@@ -473,7 +473,7 @@ public class AcquireManager {
 
                     InputStream errorStream = httpURLConnection.getErrorStream();
                     if (errorStream != null) {
-                        try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8");
+                        try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8"); //$NON-NLS-1$
                                         BufferedReader reader = new BufferedReader(inputStream)) {
                             StringBuilder stringBuilder = new StringBuilder();
                             String line;
@@ -482,14 +482,14 @@ public class AcquireManager {
                             }
                             String errorDescription = stringBuilder.toString();
                             if (StringUtil.hasText(errorDescription)) {
-                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " [" //$NON-NLS-2$
-                                    + httpURLConnection.getResponseMessage() + "]", errorDescription);
+                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " ["  //$NON-NLS-1$//$NON-NLS-2$
+                                    + httpURLConnection.getResponseMessage() + "]", errorDescription); //$NON-NLS-1$
                             }
                         }
                     }
                 }
             } catch (IOException e) {
-                LOGGER.error("lOG http response message", e);
+                LOGGER.error("lOG http response message", e); //$NON-NLS-1$
             }
         }
     }
@@ -606,7 +606,7 @@ public class AcquireManager {
                     }
                 }
             } catch (ImageProcessingException | IOException e) {
-                LOGGER.error("Error when reading exif tags", e);
+                LOGGER.error("Error when reading exif tags", e); //$NON-NLS-1$
             }
             LocalDateTime dateTime = date == null
                 ? LocalDateTime.from(Instant.ofEpochMilli(element.getLastModified()).atZone(ZoneId.systemDefault()))

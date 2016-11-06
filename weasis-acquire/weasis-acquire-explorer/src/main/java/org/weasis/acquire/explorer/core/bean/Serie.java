@@ -17,6 +17,7 @@ import java.util.Objects;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
@@ -32,7 +33,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     public static final Serie DEFAULT_SERIE = new Serie();
     public static final Serie DATE_SERIE = new Serie(LocalDateTime.now());
-    public static final String DEFAULT_SERIE_NAME = "Other";
+    public static final String DEFAULT_SERIE_NAME = Messages.getString("Serie.other"); //$NON-NLS-1$
 
     public Serie() {
         this(Type.NONE);
@@ -58,7 +59,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     private void init() {
         // Default Modality if not overridden
-        tags.put(TagD.get(Tag.Modality), "XC");
+        tags.put(TagD.get(Tag.Modality), "XC"); //$NON-NLS-1$
         tags.put(TagD.get(Tag.SeriesInstanceUID), UIDUtils.createUID());
         TagW operator = TagD.get(Tag.OperatorsName);
         tags.put(operator, AcquireManager.GLOBAL.getTagValue(operator));
@@ -197,7 +198,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
         }
 
         // Check equals
-        assert this.equals(that) : "compareTo inconsistent with equals.";
+        assert this.equals(that) : "compareTo inconsistent with equals."; //$NON-NLS-1$
 
         return EQUAL;
     }

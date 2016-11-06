@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaPanel;
@@ -27,9 +28,9 @@ import org.weasis.core.api.media.data.ImageElement;
 @SuppressWarnings("serial")
 public class AcquireCentralInfoPanel extends JPanel {
 
-    private AcquireMetadataPanel globalInfoPanel = new AcquireGlobalMetaPanel("Global");
+    private AcquireMetadataPanel globalInfoPanel = new AcquireGlobalMetaPanel(Messages.getString("AcquireCentralInfoPanel.global")); //$NON-NLS-1$
     private AcquireSerieMetaPanel serieInfoPanel = new AcquireSerieMetaPanel(null);
-    private AcquireMetadataPanel imageInfoPanel = new AcquireImageMetaPanel("Image");
+    private AcquireMetadataPanel imageInfoPanel = new AcquireImageMetaPanel(Messages.getString("AcquireCentralInfoPanel.image")); //$NON-NLS-1$
 
     private AcquireImageInfo imageInfo;
 

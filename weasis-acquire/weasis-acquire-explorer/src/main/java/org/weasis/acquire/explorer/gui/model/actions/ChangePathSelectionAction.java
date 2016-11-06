@@ -20,6 +20,7 @@ import javax.swing.JFileChooser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquisitionView;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.media.MediaSource;
 
 public class ChangePathSelectionAction extends AbstractAction {
@@ -31,9 +32,9 @@ public class ChangePathSelectionAction extends AbstractAction {
     public ChangePathSelectionAction(AcquisitionView acquisitionView) {
         this.mainView = acquisitionView;
 
-        putValue(Action.NAME, " ... ");
-        putValue(Action.ACTION_COMMAND_KEY, "onChangeRootPath");
-        putValue(Action.SHORT_DESCRIPTION, "Select a folder");
+        putValue(Action.NAME, " ... "); //$NON-NLS-1$
+        putValue(Action.ACTION_COMMAND_KEY, "onChangeRootPath"); //$NON-NLS-1$
+        putValue(Action.SHORT_DESCRIPTION, Messages.getString("ChangePathSelectionAction.select_folder")); //$NON-NLS-1$
     }
 
     @Override
@@ -65,7 +66,7 @@ public class ChangePathSelectionAction extends AbstractAction {
             try {
                 returnStr = fc.getSelectedFile().toString();
             } catch (SecurityException e) {
-                LOGGER.warn("directory cannot be accessed", e);
+                LOGGER.warn("directory cannot be accessed", e); //$NON-NLS-1$
             }
         }
         return returnStr;

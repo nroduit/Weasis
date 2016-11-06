@@ -67,10 +67,10 @@ public final class Transform2Dicom {
 
     public static File dicomize(Collection<AcquireImageInfo> collection) {
         File exportDirDicom =
-            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "dcm"));
+            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "dcm")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         if (collection != null) {
             File exportDirImage =
-                FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "img"));
+                FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "img")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             try {
                 buildStudySeriesDate(collection);
 
@@ -85,9 +85,9 @@ public final class Transform2Dicom {
 
                     // Transform to jpeg
                     File imgFile = img.getFileCache().getOriginalFile().get();
-                    if (imgFile == null || !img.getMimeType().contains("jpg")
+                    if (imgFile == null || !img.getMimeType().contains("jpg") //$NON-NLS-1$
                         || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
-                        imgFile = new File(exportDirImage, uid + ".jpg");
+                        imgFile = new File(exportDirImage, uid + ".jpg"); //$NON-NLS-1$
                         PlanarImage transformedImage = img.getImage(imageInfo.getPostProcessOpManager(), false);
 
                         if (!ImageFiler.writeJPG(imgFile, transformedImage, 0.8f)) {
@@ -104,7 +104,7 @@ public final class Transform2Dicom {
                         DicomMediaUtils.fillAttributes(img.getTagEntrySetIterator(), attrs);
                         // Spatial calibration
                         if (Unit.PIXEL != img.getPixelSpacingUnit()) {
-                            attrs.setString(Tag.PixelSpacingCalibrationDescription, VR.LO, "Used fiducial");
+                            attrs.setString(Tag.PixelSpacingCalibrationDescription, VR.LO, "Used fiducial"); //$NON-NLS-1$
                             double unitRatio = img.getPixelSize()
                                 * Unit.MILLIMETER.getConversionRatio(img.getPixelSpacingUnit().getConvFactor());
                             attrs.setDouble(Tag.PixelSpacing, VR.DS, unitRatio, unitRatio);
@@ -113,7 +113,7 @@ public final class Transform2Dicom {
                         try {
                             Dicomizer.jpeg(attrs, imgFile, new File(exportDirDicom, uid), false);
                         } catch (IOException e) {
-                            LOGGER.error("Cannot dicomize {}", img.getName(), e);
+                            LOGGER.error("Cannot dicomize {}", img.getName(), e); //$NON-NLS-1$
                             continue;
                         }
 
@@ -131,7 +131,7 @@ public final class Transform2Dicom {
                     }
                 }
             } catch (Exception ex) {
-                LOGGER.error("Dicomize image", ex);
+                LOGGER.error("Dicomize image", ex); //$NON-NLS-1$
             } finally {
                 FileUtil.recursiveDelete(exportDirImage);
             }
@@ -153,7 +153,7 @@ public final class Transform2Dicom {
                 attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB,
                     GzipManager.gzipCompressToByte(outputStream.toByteArray()));
             } catch (Exception e) {
-                LOGGER.error("Cannot save model in private tag", e);
+                LOGGER.error("Cannot save model in private tag", e); //$NON-NLS-1$
             }
         }
     }
@@ -175,10 +175,10 @@ public final class Transform2Dicom {
 
             final DicomState state = CStore.process(new DicomNode(weasisAet), destination, files, dicomProgress);
             if (state.getStatus() != Status.Success) {
-                LOGGER.error("Dicom send error: {}", state.getMessage());
+                LOGGER.error("Dicom send error: {}", state.getMessage()); //$NON-NLS-1$
                 GuiExecutor.instance()
                     .execute(() -> JOptionPane.showOptionDialog(UIManager.getApplicationWindow(),
-                        String.format("Dicom send error: %s", state.getMessage()), null, JOptionPane.DEFAULT_OPTION,
+                        String.format("Dicom send error: %s", state.getMessage()), null, JOptionPane.DEFAULT_OPTION, //$NON-NLS-1$
                         JOptionPane.ERROR_MESSAGE, null, null, null));
                 // TODO throw exception
             }

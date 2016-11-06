@@ -10,21 +10,23 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer.gui.central.meta.panel.imp;
 
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSerieMeta;
 import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
+import org.weasis.core.api.util.StringUtil;
 
 public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
     private static final long serialVersionUID = -2751941971479265507L;
 
-    private static final String NO_SERIE = "No Serie";
-    private static final String SERIE_PREFIX = "Serie : ";
+    private static final String NO_SERIE = Messages.getString("AcquireSerieMetaPanel.no_series"); //$NON-NLS-1$
+    private static final String SERIE_PREFIX = Messages.getString("AcquireSerieMetaPanel.series") + StringUtil.COLON_AND_SPACE; //$NON-NLS-1$
 
     protected Serie serie;
 
     public AcquireSerieMetaPanel(Serie serie) {
-        super("");
+        super(""); //$NON-NLS-1$
         this.serie = serie;
     }
 

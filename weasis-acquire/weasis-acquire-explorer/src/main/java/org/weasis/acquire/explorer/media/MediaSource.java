@@ -40,7 +40,7 @@ public abstract class MediaSource {
     }
 
     public String getDescription() {
-        return description != null ? description : "";
+        return description != null ? description : ""; //$NON-NLS-1$
     }
 
     public Icon getIcon() {

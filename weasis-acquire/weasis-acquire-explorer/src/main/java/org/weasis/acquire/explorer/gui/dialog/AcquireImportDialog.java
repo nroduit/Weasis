@@ -36,6 +36,7 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.AcquisitionView;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -47,19 +48,20 @@ import org.weasis.core.api.util.StringUtil;
 public class AcquireImportDialog extends JDialog implements PropertyChangeListener {
     private static final long serialVersionUID = -8736946182228791444L;
 
-    private static final String P_MAX_RANGE = "maxMinuteRange";
+    private static final String P_MAX_RANGE = "maxMinuteRange"; //$NON-NLS-1$
 
     private final AcquireThumbnailListPane<? extends MediaElement> mainPanel;
 
-    private final Object[] options = { "Validate", "Cancel" };
-    private final static String REVALIDATE = "ReValidate";
+    static final Object[] OPTIONS =
+        { Messages.getString("AcquireImportDialog.validate"), Messages.getString("AcquireImportDialog.cancel") }; //$NON-NLS-1$ //$NON-NLS-2$
+    static final String REVALIDATE = "ReValidate"; //$NON-NLS-1$
 
     private final JTextField serieName = new JTextField();
     private final ButtonGroup btnGrp = new ButtonGroup();
 
-    private final JRadioButton btn1 = new JRadioButton("Do not group");
-    private final JRadioButton btn2 = new JRadioButton("Group by date");
-    private final JRadioButton btn3 = new JRadioButton("Group by name");
+    private final JRadioButton btn1 = new JRadioButton(Messages.getString("AcquireImportDialog.no_grp")); //$NON-NLS-1$
+    private final JRadioButton btn2 = new JRadioButton(Messages.getString("AcquireImportDialog.date_grp")); //$NON-NLS-1$
+    private final JRadioButton btn3 = new JRadioButton(Messages.getString("AcquireImportDialog.name_grp")); //$NON-NLS-1$
     private final JSpinner spinner;
 
     private Serie serieType = Serie.DEFAULT_SERIE;
@@ -83,7 +85,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         spinner = new JSpinner(new SpinnerNumberModel(maxRange, 1, 5256000, 5));
 
         optionPane = new JOptionPane(initPanel(), JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null,
-            options, options[0]);
+            OPTIONS, OPTIONS[0]);
         optionPane.addPropertyChangeListener(this);
         setContentPane(optionPane);
         setModal(true);
@@ -96,7 +98,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         panel.setBorder(new EmptyBorder(0, 0, 20, 10));
         panel.setLayout(new GridBagLayout());
 
-        JLabel question = new JLabel("Select how to group the images" + StringUtil.COLON);
+        JLabel question = new JLabel(Messages.getString("AcquireImportDialog.grp_msg") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(0, 0, 15, 0);
         c.gridx = 0;
@@ -134,7 +136,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         c.gridy = 2;
         c.gridwidth = GridBagConstraints.REMAINDER;
         c.anchor = GridBagConstraints.WEST;
-        panel.add(new JLabel("(max range in minutes)"), c);
+        panel.add(new JLabel(Messages.getString("AcquireImportDialog.max_range_min")), c); //$NON-NLS-1$
 
         c = new GridBagConstraints();
         c.gridx = 0;
@@ -197,7 +199,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         Object action = evt.getNewValue();
         if (action != null) {
             boolean close = true;
-            if (action.equals(options[0])) {
+            if (action.equals(OPTIONS[0])) {
                 if (btnGrp.getSelection().equals(btn1.getModel())) {
                     serieType = Serie.DEFAULT_SERIE;
                 } else if (btnGrp.getSelection().equals(btn2.getModel())) {
@@ -206,8 +208,8 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
                     if (serieName.getText() != null && !serieName.getText().isEmpty()) {
                         serieType = new Serie(serieName.getText());
                     } else {
-                        JOptionPane.showMessageDialog(this, "PLease provide a name for the Serie",
-                            "The Serie name cannot be empty", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"), //$NON-NLS-1$
+                            Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
                         optionPane.setValue(REVALIDATE);
                         close = false;
                     }

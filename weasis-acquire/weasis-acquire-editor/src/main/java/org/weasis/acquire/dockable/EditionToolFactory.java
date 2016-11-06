@@ -42,7 +42,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 public class EditionToolFactory implements InsertableFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
 
-    public static final ActionW EDITON = new ActionW("Edit", "draw.edition", KeyEvent.VK_G, 0, null) { //$NON-NLS-1$ $NON-NLS-2$
+    public static final ActionW EDITON = new ActionW("Edit", "draw.edition", KeyEvent.VK_G, 0, null) { //$NON-NLS-1$ //$NON-NLS-2$
         @Override
         public boolean isDrawingAction() {
             return true;
@@ -104,12 +104,12 @@ public class EditionToolFactory implements InsertableFactory {
 
     @Activate
     protected void activate(ComponentContext context) {
-        LOGGER.info("Activate the TransformationTool panel");
+        LOGGER.info("Activate the TransformationTool panel"); //$NON-NLS-1$
     }
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("Deactivate the TransformationTool panel");
+        LOGGER.info("Deactivate the TransformationTool panel"); //$NON-NLS-1$
     }
 
 }

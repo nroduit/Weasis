@@ -15,6 +15,7 @@ import java.awt.FlowLayout;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.AcquireAction;
 import org.weasis.acquire.dockable.components.actions.AcquireAction.Cmd;
 
@@ -25,14 +26,14 @@ public class AcquireSubmitButtonsPanel extends JPanel {
     private final AcquireActionButton resetBtn;
 
     public AcquireSubmitButtonsPanel() {
-        setBorder(UIManager.getBorder("TitledBorder.border"));
+        setBorder(UIManager.getBorder("TitledBorder.border")); //$NON-NLS-1$
         FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER, 10, 10);
         setLayout(flowLayout);
 
-        cancelBtn = new AcquireActionButton("Cancel", Cmd.CANCEL);
-        cancelBtn.setToolTipText("Return to previous values");
-        resetBtn = new AcquireActionButton("Reset", Cmd.RESET);
-        resetBtn.setToolTipText("Reset to default values");
+        cancelBtn = new AcquireActionButton(Messages.getString("AcquireSubmitButtonsPanel.cancel"), Cmd.CANCEL); //$NON-NLS-1$
+        cancelBtn.setToolTipText(Messages.getString("AcquireSubmitButtonsPanel.return_prev")); //$NON-NLS-1$
+        resetBtn = new AcquireActionButton(Messages.getString("AcquireSubmitButtonsPanel.reset"), Cmd.RESET); //$NON-NLS-1$
+        resetBtn.setToolTipText(Messages.getString("AcquireSubmitButtonsPanel.reset_def")); //$NON-NLS-1$
 
         add(cancelBtn);
         add(resetBtn);

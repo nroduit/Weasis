@@ -47,14 +47,14 @@ public class SerieTest {
 
         s1 = new Serie();
         s2 = new Serie(today);
-        s3 = new Serie("test serie 3");
+        s3 = new Serie("test serie 3"); //$NON-NLS-1$
     }
 
     @Test
     public void testToString() {
-        assertThat(s1.toString()).isEqualTo("Other");
+        assertThat(s1.toString()).isEqualTo("Other"); //$NON-NLS-1$
         assertThat(s2.toString()).isEqualTo(LocalUtil.getDateTimeFormatter().format(today));
-        assertThat(s3.toString()).isEqualTo("test serie 3");
+        assertThat(s3.toString()).isEqualTo("test serie 3"); //$NON-NLS-1$
     }
 
     @Test
@@ -68,17 +68,17 @@ public class SerieTest {
     public void testSort() {
         Serie s1 = new Serie();
         Serie s2 = new Serie(today);
-        Serie s3 = new Serie("serie3");
+        Serie s3 = new Serie("serie3"); //$NON-NLS-1$
         assetSorted(new Serie[] { s3, s2, s1 }, new Serie[] { s1, s2, s3 });
         assetSorted(new Serie[] { s2, s3, s1 }, new Serie[] { s1, s2, s3 });
 
         Serie s4 = new Serie(today.minusDays(1));
         assetSorted(new Serie[] { s3, s2, s1, s4 }, new Serie[] { s1, s4, s2, s3 });
 
-        Serie s5 = new Serie("serie2");
+        Serie s5 = new Serie("serie2"); //$NON-NLS-1$
         assetSorted(new Serie[] { s3, s2, s1, s4, s5 }, new Serie[] { s1, s4, s2, s5, s3 });
 
-        Serie s6 = new Serie("2015");
+        Serie s6 = new Serie("2015"); //$NON-NLS-1$
         assetSorted(new Serie[] { s3, s2, s1, s4, s5, s6 }, new Serie[] { s1, s4, s2, s6, s5, s3 });
     }
 

@@ -17,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.dialog.AcquireImportDialog;
 import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
@@ -29,7 +30,7 @@ import org.weasis.core.api.util.FontTools;
 public class ImportPanel extends JPanel {
     private static final long serialVersionUID = -8658686020451614960L;
 
-    private JButton importBtn = new JButton("Import");
+    private JButton importBtn = new JButton(Messages.getString("ImportPanel.import")); //$NON-NLS-1$
 
     public ImportPanel(AcquireThumbnailListPane<MediaElement> mainPanel, ImageGroupPane centralPane) {
         importBtn.setPreferredSize(new Dimension(150, 40));

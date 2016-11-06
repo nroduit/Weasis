@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageStatus;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.dicom.Transform2Dicom;
 import org.weasis.acquire.explorer.gui.dialog.AcquirePublishDialog;
 import org.weasis.core.api.gui.task.CircularProgressBar;
@@ -46,7 +47,7 @@ public class AcquirePublishPanel extends JPanel {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishPanel.class);
 
-    private final JButton publishBtn = new JButton("Publish");
+    private final JButton publishBtn = new JButton(Messages.getString("AcquirePublishPanel.publish")); //$NON-NLS-1$
     private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
 
     public AcquirePublishPanel() {
@@ -68,9 +69,9 @@ public class AcquirePublishPanel extends JPanel {
     public void publish(List<AcquireImageInfo> toPublish) {
         File exportDirDicom = Transform2Dicom.dicomize(toPublish);
 
-        String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host", "localhost");
-        String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.aet", "DCM4CHEE");
-        String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.port", "11112");
+        String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host", "localhost"); //$NON-NLS-1$ //$NON-NLS-2$
+        String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.aet", "DCM4CHEE"); //$NON-NLS-1$ //$NON-NLS-2$
+        String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.port", "11112"); //$NON-NLS-1$ //$NON-NLS-2$
 
         final DicomNode node = new DicomNode(aet, host, Integer.parseInt(port));
 
@@ -80,7 +81,7 @@ public class AcquirePublishPanel extends JPanel {
             Transform2Dicom.sendDicomFiles(exportDirDicom, node, progressBar);
             toPublish.stream().forEach(AcquireImageInfo.changeStatus(AcquireImageStatus.PUBLISHED));
         } catch (Exception ex) {
-            LOGGER.error("Sending DICOM", ex);
+            LOGGER.error("Sending DICOM", ex); //$NON-NLS-1$
             // TODO Change to FAILED
             toPublish.stream().forEach(AcquireImageInfo.changeStatus(AcquireImageStatus.TO_PUBLISH));
         } finally {
@@ -90,8 +91,8 @@ public class AcquirePublishPanel extends JPanel {
 
     public void publishForTest(List<AcquireImageInfo> toPublish) {
         File exportDirImage =
-            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "acquire", "img"));
-        File exportDirXml = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "acquire", "xml"));
+            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "acquire", "img")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        File exportDirXml = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "acquire", "xml")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         toPublish.stream().forEach(imageInfo -> {
             writteJpeg(exportDirImage, imageInfo);
@@ -114,7 +115,7 @@ public class AcquirePublishPanel extends JPanel {
         String uid = (String) img.getTagValue(tagUid);
 
         if (!imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
-            File imgFile = new File(exportDirImage, uid + ".jpg");
+            File imgFile = new File(exportDirImage, uid + ".jpg"); //$NON-NLS-1$
             PlanarImage transformedImage = img.getImage(imageInfo.getPostProcessOpManager(), false);
 
             if (!ImageFiler.writeJPG(imgFile, transformedImage, 0.8f)) {

@@ -19,6 +19,7 @@ import java.util.List;
 import javax.swing.Icon;
 
 import org.weasis.acquire.AcquireObject;
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.image.ImageOpNode;
@@ -95,7 +96,7 @@ public class CropRectangleGraphic extends RectangleGraphic {
 
     @Override
     public String getUIName() {
-        return "Crop image";
+        return Messages.getString("CropRectangleGraphic.crop_img"); //$NON-NLS-1$
     }
 
     @Override

@@ -22,6 +22,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.EditionToolFactory;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.dockable.components.actions.rectify.lib.AbstractRectifyButton;
@@ -53,7 +54,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     private final OrientationSliderComponent orientationPanel;
     private final AbstractRectifyButton rotate90btn;
     private final AbstractRectifyButton rotate270btn;
-    private final JCheckBox flipCheckBox = new JCheckBox("Flip Horizontally (after rotation)");
+    private final JCheckBox flipCheckBox = new JCheckBox(Messages.getString("RectifyPanel.flip_hz")); //$NON-NLS-1$
 
     private final RectifyAction rectifyAction;
     private final FlipActionListener flipActionListener;

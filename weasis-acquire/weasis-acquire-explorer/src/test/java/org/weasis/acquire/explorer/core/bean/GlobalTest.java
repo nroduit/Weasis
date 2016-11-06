@@ -75,7 +75,7 @@ public class GlobalTest extends GlobalHelper {
         global.init(null);
 
         // Tests
-        fail("should raise anexception");
+        fail("should raise anexception"); //$NON-NLS-1$
     }
 
     @Test
@@ -111,7 +111,7 @@ public class GlobalTest extends GlobalHelper {
         Object value;
 
         if (tag.type.equals(TagType.DATE)) {
-            value = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()).parse(tag.value);
+            value = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()).parse(tag.value); //$NON-NLS-1$
         } else {
             value = tag.value;
         }

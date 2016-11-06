@@ -17,6 +17,7 @@ import javax.swing.table.AbstractTableModel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
 
@@ -26,7 +27,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     private static final TagW[] NO_TAGS = {};
-    protected String[] headers = { "Tag", "Value" };
+    protected String[] headers = { Messages.getString("AcquireMetadataTableModel.tag"), Messages.getString("AcquireMetadataTableModel.val") }; //$NON-NLS-1$ //$NON-NLS-2$
     protected Optional<Tagable> tagable;
 
     public AcquireMetadataTableModel(Tagable tagable) {

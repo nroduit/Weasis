@@ -23,6 +23,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.weasis.acquire.AcquireObject;
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.dockable.components.actions.contrast.comp.BrightnessComponent;
 import org.weasis.acquire.dockable.components.actions.contrast.comp.ContrastComponent;
@@ -45,7 +46,7 @@ public class ContrastPanel extends AbstractAcquireActionPanel implements ChangeL
     private final AbstractSliderComponent brightnessPanel;
     private final AutoLevelListener autoLevelListener;
 
-    private JCheckBox autoLevelBtn = new JCheckBox("Auto Level");
+    private JCheckBox autoLevelBtn = new JCheckBox(Messages.getString("ContrastPanel.auto")); //$NON-NLS-1$
 
     public ContrastPanel() {
         super();

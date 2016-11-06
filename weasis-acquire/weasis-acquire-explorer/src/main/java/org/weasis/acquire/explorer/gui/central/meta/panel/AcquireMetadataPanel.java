@@ -65,7 +65,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         model.addTableModelListener(this);
         table = new JTable(model);
         // Force to commit value when losing the focus
-        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE); //$NON-NLS-1$
         table.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
 
         tableContainer = new JPanel(new BorderLayout());

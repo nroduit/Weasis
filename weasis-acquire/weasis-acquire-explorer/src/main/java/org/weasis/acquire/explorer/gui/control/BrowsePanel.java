@@ -42,7 +42,7 @@ import net.samuelcampos.usbdrivedectector.events.USBStorageEvent;
 
 @SuppressWarnings("serial")
 public class BrowsePanel extends JPanel implements IUSBDriveListener {
-    private static final String USER_HOME = System.getProperty("user.home");
+    private static final String USER_HOME = System.getProperty("user.home"); //$NON-NLS-1$
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BrowsePanel.class);
 

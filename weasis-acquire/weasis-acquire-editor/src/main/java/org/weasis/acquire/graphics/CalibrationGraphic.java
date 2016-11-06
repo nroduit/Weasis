@@ -18,6 +18,7 @@ import javax.swing.Icon;
 import javax.swing.JOptionPane;
 
 import org.weasis.acquire.AcquireObject;
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.EditionToolFactory;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
@@ -58,7 +59,7 @@ public class CalibrationGraphic extends LineGraphic {
 
         if (!getResizingOrMoving()) {
             CalibrationView calibrationDialog = new CalibrationView(this, view, false);
-            int res = JOptionPane.showConfirmDialog(view.getJComponent(), calibrationDialog, "Calibration",
+            int res = JOptionPane.showConfirmDialog(view.getJComponent(), calibrationDialog, Messages.getString("CalibrationGraphic.calib"), //$NON-NLS-1$
                 JOptionPane.OK_CANCEL_OPTION);
             if (res == JOptionPane.OK_OPTION) {
                 calibrationDialog.applyNewCalibration();
@@ -97,7 +98,7 @@ public class CalibrationGraphic extends LineGraphic {
 
     @Override
     public String getUIName() {
-        return "Calibration line";
+        return Messages.getString("CalibrationGraphic.calib_line"); //$NON-NLS-1$
     }
 
     @Override

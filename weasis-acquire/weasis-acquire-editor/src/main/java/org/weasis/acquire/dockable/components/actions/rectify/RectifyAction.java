@@ -83,7 +83,7 @@ public class RectifyAction extends AbstractAcquireAction {
                 double viewportHeight = view.getJComponent().getHeight() - 1.0;
                 view.zoom(Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight()));
             } catch (InvalidShapeException e) {
-                LOGGER.error("Build crop graphic", e);
+                LOGGER.error("Build crop graphic", e); //$NON-NLS-1$
             }
         }
     }
@@ -116,7 +116,7 @@ public class RectifyAction extends AbstractAcquireAction {
             transform.transform(pMin, pMin);
             transform.transform(pMax, pMax);
         } catch (NoninvertibleTransformException e) {
-            LOGGER.error("Create inverse transformation", e);
+            LOGGER.error("Create inverse transformation", e); //$NON-NLS-1$
         }
 
         Rectangle2D rect = new Rectangle2D.Double();

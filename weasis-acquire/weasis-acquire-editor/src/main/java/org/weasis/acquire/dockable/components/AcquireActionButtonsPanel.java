@@ -19,6 +19,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 
 import org.weasis.acquire.AcquireObject;
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.EditionTool;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.dockable.components.actions.AcquireAction;
@@ -45,11 +46,11 @@ public class AcquireActionButtonsPanel extends JPanel {
 
         this.editionTool = editionTool;
 
-        setSelected(addNewButton("Metadata", new MetadataAction(this)));
-        addNewButton("Rectify", new RectifyAction(this));
-        addNewButton("Contrasts", new ContrastAction(this));
-        addNewButton("Calibration", new CalibrationAction(this));
-        addNewButton("Annotation", new AnnotateAction(this));
+        setSelected(addNewButton(Messages.getString("AcquireActionButtonsPanel.metadata"), new MetadataAction(this))); //$NON-NLS-1$
+        addNewButton(Messages.getString("AcquireActionButtonsPanel.rectify"), new RectifyAction(this)); //$NON-NLS-1$
+        addNewButton(Messages.getString("AcquireActionButtonsPanel.contrast"), new ContrastAction(this)); //$NON-NLS-1$
+        addNewButton(Messages.getString("AcquireActionButtonsPanel.calib"), new CalibrationAction(this)); //$NON-NLS-1$
+        addNewButton(Messages.getString("AcquireActionButtonsPanel.annotation"), new AnnotateAction(this)); //$NON-NLS-1$
     }
 
     private AcquireActionButton addNewButton(String title, AcquireAction action) {

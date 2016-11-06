@@ -22,6 +22,7 @@ import javax.swing.JPopupMenu;
 
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
 import org.weasis.acquire.explorer.gui.central.component.SerieButton;
@@ -33,6 +34,7 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.util.DefaultAction;
 
 @SuppressWarnings({ "serial" })
@@ -79,15 +81,15 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
         if (!medias.isEmpty()) {
             JPopupMenu popupMenu = new JPopupMenu();
 
-            popupMenu.add(new JMenuItem(new DefaultAction("Edit", event -> openSelection())));
+            popupMenu.add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.edit"), event -> openSelection()))); //$NON-NLS-1$
 
-            popupMenu.add(new JMenuItem(new DefaultAction("Remove", event -> {
+            popupMenu.add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.remove"), event -> { //$NON-NLS-1$
                 clearSelection();
                 AcquireCentralThumnailList.this.acquireTabPanel.removeElements(AcquireManager.toImageElement(medias));
                 repaint();
             })));
 
-            JMenu moveToMenu = new JMenu("Move to...");
+            JMenu moveToMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.moveto")); //$NON-NLS-1$
 
             moveToOther(moveToMenu, medias);
             moveToMenu.addSeparator();
@@ -97,9 +99,9 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
             }
             moveToNewSerie(moveToMenu, medias);
 
-            JMenu operationsMenu = new JMenu("Operations...");
-            operationRotate(operationsMenu, medias, "Rotate +90°", 90);
-            operationRotate(operationsMenu, medias, "Rotate -90°", 270);
+            JMenu operationsMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.operations")); //$NON-NLS-1$
+            operationRotate(operationsMenu, medias,Messages.getString("AcquireCentralThumnailList.rotate") + StringUtil.COLON_AND_SPACE + Messages.getString("AcquireCentralThumnailList.plus90"), 90);  //$NON-NLS-1$//$NON-NLS-2$
+            operationRotate(operationsMenu, medias,Messages.getString("AcquireCentralThumnailList.rotate") + StringUtil.COLON_AND_SPACE + Messages.getString("AcquireCentralThumnailList.min90"), 270);  //$NON-NLS-1$//$NON-NLS-2$
 
             popupMenu.add(moveToMenu);
             popupMenu.add(operationsMenu);
@@ -134,7 +136,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
     }
 
     private void moveToNewSerie(JMenu moveToMenu, final List<E> medias) {
-        moveToMenu.add(new JMenuItem(new DefaultAction("New Serie", event -> {
+        moveToMenu.add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.new_series"), event -> { //$NON-NLS-1$
             JDialog dialog = new AcquireNewSerieDialog(AcquireCentralThumnailList.this.acquireTabPanel,
                 AcquireManager.toImageElement(medias));
             JMVUtils.showCenterScreen(dialog, AcquireCentralThumnailList.this.acquireTabPanel);

@@ -48,7 +48,7 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
     protected static final Logger LOGGER = LoggerFactory.getLogger(AcquisitionView.class);
 
     public static final String BUTTON_NAME = "dicomizer"; //$NON-NLS-1$
-    public static final String NAME = "Acquisition";
+    public static final String NAME = Messages.getString("AcquisitionView.acquisition"); //$NON-NLS-1$
     public static final String P_LAST_DIR = "last.dir"; //$NON-NLS-1$
     public static final String PREFERENCE_NODE = "importer"; //$NON-NLS-1$
 
@@ -56,7 +56,7 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
 
     private MediaSource systemDrive;
 
-    private final ImageGroupPane centralPane = new ImageGroupPane("Albums");
+    private final ImageGroupPane centralPane = new ImageGroupPane(Messages.getString("AcquisitionView.albums")); //$NON-NLS-1$
 
     private AcquireThumbnailListPane<MediaElement> acquireThumbnailListPane;
     private BrowsePanel browsePanel;

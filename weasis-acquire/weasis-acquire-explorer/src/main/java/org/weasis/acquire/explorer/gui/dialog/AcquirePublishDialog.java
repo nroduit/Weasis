@@ -36,6 +36,7 @@ import javax.swing.tree.TreePath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
 import org.weasis.acquire.explorer.util.ImageInfoHelper;
@@ -59,7 +60,7 @@ public class AcquirePublishDialog extends JDialog {
     private final JComboBox<EResolution> resolutionCombo;
 
     public AcquirePublishDialog(AcquirePublishPanel publishPanel) {
-        super(WinUtil.getParentWindow(publishPanel), "", ModalityType.APPLICATION_MODAL);
+        super(WinUtil.getParentWindow(publishPanel), "", ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
         this.resolutionCombo = new JComboBox<>(EResolution.values());
         this.publishPanel = publishPanel;
         this.initContent();
@@ -75,7 +76,7 @@ public class AcquirePublishDialog extends JDialog {
     private JPanel initContent() {
         content.setBorder(new EmptyBorder(10, 15, 10, 15));
         content.setLayout(new BorderLayout());
-        JLabel question = new JLabel("Select the images to be published");
+        JLabel question = new JLabel(Messages.getString("AcquirePublishDialog.select_pub")); //$NON-NLS-1$
         question.setFont(FontTools.getFont12Bold());
         JPanel responsesPanel = new JPanel(new BorderLayout());
         responsesPanel.setBorder(BorderFactory.createEmptyBorder(30, 10, 10, 10));
@@ -104,11 +105,11 @@ public class AcquirePublishDialog extends JDialog {
         flowLayout.setVgap(10);
         panel.add(panel1, BorderLayout.SOUTH);
 
-        JButton buttonNewButton = new JButton("Publish");
+        JButton buttonNewButton = new JButton(Messages.getString("AcquirePublishDialog.publish")); //$NON-NLS-1$
         buttonNewButton.addActionListener(e -> publishAction());
         panel1.add(buttonNewButton);
 
-        JButton buttonNewButton1 = new JButton("Cancel");
+        JButton buttonNewButton1 = new JButton(Messages.getString("AcquirePublishDialog.cancel")); //$NON-NLS-1$
         buttonNewButton1.addActionListener(e -> clearAndHide());
         panel1.add(buttonNewButton1);
         panel.add(resolutionPanel, BorderLayout.NORTH);
@@ -123,7 +124,7 @@ public class AcquirePublishDialog extends JDialog {
 
         panel.setBorder(BorderFactory.createCompoundBorder(margin, line));
 
-        JLabel resolutionLabel = new JLabel("Resolution" + StringUtil.COLON_AND_SPACE);
+        JLabel resolutionLabel = new JLabel(Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
 
         panel.add(resolutionLabel);
         panel.add(resolutionCombo);
@@ -144,8 +145,8 @@ public class AcquirePublishDialog extends JDialog {
         List<AcquireImageInfo> toPublish = getSelectedImages(tree);
 
         if (toPublish.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please, select at least one image to publish",
-                "The publish list cannot be empty", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.select_one_msg"), //$NON-NLS-1$
+                "", JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             return;
         }
 
@@ -195,7 +196,7 @@ public class AcquirePublishDialog extends JDialog {
     }
 
     public enum EResolution {
-        original("Original"), hd("High Resolution"), md("Medium Resolution");
+        original(Messages.getString("AcquirePublishDialog.original")), hd(Messages.getString("AcquirePublishDialog.high_res")), md(Messages.getString("AcquirePublishDialog.med_res")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         private String title;
 
