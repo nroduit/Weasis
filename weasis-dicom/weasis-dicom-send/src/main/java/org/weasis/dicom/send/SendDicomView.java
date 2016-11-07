@@ -12,10 +12,16 @@ package org.weasis.dicom.send;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
@@ -40,7 +46,6 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.CheckTreeModel;
 import org.weasis.dicom.explorer.DicomModel;
@@ -62,6 +67,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomView.class);
 
     private static final String LAST_SEL_NODE = "lastSelNode"; //$NON-NLS-1$
+    private static final String STOW_BOUNDARY = "mimeTypeBoundary";
+    private static final String STOW_SEG = "--";
+    private static final String RETURN = "\r\n";
 
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
@@ -115,7 +123,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     }
 
     public void applyChange() {
-        final DefaultDicomNode node = (DefaultDicomNode) comboNode.getSelectedItem();
+        final AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
         if (node != null) {
             SendDicomFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
         }
@@ -185,7 +193,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
             Object selectedItem = comboNode.getSelectedItem();
             if (selectedItem instanceof DefaultDicomNode) {
-                final DefaultDicomNode node = (DefaultDicomNode) comboNode.getSelectedItem();
+                final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
                 final DicomState state =
                     CStore.process(new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
                 if (state.getStatus() != Status.Success) {
@@ -194,7 +202,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                         null, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null));
                 }
             } else if (selectedItem instanceof DicomWebNode) {
-                // TODO to implement
+                postDicom((DicomWebNode) selectedItem, files);
             }
         } finally {
             FileUtil.recursiveDelete(exportDir);
@@ -220,7 +228,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     if (index == -1) {
                         uids.add(iuid);
                     } else {
-                        // Write only once the file for multiframe
+                        // Write only once the file for multiframes
                         continue;
                     }
 
@@ -229,24 +237,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     destinationDir.mkdirs();
 
                     File destinationFile = new File(destinationDir, iuid);
-                    if (img.saveToFile(destinationFile)) {
-                        // if (writeGraphics) {
-                        // // TODO remove me and use PR
-                        // DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
-                        // }
-                    } else {
+                    if (!img.saveToFile(destinationFile)) {
                         LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
-                    }
-                } else if (node.getUserObject() instanceof DicomSpecialElement) {
-                    DicomSpecialElement dcm = (DicomSpecialElement) node.getUserObject();
-                    String iuid = TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class);
-                    String path = LocalExport.buildPath(dcm, false, false, false, node);
-                    File destinationDir = new File(writeDir, path);
-                    destinationDir.mkdirs();
-
-                    File destinationFile = new File(destinationDir, iuid);
-                    if (!dcm.saveToFile(destinationFile)) {
-                        // LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
                     }
                 } else if (node.getUserObject() instanceof MediaElement) {
                     MediaElement dcm = (MediaElement) node.getUserObject();
@@ -255,13 +247,76 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     String path = LocalExport.buildPath(dcm, false, false, false, node);
                     File destinationDir = new File(writeDir, path);
                     destinationDir.mkdirs();
-
-                    File destinationFile = new File(destinationDir, iuid);
-                    if (!dcm.saveToFile(destinationFile)) {
-                        // LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
-                    }
+                    
+                    dcm.saveToFile(new File(destinationDir, iuid));
                 }
             }
+        }
+    }
+
+    private static void postDicom(DicomWebNode destination, List<String> files) {
+        HttpURLConnection httpPost = null;
+        try {
+            httpPost = (HttpURLConnection) destination.getUrl().openConnection();
+            httpPost.setDoOutput(true);
+            httpPost.setDoInput(true);
+            httpPost.setRequestMethod("POST");
+            httpPost.setRequestProperty("Content-Type",
+                "multipart/related; type=application/dicom; boundary=" + STOW_BOUNDARY);
+            httpPost.setUseCaches(false);
+
+            DataOutputStream out = new DataOutputStream(httpPost.getOutputStream());
+            for (String entry : files) {
+                File file = new File(entry);
+                if (file.isDirectory()) {
+                    List<File> fileList = new ArrayList<>();
+                    FileUtil.getAllFilesInDirectory(file, fileList);
+                    for (File f : fileList) {
+                        postDicomStream(f, out);
+                    }
+                } else {
+                    postDicomStream(file, out);
+                }
+            }
+            // Final part segment
+            out.writeBytes(RETURN);
+            out.writeBytes(STOW_SEG);
+            out.writeBytes(STOW_BOUNDARY);
+            out.writeBytes(STOW_SEG);
+            out.flush();
+            out.close();
+            String response = httpPost.getResponseMessage();
+            LOGGER.info("STOWRS: server response: {}", response);
+        } catch (Exception e) {
+            LOGGER.error("STOWRS: error when posting data", e);
+        } finally {
+            Optional.ofNullable(httpPost).ifPresent(h -> h.disconnect());
+        }
+
+    }
+
+    private static void postDicomStream(File file, DataOutputStream out) throws IOException {
+        // Segment for a part
+        out.writeBytes(RETURN);
+        out.writeBytes(STOW_SEG);
+        out.writeBytes(STOW_BOUNDARY);
+        out.writeBytes(RETURN);
+        out.writeBytes("Content-Type: application/dicom\r\n\r\n");
+
+        // write dicom binary file
+        writeStream(new FileInputStream(file), out);
+    }
+
+    private static void writeStream(InputStream inputStream, OutputStream out) throws IOException {
+        try {
+            byte[] buf = new byte[FileUtil.FILE_BUFFER];
+            int offset;
+            while ((offset = inputStream.read(buf)) > 0) {
+                out.write(buf, 0, offset);
+            }
+            out.flush();
+        } finally {
+            FileUtil.safeClose(inputStream);
         }
     }
 
