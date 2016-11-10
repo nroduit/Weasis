@@ -116,6 +116,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public static final String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat"); //$NON-NLS-1$
     public static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st"); //$NON-NLS-1$
     public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
+    public static final Icon KO_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png")); // $NON-NLS-0$
 
     private JPanel panel = null;
     private PatientPane selectedPatient = null;
@@ -161,8 +162,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     private final JButton btnExport;
     private final JButton btnImport;
-    private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), new ImageIcon( //$NON-NLS-1$
-        DicomExplorer.class.getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
+    private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), KO_ICON); //$NON-NLS-1$
 
     public DicomExplorer() {
         this(null);
@@ -1433,8 +1433,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public List<Action> getOpenImportDialogAction() {
         ArrayList<Action> actions = new ArrayList<>(2);
         actions.add(btnImport.getAction());
-        DefaultAction importCDAction =
-            new DefaultAction(Messages.getString("DicomExplorer.dcmCD"), new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), event ->  openImportDialogAction(Messages.getString("DicomExplorer.dcmCD")));  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+        DefaultAction importCDAction = new DefaultAction(Messages.getString("DicomExplorer.dcmCD"), //$NON-NLS-1$
+            new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), //$NON-NLS-1$
+            event -> openImportDialogAction(Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
         actions.add(importCDAction);
         return actions;
     }

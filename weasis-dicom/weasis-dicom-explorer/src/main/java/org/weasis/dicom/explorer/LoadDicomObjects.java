@@ -140,12 +140,14 @@ public class LoadDicomObjects extends ExplorerTask {
             if (dicomSeries == null) {
                 dicomSeries = dicomReader.buildSeries(seriesUID);
                 dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
+                dicomSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
                 dicomReader.writeMetaData(dicomSeries);
                 dicomModel.addHierarchyNode(study, dicomSeries);
                 MediaElement[] medias = dicomReader.getMediaElement();
                 if (medias != null) {
                     for (MediaElement media : medias) {
                         dicomModel.applySplittingRules(dicomSeries, media);
+                        media.setTag(TagW.ObjectToSave, Boolean.TRUE);
                     }
                     if (medias.length > 0) {
                         dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
@@ -196,6 +198,7 @@ public class LoadDicomObjects extends ExplorerTask {
                 if (medias != null) {
                     for (MediaElement media : medias) {
                         dicomModel.applySplittingRules(dicomSeries, media);
+                        media.setTag(TagW.ObjectToSave, Boolean.TRUE);
                     }
                     if (medias.length > 0) {
                         dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());

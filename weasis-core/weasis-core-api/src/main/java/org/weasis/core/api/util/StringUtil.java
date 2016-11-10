@@ -126,13 +126,6 @@ public class StringUtil {
         return result;
     }
 
-    public static String integer2String(Integer val) {
-        if (val != null) {
-            return val.toString();
-        }
-        return null;
-    }
-
     public static String splitCamelCaseString(String s) {
         StringBuilder builder = new StringBuilder();
         for (String w : s.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) { //$NON-NLS-1$

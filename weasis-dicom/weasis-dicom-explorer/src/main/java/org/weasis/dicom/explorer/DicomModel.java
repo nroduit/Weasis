@@ -460,7 +460,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     }
 
-    public static boolean isSpecialModality(Series series) {
+    public static boolean isSpecialModality(MediaSeries<?> series) {
         String modality = (series == null) ? null : TagD.getTagValue(series, Tag.Modality, String.class);
         return modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
     }

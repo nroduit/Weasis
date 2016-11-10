@@ -11,8 +11,6 @@
 package org.weasis.dicom.explorer;
 
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -32,6 +30,7 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
+@SuppressWarnings("serial")
 public class DicomZipImport extends AbstractItemDialogPage implements ImportDicom {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomZipImport.class);
 
@@ -53,12 +52,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
             TitledBorder.TOP, null, null));
         setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
         btnOpen = new JButton(Messages.getString("DicomZipImport.select_file")); //$NON-NLS-1$
-        btnOpen.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                browseImgFile();
-            }
-        });
+        btnOpen.addActionListener(e -> browseImgFile());
         add(btnOpen);
         add(fileLabel);
     }
@@ -81,9 +75,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
     }
 
     protected void initialize(boolean afirst) {
-        if (afirst) {
-
-        }
+         // Do nothing     
     }
 
     public void resetSettingsToDefault() {
@@ -91,10 +83,11 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
     }
 
     public void applyChange() {
-
+        // Do nothing
     }
 
     protected void updateChanges() {
+        // Do nothing
     }
 
     @Override
@@ -105,6 +98,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
 
     @Override
     public void resetoDefaultValues() {
+        // Do nothing
     }
 
     @Override
@@ -119,13 +113,13 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                 try {
                     FileUtil.unzip(file, dir);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOGGER.error("", e);
                 }
                 File dicomdir = new File(dir, "DICOMDIR"); //$NON-NLS-1$
                 if (dicomdir.canRead()) {
                     DicomDirLoader dirImport = new DicomDirLoader(dicomdir, dicomModel, false); // $NON-NLS-1$
                     List<LoadSeries> loadSeries = dirImport.readDicomDir();
-                    if (loadSeries != null && loadSeries.size() > 0) {
+                    if (loadSeries != null && !loadSeries.isEmpty()) {
                         DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
                     } else {
                         LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$

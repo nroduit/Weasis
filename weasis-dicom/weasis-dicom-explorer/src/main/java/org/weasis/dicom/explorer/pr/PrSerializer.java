@@ -72,19 +72,20 @@ public class PrSerializer {
     }
 
     public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,
-        String sopInstanceUID) {
-        return writePresentation(model, parentAttributes, outputFile, sopInstanceUID, null);
+        String seriesInstanceUID, String sopInstanceUID) {
+        return writePresentation(model, parentAttributes, outputFile,seriesInstanceUID, sopInstanceUID, null);
     }
 
     public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,
-        String sopInstanceUID, Point2D offset) {
+        String seriesInstanceUID, String sopInstanceUID, Point2D offset) {
         Objects.requireNonNull(model);
         Objects.requireNonNull(outputFile);
 
         if (parentAttributes != null) {
             try {
                 GraphicModel m = getModelForSerialization(model, offset);
-                Attributes attributes = DicomMediaUtils.createDicomPR(parentAttributes, null, sopInstanceUID);
+                Attributes attributes =
+                    DicomMediaUtils.createDicomPR(parentAttributes, seriesInstanceUID, sopInstanceUID);
 
                 writeCommonTags(attributes);
                 writeReferences(attributes, m, parentAttributes.getString(Tag.SOPClassUID));
@@ -101,10 +102,10 @@ public class PrSerializer {
     }
 
     public static Attributes writePresentation(GraphicModel model, DicomImageElement img, File outputFile,
-        String sopInstanceUID) {
+        String seriesInstanceUID, String sopInstanceUID) {
         Attributes imgAttributes = img.getMediaReader() instanceof DcmMediaReader
             ? ((DcmMediaReader) img.getMediaReader()).getDicomObject() : null;
-        return writePresentation(model, imgAttributes, outputFile, sopInstanceUID);
+        return writePresentation(model, imgAttributes, outputFile, seriesInstanceUID, sopInstanceUID, null);
     }
 
     private static GraphicModel getModelForSerialization(GraphicModel model, Point2D offset) {

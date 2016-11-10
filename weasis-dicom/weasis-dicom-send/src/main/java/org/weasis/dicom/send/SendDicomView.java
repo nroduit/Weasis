@@ -34,6 +34,7 @@ import javax.swing.tree.TreePath;
 
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.Status;
+import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -41,10 +42,15 @@ import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.CheckTreeModel;
@@ -247,8 +253,24 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     String path = LocalExport.buildPath(dcm, false, false, false, node);
                     File destinationDir = new File(writeDir, path);
                     destinationDir.mkdirs();
-                    
+
                     dcm.saveToFile(new File(destinationDir, iuid));
+                } else if (node.getUserObject() instanceof Series) {
+                    MediaSeries<?> s = (MediaSeries<?>) node.getUserObject();
+                    if (JMVUtils.getNULLtoFalse(s.getTagValue(TagW.ObjectToSave))) {
+                        Series<?> series = (Series<?>) s.getTagValue(CheckTreeModel.SourceSeriesForPR);
+                        if (series != null) {
+                            String seriesInstanceUID = UIDUtils.createUID();
+                            for (MediaElement dcm : series.getMedias(null, null)) {
+                                GraphicModel grModel = (GraphicModel) dcm.getTagValue(TagW.PresentationModel);
+                                if (grModel != null && grModel.hasSerializableGraphics()) {
+                                    String path = LocalExport.buildPath(dcm, false, false, false, node);
+                                    LocalExport.buildAndWritePR(dcm, false, new File(writeDir, path), null,
+                                        node, seriesInstanceUID);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -73,7 +73,9 @@ public final class Transform2Dicom {
                 FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "img")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             try {
                 buildStudySeriesDate(collection);
-
+                // Global series for all PR
+                String seriesInstanceUID = UIDUtils.createUID();
+                
                 for (AcquireImageInfo imageInfo : collection) {
                     ImageElement img = imageInfo.getImage();
                     TagW tagUid = TagD.getUID(Level.INSTANCE);
@@ -126,7 +128,7 @@ public final class Transform2Dicom {
                             }
                             String prUid = UIDUtils.createUID();
                             File outputFile = new File(exportDirDicom, prUid);
-                            PrSerializer.writePresentation(grModel, attrs, outputFile, prUid, offset);
+                            PrSerializer.writePresentation(grModel, attrs, outputFile, seriesInstanceUID, prUid, offset);
                         }
                     }
                 }

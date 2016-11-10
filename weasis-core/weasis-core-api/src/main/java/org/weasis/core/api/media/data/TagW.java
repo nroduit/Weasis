@@ -120,6 +120,7 @@ public class TagW implements Serializable {
     public static final TagW OverlayBitMask = new TagW("OverlayBitMask", TagType.INTEGER); //$NON-NLS-1$
     public static final TagW OverlayBurninDataPath = new TagW("OverlayBurninDataPath", TagType.STRING); //$NON-NLS-1$
     public static final TagW HasOverlay = new TagW("HasOverlay", TagType.BOOLEAN); //$NON-NLS-1$
+    public static final TagW ObjectToSave = new TagW("ObjectToSave", TagType.BOOLEAN); //$NON-NLS-1$
 
     public static final TagW WadoCompressionRate = new TagW("WadoCompressionRate", TagType.INTEGER); //$NON-NLS-1$
     public static final TagW WadoTransferSyntaxUID = new TagW("WadoTransferSyntaxUID", TagType.STRING); //$NON-NLS-1$
