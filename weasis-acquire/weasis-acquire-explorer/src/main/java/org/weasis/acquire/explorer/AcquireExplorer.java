@@ -23,8 +23,6 @@ import javax.swing.Icon;
 
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.control.BrowsePanel;
 import org.weasis.acquire.explorer.gui.control.ImportPanel;
@@ -45,8 +43,6 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 public class AcquireExplorer extends PluginTool implements DataExplorerView {
     private static final long serialVersionUID = 661412595299625116L;
-
-    protected static final Logger LOGGER = LoggerFactory.getLogger(AcquireExplorer.class);
 
     public static final String BUTTON_NAME = "dicomizer"; //$NON-NLS-1$
     public static final String TOOL_NAME = Messages.getString("AcquireExplorer.acquisition"); //$NON-NLS-1$
@@ -112,14 +108,15 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
                         .map(String.class::cast).orElse(""); //$NON-NLS-1$
 
                     centralPane.setPluginName(newPatientName);
-                    centralPane.clearAll();
+                    centralPane.tabbedPane.clearAll();
+                    centralPane.tabbedPane.repaint();
                 } else if (ObservableEvent.BasicAction.REMOVE.equals(((ObservableEvent) evt).getActionCommand())) {
-                    // TODO work with AcquireImageInfo collection since it handle Serie and ImageElement object
-
                     if (evt.getNewValue() instanceof Collection<?>) {
-                        centralPane.removeImages((Collection<ImageElement>) evt.getNewValue());
+                        centralPane.tabbedPane.removeImages((Collection<ImageElement>) evt.getNewValue());
+                        centralPane.tabbedPane.repaint();
                     } else if (evt.getNewValue() instanceof ImageElement) {
-                        centralPane.removeImage((ImageElement) evt.getNewValue());
+                        centralPane.tabbedPane.removeImage((ImageElement) evt.getNewValue());
+                        centralPane.tabbedPane.repaint();
                     }
                 }
             }

@@ -25,24 +25,28 @@ import org.weasis.dicom.codec.TagD;
 
 public class Global extends AbstractTagable {
 
-    public void init(Document xml) {
-        clear();
-        tags.put(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
-        Optional.of(xml).map(o -> o.getDocumentElement()).ifPresent(init);
-    }
-
-    private final Consumer<Node> setTag = n -> {
-        setTag(n);
-    };
-
     private final Consumer<Element> init = e -> {
         NodeList nodes = e.getChildNodes();
         if (nodes != null) {
             for (int i = 0; i < nodes.getLength(); i++) {
-                Optional.ofNullable(nodes.item(i)).ifPresent(setTag);
+                Optional.ofNullable(nodes.item(i)).ifPresent(this::setTag);
             }
         }
     };
+
+    public Global() {
+        init();
+    }
+    
+    public void init() {
+        init(null);
+    }
+
+    public void init(Document xml) {
+        clear();
+        tags.put(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
+        Optional.ofNullable(xml).map(o -> o.getDocumentElement()).ifPresent(init);
+    }
 
     private void setTag(final Node node) {
         Optional.ofNullable(node).ifPresent(
@@ -72,8 +76,7 @@ public class Global extends AbstractTagable {
 
             if (this.containTagKey(tag)) {
                 Object globalTagVal = this.getTagValue(tag);
-                Object xmlTagVal =
-                    Optional.ofNullable(node).map(Node::getTextContent).map(s -> tag.getValue(s)).orElse(null);
+                Object xmlTagVal = Optional.ofNullable(node).map(Node::getTextContent).map(tag::getValue).orElse(null);
 
                 if (!TagUtil.isEquals(globalTagVal, xmlTagVal)) {
                     return false;

@@ -74,14 +74,23 @@ import org.xml.sax.SAXException;
  */
 public class AcquireManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
-    private static final AcquireManager instance = new AcquireManager();
-
+ 
     public static final String[] functions = { "patient" }; //$NON-NLS-1$
-
     public static final Global GLOBAL = new Global();
+    
+    private static final int OPT_NONE = 0;
+    private static final int OPT_B64 = 1;
+    private static final int OPT_ZIP = 2;
+    private static final int OPT_URLSAFE = 4;
 
-    private final static Map<String, AcquireImageInfo> imagesInfoByUID = new HashMap<>();
-    private final static Map<URI, AcquireImageInfo> imagesInfoByURI = new HashMap<>();
+    private static final int OPT_B64ZIP = 3;
+    private static final int OPT_B64URLSAFE = 5;
+    private static final int OPT_B64URLSAFEZIP = 7;
+    
+    private static final AcquireManager instance = new AcquireManager();
+    private static final Map<String, AcquireImageInfo> imagesInfoByUID = new HashMap<>();
+    private static final Map<URI, AcquireImageInfo> imagesInfoByURI = new HashMap<>();
+
     private AcquireImageInfo currentAcquireImageInfo = null;
     private ViewCanvas<ImageElement> currentView = null;
 
@@ -147,22 +156,22 @@ public class AcquireManager {
     }
 
     public void removeMedias(List<? extends MediaElement> mediaList) {
-        // TODO work with AcquireImageInfo collection since it handle Serie and ImageElement object
-
         removeImages(toImageElement(mediaList));
+    }
+    
+    public void removeAllImages() {
+        imagesInfoByURI.clear();
+        imagesInfoByUID.clear();
+        notifyPatientContextChanged();
     }
 
     public void removeImages(Collection<ImageElement> imageCollection) {
-        // TODO work with AcquireImageInfo collection since it handle Serie and ImageElement object
-
-        imageCollection.stream().filter(Objects::nonNull).forEach(e -> removeImageFromDataMapping(e));
+        imageCollection.stream().filter(Objects::nonNull).forEach(this::removeImageFromDataMapping);
         notifyImagesRemoved(imageCollection);
     }
 
     public void removeImage(ImageElement imageElement) {
-        // TODO work with AcquireImageInfo collection since it handle Serie and ImageElement object
-
-        Optional.ofNullable(imageElement).ifPresent(e -> removeImageFromDataMapping(e));
+        Optional.ofNullable(imageElement).ifPresent(this::removeImageFromDataMapping);
         notifyImageRemoved(imageElement);
     }
 
@@ -234,13 +243,13 @@ public class AcquireManager {
 
         if (Objects.nonNull(explorer)) {
             this.acquireExplorer = explorer;
-            addPropertyChangeListener(explorer);
+            this.addPropertyChangeListener(explorer);
         }
     }
 
     public void unRegisterDataExplorerView() {
         if (Objects.nonNull(this.acquireExplorer)) {
-            removePropertyChangeListener(acquireExplorer);
+            this.removePropertyChangeListener(acquireExplorer);
         }
     }
 
@@ -272,15 +281,11 @@ public class AcquireManager {
     }
 
     private void notifyImageRemoved(ImageElement imageElement) {
-        // TODO work with AcquireImageInfo collection since it handle Serie and ImageElement object
-
         firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.REMOVE, AcquireManager.this, null, imageElement));
     }
 
     private void notifyImagesRemoved(Collection<ImageElement> imageCollection) {
-        // TODO work with AcquireImageInfo collection since it handle Serie and ImageElement object
-
         firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.REMOVE, AcquireManager.this, null, imageCollection));
     }
@@ -348,6 +353,7 @@ public class AcquireManager {
             }
 
             imagesInfoByURI.clear();
+            imagesInfoByUID.clear();
             GLOBAL.init(newPatientContext);
             notifyPatientContextChanged();
         }
@@ -364,7 +370,7 @@ public class AcquireManager {
      * @return
      */
 
-    private boolean isPatientContextIdentical(Document newPatientContext) {
+    private static boolean isPatientContextIdentical(Document newPatientContext) {
         return !GLOBAL.isEmpty() && GLOBAL.containSameTagValues(newPatientContext);
     }
 
@@ -378,23 +384,12 @@ public class AcquireManager {
     }
 
     /**
-     */
-    private static final short OPT_NONE = 0;
-    private static final short OPT_B64 = 1;
-    private static final short OPT_ZIP = 2;
-    private static final short OPT_URLSAFE = 4;
-
-    private static final short OPT_B64ZIP = 3;
-    private static final short OPT_B64URLSAFE = 5;
-    private static final short OPT_B64URLSAFEZIP = 7;
-
-    /**
      *
      * @param inputString
      * @param codeOption
      * @return
      */
-    private static Document getPatientContext(String inputString, short codeOption) {
+    private static Document getPatientContext(String inputString, int codeOption) {
         return getPatientContext(inputString.getBytes(StandardCharsets.UTF_8), codeOption);
     }
 
@@ -404,7 +399,7 @@ public class AcquireManager {
      * @param codeOption
      * @return
      */
-    private static Document getPatientContext(byte[] byteArray, short codeOption) {
+    private static Document getPatientContext(byte[] byteArray, int codeOption) {
         if (byteArray == null || byteArray.length == 0) {
             throw new IllegalArgumentException("empty byteArray parameter"); //$NON-NLS-1$
         }
@@ -428,17 +423,15 @@ public class AcquireManager {
             }
         }
 
-        Document patientContext = null;
-
         try (InputStream inputStream = new ByteArrayInputStream(byteArray)) {
             LOGGER.debug("Source XML :\n{}", new String(byteArray)); //$NON-NLS-1$
 
-            patientContext = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
+            return DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
         } catch (SAXException | IOException | ParserConfigurationException e) {
             LOGGER.error("Parsing Patient Context XML", e); //$NON-NLS-1$
         }
 
-        return patientContext;
+        return null;
     }
 
     /**
@@ -447,15 +440,11 @@ public class AcquireManager {
      * @return
      */
     private static Document getPatientContextFromUri(URI uri) {
-        if (uri == null) {
-            throw new IllegalArgumentException("empty URI parameter"); //$NON-NLS-1$
-        }
-
         // TODO could be more secure to limit the loading buffer size !!!
-        byte[] byteArray = getURIContent(uri);
+        byte[] byteArray = getURIContent(Objects.requireNonNull(uri));
         String uriPath = uri.getPath();
 
-        if (uriPath.endsWith(".gz") || (uriPath.endsWith(".xml") == false //$NON-NLS-1$ //$NON-NLS-2$
+        if (uriPath.endsWith(".gz") || !(uriPath.endsWith(".xml") //$NON-NLS-1$ //$NON-NLS-2$
             && MimeInspector.isMatchingMimeTypeFromMagicNumber(byteArray, "application/x-gzip"))) { //$NON-NLS-1$
             return getPatientContext(byteArray, OPT_ZIP);
         } else {
@@ -478,13 +467,13 @@ public class AcquireManager {
      * @return
      */
     private static URI getURIFromURL(String urlStr) {
-        if (urlStr == null || urlStr.isEmpty()) {
+        if (!StringUtil.hasText(urlStr)) {
             throw new IllegalArgumentException("empty urlString parameter"); //$NON-NLS-1$
         }
 
         URI uri = null;
 
-        if (urlStr.startsWith("http") == false) { //$NON-NLS-1$
+        if (!urlStr.startsWith("http")) { //$NON-NLS-1$
             try {
                 File file = new File(urlStr);
                 if (file.canRead()) {
@@ -511,17 +500,9 @@ public class AcquireManager {
      * @return
      */
     private static byte[] getURIContent(URI uri) {
-
-        if (uri == null) {
-            throw new IllegalArgumentException("empty URI parameter"); //$NON-NLS-1$
-        }
-
-        byte[] byteArray = null;
-
-        URLConnection urlConnection = null;
         try {
-            URL url = uri.toURL();
-            urlConnection = url.openConnection();
+            URL url = Objects.requireNonNull(uri).toURL();
+            URLConnection urlConnection = url.openConnection();
 
             LOGGER.debug("download from URL: {}", url); //$NON-NLS-1$
             logHttpError(urlConnection);
@@ -538,15 +519,14 @@ public class AcquireManager {
                 while ((length = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, length);
                 }
-
-                byteArray = outputStream.toByteArray();
+                return outputStream.toByteArray();
             }
 
         } catch (Exception e) {
             LOGGER.error("getURIContent from : {}", uri.getPath(), e); //$NON-NLS-1$
         }
 
-        return byteArray;
+        return null;
     }
 
     /**
@@ -617,7 +597,8 @@ public class AcquireManager {
 
         AcquireImageInfo imageInfo = imagesInfoByURI.get(image.getMediaURI());
         if (imageInfo == null) {
-            addImageToDataMapping(imageInfo = new AcquireImageInfo(image));
+            imageInfo = new AcquireImageInfo(image);
+            addImageToDataMapping(imageInfo);
         }
 
         return imageInfo;

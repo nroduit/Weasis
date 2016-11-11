@@ -51,11 +51,11 @@ public class DicomizeTask extends SwingWorker<File, AcquireImageInfo> {
             String seriesInstanceUID = UIDUtils.createUID(); // Global series for all PR
 
             for (AcquireImageInfo imageInfo : toDicomize) {
-                if (Transform2Dicom.dicomize(imageInfo, exportDirDicom, exportDirImage, seriesInstanceUID) == false) {
+                if (!Transform2Dicom.dicomize(imageInfo, exportDirDicom, exportDirImage, seriesInstanceUID)) {
                     FileUtil.recursiveDelete(exportDirDicom);
                     return null;
                 }
-                setProgress(Math.round(++nbImageProcessed * 100 / nbImageToProcess));
+                setProgress(++nbImageProcessed * 100 / nbImageToProcess);
                 publish(imageInfo);
             }
         } catch (Exception ex) {

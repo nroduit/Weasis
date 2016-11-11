@@ -97,10 +97,8 @@ public class AcquireTabPanel extends JPanel {
     private void removeSerie(Serie serie) {
 
         Optional.ofNullable(btnMap.remove(serie)).ifPresent(imagePanel -> imagePanel.updateSerie(null));
-        // TODO updateSerie(null) should be called from with AcquireCentralImagePanel when ImageElement dataModel
-        // becomes empty
 
-        serieList.getButton(serie).ifPresent(b -> btnGrp.remove(b));
+        serieList.getButton(serie).ifPresent(btnGrp::remove);
         serieList.removeBySerie(serie);
         Optional<SerieButton> nextBtn = serieList.getFirstSerieButton();
 
@@ -109,7 +107,6 @@ public class AcquireTabPanel extends JPanel {
             setSelected(nextBtn.get());
         } else if (btnMap.isEmpty()) {
             selected = null;
-            // imageList.refreshGUI();
         }
     }
 
@@ -123,14 +120,6 @@ public class AcquireTabPanel extends JPanel {
     }
 
     public void removeImages(Collection<ImageElement> images) {
-        // TODO work with AcquireImageInfo collection since it handle Serie and ImageElement object
-
-        // Map<Serie, List<ImageElement>> imagesToRemove =
-        // btnMap.entrySet().stream().collect(Collectors.toMap(
-        // Entry::getKey,
-        // e -> images.stream().filter(i ->
-        // e.getValue().containsImageElement(i)).collect(Collectors.toList())));
-
         Map<Serie, List<ImageElement>> imagesToRemove = new HashMap<>();
 
         for (Entry<Serie, AcquireCentralImagePanel> e : btnMap.entrySet()) {
@@ -151,7 +140,7 @@ public class AcquireTabPanel extends JPanel {
             }
         }
 
-        imagesToRemove.forEach((s, i) -> removeImages(s, i));
+        imagesToRemove.forEach(this::removeImages);
     }
 
     private void removeImage(Serie serie, ImageElement image) {
@@ -188,7 +177,6 @@ public class AcquireTabPanel extends JPanel {
     }
 
     public void clearAll() {
-
         Iterator<Entry<Serie, AcquireCentralImagePanel>> iteratorBtnMap = btnMap.entrySet().iterator();
         while (iteratorBtnMap.hasNext()) {
             Entry<Serie, AcquireCentralImagePanel> btnMapEntry = iteratorBtnMap.next();
@@ -197,13 +185,10 @@ public class AcquireTabPanel extends JPanel {
 
             iteratorBtnMap.remove();
             Serie serie = btnMapEntry.getKey();
-            serieList.getButton(serie).ifPresent(b -> btnGrp.remove(b));
+            serieList.getButton(serie).ifPresent(btnGrp::remove);
             serieList.removeBySerie(serie);
 
             Optional.ofNullable(btnMapEntry.getValue()).ifPresent(imagePane -> imagePane.updateSerie(null));
-
-            // TODO updateSerie(null) should be called from with AcquireCentralImagePanel when ImageElement dataModel
-            // becomes empty
         }
         selected = null;
         imageList.refreshGUI();

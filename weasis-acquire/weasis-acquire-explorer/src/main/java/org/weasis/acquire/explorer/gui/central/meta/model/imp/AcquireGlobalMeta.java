@@ -24,7 +24,7 @@ public class AcquireGlobalMeta extends AcquireMetadataTableModel {
     private static final AcquireGlobalMeta instance = new AcquireGlobalMeta();
 
     private static final TagW[] TAGS_TO_DISPLAY = TagD.getTagFromIDs(Tag.PatientID, Tag.PatientName,
-        Tag.PatientBirthDate, Tag.PatientSex, Tag.StudyID, Tag.StudyDescription);
+        Tag.PatientBirthDate, Tag.PatientSex, Tag.AccessionNumber, Tag.StudyID, Tag.StudyDescription);
 
     private static final TagW[] TAGS_EDITABLE = TagD.getTagFromIDs(Tag.StudyDescription);
 

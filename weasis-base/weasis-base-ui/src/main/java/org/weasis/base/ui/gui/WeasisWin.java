@@ -142,7 +142,6 @@ public class WeasisWin {
         @Override
         public void popupMenuWillBecomeVisible() {
             buildSelectedPluginMenu(this);
-
         }
     };
     private static ViewerPlugin<?> selectedPlugin = null;

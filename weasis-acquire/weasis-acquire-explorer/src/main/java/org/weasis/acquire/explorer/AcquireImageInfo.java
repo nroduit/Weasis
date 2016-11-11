@@ -64,7 +64,6 @@ import com.drew.metadata.exif.ExifSubIFDDirectory;
  * @since 2.5.0 - 2016-04-11 - ylar - Creation
  */
 public class AcquireImageInfo {
-    @SuppressWarnings("unused")
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireImageInfo.class);
 
     private final ImageElement image;

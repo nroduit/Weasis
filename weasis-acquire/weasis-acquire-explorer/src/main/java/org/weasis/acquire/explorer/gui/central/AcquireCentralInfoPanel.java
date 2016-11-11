@@ -36,7 +36,7 @@ public class AcquireCentralInfoPanel extends JPanel {
 
     public AcquireCentralInfoPanel(Serie serie) {
         setLayout(new GridLayout(1, 3));
-        JMVUtils.setPreferredHeight(this, 200);
+        JMVUtils.setPreferredHeight(this, 230);
 
         setSerie(serie);
 
