@@ -92,47 +92,9 @@ public class AcquirePublishPanel extends JPanel {
                     publishBtn.setEnabled(true);
                     progressBar.setVisible(false);
                 }
-
             }
         });
 
         PUBLISH_DICOM.execute(publishDicomTask);
     }
-
-    // public void publishForTest(List<AcquireImageInfo> toPublish) {
-    // File exportDirImage =
-    // FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "acquire", "img"));
-    // File exportDirXml = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "acquire", "xml"));
-    //
-    // toPublish.stream().forEach(imageInfo -> {
-    // writteJpeg(exportDirImage, imageInfo);
-    // writeXml(exportDirXml, imageInfo);
-    // });
-    // }
-    //
-    // private void writeXml(File exportDirXml, AcquireImageInfo imgInfo) {
-    // ImageElement img = imgInfo.getImage();
-    // GraphicModel graphicManager = (GraphicModel) img.getTagValue(TagW.PresentationModel);
-    //
-    // if (Objects.nonNull(graphicManager)) {
-    // XmlSerializer.writePresentation(img, new File(exportDirXml, img.getName()));
-    // }
-    // }
-    //
-    // private void writteJpeg(File exportDirImage, AcquireImageInfo imageInfo) {
-    // ImageElement img = imageInfo.getImage();
-    // TagW tagUid = TagD.getUID(Level.INSTANCE);
-    // String uid = (String) img.getTagValue(tagUid);
-    //
-    // if (!imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
-    // File imgFile = new File(exportDirImage, uid + ".jpg");
-    // PlanarImage transformedImage = img.getImage(imageInfo.getPostProcessOpManager(), false);
-    //
-    // if (!ImageFiler.writeJPG(imgFile, transformedImage, 0.8f)) {
-    // // out of memory
-    // imgFile.delete();
-    // }
-    // }
-    // }
-
 }

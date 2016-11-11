@@ -194,10 +194,9 @@ public class AcquirePublishDialog extends JDialog {
                     cancelButton.addActionListener(taskCancelActionListener);
 
                 } else if (StateValue.DONE == evt.getNewValue()) {
-
                     File exportDirDicom = null;
-
-                    if (dicomizeTask.isCancelled() == false) {
+                    
+                    if (!dicomizeTask.isCancelled()) {
                         try {
                             exportDirDicom = dicomizeTask.get();
                         } catch (InterruptedException | ExecutionException doNothing) {

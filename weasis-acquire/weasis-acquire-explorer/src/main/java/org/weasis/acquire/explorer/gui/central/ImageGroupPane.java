@@ -18,6 +18,8 @@ import java.util.List;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.util.UIDUtils;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.weasis.acquire.explorer.AcquireManager;
@@ -34,6 +36,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.dicom.codec.TagD;
 
 @SuppressWarnings("serial")
 public class ImageGroupPane extends ViewerPlugin<ImageElement> {
@@ -84,9 +87,12 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
     public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
         if (menuRoot != null) {
             menuRoot.removeAll();
-            JMenuItem item = new JMenuItem("Remove all the series");
-            item.addActionListener(e -> AcquireManager.getInstance().removeAllImages());
+            JMenuItem item = new JMenuItem("Build a new study");
+            item.addActionListener(e -> AcquireManager.GLOBAL.setTag(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID()));
             menuRoot.add(item);
+            JMenuItem item2 = new JMenuItem("Remove all the series");
+            item2.addActionListener(e -> AcquireManager.getInstance().removeAllImages());
+            menuRoot.add(item2);
         }
         return menuRoot;
     }

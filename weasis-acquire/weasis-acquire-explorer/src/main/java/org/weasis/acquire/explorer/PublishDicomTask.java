@@ -72,11 +72,13 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
 
     @Override
     protected void process(List<File> chunks) {
-        chunks.stream().filter(Objects::nonNull).map(imageFile -> AcquireManager.findByUId(imageFile.getName()))
-            .filter(Objects::nonNull).forEach(imageInfo -> {
-                imageInfo.setStatus(AcquireImageStatus.PUBLISHED);
-                AcquireManager.getInstance().removeImage(imageInfo.getImage());
-            });
+        if (!dicomProgress.isLastFailed()) {
+            chunks.stream().filter(Objects::nonNull).map(imageFile -> AcquireManager.findByUId(imageFile.getName()))
+                .filter(Objects::nonNull).forEach(imageInfo -> {
+                    imageInfo.setStatus(AcquireImageStatus.PUBLISHED);
+                    AcquireManager.getInstance().removeImage(imageInfo.getImage());
+                });
+        }
     }
 
 }

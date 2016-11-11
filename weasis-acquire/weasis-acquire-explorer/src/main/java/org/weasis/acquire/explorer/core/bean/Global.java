@@ -24,21 +24,23 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
 
 public class Global extends AbstractTagable {
-
+    
+    protected boolean allowFullEdition = true;
+    
     private final Consumer<Element> init = e -> {
         NodeList nodes = e.getChildNodes();
         if (nodes != null) {
             for (int i = 0; i < nodes.getLength(); i++) {
                 Optional.ofNullable(nodes.item(i)).ifPresent(this::setTag);
             }
+
+            if (getTagValue(TagD.get(Tag.PatientID)) != null && getTagValue(TagD.get(Tag.PatientName)) != null) {
+                allowFullEdition = false;
+            }
         }
     };
 
     public Global() {
-        init();
-    }
-    
-    public void init() {
         init(null);
     }
 
@@ -85,12 +87,15 @@ public class Global extends AbstractTagable {
         }
 
         return true;
-
     }
 
     @Override
     public String toString() {
         TagW name = TagD.get(Tag.PatientName);
         return name.getFormattedTagValue(getTagValue(name), null);
+    }
+
+    public boolean isAllowFullEdition() {
+        return allowFullEdition;
     }
 }

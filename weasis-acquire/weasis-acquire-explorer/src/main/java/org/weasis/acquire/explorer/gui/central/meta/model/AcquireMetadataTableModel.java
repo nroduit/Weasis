@@ -80,11 +80,8 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         TagW tag = tagsToDisplay().orElse(NO_TAGS)[rowIndex];
-        switch (columnIndex) {
-            case 1:
-                boolean isValueEditable =
-                    Arrays.stream(tagsEditable().orElse(NO_TAGS)).filter(t -> t.equals(tag)).findFirst().isPresent();
-                return isValueEditable;
+        if (columnIndex == 1) {
+            return Arrays.stream(tagsEditable().orElse(NO_TAGS)).filter(t -> t.equals(tag)).findFirst().isPresent();
         }
         return false;
     }

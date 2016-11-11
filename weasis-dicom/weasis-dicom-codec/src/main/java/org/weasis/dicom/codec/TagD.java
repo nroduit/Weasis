@@ -69,9 +69,46 @@ public class TagD extends TagW {
     static final DateTimeFormatter DICOM_TIME = new DateTimeFormatterBuilder().appendValue(HOUR_OF_DAY, 2)
         .optionalStart().appendValue(MINUTE_OF_HOUR, 2).optionalStart().appendValue(SECOND_OF_MINUTE, 2)
         .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true).toFormatter();
+    
+    public enum Sex {
+        SEX_MALE("M", Messages.getString("TagW.Male")), //$NON-NLS-1$
+        SEX_FEMALE("F", Messages.getString("TagW.female")), //$NON-NLS-1$
+        SEX_OTHER("O", Messages.getString("TagW.other")); //$NON-NLS-1$
+
+        private final String value;
+        private final String displayValue;
+
+        private Sex(String value, String displayValue) {
+            this.value = value;
+            this.displayValue = displayValue;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return displayValue;
+        }
+        
+        public static Sex getSex(String sex) {
+            Sex s = Sex.SEX_OTHER;
+            if (StringUtil.hasText(sex)) {
+               // Sex attribute can have the following values: M(male), F(female), or O(other)
+               return sex.toUpperCase().startsWith("F") ? Sex.SEX_FEMALE //$NON-NLS-1$
+                    : sex.toUpperCase().startsWith("M") ? Sex.SEX_MALE : s; //$NON-NLS-1$
+            }
+            return s;
+        }
+    }
 
     public enum Level {
-        PATIENT(org.weasis.dicom.codec.Messages.getString("TagD.pat")), STUDY(org.weasis.dicom.codec.Messages.getString("TagD.study")), SERIES(org.weasis.dicom.codec.Messages.getString("TagD.series")), INSTANCE(org.weasis.dicom.codec.Messages.getString("TagD.instance")), FRAME(org.weasis.dicom.codec.Messages.getString("TagD.frame")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+        PATIENT(org.weasis.dicom.codec.Messages.getString("TagD.pat")), //$NON-NLS-1$
+        STUDY(org.weasis.dicom.codec.Messages.getString("TagD.study")), //$NON-NLS-1$
+        SERIES(org.weasis.dicom.codec.Messages.getString("TagD.series")), //$NON-NLS-1$
+        INSTANCE(org.weasis.dicom.codec.Messages.getString("TagD.instance")), //$NON-NLS-1$
+        FRAME(org.weasis.dicom.codec.Messages.getString("TagD.frame")); //$NON-NLS-1$
 
         private final String tag;
 
@@ -375,8 +412,9 @@ public class TagD extends TagW {
         }
 
         if (TagType.DICOM_PERSON_NAME.equals(type)) {
-            if(value instanceof String[]){
-                return Arrays.asList((String[]) value).stream().map(TagD::getDicomPersonName).collect(Collectors.joining(", ")); //$NON-NLS-1$
+            if (value instanceof String[]) {
+                return Arrays.asList((String[]) value).stream().map(TagD::getDicomPersonName)
+                    .collect(Collectors.joining(", ")); //$NON-NLS-1$
             }
             return getDicomPersonName(value.toString());
         } else if (TagType.DICOM_PERIOD.equals(type)) {
@@ -870,9 +908,7 @@ public class TagD extends TagW {
         if (!StringUtil.hasText(val)) {
             return StringUtil.EMPTY_STRING;
         }
-        // Sex attribute can have the following values: M(male), F(female), or O(other)
-        return val.toUpperCase().startsWith("F") ? Messages.getString("TagW.female") //$NON-NLS-1$ //$NON-NLS-2$
-            : val.toUpperCase().startsWith("M") ? Messages.getString("TagW.Male") : Messages.getString("TagW.other"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        return Sex.getSex(val).toString();
     }
 
 }

@@ -46,7 +46,7 @@ public class AcquireGlobalMeta extends AcquireMetadataTableModel {
 
     @Override
     protected Optional<TagW[]> tagsEditable() {
-        return Optional.of(TAGS_EDITABLE);
+        return AcquireManager.GLOBAL.isAllowFullEdition() ? Optional.of(TAGS_TO_DISPLAY) : Optional.of(TAGS_EDITABLE);
     }
 
     @Override
