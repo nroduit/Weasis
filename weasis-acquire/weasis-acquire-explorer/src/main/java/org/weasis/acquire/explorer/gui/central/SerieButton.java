@@ -40,6 +40,11 @@ public class SerieButton extends JToggleButton implements ActionListener, Compar
     public Serie getSerie() {
         return serie;
     }
+    @Override
+    public void setText(String text) {
+        super.setText(text);
+        setToolTipText(text);
+    }
 
     @Override
     public int compareTo(SerieButton o) {

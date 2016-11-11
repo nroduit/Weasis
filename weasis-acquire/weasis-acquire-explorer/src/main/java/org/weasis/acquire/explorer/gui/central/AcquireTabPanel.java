@@ -33,6 +33,7 @@ import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.TagD;
 
@@ -53,8 +54,11 @@ public class AcquireTabPanel extends JPanel {
 
         serieList = new SerieButtonList();
         imageList = new AcquireCentralImagePanel(this);
+        JPanel seriesPanel = new JPanel(new BorderLayout());
+        seriesPanel.add(serieList, BorderLayout.CENTER);
+        seriesPanel.add(new AcquirePublishPanel(), BorderLayout.SOUTH);
 
-        add(serieList, BorderLayout.WEST);
+        add(seriesPanel, BorderLayout.WEST);
         add(imageList, BorderLayout.CENTER);
     }
 
@@ -68,10 +72,10 @@ public class AcquireTabPanel extends JPanel {
 
     public void updateSerie(Serie serie, List<AcquireImageInfo> images) {
         if (btnMap.containsKey(serie)) {
-            // update serie list
+            // update series list
             btnMap.get(serie).updateList(images);
         } else {
-            // Create serie list
+            // Create series list
             AcquireCentralImagePanel tab = new AcquireCentralImagePanel(this, serie, images);
             btnMap.put(serie, tab);
 
