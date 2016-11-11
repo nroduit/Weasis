@@ -33,6 +33,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     public static final Serie DEFAULT_SERIE = new Serie();
     public static final Serie DATE_SERIE = new Serie(LocalDateTime.now());
+
     public static final String DEFAULT_SERIE_NAME = Messages.getString("Serie.other"); //$NON-NLS-1$
 
     public Serie() {
@@ -87,6 +88,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
                 return name;
             case DATE:
                 return TagUtil.formatDateTime(date);
+            case NONE:
             default:
                 return DEFAULT_SERIE_NAME;
         }

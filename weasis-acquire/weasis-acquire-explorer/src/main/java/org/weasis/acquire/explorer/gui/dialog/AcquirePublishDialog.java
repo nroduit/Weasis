@@ -14,9 +14,13 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -28,7 +32,9 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
+import javax.swing.JProgressBar;
+import javax.swing.SwingWorker;
+import javax.swing.SwingWorker.StateValue;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -36,6 +42,7 @@ import javax.swing.tree.TreePath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.DicomizeTask;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
@@ -44,6 +51,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.ThreadUtil;
 
 public class AcquirePublishDialog extends JDialog {
     private static final long serialVersionUID = -8736946182228791444L;
@@ -53,96 +61,101 @@ public class AcquirePublishDialog extends JDialog {
     public static final Integer MAX_RESOLUTION_THRESHOLD = 3000; // in pixels
 
     private final AcquirePublishPanel publishPanel;
-    private final JPanel content = new JPanel();
 
-    private PublishTree tree;
-    private JPanel resolutionPanel;
-    private final JComboBox<EResolution> resolutionCombo;
+    private PublishTree publishTree;
+    private JPanel resolutionPane;
+    private JComboBox<EResolution> resolutionCombo;
+    private JButton publishButton;
+    private JButton cancelButton;
+    private JProgressBar progressBar;
+
+    private ActionListener clearAndHideActionListener;
 
     public AcquirePublishDialog(AcquirePublishPanel publishPanel) {
         super(WinUtil.getParentWindow(publishPanel), "", ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
-        this.resolutionCombo = new JComboBox<>(EResolution.values());
         this.publishPanel = publishPanel;
-        this.initContent();
 
-        tree.getTree().addCheckingPath(new TreePath(tree.getModel().getRootNode().getPath()));
+        setContentPane(initContent());
+        publishTree.getTree().addCheckingPath(new TreePath(publishTree.getModel().getRootNode().getPath()));
 
-        setContentPane(content);
+        setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent we) {
+                cancelButton.doClick();
+            }
+        });
 
         setPreferredSize(new Dimension(700, 400));
         pack();
     }
 
     private JPanel initContent() {
-        content.setBorder(new EmptyBorder(10, 15, 10, 15));
-        content.setLayout(new BorderLayout());
-        JLabel question = new JLabel(Messages.getString("AcquirePublishDialog.select_pub")); //$NON-NLS-1$
-        question.setFont(FontTools.getFont12Bold());
-        JPanel responsesPanel = new JPanel(new BorderLayout());
-        responsesPanel.setBorder(BorderFactory.createEmptyBorder(30, 10, 10, 10));
+        JPanel contentPane = new JPanel();
 
-        tree = new PublishTree();
+        contentPane.setBorder(new EmptyBorder(10, 10, 10, 10));
+        contentPane.setLayout(new BorderLayout());
 
-        tree.addTreeCheckingListener(evt -> {
-            resolutionPanel.setVisible(!getOversizedSelected(tree).isEmpty());
-            resolutionPanel.repaint();
+        JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub")); //$NON-NLS-1$
+        questionLabel.setFont(FontTools.getFont12Bold());
+
+        contentPane.add(questionLabel, BorderLayout.NORTH);
+
+        JPanel imageTreePane = new JPanel(new BorderLayout());
+        imageTreePane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        publishTree = new PublishTree();
+        publishTree.addTreeCheckingListener(evt -> {
+            resolutionPane.setVisible(!getOversizedSelected(publishTree).isEmpty());
+            resolutionPane.repaint();
         });
-        responsesPanel.add(tree);
+        publishTree.setMinimumSize(publishTree.getPreferredSize());
+        imageTreePane.add(publishTree);
 
-        content.add(question, BorderLayout.NORTH);
-        content.add(responsesPanel, BorderLayout.CENTER);
+        contentPane.add(imageTreePane, BorderLayout.CENTER);
 
-        JPanel panel = new JPanel();
-        content.add(panel, BorderLayout.SOUTH);
-        panel.setLayout(new BorderLayout(0, 0));
+        JPanel actionPane = new JPanel(new BorderLayout());
+        actionPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        resolutionPanel = initResolutionPanel();
-        resolutionPanel.setVisible(Boolean.FALSE);
+        resolutionPane = new JPanel();
+        resolutionPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
-        JPanel panel1 = new JPanel();
-        FlowLayout flowLayout = (FlowLayout) panel1.getLayout();
-        flowLayout.setHgap(25);
-        flowLayout.setVgap(10);
-        panel.add(panel1, BorderLayout.SOUTH);
+        JLabel resolutionLabel =
+            new JLabel(Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+        resolutionPane.add(resolutionLabel);
 
-        JButton buttonNewButton = new JButton(Messages.getString("AcquirePublishDialog.publish")); //$NON-NLS-1$
-        buttonNewButton.addActionListener(e -> publishAction());
-        panel1.add(buttonNewButton);
+        resolutionCombo = new JComboBox<>(EResolution.values());
+        resolutionPane.add(resolutionCombo);
+        resolutionPane.setVisible(Boolean.FALSE);
 
-        JButton buttonNewButton1 = new JButton(Messages.getString("AcquirePublishDialog.cancel")); //$NON-NLS-1$
-        buttonNewButton1.addActionListener(e -> clearAndHide());
-        panel1.add(buttonNewButton1);
-        panel.add(resolutionPanel, BorderLayout.NORTH);
+        actionPane.add(resolutionPane, BorderLayout.NORTH);
 
-        return content;
-    }
+        progressBar = new JProgressBar();
+        progressBar.setStringPainted(true);
+        progressBar.setVisible(false);
 
-    private JPanel initResolutionPanel() {
-        JPanel panel = new JPanel();
-        Border margin = BorderFactory.createEmptyBorder(5, 10, 20, 10);
-        Border line = BorderFactory.createLineBorder(Color.BLACK);
+        actionPane.add(progressBar, BorderLayout.CENTER);
 
-        panel.setBorder(BorderFactory.createCompoundBorder(margin, line));
+        JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
 
-        JLabel resolutionLabel = new JLabel(Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+        publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish")); //$NON-NLS-1$
+        publishButton.addActionListener(e -> publishAction());
 
-        panel.add(resolutionLabel);
-        panel.add(resolutionCombo);
+        cancelButton = new JButton(Messages.getString("AcquirePublishDialog.cancel")); //$NON-NLS-1$
+        cancelButton.addActionListener(clearAndHideActionListener = e -> clearAndHide());
 
-        return panel;
-    }
+        buttonPane.add(publishButton);
+        buttonPane.add(cancelButton);
 
-    // Overridden so we can exit when window is closed
-    @Override
-    protected void processWindowEvent(WindowEvent e) {
-        if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            clearAndHide();
-        }
-        super.processWindowEvent(e);
+        actionPane.add(buttonPane, BorderLayout.SOUTH);
+
+        contentPane.add(actionPane, BorderLayout.SOUTH);
+
+        return contentPane;
     }
 
     private void publishAction() {
-        List<AcquireImageInfo> toPublish = getSelectedImages(tree);
+        List<AcquireImageInfo> toPublish = getSelectedImages(publishTree);
 
         if (toPublish.isEmpty()) {
             JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.select_one_msg"), //$NON-NLS-1$
@@ -150,7 +163,7 @@ public class AcquirePublishDialog extends JDialog {
             return;
         }
 
-        List<AcquireImageInfo> overSizedSelected = getOversizedSelected(tree);
+        List<AcquireImageInfo> overSizedSelected = getOversizedSelected(publishTree);
         if (!overSizedSelected.isEmpty()) {
             for (AcquireImageInfo imgInfo : overSizedSelected) {
                 // caculate zoom ration
@@ -162,9 +175,59 @@ public class AcquirePublishDialog extends JDialog {
                 imgInfo.getPostProcessOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, ratio);
             }
         }
-        clearAndHide();
-        publishPanel.publish(toPublish);
-        // publishPanel.publishForTest(toPublish);
+
+        SwingWorker<File, AcquireImageInfo> dicomizeTask = new DicomizeTask(toPublish);
+        ActionListener taskCancelActionListener = e -> dicomizeTask.cancel(true);
+
+        dicomizeTask.addPropertyChangeListener(evt -> {
+            if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
+                int progress = (Integer) evt.getNewValue();
+                progressBar.setValue(progress);
+
+            } else if ("state" == evt.getPropertyName()) { //$NON-NLS-1$
+
+                if (StateValue.STARTED == evt.getNewValue()) {
+                    resolutionPane.setVisible(false);
+                    progressBar.setVisible(true);
+                    publishButton.setEnabled(false);
+                    cancelButton.removeActionListener(clearAndHideActionListener);
+                    cancelButton.addActionListener(taskCancelActionListener);
+
+                } else if (StateValue.DONE == evt.getNewValue()) {
+
+                    File exportDirDicom = null;
+
+                    if (dicomizeTask.isCancelled() == false) {
+                        try {
+                            exportDirDicom = dicomizeTask.get();
+                        } catch (InterruptedException | ExecutionException doNothing) {
+                        }
+
+                        if (exportDirDicom != null) {
+                            publishPanel.publishDirDicom(exportDirDicom);
+                            clearAndHide();
+                        } else {
+                            JOptionPane.showMessageDialog(this,
+                                Messages.getString("AcquirePublishDialog.dicomize_error_msg"), //$NON-NLS-1$
+                                Messages.getString("AcquirePublishDialog.dicomize_error_title"), //$NON-NLS-1$
+                                JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+
+                    if (exportDirDicom == null) {
+                        resolutionPane.setVisible(!getOversizedSelected(publishTree).isEmpty());
+                        progressBar.setValue(0);
+                        progressBar.setVisible(false);
+                        publishButton.setEnabled(true);
+                        cancelButton.removeActionListener(taskCancelActionListener);
+                        cancelButton.addActionListener(clearAndHideActionListener);
+                    }
+                }
+            }
+        });
+
+        ThreadUtil.buildNewSingleThreadExecutor("Dicomize").execute(dicomizeTask); //$NON-NLS-1$
+
     }
 
     private List<AcquireImageInfo> getSelectedImages(PublishTree tree) {
@@ -196,7 +259,8 @@ public class AcquirePublishDialog extends JDialog {
     }
 
     public enum EResolution {
-        original(Messages.getString("AcquirePublishDialog.original")), hd(Messages.getString("AcquirePublishDialog.high_res")), md(Messages.getString("AcquirePublishDialog.med_res")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        original(Messages.getString("AcquirePublishDialog.original")), //$NON-NLS-1$
+        hd(Messages.getString("AcquirePublishDialog.high_res")), md(Messages.getString("AcquirePublishDialog.med_res")); //$NON-NLS-1$ //$NON-NLS-2$
 
         private String title;
 

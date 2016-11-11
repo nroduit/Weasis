@@ -12,6 +12,7 @@ package org.weasis.acquire.explorer.gui.central;
 
 import java.awt.BorderLayout;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,8 +44,8 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
     // private static Comparator<ImageItem> nameComparator = new ImageItem.NameComparator();
     // private static Comparator<ImageItem> dateComparator = new ImageItem.DateComparator();
 
-    public ImageGroupPane(String PluginName) {
-        super(PluginName);
+    public ImageGroupPane(String pluginName) {
+        super(pluginName);
 
         // Add standard toolbars
         final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -111,6 +112,21 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
         super.setSelectedAndGetFocus();
         updateAll();
     }
+
+    public void removeImages(Collection<ImageElement> images) {
+        tabbedPane.removeImages(images);
+        tabbedPane.repaint();
+    }
+
+    public void removeImage(ImageElement image) {
+        tabbedPane.removeImage(image);
+        tabbedPane.repaint();
+    }
+
+    public void clearAll() {
+        tabbedPane.clearAll();
+        tabbedPane.repaint();
+    };
 
     private void updateAll() {
         AcquireManager.groupBySeries().forEach((k, v) -> {

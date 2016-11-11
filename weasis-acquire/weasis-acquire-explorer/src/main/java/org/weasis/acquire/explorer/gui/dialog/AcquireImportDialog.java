@@ -34,8 +34,8 @@ import javax.swing.border.EmptyBorder;
 
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
+import org.weasis.acquire.explorer.AcquireExplorer;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.AcquisitionView;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
@@ -79,10 +79,10 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         Preferences prefs =
             BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
         if (prefs != null) {
-            Preferences p = prefs.node(AcquisitionView.PREFERENCE_NODE);
+            Preferences p = prefs.node(AcquireExplorer.PREFERENCE_NODE);
             maxRange = p.getInt(P_MAX_RANGE, maxRange);
         }
-        spinner = new JSpinner(new SpinnerNumberModel(maxRange, 1, 5256000, 5));
+        spinner = new JSpinner(new SpinnerNumberModel(maxRange, 1, 5256000, 5)); // <=> 4 years
 
         optionPane = new JOptionPane(initPanel(), JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null,
             OPTIONS, OPTIONS[0]);
@@ -215,14 +215,14 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
                     }
                 }
                 if (close) {
-                    Integer max = (Integer) spinner.getValue();
-                    AcquireManager.importImages(serieType, mediaList, max);
+                    Integer maxRangeInMinutes = (Integer) spinner.getValue();
+                    AcquireManager.importImages(serieType, mediaList, maxRangeInMinutes);
                     mainPanel.getCentralPane().setSelectedAndGetFocus();
                     Preferences prefs = BundlePreferences
                         .getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
                     if (prefs != null) {
-                        Preferences p = prefs.node(AcquisitionView.PREFERENCE_NODE);
-                        BundlePreferences.putIntPreferences(p, P_MAX_RANGE, max);
+                        Preferences p = prefs.node(AcquireExplorer.PREFERENCE_NODE);
+                        BundlePreferences.putIntPreferences(p, P_MAX_RANGE, maxRangeInMinutes);
                     }
                 }
             } else if (action.equals(REVALIDATE)) {

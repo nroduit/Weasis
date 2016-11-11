@@ -32,13 +32,14 @@ import org.weasis.core.api.explorer.DataExplorerViewFactory;
 public class MediaImporterFactory implements DataExplorerViewFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(MediaImporterFactory.class);
 
-    private AcquisitionView explorer = null;
+    private AcquireExplorer explorer = null;
 
     @Override
-    public AcquisitionView createDataExplorerView(Hashtable<String, Object> properties) {
+    public AcquireExplorer createDataExplorerView(Hashtable<String, Object> properties) {
         if (explorer == null) {
-            explorer = new AcquisitionView();
+            explorer = new AcquireExplorer();
             explorer.initImageGroupPane();
+            AcquireManager.getInstance().registerDataExplorerView(explorer);
         }
         return explorer;
     }
@@ -52,7 +53,10 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
     protected void deactivate(ComponentContext context) {
         if (explorer != null) {
             explorer.saveLastPath();
+            AcquireManager.getInstance().unRegisterDataExplorerView();
+            // TODO handle user message if all data is not published !!!
         }
+
     }
 
     private void registerCommands(ComponentContext context) {

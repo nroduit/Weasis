@@ -38,11 +38,15 @@ public class AcquireCentralInfoPanel extends JPanel {
         setLayout(new GridLayout(1, 3));
         JMVUtils.setPreferredHeight(this, 200);
 
-        serieInfoPanel.setSerie(serie);
+        setSerie(serie);
 
         add(globalInfoPanel);
         add(serieInfoPanel);
         add(imageInfoPanel);
+    }
+
+    public void setSerie(Serie newSerie) {
+        serieInfoPanel.setSerie(newSerie);
     }
 
     public void setImage(ImageElement newImage) {
@@ -61,9 +65,11 @@ public class AcquireCentralInfoPanel extends JPanel {
 
     }
 
-    public void refreshSerieMeta() {
-        serieInfoPanel.setMetaVisible(true);
+    protected void refreshGUI() {
+        globalInfoPanel.update();
         serieInfoPanel.update();
+        imageInfoPanel.update();
+
         revalidate();
         repaint();
     }

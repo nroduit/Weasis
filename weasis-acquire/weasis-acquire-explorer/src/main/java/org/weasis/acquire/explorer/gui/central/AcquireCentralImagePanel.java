@@ -22,7 +22,6 @@ import javax.swing.event.ListSelectionListener;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
-import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.central.tumbnail.AcquireCentralTumbnailPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
@@ -63,24 +62,39 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
         imageListPane.setList(toImageElement(imageInfos));
     }
 
+    public void updateSerie(Serie newSerie) {
+        imageInfo.setSerie(newSerie);
+    }
+
     public IThumbnailModel<ImageElement> getFileListModel() {
         return imageListPane.getFileListModel();
     }
 
+    public boolean containsImageElement(ImageElement image) {
+        return getFileListModel().contains(image);
+    }
+
+    public void removeElement(ImageElement image) {
+        getFileListModel().removeElement(image);
+    }
+
     public void removeElements(List<ImageElement> medias) {
         IThumbnailModel<ImageElement> model = getFileListModel();
-        medias.forEach(m -> {
-            model.removeElement(m);
-            AcquireManager.remove(m);
-        });
+        medias.forEach(model::removeElement);
+    }
+
+    public void clearAll() {
+        getFileListModel().clear();
     }
 
     public boolean isEmpty() {
         return getFileListModel().isEmpty();
     }
 
-    public void refreshSerieMeta() {
-        imageInfo.refreshSerieMeta();
+    protected void refreshGUI() {
+        imageInfo.refreshGUI();
+        revalidate();
+        repaint();
     }
 
     @Override

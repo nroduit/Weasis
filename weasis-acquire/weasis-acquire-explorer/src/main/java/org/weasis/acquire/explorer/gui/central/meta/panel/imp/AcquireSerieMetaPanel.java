@@ -28,6 +28,7 @@ public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
     public AcquireSerieMetaPanel(Serie serie) {
         super(""); //$NON-NLS-1$
         this.serie = serie;
+
     }
 
     @Override
@@ -47,7 +48,13 @@ public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
     public void setSerie(Serie serie) {
         this.serie = serie;
         this.titleBorder.setTitle(getDisplayText());
-        setMetaVisible(serie != null);
         update();
     }
+
+    @Override
+    public void update() {
+        setMetaVisible(serie != null);
+        super.update();
+    }
+
 }

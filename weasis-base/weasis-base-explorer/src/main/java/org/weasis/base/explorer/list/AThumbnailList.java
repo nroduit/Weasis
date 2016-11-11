@@ -161,6 +161,10 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
     public void registerListeners() {
         registerDragListeners();
         addMouseListener(new PopupTrigger());
+
+        // TODO prefer the use of Key Bindings rather than keyListener
+        // @see http://docs.oracle.com/javase/tutorial/uiswing/misc/keybinding.html
+
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {

@@ -27,7 +27,8 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     private static final TagW[] NO_TAGS = {};
-    protected String[] headers = { Messages.getString("AcquireMetadataTableModel.tag"), Messages.getString("AcquireMetadataTableModel.val") }; //$NON-NLS-1$ //$NON-NLS-2$
+    protected String[] headers =
+        { Messages.getString("AcquireMetadataTableModel.tag"), Messages.getString("AcquireMetadataTableModel.val") }; //$NON-NLS-1$ //$NON-NLS-2$
     protected Optional<Tagable> tagable;
 
     public AcquireMetadataTableModel(Tagable tagable) {
@@ -37,6 +38,10 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     protected abstract Optional<TagW[]> tagsToDisplay();
 
     protected Optional<TagW[]> tagsEditable() {
+        return Optional.of(NO_TAGS);
+    }
+
+    protected Optional<TagW[]> tagsToPublish() {
         return Optional.of(NO_TAGS);
     }
 

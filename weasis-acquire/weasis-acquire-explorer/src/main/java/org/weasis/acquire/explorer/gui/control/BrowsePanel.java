@@ -23,7 +23,7 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.AcquisitionView;
+import org.weasis.acquire.explorer.AcquireExplorer;
 import org.weasis.acquire.explorer.core.ItemList;
 import org.weasis.acquire.explorer.gui.model.actions.ChangePathSelectionAction;
 import org.weasis.acquire.explorer.gui.model.list.ItemListComboBoxModel;
@@ -46,13 +46,13 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BrowsePanel.class);
 
-    private final AcquisitionView mainView;
+    private final AcquireExplorer mainView;
     private final ItemList<MediaSource> mediaSourceList = new ItemList<>();
     private final ItemListComboBoxModel<MediaSource> mediaSourceListComboModel;
     private final JComboBox<MediaSource> mediaSourceSelectionCombo = new JComboBox<>();
     private final USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager(2000);
 
-    public BrowsePanel(AcquisitionView acquisitionView) {
+    public BrowsePanel(AcquireExplorer acquisitionView) {
         this.mainView = acquisitionView;
         try {
             String last = iniLastPath();
@@ -111,8 +111,8 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
         if (prefs == null) {
             prefDir = new File(USER_HOME); // $NON-NLS-1$
         } else {
-            Preferences p = prefs.node(AcquisitionView.PREFERENCE_NODE);
-            prefDir = new File(p.get(AcquisitionView.P_LAST_DIR, USER_HOME)); // $NON-NLS-1$
+            Preferences p = prefs.node(AcquireExplorer.PREFERENCE_NODE);
+            prefDir = new File(p.get(AcquireExplorer.P_LAST_DIR, USER_HOME)); // $NON-NLS-1$
         }
 
         if (prefDir.canRead() && prefDir.isDirectory()) {

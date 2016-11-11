@@ -13,13 +13,14 @@ package org.weasis.acquire.explorer;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.Action;
 import javax.swing.Icon;
 
-import org.dcm4che3.data.Tag;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
@@ -31,58 +32,56 @@ import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
 import org.weasis.acquire.explorer.media.FileSystemDrive;
 import org.weasis.acquire.explorer.media.MediaSource;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.dicom.codec.TagD;
 
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 
-public class AcquisitionView extends PluginTool implements DataExplorerView {
+public class AcquireExplorer extends PluginTool implements DataExplorerView {
     private static final long serialVersionUID = 661412595299625116L;
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(AcquisitionView.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(AcquireExplorer.class);
 
     public static final String BUTTON_NAME = "dicomizer"; //$NON-NLS-1$
-    public static final String NAME = Messages.getString("AcquisitionView.acquisition"); //$NON-NLS-1$
+    public static final String TOOL_NAME = Messages.getString("AcquireExplorer.acquisition"); //$NON-NLS-1$
     public static final String P_LAST_DIR = "last.dir"; //$NON-NLS-1$
     public static final String PREFERENCE_NODE = "importer"; //$NON-NLS-1$
 
-    public static final int MEDIASOURCELIST_MAX = 10;
+    public static final int MEDIASOURCELIST_MAX = 5;
 
     private MediaSource systemDrive;
 
-    private final ImageGroupPane centralPane = new ImageGroupPane(Messages.getString("AcquisitionView.albums")); //$NON-NLS-1$
+    private final ImageGroupPane centralPane;
 
     private AcquireThumbnailListPane<MediaElement> acquireThumbnailListPane;
     private BrowsePanel browsePanel;
     private ImportPanel importPanel;
 
-    public AcquisitionView() {
-        super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
+    public AcquireExplorer() {
+        super(BUTTON_NAME, TOOL_NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
         setDockableWidth(400);
+
+        centralPane = new ImageGroupPane(AcquireManager.getPatientContextName());
+
         browsePanel = new BrowsePanel(this);
         acquireThumbnailListPane = new AcquireThumbnailListPane<>(centralPane);
         importPanel = new ImportPanel(acquireThumbnailListPane, centralPane);
 
         setLayout(new BorderLayout(0, 0));
-        add(acquireThumbnailListPane, BorderLayout.CENTER);
         add(browsePanel, BorderLayout.NORTH);
+        add(acquireThumbnailListPane, BorderLayout.CENTER);
         add(importPanel, BorderLayout.SOUTH);
 
         this.acquireThumbnailListPane.loadDirectory(systemDrive.getID());
 
-        String ptName = TagD.getDicomPersonName(TagD.getTagValue(AcquireManager.GLOBAL, Tag.PatientName, String.class));
-        if (!org.weasis.core.api.util.StringUtil.hasLength(ptName)) {
-            ptName = TagW.NO_VALUE;
-        }
-        centralPane.setPluginName(ptName);
-
-        // Remove dropping capabilities in the central area (limit to import from browse panel)
+        // Remove dropping capabilities in the central area (limit to import
+        // from browse panel)
         UIManager.MAIN_AREA.getComponent().setTransferHandler(null);
     }
 
@@ -105,7 +104,26 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        // Do nothing
+        if (evt instanceof ObservableEvent) {
+            if (evt.getSource() instanceof AcquireManager) {
+                if (ObservableEvent.BasicAction.REPLACE.equals(((ObservableEvent) evt).getActionCommand())) {
+
+                    String newPatientName = Optional.ofNullable(evt.getNewValue()).filter(String.class::isInstance)
+                        .map(String.class::cast).orElse(""); //$NON-NLS-1$
+
+                    centralPane.setPluginName(newPatientName);
+                    centralPane.clearAll();
+                } else if (ObservableEvent.BasicAction.REMOVE.equals(((ObservableEvent) evt).getActionCommand())) {
+                    // TODO work with AcquireImageInfo collection since it handle Serie and ImageElement object
+
+                    if (evt.getNewValue() instanceof Collection<?>) {
+                        centralPane.removeImages((Collection<ImageElement>) evt.getNewValue());
+                    } else if (evt.getNewValue() instanceof ImageElement) {
+                        centralPane.removeImage((ImageElement) evt.getNewValue());
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -115,7 +133,7 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
 
     @Override
     public String getUIName() {
-        return NAME;
+        return TOOL_NAME;
     }
 
     @Override
@@ -182,8 +200,6 @@ public class AcquisitionView extends PluginTool implements DataExplorerView {
     }
 
     public void loadSystemDrive() {
-        if (systemDrive != null) {
-            acquireThumbnailListPane.loadDirectory(systemDrive.getID());
-        }
+        acquireThumbnailListPane.loadDirectory(systemDrive.getID());
     }
 }

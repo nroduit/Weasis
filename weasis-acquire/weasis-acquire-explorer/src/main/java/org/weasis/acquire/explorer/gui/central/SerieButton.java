@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.acquire.explorer.gui.central.component;
+package org.weasis.acquire.explorer.gui.central;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,7 +16,6 @@ import java.awt.event.ActionListener;
 import javax.swing.JToggleButton;
 
 import org.weasis.acquire.explorer.core.bean.Serie;
-import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
 
 public class SerieButton extends JToggleButton implements ActionListener, Comparable<SerieButton> {
     private static final long serialVersionUID = -2587964095510462601L;

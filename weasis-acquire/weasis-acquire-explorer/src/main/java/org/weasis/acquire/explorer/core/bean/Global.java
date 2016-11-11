@@ -26,37 +26,39 @@ import org.weasis.dicom.codec.TagD;
 public class Global extends AbstractTagable {
 
     public void init(Document xml) {
+        clear();
         tags.put(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
         Optional.of(xml).map(o -> o.getDocumentElement()).ifPresent(init);
     }
+
+    private final Consumer<Node> setTag = n -> {
+        setTag(n);
+    };
 
     private final Consumer<Element> init = e -> {
         NodeList nodes = e.getChildNodes();
         if (nodes != null) {
             for (int i = 0; i < nodes.getLength(); i++) {
-                Node node = nodes.item(i);
-                setTag(node);
+                Optional.ofNullable(nodes.item(i)).ifPresent(setTag);
             }
         }
     };
 
-    private void setTag(Node node) {
-        if (node != null) {
-            TagW tag = TagD.get(node.getNodeName());
-            if (tag != null) {
-                tag.readValue(node.getTextContent(), this);
-            }
-        }
+    private void setTag(final Node node) {
+        Optional.ofNullable(node).ifPresent(
+            n -> Optional.ofNullable(TagD.get(n.getNodeName())).ifPresent(t -> t.readValue(n.getTextContent(), this)));
     }
 
     /**
      * Check if all tag values in the given document XML are equals to the global DICOM Tags According to the TagD data
-     * Model
+     * Model <br>
+     *
+     * Only existing GLOBAL Tag values are checked, if GLOBAL tag is empty it will return true
      *
      * @param xmlDoc
      * @return
      */
-    public boolean containSameTagsValues(Document xmlDoc) {
+    public boolean containSameTagValues(Document xmlDoc) {
 
         Optional<NodeList> nodeList = Optional.of(xmlDoc).map(Document::getDocumentElement).map(Element::getChildNodes);
 
@@ -69,7 +71,6 @@ public class Global extends AbstractTagable {
             TagW tag = TagD.get(Optional.ofNullable(node).map(Node::getNodeName).orElse(null));
 
             if (this.containTagKey(tag)) {
-
                 Object globalTagVal = this.getTagValue(tag);
                 Object xmlTagVal =
                     Optional.ofNullable(node).map(Node::getTextContent).map(s -> tag.getValue(s)).orElse(null);

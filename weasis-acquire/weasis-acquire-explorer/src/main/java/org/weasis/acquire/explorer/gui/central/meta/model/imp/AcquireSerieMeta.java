@@ -27,6 +27,8 @@ public class AcquireSerieMeta extends AcquireMetadataTableModel {
     private static final TagW[] TAGS_EDITABLE =
         TagD.getTagFromIDs(Tag.ReferringPhysicianName, Tag.BodyPartExamined, Tag.SeriesDescription);
 
+    private static final TagW[] TAGS_TO_PUBLISH = TagD.getTagFromIDs(Tag.Modality, Tag.SeriesDescription);
+
     public AcquireSerieMeta(Serie serie) {
         super(serie);
     }
@@ -39,5 +41,10 @@ public class AcquireSerieMeta extends AcquireMetadataTableModel {
     @Override
     protected Optional<TagW[]> tagsEditable() {
         return Optional.of(TAGS_EDITABLE);
+    }
+
+    @Override
+    protected Optional<TagW[]> tagsToPublish() {
+        return Optional.of(TAGS_TO_PUBLISH);
     }
 }

@@ -121,6 +121,9 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
 
     @Override
     public boolean removeElement(E obj) {
+        if (obj instanceof ImageElement) {
+            JIThumbnailCache.removeInQueue((ImageElement) obj);
+        }
         return listModel.removeElement(obj);
     }
 

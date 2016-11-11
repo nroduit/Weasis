@@ -25,7 +25,7 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
-import org.weasis.acquire.explorer.gui.central.component.SerieButton;
+import org.weasis.acquire.explorer.gui.central.SerieButton;
 import org.weasis.acquire.explorer.gui.dialog.AcquireNewSerieDialog;
 import org.weasis.base.explorer.list.AThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
@@ -85,7 +85,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
 
             popupMenu.add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.remove"), event -> { //$NON-NLS-1$
                 clearSelection();
-                AcquireCentralThumnailList.this.acquireTabPanel.removeElements(AcquireManager.toImageElement(medias));
+                AcquireManager.getInstance().removeMedias(medias);
                 repaint();
             })));
 
@@ -188,12 +188,16 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
             case KeyEvent.VK_PAGE_UP:
                 lastPage(e);
                 break;
+            case KeyEvent.VK_ENTER:
+                openSelection();
+                e.consume();
+                break;
             case KeyEvent.VK_DELETE:
                 List<E> selected = getSelectedValuesList();
                 if (!selected.isEmpty()) {
                     List<ImageElement> list = AcquireManager.toImageElement(selected);
                     clearSelection();
-                    AcquireCentralThumnailList.this.acquireTabPanel.removeElements(list);
+                    AcquireManager.getInstance().removeImages(list);
                 }
                 break;
         }

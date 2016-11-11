@@ -19,7 +19,7 @@ import javax.swing.JFileChooser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.AcquisitionView;
+import org.weasis.acquire.explorer.AcquireExplorer;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.media.MediaSource;
 
@@ -27,9 +27,9 @@ public class ChangePathSelectionAction extends AbstractAction {
     private static final long serialVersionUID = -65145837841144613L;
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangePathSelectionAction.class);
 
-    private final AcquisitionView mainView;
+    private final AcquireExplorer mainView;
 
-    public ChangePathSelectionAction(AcquisitionView acquisitionView) {
+    public ChangePathSelectionAction(AcquireExplorer acquisitionView) {
         this.mainView = acquisitionView;
 
         putValue(Action.NAME, " ... "); //$NON-NLS-1$
@@ -51,7 +51,7 @@ public class ChangePathSelectionAction extends AbstractAction {
             }
         }
     }
-    
+
     public static String openDirectoryChooser(String path, Component parent) {
 
         JFileChooser fc = new JFileChooser(path);

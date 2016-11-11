@@ -95,7 +95,7 @@ public class PrSerializer {
                 saveToFile(outputFile, attributes);
                 return attributes;
             } catch (Exception e) {
-                LOGGER.error("Cannot DICOM PR: ", e); //$NON-NLS-1$
+                LOGGER.error("Cannot write Presentation State : ", e); //$NON-NLS-1$
             }
         }
         return null;
