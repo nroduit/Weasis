@@ -21,7 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 
 @SuppressWarnings("serial")
 public class SerieButtonList extends JScrollPane {
@@ -48,8 +48,8 @@ public class SerieButtonList extends JScrollPane {
         serieButtonPane.add(btn, index);
     }
 
-    public Optional<SerieButton> getButton(final Serie serie) {
-        return serieButtonSet.stream().filter(sb -> sb.getSerie().equals(serie)).findAny();
+    public Optional<SerieButton> getButton(final SeriesGroup seriesGroup) {
+        return serieButtonSet.stream().filter(sb -> sb.getSerie().equals(seriesGroup)).findAny();
     }
 
     public Set<SerieButton> getButtons() {
@@ -66,8 +66,8 @@ public class SerieButtonList extends JScrollPane {
         return serieButtonSet.stream().sorted().findFirst();
     }
 
-    public void removeBySerie(final Serie serie) {
-        serieButtonSet.stream().filter(sb -> sb.getSerie().equals(serie)).findFirst().ifPresent(this::remove);
+    public void removeBySerie(final SeriesGroup seriesGroup) {
+        serieButtonSet.stream().filter(sb -> sb.getSerie().equals(seriesGroup)).findFirst().ifPresent(this::remove);
     }
 
     protected void refreshGUI() {

@@ -46,7 +46,7 @@ public class MetadataPanel extends AbstractAcquireActionPanel {
 
     @Override
     public void initValues(AcquireImageInfo info, AcquireImageValues values) {
-        serieInfoPanel.setSerie(info.getSerie());
+        serieInfoPanel.setSerie(info.getSeries());
         imageInfoPanel.setImageInfo(info);
         repaint();
     }

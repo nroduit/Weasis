@@ -21,19 +21,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.Messages;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
 import org.weasis.core.api.media.data.ImageElement;
 
 @SuppressWarnings("serial")
 public class AcquireNewSerieDialog extends JDialog implements PropertyChangeListener {
-
-    protected static final Logger LOGGER = LoggerFactory.getLogger(AcquireNewSerieDialog.class);
-
-
     private final JTextField serieName = new JTextField();
     private JOptionPane optionPane;
 
@@ -71,7 +65,7 @@ public class AcquireNewSerieDialog extends JDialog implements PropertyChangeList
         if (action != null) {
             if (AcquireImportDialog.OPTIONS[0].equals(action)) {
                 if (serieName.getText() != null && !serieName.getText().isEmpty()) {
-                    acquireTabPanel.moveElements(new Serie(serieName.getText()), medias);
+                    acquireTabPanel.moveElements(new SeriesGroup(serieName.getText()), medias);
                 } else {
                     JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"), //$NON-NLS-1$
                         Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$

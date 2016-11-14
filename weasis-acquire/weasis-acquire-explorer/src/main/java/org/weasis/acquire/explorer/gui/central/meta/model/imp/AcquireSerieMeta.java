@@ -14,7 +14,7 @@ import java.util.Optional;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
@@ -30,8 +30,8 @@ public class AcquireSerieMeta extends AcquireMetadataTableModel {
 
     private static final TagW[] TAGS_TO_PUBLISH = TagD.getTagFromIDs(Tag.Modality, Tag.SeriesDescription);
 
-    public AcquireSerieMeta(Serie serie) {
-        super(serie);
+    public AcquireSerieMeta(SeriesGroup seriesGroup) {
+        super(seriesGroup);
     }
 
     @Override

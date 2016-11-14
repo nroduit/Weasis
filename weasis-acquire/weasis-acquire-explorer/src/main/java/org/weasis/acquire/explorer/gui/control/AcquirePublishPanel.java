@@ -32,12 +32,12 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomState;
 
+@SuppressWarnings("serial")
 public class AcquirePublishPanel extends JPanel {
-    private static final long serialVersionUID = 7909124238543156489L;
-
-    public static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishPanel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishPanel.class);
 
     private final JButton publishBtn = new JButton(Messages.getString("AcquirePublishPanel.publish")); //$NON-NLS-1$
     private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
@@ -61,9 +61,9 @@ public class AcquirePublishPanel extends JPanel {
         progressBar.setVisible(false);
     }
 
-    public void publishDirDicom(File exportDirDicom) {
+    public void publishDirDicom(File exportDirDicom, DicomNode destinationNode) {
 
-        SwingWorker<DicomState, File> publishDicomTask = new PublishDicomTask(exportDirDicom);
+        SwingWorker<DicomState, File> publishDicomTask = new PublishDicomTask(exportDirDicom, destinationNode);
         publishDicomTask.addPropertyChangeListener(evt -> {
             if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
                 int progress = (Integer) evt.getNewValue();

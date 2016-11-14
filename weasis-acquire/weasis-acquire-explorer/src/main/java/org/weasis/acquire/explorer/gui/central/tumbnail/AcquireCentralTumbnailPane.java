@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
 import org.weasis.acquire.explorer.gui.central.SerieButton;
 import org.weasis.base.explorer.list.AThumbnailListPane;
@@ -140,13 +139,15 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                 AcquireCentralThumnailList tumbList =
                     (AcquireCentralThumnailList) AcquireCentralTumbnailPane.this.thumbnailList;
                 AcquireImageInfo info = AcquireManager.findByImage((ImageElement) media);
-                SerieButton btn = tumbList.getSelectedSerie();
-                if (btn != null) {
-                    info.setSerie(btn.getSerie());
-                } else {
-                    info.setSerie(Serie.DEFAULT_SERIE);
+                if (info != null) {
+                    SerieButton btn = tumbList.getSelectedSerie();
+                    if (btn != null) {
+                        info.setSeries(btn.getSerie());
+                    } else {
+                        info.setSeries(AcquireManager.getDefaultSeries());
+                    }
+                    tumbList.updateAll();
                 }
-                tumbList.updateAll();
             }
         }
 

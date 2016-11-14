@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.SubsampleAverageDescriptor;
-import javax.swing.Icon;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +83,7 @@ public final class JIThumbnailCache {
         }
     }
 
-    public Icon getThumbnailFor(final ImageElement diskObject, final IThumbnailList aThumbnailList, final int index) {
+    public ThumbnailIcon getThumbnailFor(final ImageElement diskObject, final IThumbnailList aThumbnailList, final int index) {
         try {
 
             final ThumbnailIcon jiIcon = this.cachedThumbnails.get(diskObject.getMediaURI());

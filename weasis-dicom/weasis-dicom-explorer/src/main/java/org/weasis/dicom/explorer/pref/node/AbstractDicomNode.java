@@ -167,7 +167,7 @@ public abstract class AbstractDicomNode {
     }
 
     public static void loadDicomNodes(JComboBox<AbstractDicomNode> comboBox, Type type, UsageType usage) {
-        // Load nodes from ressources
+        // Load nodes from resources
         loadDicomNodes(comboBox, ResourceUtil.getResource(type.getFilename()), type, false, usage);
 
         // Load nodes from local data

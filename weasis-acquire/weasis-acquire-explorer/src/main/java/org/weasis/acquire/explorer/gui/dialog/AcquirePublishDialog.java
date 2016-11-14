@@ -39,8 +39,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.DicomizeTask;
 import org.weasis.acquire.explorer.Messages;
@@ -49,27 +47,47 @@ import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
 import org.weasis.acquire.explorer.util.ImageInfoHelper;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
+import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 
+@SuppressWarnings("serial")
 public class AcquirePublishDialog extends JDialog {
-    private static final long serialVersionUID = -8736946182228791444L;
-
-    public static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishDialog.class);
 
     public static final Integer MAX_RESOLUTION_THRESHOLD = 3000; // in pixels
+
+    public enum Resolution {
+        ORIGINAL(Messages.getString("AcquirePublishDialog.original")), //$NON-NLS-1$
+        HIGH_RES(Messages.getString("AcquirePublishDialog.high_res")), //$NON-NLS-1$
+        MED_RES(Messages.getString("AcquirePublishDialog.med_res")); //$NON-NLS-1$
+
+        private String title;
+
+        private Resolution(String title) {
+            this.title = title;
+        }
+
+        @Override
+        public String toString() {
+            return title;
+        }
+    }
 
     private final AcquirePublishPanel publishPanel;
 
     private PublishTree publishTree;
     private JPanel resolutionPane;
-    private JComboBox<EResolution> resolutionCombo;
+    private JComboBox<Resolution> resolutionCombo;
     private JButton publishButton;
     private JButton cancelButton;
     private JProgressBar progressBar;
 
     private ActionListener clearAndHideActionListener;
+    private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public AcquirePublishDialog(AcquirePublishPanel publishPanel) {
         super(WinUtil.getParentWindow(publishPanel), "", ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
@@ -124,7 +142,7 @@ public class AcquirePublishDialog extends JDialog {
             new JLabel(Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
         resolutionPane.add(resolutionLabel);
 
-        resolutionCombo = new JComboBox<>(EResolution.values());
+        resolutionCombo = new JComboBox<>(Resolution.values());
         resolutionPane.add(resolutionCombo);
         resolutionPane.setVisible(Boolean.FALSE);
 
@@ -136,22 +154,50 @@ public class AcquirePublishDialog extends JDialog {
 
         actionPane.add(progressBar, BorderLayout.CENTER);
 
+        JPanel bottomPane = new JPanel(new BorderLayout());
         JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
 
         publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish")); //$NON-NLS-1$
         publishButton.addActionListener(e -> publishAction());
 
         cancelButton = new JButton(Messages.getString("AcquirePublishDialog.cancel")); //$NON-NLS-1$
-        cancelButton.addActionListener(clearAndHideActionListener = e -> clearAndHide());
+        clearAndHideActionListener = e -> clearAndHide();
+        cancelButton.addActionListener(clearAndHideActionListener);
+
+        JPanel destPane = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 10));
+        JLabel lblDestination = new JLabel(Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON); //$NON-NLS-1$
+        destPane.add(lblDestination);
+        AbstractDicomNode.addTooltipToComboList(comboNode);
+
+        if (!StringUtil.hasText(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host"))) {
+            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
+            if (comboNode.getItemCount() == 0) {
+                comboNode.addItem(getDestinationConfiguration());
+            }
+        } else {
+            comboNode.addItem(getDestinationConfiguration());
+        }
+
+        destPane.add(comboNode);
+        bottomPane.add(destPane, BorderLayout.WEST);
 
         buttonPane.add(publishButton);
         buttonPane.add(cancelButton);
 
-        actionPane.add(buttonPane, BorderLayout.SOUTH);
+        bottomPane.add(buttonPane, BorderLayout.EAST);
+
+        actionPane.add(bottomPane, BorderLayout.SOUTH);
 
         contentPane.add(actionPane, BorderLayout.SOUTH);
 
         return contentPane;
+    }
+
+    private static AbstractDicomNode getDestinationConfiguration() {
+        String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host", "localhost"); //$NON-NLS-1$ //$NON-NLS-2$
+        String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.aet", "DCM4CHEE"); //$NON-NLS-1$ //$NON-NLS-2$
+        String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.port", "11112"); //$NON-NLS-1$ //$NON-NLS-2$
+        return new DefaultDicomNode("Default archive", aet, host, Integer.parseInt(port), UsageType.BOTH);
     }
 
     private void publishAction() {
@@ -167,7 +213,7 @@ public class AcquirePublishDialog extends JDialog {
         if (!overSizedSelected.isEmpty()) {
             for (AcquireImageInfo imgInfo : overSizedSelected) {
                 // caculate zoom ration
-                Double ratio = ImageInfoHelper.calculateRatio(imgInfo, (EResolution) resolutionCombo.getSelectedItem(),
+                Double ratio = ImageInfoHelper.calculateRatio(imgInfo, (Resolution) resolutionCombo.getSelectedItem(),
                     MAX_RESOLUTION_THRESHOLD.doubleValue());
 
                 imgInfo.getCurrentValues().setRatio(ratio);
@@ -195,7 +241,7 @@ public class AcquirePublishDialog extends JDialog {
 
                 } else if (StateValue.DONE == evt.getNewValue()) {
                     File exportDirDicom = null;
-                    
+
                     if (!dicomizeTask.isCancelled()) {
                         try {
                             exportDirDicom = dicomizeTask.get();
@@ -203,8 +249,11 @@ public class AcquirePublishDialog extends JDialog {
                         }
 
                         if (exportDirDicom != null) {
-                            publishPanel.publishDirDicom(exportDirDicom);
-                            clearAndHide();
+                            AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
+                            if (node instanceof DefaultDicomNode) {
+                                publishPanel.publishDirDicom(exportDirDicom, ((DefaultDicomNode) node).getDicomNode());
+                                clearAndHide();
+                            }
                         } else {
                             JOptionPane.showMessageDialog(this,
                                 Messages.getString("AcquirePublishDialog.dicomize_error_msg"), //$NON-NLS-1$
@@ -255,22 +304,6 @@ public class AcquirePublishDialog extends JDialog {
 
     public void clearAndHide() {
         dispose();
-    }
-
-    public enum EResolution {
-        original(Messages.getString("AcquirePublishDialog.original")), //$NON-NLS-1$
-        hd(Messages.getString("AcquirePublishDialog.high_res")), md(Messages.getString("AcquirePublishDialog.med_res")); //$NON-NLS-1$ //$NON-NLS-2$
-
-        private String title;
-
-        EResolution(String title) {
-            this.title = title;
-        }
-
-        @Override
-        public String toString() {
-            return title;
-        }
     }
 
 }

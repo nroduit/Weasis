@@ -29,7 +29,7 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.image.AutoLevelsOp;
 import org.weasis.core.api.image.BrightnessOp;
 import org.weasis.core.api.image.CropOp;
@@ -67,7 +67,7 @@ public class AcquireImageInfo {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireImageInfo.class);
 
     private final ImageElement image;
-    private Serie serie = Serie.DEFAULT_SERIE;
+    private SeriesGroup seriesGroup;
     private final Attributes attributes;
     private Layer layer;
     private AcquireImageStatus status;
@@ -162,7 +162,6 @@ public class AcquireImageInfo {
         boolean dirty = isDirty();
 
         if (dirty) {
-
             postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, nextValues.getFullRotation());
 
             if (!Objects.equals(nextValues.getCropZone(), currentValues.getCropZone())) {
@@ -287,18 +286,18 @@ public class AcquireImageInfo {
         return defaultValues;
     }
 
-    public Serie getSerie() {
-        return serie;
+    public SeriesGroup getSeries() {
+        return seriesGroup;
     }
 
-    public void setSerie(Serie serie) {
-        this.serie = serie;
-        if (serie != null) {
-            image.setTag(TagD.get(Tag.SeriesInstanceUID), serie.getUID());
+    public void setSeries(SeriesGroup seriesGroup) {
+        this.seriesGroup = seriesGroup;
+        if (seriesGroup != null) {
+            image.setTag(TagD.get(Tag.SeriesInstanceUID), seriesGroup.getUID());
 
-            String seriesDescription = TagD.getTagValue(serie, Tag.SeriesDescription, String.class);
-            if (!StringUtil.hasText(seriesDescription) && serie.getType() != Serie.Type.NONE) {
-                serie.setTag(TagD.get(Tag.SeriesDescription), serie.getDisplayName());
+            String seriesDescription = TagD.getTagValue(seriesGroup, Tag.SeriesDescription, String.class);
+            if (!StringUtil.hasText(seriesDescription) && seriesGroup.getType() != SeriesGroup.Type.NONE) {
+                seriesGroup.setTag(TagD.get(Tag.SeriesDescription), seriesGroup.getDisplayName());
             }
         }
     }

@@ -17,7 +17,6 @@ import java.awt.Rectangle;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -60,7 +59,7 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements
     @Override
     public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected,
         boolean cellHasFocus) {
-        Icon icon = null;
+        ThumbnailIcon icon = null;
         if (value instanceof ImageElement) {
             icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) value, (IThumbnailList) list, index);
         }

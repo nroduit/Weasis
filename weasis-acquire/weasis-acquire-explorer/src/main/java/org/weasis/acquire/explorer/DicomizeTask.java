@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.dicom.Transform2Dicom;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.media.data.Tagable;
 import org.weasis.core.api.util.FileUtil;
 
 /**
@@ -27,7 +26,6 @@ public class DicomizeTask extends SwingWorker<File, AcquireImageInfo> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomizeTask.class);
 
-    private final Tagable acquireGlobalTags = AcquireManager.GLOBAL;
     private final Collection<AcquireImageInfo> toDicomize;
 
     public DicomizeTask(Collection<AcquireImageInfo> toDicomize) {
@@ -46,7 +44,7 @@ public class DicomizeTask extends SwingWorker<File, AcquireImageInfo> {
         int nbImageProcessed = 0;
 
         try {
-            Transform2Dicom.buildStudySeriesDate(toDicomize, acquireGlobalTags);
+            Transform2Dicom.buildStudySeriesDate(toDicomize, AcquireManager.GLOBAL);
 
             String seriesInstanceUID = UIDUtils.createUID(); // Global series for all PR
 

@@ -37,7 +37,7 @@ import org.osgi.service.prefs.Preferences;
 import org.weasis.acquire.explorer.AcquireExplorer;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
@@ -64,7 +64,6 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
     private final JRadioButton btn3 = new JRadioButton(Messages.getString("AcquireImportDialog.name_grp")); //$NON-NLS-1$
     private final JSpinner spinner;
 
-    private Serie serieType = Serie.DEFAULT_SERIE;
     private JOptionPane optionPane;
 
     private List<ImageElement> mediaList;
@@ -200,13 +199,14 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         if (action != null) {
             boolean close = true;
             if (action.equals(OPTIONS[0])) {
+                SeriesGroup serieType = null;
                 if (btnGrp.getSelection().equals(btn1.getModel())) {
-                    serieType = Serie.DEFAULT_SERIE;
+                    serieType = AcquireManager.getDefaultSeries();
                 } else if (btnGrp.getSelection().equals(btn2.getModel())) {
-                    serieType = Serie.DATE_SERIE;
+                    serieType = SeriesGroup.DATE_SERIE;
                 } else {
                     if (serieName.getText() != null && !serieName.getText().isEmpty()) {
-                        serieType = new Serie(serieName.getText());
+                        serieType = new SeriesGroup(serieName.getText());
                     } else {
                         JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"), //$NON-NLS-1$
                             Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
@@ -214,7 +214,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
                         close = false;
                     }
                 }
-                if (close) {
+                if (close && serieType != null) {
                     Integer maxRangeInMinutes = (Integer) spinner.getValue();
                     AcquireManager.importImages(serieType, mediaList, maxRangeInMinutes);
                     mainPanel.getCentralPane().setSelectedAndGetFocus();

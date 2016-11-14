@@ -19,7 +19,7 @@ import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.weasis.acquire.explorer.AcquireImageInfo;
-import org.weasis.acquire.explorer.gui.dialog.AcquirePublishDialog.EResolution;
+import org.weasis.acquire.explorer.gui.dialog.AcquirePublishDialog.Resolution;
 import org.weasis.acquire.explorer.util.ImageInfoHelper;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -39,19 +39,19 @@ public class ImageInfoHelperTest {
 
         assertThat(ImageInfoHelper.calculateRatio(null, null, null)).isNull();
         assertThat(ImageInfoHelper.calculateRatio(imgInfo, null, null)).isNull();
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.original, null)).isNull();
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.ORIGINAL, null)).isNull();
 
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.original, MAX)).isNull();
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.ORIGINAL, MAX)).isNull();
 
         PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageWidth))).thenReturn(4000);
         PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageHeight))).thenReturn(2000);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.hd, MAX)).isEqualTo(0.75d);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.md, MAX)).isEqualTo(0.5d);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.HIGH_RES, MAX)).isEqualTo(0.75d);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.MED_RES, MAX)).isEqualTo(0.5d);
 
         PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageWidth))).thenReturn(2000);
         PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageHeight))).thenReturn(4000);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.hd, MAX)).isEqualTo(0.75d);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, EResolution.md, MAX)).isEqualTo(0.5d);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.HIGH_RES, MAX)).isEqualTo(0.75d);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.MED_RES, MAX)).isEqualTo(0.5d);
     }
 
 }

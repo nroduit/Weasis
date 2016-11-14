@@ -17,7 +17,7 @@ import javax.swing.JPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel;
@@ -34,18 +34,18 @@ public class AcquireCentralInfoPanel extends JPanel {
 
     private AcquireImageInfo imageInfo;
 
-    public AcquireCentralInfoPanel(Serie serie) {
+    public AcquireCentralInfoPanel(SeriesGroup seriesGroup) {
         setLayout(new GridLayout(1, 3));
         JMVUtils.setPreferredHeight(this, 230);
 
-        setSerie(serie);
+        setSerie(seriesGroup);
 
         add(globalInfoPanel);
         add(serieInfoPanel);
         add(imageInfoPanel);
     }
 
-    public void setSerie(Serie newSerie) {
+    public void setSerie(SeriesGroup newSerie) {
         serieInfoPanel.setSerie(newSerie);
     }
 

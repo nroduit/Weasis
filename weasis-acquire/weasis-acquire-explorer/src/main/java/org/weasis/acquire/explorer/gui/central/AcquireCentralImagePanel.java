@@ -22,7 +22,7 @@ import javax.swing.event.ListSelectionListener;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.tumbnail.AcquireCentralTumbnailPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.ImageElement;
@@ -38,10 +38,10 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
         this(acquireTabPanel, null, new ArrayList<AcquireImageInfo>());
     }
 
-    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, Serie serie, List<AcquireImageInfo> imageInfos) {
+    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, SeriesGroup seriesGroup, List<AcquireImageInfo> imageInfos) {
         setLayout(new BorderLayout());
 
-        imageInfo = new AcquireCentralInfoPanel(serie);
+        imageInfo = new AcquireCentralInfoPanel(seriesGroup);
 
         imageListPane = new AcquireCentralTumbnailPane<>(toImageElement(imageInfos));
         imageListPane.setAcquireTabPanel(acquireTabPanel);
@@ -62,7 +62,7 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
         imageListPane.setList(toImageElement(imageInfos));
     }
 
-    public void updateSerie(Serie newSerie) {
+    public void updateSerie(SeriesGroup newSerie) {
         imageInfo.setSerie(newSerie);
     }
 

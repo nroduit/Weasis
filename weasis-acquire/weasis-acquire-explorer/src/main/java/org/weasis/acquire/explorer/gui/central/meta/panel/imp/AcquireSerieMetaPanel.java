@@ -11,7 +11,7 @@
 package org.weasis.acquire.explorer.gui.central.meta.panel.imp;
 
 import org.weasis.acquire.explorer.Messages;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSerieMeta;
 import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
@@ -23,37 +23,37 @@ public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
     private static final String NO_SERIE = Messages.getString("AcquireSerieMetaPanel.no_series"); //$NON-NLS-1$
     private static final String SERIE_PREFIX = Messages.getString("AcquireSerieMetaPanel.series") + StringUtil.COLON_AND_SPACE; //$NON-NLS-1$
 
-    protected Serie serie;
+    protected SeriesGroup seriesGroup;
 
-    public AcquireSerieMetaPanel(Serie serie) {
+    public AcquireSerieMetaPanel(SeriesGroup seriesGroup) {
         super(""); //$NON-NLS-1$
-        this.serie = serie;
+        this.seriesGroup = seriesGroup;
 
     }
 
     @Override
     public AcquireMetadataTableModel newTableModel() {
-        return new AcquireSerieMeta(serie);
+        return new AcquireSerieMeta(seriesGroup);
     }
 
     @Override
     public String getDisplayText() {
-        return (serie == null) ? NO_SERIE : new StringBuilder(SERIE_PREFIX).append(serie.getDisplayName()).toString();
+        return (seriesGroup == null) ? NO_SERIE : new StringBuilder(SERIE_PREFIX).append(seriesGroup.getDisplayName()).toString();
     }
 
-    public Serie getSerie() {
-        return serie;
+    public SeriesGroup getSerie() {
+        return seriesGroup;
     }
 
-    public void setSerie(Serie serie) {
-        this.serie = serie;
+    public void setSerie(SeriesGroup seriesGroup) {
+        this.seriesGroup = seriesGroup;
         this.titleBorder.setTitle(getDisplayText());
         update();
     }
 
     @Override
     public void update() {
-        setMetaVisible(serie != null);
+        setMetaVisible(seriesGroup != null);
         super.update();
     }
 

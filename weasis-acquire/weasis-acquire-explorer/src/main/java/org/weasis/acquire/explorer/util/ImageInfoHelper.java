@@ -17,7 +17,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
-import org.weasis.acquire.explorer.gui.dialog.AcquirePublishDialog.EResolution;
+import org.weasis.acquire.explorer.gui.dialog.AcquirePublishDialog.Resolution;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 
@@ -35,7 +35,7 @@ public class ImageInfoHelper {
      * @param resolution
      * @return
      */
-    public static Double calculateRatio(AcquireImageInfo imgInfo, EResolution resolution, Double max) {
+    public static Double calculateRatio(AcquireImageInfo imgInfo, Resolution resolution, Double max) {
         try {
             Objects.requireNonNull(imgInfo);
             Objects.requireNonNull(resolution);
@@ -43,10 +43,10 @@ public class ImageInfoHelper {
 
             Double expectedImageSize;
             switch (resolution) {
-                case hd:
+                case HIGH_RES:
                     expectedImageSize = max;
                     break;
-                case md:
+                case MED_RES:
                     expectedImageSize = Math.floor((max * 2) / 3);
                     break;
                 default:

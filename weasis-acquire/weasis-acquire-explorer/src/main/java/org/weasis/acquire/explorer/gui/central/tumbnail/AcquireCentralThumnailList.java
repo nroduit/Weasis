@@ -23,7 +23,7 @@ import javax.swing.JPopupMenu;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
 import org.weasis.acquire.explorer.gui.central.SerieButton;
 import org.weasis.acquire.explorer.gui.dialog.AcquireNewSerieDialog;
@@ -121,7 +121,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
     private void moveToExisting(JMenu moveToMenu, final List<E> medias) {
         AcquireCentralThumnailList.this.acquireTabPanel.getSeries().stream().forEach(s -> {
             if (!s.equals(AcquireCentralThumnailList.this.acquireTabPanel.getSelected().getSerie())
-                && !s.equals(Serie.DEFAULT_SERIE)) {
+                && !SeriesGroup.Type.NONE.equals(s.getType())) {
                 moveToMenu.add(new JMenuItem(new DefaultAction(s.getDisplayName(), event -> {
                     AcquireCentralThumnailList.this.acquireTabPanel.moveElements(s,
                         AcquireManager.toImageElement(medias));
@@ -133,8 +133,8 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
     }
 
     private void moveToOther(JMenu moveToMenu, final List<E> medias) {
-        moveToMenu.add(new JMenuItem(new DefaultAction(Serie.DEFAULT_SERIE_NAME, event -> {
-            AcquireCentralThumnailList.this.acquireTabPanel.moveElements(Serie.DEFAULT_SERIE,
+        moveToMenu.add(new JMenuItem(new DefaultAction(SeriesGroup.DEFAULT_SERIE_NAME, event -> {
+            AcquireCentralThumnailList.this.acquireTabPanel.moveElements(AcquireManager.getDefaultSeries(),
                 AcquireManager.toImageElement(medias));
             repaint();
         })));

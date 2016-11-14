@@ -34,18 +34,11 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
 
     private DicomProgress dicomProgress = new DicomProgress();
 
-    public PublishDicomTask(File exportDirDicom) {
+    public PublishDicomTask(File exportDirDicom, DicomNode destinationNode) {
         this.exportDirDicom = Objects.requireNonNull(exportDirDicom);
-
-        callingNode = new DicomNode(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE")); //$NON-NLS-1$ //$NON-NLS-2$
-
-        String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host", "localhost"); //$NON-NLS-1$ //$NON-NLS-2$
-        String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.aet", "DCM4CHEE"); //$NON-NLS-1$ //$NON-NLS-2$
-        String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.port", "11112"); //$NON-NLS-1$ //$NON-NLS-2$
-
-        destinationNode = new DicomNode(aet, host, Integer.parseInt(port));
+        this.destinationNode = Objects.requireNonNull(destinationNode);
+        this.callingNode = new DicomNode(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.debug("destinationNode is : {}", destinationNode); //$NON-NLS-1$
-
         initDicomProgress();
     }
 

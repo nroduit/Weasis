@@ -49,7 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.weasis.acquire.explorer.core.bean.Global;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -74,10 +74,10 @@ import org.xml.sax.SAXException;
  */
 public class AcquireManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
- 
+
     public static final String[] functions = { "patient" }; //$NON-NLS-1$
     public static final Global GLOBAL = new Global();
-    
+
     private static final int OPT_NONE = 0;
     private static final int OPT_B64 = 1;
     private static final int OPT_ZIP = 2;
@@ -86,7 +86,7 @@ public class AcquireManager {
     private static final int OPT_B64ZIP = 3;
     private static final int OPT_B64URLSAFE = 5;
     private static final int OPT_B64URLSAFEZIP = 7;
-    
+
     private static final AcquireManager instance = new AcquireManager();
     private static final Map<String, AcquireImageInfo> imagesInfoByUID = new HashMap<>();
     private static final Map<URI, AcquireImageInfo> imagesInfoByURI = new HashMap<>();
@@ -134,31 +134,33 @@ public class AcquireManager {
         return getInstance().getAcquireImageInfo(image);
     }
 
-    public static List<AcquireImageInfo> findbySerie(Serie serie) {
-        return getAcquireImageInfoList().stream().filter(i -> i.getSerie().equals(serie)).collect(Collectors.toList());
-    }
-
-    public static List<Serie> getBySeries() {
-        return imagesInfoByURI.entrySet().stream().map(e -> e.getValue().getSerie()).distinct().sorted()
+    public static List<AcquireImageInfo> findbySerie(SeriesGroup seriesGroup) {
+        return getAcquireImageInfoList().stream().filter(i -> i.getSeries().equals(seriesGroup))
             .collect(Collectors.toList());
     }
 
-    public static Map<Serie, List<AcquireImageInfo>> groupBySeries() {
-        return getAcquireImageInfoList().stream().collect(Collectors.groupingBy(AcquireImageInfo::getSerie));
+    public static List<SeriesGroup> getBySeries() {
+        return imagesInfoByURI.entrySet().stream().map(e -> e.getValue().getSeries()).filter(Objects::nonNull)
+            .distinct().sorted().collect(Collectors.toList());
     }
 
-    public static Serie getSerie(Serie searched) {
-        Optional<Serie> serie = getBySeries().stream().filter(s -> s.equals(searched)).findFirst();
-        if (serie.isPresent()) {
-            return serie.get();
-        }
-        return searched;
+    public static Map<SeriesGroup, List<AcquireImageInfo>> groupBySeries() {
+        return getAcquireImageInfoList().stream().collect(Collectors.groupingBy(AcquireImageInfo::getSeries));
+    }
+
+    public static SeriesGroup getSeries(SeriesGroup searched) {
+        return getBySeries().stream().filter(s -> s.equals(searched)).findFirst().orElse(searched);
+    }
+
+    public static SeriesGroup getDefaultSeries() {
+        return getBySeries().stream().filter(s -> SeriesGroup.Type.NONE.equals(s.getType())).findFirst()
+            .orElseGet(SeriesGroup::new);
     }
 
     public void removeMedias(List<? extends MediaElement> mediaList) {
         removeImages(toImageElement(mediaList));
     }
-    
+
     public void removeAllImages() {
         imagesInfoByURI.clear();
         imagesInfoByUID.clear();
@@ -175,11 +177,11 @@ public class AcquireManager {
         notifyImageRemoved(imageElement);
     }
 
-    public static void importImages(Serie searched, List<ImageElement> selected, int maxRangeInMinutes) {
-        Serie serie = null;
+    public static void importImages(SeriesGroup searched, List<ImageElement> selected, int maxRangeInMinutes) {
+        SeriesGroup seriesGroup = null;
 
-        if (!Serie.Type.DATE.equals(searched.getType())) {
-            serie = AcquireManager.getSerie(searched);
+        if (!SeriesGroup.Type.DATE.equals(searched.getType())) {
+            seriesGroup = AcquireManager.getSeries(searched);
         }
 
         for (ImageElement element : selected) {
@@ -188,10 +190,10 @@ public class AcquireManager {
                 continue;
             }
 
-            if (Serie.Type.DATE.equals(searched.getType())) {
+            if (SeriesGroup.Type.DATE.equals(searched.getType())) {
                 LocalDateTime date = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, imageInfo.getImage());
-                Optional<Serie> ser =
-                    getBySeries().stream().filter(s -> Serie.Type.DATE.equals(s.getType())).filter(s -> {
+                Optional<SeriesGroup> ser =
+                    getBySeries().stream().filter(s -> SeriesGroup.Type.DATE.equals(s.getType())).filter(s -> {
                         LocalDateTime start = s.getDate();
                         LocalDateTime end = date;
                         if (end.isBefore(start)) {
@@ -202,16 +204,16 @@ public class AcquireManager {
                         return duration.toMinutes() < maxRangeInMinutes;
                     }).findFirst();
 
-                serie = ser.isPresent() ? ser.get() : AcquireManager.getSerie(new Serie(date));
-                imageInfo.setSerie(serie);
+                seriesGroup = ser.isPresent() ? ser.get() : AcquireManager.getSeries(new SeriesGroup(date));
+                imageInfo.setSeries(seriesGroup);
                 if (ser.isPresent()) {
-                    List<AcquireImageInfo> list = findbySerie(serie);
+                    List<AcquireImageInfo> list = findbySerie(seriesGroup);
                     if (list.size() > 2) {
                         recalculateCentralTime(list);
                     }
                 }
             } else {
-                imageInfo.setSerie(serie);
+                imageInfo.setSeries(seriesGroup);
             }
         }
     }
@@ -221,7 +223,7 @@ public class AcquireManager {
             .sorted(Comparator.comparing(i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i.getImage())))
             .collect(Collectors.toList());
         AcquireImageInfo info = sortedList.get(sortedList.size() / 2);
-        info.getSerie().setDate(TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getImage()));
+        info.getSeries().setDate(TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getImage()));
     }
 
     public static List<ImageElement> toImageElement(List<? extends MediaElement> medias) {
@@ -591,7 +593,7 @@ public class AcquireManager {
      * @return
      */
     private AcquireImageInfo getAcquireImageInfo(ImageElement image) {
-        if (image == null) {
+        if (image == null || image.getImage() == null) {
             return null;
         }
 
@@ -600,7 +602,6 @@ public class AcquireManager {
             imageInfo = new AcquireImageInfo(image);
             addImageToDataMapping(imageInfo);
         }
-
         return imageInfo;
     }
 }

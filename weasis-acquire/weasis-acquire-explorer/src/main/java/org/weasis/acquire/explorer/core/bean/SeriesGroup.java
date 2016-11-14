@@ -22,7 +22,7 @@ import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
 
-public class Serie extends AbstractTagable implements Comparable<Serie> {
+public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGroup> {
     public enum Type {
         NONE, DATE, NAME;
     }
@@ -31,27 +31,26 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
     private String name;
     private LocalDateTime date;
 
-    public static final Serie DEFAULT_SERIE = new Serie();
-    public static final Serie DATE_SERIE = new Serie(LocalDateTime.now());
+    public static final SeriesGroup DATE_SERIE = new SeriesGroup(LocalDateTime.now());
 
     public static final String DEFAULT_SERIE_NAME = Messages.getString("Serie.other"); //$NON-NLS-1$
 
-    public Serie() {
+    public SeriesGroup() {
         this(Type.NONE);
     }
 
-    private Serie(Type type) {
+    private SeriesGroup(Type type) {
         this.type = type;
         init();
     }
 
-    public Serie(String name) {
+    public SeriesGroup(String name) {
         this.type = Type.NAME;
         this.name = name;
         init();
     }
 
-    public Serie(LocalDateTime date) {
+    public SeriesGroup(LocalDateTime date) {
         Objects.requireNonNull(date);
         this.type = Type.DATE;
         this.date = date;
@@ -115,7 +114,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        Serie other = (Serie) obj;
+        SeriesGroup other = (SeriesGroup) obj;
         if (date == null) {
             if (other.date != null) {
                 return false;
@@ -149,7 +148,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
     }
 
     @Override
-    public int compareTo(Serie that) {
+    public int compareTo(SeriesGroup that) {
         final int BEFORE = -1;
         final int EQUAL = 0;
         final int AFTER = 1;

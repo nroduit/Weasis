@@ -89,7 +89,7 @@ public final class Transform2Dicom {
         if (imgFile.canRead()) {
             Attributes attrs = imageInfo.getAttributes();
             DicomMediaUtils.fillAttributes(AcquireManager.GLOBAL.getTagEntrySetIterator(), attrs);
-            DicomMediaUtils.fillAttributes(imageInfo.getSerie().getTagEntrySetIterator(), attrs);
+            DicomMediaUtils.fillAttributes(imageInfo.getSeries().getTagEntrySetIterator(), attrs);
             DicomMediaUtils.fillAttributes(imageElement.getTagEntrySetIterator(), attrs);
             // Spatial calibration
             if (Unit.PIXEL != imageElement.getPixelSpacingUnit()) {
@@ -149,10 +149,10 @@ public final class Transform2Dicom {
                 continue;
             }
 
-            LocalDateTime minSeries = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, imageInfo.getSerie());
+            LocalDateTime minSeries = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, imageInfo.getSeries());
             if (minSeries == null || date.isBefore(minSeries)) {
-                imageInfo.getSerie().setTag(seriesDate, date.toLocalDate());
-                imageInfo.getSerie().setTag(seriesTime, date.toLocalTime());
+                imageInfo.getSeries().setTag(seriesDate, date.toLocalDate());
+                imageInfo.getSeries().setTag(seriesTime, date.toLocalTime());
             }
 
             LocalDateTime minStudy = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, dicomTags);
