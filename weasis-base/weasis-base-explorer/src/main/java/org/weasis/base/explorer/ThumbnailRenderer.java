@@ -17,24 +17,32 @@ import java.awt.Rectangle;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
+import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 
 import org.weasis.base.explorer.list.IThumbnailList;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 
 @SuppressWarnings("serial")
 public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements ListCellRenderer<E> {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
+    public static final Icon ICON_CHECKED = new ImageIcon(ThumbnailRenderer.class.getResource("/icon/24x24/tick.png")); //$NON-NLS-1$
+
     private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER); //$NON-NLS-1$
+    private final JLabel iconCheckedLabel = new JLabel((Icon) null);
     private final JLabel descriptionLabel = new JLabel("", SwingConstants.CENTER); //$NON-NLS-1$
     private static final Color back = new Color(242, 242, 242);
 
@@ -42,17 +50,28 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements
         // Cannot pass a boxLayout directly to super because it has a this reference
         super(null, true);
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        this.iconLabel.setVerticalAlignment(SwingConstants.CENTER);
+        JPanel panel = new JPanel();
+        panel.setLayout(new OverlayLayout(panel));
+        panel.setPreferredSize(ICON_DIM);
+        panel.setMaximumSize(ICON_DIM);
+
+        iconCheckedLabel.setPreferredSize(ICON_DIM);
+        iconCheckedLabel.setMaximumSize(ICON_DIM);
+        panel.add(iconCheckedLabel);
+
         iconLabel.setPreferredSize(ICON_DIM);
         iconLabel.setMaximumSize(ICON_DIM);
         iconLabel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
-        this.add(iconLabel);
+        panel.add(iconLabel);
+        this.add(panel);
 
         descriptionLabel.setFont(FontTools.getFont10());
         Dimension dim = new Dimension(ICON_DIM.width, descriptionLabel.getFont().getSize() + 4);
         descriptionLabel.setPreferredSize(dim);
         descriptionLabel.setMaximumSize(dim);
+
         this.add(descriptionLabel);
+
         setBorder(new EmptyBorder(5, 5, 5, 5));
     }
 
@@ -62,6 +81,9 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements
         ThumbnailIcon icon = null;
         if (value instanceof ImageElement) {
             icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) value, (IThumbnailList) list, index);
+            if (JMVUtils.getNULLtoFalse(value.getTagValue(TagW.Checked))) {
+                iconCheckedLabel.setIcon(ICON_CHECKED);
+            }
         }
         this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(value) : icon);
         this.descriptionLabel.setText(value.getName());

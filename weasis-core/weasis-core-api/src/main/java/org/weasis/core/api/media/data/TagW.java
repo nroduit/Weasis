@@ -139,6 +139,7 @@ public class TagW implements Serializable {
     public static final TagW FileName = new TagW("FileName", TagType.STRING); //$NON-NLS-1$
     public static final TagW CurrentFolder =
         new TagW("CurrentFolder", Messages.getString("TagElement.cur_dir"), TagType.STRING);  //$NON-NLS-1$//$NON-NLS-2$
+    public static final TagW Checked = new TagW("Checked", TagType.BOOLEAN); //$NON-NLS-1$
 
     /**
      * DICOM common tags
