@@ -113,7 +113,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                 try {
                     FileUtil.unzip(file, dir);
                 } catch (IOException e) {
-                    LOGGER.error("", e);
+                    LOGGER.error("", e); //$NON-NLS-1$
                 }
                 File dicomdir = new File(dir, "DICOMDIR"); //$NON-NLS-1$
                 if (dicomdir.canRead()) {

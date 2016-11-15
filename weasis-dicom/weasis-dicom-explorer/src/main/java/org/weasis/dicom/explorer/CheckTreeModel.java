@@ -152,13 +152,13 @@ public class CheckTreeModel {
             String seriesInstanceUID = UIDUtils.createUID();
             Series prSeries = new DicomSeries(seriesInstanceUID);
             prSeries.setTag(TagD.get(Tag.SeriesNumber), TagD.getTagValue(series, Tag.SeriesNumber, Integer.class));
-            prSeries.setTag(TagD.get(Tag.Modality), "PR");
+            prSeries.setTag(TagD.get(Tag.Modality), "PR"); //$NON-NLS-1$
             prSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesInstanceUID);
             prSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
             prSeries.setTag(SourceSeriesForPR, series);
             prSeries.setTag(TagD.get(Tag.SeriesDescription),
-                Optional.ofNullable(TagD.getTagValue(series, Tag.SeriesDescription, String.class)).orElse("")
-                    + " [GRAPHICS]");
+                Optional.ofNullable(TagD.getTagValue(series, Tag.SeriesDescription, String.class)).orElse("") //$NON-NLS-1$
+                    + " [GRAPHICS]"); //$NON-NLS-1$
             DefaultMutableTreeNode prVirtualNode = new ToolTipTreeNode(prSeries, false);
             studyNode.insert(prVirtualNode, index + 1);
         }

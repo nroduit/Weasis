@@ -16,8 +16,10 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.media.jai.PlanarImage;
+import javax.media.jai.operator.TranslateDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -28,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.image.CropOp;
+import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -75,7 +79,15 @@ public final class Transform2Dicom {
             || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
 
             imgFile = new File(exportDirImage, sopInstanceUID + ".jpg"); //$NON-NLS-1$
-            PlanarImage transformedImage = imageElement.getImage(imageInfo.getPostProcessOpManager(), false);
+            SimpleOpManager opManager = imageInfo.getPostProcessOpManager();
+            PlanarImage transformedImage = imageElement.getImage(opManager, false);
+            Rectangle area = (Rectangle) opManager.getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
+            Integer rotationAngle = Optional.ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
+            rotationAngle = rotationAngle % 360;
+            if (area != null && rotationAngle != 0 && rotationAngle != 180) {
+                transformedImage = TranslateDescriptor.create(transformedImage, (float) -area.getX(),
+                    (float) -area.getY(), null, null);
+            }
 
             if (!ImageFiler.writeJPG(imgFile, transformedImage, 0.8f)) {
                 // out of memory ??
@@ -113,7 +125,14 @@ public final class Transform2Dicom {
                 Rectangle crop =
                     (Rectangle) imageInfo.getPostProcessOpManager().getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
                 if (crop != null) {
-                    offset = new Point2D.Double(crop.getX(), crop.getY());
+                    Integer rotationAngle = Optional.ofNullable((Integer) imageInfo.getPostProcessOpManager().getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
+                    rotationAngle = rotationAngle % 360;
+                    if (rotationAngle == 0 || rotationAngle == 180) {
+                        offset = new Point2D.Double(crop.getX(), crop.getY());
+                    } else {
+                        double factor = 2.0; // work only with 90 and 270 degrees
+                        offset = new Point2D.Double(crop.getX() * factor, crop.getY() * factor);
+                    }
                 }
                 String prUid = UIDUtils.createUID();
                 File outputFile = new File(exportDirDicom, prUid);

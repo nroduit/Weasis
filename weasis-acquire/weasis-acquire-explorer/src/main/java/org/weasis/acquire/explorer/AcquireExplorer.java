@@ -67,7 +67,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         super(BUTTON_NAME, TOOL_NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
         setDockableWidth(400);
 
-        centralPane = new ImageGroupPane("Albums");
+        centralPane = new ImageGroupPane(Messages.getString("AcquireExplorer.album")); //$NON-NLS-1$
 
         browsePanel = new BrowsePanel(this);
         acquireThumbnailListPane = new AcquireThumbnailListPane<>(centralPane);
@@ -111,10 +111,10 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
                 if (ObservableEvent.BasicAction.REPLACE.equals(((ObservableEvent) evt).getActionCommand())) {
 
                     String newPatientName = Optional.ofNullable(evt.getNewValue()).filter(String.class::isInstance)
-                        .map(String.class::cast).orElse("Albums"); //$NON-NLS-1$
+                        .map(String.class::cast).orElse(Messages.getString("AcquireExplorer.album")); //$NON-NLS-1$
 
                     if (TagW.NO_VALUE.equals(newPatientName)) {
-                        newPatientName = "Albums";
+                        newPatientName = Messages.getString("AcquireExplorer.album"); //$NON-NLS-1$
                     }
 
                     centralPane.setPluginName(newPatientName);

@@ -25,7 +25,7 @@ import org.weasis.dicom.codec.TagD;
 
 public class Global extends AbstractTagable {
 
-    private static final Integer PatientDicomGroupNumber = Integer.parseInt("0010", 16);
+    private static final Integer PatientDicomGroupNumber = Integer.parseInt("0010", 16); //$NON-NLS-1$
 
     protected boolean allowFullEdition = true;
 

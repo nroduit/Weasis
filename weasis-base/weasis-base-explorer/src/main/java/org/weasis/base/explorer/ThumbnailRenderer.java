@@ -84,6 +84,9 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements
             if (JMVUtils.getNULLtoFalse(value.getTagValue(TagW.Checked))) {
                 iconCheckedLabel.setIcon(ICON_CHECKED);
             }
+            else {
+                iconCheckedLabel.setIcon(null); 
+            }
         }
         this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(value) : icon);
         this.descriptionLabel.setText(value.getName());

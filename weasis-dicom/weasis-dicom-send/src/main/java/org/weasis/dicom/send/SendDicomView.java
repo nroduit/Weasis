@@ -73,9 +73,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomView.class);
 
     private static final String LAST_SEL_NODE = "lastSelNode"; //$NON-NLS-1$
-    private static final String STOW_BOUNDARY = "mimeTypeBoundary";
-    private static final String STOW_SEG = "--";
-    private static final String RETURN = "\r\n";
+    private static final String STOW_BOUNDARY = "mimeTypeBoundary"; //$NON-NLS-1$
+    private static final String STOW_SEG = "--"; //$NON-NLS-1$
+    private static final String RETURN = "\r\n"; //$NON-NLS-1$
 
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
@@ -282,9 +282,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
             httpPost = (HttpURLConnection) destination.getUrl().openConnection();
             httpPost.setDoOutput(true);
             httpPost.setDoInput(true);
-            httpPost.setRequestMethod("POST");
-            httpPost.setRequestProperty("Content-Type",
-                "multipart/related; type=application/dicom; boundary=" + STOW_BOUNDARY);
+            httpPost.setRequestMethod("POST"); //$NON-NLS-1$
+            httpPost.setRequestProperty("Content-Type", //$NON-NLS-1$
+                "multipart/related; type=application/dicom; boundary=" + STOW_BOUNDARY); //$NON-NLS-1$
             httpPost.setUseCaches(false);
 
             DataOutputStream out = new DataOutputStream(httpPost.getOutputStream());
@@ -308,9 +308,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
             out.flush();
             out.close();
             String response = httpPost.getResponseMessage();
-            LOGGER.info("STOWRS: server response: {}", response);
+            LOGGER.info("STOWRS: server response: {}", response); //$NON-NLS-1$
         } catch (Exception e) {
-            LOGGER.error("STOWRS: error when posting data", e);
+            LOGGER.error("STOWRS: error when posting data", e); //$NON-NLS-1$
         } finally {
             Optional.ofNullable(httpPost).ifPresent(h -> h.disconnect());
         }
@@ -323,7 +323,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         out.writeBytes(STOW_SEG);
         out.writeBytes(STOW_BOUNDARY);
         out.writeBytes(RETURN);
-        out.writeBytes("Content-Type: application/dicom\r\n\r\n");
+        out.writeBytes("Content-Type: application/dicom\r\n\r\n"); //$NON-NLS-1$
 
         // write dicom binary file
         writeStream(new FileInputStream(file), out);

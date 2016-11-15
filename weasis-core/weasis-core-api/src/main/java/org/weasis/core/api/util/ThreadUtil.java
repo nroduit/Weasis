@@ -73,7 +73,7 @@ public class ThreadUtil {
     public static final ThreadFactory getThreadFactory(String name) {
         return r -> {
             Thread t = Executors.defaultThreadFactory().newThread(r);
-            t.setName(name + "-" + t.getName());
+            t.setName(name + "-" + t.getName()); //$NON-NLS-1$
             return t;
         };
     }

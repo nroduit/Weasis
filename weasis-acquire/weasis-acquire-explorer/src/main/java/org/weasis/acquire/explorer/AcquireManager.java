@@ -135,7 +135,7 @@ public class AcquireManager {
     }
 
     public static List<AcquireImageInfo> findbySerie(SeriesGroup seriesGroup) {
-        return getAcquireImageInfoList().stream().filter(i -> i.getSeries().equals(seriesGroup))
+        return getAcquireImageInfoList().stream().filter(i -> i.getSeries() != null && i.getSeries().equals(seriesGroup))
             .collect(Collectors.toList());
     }
 
@@ -145,7 +145,7 @@ public class AcquireManager {
     }
 
     public static Map<SeriesGroup, List<AcquireImageInfo>> groupBySeries() {
-        return getAcquireImageInfoList().stream().collect(Collectors.groupingBy(AcquireImageInfo::getSeries));
+        return getAcquireImageInfoList().stream().filter(e -> e.getSeries() != null).collect(Collectors.groupingBy(AcquireImageInfo::getSeries));
     }
 
     public static SeriesGroup getSeries(SeriesGroup searched) {
