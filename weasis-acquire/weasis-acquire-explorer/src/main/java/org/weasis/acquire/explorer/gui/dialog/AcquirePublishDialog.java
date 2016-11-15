@@ -169,7 +169,7 @@ public class AcquirePublishDialog extends JDialog {
         destPane.add(lblDestination);
         AbstractDicomNode.addTooltipToComboList(comboNode);
 
-        if (!StringUtil.hasText(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host"))) {
+        if (!StringUtil.hasText(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host"))) { //$NON-NLS-1$
             DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
             if (comboNode.getItemCount() == 0) {
                 comboNode.addItem(getDestinationConfiguration());
@@ -197,7 +197,7 @@ public class AcquirePublishDialog extends JDialog {
         String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host", "localhost"); //$NON-NLS-1$ //$NON-NLS-2$
         String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.aet", "DCM4CHEE"); //$NON-NLS-1$ //$NON-NLS-2$
         String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.port", "11112"); //$NON-NLS-1$ //$NON-NLS-2$
-        return new DefaultDicomNode("Default archive", aet, host, Integer.parseInt(port), UsageType.BOTH);
+        return new DefaultDicomNode(Messages.getString("AcquirePublishDialog.def_archive"), aet, host, Integer.parseInt(port), UsageType.BOTH); //$NON-NLS-1$
     }
 
     private void publishAction() {

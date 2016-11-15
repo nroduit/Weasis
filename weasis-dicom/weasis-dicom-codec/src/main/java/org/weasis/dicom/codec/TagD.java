@@ -50,7 +50,6 @@ import org.dcm4che3.util.DateUtils;
 import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
@@ -71,9 +70,9 @@ public class TagD extends TagW {
         .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true).toFormatter();
     
     public enum Sex {
-        SEX_MALE("M", Messages.getString("TagW.Male")), //$NON-NLS-1$
-        SEX_FEMALE("F", Messages.getString("TagW.female")), //$NON-NLS-1$
-        SEX_OTHER("O", Messages.getString("TagW.other")); //$NON-NLS-1$
+        SEX_MALE("M", org.weasis.core.api.Messages.getString("TagW.Male")), //$NON-NLS-1$ //$NON-NLS-2$
+        SEX_FEMALE("F", org.weasis.core.api.Messages.getString("TagW.female")), //$NON-NLS-1$ //$NON-NLS-2$
+        SEX_OTHER("O", org.weasis.core.api.Messages.getString("TagW.other")); //$NON-NLS-1$ //$NON-NLS-2$
 
         private final String value;
         private final String displayValue;

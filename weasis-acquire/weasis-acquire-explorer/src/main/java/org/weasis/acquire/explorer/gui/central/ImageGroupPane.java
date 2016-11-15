@@ -21,6 +21,7 @@ import javax.swing.JMenuItem;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.AcquireToolBar;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.InsertableUtil;
@@ -88,7 +89,7 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
             // item.addActionListener(e -> AcquireManager.GLOBAL.setTag(TagD.get(Tag.StudyInstanceUID),
             // UIDUtils.createUID()));
             // menuRoot.add(item);
-            JMenuItem item2 = new JMenuItem("Remove all the series");
+            JMenuItem item2 = new JMenuItem(Messages.getString("ImageGroupPane.rm_all")); //$NON-NLS-1$
             item2.addActionListener(e -> AcquireManager.getInstance().removeAllImages());
             menuRoot.add(item2);
         }

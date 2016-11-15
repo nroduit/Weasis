@@ -420,11 +420,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     private static String getExtension(String format) {
         if (EXPORT_FORMAT[3].equals(format)) {
-            return ".png";
+            return ".png"; //$NON-NLS-1$
         } else if (EXPORT_FORMAT[4].equals(format)) {
-            return ".tif";
+            return ".tif"; //$NON-NLS-1$
         }
-        return ".jpg";
+        return ".jpg"; //$NON-NLS-1$
     }
 
     private void writeDicom(ExplorerTask task, File exportDir, CheckTreeModel model, boolean zipFile)

@@ -114,7 +114,7 @@ public enum Modality {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder(this.name());
-        buf.append(" - ");
+        buf.append(" - "); //$NON-NLS-1$
         buf.append(description);
         return buf.toString();
     }
