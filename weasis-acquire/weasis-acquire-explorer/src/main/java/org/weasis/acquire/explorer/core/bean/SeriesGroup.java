@@ -61,6 +61,10 @@ public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGro
         // Default Modality if not overridden
         tags.put(TagD.get(Tag.Modality), "XC"); //$NON-NLS-1$
         tags.put(TagD.get(Tag.SeriesInstanceUID), UIDUtils.createUID());
+        updateDicomTags();
+    }
+
+    public void updateDicomTags() {
         TagW operator = TagD.get(Tag.OperatorsName);
         tags.put(operator, AcquireManager.GLOBAL.getTagValue(operator));
     }

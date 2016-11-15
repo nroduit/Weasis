@@ -297,6 +297,10 @@ public class AcquireManager {
             getPatientContextName()));
     }
 
+    private void notifyPatientContextUpdated() {
+        firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UPDATE, AcquireManager.this, null, null));
+    }
+
     /**
      * Set a new Patient Context and in case current state job is not finished ask user if cleaning unpublished images
      * should be done or canceled.
@@ -342,22 +346,28 @@ public class AcquireManager {
         }
 
         if (newPatientContext != null) {
-            if (isPatientContextIdentical(newPatientContext)) {
-                return;
-            }
-            if (!isAcquireImagesAllPublished()) {
-                if (JOptionPane.showConfirmDialog(getExplorerViewComponent(),
-                    Messages.getString("AcquireManager.new_patient_load_warn"), //$NON-NLS-1$
-                    Messages.getString("AcquireManager.new_patient_load_title"), //$NON-NLS-1$
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) != JOptionPane.OK_OPTION) {
-                    return;
+            if (!isPatientContextIdentical(newPatientContext)) {
+
+                if (!isAcquireImagesAllPublished()) {
+                    if (JOptionPane.showConfirmDialog(getExplorerViewComponent(),
+                        Messages.getString("AcquireManager.new_patient_load_warn"), //$NON-NLS-1$
+                        Messages.getString("AcquireManager.new_patient_load_title"), //$NON-NLS-1$
+                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) != JOptionPane.OK_OPTION) {
+                        return;
+                    }
                 }
+
+                imagesInfoByURI.clear();
+                imagesInfoByUID.clear();
+
+                GLOBAL.init(newPatientContext);
+                notifyPatientContextChanged();
+            } else {
+                GLOBAL.updateAllButPatient(newPatientContext);
+                getBySeries().stream().forEach(SeriesGroup::updateDicomTags);
+                notifyPatientContextUpdated();
             }
 
-            imagesInfoByURI.clear();
-            imagesInfoByUID.clear();
-            GLOBAL.init(newPatientContext);
-            notifyPatientContextChanged();
         }
     }
 
@@ -367,13 +377,14 @@ public class AcquireManager {
     }
 
     /**
-     * Evaluates if patientContext currently loaded is identical to the one that's expected to be loaded
+     * Evaluates if patientContext currently loaded is identical to the one that's expected to be loaded according to
+     * the Dicom Patient Group Only
      *
      * @return
      */
 
     private static boolean isPatientContextIdentical(Document newPatientContext) {
-        return !GLOBAL.isEmpty() && GLOBAL.containSameTagValues(newPatientContext);
+        return GLOBAL.containsSamePatientTagValues(newPatientContext);
     }
 
     /**
