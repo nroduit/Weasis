@@ -178,6 +178,8 @@ public class AcquireTabPanel extends JPanel {
 
     public void clearAll() {
         Iterator<Entry<SeriesGroup, AcquireCentralImagePanel>> iteratorBtnMap = btnMap.entrySet().iterator();
+        
+
         while (iteratorBtnMap.hasNext()) {
             Entry<SeriesGroup, AcquireCentralImagePanel> btnMapEntry = iteratorBtnMap.next();
 
@@ -191,6 +193,10 @@ public class AcquireTabPanel extends JPanel {
             Optional.ofNullable(btnMapEntry.getValue()).ifPresent(imagePane -> imagePane.updateSerie(null));
         }
         selected = null;
+        refreshGUI();
+    }
+
+    public void refreshGUI() {
         imageList.refreshGUI();
         serieList.refreshGUI();
     }

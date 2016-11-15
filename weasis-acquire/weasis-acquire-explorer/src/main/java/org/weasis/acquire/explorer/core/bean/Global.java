@@ -11,9 +11,9 @@
 package org.weasis.acquire.explorer.core.bean;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -24,21 +24,10 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
 
 public class Global extends AbstractTagable {
-    
-    protected boolean allowFullEdition = true;
-    
-    private final Consumer<Element> init = e -> {
-        NodeList nodes = e.getChildNodes();
-        if (nodes != null) {
-            for (int i = 0; i < nodes.getLength(); i++) {
-                Optional.ofNullable(nodes.item(i)).ifPresent(this::setTag);
-            }
 
-            if (getTagValue(TagD.get(Tag.PatientID)) != null && getTagValue(TagD.get(Tag.PatientName)) != null) {
-                allowFullEdition = false;
-            }
-        }
-    };
+    private static final Integer PatientDicomGroupNumber = Integer.parseInt("0010", 16);
+
+    protected boolean allowFullEdition = true;
 
     public Global() {
         init(null);
@@ -47,7 +36,44 @@ public class Global extends AbstractTagable {
     public void init(Document xml) {
         clear();
         tags.put(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
-        Optional.ofNullable(xml).map(o -> o.getDocumentElement()).ifPresent(init);
+
+        Optional.ofNullable(xml).map(o -> o.getDocumentElement()).ifPresent(element -> {
+
+            NodeList nodeList = element.getChildNodes();
+            if (nodeList != null) {
+                for (int i = 0; i < nodeList.getLength(); i++) {
+                    Optional.ofNullable(nodeList.item(i)).ifPresent(this::setTag);
+                }
+
+                if (getTagValue(TagD.get(Tag.PatientID)) != null && getTagValue(TagD.get(Tag.PatientName)) != null) {
+                    allowFullEdition = false;
+                }
+            }
+        });
+    }
+
+    /**
+     * Updates all Dicom Tags from the given document except Patient Dicom Group Tags
+     *
+     * @param xml
+     */
+    public void updateAllButPatient(Document xml) {
+
+        Optional.ofNullable(xml).map(o -> o.getDocumentElement()).ifPresent(element -> {
+
+            NodeList nodeList = element.getChildNodes();
+            if (nodeList != null) {
+                for (int i = 0; i < nodeList.getLength(); i++) {
+
+                    Optional.ofNullable(nodeList.item(i))
+                        .ifPresent(node -> Optional.ofNullable(TagD.get(node.getNodeName())).ifPresent(tag -> {
+                            if (TagUtils.groupNumber(tag.getId()) != PatientDicomGroupNumber) {
+                                tag.readValue(node.getTextContent(), this);
+                            }
+                        }));
+                }
+            }
+        });
     }
 
     private void setTag(final Node node) {
@@ -56,15 +82,30 @@ public class Global extends AbstractTagable {
     }
 
     /**
-     * Check if all tag values in the given document XML are equals to the global DICOM Tags According to the TagD data
-     * Model <br>
-     *
-     * Only existing GLOBAL Tag values are checked, if GLOBAL tag is empty it will return true
+     * Check if all patient tag values in the given document XML are equals to the global DICOM Tags According to the
+     * TagD data Model <br>
+     * Patient Tag have the Dicom Group Number : 0x0010
      *
      * @param xmlDoc
      * @return
      */
-    public boolean containSameTagValues(Document xmlDoc) {
+    public boolean containsSamePatientTagValues(Document xmlDoc) {
+        return containsSameTagValues(xmlDoc, PatientDicomGroupNumber);
+    }
+
+    /**
+     * Check if all tag values in the given document XML are equals to the global DICOM Tags According to the TagD data
+     * Model <br>
+     *
+     *
+     * @param xmlDoc
+     * @param dicomGroupNumber
+     *            is the restriction for the Tag values equality check.<br>
+     *            Null involves no filtering
+     * @return
+     */
+
+    public boolean containsSameTagValues(Document xmlDoc, final Integer dicomGroupNumber) {
 
         Optional<NodeList> nodeList = Optional.of(xmlDoc).map(Document::getDocumentElement).map(Element::getChildNodes);
 
@@ -76,11 +117,16 @@ public class Global extends AbstractTagable {
             Node node = nodeList.get().item(nodeIndex);
             TagW tag = TagD.get(Optional.ofNullable(node).map(Node::getNodeName).orElse(null));
 
-            if (this.containTagKey(tag)) {
-                Object globalTagVal = this.getTagValue(tag);
+            if (tag != null && (dicomGroupNumber == null || TagUtils.groupNumber(tag.getId()) == dicomGroupNumber)) {
                 Object xmlTagVal = Optional.ofNullable(node).map(Node::getTextContent).map(tag::getValue).orElse(null);
 
-                if (!TagUtil.isEquals(globalTagVal, xmlTagVal)) {
+                if (this.containTagKey(tag)) {
+                    Object globalTagVal = this.getTagValue(tag);
+
+                    if (!TagUtil.isEquals(globalTagVal, xmlTagVal)) {
+                        return false;
+                    }
+                } else if (xmlTagVal != null) {
                     return false;
                 }
             }

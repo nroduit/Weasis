@@ -124,6 +124,9 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
                         centralPane.tabbedPane.removeImage((ImageElement) evt.getNewValue());
                         centralPane.tabbedPane.repaint();
                     }
+                } else if (ObservableEvent.BasicAction.UPDATE.equals(((ObservableEvent) evt).getActionCommand())) {
+                    centralPane.tabbedPane.refreshGUI();
+                    centralPane.tabbedPane.repaint();
                 }
             }
         }
