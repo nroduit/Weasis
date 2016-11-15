@@ -55,6 +55,11 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
         this.thumbnailList.addListSelectionListener(listener);
     }
 
+    public void addElements(List<E> elements) {
+        IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
+        elements.forEach(model::addElement);
+    }
+
     public void setList(List<E> elements) {
         IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
         model.clear();

@@ -13,16 +13,19 @@ package org.weasis.acquire.explorer;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.swing.Action;
 import javax.swing.Icon;
 
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.control.BrowsePanel;
 import org.weasis.acquire.explorer.gui.control.ImportPanel;
@@ -100,6 +103,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         centralPane.setSelectedAndGetFocus();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt instanceof ObservableEvent) {
@@ -108,23 +112,45 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
                     String newPatientName = Optional.ofNullable(evt.getNewValue()).filter(String.class::isInstance)
                         .map(String.class::cast).orElse("Albums"); //$NON-NLS-1$
-                    
-                    if(TagW.NO_VALUE.equals(newPatientName)){
+
+                    if (TagW.NO_VALUE.equals(newPatientName)) {
                         newPatientName = "Albums";
                     }
 
                     centralPane.setPluginName(newPatientName);
                     centralPane.tabbedPane.clearAll();
                     centralPane.tabbedPane.repaint();
+
                 } else if (ObservableEvent.BasicAction.REMOVE.equals(((ObservableEvent) evt).getActionCommand())) {
+
                     if (evt.getNewValue() instanceof Collection<?>) {
                         centralPane.tabbedPane.removeImages((Collection<ImageElement>) evt.getNewValue());
                         centralPane.tabbedPane.repaint();
+
                     } else if (evt.getNewValue() instanceof ImageElement) {
                         centralPane.tabbedPane.removeImage((ImageElement) evt.getNewValue());
                         centralPane.tabbedPane.repaint();
                     }
+
                 } else if (ObservableEvent.BasicAction.UPDATE.equals(((ObservableEvent) evt).getActionCommand())) {
+                    centralPane.tabbedPane.refreshGUI();
+                    centralPane.tabbedPane.repaint();
+
+                } else if (ObservableEvent.BasicAction.ADD.equals(((ObservableEvent) evt).getActionCommand())) {
+
+                    if (evt.getNewValue() instanceof Collection<?>) {
+                        ((Collection<AcquireImageInfo>) evt.getNewValue()).stream()
+                            .collect(Collectors.groupingBy(AcquireImageInfo::getSeries))
+                            .forEach(centralPane.tabbedPane::addSeriesElement);
+
+                    } else if (evt.getNewValue() instanceof AcquireImageInfo) {
+                        SeriesGroup series = ((AcquireImageInfo) evt.getNewValue()).getSeries();
+
+                        List<AcquireImageInfo> list = new ArrayList<AcquireImageInfo>();
+                        list.add((AcquireImageInfo) evt.getNewValue()); // TODO do better !!!
+
+                        centralPane.tabbedPane.addSeriesElement(series, list);
+                    }
                     centralPane.tabbedPane.refreshGUI();
                     centralPane.tabbedPane.repaint();
                 }

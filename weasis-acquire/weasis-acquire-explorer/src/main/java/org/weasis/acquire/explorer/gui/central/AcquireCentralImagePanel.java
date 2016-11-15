@@ -38,7 +38,8 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
         this(acquireTabPanel, null, new ArrayList<AcquireImageInfo>());
     }
 
-    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, SeriesGroup seriesGroup, List<AcquireImageInfo> imageInfos) {
+    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, SeriesGroup seriesGroup,
+        List<AcquireImageInfo> imageInfos) {
         setLayout(new BorderLayout());
 
         imageInfo = new AcquireCentralInfoPanel(seriesGroup);
@@ -56,6 +57,10 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
             .sorted(Comparator.comparing(i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i)))
             .collect(Collectors.toList());
 
+    }
+
+    public void addImagesInfo(List<AcquireImageInfo> imageInfos) {
+        imageListPane.addElements(toImageElement(imageInfos));
     }
 
     public void updateList(List<AcquireImageInfo> imageInfos) {

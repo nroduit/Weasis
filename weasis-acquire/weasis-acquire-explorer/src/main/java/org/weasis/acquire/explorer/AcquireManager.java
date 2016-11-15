@@ -177,7 +177,19 @@ public class AcquireManager {
         notifyImageRemoved(imageElement);
     }
 
+    public void addImages(Collection<AcquireImageInfo> imageInfoCollection) {
+        imageInfoCollection.stream().filter(Objects::nonNull).forEach(this::addImageToDataMapping);
+        notifyImagesAdded(imageInfoCollection);
+    }
+
+    public void addImage(AcquireImageInfo imageInfo) {
+        Optional.ofNullable(imageInfo).ifPresent(this::addImageToDataMapping);
+        notifyImageAdded(imageInfo);
+    }
+
+    @Deprecated
     public static void importImages(SeriesGroup searched, List<ImageElement> selected, int maxRangeInMinutes) {
+
         SeriesGroup seriesGroup = null;
 
         if (!SeriesGroup.Type.DATE.equals(searched.getType())) {
@@ -218,10 +230,75 @@ public class AcquireManager {
         }
     }
 
-    private static void recalculateCentralTime(List<AcquireImageInfo> list) {
-        List<AcquireImageInfo> sortedList = list.stream()
+    @Deprecated
+    public static boolean importImage(SeriesGroup searchedSeries, ImageElement element, int maxRangeInMinutes) {
+
+        AcquireImageInfo imageInfo = AcquireManager.findByImage(element);
+        if (imageInfo == null) {
+            return false;
+        }
+
+        if (SeriesGroup.Type.DATE.equals(searchedSeries.getType())) {
+            LocalDateTime imageDate = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, imageInfo.getImage());
+
+            Optional<SeriesGroup> seriesFound =
+                getBySeries().stream().filter(s -> SeriesGroup.Type.DATE.equals(s.getType())).filter(s -> {
+                    LocalDateTime start = s.getDate();
+                    LocalDateTime end = imageDate;
+                    if (end.isBefore(start)) {
+                        start = imageDate;
+                        end = s.getDate();
+                    }
+                    Duration duration = Duration.between(start, end);
+                    return duration.toMinutes() < maxRangeInMinutes;
+                }).findFirst();
+
+            if (seriesFound.isPresent()) {
+                imageInfo.setSeries(seriesFound.get());
+                List<AcquireImageInfo> imageInfoList = findbySerie(seriesFound.get());
+                if (imageInfoList.size() > 2) {
+                    recalculateCentralTime(imageInfoList);
+                }
+            } else {
+                imageInfo.setSeries(AcquireManager.getSeries(new SeriesGroup(imageDate)));
+            }
+        } else {
+            imageInfo.setSeries(AcquireManager.getSeries(searchedSeries));
+        }
+
+        return true;
+    }
+
+    public static SeriesGroup findSeries(SeriesGroup searchedSeries, AcquireImageInfo imageInfo,
+        int maxRangeInMinutes) {
+
+        Objects.requireNonNull(imageInfo, "findSeries imageInfo should not be null");
+
+        if (SeriesGroup.Type.DATE.equals(searchedSeries.getType())) {
+            LocalDateTime imageDate = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, imageInfo.getImage());
+
+            return getBySeries().stream().filter(s -> SeriesGroup.Type.DATE.equals(s.getType())).filter(s -> {
+                LocalDateTime start = s.getDate();
+                LocalDateTime end = imageDate;
+                if (end.isBefore(start)) {
+                    start = imageDate;
+                    end = s.getDate();
+                }
+                Duration duration = Duration.between(start, end);
+                return duration.toMinutes() < maxRangeInMinutes;
+            }).findFirst().orElse(AcquireManager.getSeries(new SeriesGroup(imageDate)));
+
+        } else {
+            return AcquireManager.getSeries(searchedSeries);
+        }
+    }
+
+    public static void recalculateCentralTime(List<AcquireImageInfo> imageInfoList) {
+        Objects.requireNonNull(imageInfoList);
+        List<AcquireImageInfo> sortedList = imageInfoList.stream()
             .sorted(Comparator.comparing(i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i.getImage())))
             .collect(Collectors.toList());
+
         AcquireImageInfo info = sortedList.get(sortedList.size() / 2);
         info.getSeries().setDate(TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getImage()));
     }
@@ -290,6 +367,15 @@ public class AcquireManager {
     private void notifyImagesRemoved(Collection<ImageElement> imageCollection) {
         firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.REMOVE, AcquireManager.this, null, imageCollection));
+    }
+
+    private void notifyImageAdded(AcquireImageInfo imageInfo) {
+        firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, AcquireManager.this, null, imageInfo));
+    }
+
+    private void notifyImagesAdded(Collection<AcquireImageInfo> imageInfoCollection) {
+        firePropertyChange(
+            new ObservableEvent(ObservableEvent.BasicAction.ADD, AcquireManager.this, null, imageInfoCollection));
     }
 
     private void notifyPatientContextChanged() {
@@ -597,8 +683,9 @@ public class AcquireManager {
     }
 
     /**
-     * Get AcquireImageInfo from the data model and create it lazily if not yet available<br>
-     * All the AcquireImageInfo value objects are unique according to the imageElement URI
+     * Get AcquireImageInfo from the data model and create lazily the jai.PlanarImage if not yet available<br>
+     *
+     * @note All the AcquireImageInfo value objects are unique according to the imageElement URI
      *
      * @param image
      * @return
@@ -611,7 +698,7 @@ public class AcquireManager {
         AcquireImageInfo imageInfo = imagesInfoByURI.get(image.getMediaURI());
         if (imageInfo == null) {
             imageInfo = new AcquireImageInfo(image);
-            addImageToDataMapping(imageInfo);
+            // addImageToDataMapping(imageInfo); // should nto be here !!
         }
         return imageInfo;
     }

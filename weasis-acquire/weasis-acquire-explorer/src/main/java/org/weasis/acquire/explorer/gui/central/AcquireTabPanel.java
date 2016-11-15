@@ -90,6 +90,25 @@ public class AcquireTabPanel extends JPanel {
         }
     }
 
+    public void addSeriesElement(SeriesGroup seriesGroup, List<AcquireImageInfo> images) {
+        if (btnMap.containsKey(seriesGroup)) {
+            btnMap.get(seriesGroup).addImagesInfo(images);
+        } else {
+            // Create series list
+            AcquireCentralImagePanel tab = new AcquireCentralImagePanel(this, seriesGroup, images);
+            btnMap.put(seriesGroup, tab);
+
+            SerieButton btn = new SerieButton(seriesGroup, this);
+            btnGrp.add(btn);
+            serieList.addButton(btn);
+
+            if (selected == null) {
+                btnGrp.setSelected(btn.getModel(), true);
+                setSelected(btn);
+            }
+        }
+    }
+
     public Set<SeriesGroup> getSeries() {
         return new TreeSet<>(btnMap.keySet());
     }
@@ -178,7 +197,6 @@ public class AcquireTabPanel extends JPanel {
 
     public void clearAll() {
         Iterator<Entry<SeriesGroup, AcquireCentralImagePanel>> iteratorBtnMap = btnMap.entrySet().iterator();
-        
 
         while (iteratorBtnMap.hasNext()) {
             Entry<SeriesGroup, AcquireCentralImagePanel> btnMapEntry = iteratorBtnMap.next();
