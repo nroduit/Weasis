@@ -72,7 +72,6 @@ public class ImportTask extends SwingWorker<Void, AcquireImageInfo> {
                 List<AcquireImageInfo> imageInfoList = AcquireManager.findbySerie(imageInfo.getSeries());
                 // ADD imageInfo here since it's not in the dataModel yet => see AcquireManager.addImages()
                 imageInfoList.add(imageInfo);
-
                 if (imageInfoList.size() > 2) {
                     AcquireManager.recalculateCentralTime(imageInfoList);
                 }

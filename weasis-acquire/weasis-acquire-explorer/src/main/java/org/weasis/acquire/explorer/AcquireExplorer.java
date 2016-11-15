@@ -13,7 +13,7 @@ package org.weasis.acquire.explorer;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -145,12 +145,9 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
                     } else if (evt.getNewValue() instanceof AcquireImageInfo) {
                         SeriesGroup series = ((AcquireImageInfo) evt.getNewValue()).getSeries();
-
-                        List<AcquireImageInfo> list = new ArrayList<AcquireImageInfo>();
-                        list.add((AcquireImageInfo) evt.getNewValue()); // TODO do better !!!
-
-                        centralPane.tabbedPane.addSeriesElement(series, list);
+                        centralPane.tabbedPane.addSeriesElement(series, Arrays.asList((AcquireImageInfo) evt.getNewValue()));
                     }
+                    
                     centralPane.tabbedPane.refreshGUI();
                     centralPane.tabbedPane.repaint();
                 }

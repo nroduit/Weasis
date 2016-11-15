@@ -28,8 +28,8 @@ import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.TagD;
 
+@SuppressWarnings("serial")
 public class AcquireCentralImagePanel extends JPanel implements ListSelectionListener {
-    private static final long serialVersionUID = 1270219114006046523L;
 
     private final AcquireCentralTumbnailPane<ImageElement> imageListPane;
     private AcquireCentralInfoPanel imageInfo;
@@ -97,9 +97,9 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
     }
 
     protected void refreshGUI() {
+        imageListPane.revalidate();
+        imageListPane.repaint();
         imageInfo.refreshGUI();
-        revalidate();
-        repaint();
     }
 
     @Override

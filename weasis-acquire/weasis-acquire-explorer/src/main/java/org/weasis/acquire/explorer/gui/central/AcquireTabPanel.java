@@ -93,6 +93,7 @@ public class AcquireTabPanel extends JPanel {
     public void addSeriesElement(SeriesGroup seriesGroup, List<AcquireImageInfo> images) {
         if (btnMap.containsKey(seriesGroup)) {
             btnMap.get(seriesGroup).addImagesInfo(images);
+            updateSerie(seriesGroup, AcquireManager.findbySerie(seriesGroup));
         } else {
             // Create series list
             AcquireCentralImagePanel tab = new AcquireCentralImagePanel(this, seriesGroup, images);

@@ -698,7 +698,6 @@ public class AcquireManager {
         AcquireImageInfo imageInfo = imagesInfoByURI.get(image.getMediaURI());
         if (imageInfo == null) {
             imageInfo = new AcquireImageInfo(image);
-            // addImageToDataMapping(imageInfo); // should nto be here !!
         }
         return imageInfo;
     }

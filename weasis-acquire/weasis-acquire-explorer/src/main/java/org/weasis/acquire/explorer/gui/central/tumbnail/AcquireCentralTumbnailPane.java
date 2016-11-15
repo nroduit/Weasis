@@ -151,6 +151,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                     } else {
                         info.setSeries(AcquireManager.getDefaultSeries());
                     }
+                    AcquireManager.getInstance().addImage(info);
                     tumbList.updateAll();
                 }
             }
