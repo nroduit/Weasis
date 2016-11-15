@@ -34,6 +34,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -63,7 +64,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         super(BUTTON_NAME, TOOL_NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
         setDockableWidth(400);
 
-        centralPane = new ImageGroupPane(AcquireManager.getPatientContextName());
+        centralPane = new ImageGroupPane("Albums");
 
         browsePanel = new BrowsePanel(this);
         acquireThumbnailListPane = new AcquireThumbnailListPane<>(centralPane);
@@ -96,6 +97,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
     public void initImageGroupPane() {
         centralPane.getDockable().setCloseable(false);
         centralPane.showDockable();
+        centralPane.setSelectedAndGetFocus();
     }
 
     @Override
@@ -105,7 +107,11 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
                 if (ObservableEvent.BasicAction.REPLACE.equals(((ObservableEvent) evt).getActionCommand())) {
 
                     String newPatientName = Optional.ofNullable(evt.getNewValue()).filter(String.class::isInstance)
-                        .map(String.class::cast).orElse(""); //$NON-NLS-1$
+                        .map(String.class::cast).orElse("Albums"); //$NON-NLS-1$
+                    
+                    if(TagW.NO_VALUE.equals(newPatientName)){
+                        newPatientName = "Albums";
+                    }
 
                     centralPane.setPluginName(newPatientName);
                     centralPane.tabbedPane.clearAll();

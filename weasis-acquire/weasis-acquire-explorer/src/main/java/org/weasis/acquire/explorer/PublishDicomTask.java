@@ -7,10 +7,14 @@ import java.util.Objects;
 
 import javax.swing.SwingWorker;
 
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.op.CStore;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
@@ -32,7 +36,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
     private final DicomNode callingNode;
     private final DicomNode destinationNode;
 
-    private DicomProgress dicomProgress = new DicomProgress();
+    private final DicomProgress dicomProgress = new DicomProgress();
 
     public PublishDicomTask(File exportDirDicom, DicomNode destinationNode) {
         this.exportDirDicom = Objects.requireNonNull(exportDirDicom);
@@ -69,9 +73,17 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
             chunks.stream().filter(Objects::nonNull).map(imageFile -> AcquireManager.findByUId(imageFile.getName()))
                 .filter(Objects::nonNull).forEach(imageInfo -> {
                     imageInfo.setStatus(AcquireImageStatus.PUBLISHED);
+                    imageInfo.getImage().setTag(TagW.Checked, Boolean.TRUE);
                     AcquireManager.getInstance().removeImage(imageInfo.getImage());
                 });
         }
+    }
+    
+    @Override
+    protected void done() {
+        super.done();
+        // Change to a new exman after publishing (avoid to reuse the same exam)
+        AcquireManager.GLOBAL.setTag(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
     }
 
 }

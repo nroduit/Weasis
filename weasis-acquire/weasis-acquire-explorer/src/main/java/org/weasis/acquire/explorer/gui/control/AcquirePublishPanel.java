@@ -82,9 +82,14 @@ public class AcquirePublishPanel extends JPanel {
 
                         if (dicomState.getStatus() != Status.Success) {
                             LOGGER.error("Dicom send error: {}", dicomState.getMessage()); //$NON-NLS-1$
-
                             JOptionPane.showOptionDialog(WinUtil.getParentWindow(AcquirePublishPanel.this),
-                                String.format("Dicom send error: %s", dicomState.getMessage()), null, //$NON-NLS-1$
+                                String.format("DICOM send error: %s", dicomState.getMessage()), null, //$NON-NLS-1$
+                                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null);
+                        }
+                        else if(dicomState.getProgress().getNumberOfFailedSuboperations() > 0){
+                            LOGGER.error("{} dicom send operations failed", dicomState.getProgress().getNumberOfFailedSuboperations()); //$NON-NLS-1$
+                            JOptionPane.showOptionDialog(WinUtil.getParentWindow(AcquirePublishPanel.this),
+                                String.format("DICOM send error: %d operations", dicomState.getProgress().getNumberOfFailedSuboperations()), null, //$NON-NLS-1$
                                 JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null);
                         }
                     } catch (InterruptedException | ExecutionException doNothing) {
