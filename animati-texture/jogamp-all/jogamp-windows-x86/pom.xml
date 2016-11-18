@@ -1,58 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<parent>
-		<artifactId>jogamp-all</artifactId>
-		<groupId>org.weasis.thirdparty.org.jogamp</groupId>
-		<version>1.0.0-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
-	<modelVersion>4.0.0</modelVersion>
-	<packaging>bundle</packaging>
-	<artifactId>jogamp-windows-x86</artifactId>
-	<name>jogamp native Windows x86</name>
-	<version>2.1.5-01</version>
-	<properties>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-	</properties>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<configuration>
-					<instructions>
-						<Bundle-NativeCode>gluegen-rt.dll;jogl_desktop.dll;jogl_mobile.dll;nativewindow_awt.dll;nativewindow_win32.dll;newt.dll;jocl.dll; processor=x86; osname=win32</Bundle-NativeCode>
-						<Fragment-Host>jogamp;bundle-version="2.1"</Fragment-Host>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <artifactId>jogamp-all</artifactId>
+        <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>bundle</packaging>
+    <artifactId>jogamp-windows-x86</artifactId>
+    <name>jogamp native Windows x86</name>
+    <version>2.3.2</version>
+    <properties>
+        <bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+    </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>
+                        <Bundle-NativeCode>
+                            natives/windows-i586/gluegen-rt.dll;
+                            natives/windows-i586/jogl_desktop.dll;
+                            natives/windows-i586/jogl_mobile.dll;
+                            natives/windows-i586/nativewindow_awt.dll;
+                            natives/windows-i586/nativewindow_win32.dll;
+                            natives/windows-i586/newt.dll;
+                            natives/windows-i586/jocl.dll;
+                            processor=x86; osname=win32
+                        </Bundle-NativeCode>
+                        <Fragment-Host>jogamp;bundle-version="2.3"</Fragment-Host>
 						
-						<Implementation-Title>Java Bindings for OpenGL Runtime Environment</Implementation-Title>
-						<Implementation-Version>${project.version}</Implementation-Version>
-						<Specification-Title>Java Bindings for OpenGL API Specification</Specification-Title>
-						<Specification-Version>2.1</Specification-Version>
-						<Specification-Vendor>JogAmp Community</Specification-Vendor>
-					</instructions>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-	<dependencies>
-		<dependency>
-			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt</artifactId>
-			<version>${project.version}</version>
-			<classifier>natives-windows-i586</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl-all</artifactId>
-			<version>${project.version}</version>
-			<classifier>natives-windows-i586</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jocl</groupId>
-			<artifactId>jocl</artifactId>
-			<version>${project.version}</version>
-			<classifier>natives-windows-i586</classifier>
-		</dependency>
-	</dependencies>
+                        <Implementation-Title>Java Bindings for OpenGL Runtime Environment</Implementation-Title>
+                        <Implementation-Version>${project.version}</Implementation-Version>
+                        <Specification-Title>Java Bindings for OpenGL API Specification</Specification-Title>
+                        <Specification-Version>2.3</Specification-Version>
+                        <Specification-Vendor>JogAmp Community</Specification-Vendor>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>org.jogamp.gluegen</groupId>
+            <artifactId>gluegen-rt</artifactId>
+            <version>${project.version}</version>
+            <classifier>natives-windows-i586</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.jogamp.jogl</groupId>
+            <artifactId>jogl-all</artifactId>
+            <version>${project.version}</version>
+            <classifier>natives-windows-i586</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.jogamp.jocl</groupId>
+            <artifactId>jocl</artifactId>
+            <version>${project.version}</version>
+            <classifier>natives-windows-i586</classifier>
+        </dependency>
+    </dependencies>
 </project>

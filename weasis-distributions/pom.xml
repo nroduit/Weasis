@@ -48,7 +48,7 @@
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 
 		<animati.plugins.version>1.0.0-SNAPSHOT</animati.plugins.version>
-		<jogamp.version>2.1.5-01</jogamp.version>
+		<jogamp.version>2.3.2</jogamp.version>
 
 		<windowsName>weasis-native</windowsName>
 	</properties>

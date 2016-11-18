@@ -1,13 +1,12 @@
 /*
- * @copyright Copyright (c) 2012 Animati Sistemas de Informática Ltda.
- * (http://www.animati.com.br)
+ * @copyright Copyright (c) 2012 Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
  */
 package br.com.animati.texture.mpr3dview.internal;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import javax.media.opengl.Threading;
+import com.jogamp.opengl.Threading;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -42,14 +41,20 @@ public class Activator implements BundleActivator {
     public static String LOG_MESSAGE;
     public static String TRACE;
 
-    /** Hardware acceleration config name. */
+    /**
+     * Hardware acceleration config name.
+     */
     public static final String HA_PROP_NAME = "enableHardwareAcceleration";
     public static final String CL_PROP_NAME = "enableOpenCL";
 
-    /** Hardware acceleration crash flag. */
+    /**
+     * Hardware acceleration crash flag.
+     */
     public static final String CRASH_FLAG = "HAcrash";
 
-    /** Will be true if hardware acceleration is to be tried. */
+    /**
+     * Will be true if hardware acceleration is to be tried.
+     */
     public static Boolean useHardwareAcceleration = true;
 
     public static boolean useOpenCL = true;
@@ -65,6 +70,9 @@ public class Activator implements BundleActivator {
     @Override
     public void start(BundleContext context) throws Exception {
         LOGGER.info("Starting bundle Mpr 3D View [Animati].");
+
+        // Must be done very early:
+        System.setProperty("jogl.1thread", "worker");
 
         Preferences dPrefs = BundlePreferences.getDefaultPreferences(context);
         if (dPrefs != null) {
@@ -143,7 +151,7 @@ public class Activator implements BundleActivator {
             }
             setHACrashFlag(false);
             LOGGER.info("3D Support is active. Time of checking: " + (System.currentTimeMillis() - startTime) / 1000D
-                + " seconds.");
+                    + " seconds.");
         } catch (Exception ex) {
             LOG_MESSAGE = "Cant get context: " + ex.getMessage();
             LOGGER.info("Cant get context: " + ex.getMessage());

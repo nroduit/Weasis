@@ -102,7 +102,6 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
         // Unregister listener
         graphicManager.removeChangeListener(layerModelHandler);
         graphicManager.removeGraphicChangeHandler(graphicsChangeHandler);
-        super.dispose();
     }
 
     @Override
@@ -158,7 +157,7 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     public HashMap<String, Object> getActionsInView() {
         return actionsInView;
     }
-    
+
 
     @Override
     public PropertyChangeListener getGraphicsChangeHandler() {
@@ -237,10 +236,10 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
         return new Point((int) Math.floor(p2.getX() - getViewModel().getModelOffsetX() * viewScale + 0.5),
             (int) Math.floor(p2.getY() - getViewModel().getModelOffsetY() * viewScale + 0.5));
     }
-    
+
     /**
      * Updates all labels on viewer.
-     * 
+     *
      * @param source
      *            The viewer object.
      */

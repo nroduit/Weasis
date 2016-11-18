@@ -1,58 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<parent>
-		<artifactId>jogamp-all</artifactId>
-		<groupId>org.weasis.thirdparty.org.jogamp</groupId>
-		<version>1.0.0-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
-	<modelVersion>4.0.0</modelVersion>
-	<packaging>bundle</packaging>
-	<artifactId>jogamp-linux-x86-64</artifactId>
-	<name>jogamp native Linux x86-64</name>
-	<version>2.1.5-01</version>
-	<properties>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-	</properties>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<configuration>
-					<instructions>
-						<Bundle-NativeCode>libgluegen-rt.so;libjogl_desktop.so;libjogl_mobile.so;libnativewindow_awt.so;libnativewindow_x11.so;libnewt.so;libjocl.so; processor=x86-64; osname=Linux</Bundle-NativeCode>
-						<Fragment-Host>jogamp;bundle-version="2.1"</Fragment-Host>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <artifactId>jogamp-all</artifactId>
+        <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>bundle</packaging>
+    <artifactId>jogamp-linux-x86-64</artifactId>
+    <name>jogamp native Linux x86-64</name>
+    <version>2.3.2</version>
+    <properties>
+        <bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+    </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>
+                        <Bundle-NativeCode>
+                            natives/linux-amd64/libgluegen-rt.so;
+                            natives/linux-amd64/libjogl_desktop.so;
+                            natives/linux-amd64/libjogl_mobile.so;
+                            natives/linux-amd64/libnativewindow_awt.so;
+                            natives/linux-amd64/libnativewindow_x11.so;
+                            natives/linux-amd64/libnewt.so;
+                            natives/linux-amd64/libjocl.so; 
+                            processor=x86-64; osname=Linux
+                        </Bundle-NativeCode>
+                        <Fragment-Host>jogamp;bundle-version="2.3"</Fragment-Host>
 						
-						<Implementation-Title>Java Bindings for OpenGL Runtime Environment</Implementation-Title>
-						<Implementation-Version>${project.version}</Implementation-Version>
-						<Specification-Title>Java Bindings for OpenGL API Specification</Specification-Title>
-						<Specification-Version>2.1</Specification-Version>
-						<Specification-Vendor>JogAmp Community</Specification-Vendor>
-					</instructions>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-	<dependencies>
-		<dependency>
-			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt</artifactId>
-			<version>${project.version}</version>
-			<classifier>natives-linux-amd64</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl-all</artifactId>
-			<version>${project.version}</version>
-			<classifier>natives-linux-amd64</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jocl</groupId>
-			<artifactId>jocl</artifactId>
-			<version>${project.version}</version>
-			<classifier>natives-linux-amd64</classifier>
-		</dependency>
-	</dependencies>
+                        <Implementation-Title>Java Bindings for OpenGL Runtime Environment</Implementation-Title>
+                        <Implementation-Version>${project.version}</Implementation-Version>
+                        <Specification-Title>Java Bindings for OpenGL API Specification</Specification-Title>
+                        <Specification-Version>2.3</Specification-Version>
+                        <Specification-Vendor>JogAmp Community</Specification-Vendor>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>org.jogamp.gluegen</groupId>
+            <artifactId>gluegen-rt</artifactId>
+            <version>${project.version}</version>
+            <classifier>natives-linux-amd64</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.jogamp.jogl</groupId>
+            <artifactId>jogl-all</artifactId>
+            <version>${project.version}</version>
+            <classifier>natives-linux-amd64</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.jogamp.jocl</groupId>
+            <artifactId>jocl</artifactId>
+            <version>${project.version}</version>
+            <classifier>natives-linux-amd64</classifier>
+        </dependency>
+    </dependencies>
 </project>
