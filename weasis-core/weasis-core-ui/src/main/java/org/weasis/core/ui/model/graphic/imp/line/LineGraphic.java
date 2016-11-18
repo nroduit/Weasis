@@ -171,7 +171,7 @@ public class LineGraphic extends AbstractDragGraphic {
                 }
                 if (FIRST_POINT_Y.getComputed()) {
                     measVal.add(
-                        new MeasureItem(FIRST_POINT_Y, adapter.getXCalibratedValue(ptA.getY()), adapter.getUnit()));
+                        new MeasureItem(FIRST_POINT_Y, adapter.getYCalibratedValue(ptA.getY()), adapter.getUnit()));
                 }
                 if (LAST_POINT_X.getComputed()) {
                     measVal
@@ -179,7 +179,7 @@ public class LineGraphic extends AbstractDragGraphic {
                 }
                 if (LAST_POINT_Y.getComputed()) {
                     measVal
-                        .add(new MeasureItem(LAST_POINT_Y, adapter.getXCalibratedValue(ptB.getY()), adapter.getUnit()));
+                        .add(new MeasureItem(LAST_POINT_Y, adapter.getYCalibratedValue(ptB.getY()), adapter.getUnit()));
                 }
                 if (LINE_LENGTH.getComputed()) {
                     measVal.add(

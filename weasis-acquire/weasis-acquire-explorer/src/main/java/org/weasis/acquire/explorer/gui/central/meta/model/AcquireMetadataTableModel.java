@@ -17,6 +17,7 @@ import javax.swing.table.AbstractTableModel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
 
@@ -26,7 +27,8 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     private static final TagW[] NO_TAGS = {};
-    protected String[] headers = { "Tag", "Value" };
+    protected String[] headers =
+        { Messages.getString("AcquireMetadataTableModel.tag"), Messages.getString("AcquireMetadataTableModel.val") }; //$NON-NLS-1$ //$NON-NLS-2$
     protected Optional<Tagable> tagable;
 
     public AcquireMetadataTableModel(Tagable tagable) {
@@ -36,6 +38,10 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     protected abstract Optional<TagW[]> tagsToDisplay();
 
     protected Optional<TagW[]> tagsEditable() {
+        return Optional.of(NO_TAGS);
+    }
+
+    protected Optional<TagW[]> tagsToPublish() {
         return Optional.of(NO_TAGS);
     }
 
@@ -74,11 +80,8 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         TagW tag = tagsToDisplay().orElse(NO_TAGS)[rowIndex];
-        switch (columnIndex) {
-            case 1:
-                boolean isValueEditable =
-                    Arrays.stream(tagsEditable().orElse(NO_TAGS)).filter(t -> t.equals(tag)).findFirst().isPresent();
-                return isValueEditable;
+        if (columnIndex == 1) {
+            return Arrays.stream(tagsEditable().orElse(NO_TAGS)).filter(t -> t.equals(tag)).findFirst().isPresent();
         }
         return false;
     }

@@ -25,9 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.core.bean.Serie;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
-import org.weasis.acquire.explorer.gui.central.component.SerieButton;
+import org.weasis.acquire.explorer.gui.central.SerieButton;
 import org.weasis.base.explorer.list.AThumbnailListPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.ImageElement;
@@ -54,6 +53,11 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
 
     public void addListSelectionListener(ListSelectionListener listener) {
         this.thumbnailList.addListSelectionListener(listener);
+    }
+
+    public void addElements(List<E> elements) {
+        IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
+        elements.forEach(model::addElement);
     }
 
     public void setList(List<E> elements) {
@@ -102,7 +106,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                 try {
                     files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 } catch (Exception e) {
-                    LOGGER.error("Drop image file", e);
+                    LOGGER.error("Drop image file", e); //$NON-NLS-1$
                 }
                 return dropDFiles(files);
             }
@@ -115,7 +119,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                     String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
-                    LOGGER.error("Drop image URI", e);
+                    LOGGER.error("Drop image URI", e); //$NON-NLS-1$
                 }
                 return dropDFiles(files);
             }
@@ -128,7 +132,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                     addToSerie(media);
                 }
             } catch (UnsupportedFlavorException | IOException e) {
-                LOGGER.error("Drop thumnail", e);
+                LOGGER.error("Drop thumnail", e); //$NON-NLS-1$
             }
 
             return true;
@@ -140,13 +144,16 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                 AcquireCentralThumnailList tumbList =
                     (AcquireCentralThumnailList) AcquireCentralTumbnailPane.this.thumbnailList;
                 AcquireImageInfo info = AcquireManager.findByImage((ImageElement) media);
-                SerieButton btn = tumbList.getSelectedSerie();
-                if (btn != null) {
-                    info.setSerie(btn.getSerie());
-                } else {
-                    info.setSerie(Serie.DEFAULT_SERIE);
+                if (info != null) {
+                    SerieButton btn = tumbList.getSelectedSerie();
+                    if (btn != null) {
+                        info.setSeries(btn.getSerie());
+                    } else {
+                        info.setSeries(AcquireManager.getDefaultSeries());
+                    }
+                    AcquireManager.getInstance().addImage(info);
+                    tumbList.updateAll();
                 }
-                tumbList.updateAll();
             }
         }
 

@@ -274,7 +274,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             affineTransform.scale(-1.0, 1.0);
             affineTransform.translate(-getViewModel().getModelArea().getWidth(), 0.0);
         }
-        Point offset = (Point) view2d.getActionValue(DefaultView2d.PROP_LAYER_OFFSET);
+        Point offset = view2d.getImageLayer().getOffset();
         if (offset != null) {
             affineTransform.translate(-offset.getX(), -offset.getY());
         }

@@ -58,7 +58,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/image-x-generic.png")); //$NON-NLS-1$
 
     private static final DefaultAction preferencesAction =
-        new DefaultAction(Messages.getString("OpenImageAction.img"), ViewerFactory::getOpenImageAction);
+        new DefaultAction(Messages.getString("OpenImageAction.img"), ViewerFactory::getOpenImageAction); //$NON-NLS-1$
 
     public ViewerFactory() {
         super();
@@ -134,7 +134,7 @@ public class ViewerFactory implements SeriesViewerFactory {
                         val++;
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Checking view type", e);
+                    LOGGER.error("Checking view type", e); //$NON-NLS-1$
                 }
             }
         }
@@ -223,8 +223,8 @@ public class ViewerFactory implements SeriesViewerFactory {
                     false);
             } else {
                 Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
-                JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"),
-                    Messages.getString("OpenImageAction.open_img"), JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"), //$NON-NLS-1$
+                    Messages.getString("OpenImageAction.open_img"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
             }
             BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
         }

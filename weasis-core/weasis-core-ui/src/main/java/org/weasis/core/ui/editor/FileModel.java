@@ -47,14 +47,14 @@ public class FileModel extends AbstractFileModel {
                 return null;
             }
 
-            outFile = File.createTempFile("tumb_", FileUtil.getExtension(path), IMAGE_CACHE_DIR); // $NON-NLS-2$
+            outFile = File.createTempFile("tumb_", FileUtil.getExtension(path), IMAGE_CACHE_DIR); // $NON-NLS-2$ //$NON-NLS-1$
                                                                                                   // //$NON-NLS-3$
             LOGGER.debug("Start to download image {} to {}.", url, outFile.getName()); //$NON-NLS-1$
             if (FileUtil.writeFile(httpCon, outFile) == 0) {
                 return null;
             }
         } catch (IOException e) {
-            LOGGER.error("Dowloading image", e);
+            LOGGER.error("Dowloading image", e); //$NON-NLS-1$
         }
         return outFile;
     }
@@ -62,8 +62,8 @@ public class FileModel extends AbstractFileModel {
     @Override
     public void get(String[] argv) throws IOException {
         final String[] usage = { "Load an image remotely or locally", "Usage: image:get [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
-            "  -f --file     Open an image from a file", // $NON-NLS-1$
-            "  -u --url      Open an image from an URL", "  -? --help        show help" }; // $NON-NLS-1$ //$NON-NLS-2$
+            "  -f --file     Open an image from a file", // $NON-NLS-1$ //$NON-NLS-1$
+            "  -u --url      Open an image from an URL", "  -? --help        show help" }; // $NON-NLS-1$  //$NON-NLS-1$//$NON-NLS-2$
 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();

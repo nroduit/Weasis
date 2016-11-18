@@ -13,8 +13,6 @@ package org.weasis.dicom.explorer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
@@ -34,8 +32,6 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
@@ -129,14 +125,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         setPreferredSize(new Dimension(400, 300));
         setMinimumSize(new Dimension(150, 50));
 
-        ChangeListener changeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent changeEvent) {
-                changeDicomInfo(currentSeries, currentMedia);
-            }
-        };
-        this.addChangeListener(changeListener);
-
+        this.addChangeListener(changeEvent -> changeDicomInfo(currentSeries, currentMedia));
     }
 
     public static void addStylesToDocument(StyledDocument doc, Color textColor) {
@@ -205,7 +194,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     try {
                         metaData = (DicomMetaData) ((DicomMediaIO) loader).getStreamMetadata();
                     } catch (IOException e) {
-                        LOGGER.error("Get metadata", e);
+                        LOGGER.error("Get metadata", e); //$NON-NLS-1$
                     }
                     if (metaData != null) {
                         printAttribute(metaData.getFileMetaInformation(), doc);
@@ -218,7 +207,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 doc.remove(0, 1);
             }
         } catch (BadLocationException e) {
-            LOGGER.error("Clear document", e);
+            LOGGER.error("Clear document", e); //$NON-NLS-1$
         }
         oldCaretPosition = oldCaretPosition > doc.getLength() ? doc.getLength() : oldCaretPosition;
         jTextPaneAll.setCaretPosition(oldCaretPosition);
@@ -342,7 +331,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             // clear previous text
             doc.remove(0, doc.getLength());
         } catch (BadLocationException e) {
-            LOGGER.error("Clear document", e);
+            LOGGER.error("Clear document", e); //$NON-NLS-1$
         }
         if (series != null && media != null) {
             Object tagValue = series.getTagValue(TagW.ExplorerModel);
@@ -394,7 +383,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                             break;
                         }
                     } catch (BadLocationException e) {
-                        LOGGER.error("Writing textissue", e);
+                        LOGGER.error("Writing textissue", e); //$NON-NLS-1$
                     }
                 }
             }
@@ -404,7 +393,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 String formatTitle = insertTitle < 3 ? dicomData.getTitle() + "\n" : "\n" + dicomData.getTitle() + "\n"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 doc.insertString(insertTitle, formatTitle, doc.getStyle("title")); //$NON-NLS-1$
             } catch (BadLocationException e) {
-                LOGGER.error("Writing text issue", e);
+                LOGGER.error("Writing text issue", e); //$NON-NLS-1$
             }
         }
     }
@@ -472,41 +461,28 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             this.add(new JLabel(Messages.getString("DicomFieldsView.search") + StringUtil.COLON_AND_SPACE)); //$NON-NLS-1$
             final JTextField tf = new JTextField();
             JMVUtils.setPreferredWidth(tf, 300, 100);
-            tf.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent evt) {
-                    currentSearchPattern = tf.getText().trim();
-                    highlight(currentSearchPattern);
-                    if (!searchPostions.isEmpty()) {
-                        try {
-                            textComponent.scrollRectToVisible(textComponent.modelToView(searchPostions.get(0)));
-                            textComponent.requestFocusInWindow();
-                        } catch (BadLocationException e) {
-                            LOGGER.error("Scroll to highight", e);
-                        }
+            tf.addActionListener(evt -> {
+                currentSearchPattern = tf.getText().trim();
+                highlight(currentSearchPattern);
+                if (!searchPostions.isEmpty()) {
+                    try {
+                        textComponent.scrollRectToVisible(textComponent.modelToView(searchPostions.get(0)));
+                        textComponent.requestFocusInWindow();
+                    } catch (BadLocationException e) {
+                        LOGGER.error("Scroll to highight", e); //$NON-NLS-1$
                     }
                 }
             });
             this.add(tf);
             JButton up = new JButton(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png"))); //$NON-NLS-1$
             up.setToolTipText(Messages.getString("DicomFieldsView.previous")); //$NON-NLS-1$
-            up.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent evt) {
-                    previous();
-                }
-            });
+            up.addActionListener(evt -> previous());
             this.add(up);
             JButton down =
                 new JButton(new RotatedIcon(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")), //$NON-NLS-1$
                     RotatedIcon.Rotate.UPSIDE_DOWN));
             down.setToolTipText(Messages.getString("DicomFieldsView.next")); //$NON-NLS-1$
-            down.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent evt) {
-                    next();
-                }
-            });
+            down.addActionListener(evt -> next());
             this.add(down);
             textComponent.addKeyListener(new KeyListener() {
 
@@ -566,7 +542,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                         pos += patternUp.length();
                     }
                 } catch (BadLocationException e) {
-                    LOGGER.error("Highight result of search", e);
+                    LOGGER.error("Highight result of search", e); //$NON-NLS-1$
                 }
             }
         }
@@ -600,7 +576,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     }
                     textComponent.scrollRectToVisible(textComponent.modelToView(curPos));
                 } catch (BadLocationException e) {
-                    LOGGER.error("Highight result of search", e);
+                    LOGGER.error("Highight result of search", e); //$NON-NLS-1$
                 }
             }
         }

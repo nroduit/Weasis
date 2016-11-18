@@ -58,14 +58,11 @@ public class FileUtil {
         if (childDirs != null) {
             for (File f : childDirs) {
                 if (f.isDirectory()) {
-                    recursiveDelete(f, deleteRoot);
-                    f.delete();
+                    // deleteRoot used only for the first level, directory is deleted in next line
+                    recursiveDelete(f, false);
+                    deleteFile(f);
                 } else {
-                    try {
-                        f.delete();
-                    } catch (Exception e) {
-                        // Do nothing, wait next start to delete it
-                    }
+                    deleteFile(f);
                 }
             }
         }
@@ -84,20 +81,20 @@ public class FileUtil {
                 if (f.isDirectory()) {
                     deleteDirectoryContents(f, deleteDirLevel, level + 1);
                 } else {
-                    try {
-                        f.delete();
-                    } catch (Exception e) {
-                        // Do nothing, wait next start to delete it
-                    }
+                    deleteFile(f);
                 }
             }
         }
         if (level >= deleteDirLevel) {
-            try {
-                dir.delete();
-            } catch (Exception e) {
-                // Do nothing, wait next start to delete it
-            }
+            deleteFile(dir);
+        }
+    }
+
+    private static void deleteFile(File fileOrDirectory) {
+        try {
+            fileOrDirectory.delete();
+        } catch (Exception e) {
+            // Do nothing, wait next start to delete it
         }
     }
 
@@ -181,11 +178,8 @@ public class FileUtil {
     }
 
     private static void copyZip(InputStream in, File file) throws IOException {
-        OutputStream out = new FileOutputStream(file);
-        try {
+        try (OutputStream out = new FileOutputStream(file)) {
             copy(in, out);
-        } finally {
-            out.close();
         }
     }
 
@@ -193,8 +187,9 @@ public class FileUtil {
         if (inputStream == null || directory == null) {
             return;
         }
-        ZipInputStream zis = new ZipInputStream(new BufferedInputStream(inputStream));
-        try {
+
+        try (BufferedInputStream bufInStream = new BufferedInputStream(inputStream);
+                        ZipInputStream zis = new ZipInputStream(bufInStream)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 File file = new File(directory, entry.getName());
@@ -206,8 +201,7 @@ public class FileUtil {
                 }
             }
         } finally {
-            safeClose(zis);
+            FileUtil.safeClose(inputStream);
         }
-
     }
 }

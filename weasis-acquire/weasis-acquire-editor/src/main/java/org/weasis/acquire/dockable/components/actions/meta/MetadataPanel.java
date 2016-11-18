@@ -15,6 +15,7 @@ import java.awt.GridLayout;
 
 import javax.swing.JPanel;
 
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageValues;
@@ -24,11 +25,11 @@ import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaP
 public class MetadataPanel extends AbstractAcquireActionPanel {
     private static final long serialVersionUID = -1474114784513035056L;
 
-    private AcquireMetadataPanel globalInfoPanel = new AcquireGlobalMetaPanel("Global");
+    private AcquireMetadataPanel globalInfoPanel = new AcquireGlobalMetaPanel(Messages.getString("MetadataPanel.global")); //$NON-NLS-1$
     private org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel serieInfoPanel =
         new org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel(null);
     private AcquireMetadataPanel imageInfoPanel =
-        new org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel("Image");
+        new org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel(Messages.getString("MetadataPanel.image")); //$NON-NLS-1$
 
     private JPanel content = new JPanel(new GridLayout(3, 1));
 
@@ -45,7 +46,7 @@ public class MetadataPanel extends AbstractAcquireActionPanel {
 
     @Override
     public void initValues(AcquireImageInfo info, AcquireImageValues values) {
-        serieInfoPanel.setSerie(info.getSerie());
+        serieInfoPanel.setSerie(info.getSeries());
         imageInfoPanel.setImageInfo(info);
         repaint();
     }

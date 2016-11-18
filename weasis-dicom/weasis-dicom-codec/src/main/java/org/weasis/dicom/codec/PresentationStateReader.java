@@ -38,7 +38,7 @@ public class PresentationStateReader implements Tagable {
 
     public static final int PRIVATE_CREATOR_TAG = 0x71070070;
     public static final int PR_MODEL_PRIVATE_TAG = 0x71077001;
-    public static final String PR_MODEL_ID = "weasis/model/xml/2.5";
+    public static final String PR_MODEL_ID = "weasis/model/xml/2.5"; //$NON-NLS-1$
 
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
@@ -143,7 +143,8 @@ public class PresentationStateReader implements Tagable {
     }
 
     public List<PresetWindowLevel> getPresetCollection(DicomImageElement img) {
-        return Optional.ofNullable(PresetWindowLevel.getPresetCollection(img, prSpecialElement, true, "[PR]")).orElseGet(ArrayList::new);
+        return Optional.ofNullable(PresetWindowLevel.getPresetCollection(img, prSpecialElement, true, "[PR]")) //$NON-NLS-1$
+            .orElseGet(ArrayList::new);
     }
 
     public void applySpatialTransformationModule(Map<String, Object> actionsInView) {

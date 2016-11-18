@@ -22,15 +22,14 @@ import javax.swing.event.ListSelectionListener;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
-import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.tumbnail.AcquireCentralTumbnailPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.TagD;
 
+@SuppressWarnings("serial")
 public class AcquireCentralImagePanel extends JPanel implements ListSelectionListener {
-    private static final long serialVersionUID = 1270219114006046523L;
 
     private final AcquireCentralTumbnailPane<ImageElement> imageListPane;
     private AcquireCentralInfoPanel imageInfo;
@@ -39,10 +38,11 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
         this(acquireTabPanel, null, new ArrayList<AcquireImageInfo>());
     }
 
-    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, Serie serie, List<AcquireImageInfo> imageInfos) {
+    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, SeriesGroup seriesGroup,
+        List<AcquireImageInfo> imageInfos) {
         setLayout(new BorderLayout());
 
-        imageInfo = new AcquireCentralInfoPanel(serie);
+        imageInfo = new AcquireCentralInfoPanel(seriesGroup);
 
         imageListPane = new AcquireCentralTumbnailPane<>(toImageElement(imageInfos));
         imageListPane.setAcquireTabPanel(acquireTabPanel);
@@ -59,28 +59,47 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
 
     }
 
+    public void addImagesInfo(List<AcquireImageInfo> imageInfos) {
+        imageListPane.addElements(toImageElement(imageInfos));
+    }
+
     public void updateList(List<AcquireImageInfo> imageInfos) {
         imageListPane.setList(toImageElement(imageInfos));
+    }
+
+    public void updateSerie(SeriesGroup newSerie) {
+        imageInfo.setSerie(newSerie);
     }
 
     public IThumbnailModel<ImageElement> getFileListModel() {
         return imageListPane.getFileListModel();
     }
 
+    public boolean containsImageElement(ImageElement image) {
+        return getFileListModel().contains(image);
+    }
+
+    public void removeElement(ImageElement image) {
+        getFileListModel().removeElement(image);
+    }
+
     public void removeElements(List<ImageElement> medias) {
         IThumbnailModel<ImageElement> model = getFileListModel();
-        medias.forEach(m -> {
-            model.removeElement(m);
-            AcquireManager.remove(m);
-        });
+        medias.forEach(model::removeElement);
+    }
+
+    public void clearAll() {
+        getFileListModel().clear();
     }
 
     public boolean isEmpty() {
         return getFileListModel().isEmpty();
     }
 
-    public void refreshSerieMeta() {
-        imageInfo.refreshSerieMeta();
+    protected void refreshGUI() {
+        imageListPane.revalidate();
+        imageListPane.repaint();
+        imageInfo.refreshGUI();
     }
 
     @Override

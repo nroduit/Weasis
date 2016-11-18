@@ -43,17 +43,17 @@ import org.weasis.dicom.explorer.Messages;
 public abstract class AbstractDicomNode {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDicomNode.class);
 
-    protected static final String T_NODES = "nodes";
-    protected static final String T_NODE = "node";
+    protected static final String T_NODES = "nodes"; //$NON-NLS-1$
+    protected static final String T_NODE = "node"; //$NON-NLS-1$
 
-    protected static final String T_DESCRIPTION = "description";
-    protected static final String T_TYPE = "type";
-    protected static final String T_USAGE_TYPE = "usageType";
-    protected static final String T_TSUID = "tsuid";
+    protected static final String T_DESCRIPTION = "description"; //$NON-NLS-1$
+    protected static final String T_TYPE = "type"; //$NON-NLS-1$
+    protected static final String T_USAGE_TYPE = "usageType"; //$NON-NLS-1$
+    protected static final String T_TSUID = "tsuid"; //$NON-NLS-1$
 
     public enum Type {
-        DICOM("DICOM Node", "dicomNodes.xml"), PRINTER("DICOM Printer", "dicomPrinterNodes.xml"),
-        WEB("WEB Node", "dicomWebNodes.xml");
+        DICOM("DICOM Node", "dicomNodes.xml"), PRINTER("DICOM Printer", "dicomPrinterNodes.xml"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        WEB("WEB Node", "dicomWebNodes.xml"); //$NON-NLS-1$ //$NON-NLS-2$
 
         final String title;
         final String filename;
@@ -74,7 +74,7 @@ public abstract class AbstractDicomNode {
     }
 
     public enum UsageType {
-        STORAGE("Storage"), RETRIEVE("Retrieve"), BOTH("Both");
+        STORAGE(Messages.getString("AbstractDicomNode.storage")), RETRIEVE(Messages.getString("AbstractDicomNode.retrieve")), BOTH(Messages.getString("AbstractDicomNode.both")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         final String title;
 
@@ -97,7 +97,7 @@ public abstract class AbstractDicomNode {
 
     public AbstractDicomNode(String description, Type type, UsageType usageType) {
         if (type == null) {
-            throw new IllegalArgumentException("Type cannot be null");
+            throw new IllegalArgumentException("Type cannot be null"); //$NON-NLS-1$
         }
         this.description = description;
         this.tsuid = TransferSyntax.NONE;
@@ -167,7 +167,7 @@ public abstract class AbstractDicomNode {
     }
 
     public static void loadDicomNodes(JComboBox<AbstractDicomNode> comboBox, Type type, UsageType usage) {
-        // Load nodes from ressources
+        // Load nodes from resources
         loadDicomNodes(comboBox, ResourceUtil.getResource(type.getFilename()), type, false, usage);
 
         // Load nodes from local data
@@ -198,7 +198,7 @@ public abstract class AbstractDicomNode {
             writer.writeEndDocument();
             writer.flush();
         } catch (Exception e) {
-            LOGGER.error("Error on writing DICOM node file", e);
+            LOGGER.error("Error on writing DICOM node file", e); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(writer);
         }
@@ -223,7 +223,7 @@ public abstract class AbstractDicomNode {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Error on reading DICOM node file", e);
+                LOGGER.error("Error on reading DICOM node file", e); //$NON-NLS-1$
             } finally {
                 FileUtil.safeClose(xmler);
             }
@@ -278,7 +278,7 @@ public abstract class AbstractDicomNode {
 
                 comboBox.addItem(node);
             } catch (Exception e) {
-                LOGGER.error("Cannot read DicomNode: {}", e);
+                LOGGER.error("Cannot read DicomNode: {}", e); //$NON-NLS-1$
             }
         }
     }
@@ -310,8 +310,8 @@ public abstract class AbstractDicomNode {
                 }
                 JMVUtils.showCenterScreen(dialog, comboBox);
             } else {
-                JOptionPane.showMessageDialog(comboBox, "Only user-created node can be modified!",
-                    Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); // $NON-NLS-1$
+                JOptionPane.showMessageDialog(comboBox, Messages.getString("AbstractDicomNode.only_usr_cr_msg"), //$NON-NLS-1$
+                    Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             }
         }
     }
@@ -322,7 +322,7 @@ public abstract class AbstractDicomNode {
             AbstractDicomNode node = comboBox.getItemAt(index);
             if (node.isLocal()) {
                 int response = JOptionPane.showConfirmDialog(comboBox,
-                    String.format("Do you really want to delete \"%s\"?", node), Type.DICOM.toString(), // $NON-NLS-2$
+                    String.format(Messages.getString("AbstractDicomNode.delete_msg"), node), Type.DICOM.toString(), //$NON-NLS-1$
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (response == 0) {
@@ -330,8 +330,8 @@ public abstract class AbstractDicomNode {
                     AbstractDicomNode.saveDicomNodes(comboBox, node.getType());
                 }
             } else {
-                JOptionPane.showMessageDialog(comboBox, "Only user-created node can be modified!",
-                    Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); // $NON-NLS-1$
+                JOptionPane.showMessageDialog(comboBox, Messages.getString("AbstractDicomNode.only_usr_cr_msg"), //$NON-NLS-1$
+                    Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             }
         }
     }

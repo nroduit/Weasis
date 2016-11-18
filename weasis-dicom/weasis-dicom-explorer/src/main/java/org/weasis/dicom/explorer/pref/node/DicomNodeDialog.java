@@ -17,6 +17,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
 import java.text.NumberFormat;
+import java.util.Optional;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -97,7 +98,7 @@ public class DicomNodeDialog extends JDialog {
         gbcDescriptionLabel.gridy = 0;
         content.add(descriptionLabel, gbcDescriptionLabel);
 
-        descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
+        descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON); //$NON-NLS-1$
         descriptionTf = new JTextField();
         GridBagConstraints gbcDescriptionTf = new GridBagConstraints();
         gbcDescriptionTf.insets = new Insets(0, 0, 5, 5);
@@ -219,12 +220,12 @@ public class DicomNodeDialog extends JDialog {
         }
 
         if (aeTitle.length() > 16) {
-            JOptionPane.showMessageDialog(this, "AETitle cannot have more than 16 characters!",
+            JOptionPane.showMessageDialog(this, Messages.getString("DicomNodeDialog.long_aet_msg"), //$NON-NLS-1$
                 Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             return;
         }
 
-        UsageType usageType = (UsageType) comboBox.getSelectedItem();
+        UsageType usageType =  Optional.ofNullable(comboBox).map(c -> (UsageType) c.getSelectedItem()).orElse(null);
         boolean addNode = dicomNode == null;
         if (addNode) {
             if (AbstractDicomNode.Type.PRINTER == typeNode) {

@@ -16,10 +16,12 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.AcquireToolBar;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.InsertableUtil;
@@ -30,21 +32,19 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
+@SuppressWarnings("serial")
 public class ImageGroupPane extends ViewerPlugin<ImageElement> {
-    private static final long serialVersionUID = -1446534853755678224L;
 
     public final List<Toolbar> toolBar = Collections.synchronizedList(new ArrayList<Toolbar>(1));
 
     public final AcquireTabPanel tabbedPane = new AcquireTabPanel();
 
-    // private static Comparator<ImageItem> nameComparator = new ImageItem.NameComparator();
-    // private static Comparator<ImageItem> dateComparator = new ImageItem.DateComparator();
-
-    public ImageGroupPane(String PluginName) {
-        super(PluginName);
+    public ImageGroupPane(String pluginName) {
+        super(pluginName);
 
         // Add standard toolbars
         final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -54,7 +54,8 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
 
         if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
             InsertableUtil.getCName(AcquireToolBar.class), key, true)) {
-            toolBar.add(new AcquireToolBar<ImageElement>(10));
+            toolBar.add(ToolBarContainer.EMPTY);
+            // toolBar.add(new AcquireToolBar<ImageElement>(10));
         }
 
         init();
@@ -72,15 +73,27 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
 
     @Override
     public void addSeries(MediaSeries<ImageElement> series) {
+        // Do nothing
     }
 
     @Override
     public void removeSeries(MediaSeries<ImageElement> series) {
+        // Do nothing
     }
 
     @Override
-    public JMenu fillSelectedPluginMenu(JMenu menu) {
-        return null;
+    public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
+        if (menuRoot != null) {
+            menuRoot.removeAll();
+            // JMenuItem item = new JMenuItem("Build a new study");
+            // item.addActionListener(e -> AcquireManager.GLOBAL.setTag(TagD.get(Tag.StudyInstanceUID),
+            // UIDUtils.createUID()));
+            // menuRoot.add(item);
+            JMenuItem item2 = new JMenuItem(Messages.getString("ImageGroupPane.rm_all")); //$NON-NLS-1$
+            item2.addActionListener(e -> AcquireManager.getInstance().removeAllImages());
+            menuRoot.add(item2);
+        }
+        return menuRoot;
     }
 
     @Override
@@ -113,9 +126,7 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
     }
 
     private void updateAll() {
-        AcquireManager.groupBySeries().forEach((k, v) -> {
-            tabbedPane.updateSerie(k, v);
-        });
+        AcquireManager.groupBySeries().forEach(tabbedPane::updateSerie);
         tabbedPane.clearUnusedSeries(AcquireManager.getBySeries());
         tabbedPane.repaint();
     }

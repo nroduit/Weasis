@@ -36,6 +36,7 @@ import br.com.animati.texturedicom.TextureData;
 import br.com.animati.texturedicom.rendering.RenderHelper;
 import br.com.animati.texturedicom.rendering.RenderResult;
 import br.com.animati.texturedicom.rendering.RenderResultListener;
+import java.awt.Point;
 
 /**
  *
@@ -240,5 +241,15 @@ public class TextureMeasurableLayer implements MeasurableLayer {
                 }
             }
         });
+    }
+
+    @Override
+    public Point getOffset() {
+        return null; // Offset for measurement serialization: not used here.
+    }
+
+    @Override
+    public void setOffset(final Point p) {
+        // Offset for measurement serialization: not used here.
     }
 }

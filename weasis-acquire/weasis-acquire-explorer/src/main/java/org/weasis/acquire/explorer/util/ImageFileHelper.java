@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer.util;
 
-import static javax.swing.JFileChooser.FILES_AND_DIRECTORIES;
-
 import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
@@ -31,7 +29,7 @@ import org.slf4j.LoggerFactory;
 public final class ImageFileHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageFileHelper.class);
 
-    private static final String GLOBAL_FILE_DESCRIPTION = "All Image Files";
+    private static final String GLOBAL_FILE_DESCRIPTION = "All Image Files"; //$NON-NLS-1$
     private static final Map<String, String> readerFileExtensionMap = createReaderFileExtensionMap();
 
     private ImageFileHelper() {
@@ -44,7 +42,7 @@ public final class ImageFileHelper {
         for (String extension : ImageIO.getReaderFileSuffixes()) {
             if (extension.length() > 0) {
                 extension = extension.toLowerCase(Locale.ENGLISH);
-                String description = extension.toUpperCase(Locale.ENGLISH) + " - Image Files (." + extension + ")";
+                String description = extension.toUpperCase(Locale.ENGLISH) + " - Image Files (." + extension + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                 extensionMap.put(extension, description);
             }
         }
@@ -76,15 +74,15 @@ public final class ImageFileHelper {
     /**
      * @return null if Canceled
      */
-    public static String openImageFileChooser(String path) {// ,Component parent){
+    public static String openImageFileChooser(String path) {
 
         JFileChooser fc = new JFileChooser(path);
 
-        fc.setName("openImageFileChooser");
-        fc.setDialogType(javax.swing.JFileChooser.OPEN_DIALOG);
+        fc.setName("openImageFileChooser"); //$NON-NLS-1$
+        fc.setDialogType(JFileChooser.OPEN_DIALOG);
         fc.setControlButtonsAreShown(true);
         fc.setAcceptAllFileFilterUsed(true);
-        fc.setFileSelectionMode(FILES_AND_DIRECTORIES);
+        fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         for (String extension : getReaderFileExtensionSet()) {
             String description = getReaderFileDescription(extension);
@@ -110,7 +108,27 @@ public final class ImageFileHelper {
             try {
                 returnStr = fc.getSelectedFile().toString();
             } catch (SecurityException e) {
-                LOGGER.warn("system property value cannot be accessed", e);
+                LOGGER.warn("system property value cannot be accessed", e); //$NON-NLS-1$
+            }
+        }
+        return returnStr;
+    }
+
+    public static String openDirectoryChooser(String path) {
+
+        JFileChooser fc = new JFileChooser(path);
+        fc.setDialogType(JFileChooser.OPEN_DIALOG);
+        fc.setControlButtonsAreShown(true);;
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int returnVal = fc.showOpenDialog(null);
+        String returnStr = null;
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            try {
+                returnStr = fc.getSelectedFile().toString();
+            } catch (SecurityException e) {
+                LOGGER.warn("system property value cannot be accessed", e); //$NON-NLS-1$
             }
         }
         return returnStr;

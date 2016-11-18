@@ -311,7 +311,7 @@ public class JMVUtils {
         Style style = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
         Style regular = doc.addStyle("regular", style); //$NON-NLS-1$
         StyleConstants.setFontFamily(def, "SansSerif"); //$NON-NLS-1$
-        StyleConstants.setForeground(def, textColor == null ? UIManager.getColor("text") : textColor);
+        StyleConstants.setForeground(def, textColor == null ? UIManager.getColor("text") : textColor); //$NON-NLS-1$
         TabStop[] tabs = new TabStop[1];
         tabs[0] = new TabStop(25.0f, TabStop.ALIGN_LEFT, TabStop.LEAD_NONE);
         StyleConstants.setTabSet(def, new TabSet(tabs));

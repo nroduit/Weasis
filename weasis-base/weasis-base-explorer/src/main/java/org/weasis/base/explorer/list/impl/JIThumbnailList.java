@@ -91,7 +91,7 @@ public final class JIThumbnailList<E extends MediaElement> extends AThumbnailLis
 
             }
         } catch (Exception ex) {
-            LOGGER.error("Build context menu", ex);
+            LOGGER.error("Build context menu", ex); //$NON-NLS-1$
         } finally {
             e.consume();
         }

@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 public class UriListFlavor {
     private static final Logger LOGGER = LoggerFactory.getLogger(UriListFlavor.class);
 
-    public static final DataFlavor flavor = createConstant("text/uri-list;class=java.lang.String", null);
+    public static final DataFlavor flavor = createConstant("text/uri-list;class=java.lang.String", null); //$NON-NLS-1$
 
     private static final DataFlavor[] flavors = new DataFlavor[] { DataFlavor.javaFileListFlavor, flavor };
 
@@ -33,7 +33,7 @@ public class UriListFlavor {
         try {
             return new DataFlavor(mt, prn, UriListFlavor.class.getClassLoader()); // $NON-NLS-1$
         } catch (Exception e) {
-            LOGGER.error("Build uri flavor", e);
+            LOGGER.error("Build uri flavor", e); //$NON-NLS-1$
             return null;
         }
     }
@@ -47,7 +47,7 @@ public class UriListFlavor {
                 try {
                     list.add(new File(new URI(s)));
                 } catch (Exception e) {
-                    LOGGER.error("Build file from URI", e);
+                    LOGGER.error("Build file from URI", e); //$NON-NLS-1$
                 }
             }
         }

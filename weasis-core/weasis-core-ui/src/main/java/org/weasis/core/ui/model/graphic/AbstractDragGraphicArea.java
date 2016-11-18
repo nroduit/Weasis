@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.ui.model.graphic;
 
+import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.image.RenderedImage;
@@ -71,8 +72,15 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         if (image == null) {
                             return null;
                         }
-
                         AffineTransform transform = layer.getShapeTransform();
+                        Point offset = layer.getOffset();
+                        if (offset != null) {
+                            if (transform == null) {
+                                transform = AffineTransform.getTranslateInstance(-offset.getX(), -offset.getY());
+                            } else {
+                                transform.translate(-offset.getX(), -offset.getY());
+                            }
+                        }
                         ROIShape roi;
                         if (transform != null) {
                             // Rescale ROI, if needed
@@ -83,8 +91,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         // Get padding values => exclude values
                         Double excludedMin = null;
                         Double excludedMax = null;
-                        Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue"));
-                        Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingRangeLimit"));
+                        Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue")); //$NON-NLS-1$
+                        Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingRangeLimit")); //$NON-NLS-1$
                         if (paddingValue != null) {
                             if (paddingLimit == null) {
                                 paddingLimit = paddingValue;
@@ -111,8 +119,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
 
                         // LOGGER.error("Basic stats [ms]: {}", System.currentTimeMillis() - startTime);
                         // unit = pixelValue * rescale slope + rescale intercept
-                        Double slopeVal = (Double) layer.getSourceTagValue(TagW.get("RescaleSlope"));
-                        Double interceptVal = (Double) layer.getSourceTagValue(TagW.get("RescaleIntercept"));
+                        Double slopeVal = (Double) layer.getSourceTagValue(TagW.get("RescaleSlope")); //$NON-NLS-1$
+                        Double interceptVal = (Double) layer.getSourceTagValue(TagW.get("RescaleIntercept")); //$NON-NLS-1$
                         double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
                         double intercept = interceptVal == null ? 0.0f : interceptVal.doubleValue();
                         for (int i = 0; i < extrema[0].length; i++) {

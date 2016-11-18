@@ -23,7 +23,7 @@ public class MeasureItem {
     }
 
     public MeasureItem(Measurement measurement, String labelExtension, Object value, String unit) {
-        this.measurement = Objects.requireNonNull(measurement, "Measurement cannot be null!");
+        this.measurement = Objects.requireNonNull(measurement, "Measurement cannot be null!"); //$NON-NLS-1$
         this.value = value;
         this.unit = unit;
         this.labelExtension = labelExtension;

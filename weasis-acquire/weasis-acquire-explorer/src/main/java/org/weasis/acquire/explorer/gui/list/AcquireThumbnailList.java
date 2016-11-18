@@ -18,6 +18,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.dialog.AcquireImportDialog;
 import org.weasis.base.explorer.list.AThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
@@ -55,7 +56,7 @@ public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList
         if (!medias.isEmpty()) {
             JPopupMenu popupMenu = new JPopupMenu();
 
-            popupMenu.add(new JMenuItem(new DefaultAction("Import selection", event -> {
+            popupMenu.add(new JMenuItem(new DefaultAction(Messages.getString("AcquireThumbnailList.import_sel"), event -> { //$NON-NLS-1$
                 AcquireImportDialog dialog = new AcquireImportDialog(AcquireThumbnailList.this.mainPanel, medias);
                 JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
             })));

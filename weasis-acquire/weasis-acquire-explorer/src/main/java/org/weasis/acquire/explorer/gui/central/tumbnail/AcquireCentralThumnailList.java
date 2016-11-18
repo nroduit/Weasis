@@ -22,9 +22,10 @@ import javax.swing.JPopupMenu;
 
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.Messages;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
-import org.weasis.acquire.explorer.gui.central.component.SerieButton;
+import org.weasis.acquire.explorer.gui.central.SerieButton;
 import org.weasis.acquire.explorer.gui.dialog.AcquireNewSerieDialog;
 import org.weasis.base.explorer.list.AThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
@@ -33,6 +34,7 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.util.DefaultAction;
 
 @SuppressWarnings({ "serial" })
@@ -79,15 +81,17 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
         if (!medias.isEmpty()) {
             JPopupMenu popupMenu = new JPopupMenu();
 
-            popupMenu.add(new JMenuItem(new DefaultAction("Edit", event -> openSelection())));
+            popupMenu.add(new JMenuItem(
+                new DefaultAction(Messages.getString("AcquireCentralThumnailList.edit"), event -> openSelection()))); //$NON-NLS-1$
 
-            popupMenu.add(new JMenuItem(new DefaultAction("Remove", event -> {
-                clearSelection();
-                AcquireCentralThumnailList.this.acquireTabPanel.removeElements(AcquireManager.toImageElement(medias));
-                repaint();
-            })));
+            popupMenu
+                .add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.remove"), event -> { //$NON-NLS-1$
+                    clearSelection();
+                    AcquireManager.getInstance().removeMedias(medias);
+                    repaint();
+                })));
 
-            JMenu moveToMenu = new JMenu("Move to...");
+            JMenu moveToMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.moveto")); //$NON-NLS-1$
 
             moveToOther(moveToMenu, medias);
             moveToMenu.addSeparator();
@@ -97,12 +101,15 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
             }
             moveToNewSerie(moveToMenu, medias);
 
-            JMenu operationsMenu = new JMenu("Operations...");
-            operationRotate(operationsMenu, medias, "Rotate +90°", 90);
-            operationRotate(operationsMenu, medias, "Rotate -90°", 270);
+            JMenu operationsMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.operations")); //$NON-NLS-1$
+            operationRotate(operationsMenu, medias, Messages.getString("AcquireCentralThumnailList.rotate") //$NON-NLS-1$
+                + StringUtil.COLON_AND_SPACE + Messages.getString("AcquireCentralThumnailList.plus90"), 90); //$NON-NLS-1$
+            operationRotate(operationsMenu, medias, Messages.getString("AcquireCentralThumnailList.rotate") //$NON-NLS-1$
+                + StringUtil.COLON_AND_SPACE + Messages.getString("AcquireCentralThumnailList.min90"), 270); //$NON-NLS-1$
 
             popupMenu.add(moveToMenu);
-            popupMenu.add(operationsMenu);
+            // TODO need do better
+            // popupMenu.add(operationsMenu);
 
             return popupMenu;
         }
@@ -114,7 +121,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
     private void moveToExisting(JMenu moveToMenu, final List<E> medias) {
         AcquireCentralThumnailList.this.acquireTabPanel.getSeries().stream().forEach(s -> {
             if (!s.equals(AcquireCentralThumnailList.this.acquireTabPanel.getSelected().getSerie())
-                && !s.equals(Serie.DEFAULT_SERIE)) {
+                && !SeriesGroup.Type.NONE.equals(s.getType())) {
                 moveToMenu.add(new JMenuItem(new DefaultAction(s.getDisplayName(), event -> {
                     AcquireCentralThumnailList.this.acquireTabPanel.moveElements(s,
                         AcquireManager.toImageElement(medias));
@@ -126,20 +133,21 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
     }
 
     private void moveToOther(JMenu moveToMenu, final List<E> medias) {
-        moveToMenu.add(new JMenuItem(new DefaultAction(Serie.DEFAULT_SERIE_NAME, event -> {
-            AcquireCentralThumnailList.this.acquireTabPanel.moveElements(Serie.DEFAULT_SERIE,
+        moveToMenu.add(new JMenuItem(new DefaultAction(SeriesGroup.DEFAULT_SERIE_NAME, event -> {
+            AcquireCentralThumnailList.this.acquireTabPanel.moveElements(AcquireManager.getDefaultSeries(),
                 AcquireManager.toImageElement(medias));
             repaint();
         })));
     }
 
     private void moveToNewSerie(JMenu moveToMenu, final List<E> medias) {
-        moveToMenu.add(new JMenuItem(new DefaultAction("New Serie", event -> {
-            JDialog dialog = new AcquireNewSerieDialog(AcquireCentralThumnailList.this.acquireTabPanel,
-                AcquireManager.toImageElement(medias));
-            JMVUtils.showCenterScreen(dialog, AcquireCentralThumnailList.this.acquireTabPanel);
-            repaint();
-        })));
+        moveToMenu
+            .add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.new_series"), event -> { //$NON-NLS-1$
+                JDialog dialog = new AcquireNewSerieDialog(AcquireCentralThumnailList.this.acquireTabPanel,
+                    AcquireManager.toImageElement(medias));
+                JMVUtils.showCenterScreen(dialog, AcquireCentralThumnailList.this.acquireTabPanel);
+                repaint();
+            })));
     }
 
     private void operationRotate(JMenu operationsMenu, final List<E> medias, String label, final int angle) {
@@ -186,12 +194,16 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
             case KeyEvent.VK_PAGE_UP:
                 lastPage(e);
                 break;
+            case KeyEvent.VK_ENTER:
+                openSelection();
+                e.consume();
+                break;
             case KeyEvent.VK_DELETE:
                 List<E> selected = getSelectedValuesList();
                 if (!selected.isEmpty()) {
                     List<ImageElement> list = AcquireManager.toImageElement(selected);
                     clearSelection();
-                    AcquireCentralThumnailList.this.acquireTabPanel.removeElements(list);
+                    AcquireManager.getInstance().removeImages(list);
                 }
                 break;
         }

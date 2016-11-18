@@ -67,7 +67,7 @@ public class SplittingRules {
         // Make a condition to exclude projection image type
         And allOf = new And();
         allOf.addChild(
-            new DefaultCondition(TagD.get(Tag.ImageType), Condition.Type.notContainsIgnoreCase, "PROJECTION"));
+            new DefaultCondition(TagD.get(Tag.ImageType), Condition.Type.notContainsIgnoreCase, "PROJECTION")); //$NON-NLS-1$
         ctRules.addSingleFrameTags(TagW.ImageOrientationPlane, allOf);
         rules.put(ctRules.getModality(), ctRules);
 
@@ -93,7 +93,7 @@ public class SplittingRules {
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
-            File file = ResourceUtil.getResource("series-splitting-rules.xml");
+            File file = ResourceUtil.getResource("series-splitting-rules.xml"); //$NON-NLS-1$
             if (!file.canRead()) {
                 return;
             }
@@ -231,7 +231,7 @@ public class SplittingRules {
                         type = getConditionType(xmler.getAttributeValue(null, "type"));//$NON-NLS-1$
                     } else if ("conditions".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
                         String t = xmler.getAttributeValue(null, "type");//$NON-NLS-1$
-                        lastConditions = "anyOf".equals(t) ? new Or() : new And();
+                        lastConditions = "anyOf".equals(t) ? new Or() : new And(); //$NON-NLS-1$
                         if (conditions == null) {
                             // Root condition
                             conditions = lastConditions;
@@ -243,7 +243,7 @@ public class SplittingRules {
                 case XMLStreamConstants.END_ELEMENT:
                     if ("condition".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
                         if (tag == null || type == null || value == null) {
-                            LOGGER.error("Cannot read condition: {} {} {}", tag, type, value);
+                            LOGGER.error("Cannot read condition: {} {} {}", tag, type, value); //$NON-NLS-1$
                         }
                         if (lastConditions != null) {
                             lastConditions.addChild(new DefaultCondition(tag, type, value));
@@ -302,7 +302,7 @@ public class SplittingRules {
     private static TagW getTag(String tagKey) {
         TagW tag = TagW.get(tagKey);
         if (tag == null) {
-            LOGGER.error("Cannot find a tag with the keyword {}", tagKey);
+            LOGGER.error("Cannot find a tag with the keyword {}", tagKey); //$NON-NLS-1$
         }
         return tag;
     }

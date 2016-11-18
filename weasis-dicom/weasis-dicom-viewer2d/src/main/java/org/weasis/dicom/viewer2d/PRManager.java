@@ -94,7 +94,7 @@ public class PRManager {
             if (!presetList.get(presetList.size() - 1).equals(auto)) {
                 // It happens when PR contains a new Modality LUT
                 String name = Messages.getString("PresetWindowLevel.full"); //$NON-NLS-1$
-                presets.add(new PresetWindowLevel(name + " [PR]", auto.getWindow(), auto.getLevel(), auto.getShape()));
+                presets.add(new PresetWindowLevel(name + " [PR]", auto.getWindow(), auto.getLevel(), auto.getShape())); //$NON-NLS-1$
             }
             presets.addAll(presetList);
         }
@@ -124,12 +124,12 @@ public class PRManager {
         reader.readDisplayArea(img);
 
         String presentationMode = TagD.getTagValue(reader, Tag.PresentationSizeMode, String.class);
-        boolean trueSize = "TRUE SIZE".equalsIgnoreCase(presentationMode);
+        boolean trueSize = "TRUE SIZE".equalsIgnoreCase(presentationMode); //$NON-NLS-1$
 
         double[] prPixSize = TagD.getTagValue(reader, Tag.PresentationPixelSpacing, double[].class);
         if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
             if (trueSize) {
-                img.setPixelSize(prPixSize[0], prPixSize[1]);
+                img.setPixelSize(prPixSize[1], prPixSize[0]);
                 img.setPixelSpacingUnit(Unit.MILLIMETER);
                 actionsInView.put(PRManager.TAG_CHANGE_PIX_CONFIG, true);
                 ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
@@ -168,12 +168,14 @@ public class PRManager {
                 area = area.intersection(
                     new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight()));
                 if (area.width > 1 && area.height > 1 && !area.equals(view.getViewModel().getModelArea())) {
-                    SimpleOpManager manager = new SimpleOpManager();
+                    SimpleOpManager opManager =
+                        Optional.ofNullable((SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()))
+                            .orElseGet(SimpleOpManager::new);
                     CropOp crop = new CropOp();
                     crop.setParam(CropOp.P_AREA, area);
                     crop.setParam(CropOp.P_SHIFT_TO_ORIGIN, true);
-                    manager.addImageOperationAction(crop);
-                    actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
+                    opManager.addImageOperationAction(crop);
+                    actionsInView.put(ActionW.PREPROCESSING.cmd(), opManager);
                 }
             }
             actionsInView.put(ActionW.CROP.cmd(), area);
@@ -212,7 +214,7 @@ public class PRManager {
         ArrayList<GraphicLayer> layers = new ArrayList<>();
         int k = 0;
         for (GraphicLayer layer : graphicModel.getLayers()) {
-            layer.setName(Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName) + " [DICOM]");
+            layer.setName(Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName) + " [DICOM]"); //$NON-NLS-1$
             layer.setLocked(true);
             layer.setSerializable(false);
             layer.setLevel(270 + k++);
@@ -276,7 +278,7 @@ public class PRManager {
                     }
 
                     GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
-                    layer.setName(graphicLayerName + " [DICOM]");
+                    layer.setName(graphicLayerName + " [DICOM]"); //$NON-NLS-1$
                     layer.setSerializable(false);
                     layer.setLocked(true);
                     layer.setSelectable(false);

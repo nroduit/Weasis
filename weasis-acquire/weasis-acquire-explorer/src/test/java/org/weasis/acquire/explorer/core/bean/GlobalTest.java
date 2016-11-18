@@ -11,7 +11,6 @@
 package org.weasis.acquire.explorer.core.bean;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -64,18 +63,6 @@ public class GlobalTest extends GlobalHelper {
         global = new Global();
 
         assertThat(global).isNotNull();
-        assertThat(global.getTagEntrySetIterator()).isEmpty();
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testInitWithNullXml() throws Exception {
-        global = new Global();
-
-        // Method to test
-        global.init(null);
-
-        // Tests
-        fail("should raise anexception");
     }
 
     @Test
@@ -111,7 +98,7 @@ public class GlobalTest extends GlobalHelper {
         Object value;
 
         if (tag.type.equals(TagType.DATE)) {
-            value = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()).parse(tag.value);
+            value = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()).parse(tag.value); //$NON-NLS-1$
         } else {
             value = tag.value;
         }

@@ -240,27 +240,27 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("AcquireImageValues[cropZone=>");
+        builder.append("AcquireImageValues[cropZone=>"); //$NON-NLS-1$
         builder.append(cropZone);
-        builder.append("layerOffset=>");
+        builder.append("layerOffset=>"); //$NON-NLS-1$
         builder.append(layerOffset);
-        builder.append("orientation=>");
+        builder.append("orientation=>"); //$NON-NLS-1$
         builder.append(orientation);
-        builder.append("rotation=>");
+        builder.append("rotation=>"); //$NON-NLS-1$
         builder.append(rotation);
-        builder.append("brightness=>");
+        builder.append("brightness=>"); //$NON-NLS-1$
         builder.append(brightness);
-        builder.append("contrast=>");
+        builder.append("contrast=>"); //$NON-NLS-1$
         builder.append(contrast);
-        builder.append("autoLevel=>");
+        builder.append("autoLevel=>"); //$NON-NLS-1$
         builder.append(autoLevel);
-        builder.append("flip=>");
+        builder.append("flip=>"); //$NON-NLS-1$
         builder.append(flip);
-        builder.append("calibrationUnit=>");
+        builder.append("calibrationUnit=>"); //$NON-NLS-1$
         builder.append(calibrationUnit);
-        builder.append("calibrationRatio=>");
+        builder.append("calibrationRatio=>"); //$NON-NLS-1$
         builder.append(calibrationRatio);
-        builder.append("ratio=>");
+        builder.append("ratio=>"); //$NON-NLS-1$
         builder.append(ratio);
         return builder.toString();
     }

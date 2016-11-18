@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.weasis.dicom.codec.display;
 
+import java.util.Arrays;
+
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.Messages;
 
 public enum Modality {
@@ -110,12 +113,15 @@ public enum Modality {
 
     @Override
     public String toString() {
-        return description;
+        StringBuilder buf = new StringBuilder(this.name());
+        buf.append(" - "); //$NON-NLS-1$
+        buf.append(description);
+        return buf.toString();
     }
 
     public static Modality getModality(String modality) {
         Modality v = Modality.DEFAULT;
-        if (modality != null) {
+        if (StringUtil.hasText(modality)) {
             try {
                 v = Modality.valueOf(modality);
             } catch (Exception e) {
@@ -123,5 +129,10 @@ public enum Modality {
             }
         }
         return v;
+    }
+    
+    public static Modality[] getAllModalitiesExceptDefault() {
+        Modality[] vals = Modality.values();
+        return Arrays.copyOfRange(vals, 1, vals.length);
     }
 }

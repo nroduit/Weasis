@@ -31,24 +31,24 @@ public class AppProperties {
     /**
      * The version of the application (for display)
      */
-    public static final String WEASIS_VERSION = System.getProperty("weasis.version", "2.5.x"); //$NON-NLS-1$
+    public static final String WEASIS_VERSION = System.getProperty("weasis.version", "2.5.x"); //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The name of the application (for display)
      */
-    public static final String WEASIS_NAME = System.getProperty("weasis.name", "Weasis"); //$NON-NLS-1$
+    public static final String WEASIS_NAME = System.getProperty("weasis.name", "Weasis"); //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The current user of the application (defined either in JNLP by the property "weasis.user" or by the user of the
      * operating system session if the property is null)
      */
-    public static final String WEASIS_USER = System.getProperty("weasis.user", "user"); //$NON-NLS-1$
+    public static final String WEASIS_USER = System.getProperty("weasis.user", "user"); //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The name of the configuration profile (defined in config-ext.properties). The value is “default” if null. This
      * property allows to have separated preferences (in a new directory).
      */
-    public static final String WEASIS_PROFILE = System.getProperty("weasis.profile", "default"); //$NON-NLS-1$
+    public static final String WEASIS_PROFILE = System.getProperty("weasis.profile", "default"); //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The directory for writing temporary files
@@ -83,7 +83,7 @@ public class AppProperties {
      * The path of the directory “.weasis” (containing the installation and the preferences)
      */
     public static final String WEASIS_PATH =
-        System.getProperty("weasis.path", APP_TEMP_DIR + File.separator + ".weasis"); //$NON-NLS-1$
+        System.getProperty("weasis.path", APP_TEMP_DIR + File.separator + ".weasis"); //$NON-NLS-1$ //$NON-NLS-2$
 
     public static final File FILE_CACHE_DIR = buildAccessibleTempDirectory("cache"); //$NON-NLS-1$
 

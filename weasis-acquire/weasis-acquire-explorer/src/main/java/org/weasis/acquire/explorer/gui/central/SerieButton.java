@@ -8,25 +8,24 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.acquire.explorer.gui.central.component;
+package org.weasis.acquire.explorer.gui.central;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JToggleButton;
 
-import org.weasis.acquire.explorer.core.bean.Serie;
-import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 
 public class SerieButton extends JToggleButton implements ActionListener, Comparable<SerieButton> {
     private static final long serialVersionUID = -2587964095510462601L;
 
-    private final Serie serie;
+    private final SeriesGroup seriesGroup;
     private final AcquireTabPanel panel;
 
-    public SerieButton(Serie serie, AcquireTabPanel panel) {
-        super(serie.getDisplayName());
-        this.serie = serie;
+    public SerieButton(SeriesGroup seriesGroup, AcquireTabPanel panel) {
+        super(seriesGroup.getDisplayName());
+        this.seriesGroup = seriesGroup;
         this.panel = panel;
         addActionListener(this);
     }
@@ -38,8 +37,13 @@ public class SerieButton extends JToggleButton implements ActionListener, Compar
         }
     }
 
-    public Serie getSerie() {
-        return serie;
+    public SeriesGroup getSerie() {
+        return seriesGroup;
+    }
+    @Override
+    public void setText(String text) {
+        super.setText(text);
+        setToolTipText(text);
     }
 
     @Override

@@ -89,7 +89,7 @@ public class GraphicsPane extends JComponent implements Canvas {
                 this.graphicManager.updateLabels(Boolean.TRUE, (ViewCanvas) this);
             }
             this.graphicManager.addChangeListener(layerModelHandler);
-            firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager);
+            firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager); //$NON-NLS-1$
         }
     }
 

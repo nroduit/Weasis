@@ -81,9 +81,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     public void iniTree() {
         tree.getCheckingModel().setCheckingMode(CheckingMode.SIMPLE);
 
-        image = new DefaultMutableTreeNode(Messages.getString("DisplayTool.img"), true);
+        image = new DefaultMutableTreeNode(Messages.getString("DisplayTool.img"), true); //$NON-NLS-1$
         rootNode.add(image);
-        info = new DefaultMutableTreeNode(Messages.getString("DisplayTool.annotations"), true);
+        info = new DefaultMutableTreeNode(Messages.getString("DisplayTool.annotations"), true); //$NON-NLS-1$
         info.add(new DefaultMutableTreeNode(LayerAnnotation.ANNOTATIONS, true));
         info.add(new DefaultMutableTreeNode(LayerAnnotation.SCALE, true));
         info.add(new DefaultMutableTreeNode(LayerAnnotation.LUT, true));

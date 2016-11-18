@@ -91,7 +91,7 @@ public class PickerView extends JPanel {
         try {
             it = RectIterFactory.create(imageData, area);
         } catch (Exception ex) {
-            LOGGER.error("Create image data iterator", ex);
+            LOGGER.error("Create image data iterator", ex); //$NON-NLS-1$
             it = null;
         }
         int[][] val = null;
@@ -149,7 +149,7 @@ public class PickerView extends JPanel {
             rectIter = RectIterFactory.create(imageView, area);
             nbBand = imageView.getSampleModel().getNumBands();
         } catch (Exception ex) {
-            LOGGER.error("Create image data iterator", ex);
+            LOGGER.error("Create image data iterator", ex); //$NON-NLS-1$
             rectIter = null;
         }
         repaint();

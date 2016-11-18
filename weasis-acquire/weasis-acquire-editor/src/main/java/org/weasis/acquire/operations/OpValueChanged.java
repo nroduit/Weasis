@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.acquire.operations;
 
+@FunctionalInterface
 public interface OpValueChanged {
     void applyNextValues();
 }

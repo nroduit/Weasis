@@ -8,14 +8,14 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class CobbAngleToolGraphicTest extends GraphicTester<CobbAngleToolGraphic> {
-    private static final String XML_0 = "/graphic/cobbAngle/cobbAngle.graphic.0.xml";
-    private static final String XML_1 = "/graphic/cobbAngle/cobbAngle.graphic.1.xml";
+    private static final String XML_0 = "/graphic/cobbAngle/cobbAngle.graphic.0.xml"; //$NON-NLS-1$
+    private static final String XML_1 = "/graphic/cobbAngle/cobbAngle.graphic.1.xml"; //$NON-NLS-1$
     
     public static final String BASIC_TPL = 
-        "<cobbAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"
-     +     "<paint rgb=\"%s\"/>"
-     +     "<pts/>"
-     + "</cobbAngle>";
+        "<cobbAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
+     +     "<paint rgb=\"%s\"/>" //$NON-NLS-1$
+     +     "<pts/>" //$NON-NLS-1$
+     + "</cobbAngle>"; //$NON-NLS-1$
     
     public static final CobbAngleToolGraphic COMPLETE_OBJECT =  new CobbAngleToolGraphic();
     static {

@@ -560,7 +560,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                 try {
                     files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable files", e);
+                    LOGGER.error("Get dragable files", e); //$NON-NLS-1$
                 }
                 return dropDicomFiles(files);
             }
@@ -573,7 +573,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                     String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable URIs", e);
+                    LOGGER.error("Get dragable URIs", e); //$NON-NLS-1$
                 }
                 return dropDicomFiles(files);
             }
@@ -626,7 +626,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                     return true;
                 }
             } catch (Exception e) {
-                LOGGER.error("Opening series", e);
+                LOGGER.error("Opening series", e); //$NON-NLS-1$
                 return false;
             }
 

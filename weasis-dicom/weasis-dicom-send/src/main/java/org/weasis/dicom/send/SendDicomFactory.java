@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.dicom;
+package org.weasis.dicom.send;
 
 import java.io.File;
 import java.util.Hashtable;
@@ -49,7 +49,7 @@ public class SendDicomFactory implements DicomExportFactory {
 
     @Activate
     protected void activate(ComponentContext context) throws Exception {
-        LOGGER.info("DICOM Send is activated");
+        LOGGER.info("DICOM Send is activated"); //$NON-NLS-1$
         FileUtil.readProperties(
             new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"), //$NON-NLS-1$
             EXPORT_PERSISTENCE);
@@ -57,7 +57,7 @@ public class SendDicomFactory implements DicomExportFactory {
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("DICOM Send is deactivated");
+        LOGGER.info("DICOM Send is deactivated"); //$NON-NLS-1$
         FileUtil.storeProperties(
             new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"), //$NON-NLS-1$
             EXPORT_PERSISTENCE, null);

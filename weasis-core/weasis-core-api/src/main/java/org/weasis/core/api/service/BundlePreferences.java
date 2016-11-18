@@ -189,7 +189,7 @@ public class BundlePreferences {
                 return instance.get(null) == null;
             }
         } catch (Exception e) {
-            LOGGER.error("Checking static field value", e);
+            LOGGER.error("Checking static field value", e); //$NON-NLS-1$
         }
         return false;
     }

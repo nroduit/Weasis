@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.api.media.data;
 
+import java.awt.Point;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
@@ -216,7 +217,7 @@ public class ImageElement extends MediaElement {
         return pixelSizeCalibrationDescription;
     }
 
-    public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit) {
+    public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit, Point offset) {
         Unit unit = displayUnit;
         if (unit == null || pixelSpacingUnit == null || pixelSpacingUnit.equals(Unit.PIXEL)) {
             unit = Unit.PIXEL;
@@ -228,7 +229,9 @@ public class ImageElement extends MediaElement {
         } else {
             unitRatio = getPixelSize() * unit.getConversionRatio(pixelSpacingUnit.getConvFactor());
         }
-        return new MeasurementsAdapter(unitRatio, 0, 0, false, 0, unit.getAbbreviation());
+        int offsetx = offset == null ? 0 : -offset.x;
+        int offsety = offset == null ? 0 : -offset.y;
+        return new MeasurementsAdapter(unitRatio, offsetx, offsety, false, 0, unit.getAbbreviation());
     }
 
     public boolean isImageInCache() {

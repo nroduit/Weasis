@@ -68,6 +68,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TransferSyntax;
@@ -206,11 +207,13 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
             if (DicomModel.isSpecialModality(dicomSeries)) {
                 dicomModel.addSpecialModality(dicomSeries);
+                dicomSeries.getSortedMedias(null).stream().filter(DicomSpecialElement.class::isInstance)
+                .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                    new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
             }
 
             Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-            Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
-            if (splitNb != null || dicomObject != null) {
+            if (splitNb != null) {
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
             } else if (dicomSeries.size(null) == 0) {
@@ -316,7 +319,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             return false;
         }
         ExecutorService imageDownloader =
-            ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader");
+            ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader"); //$NON-NLS-1$
         ArrayList<Callable<Boolean>> tasks = new ArrayList<>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
         GuiExecutor.instance().execute(() -> progressBar.setValue(0));
@@ -835,7 +838,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             } catch (InterruptedIOException e) {
                 return e.bytesTransferred;
             } catch (Exception e) {
-                LOGGER.error("Error when writing DICOM temp file", e);
+                LOGGER.error("Error when writing DICOM temp file", e); //$NON-NLS-1$
                 return 0;
             } finally {
                 SafeClose.close(dos);

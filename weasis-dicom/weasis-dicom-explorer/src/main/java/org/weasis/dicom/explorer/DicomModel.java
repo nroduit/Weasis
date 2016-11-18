@@ -105,7 +105,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         modelStrucure.add(series);
     }
 
-    public static final ExecutorService LOADING_EXECUTOR = ThreadUtil.buildNewSingleThreadExecutor("Dicom Model");
+    public static final ExecutorService LOADING_EXECUTOR = ThreadUtil.buildNewSingleThreadExecutor("Dicom Model"); //$NON-NLS-1$
 
     private final Tree<MediaSeriesGroup> model;
     private PropertyChangeSupport propertyChange = null;
@@ -460,7 +460,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     }
 
-    public static boolean isSpecialModality(Series series) {
+    public static boolean isSpecialModality(MediaSeries<?> series) {
         String modality = (series == null) ? null : TagD.getTagValue(series, Tag.Modality, String.class);
         return modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
     }
@@ -550,9 +550,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public static <E> E getFirstSpecialElement(MediaSeriesGroup group, Class<E> clazz) {
         if (group != null && clazz != null && clazz.isAssignableFrom(clazz)) {
-            List<DicomSpecialElement> kos = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
-            if (kos != null) {
-                for (DicomSpecialElement el : kos) {
+            List<DicomSpecialElement> sps = (List<DicomSpecialElement>) group.getTagValue(TagW.DicomSpecialElementList);
+            if (sps != null) {
+                for (DicomSpecialElement el : sps) {
                     if (clazz.isInstance(el)) {
                         return (E) el;
                     }
@@ -680,7 +680,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 LOGGER.info("Adding patient: {}", pt); //$NON-NLS-1$
             } else {
                 pt = getParent(st, DicomModel.patient);
-                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam.");
+                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam."); //$NON-NLS-1$
             }
         }
 

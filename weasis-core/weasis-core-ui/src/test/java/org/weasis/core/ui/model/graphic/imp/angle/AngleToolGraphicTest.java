@@ -8,14 +8,14 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class AngleToolGraphicTest extends GraphicTester<AngleToolGraphic> {
-    private static final String XML_0 = "/graphic/angle/angle.graphic.0.xml";
-    private static final String XML_1 = "/graphic/angle/angle.graphic.1.xml";
+    private static final String XML_0 = "/graphic/angle/angle.graphic.0.xml"; //$NON-NLS-1$
+    private static final String XML_1 = "/graphic/angle/angle.graphic.1.xml"; //$NON-NLS-1$
     
     public static final String BASIC_TPL = 
-        "<angle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"
-      +     "<paint rgb=\"%s\"/>"
-      +     "<pts/>"
-      + "</angle>";
+        "<angle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
+      +     "<paint rgb=\"%s\"/>" //$NON-NLS-1$
+      +     "<pts/>" //$NON-NLS-1$
+      + "</angle>"; //$NON-NLS-1$
     
     public static final AngleToolGraphic COMPLETE_OBJECT =  new AngleToolGraphic();
     static {

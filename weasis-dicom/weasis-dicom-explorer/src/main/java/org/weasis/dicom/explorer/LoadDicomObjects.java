@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -33,6 +34,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 
@@ -97,7 +99,7 @@ public class LoadDicomObjects extends ExplorerTask {
                     }
                 }
             } catch (URISyntaxException e) {
-                LOGGER.debug("", e);
+                LOGGER.debug("", e); //$NON-NLS-1$
             }
 
         }
@@ -138,12 +140,14 @@ public class LoadDicomObjects extends ExplorerTask {
             if (dicomSeries == null) {
                 dicomSeries = dicomReader.buildSeries(seriesUID);
                 dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
+                dicomSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
                 dicomReader.writeMetaData(dicomSeries);
                 dicomModel.addHierarchyNode(study, dicomSeries);
                 MediaElement[] medias = dicomReader.getMediaElement();
                 if (medias != null) {
                     for (MediaElement media : medias) {
                         dicomModel.applySplittingRules(dicomSeries, media);
+                        media.setTag(TagW.ObjectToSave, Boolean.TRUE);
                     }
                     if (medias.length > 0) {
                         dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
@@ -160,6 +164,9 @@ public class LoadDicomObjects extends ExplorerTask {
 
                 if (DicomModel.isSpecialModality(dicomSeries)) {
                     dicomModel.addSpecialModality(dicomSeries);
+                    Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
+                    .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                 } else {
                     dicomModel.firePropertyChange(
                         new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
@@ -169,8 +176,7 @@ public class LoadDicomObjects extends ExplorerTask {
                 thumb = t;
 
                 Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
-                if (splitNb != null || dicomObject != null) {
+                if (splitNb != null) {
                     dicomModel.firePropertyChange(
                         new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
                 }
@@ -192,6 +198,7 @@ public class LoadDicomObjects extends ExplorerTask {
                 if (medias != null) {
                     for (MediaElement media : medias) {
                         dicomModel.applySplittingRules(dicomSeries, media);
+                        media.setTag(TagW.ObjectToSave, Boolean.TRUE);
                     }
                     if (medias.length > 0) {
                         dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
@@ -204,12 +211,14 @@ public class LoadDicomObjects extends ExplorerTask {
 
                     if (DicomModel.isSpecialModality(dicomSeries)) {
                         dicomModel.addSpecialModality(dicomSeries);
+                        Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
+                        .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                     }
 
                     // If Split series or special DICOM element update the explorer view and View2DContainer
                     Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                    Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
-                    if (splitNb != null || dicomObject != null) {
+                    if (splitNb != null) {
                         dicomModel.firePropertyChange(
                             new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
                     }

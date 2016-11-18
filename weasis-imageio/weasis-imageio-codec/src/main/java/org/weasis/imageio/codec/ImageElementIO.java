@@ -92,11 +92,11 @@ public class ImageElementIO implements MediaReader {
             file = cache.getTransformedFile();
             if (file == null) {
                 String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes());
-                imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".tif");
+                imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".tif"); //$NON-NLS-1$
                 if (Files.isReadable(imgCachePath)) {
                     file = imgCachePath.toFile();
                     cache.setTransformedFile(file);
-                    this.mimeType = "image/tiff";
+                    this.mimeType = "image/tiff"; //$NON-NLS-1$
                     imgCachePath = null;
                 } else {
                     file = cache.getOriginalFile().get();
@@ -178,7 +178,7 @@ public class ImageElementIO implements MediaReader {
         String sUID = null;
         MediaElement element = getSingleImage();
         if (element != null) {
-            sUID = (String) element.getTagValue(TagW.get("SeriesInstanceUID"));
+            sUID = (String) element.getTagValue(TagW.get("SeriesInstanceUID")); //$NON-NLS-1$
         }
         if (sUID == null) {
             sUID = uri == null ? "unknown" : uri.toString(); //$NON-NLS-1$
@@ -312,13 +312,13 @@ public class ImageElementIO implements MediaReader {
             && !mimeType.contains("dicom")) { //$NON-NLS-1$
             File outFile = imgCachePath.toFile();
             if (ImageFiler.writeTIFF(outFile, img, true, true, false)) {
-                this.mimeType = "image/tiff";
+                this.mimeType = "image/tiff"; //$NON-NLS-1$
                 return outFile;
             } else {
                 try {
                     Files.deleteIfExists(outFile.toPath());
                 } catch (IOException e) {
-                    LOGGER.error("Deleting temp tiff file", e);
+                    LOGGER.error("Deleting temp tiff file", e); //$NON-NLS-1$
                 }
             }
         }

@@ -21,7 +21,7 @@ public class FileSystemDrive extends MediaSource {
 
         File locationFile = new File(locationPath);
         if (!locationFile.isDirectory()) {
-            throw new IllegalArgumentException(locationPath + "is not valid directory");
+            throw new IllegalArgumentException(locationPath + "is not valid directory"); //$NON-NLS-1$
         }
 
         File sysRootFile = locationFile;
@@ -31,7 +31,7 @@ public class FileSystemDrive extends MediaSource {
 
         FileSystemView fsv = FileSystemView.getFileSystemView();
 
-        displayName = fsv.getSystemDisplayName(sysRootFile) + " - " + locationFile.getPath();
+        displayName = fsv.getSystemDisplayName(sysRootFile) + " - " + locationFile.getPath(); //$NON-NLS-1$
         description = fsv.getSystemTypeDescription(sysRootFile);
         icon = fsv.getSystemIcon(sysRootFile);
     }

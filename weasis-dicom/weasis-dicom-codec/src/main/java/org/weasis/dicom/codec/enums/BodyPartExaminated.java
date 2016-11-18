@@ -14,9 +14,6 @@ package org.weasis.dicom.codec.enums;
  * Official DICOM list of body part examinated. See also :
  * http://dicom.nema.org/MEDICAL/DICOM/current/output/chtml/part16/chapter_L.html
  *
- * @author Yannick LARVOR (ylarvor@smartwavesa.com)
- * @version 2.5.0
- * @since 2.5.0 - 2016-07-19 - ylar - Creation
  */
 public enum BodyPartExaminated {
     ABDOMEN, ABDOMENPELVIS, ADRENAL, ANKLE, AORTA, ARM, AXILLA, BACK, BLADDER, BRAIN, BREAST, BRONCHUS, BUTTOCK,

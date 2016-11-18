@@ -20,6 +20,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.AcquireActionButton;
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.dockable.components.AcquireSubmitButtonsPanel;
@@ -51,7 +52,7 @@ import bibliothek.gui.dock.common.CLocation;
 public class EditionTool extends PluginTool implements SeriesViewerListener {
     private static final long serialVersionUID = -3662409181835644699L;
 
-    public static final String BUTTON_NAME = "Photo Editor";
+    public static final String BUTTON_NAME = Messages.getString("EditionTool.title_btn"); //$NON-NLS-1$
 
     private final JScrollPane rootPane = new JScrollPane();
 

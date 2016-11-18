@@ -28,13 +28,12 @@ import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
 @SuppressWarnings("serial")
-public abstract class AThumbnailListPane<E extends MediaElement> extends JScrollPane
-    implements IThumbnailListPane<E> {
+public abstract class AThumbnailListPane<E extends MediaElement> extends JScrollPane implements IThumbnailListPane<E> {
     protected IThumbnailList<E> thumbnailList;
     protected ExecutorService pool;
 
     public AThumbnailListPane(IThumbnailList<E> thumbList) {
-        this.pool = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail List");
+        this.pool = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail List"); //$NON-NLS-1$
 
         this.thumbnailList = thumbList;
         this.thumbnailList.addListSelectionListener(new JIListSelectionAdapter());
@@ -123,5 +122,4 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
     public IThumbnailList<E> getThumbnailList() {
         return thumbnailList;
     }
-
 }

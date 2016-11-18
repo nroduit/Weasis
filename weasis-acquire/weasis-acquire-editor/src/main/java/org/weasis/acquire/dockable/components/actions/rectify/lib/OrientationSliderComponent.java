@@ -15,6 +15,7 @@ import java.util.Hashtable;
 
 import javax.swing.JLabel;
 
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.rectify.RectifyPanel;
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
@@ -41,7 +42,7 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
     private final RectifyOrientationChangeListener listener;
 
     public OrientationSliderComponent(RectifyPanel panel) {
-        super(panel, "Orientation");
+        super(panel, Messages.getString("OrientationSliderComponent.orientation")); //$NON-NLS-1$
         listener = new RectifyOrientationChangeListener(panel.getRectifyAction());
         addChangeListener(listener);
     }
@@ -72,6 +73,6 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
 
     @Override
     public String getDisplayTitle() {
-        return super.getDisplayTitle() + "°";
+        return super.getDisplayTitle() + Messages.getString("OrientationSliderComponent.deg_symb"); //$NON-NLS-1$
     }
 }

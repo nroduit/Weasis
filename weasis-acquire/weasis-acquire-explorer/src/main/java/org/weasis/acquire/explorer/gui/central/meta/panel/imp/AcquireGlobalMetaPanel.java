@@ -24,6 +24,6 @@ public class AcquireGlobalMetaPanel extends AcquireMetadataPanel {
 
     @Override
     public AcquireMetadataTableModel newTableModel() {
-        return new AcquireGlobalMeta();
+        return AcquireGlobalMeta.getInstance();
     }
 }

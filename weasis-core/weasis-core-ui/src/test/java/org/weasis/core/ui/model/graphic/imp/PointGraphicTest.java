@@ -11,14 +11,14 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class PointGraphicTest extends GraphicTester<PointGraphic> {
-    private static final String XML_0 = "/graphic/point/point.graphic.0.xml";
-    private static final String XML_1 = "/graphic/point/point.graphic.1.xml";
+    private static final String XML_0 = "/graphic/point/point.graphic.0.xml"; //$NON-NLS-1$
+    private static final String XML_1 = "/graphic/point/point.graphic.1.xml"; //$NON-NLS-1$
     
     static final String BASIC_TPL = 
-        "<point pointSize=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"
-      +     "<paint rgb=\"%s\"/>"
-      +     "<pts/>"
-      + "</point>";
+        "<point pointSize=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
+      +     "<paint rgb=\"%s\"/>" //$NON-NLS-1$
+      +     "<pts/>" //$NON-NLS-1$
+      + "</point>"; //$NON-NLS-1$
     
     
     public static final PointGraphic COMPLETE_OBJECT =  new PointGraphic();

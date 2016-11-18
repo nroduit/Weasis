@@ -237,7 +237,7 @@ public class ViewerPluginBuilder {
                 DefaultDataModel.addHierarchyNode(group1, series);
             } else {
                 // Test if SOPInstanceUID already exists
-                TagW sopTag = TagW.get("SOPInstanceUID");
+                TagW sopTag = TagW.get("SOPInstanceUID"); //$NON-NLS-1$
                 if (series instanceof Series
                     && ((Series<?>) series).hasMediaContains(sopTag, reader.getTagValue(sopTag))) {
                     return series;
@@ -259,7 +259,7 @@ public class ViewerPluginBuilder {
             }
 
         } catch (Exception e) {
-            LOGGER.error("Build series error", e);
+            LOGGER.error("Build series error", e); //$NON-NLS-1$
         } finally {
             reader.reset();
         }

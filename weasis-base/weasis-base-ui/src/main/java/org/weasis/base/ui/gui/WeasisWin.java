@@ -142,7 +142,6 @@ public class WeasisWin {
         @Override
         public void popupMenuWillBecomeVisible() {
             buildSelectedPluginMenu(this);
-
         }
     };
     private static ViewerPlugin<?> selectedPlugin = null;
@@ -672,7 +671,7 @@ public class WeasisWin {
                 try {
                     JMVUtils.openInDefaultBrowser(helpContentMenuItem, new URL(helpURL));
                 } catch (MalformedURLException e1) {
-                    LOGGER.error("Open URL in default browser", e);
+                    LOGGER.error("Open URL in default browser", e); //$NON-NLS-1$
                 }
             });
             helpMenuItem.add(helpContentMenuItem);
@@ -684,7 +683,7 @@ public class WeasisWin {
                 URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")); //$NON-NLS-1$
                 JMVUtils.openInDefaultBrowser(webMenuItem, url);
             } catch (MalformedURLException e1) {
-                LOGGER.error("Open URL in default browser", e);
+                LOGGER.error("Open URL in default browser", e); //$NON-NLS-1$
             }
         });
         helpMenuItem.add(webMenuItem);
@@ -695,7 +694,7 @@ public class WeasisWin {
                 URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")); //$NON-NLS-1$
                 JMVUtils.openInDefaultBrowser(websiteMenuItem, url);
             } catch (MalformedURLException e1) {
-                LOGGER.error("Open URL in default browser", e);
+                LOGGER.error("Open URL in default browser", e); //$NON-NLS-1$
             }
         });
         helpMenuItem.add(websiteMenuItem);
@@ -977,7 +976,7 @@ public class WeasisWin {
                 try {
                     files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable files", e);
+                    LOGGER.error("Get dragable files", e); //$NON-NLS-1$
                 }
                 return dropFiles(files, support.getDropLocation());
             }
@@ -990,7 +989,7 @@ public class WeasisWin {
                     String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable URIs", e);
+                    LOGGER.error("Get dragable URIs", e); //$NON-NLS-1$
                 }
                 return dropFiles(files, support.getDropLocation());
             }
@@ -1022,7 +1021,7 @@ public class WeasisWin {
                 }
 
             } catch (Exception e) {
-                LOGGER.error("Open series", e);
+                LOGGER.error("Open series", e); //$NON-NLS-1$
                 return false;
             }
             return true;

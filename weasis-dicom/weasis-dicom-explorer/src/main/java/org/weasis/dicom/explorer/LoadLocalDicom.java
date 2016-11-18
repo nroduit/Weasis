@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -37,6 +38,7 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 
@@ -141,7 +143,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
             } else {
                 patient = dicomModel.getParent(study, DicomModel.patient);
-                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam.");
+                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam."); //$NON-NLS-1$
             }
         }
 
@@ -180,6 +182,9 @@ public class LoadLocalDicom extends ExplorerTask {
 
                 if (DicomModel.isSpecialModality(dicomSeries)) {
                     dicomModel.addSpecialModality(dicomSeries);
+                    Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
+                        .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                 } else {
                     dicomModel.firePropertyChange(
                         new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
@@ -189,8 +194,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 thumb = t;
 
                 Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
-                if (splitNb != null || dicomObject != null) {
+                if (splitNb != null) {
                     dicomModel.firePropertyChange(
                         new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
                 }
@@ -228,19 +232,21 @@ public class LoadLocalDicom extends ExplorerTask {
 
                     if (DicomModel.isSpecialModality(dicomSeries)) {
                         dicomModel.addSpecialModality(dicomSeries);
+                        Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
+                        .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                     }
 
                     // If Split series or special DICOM element update the explorer view and View2DContainer
                     Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                    Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
-                    if (splitNb != null || dicomObject != null) {
+                    if (splitNb != null) {
                         dicomModel.firePropertyChange(
                             new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
                     }
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Build DicomModel",e);
+            LOGGER.error("Build DicomModel", e); //$NON-NLS-1$
         } finally {
             // dicomReader.reset();
         }

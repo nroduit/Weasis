@@ -10,13 +10,12 @@ The master branch contains Weasis 2.5.x (requires Java 8+) and the old branches 
 
 [Issue Tracker](http://www.dcm4che.org/jira/browse/WEA)
 
-## Weasis 2.5 ##
 
-### New ###
+### New features in Weasis 2.5 ###
 * Embedded new codecs compiled for Windows 32/64-bit, Linux x86 32/64-bit and Mac OS X 64-bit.    
 	* jpeg-basline, jpeg-extended and jpeg-lossless (IJG 6b)   
-	* jpeg-ls (CharLS 1.0)   
-	* jpeg2000 codecs (OpegJPEG 2.1)   
+	* jpeg-ls (CharLS 1.1.0)   
+	* jpeg2000 codecs (OpegJPEG 2.1.2)   
 * Allows to order the codecs by priority with a unique configuration for all the systems
 * Supports multi-frame and multiple fragments at the same time
 * DICOM send module (DICOM node configuration at the server side and/or locally)

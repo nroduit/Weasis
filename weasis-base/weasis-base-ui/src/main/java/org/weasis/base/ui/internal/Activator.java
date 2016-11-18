@@ -55,7 +55,7 @@ public class Activator implements BundleActivator, ServiceListener {
         if (bundle != null) {
             bundle.start();
         }
-        String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.look");
+        String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.look"); //$NON-NLS-1$
         if (StringUtil.hasText(className)) {
             LookAndFeel lf = javax.swing.UIManager.getLookAndFeel();
             if (lf == null || !className.equals(lf.getClass().getName())) {
@@ -93,7 +93,7 @@ public class Activator implements BundleActivator, ServiceListener {
             bundleContext.addServiceListener(Activator.this,
                 String.format("(%s=%s)", Constants.OBJECTCLASS, DataExplorerViewFactory.class.getName())); //$NON-NLS-1$
         } catch (InvalidSyntaxException e3) {
-            LOGGER.error("Add service listener", e3);
+            LOGGER.error("Add service listener", e3); //$NON-NLS-1$
         }
     }
 
@@ -152,7 +152,7 @@ public class Activator implements BundleActivator, ServiceListener {
             }
 
         } catch (InvalidSyntaxException e2) {
-            LOGGER.error("Register data explorer", e2);
+            LOGGER.error("Register data explorer", e2); //$NON-NLS-1$
         }
     }
 

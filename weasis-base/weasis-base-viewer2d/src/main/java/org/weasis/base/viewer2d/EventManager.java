@@ -421,7 +421,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         cineAction.ifPresent(a -> a.setSliderMinMaxValue(1,
             series.size((Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
             view2d.getFrameIndex() + 1, false));
-        final Integer speed = (Integer) series.getTagValue(TagW.get("CineRate"));
+        final Integer speed = (Integer) series.getTagValue(TagW.get("CineRate")); //$NON-NLS-1$
         if (speed != null) {
             cineAction.ifPresent(a -> a.setSpeed(speed));
         }

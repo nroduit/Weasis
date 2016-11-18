@@ -23,8 +23,8 @@ public class Rotate90Button extends AbstractRectifyButton {
     private static final long serialVersionUID = -4223232320924420952L;
 
     private static final int ANGLE = 90;
-    private static final Icon ICON = new ImageIcon(MouseActions.class.getResource("/icon/32x32/rotate.png"));
-    private static final String TOOL_TIP = Messages.getString("EditionTool.rotate.90");
+    private static final Icon ICON = new ImageIcon(MouseActions.class.getResource("/icon/32x32/rotate.png")); //$NON-NLS-1$
+    private static final String TOOL_TIP = Messages.getString("EditionTool.rotate.90"); //$NON-NLS-1$
 
     public Rotate90Button(RectifyAction rectifyAction) {
         super(new RotationActionListener(ANGLE, rectifyAction));

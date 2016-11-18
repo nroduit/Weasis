@@ -19,6 +19,7 @@ import java.awt.event.FocusListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
@@ -34,35 +35,40 @@ import javax.swing.border.EmptyBorder;
 
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
+import org.weasis.acquire.explorer.AcquireExplorer;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.AcquisitionView;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.ImportTask;
+import org.weasis.acquire.explorer.Messages;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.ThreadUtil;
 
 public class AcquireImportDialog extends JDialog implements PropertyChangeListener {
     private static final long serialVersionUID = -8736946182228791444L;
 
-    private static final String P_MAX_RANGE = "maxMinuteRange";
+    private static final String P_MAX_RANGE = "maxMinuteRange"; //$NON-NLS-1$
 
     private final AcquireThumbnailListPane<? extends MediaElement> mainPanel;
 
-    private final Object[] options = { "Validate", "Cancel" };
-    private final static String REVALIDATE = "ReValidate";
+    public static final ExecutorService IMPORT_IMAGES = ThreadUtil.buildNewSingleThreadExecutor("ImportImage"); //$NON-NLS-1$
+
+    static final Object[] OPTIONS =
+        { Messages.getString("AcquireImportDialog.validate"), Messages.getString("AcquireImportDialog.cancel") }; //$NON-NLS-1$ //$NON-NLS-2$
+    static final String REVALIDATE = "ReValidate"; //$NON-NLS-1$
 
     private final JTextField serieName = new JTextField();
     private final ButtonGroup btnGrp = new ButtonGroup();
 
-    private final JRadioButton btn1 = new JRadioButton("Do not group");
-    private final JRadioButton btn2 = new JRadioButton("Group by date");
-    private final JRadioButton btn3 = new JRadioButton("Group by name");
+    private final JRadioButton btn1 = new JRadioButton(Messages.getString("AcquireImportDialog.no_grp")); //$NON-NLS-1$
+    private final JRadioButton btn2 = new JRadioButton(Messages.getString("AcquireImportDialog.date_grp")); //$NON-NLS-1$
+    private final JRadioButton btn3 = new JRadioButton(Messages.getString("AcquireImportDialog.name_grp")); //$NON-NLS-1$
     private final JSpinner spinner;
 
-    private Serie serieType = Serie.DEFAULT_SERIE;
     private JOptionPane optionPane;
 
     private List<ImageElement> mediaList;
@@ -77,13 +83,13 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         Preferences prefs =
             BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
         if (prefs != null) {
-            Preferences p = prefs.node(AcquisitionView.PREFERENCE_NODE);
+            Preferences p = prefs.node(AcquireExplorer.PREFERENCE_NODE);
             maxRange = p.getInt(P_MAX_RANGE, maxRange);
         }
-        spinner = new JSpinner(new SpinnerNumberModel(maxRange, 1, 5256000, 5));
+        spinner = new JSpinner(new SpinnerNumberModel(maxRange, 1, 5256000, 5)); // <=> 4 years
 
         optionPane = new JOptionPane(initPanel(), JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null,
-            options, options[0]);
+            OPTIONS, OPTIONS[0]);
         optionPane.addPropertyChangeListener(this);
         setContentPane(optionPane);
         setModal(true);
@@ -96,7 +102,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         panel.setBorder(new EmptyBorder(0, 0, 20, 10));
         panel.setLayout(new GridBagLayout());
 
-        JLabel question = new JLabel("Select how to group the images" + StringUtil.COLON);
+        JLabel question = new JLabel(Messages.getString("AcquireImportDialog.grp_msg") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(0, 0, 15, 0);
         c.gridx = 0;
@@ -134,7 +140,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         c.gridy = 2;
         c.gridwidth = GridBagConstraints.REMAINDER;
         c.anchor = GridBagConstraints.WEST;
-        panel.add(new JLabel("(max range in minutes)"), c);
+        panel.add(new JLabel(Messages.getString("AcquireImportDialog.max_range_min")), c); //$NON-NLS-1$
 
         c = new GridBagConstraints();
         c.gridx = 0;
@@ -197,31 +203,36 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         Object action = evt.getNewValue();
         if (action != null) {
             boolean close = true;
-            if (action.equals(options[0])) {
+            if (action.equals(OPTIONS[0])) {
+                SeriesGroup serieType = null;
                 if (btnGrp.getSelection().equals(btn1.getModel())) {
-                    serieType = Serie.DEFAULT_SERIE;
+                    serieType = AcquireManager.getDefaultSeries();
                 } else if (btnGrp.getSelection().equals(btn2.getModel())) {
-                    serieType = Serie.DATE_SERIE;
+                    serieType = SeriesGroup.DATE_SERIE;
                 } else {
                     if (serieName.getText() != null && !serieName.getText().isEmpty()) {
-                        serieType = new Serie(serieName.getText());
+                        serieType = new SeriesGroup(serieName.getText());
                     } else {
-                        JOptionPane.showMessageDialog(this, "PLease provide a name for the Serie",
-                            "The Serie name cannot be empty", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"), //$NON-NLS-1$
+                            Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
                         optionPane.setValue(REVALIDATE);
                         close = false;
                     }
                 }
-                if (close) {
-                    Integer max = (Integer) spinner.getValue();
-                    AcquireManager.importImages(serieType, mediaList, max);
+
+                if (close && serieType != null) {
                     mainPanel.getCentralPane().setSelectedAndGetFocus();
+
+                    Integer maxRangeInMinutes = (Integer) spinner.getValue();
+
                     Preferences prefs = BundlePreferences
                         .getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
                     if (prefs != null) {
-                        Preferences p = prefs.node(AcquisitionView.PREFERENCE_NODE);
-                        BundlePreferences.putIntPreferences(p, P_MAX_RANGE, max);
+                        Preferences p = prefs.node(AcquireExplorer.PREFERENCE_NODE);
+                        BundlePreferences.putIntPreferences(p, P_MAX_RANGE, maxRangeInMinutes);
                     }
+
+                    IMPORT_IMAGES.execute(new ImportTask(serieType, mediaList, maxRangeInMinutes));
                 }
             } else if (action.equals(REVALIDATE)) {
                 close = false;
@@ -231,6 +242,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
                 clearAndHide();
             }
         }
+
     }
 
     public void clearAndHide() {

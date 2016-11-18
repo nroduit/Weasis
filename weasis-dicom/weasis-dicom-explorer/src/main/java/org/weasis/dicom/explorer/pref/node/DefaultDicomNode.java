@@ -25,9 +25,9 @@ import org.weasis.dicom.param.TlsOptions;
 public class DefaultDicomNode extends AbstractDicomNode {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDicomNode.class);
 
-    protected static final String T_AETITLE = "aeTitle";
-    protected static final String T_HOST = "hostname";
-    protected static final String T_PORT = "port";
+    protected static final String T_AETITLE = "aeTitle"; //$NON-NLS-1$
+    protected static final String T_HOST = "hostname"; //$NON-NLS-1$
+    protected static final String T_PORT = "port"; //$NON-NLS-1$
 
     // For C-MOVE, C-GET, C-STORE
     protected String aeTitle;
@@ -51,9 +51,9 @@ public class DefaultDicomNode extends AbstractDicomNode {
         toolTips.append(getType().toString());
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(aeTitle);
-        toolTips.append("@");
+        toolTips.append("@"); //$NON-NLS-1$
         toolTips.append(hostname);
-        toolTips.append(":");
+        toolTips.append(":"); //$NON-NLS-1$
         toolTips.append(port);
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
@@ -65,10 +65,10 @@ public class DefaultDicomNode extends AbstractDicomNode {
 
     public void setAeTitle(String aeTitle) {
         if (!StringUtil.hasText(aeTitle)) {
-            throw new IllegalArgumentException("Missing AET");
+            throw new IllegalArgumentException("Missing AET"); //$NON-NLS-1$
         }
         if (aeTitle.length() > 16) {
-            throw new IllegalArgumentException("AET has more than 16 characters");
+            throw new IllegalArgumentException("AET has more than 16 characters"); //$NON-NLS-1$
         }
         this.aeTitle = aeTitle;
     }
@@ -87,7 +87,7 @@ public class DefaultDicomNode extends AbstractDicomNode {
 
     public void setPort(Integer port) {
         if (port != null && (port < 1 || port > 65535)) {
-            throw new IllegalArgumentException("Port out of bound");
+            throw new IllegalArgumentException("Port out of bound"); //$NON-NLS-1$
         }
         this.port = port;
     }

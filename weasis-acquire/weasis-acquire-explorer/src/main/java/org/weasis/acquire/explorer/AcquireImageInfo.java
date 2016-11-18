@@ -12,7 +12,13 @@ package org.weasis.acquire.explorer;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -20,9 +26,10 @@ import java.util.function.Consumer;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.image.AutoLevelsOp;
 import org.weasis.core.api.image.BrightnessOp;
 import org.weasis.core.api.image.CropOp;
@@ -32,14 +39,23 @@ import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
+
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifDirectoryBase;
+import com.drew.metadata.exif.ExifIFD0Directory;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
 
 /**
  *
@@ -48,11 +64,10 @@ import org.weasis.dicom.codec.TagD;
  * @since 2.5.0 - 2016-04-11 - ylar - Creation
  */
 public class AcquireImageInfo {
-    @SuppressWarnings("unused")
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireImageInfo.class);
 
     private final ImageElement image;
-    private Serie serie = Serie.DEFAULT_SERIE;
+    private SeriesGroup seriesGroup;
     private final Attributes attributes;
     private Layer layer;
     private AcquireImageStatus status;
@@ -69,6 +84,8 @@ public class AcquireImageInfo {
 
     public AcquireImageInfo(ImageElement image) {
         this.image = Objects.requireNonNull(image);
+        readTags(image);
+
         this.setStatus(AcquireImageStatus.TO_PUBLISH);
         this.attributes = new Attributes();
         this.preProcessOpManager = new SimpleOpManager();
@@ -145,7 +162,6 @@ public class AcquireImageInfo {
         boolean dirty = isDirty();
 
         if (dirty) {
-
             postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, nextValues.getFullRotation());
 
             if (!Objects.equals(nextValues.getCropZone(), currentValues.getCropZone())) {
@@ -156,7 +172,7 @@ public class AcquireImageInfo {
                 if (view != null && area != null && !area.equals(view.getViewModel().getModelArea())) {
                     ((DefaultViewModel) view.getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
                     view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
-                    view.setActionsInView(DefaultView2d.PROP_LAYER_OFFSET, new Point(area.x, area.y));
+                    view.getImageLayer().setOffset(new Point(area.x, area.y));
                     view.resetZoom();
                 }
             }
@@ -270,20 +286,25 @@ public class AcquireImageInfo {
         return defaultValues;
     }
 
-    public Serie getSerie() {
-        return serie;
+    public SeriesGroup getSeries() {
+        return seriesGroup;
     }
 
-    public void setSerie(Serie serie) {
-        this.serie = serie;
-        if (serie != null) {
-            image.setTag(TagD.get(Tag.SeriesInstanceUID), serie.getUID());
+    public void setSeries(SeriesGroup seriesGroup) {
+        this.seriesGroup = seriesGroup;
+        if (seriesGroup != null) {
+            image.setTag(TagD.get(Tag.SeriesInstanceUID), seriesGroup.getUID());
+
+            String seriesDescription = TagD.getTagValue(seriesGroup, Tag.SeriesDescription, String.class);
+            if (!StringUtil.hasText(seriesDescription) && seriesGroup.getType() != SeriesGroup.Type.NONE) {
+                seriesGroup.setTag(TagD.get(Tag.SeriesDescription), seriesGroup.getDisplayName());
+            }
         }
     }
 
     @Override
     public String toString() {
-        return Optional.ofNullable(image).map(ImageElement::getName).orElseGet(() -> "");
+        return Optional.ofNullable(image).map(ImageElement::getName).orElseGet(() -> ""); //$NON-NLS-1$
     }
 
     public String getComment() {
@@ -304,5 +325,116 @@ public class AcquireImageInfo {
 
     public static final Consumer<AcquireImageInfo> changeStatus(AcquireImageStatus status) {
         return imgInfo -> imgInfo.setStatus(status);
+    }
+
+    /**
+     * Check if ImageElement has a SOPInstanceUID TAG value and if not create a new UUID. Read Exif metaData from from
+     * original file and populate relevant ImageElement TAGS. <br>
+     *
+     * @param imageElement
+     */
+    private static void readTags(ImageElement imageElement) {
+
+        // Create a SOPInstanceUID if not present
+        TagW tagUid = TagD.getUID(Level.INSTANCE);
+        String uuid = (String) imageElement.getTagValue(tagUid);
+        if (uuid == null) {
+            uuid = UIDUtils.createUID();
+            imageElement.setTag(tagUid, uuid);
+        }
+
+        // Extract information from Exif TAG
+        Optional<File> file = imageElement.getFileCache().getOriginalFile();
+        if (file.isPresent()) {
+            Date date = null;
+            try {
+                Metadata metadata = ImageMetadataReader.readMetadata(file.get());
+                if (metadata != null) {
+                    ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
+                    if (directory != null) {
+                        date = directory.getDate(ExifDirectoryBase.TAG_DATETIME_ORIGINAL);
+                        if (date == null) {
+                            date = directory.getDate(ExifDirectoryBase.TAG_DATETIME);
+                        }
+
+                        imageElement.setTagNoNull(TagD.get(Tag.DateOfSecondaryCapture),
+                            directory.getDate(ExifDirectoryBase.TAG_DATETIME_DIGITIZED));
+
+                    }
+                    ExifIFD0Directory ifd0 = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+                    if (ifd0 != null) {
+                        imageElement.setTagNoNull(TagD.get(Tag.Manufacturer),
+                            ifd0.getString(ExifDirectoryBase.TAG_MAKE));
+                        imageElement.setTagNoNull(TagD.get(Tag.ManufacturerModelName),
+                            ifd0.getString(ExifDirectoryBase.TAG_MODEL));
+
+                        // try {
+                        // int orientation =
+                        // ifd0.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+                        // } catch (MetadataException e) {
+                        // e.printStackTrace();
+                        // }
+
+                        // AffineTransform affineTransform = new
+                        // AffineTransform();
+                        //
+                        // switch (orientation) {
+                        // case 1:
+                        // break;
+                        // case 2: // Flip X
+                        // affineTransform.scale(-1.0, 1.0);
+                        // affineTransform.translate(-width, 0);
+                        // break;
+                        // case 3: // PI rotation
+                        // affineTransform.translate(width, height);
+                        // affineTransform.rotate(Math.PI);
+                        // break;
+                        // case 4: // Flip Y
+                        // affineTransform.scale(1.0, -1.0);
+                        // affineTransform.translate(0, -height);
+                        // break;
+                        // case 5: // - PI/2 and Flip X
+                        // affineTransform.rotate(-Math.PI / 2);
+                        // affineTransform.scale(-1.0, 1.0);
+                        // break;
+                        // case 6: // -PI/2 and -width
+                        // affineTransform.translate(height, 0);
+                        // affineTransform.rotate(Math.PI / 2);
+                        // break;
+                        // case 7: // PI/2 and Flip
+                        // affineTransform.scale(-1.0, 1.0);
+                        // affineTransform.translate(-height, 0);
+                        // affineTransform.translate(0, width);
+                        // affineTransform.rotate(3 * Math.PI / 2);
+                        // break;
+                        // case 8: // PI / 2
+                        // affineTransform.translate(0, width);
+                        // affineTransform.rotate(3 * Math.PI / 2);
+                        // break;
+                        // default:
+                        // break;
+                        // }
+                        //
+                        // AffineTransformOp affineTransformOp = new
+                        // AffineTransformOp(affineTransform,
+                        // AffineTransformOp.TYPE_BILINEAR);
+                        // BufferedImage destinationImage = new
+                        // BufferedImage(originalImage.getHeight(),
+                        // originalImage.getWidth(), originalImage.getType());
+                        // destinationImage =
+                        // affineTransformOp.filter(originalImage,
+                        // destinationImage);
+                    }
+                }
+            } catch (ImageProcessingException | IOException e) {
+                LOGGER.error("Error when reading exif tags", e); //$NON-NLS-1$
+            }
+            LocalDateTime dateTime = date == null
+                ? LocalDateTime
+                    .from(Instant.ofEpochMilli(imageElement.getLastModified()).atZone(ZoneId.systemDefault()))
+                : TagUtil.toLocalDateTime(date);
+            imageElement.setTagNoNull(TagD.get(Tag.ContentDate), dateTime.toLocalDate());
+            imageElement.setTagNoNull(TagD.get(Tag.ContentTime), dateTime.toLocalTime());
+        }
     }
 }

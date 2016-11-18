@@ -23,13 +23,14 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.AcquisitionView;
+import org.weasis.acquire.explorer.AcquireExplorer;
 import org.weasis.acquire.explorer.core.ItemList;
 import org.weasis.acquire.explorer.gui.model.actions.ChangePathSelectionAction;
 import org.weasis.acquire.explorer.gui.model.list.ItemListComboBoxModel;
 import org.weasis.acquire.explorer.gui.model.renderer.MediaSourceListCellRenderer;
 import org.weasis.acquire.explorer.media.FileSystemDrive;
 import org.weasis.acquire.explorer.media.MediaSource;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FontTools;
@@ -41,17 +42,17 @@ import net.samuelcampos.usbdrivedectector.events.USBStorageEvent;
 
 @SuppressWarnings("serial")
 public class BrowsePanel extends JPanel implements IUSBDriveListener {
-    private static final String USER_HOME = System.getProperty("user.home");
+    private static final String USER_HOME = System.getProperty("user.home"); //$NON-NLS-1$
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(BrowsePanel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrowsePanel.class);
 
-    private final AcquisitionView mainView;
+    private final AcquireExplorer mainView;
     private final ItemList<MediaSource> mediaSourceList = new ItemList<>();
     private final ItemListComboBoxModel<MediaSource> mediaSourceListComboModel;
     private final JComboBox<MediaSource> mediaSourceSelectionCombo = new JComboBox<>();
-    private final USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager();
+    private final USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager(2000);
 
-    public BrowsePanel(AcquisitionView acquisitionView) {
+    public BrowsePanel(AcquireExplorer acquisitionView) {
         this.mainView = acquisitionView;
         try {
             String last = iniLastPath();
@@ -68,7 +69,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
         setLayout(gridBagLayout);
         mediaSourceSelectionCombo.setModel(mediaSourceListComboModel);
         mediaSourceSelectionCombo.setRenderer(new MediaSourceListCellRenderer(mediaSourceSelectionCombo));
-        mediaSourceSelectionCombo.setMaximumRowCount(10);
+        mediaSourceSelectionCombo.setMaximumRowCount(15);
         mediaSourceSelectionCombo.setFont(FontTools.getFont11());
         mediaSourceSelectionCombo.addActionListener(e -> {
             acquisitionView.setSystemDrive((FileSystemDrive) mediaSourceSelectionCombo.getSelectedItem());
@@ -110,8 +111,8 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
         if (prefs == null) {
             prefDir = new File(USER_HOME); // $NON-NLS-1$
         } else {
-            Preferences p = prefs.node(AcquisitionView.PREFERENCE_NODE);
-            prefDir = new File(p.get(AcquisitionView.P_LAST_DIR, USER_HOME)); // $NON-NLS-1$
+            Preferences p = prefs.node(AcquireExplorer.PREFERENCE_NODE);
+            prefDir = new File(p.get(AcquireExplorer.P_LAST_DIR, USER_HOME)); // $NON-NLS-1$
         }
 
         if (prefDir.canRead() && prefDir.isDirectory()) {
@@ -132,28 +133,36 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
     public void usbDriveEvent(USBStorageEvent event) {
         LOGGER.debug(event.toString());
 
-        switch (event.getEventType()) {
-            case CONNECTED:
-                addUsbDevice(event.getStorageDevice());
-                break;
-            case REMOVED:
-                removeUsbDevice(event.getStorageDevice());
-                break;
-            default:
-                break;
-        }
+        GuiExecutor.instance().execute(() -> {
+            switch (event.getEventType()) {
+                case CONNECTED:
+                    addUsbDevice(event.getStorageDevice());
+                    break;
+                case REMOVED:
+                    removeUsbDevice(event.getStorageDevice());
+                    break;
+                default:
+                    break;
+            }        
+        });
+
     }
 
     private void addUsbDevice(USBStorageDevice storageDevice) {
-        mediaSourceList.addItem(new FileSystemDrive(storageDevice.getRootDirectory().getPath()));
+        FileSystemDrive item = new FileSystemDrive(storageDevice.getRootDirectory().getPath());
+        mediaSourceList.addItem(item);
+        mediaSourceSelectionCombo.setSelectedItem(item);
     }
 
     private void removeUsbDevice(USBStorageDevice storageDevice) {
+        MediaSource selected = (MediaSource) mediaSourceSelectionCombo.getSelectedItem();
         String id = storageDevice.getRootDirectory().getPath();
-
-        mediaSourceList.getList().stream().filter(m -> m.getID().equals(id)).findFirst()
-            .ifPresent(mediaSourceList::removeItem);
-        if (!mediaSourceList.isEmpty()) {
+        mediaSourceList.getList().removeIf(m -> m.getID().startsWith(id));
+        if (mediaSourceList.isEmpty()) {
+            mediaSourceSelectionCombo.setSelectedItem(null);
+        }
+        
+        if (selected == null || selected.getID().startsWith(id)) {
             mediaSourceSelectionCombo.setSelectedIndex(0);
         }
     }

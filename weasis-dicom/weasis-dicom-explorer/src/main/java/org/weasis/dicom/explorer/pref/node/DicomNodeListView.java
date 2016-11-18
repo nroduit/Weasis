@@ -26,11 +26,14 @@ import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.util.StringUtil;
 
+@SuppressWarnings("serial")
 public class DicomNodeListView extends AbstractItemDialogPage {
 
     public DicomNodeListView() {
-        super("Dicom node list");
+        super(Messages.getString("DicomNodeListView.node_list")); //$NON-NLS-1$
         initGUI();
     }
 
@@ -46,7 +49,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         panel.setLayout(gblPanel);
 
         JLabel label = new JLabel();
-        label.setText("Node:");
+        label.setText(Messages.getString("DicomNodeListView.node") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbcLabel = new GridBagConstraints();
         gbcLabel.anchor = GridBagConstraints.WEST;
         gbcLabel.insets = new Insets(0, 0, 5, 5);
@@ -74,7 +77,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         panel.add(horizontalStrut, gbcHorizontalStrut);
 
         JButton editButton = new JButton();
-        editButton.setText("Edit");
+        editButton.setText(Messages.getString("DicomNodeListView.edit")); //$NON-NLS-1$
         GridBagConstraints gbcButton1 = new GridBagConstraints();
         gbcButton1.anchor = GridBagConstraints.NORTHWEST;
         gbcButton1.insets = new Insets(0, 0, 5, 5);
@@ -83,7 +86,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         panel.add(editButton, gbcButton1);
 
         JButton deleteButton = new JButton();
-        deleteButton.setText("Delete");
+        deleteButton.setText(Messages.getString("DicomNodeListView.delete")); //$NON-NLS-1$
         GridBagConstraints gbcButton2 = new GridBagConstraints();
         gbcButton2.insets = new Insets(0, 0, 5, 5);
         gbcButton2.anchor = GridBagConstraints.NORTHWEST;
@@ -91,7 +94,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         gbcButton2.gridy = 0;
         panel.add(deleteButton, gbcButton2);
 
-        JButton addNodeButton = new JButton("Add new");
+        JButton addNodeButton = new JButton(Messages.getString("DicomNodeListView.add_new")); //$NON-NLS-1$
         GridBagConstraints gbcButton = new GridBagConstraints();
         gbcButton.gridwidth = 2;
         gbcButton.anchor = GridBagConstraints.NORTHWEST;
@@ -124,7 +127,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         panel1.setLayout(gblPanel1);
 
         JLabel label1 = new JLabel();
-        label1.setText("Node:");
+        label1.setText(Messages.getString("DicomNodeListView.node") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbcLabel1 = new GridBagConstraints();
         gbcLabel1.anchor = GridBagConstraints.WEST;
         gbcLabel1.insets = new Insets(0, 0, 5, 5);
@@ -152,7 +155,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         panel1.add(horizontalStrut1, gbcHorizontalStrut1);
 
         JButton editBtn1 = new JButton();
-        editBtn1.setText("Edit");
+        editBtn1.setText(Messages.getString("DicomNodeListView.edit")); //$NON-NLS-1$
         GridBagConstraints gbcbutton = new GridBagConstraints();
         gbcbutton.anchor = GridBagConstraints.NORTHWEST;
         gbcbutton.insets = new Insets(0, 0, 5, 5);
@@ -161,7 +164,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         panel1.add(editBtn1, gbcbutton);
 
         JButton deleteBtn1 = new JButton();
-        deleteBtn1.setText("Delete");
+        deleteBtn1.setText(Messages.getString("DicomNodeListView.delete")); //$NON-NLS-1$
         GridBagConstraints gbcButton3 = new GridBagConstraints();
         gbcButton3.anchor = GridBagConstraints.NORTHWEST;
         gbcButton3.insets = new Insets(0, 0, 5, 0);
@@ -169,7 +172,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         gbcButton3.gridy = 0;
         panel1.add(deleteBtn1, gbcButton3);
 
-        JButton addBtn1 = new JButton("Add new");
+        JButton addBtn1 = new JButton(Messages.getString("DicomNodeListView.add_new")); //$NON-NLS-1$
         GridBagConstraints gbcButton4 = new GridBagConstraints();
         gbcButton4.anchor = GridBagConstraints.NORTHWEST;
         gbcButton4.gridwidth = 2;
@@ -198,11 +201,11 @@ public class DicomNodeListView extends AbstractItemDialogPage {
 
     @Override
     public void closeAdditionalWindow() {
-
+        // Do nothing
     }
 
     @Override
     public void resetoDefaultValues() {
-
+        // Do nothing
     }
 }

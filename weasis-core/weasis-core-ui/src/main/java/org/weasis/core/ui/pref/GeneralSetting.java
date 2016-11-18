@@ -101,9 +101,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final Component horizontalStrut1 = Box.createHorizontalStrut(10);
     private final Component horizontalStrut2 = Box.createHorizontalStrut(10);
     private final JPanel panel1 = new JPanel();
-    private final JLabel lblStacktraceLimit = new JLabel("Stacktrace Limit" + StringUtil.COLON);
+    private final JLabel lblStacktraceLimit = new JLabel(Messages.getString("GeneralSetting.stack_limit") + StringUtil.COLON); //$NON-NLS-1$
     private final JComboBox<String> comboBoxStackLimit =
-        new JComboBox<>(new String[] { "", "0", "1", "3", "5", "10", "20", "50", "100" });
+        new JComboBox<>(new String[] { "", "0", "1", "3", "5", "10", "20", "50", "100" }); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
     public GeneralSetting() {
         super(pageName);
@@ -314,7 +314,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             && (limit != 1 || limit != 3 || limit != 5 || limit != 10 || limit != 20 || limit != 50 || limit != 100)) {
             comboBoxStackLimit.addItem(Integer.toString(limit));
         }
-        comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");// $NON-NLS-1$
+        comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");// $NON-NLS-1$ //$NON-NLS-1$
         panel1.add(comboBoxStackLimit);
         chckbxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, ""))); //$NON-NLS-1$
         spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
@@ -366,7 +366,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
         String limit = (String) comboBoxStackLimit.getSelectedItem();
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_STACKTRACE_LIMIT,
-            StringUtil.hasText(limit) ? limit : "-1");
+            StringUtil.hasText(limit) ? limit : "-1"); //$NON-NLS-1$
 
         LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());

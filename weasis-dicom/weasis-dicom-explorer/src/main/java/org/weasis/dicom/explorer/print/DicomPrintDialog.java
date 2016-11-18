@@ -100,7 +100,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
                 try {
                     return FilmSize.valueOf(val);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot find FilmSize: {}", val, e);
+                    LOGGER.error("Cannot find FilmSize: {}", val, e); //$NON-NLS-1$
                 }
             }
             return defaultValue;
@@ -263,8 +263,8 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
             dicomPrint.printImage(dicomPrint.printImage(layout));
         } catch (Exception e) {
             LOGGER.error("DICOM Print Service", e); //$NON-NLS-1$
-            JOptionPane.showMessageDialog(this, Messages.getString("DicomPrintDialog.error_print"), // $NON-NLS-1$
-                Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); // $NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("DicomPrintDialog.error_print"), //$NON-NLS-1$
+                Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
         } finally {
             layout.dispose();
         }

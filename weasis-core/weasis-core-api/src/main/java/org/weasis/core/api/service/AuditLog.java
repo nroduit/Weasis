@@ -89,7 +89,7 @@ public class AuditLog {
                             loggingProperties.put(LOG_PATTERN, pattern);
                         }
                         if (limit != null) {
-                            loggingProperties.put(LOG_STACKTRACE_LIMIT, StringUtil.hasText(limit) ? limit : "-1");
+                            loggingProperties.put(LOG_STACKTRACE_LIMIT, StringUtil.hasText(limit) ? limit : "-1"); //$NON-NLS-1$
                         }
                         logConfiguration.update(loggingProperties);
                     } catch (IOException e) {

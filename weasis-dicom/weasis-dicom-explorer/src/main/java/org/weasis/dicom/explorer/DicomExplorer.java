@@ -116,6 +116,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public static final String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat"); //$NON-NLS-1$
     public static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st"); //$NON-NLS-1$
     public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
+    public static final Icon KO_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png")); // $NON-NLS-0$ //$NON-NLS-1$
 
     private JPanel panel = null;
     private PatientPane selectedPatient = null;
@@ -161,8 +162,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     private final JButton btnExport;
     private final JButton btnImport;
-    private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), new ImageIcon( //$NON-NLS-1$
-        DicomExplorer.class.getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
+    private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), KO_ICON); //$NON-NLS-1$
 
     public DicomExplorer() {
         this(null);
@@ -1306,7 +1306,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                         if (splitNb != null) {
                             updateSplitSeries(series);
-                        } else if ("KO".equals(TagD.getTagValue(series, Tag.Modality, String.class))) {
+                        } else if ("KO".equals(TagD.getTagValue(series, Tag.Modality, String.class))) { //$NON-NLS-1$
                             MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
                             koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
                         }
@@ -1412,7 +1412,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         try {
             result = future.get();
         } catch (InterruptedException | ExecutionException e) {
-            LOGGER.error("Building Series thumbnail", e);
+            LOGGER.error("Building Series thumbnail", e); //$NON-NLS-1$
         }
         return result;
     }
@@ -1433,8 +1433,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public List<Action> getOpenImportDialogAction() {
         ArrayList<Action> actions = new ArrayList<>(2);
         actions.add(btnImport.getAction());
-        DefaultAction importCDAction =
-            new DefaultAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), event ->  openImportDialogAction("DICOM CD")); //$NON-NLS-1$ //$NON-NLS-2$
+        DefaultAction importCDAction = new DefaultAction(Messages.getString("DicomExplorer.dcmCD"), //$NON-NLS-1$
+            new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), //$NON-NLS-1$
+            event -> openImportDialogAction(Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
         actions.add(importCDAction);
         return actions;
     }
