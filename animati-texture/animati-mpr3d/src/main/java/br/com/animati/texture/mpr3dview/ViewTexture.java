@@ -109,6 +109,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
@@ -559,6 +560,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
         actionsInView.put(ActionW.DRAWINGS.cmd(), true);
+        actionsInView.put(LayerType.CROSSLINES.name(), true);
         actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
 

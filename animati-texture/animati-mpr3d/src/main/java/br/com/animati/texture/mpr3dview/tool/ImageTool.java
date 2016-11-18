@@ -31,7 +31,6 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
 
@@ -107,16 +106,14 @@ public class ImageTool extends PluginTool {
 
         ActionState winAction = GUIManager.getInstance().getAction(ActionW.WINDOW);
         if (winAction instanceof SliderChangeListener) {
-            final JSliderW windowSlider = ((SliderChangeListener) winAction).createSlider(4, true);
+            final JSliderW windowSlider = ((SliderChangeListener) winAction).createSlider(2, true);
             JMVUtils.setPreferredWidth(windowSlider, 100);
             winLevelPanel.add(windowSlider.getParent());
         }
 
         ActionState levelAction = GUIManager.getInstance().getAction(ActionW.LEVEL);
         if (levelAction instanceof SliderChangeListener) {
-            final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(4, true);
-            levelSlider.setMajorTickSpacing(
-                (ImageViewerEventManager.LEVEL_LARGEST - ImageViewerEventManager.LEVEL_SMALLEST) / 4);
+            final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(2, true);
             JMVUtils.setPreferredWidth(levelSlider, 100);
             winLevelPanel.add(levelSlider.getParent());
         }
@@ -239,7 +236,7 @@ public class ImageTool extends PluginTool {
 
         ActionState rotateAction = GUIManager.getInstance().getAction(ActionW.ROTATION);
         if (rotateAction instanceof SliderChangeListener) {
-            final JSliderW rotationSlider = ((SliderChangeListener) rotateAction).createSlider(4, true);
+            final JSliderW rotationSlider = ((SliderChangeListener) rotateAction).createSlider(5, true);
             JMVUtils.setPreferredWidth(rotationSlider, 100);
             transPanel.add(rotationSlider.getParent());
         }
