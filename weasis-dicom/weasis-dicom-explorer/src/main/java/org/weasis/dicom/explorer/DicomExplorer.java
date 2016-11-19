@@ -1306,9 +1306,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                         if (splitNb != null) {
                             updateSplitSeries(series);
-                        } else if ("KO".equals(TagD.getTagValue(series, Tag.Modality, String.class))) { //$NON-NLS-1$
-                            MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
-                            koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
+                        }
+                    } else if (newVal instanceof KOSpecialElement) {
+                        Object item = modelPatient.getSelectedItem();
+                        if (item instanceof MediaSeriesGroupNode) {
+                            koOpen.setVisible(DicomModel.hasSpecialElements((MediaSeriesGroup) item, KOSpecialElement.class));
                         }
                     }
                 } else if (ObservableEvent.BasicAction.LOADING_START.equals(action)) {
