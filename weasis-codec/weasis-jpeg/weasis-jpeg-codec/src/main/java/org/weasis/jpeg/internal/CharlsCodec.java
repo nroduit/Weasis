@@ -169,8 +169,9 @@ public class CharlsCodec implements NativeCodec {
                     try (ByteStreamInfo input = libijg.FromByteArray(buffer, size)) {
 
                         // Build outputStream here and transform to an array
+                        int bytesPerSample = params.getBitsPerSample() / 8;
                         outBuf = ByteBuffer.allocateDirect(params.getWidth() * params.getHeight()
-                            * params.getSamplesPerPixel() * params.getBitsPerSample() / 16);
+                            * params.getSamplesPerPixel() * bytesPerSample);
                         outBuf.order(params.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
                         size2.put(outBuf.limit());
                         try (ByteStreamInfo outStream = libijg.FromByteArray(outBuf, size2)) {

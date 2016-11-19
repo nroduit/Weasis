@@ -71,8 +71,11 @@ public abstract class NativeImageReader extends ImageReader {
      * Creates a <code>ImageTypeSpecifier</code> from the <code>ImageParameters</code>. The default sample model is
      * pixel interleaved and the default color model is CS_GRAY or CS_sRGB and IndexColorModel with palettes.
      */
-    protected static final ImageTypeSpecifier createImageType(ImageParameters params, ColorSpace colorSpace,
-        byte[] redPalette, byte[] greenPalette, byte[] bluePalette, byte[] alphaPalette) throws IOException {
+    protected static final ImageTypeSpecifier createImageType(ImageParameters params, ColorSpace colorSpace, byte[] redPalette, byte[] greenPalette, byte[] bluePalette, byte[] alphaPalette) throws IOException {
+        return createImageType(params, createColorModel(params, colorSpace, redPalette, greenPalette, bluePalette, alphaPalette));
+    }
+
+    protected static final ImageTypeSpecifier createImageType(ImageParameters params, ColorModel colorModel) throws IOException {
 
         int nType = params.getDataType();
         int nWidth = params.getWidth();
@@ -97,6 +100,13 @@ public abstract class NativeImageReader extends ImageReader {
             }
             sampleModel = new PixelInterleavedSampleModel(nType, nWidth, nHeight, nBands, nScanlineStride, bandOffsets);
         }
+        return new ImageTypeSpecifier(colorModel, sampleModel);
+    }
+
+    private static ColorModel createColorModel(ImageParameters params, ColorSpace colorSpace, byte[] redPalette, byte[] greenPalette, byte[] bluePalette, byte[] alphaPalette) {
+        int nType = params.getDataType();
+        int nBands = params.getSamplesPerPixel();
+        int nBitDepth = params.getBitsPerSample();
 
         ColorModel colorModel;
         if (nBands == 1 && redPalette != null && greenPalette != null && bluePalette != null
@@ -145,8 +155,7 @@ public abstract class NativeImageReader extends ImageReader {
             colorModel = new ComponentColorModel(cs, bits, hasAlpha, false,
                 hasAlpha ? Transparency.TRANSLUCENT : Transparency.OPAQUE, nType);
         }
-
-        return new ImageTypeSpecifier(colorModel, sampleModel);
+        return colorModel;
     }
 
 
@@ -511,14 +520,21 @@ public abstract class NativeImageReader extends ImageReader {
             return null;
         }
 
-        ImageTypeSpecifier type = createImageType(img.getImageParameters(), null, null, null, null, null);
-        // Create a new raster and copy the data.
+        ColorModel cm = createColorModel(img.getImageParameters(), null, null, null, null, null);
+        ImageTypeSpecifier type = createImageType(img.getImageParameters(), cm);
         SampleModel sm = type.getSampleModel();
+        if(param != null) {
+            if (param.getDestination() != null && param.getDestination().getColorModel() != null) {
+                cm = param.getDestination().getColorModel();
+                sm = cm.createCompatibleSampleModel(img.getImageParameters().getWidth(), img.getImageParameters().getHeight());
+            }
+        }
+        // Create a new raster and copy the data.
         WritableRaster raster = Raster.createWritableRaster(sm, db, param.getDestinationOffset());
 
         long stop = System.currentTimeMillis();
         LOGGER.debug("Building BufferedImage time: {} ms", stop - start); //$NON-NLS-1$
-        return new BufferedImage(type.getColorModel(), raster, false, null);
+        return new BufferedImage(cm, raster, false, null);
     }
 
     @Override

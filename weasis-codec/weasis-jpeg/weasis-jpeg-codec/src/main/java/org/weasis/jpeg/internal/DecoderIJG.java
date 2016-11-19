@@ -32,7 +32,6 @@ public interface DecoderIJG extends AutoCloseable {
 
     void deallocate();
     
-    @Override
-    default void close() {}
+    public void close();
 
 }
