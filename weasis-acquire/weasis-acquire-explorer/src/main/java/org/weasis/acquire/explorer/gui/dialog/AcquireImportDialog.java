@@ -224,7 +224,6 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
                     mainPanel.getCentralPane().setSelectedAndGetFocus();
 
                     Integer maxRangeInMinutes = (Integer) spinner.getValue();
-
                     Preferences prefs = BundlePreferences
                         .getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
                     if (prefs != null) {
@@ -232,7 +231,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
                         BundlePreferences.putIntPreferences(p, P_MAX_RANGE, maxRangeInMinutes);
                     }
 
-                    IMPORT_IMAGES.execute(new ImportTask(serieType, mediaList, maxRangeInMinutes));
+                    IMPORT_IMAGES.execute(new ImportTask(mediaList, serieType, maxRangeInMinutes));
                 }
             } else if (action.equals(REVALIDATE)) {
                 close = false;

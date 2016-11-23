@@ -12,9 +12,11 @@ import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.media.data.ImageElement;
 
 /**
- * Do the process of convert to JPEG and dicomize given image collection to a temporary folder. All the job is done
- * outside of the EDT instead of setting AcquireImageStatus change. But, full process progression can still be listened
- * with propertyChange notification of this workerTask.
+ * Do the process of creating JAI.PlanarImage (ImageElement) and new AcquireImageInfo objects in a worker thread for the
+ * given image collection "toImport". Then, all the created AcquireImageInfo objects are imported to the dataModel and
+ * associated to a valid SeriesGroup depending of the searchedSeries type (NONE,DATE,NAME). This part is done within the
+ * EDT to avoid concurrencies issues. Full process progression can still be listened with propertyChange notification of
+ * this workerTask.
  *
  * @version $Rev$ $Date$
  */
@@ -27,9 +29,9 @@ public class ImportTask extends SwingWorker<Void, AcquireImageInfo> {
     private final Collection<ImageElement> imagesToImport;
     private int maxRangeInMinutes;
 
-    public ImportTask(SeriesGroup searchedSeries, Collection<ImageElement> toImport, int maxRangeInMinutes) {
-        this.searchedSeries = Objects.requireNonNull(searchedSeries);
+    public ImportTask(Collection<ImageElement> toImport, SeriesGroup searchedSeries, int maxRangeInMinutes) {
         this.imagesToImport = Objects.requireNonNull(toImport);
+        this.searchedSeries = Objects.requireNonNull(searchedSeries);
         this.maxRangeInMinutes = maxRangeInMinutes;
     }
 
@@ -39,24 +41,14 @@ public class ImportTask extends SwingWorker<Void, AcquireImageInfo> {
         final int nbImageToProcess = imagesToImport.size();
         int nbImageProcessed = 0;
 
-        try {
-            for (ImageElement imageElement : imagesToImport) {
-                nbImageProcessed++;
-
-                AcquireImageInfo imageInfo = AcquireManager.findByImage(imageElement);
-                if (imageInfo == null) {
-                    continue;
-                }
-
-                imageInfo.setSeries(AcquireManager.findSeries(searchedSeries, imageInfo, maxRangeInMinutes));
-
-                setProgress(nbImageProcessed * 100 / nbImageToProcess);
-                publish(imageInfo);
+        for (ImageElement imageElement : imagesToImport) {
+            try {
+                publish(AcquireManager.findByImage(imageElement));
+            } catch (Exception ex) {
+                LOGGER.error("ImportTask process", ex); //$NON-NLS-1$
             }
 
-        } catch (Exception ex) {
-            LOGGER.error("ImportTask process", ex); //$NON-NLS-1$
-            return null;
+            setProgress(++nbImageProcessed * 100 / nbImageToProcess);
         }
 
         return null;
@@ -64,21 +56,7 @@ public class ImportTask extends SwingWorker<Void, AcquireImageInfo> {
 
     @Override
     protected void process(List<AcquireImageInfo> chunks) {
-        if (SeriesGroup.Type.DATE.equals(searchedSeries.getType())) {
-
-            // TODO do group Map<SeriesGroup, List<AcquireImageInfo>> to avoid much computing
-
-            chunks.stream().forEach(imageInfo -> {
-                List<AcquireImageInfo> imageInfoList = AcquireManager.findbySerie(imageInfo.getSeries());
-                // ADD imageInfo here since it's not in the dataModel yet => see AcquireManager.addImages()
-                imageInfoList.add(imageInfo);
-                if (imageInfoList.size() > 2) {
-                    AcquireManager.recalculateCentralTime(imageInfoList);
-                }
-            });
-        }
-
-        AcquireManager.getInstance().addImages(chunks);
+        AcquireManager.importImages(chunks, searchedSeries, maxRangeInMinutes);
     }
 
 }
