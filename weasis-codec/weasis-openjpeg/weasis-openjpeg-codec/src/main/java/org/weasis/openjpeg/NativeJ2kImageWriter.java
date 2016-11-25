@@ -77,7 +77,7 @@ final class NativeJ2kImageWriter extends NativeImageWriter {
             formatInputDataBuffer(nImage, renderedImage, param, false, supportedFormats);
 
             OpenJpegCodec encoder = getCodec();
-            String error = encoder.compress(nImage, stream.getStream(), null);
+            String error = encoder.compress(nImage, stream.getStream(), param);
             if (error != null) {
                 throw new IIOException("Native JPEG encoding error: " + error);
             }
