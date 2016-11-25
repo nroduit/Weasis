@@ -70,7 +70,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         centralPane = new ImageGroupPane(Messages.getString("AcquireExplorer.album")); //$NON-NLS-1$
 
         browsePanel = new BrowsePanel(this);
-        acquireThumbnailListPane = new AcquireThumbnailListPane<>(centralPane);
+        acquireThumbnailListPane = new AcquireThumbnailListPane<>();
         importPanel = new ImportPanel(acquireThumbnailListPane, centralPane);
 
         setLayout(new BorderLayout(0, 0));
@@ -145,9 +145,10 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
                     } else if (evt.getNewValue() instanceof AcquireImageInfo) {
                         SeriesGroup series = ((AcquireImageInfo) evt.getNewValue()).getSeries();
-                        centralPane.tabbedPane.addSeriesElement(series, Arrays.asList((AcquireImageInfo) evt.getNewValue()));
+                        centralPane.tabbedPane.addSeriesElement(series,
+                            Arrays.asList((AcquireImageInfo) evt.getNewValue()));
                     }
-                    
+
                     centralPane.tabbedPane.refreshGUI();
                     centralPane.tabbedPane.repaint();
                 }

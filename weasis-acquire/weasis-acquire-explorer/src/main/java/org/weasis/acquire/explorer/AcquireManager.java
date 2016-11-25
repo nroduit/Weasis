@@ -244,7 +244,7 @@ public class AcquireManager {
         Objects.requireNonNull(searchedSeries);
 
         boolean isSearchSeriesByDate = SeriesGroup.Type.DATE.equals(searchedSeries.getType());
-        SeriesGroup commonSeries = isSearchSeriesByDate ? getSeries(searchedSeries) : null;
+        SeriesGroup commonSeries = isSearchSeriesByDate ? null : getSeries(searchedSeries);
 
         List<AcquireImageInfo> imageImportedList = new ArrayList<>(toImport.size());
 

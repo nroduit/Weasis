@@ -1,8 +1,10 @@
 package org.weasis.acquire.explorer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingWorker;
 
@@ -21,7 +23,7 @@ import org.weasis.core.api.media.data.ImageElement;
  * @version $Rev$ $Date$
  */
 
-public class ImportTask extends SwingWorker<Void, AcquireImageInfo> {
+public class ImportTask extends SwingWorker<List<AcquireImageInfo>, AcquireImageInfo> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportTask.class);
 
@@ -36,27 +38,40 @@ public class ImportTask extends SwingWorker<Void, AcquireImageInfo> {
     }
 
     @Override
-    protected Void doInBackground() throws Exception {
+    protected List<AcquireImageInfo> doInBackground() throws Exception {
 
         final int nbImageToProcess = imagesToImport.size();
         int nbImageProcessed = 0;
 
+        List<AcquireImageInfo> imagesToProcess = new ArrayList<>(imagesToImport.size());
+
         for (ImageElement imageElement : imagesToImport) {
             try {
-                publish(AcquireManager.findByImage(imageElement));
+                AcquireImageInfo imageInfo = AcquireManager.findByImage(imageElement);
+                // publish(imageInfo);
+                imagesToProcess.add(imageInfo);
             } catch (Exception ex) {
                 LOGGER.error("ImportTask process", ex); //$NON-NLS-1$
             }
-
             setProgress(++nbImageProcessed * 100 / nbImageToProcess);
         }
 
-        return null;
+        return imagesToProcess;
     }
 
     @Override
     protected void process(List<AcquireImageInfo> chunks) {
-        AcquireManager.importImages(chunks, searchedSeries, maxRangeInMinutes);
+        // AcquireManager.importImages(chunks, searchedSeries, maxRangeInMinutes);
+    }
+
+    @Override
+    protected void done() {
+
+        try {
+            AcquireManager.importImages(get(), searchedSeries, maxRangeInMinutes);
+        } catch (InterruptedException | ExecutionException e) {
+
+        }
     }
 
 }

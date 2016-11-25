@@ -14,19 +14,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.Messages;
-import org.weasis.acquire.explorer.gui.dialog.AcquireImportDialog;
 import org.weasis.base.explorer.list.AThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
-import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.ui.util.DefaultAction;
 
 @SuppressWarnings("serial")
 public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList<E> {
@@ -52,17 +46,19 @@ public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList
 
     @Override
     public JPopupMenu buidContexMenu(MouseEvent e) {
-        List<ImageElement> medias = AcquireManager.toImageElement(getSelected(e));
-        if (!medias.isEmpty()) {
-            JPopupMenu popupMenu = new JPopupMenu();
-
-            popupMenu.add(new JMenuItem(new DefaultAction(Messages.getString("AcquireThumbnailList.import_sel"), event -> { //$NON-NLS-1$
-                AcquireImportDialog dialog = new AcquireImportDialog(AcquireThumbnailList.this.mainPanel, medias);
-                JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
-            })));
-
-            return popupMenu;
-        }
+        // List<ImageElement> medias = AcquireManager.toImageElement(getSelected(e));
+        // if (!medias.isEmpty()) {
+        // JPopupMenu popupMenu = new JPopupMenu();
+        //
+        // popupMenu
+        // .add(new JMenuItem(new DefaultAction(Messages.getString("AcquireThumbnailList.import_sel"), event -> {
+        // //$NON-NLS-1$
+        // AcquireImportDialog dialog = new AcquireImportDialog(importPanel, medias);
+        // JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
+        // })));
+        //
+        // return popupMenu;
+        // }
         return null;
     }
 
@@ -70,10 +66,10 @@ public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList
     public void mouseClickedEvent(MouseEvent e) {
         if (e.getClickCount() == 2) { // Manage double click
             List<ImageElement> medias = AcquireManager.toImageElement(getSelected(e));
-            if (!medias.isEmpty()) {
-                AcquireImportDialog dialog = new AcquireImportDialog(mainPanel, medias);
-                JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
-            }
+            // if (!medias.isEmpty()) {
+            // AcquireImportDialog dialog = new AcquireImportDialog(importPanel, medias);
+            // JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
+            // }
         }
     }
 
@@ -88,12 +84,12 @@ public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList
                 lastPage(e);
                 break;
             case KeyEvent.VK_ENTER:
-                final List<ImageElement> selected = AcquireManager.toImageElement(mainPanel.getSelectedValuesList());
-                if (!selected.isEmpty()) {
-                    AcquireImportDialog dialog = new AcquireImportDialog(mainPanel, selected);
-                    JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
-                }
-                e.consume();
+                // final List<ImageElement> selected = AcquireManager.toImageElement(mainPanel.getSelectedValuesList());
+                // if (!selected.isEmpty()) {
+                // AcquireImportDialog dialog = new AcquireImportDialog(importPanel, selected);
+                // JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
+                // }
+                // e.consume();
                 break;
         }
     }
