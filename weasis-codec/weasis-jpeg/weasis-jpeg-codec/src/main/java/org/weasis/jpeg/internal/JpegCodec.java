@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.jpeg.internal;
 
-import java.awt.Rectangle;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.Buffer;
@@ -19,6 +18,7 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 
 import javax.imageio.ImageReadParam;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
@@ -117,7 +117,7 @@ public class JpegCodec implements NativeCodec {
     }
 
     @Override
-    public String compress(NativeImage nImage, ImageOutputStream ouputStream, Rectangle region) throws IOException {
+    public String compress(NativeImage nImage, ImageOutputStream ouputStream, ImageWriteParam param) throws IOException {
         String msg = null;
         if (nImage != null && ouputStream != null && nImage.getInputBuffer() != null) {
             try {

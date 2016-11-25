@@ -23,6 +23,8 @@ import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.spi.ServiceRegistry;
 import javax.imageio.stream.ImageOutputStream;
 
+import org.weasis.image.jni.NativeImageWriter;
+
 import com.sun.media.imageioimpl.common.ImageUtil;
 
 /**
@@ -32,10 +34,14 @@ public class NativeJLSImageWriterSpi extends ImageWriterSpi {
     private boolean registered = false;
 
     public NativeJLSImageWriterSpi() {
+        this(NativeJLSImageWriter.class);
+    }
+
+    public NativeJLSImageWriterSpi(Class<? extends NativeImageWriter> writer) {
         super("Weasis Team", "1.0", NativeJLSImageReaderSpi.NAMES, NativeJLSImageReaderSpi.SUFFIXES,
-            NativeJLSImageReaderSpi.MIMES, NativeJLSImageWriter.class.getName(),
-            new Class[] { ImageOutputStream.class }, new String[] { NativeJLSImageReaderSpi.class.getName() }, false,
-            null, null, null, null, false, null, null, null, null);
+            NativeJLSImageReaderSpi.MIMES, writer.getName(), new Class[] { ImageOutputStream.class },
+            new String[] { NativeJLSImageReaderSpi.class.getName() }, false, null, null, null, null, false, null, null,
+            null, null);
     }
 
     @Override
