@@ -20,7 +20,6 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -205,15 +204,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void dispose() {
         synchronized (model) {
-            for (Iterator<MediaSeriesGroup> iterator =
-                this.getChildren(MediaSeriesGroupNode.rootNode).iterator(); iterator.hasNext();) {
-                MediaSeriesGroup pt = iterator.next();
-                Collection<MediaSeriesGroup> studies = this.getChildren(pt);
-                for (Iterator<MediaSeriesGroup> iterator2 = studies.iterator(); iterator2.hasNext();) {
-                    MediaSeriesGroup st = iterator2.next();
-                    Collection<MediaSeriesGroup> seriesList = this.getChildren(st);
-                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                        Object item = it.next();
+            for (MediaSeriesGroup pt : this.getChildren(MediaSeriesGroupNode.rootNode)) {
+                for ( MediaSeriesGroup st : this.getChildren(pt)) {
+                    for (MediaSeriesGroup item : this.getChildren(st)) {
                         if (item instanceof Series) {
                             ((Series) item).dispose();
                         }
@@ -370,9 +363,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public void removeStudy(MediaSeriesGroup studyGroup) {
         if (studyGroup != null) {
             if (!DownloadManager.TASKS.isEmpty()) {
-                Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
-                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup group = it.next();
+                for (MediaSeriesGroup group : getChildren(studyGroup)) {
                     if (group instanceof DicomSeries) {
                         DownloadManager.stopDownloading((DicomSeries) group, this);
                     }
@@ -380,9 +371,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, studyGroup));
-            Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
-            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                MediaSeriesGroup group = it.next();
+            for (MediaSeriesGroup group : getChildren(studyGroup)) {
                 group.dispose();
             }
             MediaSeriesGroup patientGroup = getParent(studyGroup, DicomModel.patient);
@@ -394,12 +383,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public void removePatient(MediaSeriesGroup patientGroup) {
         if (patientGroup != null) {
             if (!DownloadManager.TASKS.isEmpty()) {
-                Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
-                for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup studyGroup = it.next();
-                    Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
-                    for (Iterator<MediaSeriesGroup> it2 = seriesList.iterator(); it2.hasNext();) {
-                        MediaSeriesGroup group = it2.next();
+                for (MediaSeriesGroup studyGroup : getChildren(patientGroup)) {
+                    for (MediaSeriesGroup group : getChildren(studyGroup)) {
                         if (group instanceof DicomSeries) {
                             DownloadManager.stopDownloading((DicomSeries) group, this);
                         }
@@ -408,12 +393,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, patientGroup));
-            Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
-            for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
-                MediaSeriesGroup studyGroup = it.next();
-                Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
-                for (Iterator<MediaSeriesGroup> it2 = seriesList.iterator(); it2.hasNext();) {
-                    MediaSeriesGroup group = it2.next();
+            for (MediaSeriesGroup studyGroup : getChildren(patientGroup)) {
+                for (MediaSeriesGroup group : getChildren(studyGroup)) {
                     if (group instanceof DicomSeries) {
                         ((DicomSeries) group).dispose();
                     }

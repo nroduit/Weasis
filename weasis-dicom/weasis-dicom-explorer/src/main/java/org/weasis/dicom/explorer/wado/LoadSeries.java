@@ -27,7 +27,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -286,9 +285,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         // for Dicom Video and other special Dicom
         String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
         if (study != null && uid != null) {
-            Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
-            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                MediaSeriesGroup group = it.next();
+            for (MediaSeriesGroup group : dicomModel.getChildren(study)) {
                 if (dicomSeries != group && group instanceof Series) {
                     Series s = (Series) group;
                     if (uid.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID))

@@ -14,9 +14,7 @@ import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,7 +50,7 @@ public class CheckTreeModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckTreeModel.class);
 
     public static final TagW SourceSeriesForPR = new TagW("SourceSeriesForPR", TagType.OBJECT); //$NON-NLS-1$
-    
+
     private final DefaultMutableTreeNode rootNode;
     private final DefaultTreeModel model;
     private final TreeCheckingModel checkingModel;
@@ -169,17 +167,11 @@ public class CheckTreeModel {
     public static DefaultTreeModel buildModel(DicomModel dicomModel) {
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(DicomExplorer.ALL_PATIENTS);
         synchronized (dicomModel) {
-            for (Iterator<MediaSeriesGroup> iterator =
-                dicomModel.getChildren(MediaSeriesGroupNode.rootNode).iterator(); iterator.hasNext();) {
-                MediaSeriesGroup pt = iterator.next();
+            for (MediaSeriesGroup pt : dicomModel.getChildren(MediaSeriesGroupNode.rootNode)) {
                 DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);
-                Collection<MediaSeriesGroup> studies = dicomModel.getChildren(pt);
-                for (Iterator<MediaSeriesGroup> iterator2 = studies.iterator(); iterator2.hasNext();) {
-                    MediaSeriesGroup study = iterator2.next();
+                for (MediaSeriesGroup study : dicomModel.getChildren(pt)) {
                     DefaultMutableTreeNode studyNode = new DefaultMutableTreeNode(study, true);
-                    Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
-                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                        Object item = it.next();
+                    for (MediaSeriesGroup item : dicomModel.getChildren(study)) {
                         if (item instanceof Series) {
                             buildSeries(studyNode, (Series) item);
                         }
