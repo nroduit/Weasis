@@ -14,9 +14,6 @@ import java.net.URI;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.dcm4che3.data.ItemPointer;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
@@ -61,6 +58,16 @@ public class DicomCodec implements Codec {
             }
             if (TagUtils.isPrivateTag(tag)) {
                 return length > 5000; // Do no read in memory private value more than 5 KB
+            }
+            
+            switch (vr) {
+                case OB:
+                case OD:
+                case OF:
+                case OL:
+                case OW:
+                case UN:
+                    return length > 64;
             }
             return false;
         }
