@@ -95,4 +95,8 @@ public class ImportPanel extends JPanel {
 
         IMPORT_IMAGES.execute(imporTask);
     }
+
+    public boolean isLoading() {
+        return !importBtn.isEnabled();
+    }
 }

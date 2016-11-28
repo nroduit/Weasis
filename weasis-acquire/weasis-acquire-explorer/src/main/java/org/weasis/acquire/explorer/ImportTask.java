@@ -48,8 +48,9 @@ public class ImportTask extends SwingWorker<List<AcquireImageInfo>, AcquireImage
         for (ImageElement imageElement : imagesToImport) {
             try {
                 AcquireImageInfo imageInfo = AcquireManager.findByImage(imageElement);
-                // publish(imageInfo);
-                imagesToProcess.add(imageInfo);
+                if (imageInfo != null) {
+                    imagesToProcess.add(imageInfo);
+                }
             } catch (Exception ex) {
                 LOGGER.error("ImportTask process", ex); //$NON-NLS-1$
             }
@@ -57,11 +58,6 @@ public class ImportTask extends SwingWorker<List<AcquireImageInfo>, AcquireImage
         }
 
         return imagesToProcess;
-    }
-
-    @Override
-    protected void process(List<AcquireImageInfo> chunks) {
-        // AcquireManager.importImages(chunks, searchedSeries, maxRangeInMinutes);
     }
 
     @Override

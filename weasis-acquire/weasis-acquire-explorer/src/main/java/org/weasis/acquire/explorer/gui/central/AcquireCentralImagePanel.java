@@ -14,6 +14,7 @@ import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.swing.JPanel;
@@ -32,24 +33,28 @@ import org.weasis.dicom.codec.TagD;
 public class AcquireCentralImagePanel extends JPanel implements ListSelectionListener {
 
     private final AcquireCentralTumbnailPane<ImageElement> imageListPane;
-    private AcquireCentralInfoPanel imageInfo;
+    private final AcquireCentralInfoPanel imageInfo;
 
     public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel) {
-        this(acquireTabPanel, null, new ArrayList<AcquireImageInfo>());
-    }
-
-    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, SeriesGroup seriesGroup,
-        List<AcquireImageInfo> imageInfos) {
         setLayout(new BorderLayout());
+        this.imageInfo = new AcquireCentralInfoPanel(null);
+        this.imageListPane = new AcquireCentralTumbnailPane<>(new ArrayList<ImageElement>());
 
-        imageInfo = new AcquireCentralInfoPanel(seriesGroup);
-
-        imageListPane = new AcquireCentralTumbnailPane<>(toImageElement(imageInfos));
-        imageListPane.setAcquireTabPanel(acquireTabPanel);
+        imageListPane.setAcquireTabPanel(Objects.requireNonNull(acquireTabPanel));
         imageListPane.addListSelectionListener(this);
 
         add(imageListPane, BorderLayout.CENTER);
         add(imageInfo, BorderLayout.SOUTH);
+    }
+
+    public void getCurrentSerie(SeriesGroup newSerie) {
+        imageInfo.setSerie(newSerie);
+    }
+
+    public void setSeriesGroup(SeriesGroup seriesGroup, List<AcquireImageInfo> imageInfos) {
+        imageInfo.setSerie(seriesGroup);
+        List<ImageElement> list = imageInfos == null ? null : toImageElement(imageInfos);
+        imageListPane.setList(list);
     }
 
     private List<ImageElement> toImageElement(List<AcquireImageInfo> list) {
@@ -60,11 +65,13 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
     }
 
     public void addImagesInfo(List<AcquireImageInfo> imageInfos) {
-        imageListPane.addElements(toImageElement(imageInfos));
+        List<ImageElement> list = imageInfos == null ? null : toImageElement(imageInfos);
+        imageListPane.addElements(list);
     }
 
     public void updateList(List<AcquireImageInfo> imageInfos) {
-        imageListPane.setList(toImageElement(imageInfos));
+        List<ImageElement> list = imageInfos == null ? null : toImageElement(imageInfos);
+        imageListPane.setList(list);
     }
 
     public void updateSerie(SeriesGroup newSerie) {

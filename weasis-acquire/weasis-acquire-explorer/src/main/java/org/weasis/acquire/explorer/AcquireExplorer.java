@@ -13,7 +13,7 @@ package org.weasis.acquire.explorer;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +35,6 @@ import org.weasis.acquire.explorer.media.MediaSource;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
@@ -59,9 +58,9 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
     private final ImageGroupPane centralPane;
 
-    private AcquireThumbnailListPane<MediaElement> acquireThumbnailListPane;
-    private BrowsePanel browsePanel;
-    private ImportPanel importPanel;
+    private final AcquireThumbnailListPane<MediaElement> acquireThumbnailListPane;
+    private final BrowsePanel browsePanel;
+    private final ImportPanel importPanel;
 
     public AcquireExplorer() {
         super(BUTTON_NAME, TOOL_NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
@@ -124,11 +123,11 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
                 } else if (ObservableEvent.BasicAction.REMOVE.equals(((ObservableEvent) evt).getActionCommand())) {
 
                     if (evt.getNewValue() instanceof Collection<?>) {
-                        centralPane.tabbedPane.removeImages((Collection<ImageElement>) evt.getNewValue());
+                        centralPane.tabbedPane.removeImages((Collection<AcquireImageInfo>) evt.getNewValue());
                         centralPane.tabbedPane.repaint();
 
-                    } else if (evt.getNewValue() instanceof ImageElement) {
-                        centralPane.tabbedPane.removeImage((ImageElement) evt.getNewValue());
+                    } else if (evt.getNewValue() instanceof AcquireImageInfo) {
+                        centralPane.tabbedPane.removeImage((AcquireImageInfo) evt.getNewValue());
                         centralPane.tabbedPane.repaint();
                     }
 
@@ -145,8 +144,9 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
                     } else if (evt.getNewValue() instanceof AcquireImageInfo) {
                         SeriesGroup series = ((AcquireImageInfo) evt.getNewValue()).getSeries();
-                        centralPane.tabbedPane.addSeriesElement(series,
-                            Arrays.asList((AcquireImageInfo) evt.getNewValue()));
+                        ArrayList<AcquireImageInfo> infos = new ArrayList<>();
+                        infos.add((AcquireImageInfo) evt.getNewValue());
+                        centralPane.tabbedPane.addSeriesElement(series, infos);
                     }
 
                     centralPane.tabbedPane.refreshGUI();
@@ -216,6 +216,10 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
     public ImageGroupPane getCentralPane() {
         return centralPane;
+    }
+
+    public ImportPanel getImportPanel() {
+        return importPanel;
     }
 
     public void applyNewPath(String newRootPath) {
