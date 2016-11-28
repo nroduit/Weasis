@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.jpeg.internal;
 
-import java.awt.Rectangle;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -18,6 +17,7 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 
 import javax.imageio.ImageReadParam;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
@@ -115,8 +115,7 @@ public class CharlsCodec implements NativeCodec {
     }
 
     @Override
-    public String compress(NativeImage nImage, ImageOutputStream ouputStream, Rectangle region) throws IOException {
-        // TODO use ImageReadParam
+    public String compress(NativeImage nImage, ImageOutputStream ouputStream, ImageWriteParam param) throws IOException {
         int ret = 0;
         if (nImage != null && ouputStream != null && nImage.getInputBuffer() != null) {
             try (JlsParameters p = new JlsParameters()) {
@@ -168,9 +167,10 @@ public class CharlsCodec implements NativeCodec {
                     size.put(buffer.limit());
                     try (ByteStreamInfo input = libijg.FromByteArray(buffer, size)) {
 
-                        // Build outputStream here and transform to an array
+                        // Build outputStream here and transform to an array: 12 => 8 for getting byte and plus 4 is the
+                        // limit for decreasing the size
                         outBuf = ByteBuffer.allocateDirect(params.getWidth() * params.getHeight()
-                            * params.getSamplesPerPixel() * params.getBitsPerSample() / 16);
+                            * params.getSamplesPerPixel() * params.getBitsPerSample() / 12);
                         outBuf.order(params.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
                         size2.put(outBuf.limit());
                         try (ByteStreamInfo outStream = libijg.FromByteArray(outBuf, size2)) {

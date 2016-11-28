@@ -29,7 +29,7 @@ import org.weasis.jpeg.internal.CharlsCodec;
 import com.sun.media.imageioimpl.common.ImageUtil;
 import com.sun.media.imageioimpl.plugins.clib.OutputStreamAdapter;
 
-final class NativeJLSImageWriter extends NativeImageWriter {
+ class NativeJLSImageWriter extends NativeImageWriter {
 
     NativeJLSImageWriter(ImageWriterSpi originatingProvider) throws IOException {
         super(originatingProvider);
@@ -62,13 +62,6 @@ final class NativeJLSImageWriter extends NativeImageWriter {
             renderedImage = convertTo3BandRGB(renderedImage);
         }
 
-        int bitDepth = renderedImage.getColorModel().getComponentSize(0);
-        if ((param == null
-            || (param.getCompressionMode() == ImageWriteParam.MODE_EXPLICIT && !param.isCompressionLossless()))
-            && bitDepth > 12) {
-            throw new IIOException("JPEG baseline encoding is limited to 12 bits: " + this);
-        }
-
         try {
             NativeJPEGImage nImage = new NativeJPEGImage();
 
@@ -76,14 +69,10 @@ final class NativeJLSImageWriter extends NativeImageWriter {
             formatInputDataBuffer(nImage, renderedImage, param, false, supportedFormats);
 
             JpegParameters params = nImage.getJpegParameters();
-
-            // params.setAllowedLossyError(5);
-            // TODO handle near losseless
-
             params.setBigEndian((stream.getStream()).getByteOrder() == ByteOrder.BIG_ENDIAN);
 
             CharlsCodec encoder = getCodec();
-            String error = encoder.compress(nImage, stream.getStream(), null);
+            String error = encoder.compress(nImage, stream.getStream(), param);
             if (error != null) {
                 throw new IIOException("Native JPEG-LS encoding error: " + error);
             }

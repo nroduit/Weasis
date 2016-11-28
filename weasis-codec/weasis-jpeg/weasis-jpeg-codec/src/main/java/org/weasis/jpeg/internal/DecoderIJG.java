@@ -31,8 +31,7 @@ public interface DecoderIJG extends AutoCloseable {
         ByteBuffer uncompressedFrameBuffer, long uncompressedFrameBufferSize);
 
     void deallocate();
-    
-    @Override
-    default void close() {}
 
+    @Override
+    void close();
 }
