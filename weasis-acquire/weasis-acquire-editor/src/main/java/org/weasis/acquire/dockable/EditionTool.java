@@ -41,6 +41,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
 import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 /**
  *
@@ -64,7 +65,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
     private final AcquireSubmitButtonsPanel bottomPanel = new AcquireSubmitButtonsPanel();
 
     public EditionTool(Type type) {
-        super(BUTTON_NAME, BUTTON_NAME, type, 9);
+        super(BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, type, 9);
         dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
         setDockableWidth(300);
         setLayout(new BorderLayout());
