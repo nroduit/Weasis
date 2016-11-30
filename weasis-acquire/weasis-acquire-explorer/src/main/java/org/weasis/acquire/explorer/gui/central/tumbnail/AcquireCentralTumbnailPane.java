@@ -16,6 +16,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
@@ -25,8 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
-import org.weasis.acquire.explorer.gui.central.SerieButton;
 import org.weasis.base.explorer.list.AThumbnailListPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.ImageElement;
@@ -56,14 +57,27 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
     }
 
     public void addElements(List<E> elements) {
-        IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
-        elements.forEach(model::addElement);
+        if (elements != null) {
+            IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
+            elements.forEach(model::addElement);
+            repaintList();
+        }
     }
 
     public void setList(List<E> elements) {
         IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
         model.clear();
-        elements.forEach(model::addElement);
+        if (elements != null) {
+            elements.forEach(model::addElement);
+            repaintList();
+        }
+    }
+    
+    public void repaintList() {
+        // Require to repaint the scroll pane correctly (otherwise not all the elements of JList are repainted)
+        if(thumbnailList.asComponent() instanceof JComponent){
+            ((JComponent) thumbnailList.asComponent()).updateUI();
+        }
     }
 
     private class SequenceHandler extends TransferHandler {
@@ -145,14 +159,9 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                     (AcquireCentralThumnailList) AcquireCentralTumbnailPane.this.thumbnailList;
                 AcquireImageInfo info = AcquireManager.findByImage((ImageElement) media);
                 if (info != null) {
-                    SerieButton btn = tumbList.getSelectedSerie();
-                    if (btn != null) {
-                        info.setSeries(btn.getSerie());
-                    } else {
-                        info.setSeries(AcquireManager.getDefaultSeries());
-                    }
-                    AcquireManager.getInstance().addImage(info);
-                    tumbList.updateAll();
+                    SeriesGroup seriesGroup = Optional.ofNullable(tumbList.getSelectedSerie()).map(b -> b.getSerie())
+                        .orElseGet(AcquireManager::getDefaultSeries);
+                    AcquireManager.importImage(info, seriesGroup, 0);
                 }
             }
         }
