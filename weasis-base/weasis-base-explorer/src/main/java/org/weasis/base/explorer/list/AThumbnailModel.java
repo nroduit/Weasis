@@ -101,6 +101,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
                 JIThumbnailCache.removeInQueue((ImageElement) m);
             }
         }
+        list.getSelectionModel().clearSelection();
         listModel.clear();
     }
 

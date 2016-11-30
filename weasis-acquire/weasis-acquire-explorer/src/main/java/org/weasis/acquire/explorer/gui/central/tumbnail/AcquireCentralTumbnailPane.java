@@ -97,6 +97,9 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
             if (!support.isDrop()) {
                 return false;
             }
+            if (AcquireManager.getInstance().getAcquireExplorer().getImportPanel().isLoading()) {
+                return false;
+            }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
                 || support.isDataFlavorSupported(UriListFlavor.flavor)) {
