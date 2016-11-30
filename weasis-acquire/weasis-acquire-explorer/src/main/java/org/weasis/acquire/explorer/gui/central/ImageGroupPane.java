@@ -55,7 +55,6 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
         if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
             InsertableUtil.getCName(AcquireToolBar.class), key, true)) {
             toolBar.add(ToolBarContainer.EMPTY);
-            // toolBar.add(new AcquireToolBar<ImageElement>(10));
         }
 
         init();
@@ -126,8 +125,9 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
     }
 
     private void updateAll() {
-        AcquireManager.groupBySeries().forEach(tabbedPane::updateSerie);
         tabbedPane.clearUnusedSeries(AcquireManager.getBySeries());
+        tabbedPane.setSelected(tabbedPane.getSelected());
+        tabbedPane.revalidate();
         tabbedPane.repaint();
     }
 }
