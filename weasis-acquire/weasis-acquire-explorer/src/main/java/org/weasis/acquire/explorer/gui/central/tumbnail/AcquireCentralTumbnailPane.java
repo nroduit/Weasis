@@ -60,6 +60,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
         if (elements != null) {
             IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
             elements.forEach(model::addElement);
+            repaintList();
         }
     }
 
@@ -68,6 +69,14 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
         model.clear();
         if (elements != null) {
             elements.forEach(model::addElement);
+            repaintList();
+        }
+    }
+    
+    public void repaintList() {
+        // Require to repaint the scroll pane correctly (otherwise not all the elements of JList are repainted)
+        if(thumbnailList.asComponent() instanceof JComponent){
+            ((JComponent) thumbnailList.asComponent()).updateUI();
         }
     }
 
