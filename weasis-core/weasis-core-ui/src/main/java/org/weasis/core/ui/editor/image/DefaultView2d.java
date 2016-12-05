@@ -334,17 +334,19 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 area.setRect(offset.getX(), offset.getY(), area.getWidth(), area.getHeight());
             }
 
-            if (image != null && area.contains(realPoint)) {
+            if (image != null && area.contains(p)) {
                 try {
-                    realPoint.translate(- (int) area.getX(), - (int) area.getY());
-                    pixelInfo.setPosition(realPoint);
-                    pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
-                    pixelInfo.setPixelSize(imageElement.getPixelSize());
-                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null);
-                    pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
-                    fillPixelInfo(pixelInfo, imageElement, c);
-                    if (c != null && c.length >= 1) {
-                        pixelInfo.setChannelNames(getChannelNames(image));
+                    realPoint.translate(-(int) area.getX(), -(int) area.getY());
+                    if (image.getBounds().contains(realPoint)) {
+                        pixelInfo.setPosition(realPoint);
+                        pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
+                        pixelInfo.setPixelSize(imageElement.getPixelSize());
+                        double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null);
+                        pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
+                        fillPixelInfo(pixelInfo, imageElement, c);
+                        if (c != null && c.length >= 1) {
+                            pixelInfo.setChannelNames(getChannelNames(image));
+                        }
                     }
                 } catch (OutOfMemoryError e) {
                     LOGGER.error("Get pixel value", e);//$NON-NLS-1$
