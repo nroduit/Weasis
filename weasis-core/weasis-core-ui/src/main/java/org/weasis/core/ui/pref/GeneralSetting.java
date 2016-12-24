@@ -493,7 +493,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             }
         }
         if (laf == null) {
-            if ("Mac OS X".equals(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$ 
                 laf = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
             } else {
                 // Try to set Nimbus, concurrent thread issue
