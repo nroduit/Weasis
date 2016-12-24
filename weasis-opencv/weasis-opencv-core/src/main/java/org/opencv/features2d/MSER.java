@@ -9,6 +9,7 @@ import java.util.List;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfRect;
+import org.opencv.features2d.Feature2D;
 import org.opencv.utils.Converters;
 
 // C++: class MSER

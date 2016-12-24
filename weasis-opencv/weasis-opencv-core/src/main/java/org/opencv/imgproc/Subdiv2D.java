@@ -260,6 +260,20 @@ public class Subdiv2D {
 
 
     //
+    // C++:  void getLeadingEdgeList(vector_int& leadingEdgeList)
+    //
+
+    //javadoc: Subdiv2D::getLeadingEdgeList(leadingEdgeList)
+    public  void getLeadingEdgeList(MatOfInt leadingEdgeList)
+    {
+        Mat leadingEdgeList_mat = leadingEdgeList;
+        getLeadingEdgeList_0(nativeObj, leadingEdgeList_mat.nativeObj);
+        
+        return;
+    }
+
+
+    //
     // C++:  void getTriangleList(vector_Vec6f& triangleList)
     //
 
@@ -367,6 +381,9 @@ public class Subdiv2D {
 
     // C++:  void getEdgeList(vector_Vec4f& edgeList)
     private static native void getEdgeList_0(long nativeObj, long edgeList_mat_nativeObj);
+
+    // C++:  void getLeadingEdgeList(vector_int& leadingEdgeList)
+    private static native void getLeadingEdgeList_0(long nativeObj, long leadingEdgeList_mat_nativeObj);
 
     // C++:  void getTriangleList(vector_Vec6f& triangleList)
     private static native void getTriangleList_0(long nativeObj, long triangleList_mat_nativeObj);

@@ -81,14 +81,37 @@ public class StatModel extends Algorithm {
     // C++:  bool train(Ptr_TrainData trainData, int flags = 0)
     //
 
-    // Unknown type 'Ptr_TrainData' (I), skipping the function
+    //javadoc: StatModel::train(trainData, flags)
+    public  boolean train(TrainData trainData, int flags)
+    {
+        
+        boolean retVal = train_1(nativeObj, trainData.nativeObj, flags);
+        
+        return retVal;
+    }
+
+    //javadoc: StatModel::train(trainData)
+    public  boolean train(TrainData trainData)
+    {
+        
+        boolean retVal = train_2(nativeObj, trainData.nativeObj);
+        
+        return retVal;
+    }
 
 
     //
     // C++:  float calcError(Ptr_TrainData data, bool test, Mat& resp)
     //
 
-    // Unknown type 'Ptr_TrainData' (I), skipping the function
+    //javadoc: StatModel::calcError(data, test, resp)
+    public  float calcError(TrainData data, boolean test, Mat resp)
+    {
+        
+        float retVal = calcError_0(nativeObj, data.nativeObj, test, resp.nativeObj);
+        
+        return retVal;
+    }
 
 
     //
@@ -146,6 +169,13 @@ public class StatModel extends Algorithm {
 
     // C++:  bool train(Mat samples, int layout, Mat responses)
     private static native boolean train_0(long nativeObj, long samples_nativeObj, int layout, long responses_nativeObj);
+
+    // C++:  bool train(Ptr_TrainData trainData, int flags = 0)
+    private static native boolean train_1(long nativeObj, long trainData_nativeObj, int flags);
+    private static native boolean train_2(long nativeObj, long trainData_nativeObj);
+
+    // C++:  float calcError(Ptr_TrainData data, bool test, Mat& resp)
+    private static native float calcError_0(long nativeObj, long data_nativeObj, boolean test, long resp_nativeObj);
 
     // C++:  float predict(Mat samples, Mat& results = Mat(), int flags = 0)
     private static native float predict_0(long nativeObj, long samples_nativeObj, long results_nativeObj, int flags);

@@ -128,6 +128,20 @@ public class VideoCapture {
 
 
     //
+    // C++:  bool open(int cameraNum, int apiPreference)
+    //
+
+    //javadoc: VideoCapture::open(cameraNum, apiPreference)
+    public  boolean open(int cameraNum, int apiPreference)
+    {
+        
+        boolean retVal = open_2(nativeObj, cameraNum, apiPreference);
+        
+        return retVal;
+    }
+
+
+    //
     // C++:  bool open(int index)
     //
 
@@ -135,7 +149,7 @@ public class VideoCapture {
     public  boolean open(int index)
     {
         
-        boolean retVal = open_2(nativeObj, index);
+        boolean retVal = open_3(nativeObj, index);
         
         return retVal;
     }
@@ -251,8 +265,11 @@ public class VideoCapture {
     // C++:  bool open(String filename)
     private static native boolean open_1(long nativeObj, String filename);
 
+    // C++:  bool open(int cameraNum, int apiPreference)
+    private static native boolean open_2(long nativeObj, int cameraNum, int apiPreference);
+
     // C++:  bool open(int index)
-    private static native boolean open_2(long nativeObj, int index);
+    private static native boolean open_3(long nativeObj, int index);
 
     // C++:  bool read(Mat& image)
     private static native boolean read_0(long nativeObj, long image_nativeObj);

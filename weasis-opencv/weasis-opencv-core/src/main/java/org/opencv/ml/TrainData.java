@@ -318,6 +318,20 @@ public class TrainData {
 
 
     //
+    // C++:  Mat getVarSymbolFlags()
+    //
+
+    //javadoc: TrainData::getVarSymbolFlags()
+    public  Mat getVarSymbolFlags()
+    {
+        
+        Mat retVal = new Mat(getVarSymbolFlags_0(nativeObj));
+        
+        return retVal;
+    }
+
+
+    //
     // C++:  Mat getVarType()
     //
 
@@ -335,7 +349,23 @@ public class TrainData {
     // C++: static Ptr_TrainData create(Mat samples, int layout, Mat responses, Mat varIdx = Mat(), Mat sampleIdx = Mat(), Mat sampleWeights = Mat(), Mat varType = Mat())
     //
 
-    // Return type 'Ptr_TrainData' is not supported, skipping the function
+    //javadoc: TrainData::create(samples, layout, responses, varIdx, sampleIdx, sampleWeights, varType)
+    public static TrainData create(Mat samples, int layout, Mat responses, Mat varIdx, Mat sampleIdx, Mat sampleWeights, Mat varType)
+    {
+        
+        TrainData retVal = new TrainData(create_0(samples.nativeObj, layout, responses.nativeObj, varIdx.nativeObj, sampleIdx.nativeObj, sampleWeights.nativeObj, varType.nativeObj));
+        
+        return retVal;
+    }
+
+    //javadoc: TrainData::create(samples, layout, responses)
+    public static TrainData create(Mat samples, int layout, Mat responses)
+    {
+        
+        TrainData retVal = new TrainData(create_1(samples.nativeObj, layout, responses.nativeObj));
+        
+        return retVal;
+    }
 
 
     //
@@ -448,6 +478,13 @@ public class TrainData {
         
         return retVal;
     }
+
+
+    //
+    // C++:  void getNames(vector_String names)
+    //
+
+    // Unknown type 'vector_String' (I), skipping the function
 
 
     //
@@ -609,8 +646,15 @@ public class TrainData {
     // C++:  Mat getVarIdx()
     private static native long getVarIdx_0(long nativeObj);
 
+    // C++:  Mat getVarSymbolFlags()
+    private static native long getVarSymbolFlags_0(long nativeObj);
+
     // C++:  Mat getVarType()
     private static native long getVarType_0(long nativeObj);
+
+    // C++: static Ptr_TrainData create(Mat samples, int layout, Mat responses, Mat varIdx = Mat(), Mat sampleIdx = Mat(), Mat sampleWeights = Mat(), Mat varType = Mat())
+    private static native long create_0(long samples_nativeObj, int layout, long responses_nativeObj, long varIdx_nativeObj, long sampleIdx_nativeObj, long sampleWeights_nativeObj, long varType_nativeObj);
+    private static native long create_1(long samples_nativeObj, int layout, long responses_nativeObj);
 
     // C++:  int getCatCount(int vi)
     private static native int getCatCount_0(long nativeObj, int vi);

@@ -137,9 +137,9 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-                                        <!-- Updating surefire plugin version from 2.19 to 2.19.1 due to Netbeans compatibility issue. 
-                                        More information: https://netbeans.org/bugzilla/show_bug.cgi?id=256211 -->
-                                        <version>2.19.1</version>
+					<!-- Updating surefire plugin version from 2.19 to 2.19.1 due to Netbeans 
+						compatibility issue. More information: https://netbeans.org/bugzilla/show_bug.cgi?id=256211 -->
+					<version>2.19.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -235,6 +235,12 @@
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>docking-frames</artifactId>
 			<version>1.1.2-P18a</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>2.5.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

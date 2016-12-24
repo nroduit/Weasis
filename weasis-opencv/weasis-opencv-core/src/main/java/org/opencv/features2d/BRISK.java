@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
+import org.opencv.features2d.Feature2D;
 
 // C++: class BRISK
 //javadoc: BRISK

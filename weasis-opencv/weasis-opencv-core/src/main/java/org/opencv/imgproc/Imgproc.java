@@ -177,6 +177,9 @@ public class Imgproc {
             CC_STAT_HEIGHT = 3,
             CC_STAT_AREA = 4,
             CC_STAT_MAX = 5,
+            CCL_WU = 0,
+            CCL_DEFAULT = -1,
+            CCL_GRANA = 1,
             RETR_EXTERNAL = 0,
             RETR_LIST = 1,
             RETR_CCOMP = 2,
@@ -882,6 +885,20 @@ public class Imgproc {
 
 
     //
+    // C++:  int connectedComponents(Mat image, Mat& labels, int connectivity, int ltype, int ccltype)
+    //
+
+    //javadoc: connectedComponents(image, labels, connectivity, ltype, ccltype)
+    public static int connectedComponentsWithAlgorithm(Mat image, Mat labels, int connectivity, int ltype, int ccltype)
+    {
+        
+        int retVal = connectedComponentsWithAlgorithm_0(image.nativeObj, labels.nativeObj, connectivity, ltype, ccltype);
+        
+        return retVal;
+    }
+
+
+    //
     // C++:  int connectedComponents(Mat image, Mat& labels, int connectivity = 8, int ltype = CV_32S)
     //
 
@@ -899,6 +916,20 @@ public class Imgproc {
     {
         
         int retVal = connectedComponents_1(image.nativeObj, labels.nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int connectedComponentsWithStats(Mat image, Mat& labels, Mat& stats, Mat& centroids, int connectivity, int ltype, int ccltype)
+    //
+
+    //javadoc: connectedComponentsWithStats(image, labels, stats, centroids, connectivity, ltype, ccltype)
+    public static int connectedComponentsWithStatsWithAlgorithm(Mat image, Mat labels, Mat stats, Mat centroids, int connectivity, int ltype, int ccltype)
+    {
+        
+        int retVal = connectedComponentsWithStatsWithAlgorithm_0(image.nativeObj, labels.nativeObj, stats.nativeObj, centroids.nativeObj, connectivity, ltype, ccltype);
         
         return retVal;
     }
@@ -965,6 +996,29 @@ public class Imgproc {
 
 
     //
+    // C++:  void Canny(Mat dx, Mat dy, Mat& edges, double threshold1, double threshold2, bool L2gradient = false)
+    //
+
+    //javadoc: Canny(dx, dy, edges, threshold1, threshold2, L2gradient)
+    public static void Canny(Mat dx, Mat dy, Mat edges, double threshold1, double threshold2, boolean L2gradient)
+    {
+        
+        Canny_0(dx.nativeObj, dy.nativeObj, edges.nativeObj, threshold1, threshold2, L2gradient);
+        
+        return;
+    }
+
+    //javadoc: Canny(dx, dy, edges, threshold1, threshold2)
+    public static void Canny(Mat dx, Mat dy, Mat edges, double threshold1, double threshold2)
+    {
+        
+        Canny_1(dx.nativeObj, dy.nativeObj, edges.nativeObj, threshold1, threshold2);
+        
+        return;
+    }
+
+
+    //
     // C++:  void Canny(Mat image, Mat& edges, double threshold1, double threshold2, int apertureSize = 3, bool L2gradient = false)
     //
 
@@ -972,7 +1026,7 @@ public class Imgproc {
     public static void Canny(Mat image, Mat edges, double threshold1, double threshold2, int apertureSize, boolean L2gradient)
     {
         
-        Canny_0(image.nativeObj, edges.nativeObj, threshold1, threshold2, apertureSize, L2gradient);
+        Canny_2(image.nativeObj, edges.nativeObj, threshold1, threshold2, apertureSize, L2gradient);
         
         return;
     }
@@ -981,7 +1035,7 @@ public class Imgproc {
     public static void Canny(Mat image, Mat edges, double threshold1, double threshold2)
     {
         
-        Canny_1(image.nativeObj, edges.nativeObj, threshold1, threshold2);
+        Canny_3(image.nativeObj, edges.nativeObj, threshold1, threshold2);
         
         return;
     }
@@ -3038,9 +3092,15 @@ public class Imgproc {
     private static native float intersectConvexConvex_0(long _p1_nativeObj, long _p2_nativeObj, long _p12_nativeObj, boolean handleNested);
     private static native float intersectConvexConvex_1(long _p1_nativeObj, long _p2_nativeObj, long _p12_nativeObj);
 
+    // C++:  int connectedComponents(Mat image, Mat& labels, int connectivity, int ltype, int ccltype)
+    private static native int connectedComponentsWithAlgorithm_0(long image_nativeObj, long labels_nativeObj, int connectivity, int ltype, int ccltype);
+
     // C++:  int connectedComponents(Mat image, Mat& labels, int connectivity = 8, int ltype = CV_32S)
     private static native int connectedComponents_0(long image_nativeObj, long labels_nativeObj, int connectivity, int ltype);
     private static native int connectedComponents_1(long image_nativeObj, long labels_nativeObj);
+
+    // C++:  int connectedComponentsWithStats(Mat image, Mat& labels, Mat& stats, Mat& centroids, int connectivity, int ltype, int ccltype)
+    private static native int connectedComponentsWithStatsWithAlgorithm_0(long image_nativeObj, long labels_nativeObj, long stats_nativeObj, long centroids_nativeObj, int connectivity, int ltype, int ccltype);
 
     // C++:  int connectedComponentsWithStats(Mat image, Mat& labels, Mat& stats, Mat& centroids, int connectivity = 8, int ltype = CV_32S)
     private static native int connectedComponentsWithStats_0(long image_nativeObj, long labels_nativeObj, long stats_nativeObj, long centroids_nativeObj, int connectivity, int ltype);
@@ -3053,9 +3113,13 @@ public class Imgproc {
     // C++:  int rotatedRectangleIntersection(RotatedRect rect1, RotatedRect rect2, Mat& intersectingRegion)
     private static native int rotatedRectangleIntersection_0(double rect1_center_x, double rect1_center_y, double rect1_size_width, double rect1_size_height, double rect1_angle, double rect2_center_x, double rect2_center_y, double rect2_size_width, double rect2_size_height, double rect2_angle, long intersectingRegion_nativeObj);
 
+    // C++:  void Canny(Mat dx, Mat dy, Mat& edges, double threshold1, double threshold2, bool L2gradient = false)
+    private static native void Canny_0(long dx_nativeObj, long dy_nativeObj, long edges_nativeObj, double threshold1, double threshold2, boolean L2gradient);
+    private static native void Canny_1(long dx_nativeObj, long dy_nativeObj, long edges_nativeObj, double threshold1, double threshold2);
+
     // C++:  void Canny(Mat image, Mat& edges, double threshold1, double threshold2, int apertureSize = 3, bool L2gradient = false)
-    private static native void Canny_0(long image_nativeObj, long edges_nativeObj, double threshold1, double threshold2, int apertureSize, boolean L2gradient);
-    private static native void Canny_1(long image_nativeObj, long edges_nativeObj, double threshold1, double threshold2);
+    private static native void Canny_2(long image_nativeObj, long edges_nativeObj, double threshold1, double threshold2, int apertureSize, boolean L2gradient);
+    private static native void Canny_3(long image_nativeObj, long edges_nativeObj, double threshold1, double threshold2);
 
     // C++:  void GaussianBlur(Mat src, Mat& dst, Size ksize, double sigmaX, double sigmaY = 0, int borderType = BORDER_DEFAULT)
     private static native void GaussianBlur_0(long src_nativeObj, long dst_nativeObj, double ksize_width, double ksize_height, double sigmaX, double sigmaY, int borderType);

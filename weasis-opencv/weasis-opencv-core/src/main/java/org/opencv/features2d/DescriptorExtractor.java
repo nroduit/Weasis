@@ -41,6 +41,20 @@ public class DescriptorExtractor {
 
 
     //
+    // C++: static Ptr_javaDescriptorExtractor create(int extractorType)
+    //
+
+    //javadoc: javaDescriptorExtractor::create(extractorType)
+    public static DescriptorExtractor create(int extractorType)
+    {
+        
+        DescriptorExtractor retVal = new DescriptorExtractor(create_0(extractorType));
+        
+        return retVal;
+    }
+
+
+    //
     // C++:  bool empty()
     //
 
@@ -77,20 +91,6 @@ public class DescriptorExtractor {
     {
         
         int retVal = descriptorType_0(nativeObj);
-        
-        return retVal;
-    }
-
-
-    //
-    // C++: static javaDescriptorExtractor* create(int extractorType)
-    //
-
-    //javadoc: javaDescriptorExtractor::create(extractorType)
-    public static DescriptorExtractor create(int extractorType)
-    {
-        
-        DescriptorExtractor retVal = new DescriptorExtractor(create_0(extractorType));
         
         return retVal;
     }
@@ -165,6 +165,9 @@ public class DescriptorExtractor {
 
 
 
+    // C++: static Ptr_javaDescriptorExtractor create(int extractorType)
+    private static native long create_0(int extractorType);
+
     // C++:  bool empty()
     private static native boolean empty_0(long nativeObj);
 
@@ -173,9 +176,6 @@ public class DescriptorExtractor {
 
     // C++:  int descriptorType()
     private static native int descriptorType_0(long nativeObj);
-
-    // C++: static javaDescriptorExtractor* create(int extractorType)
-    private static native long create_0(int extractorType);
 
     // C++:  void compute(Mat image, vector_KeyPoint& keypoints, Mat descriptors)
     private static native void compute_0(long nativeObj, long image_nativeObj, long keypoints_mat_nativeObj, long descriptors_nativeObj);

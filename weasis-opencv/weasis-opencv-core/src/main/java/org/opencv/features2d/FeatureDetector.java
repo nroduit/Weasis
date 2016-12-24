@@ -77,6 +77,20 @@ public class FeatureDetector {
 
 
     //
+    // C++: static Ptr_javaFeatureDetector create(int detectorType)
+    //
+
+    //javadoc: javaFeatureDetector::create(detectorType)
+    public static FeatureDetector create(int detectorType)
+    {
+        
+        FeatureDetector retVal = new FeatureDetector(create_0(detectorType));
+        
+        return retVal;
+    }
+
+
+    //
     // C++:  bool empty()
     //
 
@@ -85,20 +99,6 @@ public class FeatureDetector {
     {
         
         boolean retVal = empty_0(nativeObj);
-        
-        return retVal;
-    }
-
-
-    //
-    // C++: static javaFeatureDetector* create(int detectorType)
-    //
-
-    //javadoc: javaFeatureDetector::create(detectorType)
-    public static FeatureDetector create(int detectorType)
-    {
-        
-        FeatureDetector retVal = new FeatureDetector(create_0(detectorType));
         
         return retVal;
     }
@@ -190,11 +190,11 @@ public class FeatureDetector {
 
 
 
+    // C++: static Ptr_javaFeatureDetector create(int detectorType)
+    private static native long create_0(int detectorType);
+
     // C++:  bool empty()
     private static native boolean empty_0(long nativeObj);
-
-    // C++: static javaFeatureDetector* create(int detectorType)
-    private static native long create_0(int detectorType);
 
     // C++:  void detect(Mat image, vector_KeyPoint& keypoints, Mat mask = Mat())
     private static native void detect_0(long nativeObj, long image_nativeObj, long keypoints_mat_nativeObj, long mask_nativeObj);

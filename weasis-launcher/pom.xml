@@ -20,13 +20,15 @@
 			<distribution>repo</distribution>
 		</license>
 		<license>
-			<!-- WeasisLauncher and AutoProcessor classes are derived from the Apache Felix launcher -->
+			<!-- WeasisLauncher and AutoProcessor classes are derived from the Apache 
+				Felix launcher -->
 			<name>Apache 2</name>
 			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	<!-- Dependencies below are provided for debugging Weasis from IDE (by launching WeasisLauncher) -->
+	<!-- Dependencies below are provided for debugging Weasis from IDE (by launching 
+		WeasisLauncher) -->
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
@@ -126,6 +128,12 @@
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>docking-frames</artifactId>
 			<version>1.1.2-P18a</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>2.5.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

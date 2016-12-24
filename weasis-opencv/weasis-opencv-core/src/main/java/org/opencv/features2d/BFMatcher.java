@@ -36,6 +36,29 @@ public class BFMatcher extends DescriptorMatcher {
     }
 
 
+    //
+    // C++: static Ptr_BFMatcher create(int normType = NORM_L2, bool crossCheck = false)
+    //
+
+    //javadoc: BFMatcher::create(normType, crossCheck)
+    public static BFMatcher create(int normType, boolean crossCheck)
+    {
+        
+        BFMatcher retVal = new BFMatcher(create_0(normType, crossCheck));
+        
+        return retVal;
+    }
+
+    //javadoc: BFMatcher::create()
+    public static BFMatcher create()
+    {
+        
+        BFMatcher retVal = new BFMatcher(create_1());
+        
+        return retVal;
+    }
+
+
     @Override
     protected void finalize() throws Throwable {
         delete(nativeObj);
@@ -46,6 +69,10 @@ public class BFMatcher extends DescriptorMatcher {
     // C++:   BFMatcher(int normType = NORM_L2, bool crossCheck = false)
     private static native long BFMatcher_0(int normType, boolean crossCheck);
     private static native long BFMatcher_1();
+
+    // C++: static Ptr_BFMatcher create(int normType = NORM_L2, bool crossCheck = false)
+    private static native long create_0(int normType, boolean crossCheck);
+    private static native long create_1();
 
     // native support for java finalize()
     private static native void delete(long nativeObj);
