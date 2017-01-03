@@ -8,10 +8,18 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
     <artifactId>texture</artifactId>
     <packaging>bundle</packaging>
     <name>Texture [${project.artifactId}]</name>
+    
+    <repositories>
+        <repository>
+            <!-- texturedicom lib stays in local repository -->
+            <id>project.local</id>
+            <name>project-lib</name>
+            <url>file:${project.basedir}/animati-lib</url>
+        </repository>
+    </repositories>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -54,7 +62,7 @@
         <dependency>
             <groupId>br.com.animati</groupId>
             <artifactId>texturedicom_pg</artifactId>
-            <version>1.2.2</version>
+            <version>1.2.4</version>
             <type>jar</type>
         </dependency>
         <dependency>

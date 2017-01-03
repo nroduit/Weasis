@@ -399,7 +399,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             }
         }
     }
-    
+
     public static String getRotationDesc(Quat4d rotation) {
         StringBuilder desc = new StringBuilder();
         desc.append(DecFormater.twoDecimal(rotation.w));
@@ -498,19 +498,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 }
             } else if (command.equals(ActionWA.MIP_OPTION.cmd())) {
                 if (val instanceof TextureImageCanvas.MipOption) {
-                    actionsInView.put(ActionWA.MIP_OPTION.cmd(), val);
-                    mipOption = (TextureImageCanvas.MipOption) val;
-                    measurableLayer.setDirty(true);
-                    updateAllLabels(ViewTexture.this);
-                    repaint();
+                    setMipOption((TextureImageCanvas.MipOption) val);
                 }
             } else if (command.equals(ActionWA.MIP_DEPTH.cmd())) {
                 if (val instanceof Integer) {
-                    actionsInView.put(ActionWA.MIP_DEPTH.cmd(), val);
-                    mipDepth = (Integer) val / (double) getTotalSlices();
-                    measurableLayer.setDirty(true);
-                    updateAllLabels(ViewTexture.this);
-                    repaint();
+                    setMipDepth((Integer) val);
                 }
             } else if (command.equals(ActionWA.VOLUM_QUALITY.cmd())) {
                 setActionsInView(ActionWA.VOLUM_QUALITY.cmd(), val, false);
@@ -522,6 +514,28 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 setActionsInView(ActionWA.SMOOTHING.cmd(), val, true);
             }
         }
+    }
+
+    private void setMipDepth(final Integer val) {
+        actionsInView.put(ActionWA.MIP_DEPTH.cmd(), val);
+        int index = getCurrentSlice();
+        setMipInterval(index, index + val - 1);
+        measurableLayer.setDirty(true);
+        updateAllLabels(ViewTexture.this);
+        repaint();
+    }
+
+    private void setMipOption(final TextureImageCanvas.MipOption val) {
+        mipOption = val;
+        actionsInView.put(ActionWA.MIP_OPTION.cmd(), mipOption);
+        Object actionValue = getActionValue(ActionWA.MIP_DEPTH.cmd());
+        if (actionValue instanceof Integer) {
+            int index = getCurrentSlice();
+            setMipInterval(index, index + (Integer) actionValue - 1);
+        }
+        measurableLayer.setDirty(true);
+        updateAllLabels(ViewTexture.this);
+        repaint();
     }
 
     private void setRotation(Integer val) {
@@ -581,7 +595,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         actionsInView.put(ActionWA.VOLUM_QUALITY.cmd(), volumetricQuality);
 
         actionsInView.put(ActionWA.MIP_OPTION.cmd(), TextureImageCanvas.MipOption.None);
-        actionsInView.put(ActionWA.MIP_DEPTH.cmd(), 5);
+        actionsInView.put(ActionWA.MIP_DEPTH.cmd(), 2);
 
         actionsInView.put(ActionWA.SMOOTHING.cmd(), true);
     }
@@ -984,10 +998,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
         // Mip Depth
         if (cmd == null || ActionWA.MIP_DEPTH.cmd().equals(cmd)) {
-            setActionsInView(ActionWA.MIP_DEPTH.cmd(), 5, true);
-            mipDepth = 5 / (double) getTotalSlices();
-            measurableLayer.setDirty(true);
-            updateAllLabels(this);
+            setMipDepth(2);
         }
 
         // ControlAxes
@@ -1078,7 +1089,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
         return null;
     }
-    
+
     private void addModifierMask(String action, int mask) {
         MouseActionAdapter adapter = getMouseAdapter(action);
         if (adapter != null) {
@@ -2102,7 +2113,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void updateCanvas(boolean triggerViewModelChangeListeners) {
-        
+
     }
 
 }

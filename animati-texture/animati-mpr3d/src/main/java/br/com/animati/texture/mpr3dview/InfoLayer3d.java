@@ -1,6 +1,5 @@
 /*
- * @copyright Copyright (c) 2012 Animati Sistemas de Inform??tica Ltda.
- * (http://www.animati.com.br)
+ * @copyright Copyright (c) 2013 Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
  */
 package br.com.animati.texture.mpr3dview;
 
@@ -42,12 +41,17 @@ import br.com.animati.texture.mpr3dview.api.ActionWA;
 import br.com.animati.texture.mpr3dview.api.DisplayUtils;
 import br.com.animati.texture.mpr3dview.internal.Messages;
 import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.TextureImageCanvas;
+import java.util.Comparator;
+import org.weasis.dicom.codec.DicomImageElement;
 
 /**
  *
  * @author Gabriela Carla Bauerman (gabriela@animati.com.br)
  */
 public class InfoLayer3d extends AbstractInfoLayer {
+
+    private static final String UNDEFINED = "Undefined";
 
     protected ViewTexture owner;
 
@@ -206,17 +210,11 @@ public class InfoLayer3d extends AbstractInfoLayer {
             }
         }
         if (getDisplayPreferences(FRAME) && !isVolumetricView() && hideMin) {
-            String instString = " [ ] ";
-            Integer instance = getOwnerContentInstanceNumber();
-            if (instance != null) {
-                instString = " [" + instance + "] ";
-            }
-            Integer index = getOwnerContentFrameIndex();
-            Integer size = getOwnerSeriesSize();
-            if (index != null && size != null) {
-                DefaultGraphicLabel.paintFontOutline(g2d,
-                    Messages.getString("InfoLayer.frame") + instString + (index + 1) + " / " + size, border, drawY);
-                drawY -= fontHeight;
+                        String desc = getFrameDescription();
+             if (StringUtil.hasText(desc)) {
+                 String str = Messages.getString("InfoLayer.frame") + desc;
+                 DefaultGraphicLabel.paintFontOutline(g2d, str, border, drawY);
+                 drawY -= fontHeight;
             }
         }
 
@@ -299,23 +297,21 @@ public class InfoLayer3d extends AbstractInfoLayer {
                         Object value = null;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                value = DisplayUtils.getTagValue(tag, patient, study, series, null);
 
-                                if (tag.getKeyword().equals("SliceLocation")
-                                    || tag.getKeyword().equals("SliceThickness")) {
-                                    if (owner instanceof ViewTexture && owner.isShowingAcquisitionAxis()
-                                        && !isVolumetricView()) {
-                                        ViewTexture texture = owner;
-                                        value = owner.getSeriesObject().getTagValue(tag, texture.getCurrentSlice() - 1);
+                                value = getFrameTagValue(tag, patient, study, series);
 
-                                    }
-                                }
-
-                                if (value != null) {
+                                if (UNDEFINED.equals(value)) {
+                                    String str = tag.getDisplayedName() + StringUtil.COLON_AND_SPACE + value;
+                                    DefaultGraphicLabel.paintColorFontOutline(g2d, str,
+                                            bound.width - g2d.getFontMetrics().stringWidth(str) - border,
+                                            drawY, Color.red);
+                                    drawY -= fontHeight;
+                                    break;
+                                } else if (value != null) {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         DefaultGraphicLabel.paintFontOutline(g2d, str,
-                                            bound.width - g2d.getFontMetrics().stringWidth(str) - border, drawY);
+                                                bound.width - g2d.getFontMetrics().stringWidth(str) - border, drawY);
                                         drawY -= fontHeight;
                                         break;
                                     }
@@ -331,6 +327,89 @@ public class InfoLayer3d extends AbstractInfoLayer {
             }
         }
         g2d.setColor(oldColor);
+    }
+
+    private boolean isMipActive() {
+        Object actionValue = owner.getActionValue(ActionWA.MIP_OPTION.cmd());
+        return actionValue instanceof TextureImageCanvas.MipOption
+                && !TextureImageCanvas.MipOption.None.equals(actionValue);
+    }
+
+    private String getFrameDescription() {
+        if (isMipActive()) {
+            Integer index = getOwnerContentFrameIndex();
+            Integer size = getOwnerSeriesSize();
+            Object val = owner.getActionValue(ActionWA.MIP_DEPTH.cmd());
+            if (index != null && size != null && val instanceof Integer) {
+                StringBuilder str = new StringBuilder();
+                str.append(' ').append(index + 1).append(" - ");
+                int last = index + (Integer) val;
+                if (last >= size) {
+                    last = size;
+                }
+                str.append(last).append(" / ").append(size);
+                return str.toString();
+            }
+            return "";
+        }
+
+        Integer index = getOwnerContentFrameIndex();
+        Integer size = getOwnerSeriesSize();
+        if (index != null && size != null) {
+            StringBuilder str = new StringBuilder();
+            Object instance = getOwnerContentInstanceNumber();
+            if (instance == null) {
+                str.append(" [ ] ");
+            } else {
+                str.append(" [").append(instance).append("] ");
+            }
+
+            str.append(index + 1).append(" / ").append(size);
+            return str.toString();
+        }
+        return "";
+    }
+
+    private Object getFrameTagValue(final TagW tag, final MediaSeriesGroup patient, final MediaSeriesGroup study,
+            final Series series) {
+
+        if ((tag.getKeyword().equals("SliceLocation") || tag.getKeyword().equals("SliceThickness"))
+                && owner.getParentImageSeries() != null && owner.isShowingAcquisitionAxis() && !isVolumetricView()) {
+
+            if (isMipActive()) {
+                if (((TextureDicomSeries) owner.getSeriesObject()).isSliceSpacingRegular()) {
+                    int currentSlice = ((ViewTexture) owner).getCurrentSlice() - 1;
+                    Comparator sorter = ((ViewTexture) owner).getCurrentSortComparator();
+                    Object depth = owner.getActionValue(ActionWA.MIP_DEPTH.cmd());
+                    if (depth instanceof Integer) {
+                        DicomImageElement firstMedia = (DicomImageElement) series.getMedia(currentSlice, null, sorter);
+                        int lastIndex = currentSlice + (Integer) depth;
+                        if (lastIndex >= series.size(null)) {
+                            lastIndex = series.size(null) - 1;
+                        }
+                        DicomImageElement lastMedia = (DicomImageElement) series.getMedia(lastIndex, null, sorter);
+                        Double lastLocation = TagD.getTagValue(lastMedia, Tag.SliceLocation, Double.class);
+                        Double firstLocation = TagD.getTagValue(firstMedia, Tag.SliceLocation, Double.class);
+                        if (lastLocation != null && firstLocation != null) {
+                            if (tag.getKeyword().equals("SliceLocation")) {
+                                return firstLocation + ((lastLocation - firstLocation) / 2);
+                            } else { // SliceThickness
+                                Double lastSliceTickness
+                                        = TagD.getTagValue(lastMedia, Tag.SliceThickness, Double.class);
+                                if (lastSliceTickness == null) {
+                                    lastSliceTickness = lastMedia.getPixelSize();
+                                }
+                                return Math.abs(lastLocation - firstLocation) + lastSliceTickness;
+                            }
+                        }
+                    }
+                }
+                return UNDEFINED;
+            } else {
+                return ((TextureDicomSeries) owner.getSeriesObject()).getTagValue(tag, owner.getCurrentSlice() - 1);
+            }
+        }
+        return DisplayUtils.getTagValue(tag, patient, study, series, null);
     }
 
     @Override

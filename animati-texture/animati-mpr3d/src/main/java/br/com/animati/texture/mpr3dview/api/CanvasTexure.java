@@ -1,6 +1,5 @@
 /*
- * @copyright Copyright (c) 2012 Animati Sistemas de Informática Ltda.
- * (http://www.animati.com.br)
+ * @copyright Copyright (c) 2012 Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
  */
 package br.com.animati.texture.mpr3dview.api;
 
@@ -44,6 +43,9 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import org.weasis.core.ui.docking.UIManager;
 
 /**
  *
@@ -69,6 +71,7 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
 
     public CanvasTexure(ImageSeries parentImageSeries) {
         super(parentImageSeries);
+        addRetinaDisplayWorkaround();
 
         this.layerModelHandler = new LayerModelHandler();
 
@@ -79,6 +82,32 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
 
         this.viewModel = new TextureViewModel();
         this.viewModel.addViewModelChangeListener(viewModelHandler);
+    }
+
+    private void addRetinaDisplayWorkaround() {
+        final GLEventListener glEventListener = new GLEventListener() {
+            @Override
+            public void init(final GLAutoDrawable glad) {
+            }
+
+            @Override
+            public void dispose(final GLAutoDrawable glad) {
+            }
+
+            @Override
+            public void display(GLAutoDrawable glad) {
+                LOGGER.info("Detecting retina display on canvas first display(): " + !isDefaultScale());
+                if (!isDefaultScale()) {
+                    UIManager.BASE_AREA.repaint();
+                }
+                removeGLEventListener(this);
+            }
+
+            @Override
+            public void reshape(final GLAutoDrawable glad, int i, int i1, int i2, int i3) {
+            }
+        };
+        addGLEventListener(glEventListener);
     }
 
     @Override

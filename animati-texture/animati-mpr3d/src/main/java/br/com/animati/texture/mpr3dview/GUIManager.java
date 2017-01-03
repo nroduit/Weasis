@@ -1,6 +1,5 @@
 /*
- * @copyright Copyright (c) 2013 Animati Sistemas de Informática Ltda.
- * (http://www.animati.com.br)
+ * @copyright Copyright (c) 2013 Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
  */
 package br.com.animati.texture.mpr3dview;
 
@@ -84,6 +83,9 @@ import br.com.animati.texturedicom.TextureImageCanvas;
  * @version 2013, 11 Sep.
  */
 public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
+
+    private static final int MIP_DEPTH_DEFAULT = 5;
+    private static final int MIP_DEPTH_MAX = 100;
 
     public static List<ColorMask> colorMaskList = StaticHelpers.buildColorMaskList();
     public static List<StaticHelpers.TextureKernel> kernelList = StaticHelpers.buildKernelList();
@@ -345,7 +347,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
     }
 
     private SliderChangeListener newMipDepth() {
-        return new SliderChangeListener(ActionWA.MIP_DEPTH, 1, 100, 5, true) {
+        return new SliderChangeListener(ActionWA.MIP_DEPTH, 2, MIP_DEPTH_MAX, MIP_DEPTH_DEFAULT, true) {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
@@ -449,7 +451,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
         }
-        
+
         ImageViewerPlugin<DicomImageElement> oldContainer = this.selectedView2dContainer;
         this.selectedView2dContainer = selectedView2dContainer;
 
@@ -533,7 +535,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
             view2d.getFrameIndex(), false));
 
         getAction(ActionWA.MIP_DEPTH, SliderChangeListener.class)
-            .ifPresent(a -> a.setSliderMinMaxValue(1, cineAction.isPresent() ? cineAction.get().getSliderMax() : 1,
+            .ifPresent(a -> a.setSliderMinMaxValue(2, cineAction.isPresent() ? cineAction.get().getSliderMax() : 1,
                 (Integer) view2d.getActionValue(ActionWA.MIP_DEPTH.cmd()), false));
 
         boolean volume = ViewType.VOLUME3D.equals(((ViewTexture) view2d).getViewType());
