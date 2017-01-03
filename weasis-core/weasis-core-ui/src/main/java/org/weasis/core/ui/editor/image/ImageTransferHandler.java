@@ -14,7 +14,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.image.RenderedImage;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
@@ -23,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.util.ImageToolkit;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
     private static final long serialVersionUID = 7716040872158831560L;
@@ -70,10 +70,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
     @Override
     public Object getTransferData(DataFlavor flavor) {
         if (isDataFlavorSupported(flavor)) {
-            RenderedImage result = disOp.process();
-            if (result instanceof PlanarImage) {
-                return ((PlanarImage) result).getAsBufferedImage();
-            }
+            return ImageToolkit.convertRenderedImage(disOp.process());
         }
         return null;
     }

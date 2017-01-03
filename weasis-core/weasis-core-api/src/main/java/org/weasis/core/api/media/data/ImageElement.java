@@ -14,7 +14,6 @@ import java.awt.Point;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.util.Map;
@@ -23,16 +22,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.RenderedOp;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
@@ -53,10 +49,10 @@ public class ImageElement extends MediaElement {
     // TODO evaluate the difference, keep one thread with sun decoder. (seems to hangs on shutdown)
     public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader"); //$NON-NLS-1$
 
-    private static final SoftHashMap<ImageElement, PlanarImage> mCache = new SoftHashMap<ImageElement, PlanarImage>() {
+    private static final SoftHashMap<ImageElement, RenderedImage> mCache = new SoftHashMap<ImageElement, RenderedImage>() {
 
         @Override
-        public void removeElement(Reference<? extends PlanarImage> soft) {
+        public void removeElement(Reference<? extends RenderedImage> soft) {
             ImageElement key = reverseLookup.remove(soft);
             if (key != null) {
                 hash.remove(key);
@@ -96,22 +92,12 @@ public class ImageElement extends MediaElement {
                 this.maxPixelValue = 255.0;
             } else {
 
-                ParameterBlock pb = new ParameterBlock();
-                pb.addSource(img);
-                // ImageToolkit.NOCACHE_HINT to ensure this image won't be stored in tile cache
-                RenderedOp dst = JAI.create("extrema", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
-
-                double[][] extrema = (double[][]) dst.getProperty("extrema"); //$NON-NLS-1$
-                double min = Double.MAX_VALUE;
-                double max = -Double.MAX_VALUE;
-                int numBands = dst.getSampleModel().getNumBands();
-
-                for (int i = 0; i < numBands; i++) {
-                    min = Math.min(min, extrema[0][i]);
-                    max = Math.max(max, extrema[1][i]);
+                double[] val = ImageProcessor.findMinMaxValues(img);
+                if (val != null && val.length == 2) {
+                    this.minPixelValue = val[0];
+                    this.maxPixelValue = val[1];
                 }
-                this.minPixelValue = min;
-                this.maxPixelValue = max;
+
                 // Handle special case when min and max are equal, ex. black image
                 // + 1 to max enables to display the correct value
                 if (this.minPixelValue.equals(this.maxPixelValue)) {
@@ -250,8 +236,8 @@ public class ImageElement extends MediaElement {
 
     public boolean hasSameSize(ImageElement image) {
         if (image != null) {
-            PlanarImage img = getImage();
-            PlanarImage img2 = image.getImage();
+            RenderedImage img = getImage();
+            RenderedImage img2 = image.getImage();
             if (img != null && img2 != null && getRescaleWidth(img.getWidth()) == image.getRescaleWidth(img2.getWidth())
                 && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight())) {
                 return true;
@@ -268,7 +254,7 @@ public class ImageElement extends MediaElement {
      * @throws IOException
      */
 
-    protected PlanarImage loadImage() throws Exception {
+    protected RenderedImage loadImage() throws Exception {
         return mediaIO.getImageFragment(this);
     }
 
@@ -309,7 +295,7 @@ public class ImageElement extends MediaElement {
      *
      * @return
      */
-    public PlanarImage getImage(OpManager manager) {
+    public RenderedImage getImage(OpManager manager) {
         return getImage(manager, true);
     }
 
@@ -318,7 +304,7 @@ public class ImageElement extends MediaElement {
         return getMediaURI().toString();
     }
 
-    public synchronized PlanarImage getImage(OpManager manager, boolean findMinMax) {
+    public synchronized RenderedImage getImage(OpManager manager, boolean findMinMax) {
         try {
             return getCacheImage(startImageLoading(), manager, findMinMax);
         } catch (OutOfMemoryError e1) {
@@ -339,7 +325,7 @@ public class ImageElement extends MediaElement {
         }
     }
     
-    private PlanarImage getCacheImage(PlanarImage cacheImage, OpManager manager, boolean findMinMax) {
+    private RenderedImage getCacheImage(RenderedImage cacheImage, OpManager manager, boolean findMinMax) {
         if (findMinMax) {
             findMinMaxValues(cacheImage, true);
         }
@@ -351,23 +337,23 @@ public class ImageElement extends MediaElement {
             }
 
             if (img != null) {
-                return PlanarImage.wrapRenderedImage(img);
+                return img;
             }
         }
         return cacheImage;
     }
 
-    public PlanarImage getImage() {
+    public RenderedImage getImage() {
         return getImage(null);
     }
 
-    private PlanarImage startImageLoading() throws OutOfMemoryError {
-        PlanarImage cacheImage;
+    private RenderedImage startImageLoading() throws OutOfMemoryError {
+        RenderedImage cacheImage;
         if ((cacheImage = mCache.get(this)) == null && readable && setAsLoading()) {
             LOGGER.debug("Asking for reading image: {}", this); //$NON-NLS-1$
             Load ref = new Load();
-            Future<PlanarImage> future = IMAGE_LOADER.submit(ref);
-            PlanarImage img = null;
+            Future<RenderedImage> future = IMAGE_LOADER.submit(ref);
+            RenderedImage img = null;
             try {
                 img = future.get();
 
@@ -410,10 +396,10 @@ public class ImageElement extends MediaElement {
         }
     }
 
-    class Load implements Callable<PlanarImage> {
+    class Load implements Callable<RenderedImage> {
 
         @Override
-        public PlanarImage call() throws Exception {
+        public RenderedImage call() throws Exception {
             return loadImage();
         }
     }

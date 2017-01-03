@@ -11,8 +11,8 @@
 package org.weasis.dicom.explorer;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Graphics2D;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
@@ -23,8 +23,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.SubsampleAverageDescriptor;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -48,6 +46,8 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.media.DicomDirWriter;
 import org.dcm4che3.media.RecordType;
 import org.dcm4che3.util.UIDUtils;
+import org.opencv.core.MatOfInt;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -55,12 +55,11 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
@@ -82,10 +81,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     public static final String INC_DICOMDIR = "exp.include.dicomdir";//$NON-NLS-1$
     public static final String KEEP_INFO_DIR = "exp.keep.dir.name";//$NON-NLS-1$
     public static final String IMG_QUALITY = "exp.img.quality";//$NON-NLS-1$
-    public static final String HEIGHT_BITS = "exp.8bis";//$NON-NLS-1$
+    public static final String IMG_16_BIT = "exp.16-bit";//$NON-NLS-1$
     public static final String CD_COMPATIBLE = "exp.cd";//$NON-NLS-1$
 
-    public static final String[] EXPORT_FORMAT = { "DICOM", "DICOM ZIP", "JPEG", "PNG", "TIFF" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+    public static final String[] EXPORT_FORMAT = { "DICOM", "DICOM ZIP", "JPEG", "PNG" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     private final DicomModel dicomModel;
     private JLabel lblImportAFolder;
@@ -180,20 +179,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
             }
         } else if (EXPORT_FORMAT[3].equals(seltected)) {
-            Object[] options = { boxKeepNames };
-            int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
-            if (response == JOptionPane.OK_OPTION) {
-                pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
-            }
-        } else if (EXPORT_FORMAT[4].equals(seltected)) {
-            final JCheckBox box1 = new JCheckBox(Messages.getString("LocalExport.tiff_sup_8bits"), //$NON-NLS-1$
-                Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false"))); //$NON-NLS-1$
+            final JCheckBox box1 = new JCheckBox(Messages.getString("LocalExport.ch_16"), //$NON-NLS-1$
+                Boolean.valueOf(pref.getProperty(IMG_16_BIT, "false"))); //$NON-NLS-1$
             Object[] options = { box1, boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
-                pref.setProperty(HEIGHT_BITS, String.valueOf(box1.isSelected()));
+                pref.setProperty(IMG_16_BIT, String.valueOf(box1.isSelected()));
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
             }
         }
@@ -331,7 +323,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         boolean keepNames = Boolean.parseBoolean(pref.getProperty(KEEP_INFO_DIR, Boolean.TRUE.toString()));
         int jpegQuality = StringUtil.getInteger(pref.getProperty(IMG_QUALITY, null), 80);
-        boolean more8bits = Boolean.parseBoolean(pref.getProperty(HEIGHT_BITS, Boolean.FALSE.toString()));
+        boolean img16 = Boolean.parseBoolean(pref.getProperty(IMG_16_BIT, Boolean.FALSE.toString()));
 
         try {
             synchronized (model) {
@@ -369,17 +361,16 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         destinationDir.mkdirs();
 
                         RenderedImage image = img.getImage(null);
-                        if (image != null && !more8bits) {
+                        if (image != null && !img16) {
                             image = img.getRenderedImage(image);
                         }
                         if (image != null) {
                             File destinationFile = new File(destinationDir, instance + getExtension(format));
                             if (EXPORT_FORMAT[3].equals(format)) {
-                                ImageFiler.writePNG(destinationFile, image);
-                            } else if (EXPORT_FORMAT[4].equals(format)) {
-                                ImageFiler.writeTIFF(destinationFile, image, false, false, false);
+                                ImageProcessor.writePNG(image, destinationFile);
                             } else {
-                                ImageFiler.writeJPG(destinationFile, image, jpegQuality / 100.0f);
+                                MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, jpegQuality);
+                                ImageProcessor.writeImage(image, destinationFile, map);
                             }
                             if (seriesGph.contains(img.getTagValue(TagD.get(Tag.SeriesInstanceUID)))) {
                                 XmlSerializer.writePresentation(img, destinationFile);
@@ -421,8 +412,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static String getExtension(String format) {
         if (EXPORT_FORMAT[3].equals(format)) {
             return ".png"; //$NON-NLS-1$
-        } else if (EXPORT_FORMAT[4].equals(format)) {
-            return ".tif"; //$NON-NLS-1$
         }
         return ".jpg"; //$NON-NLS-1$
     }
@@ -714,14 +703,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             return null;
         }
         BufferedImage thumbnail = null;
-        PlanarImage imgPl = image.getImage(null);
+        RenderedImage imgPl = image.getImage(null);
         if (imgPl != null) {
             RenderedImage img = image.getRenderedImage(imgPl);
-            final double scale = Math.min(128 / (double) img.getHeight(), 128 / (double) img.getWidth());
-            final PlanarImage thumb = scale < 1.0
-                ? SubsampleAverageDescriptor.create(img, scale, scale, Thumbnail.DownScaleQualityHints).getRendering()
-                : PlanarImage.wrapRenderedImage(img);
-            thumbnail = thumb.getAsBufferedImage();
+            thumbnail = ImageProcessor.buildThumbnail(img, new Dimension(128, 128), true);
         }
         // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
         image.removeImageFromCache();
@@ -735,7 +720,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         String pmi = TagD.getTagValue(image, Tag.PhotometricInterpretation, String.class);
         BufferedImage bi = thumbnail;
         if (thumbnail.getColorModel().getColorSpace().getType() != ColorSpace.TYPE_GRAY) {
-            bi = convertBI(thumbnail, BufferedImage.TYPE_BYTE_INDEXED);
+            bi = ImageProcessor.convertTo(thumbnail, BufferedImage.TYPE_BYTE_INDEXED);
             pmi = "PALETTE COLOR"; //$NON-NLS-1$
         }
 
@@ -783,15 +768,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return iconItem;
     }
 
-    private static BufferedImage convertBI(BufferedImage src, int imageType) {
-        BufferedImage dst = new BufferedImage(src.getWidth(), src.getHeight(), imageType);
-        Graphics2D big = dst.createGraphics();
-        try {
-            big.drawImage(src, 0, 0, null);
-        } finally {
-            big.dispose();
-        }
-        return dst;
-    }
+
 
 }

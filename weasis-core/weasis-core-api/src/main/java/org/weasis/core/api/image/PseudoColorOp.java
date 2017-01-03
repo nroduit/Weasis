@@ -14,16 +14,13 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
-
-import javax.media.jai.JAI;
-import javax.media.jai.LookupTableJAI;
 
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.op.ByteLut;
-import org.weasis.core.api.image.util.ImageToolkit;
+import org.weasis.core.api.image.util.LookupTableJAI;
 
 public class PseudoColorOp extends AbstractOp {
 
@@ -68,16 +65,10 @@ public class PseudoColorOp extends AbstractOp {
             byte[][] lut = invert ? lutTable.getInvertedLutTable() : lutTable.getLutTable();
             if (lut == null) {
                 if (invert) {
-                    ParameterBlock pb = new ParameterBlock();
-                    pb.addSource(source);
-                    result = JAI.create("invert", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+                    result = ImageProcessor.invertLUT(source);
                 }
             } else {
-                // TODO check LUT type with sample data type.
-                ParameterBlock pb = new ParameterBlock();
-                pb.addSource(source);
-                pb.add(new LookupTableJAI(lut));
-                result = JAI.create("lookup", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+                result = new LookupTableJAI(lut).lookupToRenderedImage(source, null);
             }
         }
 

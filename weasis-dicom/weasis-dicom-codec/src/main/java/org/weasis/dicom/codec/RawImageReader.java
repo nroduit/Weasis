@@ -162,8 +162,7 @@ public class RawImageReader extends ImageReader {
                 Raster.createWritableRaster(sampleModel.createCompatibleSampleModel(image.getMinX() + image.getWidth(),
                     image.getMinY() + image.getHeight()), new Point(0, 0));
 
-            bi = new BufferedImage(colorModel, raster, colorModel != null ? colorModel.isAlphaPremultiplied() : false,
-                new Hashtable());
+            bi = new BufferedImage(colorModel, raster, colorModel.isAlphaPremultiplied(), null);
         } else {
             raster = bi.getWritableTile(0, 0);
         }
@@ -204,7 +203,7 @@ public class RawImageReader extends ImageReader {
     @Override
     public Raster readRaster(int imageIndex, ImageReadParam param) throws IOException {
         BufferedImage bi = read(imageIndex, param);
-        return bi.getData();
+        return bi.getRaster();
     }
 
     @Override

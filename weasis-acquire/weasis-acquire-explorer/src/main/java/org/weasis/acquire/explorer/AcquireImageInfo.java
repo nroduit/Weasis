@@ -187,6 +187,7 @@ public class AcquireImageInfo {
 
             postProcessOpManager.setParamValue(AutoLevelsOp.OP_NAME, AutoLevelsOp.P_AUTO_LEVEL,
                 nextValues.isAutoLevel());
+            postProcessOpManager.setParamValue(AutoLevelsOp.OP_NAME, AutoLevelsOp.P_IMAGE_ELEMENT, image);
             postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, nextValues.isFlip());
 
             if (nextValues.getRatio() != currentValues.getRatio()) {
@@ -273,6 +274,7 @@ public class AcquireImageInfo {
             (double) defaultValues.getContrast());
         postProcessOpManager.setParamValue(AutoLevelsOp.OP_NAME, AutoLevelsOp.P_AUTO_LEVEL,
             defaultValues.isAutoLevel());
+        postProcessOpManager.setParamValue(AutoLevelsOp.OP_NAME, AutoLevelsOp.P_IMAGE_ELEMENT, image);
 
         if (view != null) {
             view.getImageLayer().setImage(image, postProcessOpManager);

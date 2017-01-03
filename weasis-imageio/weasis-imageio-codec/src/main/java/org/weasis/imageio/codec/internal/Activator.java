@@ -16,7 +16,6 @@ import javax.imageio.spi.ImageWriterSpi;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.weasis.core.api.image.util.JAIUtil;
 
 import com.sun.media.imageioimpl.common.ImageioUtil;
 import com.sun.media.imageioimpl.plugins.bmp.BMPImageReaderSpi;
@@ -40,7 +39,6 @@ import com.sun.media.imageioimpl.plugins.wbmp.WBMPImageReaderSpi;
 import com.sun.media.imageioimpl.plugins.wbmp.WBMPImageWriterSpi;
 import com.sun.media.imageioimpl.stream.ChannelImageInputStreamSpi;
 import com.sun.media.imageioimpl.stream.ChannelImageOutputStreamSpi;
-import com.sun.media.jai.imageioimpl.ImageReadWriteSpi;
 
 public class Activator implements BundleActivator {
 
@@ -72,9 +70,6 @@ public class Activator implements BundleActivator {
         // TODO Should be in properties?
         // Unregister sun native jpeg codec
         // ImageioUtil.unRegisterServiceProvider(registry, CLibJPEGImageReaderSpi.class);
-
-        // Register the ImageRead and ImageWrite operation for JAI
-        new ImageReadWriteSpi().updateRegistry(JAIUtil.getOperationRegistry());
     }
 
     @Override

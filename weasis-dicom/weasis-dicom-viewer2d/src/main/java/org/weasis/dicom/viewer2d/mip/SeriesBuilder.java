@@ -16,6 +16,8 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,10 +26,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.PlanarImage;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -45,7 +43,6 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.op.MaxCollectionZprojection;
 import org.weasis.core.api.image.op.MeanCollectionZprojection;
 import org.weasis.core.api.image.op.MinCollectionZprojection;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
@@ -72,7 +69,7 @@ public class SeriesBuilder {
         final MediaSeries<DicomImageElement> series, List<DicomImageElement> dicoms, Type mipType, Integer extend,
         boolean fullSeries) {
 
-        PlanarImage curImage = null;
+        RenderedImage curImage = null;
         if (series != null) {
 
             SeriesComparator sort = (SeriesComparator) view.getActionValue(ActionW.SORTSTACK.cmd());
@@ -157,7 +154,7 @@ public class SeriesBuilder {
                         File mipDir =
                             AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
                         raw = new RawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$
-                        writeRasterInRaw(curImage.getAsBufferedImage(), raw.getOutputStream());
+                        writeRasterInRaw(curImage.getData(), raw.getOutputStream());
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
@@ -271,14 +268,7 @@ public class SeriesBuilder {
         return 1.0;
     }
 
-    public static PlanarImage arithmeticOperation(String operation, PlanarImage img1, PlanarImage img2) {
-        ParameterBlockJAI pb2 = new ParameterBlockJAI(operation);
-        pb2.addSource(img1);
-        pb2.addSource(img2);
-        return JAI.create(operation, pb2, ImageToolkit.NOCACHE_HINT);
-    }
-
-    public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources,
+    public static RenderedImage addCollectionOperation(Type mipType, List<ImageElement> sources,
         final TaskMonitor taskMonitor) {
         if (Type.MIN.equals(mipType)) {
             MinCollectionZprojection op = new MinCollectionZprojection(sources, taskMonitor);
@@ -294,7 +284,13 @@ public class SeriesBuilder {
 
     static void writeRasterInRaw(BufferedImage image, OutputStream out) throws IOException {
         if (out != null && image != null) {
-            DataBuffer dataBuffer = image.getRaster().getDataBuffer();
+            writeRasterInRaw(image.getRaster(), out);
+        }
+    }
+    
+    static void writeRasterInRaw(Raster image, OutputStream out) throws IOException {
+        if (out != null && image != null) {
+            DataBuffer dataBuffer = image.getDataBuffer();
             byte[] bytesOut = null;
             if (dataBuffer instanceof DataBufferByte) {
                 bytesOut = ((DataBufferByte) dataBuffer).getData();

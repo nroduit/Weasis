@@ -11,13 +11,11 @@
 package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
-
-import javax.media.jai.JAI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.KernelData;
 
 public class FilterOp extends AbstractOp {
@@ -51,10 +49,7 @@ public class FilterOp extends AbstractOp {
         RenderedImage result = source;
         KernelData kernel = (KernelData) params.get(P_KERNEL_DATA);
         if (kernel != null && !kernel.equals(KernelData.NONE)) {
-            ParameterBlock paramBlock = new ParameterBlock();
-            paramBlock.addSource(source);
-            paramBlock.add(kernel.getKernelJAI());
-            result = JAI.create("convolve", paramBlock, null); //$NON-NLS-1$
+            result = ImageProcessor.filter(source, kernel);
         }
         params.put(Param.OUTPUT_IMG, result);
     }

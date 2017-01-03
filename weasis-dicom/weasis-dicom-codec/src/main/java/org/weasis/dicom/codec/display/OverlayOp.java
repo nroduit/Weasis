@@ -10,12 +10,11 @@
  *******************************************************************************/
 package org.weasis.dicom.codec.display;
 
+import java.awt.Color;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
-
-import javax.media.jai.PlanarImage;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -25,12 +24,11 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
-import org.weasis.core.api.image.MergeImgOp;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
-import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
@@ -93,8 +91,8 @@ public class OverlayOp extends AbstractOp {
                             Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
                             Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
                             if (height != null && width != null) {
-                                imgOverlay = PlanarImage.wrapRenderedImage(OverlayUtils.getBinaryOverlays(image,
-                                    reader.getDicomObject(), frame, width, height, params));
+                                imgOverlay = OverlayUtils.getBinaryOverlays(image, reader.getDicomObject(), frame,
+                                    width, height, params);
                             }
                         }
                     } catch (IOException e) {
@@ -102,9 +100,8 @@ public class OverlayOp extends AbstractOp {
                     }
                 }
             }
-            result = imgOverlay == null ? source : MergeImgOp.combineTwoImages(source, imgOverlay, 255);
+            result = imgOverlay == null ? source : ImageProcessor.overlay(source, imgOverlay, Color.WHITE);
         }
-
         params.put(Param.OUTPUT_IMG, result);
     }
 }

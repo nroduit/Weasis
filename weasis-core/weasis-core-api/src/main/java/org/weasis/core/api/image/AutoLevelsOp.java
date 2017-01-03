@@ -10,23 +10,19 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
-
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.util.ImageToolkit;
+import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.media.data.ImageElement;
 
 public class AutoLevelsOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(AutoLevelsOp.class);
 
     public static final String OP_NAME = Messages.getString("AutoLevelsOp.auto_ct"); //$NON-NLS-1$
-
+    public static final String P_IMAGE_ELEMENT = "img.element"; //$NON-NLS-1$
     /**
      * Set whether auto levels is applied to the image (Required parameter).
      *
@@ -49,41 +45,17 @@ public class AutoLevelsOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
+        ImageElement imageElement = (ImageElement) params.get(P_IMAGE_ELEMENT);
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         Boolean auto = (Boolean) params.get(P_AUTO_LEVEL);
 
-        if (auto != null && auto) {
-            ParameterBlock pb = new ParameterBlock();
-            pb.addSource(source);
-            PlanarImage dst = JAI.create("extrema", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
-            double[][] extrema = (double[][]) dst.getProperty("extrema"); //$NON-NLS-1$
-
-            int numBands = dst.getSampleModel().getNumBands();
-            double[] slopes = new double[numBands];
-            double[] yInts = new double[numBands];
-            // find the overall min, max (all bands)
-            for (int i = 0; i < numBands; i++) {
-                double range = extrema[1][i] - extrema[0][i];
-                if (range < 1.0) {
-                    range = 1.0;
-                }
-                slopes[i] = 255.0D / range;
-                yInts[i] = 255.0D - slopes[i] * extrema[1][i];
-            }
-
-            // Rescaling from xxx to byte range
-            pb = new ParameterBlock();
-            pb.addSource(source);
-            pb.add(slopes);
-            pb.add(yInts);
-            dst = JAI.create("rescale", pb, null); //$NON-NLS-1$
-
-            // Produce a byte image
-            pb = new ParameterBlock();
-            pb.addSource(dst);
-            pb.add(DataBuffer.TYPE_BYTE);
-            result = JAI.create("format", pb, null); //$NON-NLS-1$
+        if (auto != null && auto && imageElement != null) {
+            double min = imageElement.getMinValue(null, true);
+            double max = imageElement.getMaxValue(null, true);
+            double slope = 255.0 / (max -min);
+            double yint = 255.0 - slope * max;
+            result = ImageProcessor.rescaleToByte(source, slope, yint);
         }
 
         params.put(Param.OUTPUT_IMG, result);

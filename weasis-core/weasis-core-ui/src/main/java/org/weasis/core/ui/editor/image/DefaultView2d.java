@@ -44,6 +44,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
+import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.beans.PropertyChangeEvent;
@@ -55,7 +56,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -95,6 +95,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -121,7 +122,6 @@ import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.Draggable;
-import org.weasis.core.ui.model.utils.GraphicUtil;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.bean.PanPoint.State;
@@ -307,7 +307,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    protected PlanarImage getPreprocessedImage(E imageElement) {
+    protected RenderedImage getPreprocessedImage(E imageElement) {
         return imageElement.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
     }
 
@@ -322,7 +322,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         PixelInfo pixelInfo = new PixelInfo();
         E imageElement = imageLayer.getSourceImage();
         if (imageElement != null && imageLayer.getReadIterator() != null) {
-            PlanarImage image = getPreprocessedImage(imageElement);
+            RenderedImage image = getPreprocessedImage(imageElement);
             // realPoint to handle special case: non square pixel image
             Point realPoint = new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5),
                 (int) Math.ceil(p.y / imageElement.getRescaleY() - 0.5));
@@ -337,11 +337,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (image != null && area.contains(p)) {
                 try {
                     realPoint.translate(-(int) area.getX(), -(int) area.getY());
-                    if (image.getBounds().contains(realPoint)) {
+                    if (ImageToolkit.getBounds(image).contains(realPoint)) {
                         pixelInfo.setPosition(realPoint);
                         pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
                         pixelInfo.setPixelSize(imageElement.getPixelSize());
-                        double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null);
+                        Raster raster = imageLayer.getReadIterator().getData(new Rectangle(realPoint,new Dimension(1,1)));
+                        double[] c = new double[raster.getNumBands()];
+                        c = raster.getPixel(realPoint.x, realPoint.y, c);
                         pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
                         fillPixelInfo(pixelInfo, imageElement, c);
                         if (c != null && c.length >= 1) {
@@ -365,7 +367,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return pixelInfo;
     }
 
-    protected static String[] getChannelNames(PlanarImage image) {
+    protected static String[] getChannelNames(RenderedImage image) {
         if (image != null) {
             ColorModel cm = image.getColorModel();
             if (cm != null) {
@@ -623,7 +625,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
                 if (AuditLog.LOGGER.isInfoEnabled()) {
-                    PlanarImage image = img.getImage();
+                    RenderedImage image = img.getImage();
                     if (image != null) {
                         StringBuilder pixSize = new StringBuilder();
                         SampleModel sm = image.getSampleModel();
@@ -1542,7 +1544,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public static Cursor getCustomCursor(String filename, String cursorName, int hotSpotX, int hotSpotY) {
         Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
-        ImageIcon icon = new ImageIcon(GraphicUtil.class.getResource("/icon/cursor/" + filename)); //$NON-NLS-1$
+        ImageIcon icon = new ImageIcon(DefaultView2d.class.getResource("/icon/cursor/" + filename)); //$NON-NLS-1$
         Dimension bestCursorSize = defaultToolkit.getBestCursorSize(icon.getIconWidth(), icon.getIconHeight());
         Point hotSpot = new Point((hotSpotX * bestCursorSize.width) / icon.getIconWidth(),
             (hotSpotY * bestCursorSize.height) / icon.getIconHeight());

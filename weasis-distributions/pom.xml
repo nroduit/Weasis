@@ -40,8 +40,7 @@
 
 		<dockingframes.version>1.1.2-P18a</dockingframes.version>
 		<substance.version>7.3</substance.version>
-		<jai.version>1.1.4-b07</jai.version>
-		<jai.native.version>1.1.4-b03</jai.native.version>
+		<weasis.opencv.native.version>=3.2.0</weasis.opencv.native.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
 		<weasis.jpeg.native.version>1.0.7-6b</weasis.jpeg.native.version>
 		<weasis.openjpeg.native.version>2.1.8</weasis.openjpeg.native.version>
@@ -183,30 +182,6 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-									<artifactId>jai-lib</artifactId>
-									<version>${jai.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-									<artifactId>jai-lib-linux-x86</artifactId>
-									<version>${jai.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-									<artifactId>jai-lib-linux-x86-64</artifactId>
-									<version>${jai.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-									<artifactId>jai-lib-windows-x86</artifactId>
-									<version>${jai.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 									<artifactId>vecmath</artifactId>
 									<version>${com.sun.media.j3d.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
@@ -225,6 +200,46 @@
 									<groupId>org.weasis.core</groupId>
 									<artifactId>weasis-core-ui</artifactId>
 									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								
+								<!-- ===================================== -->
+								<!-- Weasis OpenCV bundles -->
+								<!-- ===================================== -->
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-linux-x86</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-linux-x86-64</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-windows-x86</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-windows-x86-64</artifactId>
+									<version>${weasis.opencv.native.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 

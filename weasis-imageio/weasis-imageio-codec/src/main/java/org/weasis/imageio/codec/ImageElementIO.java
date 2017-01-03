@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.imageio.codec;
 
-import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -22,16 +21,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 import java.util.Objects;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.PlanarImage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +35,8 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
@@ -82,7 +78,7 @@ public class ImageElementIO implements MediaReader {
     }
 
     @Override
-    public PlanarImage getImageFragment(MediaElement media) throws Exception {
+    public RenderedImage getImageFragment(MediaElement media) throws Exception {
         Objects.requireNonNull(media);
         FileCache cache = media.getFileCache();
 
@@ -92,11 +88,11 @@ public class ImageElementIO implements MediaReader {
             file = cache.getTransformedFile();
             if (file == null) {
                 String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes());
-                imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".tif"); //$NON-NLS-1$
+                imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".pnm"); //$NON-NLS-1$
                 if (Files.isReadable(imgCachePath)) {
                     file = imgCachePath.toFile();
                     cache.setTransformedFile(file);
-                    this.mimeType = "image/tiff"; //$NON-NLS-1$
+                    this.mimeType = "image/x-portable-anymap"; //$NON-NLS-1$
                     imgCachePath = null;
                 } else {
                     file = cache.getOriginalFile().get();
@@ -107,7 +103,7 @@ public class ImageElementIO implements MediaReader {
         }
 
         if (file != null) {
-            PlanarImage img = readImage(file, imgCachePath == null);
+            RenderedImage img = readImage(file, imgCachePath == null);
 
             if (imgCachePath != null) {
                 File rawFile = uncompress(imgCachePath, img);
@@ -122,26 +118,30 @@ public class ImageElementIO implements MediaReader {
         return null;
     }
 
-    private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
+    private RenderedImage readImage(File file, boolean createTiledLayout) throws Exception {
         ImageReader reader = getDefaultReader(mimeType);
         if (reader == null) {
             LOGGER.info("Cannot find a reader for the mime type: {}", mimeType); //$NON-NLS-1$
             return null;
         }
-        PlanarImage img;
-        RenderingHints hints = createTiledLayout ? LayoutUtil.createTiledLayoutHints() : null;
-        ImageInputStream in = new FileImageInputStream(new RandomAccessFile(file, "r")); //$NON-NLS-1$
-        ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
-        pb.setParameter("Input", in); //$NON-NLS-1$
-        pb.setParameter("Reader", reader); //$NON-NLS-1$
-        img = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
+
+        ImageInputStream stream = new FileImageInputStream(new RandomAccessFile(file, "r")); //$NON-NLS-1$
+        ImageReadParam param = reader.getDefaultReadParam();
+        reader.setInput(stream, true, true);
+        RenderedImage bi;
+        try {
+            bi = reader.read(0, param);
+        } finally {
+            reader.dispose();
+            stream.close();
+        }
 
         // to avoid problem with alpha channel and png encoded in 24 and 32 bits
-        img = PlanarImage.wrapRenderedImage(ImageFiler.getReadableImage(img));
+        bi = ImageFiler.getReadableImage(bi);
 
-        image.setTag(TagW.ImageWidth, img.getWidth());
-        image.setTag(TagW.ImageHeight, img.getHeight());
-        return img;
+        image.setTag(TagW.ImageWidth, bi.getWidth());
+        image.setTag(TagW.ImageHeight, bi.getHeight());
+        return bi;
     }
 
     @Override
@@ -311,14 +311,14 @@ public class ImageElementIO implements MediaReader {
         if (img != null && (img.getWidth() > ImageFiler.TILESIZE || img.getHeight() > ImageFiler.TILESIZE)
             && !mimeType.contains("dicom")) { //$NON-NLS-1$
             File outFile = imgCachePath.toFile();
-            if (ImageFiler.writeTIFF(outFile, img, true, true, false)) {
-                this.mimeType = "image/tiff"; //$NON-NLS-1$
+            if (ImageProcessor.writePNM(img, outFile, true)) {
+                this.mimeType = "image/x-portable-anymap"; //$NON-NLS-1$
                 return outFile;
             } else {
                 try {
                     Files.deleteIfExists(outFile.toPath());
                 } catch (IOException e) {
-                    LOGGER.error("Deleting temp tiff file", e); //$NON-NLS-1$
+                    LOGGER.error("Deleting temp pnm file", e); //$NON-NLS-1$
                 }
             }
         }

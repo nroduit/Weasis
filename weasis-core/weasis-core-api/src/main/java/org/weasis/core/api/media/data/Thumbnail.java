@@ -11,6 +11,7 @@
 package org.weasis.core.api.media.data;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -31,10 +32,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.imageio.ImageIO;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.SubsampleAverageDescriptor;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -46,7 +43,9 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
@@ -61,10 +60,6 @@ public class Thumbnail extends JLabel {
 
     public static final RenderingHints DownScaleQualityHints =
         new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
-    static {
-        DownScaleQualityHints.add(new RenderingHints(JAI.KEY_TILE_CACHE, null));
-    }
 
     public static final int MIN_SIZE = 48;
     public static final int DEFAULT_SIZE = 112;
@@ -109,11 +104,7 @@ public class Thumbnail extends JLabel {
         if (source == null) {
             return null;
         }
-        final double scale =
-            Math.min(Thumbnail.MAX_SIZE / (double) source.getHeight(), Thumbnail.MAX_SIZE / (double) source.getWidth());
-        return scale < 1.0
-            ? SubsampleAverageDescriptor.create(source, scale, scale, Thumbnail.DownScaleQualityHints).getRendering()
-            : source;
+        return ImageProcessor.buildThumbnail(source, new Dimension(Thumbnail.MAX_SIZE, Thumbnail.MAX_SIZE), true);
     }
 
     protected synchronized void buildThumbnail(MediaElement media, boolean keepMediaCache, OpManager opManager) {
@@ -152,8 +143,8 @@ public class Thumbnail extends JLabel {
         setIcon(media, icon, type, keepMediaCache, opManager);
     }
 
-    private void setIcon(final MediaElement media, final Icon mime, final String type,
-        final boolean keepMediaCache, OpManager opManager) {
+    private void setIcon(final MediaElement media, final Icon mime, final String type, final boolean keepMediaCache,
+        OpManager opManager) {
         this.setSize(thumbnailSize, thumbnailSize);
 
         ImageIcon icon = new ImageIcon() {
@@ -202,7 +193,8 @@ public class Thumbnail extends JLabel {
         return thumbnailPath;
     }
 
-    public synchronized BufferedImage getImage(final MediaElement media, final boolean keepMediaCache, final OpManager opManager) {
+    public synchronized BufferedImage getImage(final MediaElement media, final boolean keepMediaCache,
+        final OpManager opManager) {
         if ((imageSoftRef == null && readable) || (imageSoftRef != null && imageSoftRef.get() == null)) {
             if (loading.compareAndSet(false, true)) {
                 try {
@@ -214,7 +206,7 @@ public class Thumbnail extends JLabel {
 
                         @Override
                         protected Boolean doInBackground() throws Exception {
-                            loadThumbnail(media, keepMediaCache,opManager);
+                            loadThumbnail(media, keepMediaCache, opManager);
                             return Boolean.TRUE;
                         }
 
@@ -232,7 +224,8 @@ public class Thumbnail extends JLabel {
         return imageSoftRef.get();
     }
 
-    private void loadThumbnail(final MediaElement media, final boolean keepMediaCache, final OpManager opManager) throws Exception {
+    private void loadThumbnail(final MediaElement media, final boolean keepMediaCache, final OpManager opManager)
+        throws Exception {
         try {
             File file = thumbnailPath;
             boolean noPath = file == null || !file.canRead();
@@ -248,7 +241,7 @@ public class Thumbnail extends JLabel {
             if (noPath) {
                 if (media instanceof ImageElement) {
                     final ImageElement image = (ImageElement) media;
-                    PlanarImage imgPl = image.getImage(opManager);
+                    RenderedImage imgPl = image.getImage(opManager);
                     if (imgPl != null) {
                         RenderedImage img = image.getRenderedImage(imgPl);
                         final RenderedImage thumb = createThumbnail(img);
@@ -272,8 +265,8 @@ public class Thumbnail extends JLabel {
                                     // out of memory
                                 }
 
-                            } else if (thumb instanceof PlanarImage) {
-                                thumbnail = ((PlanarImage) thumb).getAsBufferedImage();
+                            } else if (thumb instanceof RenderedImage) {
+                                thumbnail = ImageToolkit.convertRenderedImage(thumb);
                             }
 
                             if (thumbnail == null) {
@@ -293,23 +286,16 @@ public class Thumbnail extends JLabel {
                 Load ref = new Load(file);
                 // loading images sequentially, only one thread pool
                 Future<BufferedImage> future = ImageElement.IMAGE_LOADER.submit(ref);
-                BufferedImage img = null;
                 BufferedImage thumb = null;
                 try {
-                    img = future.get();
+                    BufferedImage img = future.get();
                     if (img == null) {
                         thumb = null;
                     } else {
                         int width = img.getWidth();
                         int height = img.getHeight();
                         if (width > thumbnailSize || height > thumbnailSize) {
-                            final double scale =
-                                Math.min(thumbnailSize / (double) height, thumbnailSize / (double) width);
-                            PlanarImage t = scale < 1.0
-                                ? SubsampleAverageDescriptor.create(img, scale, scale, DownScaleQualityHints)
-                                : PlanarImage.wrapRenderedImage(img);
-                            thumb = t.getAsBufferedImage();
-                            t.dispose();
+                            thumb = ImageProcessor.buildThumbnail(img, new Dimension(thumbnailSize, thumbnailSize), true);
                         } else {
                             thumb = img;
                         }
@@ -374,7 +360,7 @@ public class Thumbnail extends JLabel {
 
         @Override
         public BufferedImage call() throws Exception {
-            return ImageIO.read(path);
+            return  ImageProcessor.readRenderedImage(path);
         }
     }
 

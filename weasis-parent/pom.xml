@@ -226,12 +226,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-			<artifactId>jai-lib</artifactId>
-			<version>1.1.4-b07</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>docking-frames</artifactId>
 			<version>1.1.2-P18a</version>

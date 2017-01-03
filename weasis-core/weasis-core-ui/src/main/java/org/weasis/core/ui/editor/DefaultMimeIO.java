@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.ui.editor;
 
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
@@ -17,8 +18,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-
-import javax.media.jai.PlanarImage;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -50,7 +49,7 @@ public class DefaultMimeIO implements MediaReader {
 
 
     @Override
-    public PlanarImage getImageFragment(MediaElement media) throws Exception {
+    public RenderedImage getImageFragment(MediaElement media) throws Exception {
         return null;
     }
 

@@ -19,7 +19,6 @@ import java.awt.image.DataBuffer;
 import java.awt.image.PixelInterleavedSampleModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -35,9 +34,6 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.NullDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
@@ -48,8 +44,6 @@ import org.dcm4che3.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
@@ -63,7 +57,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
-import com.sun.media.jai.util.ImageUtil;
 
 public class RawImageIO implements DcmMediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawImageIO.class);
@@ -131,7 +124,7 @@ public class RawImageIO implements DcmMediaReader {
     }
 
     @Override
-    public PlanarImage getImageFragment(MediaElement media) throws Exception {
+    public RenderedImage getImageFragment(MediaElement media) throws Exception {
         if (media != null && media.getFile() != null) {
             Integer allocated = TagD.getTagValue(media, Tag.BitsAllocated, Integer.class);
             Integer sample = TagD.getTagValue(media, Tag.SamplesPerPixel, Integer.class);
@@ -139,25 +132,10 @@ public class RawImageIO implements DcmMediaReader {
             Integer columns = TagD.getTagValue(media, Tag.Columns, Integer.class);
             ImageParameters h = new ImageParameters(rows, columns, allocated, sample, false);
             // RawImageReader doesn't need to be disposed
-            ImageReader reader = initRawImageReader(imageStream = ImageIO.createImageInputStream(media.getFile()), h, 1,
-                0, false, TagD.getTagValue(media, Tag.PixelRepresentation, Integer.class));
-
-            RenderedImage buffer = reader.readAsRenderedImage(0, null);
-            PlanarImage img = null;
-            if (buffer != null) {
-                if (ImageUtil.isBinary(buffer.getSampleModel())) {
-                    ParameterBlock pb = new ParameterBlock();
-                    pb.addSource(buffer);
-                    // Tile size are set in this operation
-                    img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
-                } else if (buffer.getTileWidth() != ImageFiler.TILESIZE
-                    || buffer.getTileHeight() != ImageFiler.TILESIZE) {
-                    img = ImageFiler.tileImage(buffer);
-                } else {
-                    img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
-                }
-            }
-            return img;
+            imageStream = ImageIO.createImageInputStream(media.getFile());
+            ImageReader reader = initRawImageReader(imageStream, h, 1, 0, false,
+                TagD.getTagValue(media, Tag.PixelRepresentation, Integer.class));
+            return reader.readAsRenderedImage(0, null);
         }
         return null;
     }

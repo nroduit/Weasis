@@ -12,14 +12,12 @@ package org.weasis.acquire.explorer.dicom;
 
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
-
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.TranslateDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -80,14 +78,16 @@ public final class Transform2Dicom {
 
             imgFile = new File(exportDirImage, sopInstanceUID + ".jpg"); //$NON-NLS-1$
             SimpleOpManager opManager = imageInfo.getPostProcessOpManager();
-            PlanarImage transformedImage = imageElement.getImage(opManager, false);
-            Rectangle area = (Rectangle) opManager.getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
-            Integer rotationAngle = Optional.ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
-            rotationAngle = rotationAngle % 360;
-            if (area != null && rotationAngle != 0 && rotationAngle != 180) {
-                transformedImage = TranslateDescriptor.create(transformedImage, (float) -area.getX(),
-                    (float) -area.getY(), null, null);
-            }
+            RenderedImage transformedImage = imageElement.getImage(opManager, false);
+            // TODO should be handled in the transformation
+            // Rectangle area = (Rectangle) opManager.getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
+            // Integer rotationAngle = Optional.ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME,
+            // RotationOp.P_ROTATE)).orElse(0);
+            // rotationAngle = rotationAngle % 360;
+            // if (area != null && rotationAngle != 0 && rotationAngle != 180) {
+            // transformedImage = TranslateDescriptor.create(transformedImage, (float) -area.getX(),
+            // (float) -area.getY(), null, null);
+            // }
 
             if (!ImageFiler.writeJPG(imgFile, transformedImage, 0.8f)) {
                 // out of memory ??
@@ -125,7 +125,8 @@ public final class Transform2Dicom {
                 Rectangle crop =
                     (Rectangle) imageInfo.getPostProcessOpManager().getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
                 if (crop != null) {
-                    Integer rotationAngle = Optional.ofNullable((Integer) imageInfo.getPostProcessOpManager().getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
+                    Integer rotationAngle = Optional.ofNullable((Integer) imageInfo.getPostProcessOpManager()
+                        .getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
                     rotationAngle = rotationAngle % 360;
                     if (rotationAngle == 0 || rotationAngle == 180) {
                         offset = new Point2D.Double(crop.getX(), crop.getY());

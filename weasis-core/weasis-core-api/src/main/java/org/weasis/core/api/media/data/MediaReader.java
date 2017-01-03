@@ -10,11 +10,10 @@
  *******************************************************************************/
 package org.weasis.core.api.media.data;
 
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.net.URI;
 import java.util.Map;
-
-import javax.media.jai.PlanarImage;
 
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 
@@ -34,7 +33,7 @@ public interface MediaReader extends Tagable {
 
     MediaElement getPreview();
 
-    PlanarImage getImageFragment(MediaElement media) throws Exception;
+    RenderedImage getImageFragment(MediaElement media) throws Exception;
 
     int getMediaElementNumber();
 

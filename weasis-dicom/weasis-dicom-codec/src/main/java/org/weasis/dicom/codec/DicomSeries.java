@@ -10,12 +10,11 @@
  *******************************************************************************/
 package org.weasis.dicom.codec;
 
+import java.awt.image.RenderedImage;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.media.jai.PlanarImage;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -270,14 +269,14 @@ public class DicomSeries extends Series<DicomImageElement> {
                 Boolean cache = (Boolean) img.getTagValue(TagW.ImageCache);
                 if (cache == null || !cache) {
                     long start = System.currentTimeMillis();
-                    PlanarImage i = img.getImage();
+                    RenderedImage i = img.getImage();
                     if (i != null) {
                         int tymin = i.getMinTileY();
-                        int tymax = i.getMaxTileY();
+                        int tymax = tymin + i.getNumYTiles();
                         int txmin = i.getMinTileX();
-                        int txmax = i.getMaxTileX();
-                        for (int tj = tymin; tj <= tymax; tj++) {
-                            for (int ti = txmin; ti <= txmax; ti++) {
+                        int txmax = txmin + i.getNumXTiles() ;
+                        for (int tj = tymin; tj < tymax; tj++) {
+                            for (int ti = txmin; ti < txmax; ti++) {
                                 try {
                                     i.getTile(ti, tj);
                                 } catch (OutOfMemoryError e) {

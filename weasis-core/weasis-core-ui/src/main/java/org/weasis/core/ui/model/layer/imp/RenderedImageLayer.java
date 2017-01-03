@@ -21,10 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-import javax.media.jai.PlanarImage;
-import javax.media.jai.iterator.RandomIter;
-import javax.media.jai.iterator.RandomIterFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
@@ -59,7 +55,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
     private OpManager preprocessing;
     private E sourceImage;
-    private RandomIter readIterator;
+    private RenderedImage readIterator;
     private boolean buildIterator = false;
     private RenderedImage displayImage;
     private Boolean visible = true;
@@ -87,7 +83,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     }
 
     @Override
-    public RandomIter getReadIterator() {
+    public RenderedImage getReadIterator() {
         return readIterator;
     }
 
@@ -320,11 +316,11 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         if (displayImage == null) {
             disOpManager.clearNodeIOCache();
         }
-        PlanarImage img = null;
+        RenderedImage img = null;
         if (buildIterator && sourceImage != null) {
             img = sourceImage.getImage(preprocessing);
         }
-        readIterator = (img == null) ? null : RandomIterFactory.create(img, null);
+        readIterator = img;
         fireLayerChanged();
     }
 

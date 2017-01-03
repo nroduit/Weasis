@@ -53,10 +53,6 @@ import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageInputStreamImpl;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.AndConstDescriptor;
-import javax.media.jai.operator.NullDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
@@ -80,9 +76,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
-import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
@@ -104,7 +100,6 @@ import org.weasis.dicom.codec.utils.OverlayUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageioimpl.common.SignedDataImageParam;
-import com.sun.media.jai.util.ImageUtil;
 
 public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
@@ -710,7 +705,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     @Override
-    public PlanarImage getImageFragment(MediaElement media) throws Exception {
+    public RenderedImage getImageFragment(MediaElement media) throws Exception {
         if (media != null && media.getKey() instanceof Integer && isReadableDicom()) {
             int frame = (Integer) media.getKey();
             if (frame >= 0 && frame < numberOfFrame && hasPixel) {
@@ -723,22 +718,13 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         return null;
     }
 
-    private PlanarImage getValidImage(RenderedImage buffer, MediaElement media) {
-        PlanarImage img = null;
+    private RenderedImage getValidImage(RenderedImage buffer, MediaElement media) {
+        RenderedImage img = null;
         if (buffer != null) {
-            // Bug fix: CLibImageReader and J2KImageReaderCodecLib (imageio libs) do not handle negative values
-            // for short data. They convert signed short to unsigned short.
+            img = ImageFiler.getReadableImage(buffer);
+            
             if (dataType == DataBuffer.TYPE_SHORT && buffer.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
-                img = RectifyUShortToShortDataDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
-            } else if (ImageUtil.isBinary(buffer.getSampleModel())) {
-                ParameterBlock pb = new ParameterBlock();
-                pb.addSource(buffer);
-                // Tile size are set in this operation
-                img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
-            } else if (buffer.getTileWidth() != ImageFiler.TILESIZE || buffer.getTileHeight() != ImageFiler.TILESIZE) {
-                img = ImageFiler.tileImage(buffer);
-            } else {
-                img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
+                img = ImageToolkit.fixSignedShortDataBuffer(img); // sh
             }
 
             /*
@@ -776,7 +762,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     }
                 }
                 // Set to 0 all bits outside bitStored
-                img = AndConstDescriptor.create(img, new int[] { overlayBitMask }, null);
+                img = ImageProcessor.bitwiseAnd(img, overlayBitMask);
             }
             img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
         }
@@ -1174,7 +1160,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     bi = reader.readAsRenderedImage(frameIndex, param);
                 }
             }
-            return validateSignedShortDataBuffer(bi);
+            if (bi != null && dataType == DataBuffer.TYPE_SHORT
+                && bi.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT && (highBit + 1) < bitsAllocated) {
+                ImageToolkit.fixSignedShortDataBuffer(bi, highBit + 1);
+            }
+            return bi;
         } finally {
             /*
              * "readingImage = false" will close the stream of the tiled image. The problem is that
@@ -1214,25 +1204,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         readingImage = true;
 
         return bi;
-    }
-
-    public RenderedImage validateSignedShortDataBuffer(RenderedImage source) {
-        /*
-         * Issue in ComponentColorModel when signed short DataBuffer, only 16 bits is supported see
-         * http://java.sun.com/javase/6/docs/api/java/awt/image/ ComponentColorModel.html Instances of
-         * ComponentColorModel created with transfer types DataBuffer.TYPE_SHORT, DataBuffer.TYPE_FLOAT, and
-         * DataBuffer.TYPE_DOUBLE use all the bits of all sample values. Thus all color/alpha components have 16 bits
-         * when using DataBuffer.TYPE_SHORT, 32 bits when using DataBuffer.TYPE_FLOAT, and 64 bits when using
-         * DataBuffer.TYPE_DOUBLE. When the ComponentColorModel(ColorSpace, int[], boolean, boolean, int, int) form of
-         * constructor is used with one of these transfer types, the bits array argument is ignored.
-         */
-
-        // TODO test with all decoders (works with raw decoder)
-        if (source != null && dataType == DataBuffer.TYPE_SHORT
-            && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT && (highBit + 1) < bitsAllocated) {
-            return RectifySignedShortDataDescriptor.create(source, new int[] { highBit + 1 }, null);
-        }
-        return source;
     }
 
     public boolean isSkipLargePrivate() {

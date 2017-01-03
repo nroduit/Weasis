@@ -14,21 +14,10 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
-import java.awt.image.renderable.ParameterBlock;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-
-import javax.media.jai.Histogram;
-import javax.media.jai.JAI;
-import javax.media.jai.LookupTableJAI;
-import javax.media.jai.OpImage;
-import javax.media.jai.ROI;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.operator.FormatDescriptor;
-import javax.media.jai.operator.LookupDescriptor;
-import javax.media.jai.operator.RescaleDescriptor;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -39,9 +28,8 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
-import org.weasis.core.api.image.util.ImageToolkit;
-import org.weasis.core.api.image.util.LayoutUtil;
+import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.image.util.LookupTableJAI;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.SoftHashMap;
@@ -503,40 +491,6 @@ public class DicomImageElement extends ImageElement {
         return lutShapeCollection;
     }
 
-    /**
-     *
-     * @param imageSource
-     * @param pixelPadding
-     * @return Histogram of the image source after modality lookup rescaled
-     */
-
-    public Histogram getHistogram(RenderedImage imageSource, TagReadable tagable, boolean pixelPadding) {
-        LookupTableJAI lookup = getModalityLookup(tagable, pixelPadding);
-        if (imageSource == null || lookup == null) {
-            return null;
-        }
-        // TODO instead of computing histo from image get Dicom attribute if present. Handle pixel padding!
-
-        ParameterBlock pb = new ParameterBlock();
-        pb.addSource(imageSource);
-        pb.add(lookup);
-        final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, null); //$NON-NLS-1$
-
-        pb.removeSources();
-        pb.removeParameters();
-
-        pb.addSource(imageModalityTransformed);
-        pb.add(null); // No ROI
-        pb.add(1); // Sampling
-        pb.add(1); // periods
-        pb.add(new int[] { getAllocatedOutRangeSize() }); // Num. bins.
-        pb.add(new double[] { getMinAllocatedValue(tagable, pixelPadding) }); // Min value to be considered.
-        pb.add(new double[] { getMaxAllocatedValue(tagable, pixelPadding) }); // Max value to be considered.
-
-        RenderedOp op = JAI.create("histogram", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
-        return (Histogram) op.getProperty("histogram"); //$NON-NLS-1$
-    }
-
     @Override
     protected void findMinMaxValues(RenderedImage img, boolean exclude8bitImage) {
         /*
@@ -606,22 +560,12 @@ public class DicomImageElement extends ImageElement {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-                RenderedOp dst = ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, new Double(paddingValueMin),
-                    new Double(paddingValueMax), null);
-                // To ensure this image won't be stored in tile cache
-                ((OpImage) dst.getRendering()).setTileCache(null);
-
-                double[][] extrema = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
-                double min = Double.MAX_VALUE;
-                double max = -Double.MAX_VALUE;
-                int numBands = dst.getSampleModel().getNumBands();
-
-                for (int i = 0; i < numBands; i++) {
-                    min = Math.min(min, extrema[0][i]);
-                    max = Math.max(max, extrema[1][i]);
+                double[] val = ImageProcessor.findMinMaxValues(img);
+                if (val != null && val.length == 2) {
+                    // TODO padding values?
+                    this.minPixelValue = val[0];
+                    this.maxPixelValue = val[1];
                 }
-                this.minPixelValue = min;
-                this.maxPixelValue = max;
                 // Handle special case when min and max are equal, ex. black image
                 // + 1 to max enables to display the correct value
                 if (this.minPixelValue.equals(this.maxPixelValue)) {
@@ -740,7 +684,7 @@ public class DicomImageElement extends ImageElement {
 
             // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, new ImageLayout(imageSource));
             RenderedImage imageModalityTransformed =
-                modalityLookup == null ? imageSource : LookupDescriptor.create(imageSource, modalityLookup, null);
+                modalityLookup == null ? imageSource : modalityLookup.lookupToRenderedImage(imageSource, null);
 
             /*
              * C.11.2.1.2 Window center and window width
@@ -764,14 +708,13 @@ public class DicomImageElement extends ImageElement {
 
             if (prLutData == null) {
                 // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
-                return LookupDescriptor.create(imageModalityTransformed, voiLookup,
-                    LayoutUtil.createGrayRenderedImage());
+                return voiLookup.lookupToRenderedImage(imageModalityTransformed, null);
             }
 
             RenderedImage imageVoiTransformed = voiLookup == null ? imageModalityTransformed
-                : LookupDescriptor.create(imageModalityTransformed, voiLookup, null);
+                : voiLookup.lookupToRenderedImage(imageModalityTransformed, null);
             // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
-            return LookupDescriptor.create(imageVoiTransformed, prLutData, LayoutUtil.createGrayRenderedImage());
+            return prLutData.lookupToRenderedImage(imageVoiTransformed, null);
 
         } else if (datatype == DataBuffer.TYPE_INT || datatype == DataBuffer.TYPE_FLOAT
             || datatype == DataBuffer.TYPE_DOUBLE) {
@@ -784,9 +727,7 @@ public class DicomImageElement extends ImageElement {
             double slope = 255.0 / range;
             double yint = 255.0 - slope * high;
 
-            RenderedOp rescale =
-                RescaleDescriptor.create(imageSource, new double[] { slope }, new double[] { yint }, null);
-            return FormatDescriptor.create(rescale, DataBuffer.TYPE_BYTE, null);
+            return ImageProcessor.rescaleToByte(imageSource, slope, yint);
         }
         return null;
     }

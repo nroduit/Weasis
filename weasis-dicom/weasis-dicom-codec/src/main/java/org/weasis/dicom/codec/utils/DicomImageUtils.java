@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.weasis.dicom.codec.utils;
 
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.lang.reflect.Array;
@@ -19,9 +21,6 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
-import javax.media.jai.LookupTableJAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.LookupDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -29,6 +28,8 @@ import org.dcm4che3.image.PaletteColorModel;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
 import org.weasis.core.api.image.LutShape;
+import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.image.util.LookupTableJAI;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
@@ -45,7 +46,7 @@ public class DicomImageUtils {
     private DicomImageUtils() {
     }
 
-    public static PlanarImage getRGBImageFromPaletteColorModel(RenderedImage source, Attributes ds) {
+    public static RenderedImage getRGBImageFromPaletteColorModel(RenderedImage source, Attributes ds) {
         if (source == null) {
             return null;
         }
@@ -64,9 +65,9 @@ public class DicomImageUtils {
             LookupTableJAI lut = new LookupTableJAI(new byte[][] { r, g, b });
 
             // Replace the original image with the RGB image.
-            return LookupDescriptor.create(source, lut, null);
+            return ImageProcessor.applyLUT(source, lut);
         }
-        return PlanarImage.wrapRenderedImage(source);
+        return source;
     }
 
     /**

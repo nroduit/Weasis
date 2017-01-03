@@ -20,10 +20,10 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
+import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -40,14 +40,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.imageio.IIOException;
-import javax.media.jai.Interpolation;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.RasterFactory;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.operator.TranslateDescriptor;
-import javax.media.jai.operator.TransposeDescriptor;
-import javax.media.jai.operator.TransposeType;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.vecmath.Point3d;
@@ -59,6 +51,8 @@ import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.util.UIDUtils;
+import org.opencv.core.Core;
+import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -69,6 +63,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -162,35 +157,35 @@ public class SeriesBuilder {
                             if (SliceOrientation.SAGITTAL.equals(type1)) {
                                 // The reference image is the first of the sagittal stack (Left)
                                 rotate(vc, vr, Math.toRadians(270), resr);
-                                recParams[0] = new ViewParameter(uid1, SliceOrientation.AXIAL, false, null,
+                                recParams[0] = new ViewParameter(uid1, SliceOrientation.AXIAL, false, -1,
                                     new double[] { resr.x, resr.y, resr.z, row[0], row[1], row[2] }, true, true,
                                     new Object[] { 0.0, false }, frUID);
                                 recParams[1] = new ViewParameter(uid2, SliceOrientation.CORONAL, false,
-                                    TransposeDescriptor.ROTATE_270,
+                                    Core.ROTATE_90_COUNTERCLOCKWISE,
                                     new double[] { resr.x, resr.y, resr.z, col[0], col[1], col[2] }, true, true,
                                     new Object[] { true, 0.0 }, frUID);
                             } else if (SliceOrientation.CORONAL.equals(type1)) {
                                 // The reference image is the first of the coronal stack (Anterior)
                                 rotate(vc, vr, Math.toRadians(90), resc);
-                                recParams[0] = new ViewParameter(uid1, SliceOrientation.AXIAL, false, null,
+                                recParams[0] = new ViewParameter(uid1, SliceOrientation.AXIAL, false, -1,
                                     new double[] { row[0], row[1], row[2], resc.x, resc.y, resc.z }, false, true,
                                     new Object[] { 0.0, false }, frUID);
 
                                 rotate(vc, vr, Math.toRadians(90), resr);
                                 recParams[1] = new ViewParameter(uid2, SliceOrientation.SAGITTAL, true,
-                                    TransposeDescriptor.ROTATE_270,
+                                    Core.ROTATE_90_COUNTERCLOCKWISE,
                                     new double[] { resr.x, resr.y, resr.z, col[0], col[1], col[2] }, true, false,
                                     new Object[] { true, 0.0 }, frUID);
                             } else {
                                 // The reference image is the last of the axial stack (Head)
                                 rotate(vc, vr, Math.toRadians(270), resc);
-                                recParams[0] = new ViewParameter(uid1, SliceOrientation.CORONAL, true, null,
+                                recParams[0] = new ViewParameter(uid1, SliceOrientation.CORONAL, true, -1,
                                     new double[] { row[0], row[1], row[2], resc.x, resc.y, resc.z }, false, false,
                                     new Object[] { 0.0, false }, frUID);
 
                                 rotate(vr, vc, Math.toRadians(90), resr);
                                 recParams[1] = new ViewParameter(uid2, SliceOrientation.SAGITTAL, true,
-                                    TransposeDescriptor.ROTATE_270,
+                                    Core.ROTATE_90_COUNTERCLOCKWISE,
                                     new double[] { col[0], col[1], col[2], resr.x, resr.y, resr.z }, false, false,
                                     new Object[] { true, 0.0 }, frUID);
 
@@ -431,9 +426,9 @@ public class SeriesBuilder {
                     dataBuffer = new DataBufferInt(data, data.length);
                 }
 
-                WritableRaster raster = RasterFactory.createWritableRaster(sampleModel, dataBuffer, null);
+                WritableRaster raster = Raster.createWritableRaster(sampleModel, dataBuffer, null);
                 BufferedImage bufImg = new BufferedImage(cm, raster, false, null);
-                bufImg = getImage(bufImg, TransposeDescriptor.ROTATE_90);
+                bufImg = getImage(bufImg, Core.ROTATE_90_CLOCKWISE);
 
                 dataBuffer = bufImg.getRaster().getDataBuffer();
                 if (dataBuffer instanceof DataBufferByte) {
@@ -585,20 +580,18 @@ public class SeriesBuilder {
                     }
                 }
                 // TODO do not open more than 512 files (Limitation to open 1024 in the same time on Ubuntu)
-                PlanarImage image = dcm.getImage();
+                RenderedImage image = dcm.getImage();
                 if (image == null) {
                     abort[0] = true;
                     throw new IIOException("Cannot read an image!"); //$NON-NLS-1$
                 }
 
                 if (MathUtil.isDifferent(dcm.getRescaleX(), dcm.getRescaleY())) {
-                    ParameterBlock pb = new ParameterBlock();
-                    pb.addSource(image);
-                    pb.add((float) dcm.getRescaleX()).add((float) dcm.getRescaleY()).add(0.0f).add(0.0f);
-                    pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
-                    image = JAI.create("scale", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+                    Dimension dim = new Dimension((int) (Math.abs(dcm.getRescaleX()) * image.getWidth()),
+                        (int) (Math.abs(dcm.getRescaleY()) * image.getHeight()));
+                    image = ImageProcessor.scale(image, dim, Imgproc.INTER_LINEAR);
                 }
-                writeRasterInRaw(getImage(image, params.transposeImage), newSeries);
+                writeRasterInRaw(getImage(image, params.rotateCvType), newSeries);
             }
             return lastSpace;
         } finally {
@@ -654,35 +647,18 @@ public class SeriesBuilder {
         }
     }
 
-    private static BufferedImage getImage(PlanarImage source, TransposeType rotate) {
-        if (rotate == null) {
-            return source == null ? null : source.getAsBufferedImage();
+    private static BufferedImage getImage(RenderedImage source, int rotateCvType) {
+        if (rotateCvType < 0) {
+            return source == null ? null : ImageToolkit.convertRenderedImage(source);
         }
-        return getRotatedImage(source, rotate);
+        return ImageProcessor.getRotatedImage(source, rotateCvType);
     }
 
-    private static BufferedImage getImage(BufferedImage source, TransposeType rotate) {
-        if (rotate == null) {
+    private static BufferedImage getImage(BufferedImage source, int rotateCvType) {
+        if (rotateCvType < 0) {
             return source == null ? null : source;
         }
-        return getRotatedImage(source, rotate);
-    }
-
-    private static BufferedImage getRotatedImage(RenderedImage source, TransposeType rotate) {
-        RenderedOp result;
-        if (source instanceof BufferedImage) {
-            source = PlanarImage.wrapRenderedImage(source);
-        }
-        // use Transpose operation
-        result = TransposeDescriptor.create(source, rotate, ImageToolkit.NOCACHE_HINT);
-        // Handle non square images. Translation is necessary because the transpose operator keeps the same
-        // origin (top left not the center of the image)
-        float diffw = source.getWidth() / 2.0f - result.getWidth() / 2.0f;
-        float diffh = source.getHeight() / 2.0f - result.getHeight() / 2.0f;
-        if (MathUtil.isDifferentFromZero(diffw) || MathUtil.isDifferentFromZero(diffh)) {
-            result = TranslateDescriptor.create(result, diffw, diffh, null, ImageToolkit.NOCACHE_HINT);
-        }
-        return result.getAsBufferedImage();
+        return ImageProcessor.getRotatedImage(source, rotateCvType);
     }
 
     private static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
@@ -747,7 +723,7 @@ public class SeriesBuilder {
         final String seriesUID;
         final SliceOrientation sliceOrientation;
         final boolean reverseSeriesOrder;
-        final TransposeType transposeImage;
+        final int rotateCvType;
         final double[] imgOrientation;
         final boolean rotateOutputImg;
         final boolean reverseIndexOrder;
@@ -755,12 +731,12 @@ public class SeriesBuilder {
         final String frameOfReferenceUID;
 
         public ViewParameter(String seriesUID, SliceOrientation sliceOrientation, boolean reverseSeriesOrder,
-            TransposeType transposeImage, double[] imgOrientation, boolean rotateOutputImg, boolean reverseIndexOrder,
+            int rotateCvType, double[] imgOrientation, boolean rotateOutputImg, boolean reverseIndexOrder,
             Object[] imgPosition, String frameOfReferenceUID) {
             this.seriesUID = seriesUID;
             this.sliceOrientation = sliceOrientation;
             this.reverseSeriesOrder = reverseSeriesOrder;
-            this.transposeImage = transposeImage;
+            this.rotateCvType = rotateCvType;
             this.imgOrientation = imgOrientation;
             this.rotateOutputImg = rotateOutputImg;
             this.reverseIndexOrder = reverseIndexOrder;

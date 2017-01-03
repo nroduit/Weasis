@@ -13,15 +13,13 @@ package org.weasis.core.api.image.util;
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
 
-import javax.media.jai.iterator.RandomIter;
-
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
 
 public interface ImageLayer<E extends ImageElement> extends MeasurableLayer {
 
-    RandomIter getReadIterator();
+    RenderedImage getReadIterator();
 
     E getSourceImage();
 

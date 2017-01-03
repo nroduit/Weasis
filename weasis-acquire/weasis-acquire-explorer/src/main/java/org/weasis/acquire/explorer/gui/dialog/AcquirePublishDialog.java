@@ -17,6 +17,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -24,7 +25,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -291,7 +291,7 @@ public class AcquirePublishDialog extends JDialog {
 
     private Predicate<AcquireImageInfo> oversizedImages() {
         return acqImg -> {
-            PlanarImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
+            RenderedImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
 
             Integer width = img.getWidth();
             Integer height = img.getHeight();
