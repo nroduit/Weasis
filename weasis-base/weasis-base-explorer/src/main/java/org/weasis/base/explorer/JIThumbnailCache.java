@@ -11,9 +11,7 @@
 package org.weasis.base.explorer;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -24,8 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.imageio.ImageIO;
-
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.list.IThumbnailList;
@@ -158,18 +155,14 @@ public final class JIThumbnailCache {
 
         @Override
         public void run() {
-            RenderedImage img = null;
+            Mat img = null;
 
             // Get the final that contain the thumbnail when the uncompress mode is activated
             File file = diskObject.getFile();
             if (file != null && file.getName().endsWith(".pnm")) {
                 File thumbFile = new File(ImageFiler.changeExtension(file.getPath(), ".jpg"));
                 if (thumbFile.canRead()) {
-                    try {
-                        img = ImageIO.read(thumbFile);
-                    } catch (IOException e) {
-                        LOGGER.error("Cannot read thumbnail {}", thumbFile.getPath());
-                    }
+                    img = ImageProcessor.readImage(thumbFile);
                 }
             }
 
@@ -181,7 +174,8 @@ public final class JIThumbnailCache {
                 return;
             }
 
-            final BufferedImage tIcon = ImageProcessor.buildThumbnail(img, ThumbnailRenderer.ICON_DIM, true);
+            final BufferedImage tIcon =
+                ImageProcessor.toBufferedImage(ImageProcessor.buildThumbnail(img, ThumbnailRenderer.ICON_DIM, true));
 
             // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
             diskObject.removeImageFromCache();

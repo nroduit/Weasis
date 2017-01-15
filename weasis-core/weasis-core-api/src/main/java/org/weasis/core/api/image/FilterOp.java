@@ -10,8 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
-
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
@@ -45,8 +44,8 @@ public class FilterOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        Mat source = (Mat) params.get(Param.INPUT_IMG);
+        Mat result = source;
         KernelData kernel = (KernelData) params.get(P_KERNEL_DATA);
         if (kernel != null && !kernel.equals(KernelData.NONE)) {
             result = ImageProcessor.filter(source, kernel);

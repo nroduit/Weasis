@@ -142,7 +142,7 @@ public class MipView extends View2d {
                 Messages.getString("MipView.monitoring_proc"), Messages.getString("MipView.init"), 0, 2 * extend + 1)) { //$NON-NLS-1$ //$NON-NLS-2$
                 @Override
                 public void run() {
-                    final List<DicomImageElement> dicoms = new ArrayList<DicomImageElement>();
+                    final List<DicomImageElement> dicoms = new ArrayList<>();
                     try {
                         taskMonitor.setMillisToPopup(1250);
                         SeriesBuilder.applyMipParameters(taskMonitor, view, ser, dicoms, mipType, extend, fullSeries);
@@ -213,6 +213,7 @@ public class MipView extends View2d {
             }
             // Close stream
             oldImage.dispose();
+            oldImage.removeImageFromCache();
             // Delete file in cache
             File file = oldImage.getFile();
             if (file != null) {

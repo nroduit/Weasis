@@ -10,8 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
-
+import org.opencv.core.Mat;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -64,8 +63,8 @@ public class WindowOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        Mat source = (Mat) params.get(Param.INPUT_IMG);
+        Mat result = source;
         ImageElement imageElement = (ImageElement) params.get(P_IMAGE_ELEMENT);
 
         if (imageElement != null) {

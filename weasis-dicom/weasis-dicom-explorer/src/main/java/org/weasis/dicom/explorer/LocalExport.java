@@ -13,11 +13,9 @@ package org.weasis.dicom.explorer;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
-import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,6 +44,7 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.media.DicomDirWriter;
 import org.dcm4che3.media.RecordType;
 import org.dcm4che3.util.UIDUtils;
+import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
@@ -360,7 +359,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         File destinationDir = new File(exportDir, path);
                         destinationDir.mkdirs();
 
-                        RenderedImage image = img.getImage(null);
+                        Mat image = img.getImage(null);
                         if (image != null && !img16) {
                             image = img.getRenderedImage(image);
                         }
@@ -702,10 +701,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (image == null) {
             return null;
         }
-        BufferedImage thumbnail = null;
-        RenderedImage imgPl = image.getImage(null);
+        Mat thumbnail = null;
+        Mat imgPl = image.getImage(null);
         if (imgPl != null) {
-            RenderedImage img = image.getRenderedImage(imgPl);
+            Mat img = image.getRenderedImage(imgPl);
             thumbnail = ImageProcessor.buildThumbnail(img, new Dimension(128, 128), true);
         }
         // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
@@ -714,13 +713,12 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (thumbnail == null) {
             return null;
         }
-        int w = thumbnail.getWidth();
-        int h = thumbnail.getHeight();
+        int w = thumbnail.width();
+        int h = thumbnail.height();
 
         String pmi = TagD.getTagValue(image, Tag.PhotometricInterpretation, String.class);
-        BufferedImage bi = thumbnail;
-        if (thumbnail.getColorModel().getColorSpace().getType() != ColorSpace.TYPE_GRAY) {
-            bi = ImageProcessor.convertTo(thumbnail, BufferedImage.TYPE_BYTE_INDEXED);
+        if (thumbnail.channels() >= 3) {
+
             pmi = "PALETTE COLOR"; //$NON-NLS-1$
         }
 
@@ -728,6 +726,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         Attributes iconItem = new Attributes();
 
         if ("PALETTE COLOR".equals(pmi)) { //$NON-NLS-1$
+            BufferedImage bi = ImageProcessor.convertTo(ImageProcessor.toBufferedImage(thumbnail), BufferedImage.TYPE_BYTE_INDEXED);
             IndexColorModel cm = (IndexColorModel) bi.getColorModel();
             int[] lutDesc = { cm.getMapSize(), 0, 8 };
             byte[] r = new byte[lutDesc[0]];
@@ -751,11 +750,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             }
         } else {
             pmi = "MONOCHROME2"; //$NON-NLS-1$
-            for (int y = 0, i = 0; y < h; ++y) {
-                for (int x = 0; x < w; ++x, ++i) {
-                    iconPixelData[i] = (byte) bi.getRGB(x, y);
-                }
-            }
+            thumbnail.get(0, 0, iconPixelData);
         }
         iconItem.setString(Tag.PhotometricInterpretation, VR.CS, pmi);
         iconItem.setInt(Tag.Rows, VR.US, h);
@@ -767,7 +762,5 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         iconItem.setBytes(Tag.PixelData, VR.OW, iconPixelData);
         return iconItem;
     }
-
-
 
 }

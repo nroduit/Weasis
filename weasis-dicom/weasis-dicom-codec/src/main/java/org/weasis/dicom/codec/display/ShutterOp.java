@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.opencv.core.Mat;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
@@ -101,8 +102,8 @@ public class ShutterOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        Mat source = (Mat) params.get(Param.INPUT_IMG);
+        Mat result = source;
 
         Boolean shutter = (Boolean) params.get(P_SHOW);
         Area area = (Area) params.get(P_SHAPE);
@@ -115,7 +116,7 @@ public class ShutterOp extends AbstractOp {
         // Potentially override the shutter in the original dicom
         if (shutter && params.get(P_PS_VALUE) != null && (pr instanceof PRSpecialElement)) {
             DicomMediaIO prReader = ((PRSpecialElement) pr).getMediaReader();
-            RenderedImage imgOverlay = null;
+            Mat imgOverlay = null;
             ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
             boolean overlays = JMVUtils.getNULLtoFalse(prReader.getTagValue(TagW.HasOverlay));
 

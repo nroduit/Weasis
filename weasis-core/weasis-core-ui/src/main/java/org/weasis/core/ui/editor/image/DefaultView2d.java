@@ -28,7 +28,6 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.awt.color.ColorSpace;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -43,10 +42,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.ColorModel;
-import java.awt.image.Raster;
-import java.awt.image.RenderedImage;
-import java.awt.image.SampleModel;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -71,6 +66,11 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
+import org.opencv.core.Size;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
@@ -84,18 +84,16 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -244,14 +242,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(LayerType.CROSSLINES.name(), true);
         actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
+        actionsInView.put(ActionW.FLIP.cmd(), false);
+        actionsInView.put(ActionW.ROTATION.cmd(), 0);
 
         OpManager disOp = getDisplayOpManager();
 
         disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_APPLY_WL_COLOR,
             eventManager.getOptions().getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
-        disOp.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, eventManager.getZoomSetting().getInterpolation());
-        disOp.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
-        disOp.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
+        disOp.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION, eventManager.getZoomSetting().getInterpolation());
+        disOp.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, null);
         disOp.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, KernelData.NONE);
         disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, ByteLut.defaultLUT);
         disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, false);
@@ -307,7 +306,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    protected RenderedImage getPreprocessedImage(E imageElement) {
+    protected Mat getPreprocessedImage(E imageElement) {
         return imageElement.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
     }
 
@@ -322,7 +321,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         PixelInfo pixelInfo = new PixelInfo();
         E imageElement = imageLayer.getSourceImage();
         if (imageElement != null && imageLayer.getReadIterator() != null) {
-            RenderedImage image = getPreprocessedImage(imageElement);
+            Mat image = imageLayer.getReadIterator();
             // realPoint to handle special case: non square pixel image
             Point realPoint = new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5),
                 (int) Math.ceil(p.y / imageElement.getRescaleY() - 0.5));
@@ -337,13 +336,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (image != null && area.contains(p)) {
                 try {
                     realPoint.translate(-(int) area.getX(), -(int) area.getY());
-                    if (ImageToolkit.getBounds(image).contains(realPoint)) {
+                    if (ImageProcessor.getBounds(image).contains(realPoint)) {
                         pixelInfo.setPosition(realPoint);
                         pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
                         pixelInfo.setPixelSize(imageElement.getPixelSize());
-                        Raster raster = imageLayer.getReadIterator().getData(new Rectangle(realPoint,new Dimension(1,1)));
-                        double[] c = new double[raster.getNumBands()];
-                        c = raster.getPixel(realPoint.x, realPoint.y, c);
+                        double[] c = imageLayer.getReadIterator().get(realPoint.x, realPoint.y);
                         pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
                         fillPixelInfo(pixelInfo, imageElement, c);
                         if (c != null && c.length >= 1) {
@@ -367,18 +364,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return pixelInfo;
     }
 
-    protected static String[] getChannelNames(RenderedImage image) {
+    protected static String[] getChannelNames(Mat image) {
         if (image != null) {
-            ColorModel cm = image.getColorModel();
-            if (cm != null) {
-                ColorSpace space = cm.getColorSpace();
-                if (space != null) {
-                    String[] val = new String[space.getNumComponents()];
-                    for (int i = 0; i < val.length; i++) {
-                        val[i] = space.getName(i);
-                    }
-                    return val;
-                }
+            int channels = CvType.channels(image.type());
+            if (channels == 3) {
+                return new String[] { "Blue", "Green", "Red" };
+            } else if (channels == 1) {
+                return new String[] { "Gray" };
             }
         }
         return null;
@@ -542,13 +534,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected Rectangle getImageBounds(E img) {
         if (img != null) {
-            RenderedImage source = getPreprocessedImage(img);
+            Mat source = getPreprocessedImage(img);
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
             boolean nosquarePixel = MathUtil.isDifferent(img.getRescaleX(), img.getRescaleY());
             int width = source == null || nosquarePixel
-                ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns"))) : source.getWidth(); //$NON-NLS-1$
+                ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns"))) : source.width(); //$NON-NLS-1$
             int height = source == null || nosquarePixel
-                ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows"))) : source.getHeight(); //$NON-NLS-1$
+                ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows"))) : source.height(); //$NON-NLS-1$
             return new Rectangle(0, 0, width, height);
         }
         return new Rectangle(0, 0, 512, 512);
@@ -616,31 +608,28 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, series, img, null));
                 resetZoom();
                 // Update zoom operation to the current image (Reset update to the previous one)
-                ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
-                if (node != null) {
-                    double viewScale = getViewModel().getViewScale();
-                    node.setParam(ZoomOp.P_RATIO_X, viewScale * img.getRescaleX());
-                    node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
-                }
+                // ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
+                // if (node != null) {
+                // double viewScale = getViewModel().getViewScale();
+                // node.setParam(ZoomOp.P_RATIO_X, viewScale * img.getRescaleX());
+                // node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
+                // }
                 imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
                 if (AuditLog.LOGGER.isInfoEnabled()) {
-                    RenderedImage image = img.getImage();
+                    Mat image = img.getImage();
                     if (image != null) {
-                        StringBuilder pixSize = new StringBuilder();
-                        SampleModel sm = image.getSampleModel();
-                        if (sm != null) {
-                            int[] spsize = sm.getSampleSize();
-                            if (spsize != null && spsize.length > 0) {
-                                pixSize.append(spsize[0]);
-                                for (int i = 1; i < spsize.length; i++) {
-                                    pixSize.append(',');
-                                    pixSize.append(spsize[i]);
-                                }
-                            }
+                        int elemSize = CvType.ELEM_SIZE(image.type());
+                        int channels = CvType.channels(image.type());
+                        int bpp = (elemSize * 8) / channels;
+                        String[] elements = new String[channels];
+                        for (int i = 0; i < elements.length; i++) {
+                            elements[i] = Integer.toString(bpp);
                         }
+                        String pixSize = String.join(",", elements);
+
                         AuditLog.LOGGER.info("open:image size:{},{} depth:{}", //$NON-NLS-1$
-                            new Object[] { image.getWidth(), image.getHeight(), pixSize.toString() });
+                            new Object[] { image.width(), image.height(), pixSize });
                     }
                 }
             }
@@ -766,7 +755,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public RenderedImage getSourceImage() {
+    public Mat getSourceImage() {
         E image = getImage();
         return image == null ? null : getPreprocessedImage(image);
     }
@@ -957,32 +946,30 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (panner != null) {
             panner.updateImageSize();
         }
-        ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
-        E img = getImage();
-        if (img != null && node != null) {
-            node.setParam(ZoomOp.P_RATIO_X, ratio * img.getRescaleX());
-            node.setParam(ZoomOp.P_RATIO_Y, ratio * img.getRescaleY());
-            imageLayer.updateDisplayOperations();
-        }
     }
 
     protected void updateAffineTransform() {
         Rectangle2D modelArea = getViewModel().getModelArea();
         double viewScale = getViewModel().getViewScale();
-        affineTransform.setToScale(viewScale, viewScale);
+        E image = getImage();
+        double rx = image == null ? 1.0 : image.getRescaleX();
+        double ry = image == null ? 1.0 : image.getRescaleY();
+        int rWidth = (int) Math.ceil(modelArea.getWidth() / rx - 0.5);
+        int rHeight = (int) Math.ceil(modelArea.getHeight() / ry - 0.5);
 
         OpManager dispOp = getDisplayOpManager();
-        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
-        Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
+        boolean flip = JMVUtils.getNULLtoFalse(actionsInView.get(ActionW.FLIP.cmd()));
+        Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
 
         if (rotationAngle != null && rotationAngle > 0) {
-            if (flip != null && flip) {
-                rotationAngle = 360 - rotationAngle;
-            }
-            affineTransform.rotate(Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0,
-                modelArea.getHeight() / 2.0);
+            affineTransform.setToRotation(Math.toRadians(rotationAngle), rWidth / 2.0,
+                rHeight / 2.0);
+            affineTransform.scale(viewScale * rx, viewScale * ry);
+        } else {
+            affineTransform.setToScale(viewScale * rx, viewScale * ry);
         }
-        if (flip != null && flip) {
+
+        if (flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
             // case FlipMode.TOP_BOTTOM:
@@ -997,11 +984,58 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // at = new AffineTransform(new double[] {-1.0,0.0,0.0,-1.0});
             // at.translate(-imageWid, -imageHt);
             affineTransform.scale(-1.0, 1.0);
-            affineTransform.translate(-modelArea.getWidth(), 0.0);
+            affineTransform.translate(-rWidth, 0.0);
         }
-        Point offset = getImageLayer().getOffset();
-        if (offset != null) {
-            affineTransform.translate(-offset.getX(), -offset.getY());
+
+        ImageOpNode node = dispOp.getNode(AffineTransformOp.OP_NAME);
+        if (node != null) {
+            
+            Point2D.Double[] handlePts = new Point2D.Double[4];
+            handlePts[0] = new Point2D.Double(0, 0);
+            handlePts[1] = new Point2D.Double(rWidth, 0);
+            handlePts[2] = new Point2D.Double(rWidth, rHeight);
+            handlePts[3] = new Point2D.Double(0, rHeight);
+
+            affineTransform.transform(handlePts, 0, handlePts, 0, handlePts.length);
+            Rectangle2D.Double r = new Rectangle.Double(Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE);
+            for (Point2D.Double p : handlePts) {
+                r.x = Math.min(p.x, r.x);
+                r.y = Math.min(p.y, r.y);
+                r.width = Math.max(p.x, r.width);
+                r.height = Math.max(p.y, r.height);
+            }
+            r.width -= r.x;
+            r.height -= r.y;
+
+            if (rotationAngle != null && rotationAngle != 0) {
+                double mWidth = modelArea.getWidth();
+                double mHeight = modelArea.getHeight();
+                int angle = rotationAngle == null ? 0 : -rotationAngle;
+                org.opencv.core.Point ptCenter =
+                    new org.opencv.core.Point(0.0, 0.0);
+                Rect rotRect = new RotatedRect(ptCenter, new Size(mWidth, mHeight), angle).boundingRect();
+                getViewModel().setRotationOffset((rotRect.width - mWidth) / 2.0, (rotRect.height - mHeight) / 2.0);
+            } else {
+                getViewModel().setRotationOffset(0.0, 0.0);
+            }
+
+            double[] fmx = new double[6];
+            affineTransform.getMatrix(fmx);
+            // adjust transformation matrix => move the center to keep all the image
+            fmx[4] -= r.x;
+            fmx[5] -= r.y;
+            affineTransform.setTransform(fmx[0], fmx[1], fmx[2], fmx[3], fmx[4], fmx[5]);
+
+            // Convert to openCV affine matrix
+            double[] m = new double[] { fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5] };
+            node.setParam(AffineTransformOp.P_AFFINE_MATRIX, m);
+            node.setParam(AffineTransformOp.P_DST_BOUNDS, r);
+            imageLayer.updateDisplayOperations();
+        } else {
+            Point offset = getImageLayer().getOffset();
+            if (offset != null) {
+                affineTransform.translate(-offset.getX(), -offset.getY());
+            }
         }
 
         try {
@@ -1029,12 +1063,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void changeZoomInterpolation(Integer interpolation) {
-        Integer val = (Integer) getDisplayOpManager().getParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION);
+        Integer val = (Integer) getDisplayOpManager().getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION);
         boolean update = val == null || val != interpolation;
         if (update) {
-            getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
+            getDisplayOpManager().setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION, interpolation);
             if (lens != null) {
-                lens.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
+                lens.getDisplayOpManager().setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION, interpolation);
                 lens.updateZoom();
             }
             imageLayer.updateDisplayOperations();
@@ -1051,7 +1085,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (series == null) {
             return;
         }
-        RenderedImage dispImage = imageLayer.getDisplayImage();
+        Mat dispImage = imageLayer.getDisplayImage();
         OpManager manager = imageLayer.getDisplayOpManager();
         final String command = evt.getPropertyName();
         if (command.equals(ActionW.SYNCH.cmd())) {
@@ -1150,8 +1184,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     imageLayer.updateDisplayOperations();
                 }
             } else if (command.equals(ActionW.ROTATION.cmd())) {
-                if (manager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, entry.getValue())) {
-                    imageLayer.updateDisplayOperations();
+                Object old = actionsInView.put(ActionW.ROTATION.cmd(), entry.getValue());
+                if (!Objects.equals(old, entry.getValue())) {
                     updateAffineTransform();
                 }
             } else if (command.equals(ActionW.RESET.cmd())) {
@@ -1206,8 +1240,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             } else if (command.equals(ActionW.FLIP.cmd())) {
                 // Horizontal flip is applied after rotation (To be compliant with DICOM PR)
-                if (manager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, entry.getValue())) {
-                    imageLayer.updateDisplayOperations();
+                Object old = actionsInView.put(ActionW.FLIP.cmd(), entry.getValue());
+                if (!Objects.equals(old, entry.getValue())) {
                     updateAffineTransform();
                 }
             } else if (command.equals(ActionW.LUT.cmd())) {

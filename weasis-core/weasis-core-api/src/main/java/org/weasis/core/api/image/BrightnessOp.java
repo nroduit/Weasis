@@ -10,8 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
-
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.cv.ImageProcessor;
@@ -39,8 +38,8 @@ public class BrightnessOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        Mat source = (Mat) params.get(Param.INPUT_IMG);
+        Mat result = source;
 
         Double contrast = (Double) params.get(P_CONTRAST_VALUE);
         Double brigtness = (Double) params.get(P_BRIGTNESS_VALUE);

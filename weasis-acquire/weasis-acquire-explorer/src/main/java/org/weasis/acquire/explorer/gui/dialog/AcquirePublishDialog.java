@@ -17,7 +17,6 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.RenderedImage;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +38,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
+import org.opencv.core.Mat;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.DicomizeTask;
 import org.weasis.acquire.explorer.Messages;
@@ -291,10 +291,10 @@ public class AcquirePublishDialog extends JDialog {
 
     private Predicate<AcquireImageInfo> oversizedImages() {
         return acqImg -> {
-            RenderedImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
+            Mat img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
 
-            Integer width = img.getWidth();
-            Integer height = img.getHeight();
+            Integer width = img.width();
+            Integer height = img.height();
 
             return width > AcquirePublishDialog.MAX_RESOLUTION_THRESHOLD
                 || height > AcquirePublishDialog.MAX_RESOLUTION_THRESHOLD;

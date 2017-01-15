@@ -29,6 +29,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -78,7 +79,7 @@ public class ImageElementIO implements MediaReader {
     }
 
     @Override
-    public RenderedImage getImageFragment(MediaElement media) throws Exception {
+    public Mat getImageFragment(MediaElement media) throws Exception {
         Objects.requireNonNull(media);
         FileCache cache = media.getFileCache();
 
@@ -103,7 +104,7 @@ public class ImageElementIO implements MediaReader {
         }
 
         if (file != null) {
-            RenderedImage img = readImage(file, imgCachePath == null);
+            Mat img = readImage(file, imgCachePath == null);
 
             if (imgCachePath != null) {
                 File rawFile = uncompress(imgCachePath, img);
@@ -118,7 +119,7 @@ public class ImageElementIO implements MediaReader {
         return null;
     }
 
-    private RenderedImage readImage(File file, boolean createTiledLayout) throws Exception {
+    private Mat readImage(File file, boolean createTiledLayout) throws Exception {
         ImageReader reader = getDefaultReader(mimeType);
         if (reader == null) {
             LOGGER.info("Cannot find a reader for the mime type: {}", mimeType); //$NON-NLS-1$
@@ -141,7 +142,7 @@ public class ImageElementIO implements MediaReader {
 
         image.setTag(TagW.ImageWidth, bi.getWidth());
         image.setTag(TagW.ImageHeight, bi.getHeight());
-        return bi;
+        return ImageProcessor.toMat(bi);
     }
 
     @Override
@@ -304,11 +305,11 @@ public class ImageElementIO implements MediaReader {
         return fileCache;
     }
 
-    private File uncompress(Path imgCachePath, RenderedImage img) {
+    private File uncompress(Path imgCachePath, Mat img) {
         /*
          * Make an image cache with its thumbnail when the image size is larger than a tile size and if not DICOM file
          */
-        if (img != null && (img.getWidth() > ImageFiler.TILESIZE || img.getHeight() > ImageFiler.TILESIZE)
+        if (img != null && (img.width() > ImageFiler.TILESIZE || img.height() > ImageFiler.TILESIZE)
             && !mimeType.contains("dicom")) { //$NON-NLS-1$
             File outFile = imgCachePath.toFile();
             if (ImageProcessor.writePNM(img, outFile, true)) {

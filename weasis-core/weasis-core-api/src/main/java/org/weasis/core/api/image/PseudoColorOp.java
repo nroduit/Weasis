@@ -13,14 +13,13 @@ package org.weasis.core.api.image;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 
+import org.opencv.core.Mat;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.op.ByteLut;
-import org.weasis.core.api.image.util.LookupTableJAI;
 
 public class PseudoColorOp extends AbstractOp {
 
@@ -56,8 +55,8 @@ public class PseudoColorOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        Mat source = (Mat) params.get(Param.INPUT_IMG);
+        Mat result = source;
         ByteLut lutTable = (ByteLut) params.get(P_LUT);
 
         if (lutTable != null) {
@@ -68,7 +67,8 @@ public class PseudoColorOp extends AbstractOp {
                     result = ImageProcessor.invertLUT(source);
                 }
             } else {
-                result = new LookupTableJAI(lut).lookupToRenderedImage(source, null);
+                result = ImageProcessor.applyLUT(source, lut);
+              //  result = new LookupTableCV(lut).lookup(source);
             }
         }
 
@@ -76,7 +76,7 @@ public class PseudoColorOp extends AbstractOp {
     }
 
     public static BufferedImage getLUT(byte[][] lut) {
-        BufferedImage image = new BufferedImage(20, 256, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = new BufferedImage(20, 256, BufferedImage.TYPE_INT_BGR);
         Graphics2D g = image.createGraphics();
         for (int k = 0; k < 256; k++) {
             g.setPaint(new Color(lut[0][k] & 0xff, lut[1][k] & 0xff, lut[2][k] & 0xff));

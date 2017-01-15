@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
 import java.util.List;
 
+import org.opencv.core.Mat;
 import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.util.Copyable;
 
@@ -26,9 +26,9 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
     
     List<ImageOpNode> getOperations();
 
-    void setFirstNode(RenderedImage imgSource);
+    void setFirstNode(Mat imgSource);
 
-    RenderedImage getFirstNodeInputImage();
+    Mat getFirstNodeInputImage();
 
     ImageOpNode getFirstNode();
 
@@ -36,9 +36,9 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
 
     ImageOpNode getLastNode();
 
-    RenderedImage getLastNodeOutputImage();
+    Mat getLastNodeOutputImage();
 
-    RenderedImage process();
+    Mat process();
 
     Object getParamValue(String opName, String param);
 

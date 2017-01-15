@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.util.LookupTableJAI;
+import org.weasis.core.api.image.util.LookupTableCV;
 
 /**
  * @author btja
@@ -63,9 +63,9 @@ public final class LutShape {
      */
     protected final eFunction function;
     protected final String explanantion;
-    protected final LookupTableJAI lookup;
+    protected final LookupTableCV lookup;
 
-    public LutShape(LookupTableJAI lookup, String explanantion) {
+    public LutShape(LookupTableCV lookup, String explanantion) {
         if (lookup == null) {
             throw new IllegalArgumentException();
         }
@@ -93,7 +93,7 @@ public final class LutShape {
         return function;
     }
 
-    public LookupTableJAI getLookup() {
+    public LookupTableCV getLookup() {
         return lookup;
     }
 

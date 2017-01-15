@@ -11,19 +11,19 @@
 package org.weasis.core.api.image.util;
 
 import java.awt.geom.AffineTransform;
-import java.awt.image.RenderedImage;
 
+import org.opencv.core.Mat;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
 
 public interface ImageLayer<E extends ImageElement> extends MeasurableLayer {
 
-    RenderedImage getReadIterator();
+    Mat getReadIterator();
 
     E getSourceImage();
 
-    RenderedImage getDisplayImage();
+    Mat getDisplayImage();
 
     void setImage(E image, OpManager preprocessing);
 

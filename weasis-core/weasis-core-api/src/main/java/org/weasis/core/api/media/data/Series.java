@@ -12,7 +12,6 @@ package org.weasis.core.api.media.data;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -30,6 +29,7 @@ import java.util.Random;
 
 import javax.swing.SwingUtilities;
 
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
@@ -334,13 +334,13 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         E media = this.getMedia(MEDIA_POSITION.MIDDLE, null, null);
         if (media instanceof ImageElement) {
             ImageElement image = (ImageElement) media;
-            RenderedImage img = image.getImage();
+            Mat img = image.getImage();
             if (img != null) {
                 toolTips.append(Messages.getString("Series.img_size")); //$NON-NLS-1$
                 toolTips.append(StringUtil.COLON_AND_SPACE);
-                toolTips.append(img.getWidth());
+                toolTips.append(img.width());
                 toolTips.append('x');
-                toolTips.append(img.getHeight());
+                toolTips.append(img.height());
             }
         }
         toolTips.append("</html>"); //$NON-NLS-1$

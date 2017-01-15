@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.LutShape.eFunction;
-import org.weasis.core.api.image.util.LookupTableJAI;
+import org.weasis.core.api.image.util.LookupTableCV;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
@@ -42,7 +42,6 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.Messages;
-import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.TagD;
 
 public class PresetWindowLevel {
@@ -189,7 +188,7 @@ public class PresetWindowLevel {
             }
         }
 
-        LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) tagable.getTagValue(TagW.VOILUTsData);
+        LookupTableCV[] voiLUTsData = (LookupTableCV[]) tagable.getTagValue(TagW.VOILUTsData);
         String[] voiLUTsExplanation = (String[]) tagable.getTagValue(TagW.VOILUTsExplanation); // optional attribute
 
         if (voiLUTsData != null) {
@@ -238,7 +237,7 @@ public class PresetWindowLevel {
         return presetList;
     }
 
-    public static PresetWindowLevel buildPresetFromLutData(LookupTableJAI voiLUTsData, DicomImageElement image,
+    public static PresetWindowLevel buildPresetFromLutData(LookupTableCV voiLUTsData, DicomImageElement image,
         TagReadable tagable, boolean pixelPadding, String explanation) {
         if (voiLUTsData == null || explanation == null) {
             return null;

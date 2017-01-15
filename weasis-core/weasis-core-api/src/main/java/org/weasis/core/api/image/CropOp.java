@@ -11,8 +11,8 @@
 package org.weasis.core.api.image;
 
 import java.awt.Rectangle;
-import java.awt.image.RenderedImage;
 
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
@@ -52,13 +52,13 @@ public class CropOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        Mat source = (Mat) params.get(Param.INPUT_IMG);
+        Mat result = source;
         Rectangle area = (Rectangle) params.get(P_AREA);
 
         if (area != null) {
             area = area
-                .intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight()));
+                .intersection(new Rectangle(0, 0, source.width(), source.height()));
             if (area.width > 1 && area.height > 1) {
                 result = ImageProcessor.crop(source, area);
             }

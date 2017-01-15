@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.weasis.core.api.image.op;
 
-import java.awt.image.RenderedImage;
 import java.util.List;
 
+import org.opencv.core.Mat;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.task.TaskMonitor;
@@ -58,7 +58,7 @@ public class MeanCollectionZprojection {
         }
     }
 
-    public RenderedImage computeMeanCollectionOpImage() {
+    public Mat computeMeanCollectionOpImage() {
           return ImageProcessor.meanStack(sources);
     }
 }

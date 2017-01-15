@@ -16,9 +16,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.util.Optional;
 
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
@@ -62,7 +62,7 @@ public class RectifyAction extends AbstractAcquireAction {
         AcquireImageInfo imageInfo = getImageInfo();
         ViewCanvas<ImageElement> view = getView();
 
-        RenderedImage img = view.getSourceImage();
+        Mat img = view.getSourceImage();
         if (img != null) {
             Rectangle2D modelArea = view.getViewModel().getModelArea();
             Rectangle2D area =

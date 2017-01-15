@@ -11,8 +11,6 @@
 package org.weasis.core.api.image.util;
 
 import java.awt.Rectangle;
-import java.awt.Transparency;
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
@@ -28,6 +26,7 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.util.Hashtable;
 
+import org.opencv.core.Mat;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
@@ -41,20 +40,7 @@ public class ImageToolkit {
     private ImageToolkit() {
     }
 
-    public static ColorModel getDefaultColorModel(int dataType, int numBands) {
-        if (dataType < DataBuffer.TYPE_BYTE || dataType > DataBuffer.TYPE_DOUBLE || numBands < 1 || numBands > 4) {
-            return null;
-        }
 
-        ColorSpace cs =
-            numBands <= 2 ? ColorSpace.getInstance(ColorSpace.CS_GRAY) : ColorSpace.getInstance(ColorSpace.CS_sRGB);
-
-        boolean useAlpha = (numBands == 2) || (numBands == 4);
-        int transparency = useAlpha ? Transparency.TRANSLUCENT : Transparency.OPAQUE;
-
-        return RasterFactory.createComponentColorModel(dataType, cs, useAlpha, false, transparency);
-
-    }
 
     public static boolean isBinary(SampleModel sm) {
         return sm instanceof MultiPixelPackedSampleModel && ((MultiPixelPackedSampleModel) sm).getPixelBitStride() == 1
@@ -717,17 +703,13 @@ public class ImageToolkit {
      * @param pixelPadding
      * @return
      */
-    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, double window,
+    public static Mat getDefaultRenderedImage(ImageElement image, Mat source, double window,
         double level, boolean pixelPadding) {
         if (image == null || source == null) {
             return null;
         }
-        SampleModel sampleModel = source.getSampleModel();
-        if (sampleModel == null) {
-            return null;
-        }
-        int datatype = sampleModel.getDataType();
-        if (datatype == DataBuffer.TYPE_BYTE && MathUtil.isEqual(window, 255.0)
+
+        if (ImageProcessor.convertToDataType(source.type()) == DataBuffer.TYPE_BYTE && MathUtil.isEqual(window, 255.0)
             && (MathUtil.isEqual(level, 127.5) || MathUtil.isEqual(level, 127.0))) {
             return source;
         }
@@ -746,7 +728,7 @@ public class ImageToolkit {
         return ImageProcessor.rescaleToByte(source, slope, yInt);
     }
 
-    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source,
+    public static Mat getDefaultRenderedImage(ImageElement image, Mat source,
         boolean pixelPadding) {
         return getDefaultRenderedImage(image, source, image.getDefaultWindow(pixelPadding),
             image.getDefaultLevel(pixelPadding), true);

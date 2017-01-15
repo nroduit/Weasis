@@ -10,10 +10,10 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
 import java.util.Optional;
 
 import org.opencv.core.Core;
+import org.opencv.core.Mat;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.image.cv.ImageProcessor;
 
@@ -43,8 +43,8 @@ public class RotationOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        Mat source = (Mat) params.get(Param.INPUT_IMG);
+        Mat result = source;
         Integer rotationAngle = Optional.ofNullable((Integer) params.get(P_ROTATE)).orElse(0);
         rotationAngle = rotationAngle % 360;
 
@@ -61,8 +61,8 @@ public class RotationOp extends AbstractOp {
             if (rotOp != null) {
                 result = ImageProcessor.getRotatedImage(source, rotOp);
             } else {
-                result = ImageProcessor.getRotatedImage(source, rotationAngle, source.getWidth() / 2.0,
-                    source.getHeight() / 2.0);
+                result = ImageProcessor.getRotatedImage(source, rotationAngle, source.width() / 2.0,
+                    source.height() / 2.0);
             }
         }
         params.put(Param.OUTPUT_IMG, result);

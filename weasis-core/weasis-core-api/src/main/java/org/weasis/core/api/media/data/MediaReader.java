@@ -10,11 +10,11 @@
  *******************************************************************************/
 package org.weasis.core.api.media.data;
 
-import java.awt.image.RenderedImage;
 import java.io.File;
 import java.net.URI;
 import java.util.Map;
 
+import org.opencv.core.Mat;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 
 public interface MediaReader extends Tagable {
@@ -33,7 +33,7 @@ public interface MediaReader extends Tagable {
 
     MediaElement getPreview();
 
-    RenderedImage getImageFragment(MediaElement media) throws Exception;
+    Mat getImageFragment(MediaElement media) throws Exception;
 
     int getMediaElementNumber();
 

@@ -10,8 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
-
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.cv.ImageProcessor;
@@ -51,9 +50,9 @@ public class MergeImgOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage source2 = (RenderedImage) params.get(INPUT_IMG2);
-        RenderedImage result = source;
+        Mat source = (Mat) params.get(Param.INPUT_IMG);
+        Mat source2 = (Mat) params.get(INPUT_IMG2);
+        Mat result = source;
 
         if (source2 != null) {
             Integer transparency = (Integer) params.get(P_OPACITY);

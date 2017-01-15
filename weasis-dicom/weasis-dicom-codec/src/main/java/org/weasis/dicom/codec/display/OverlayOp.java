@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import org.dcm4che3.data.Tag;
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -72,8 +73,8 @@ public class OverlayOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        Mat source = (Mat) params.get(Param.INPUT_IMG);
+        Mat result = source;
         Boolean overlay = (Boolean) params.get(P_SHOW);
 
         if (overlay != null && overlay) {

@@ -13,26 +13,10 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
-import java.awt.image.DataBufferShort;
-import java.awt.image.DataBufferUShort;
-import java.awt.image.Raster;
-import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -52,6 +36,7 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.util.UIDUtils;
 import org.opencv.core.Core;
+import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +49,7 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.image.util.ImageToolkit;
+import org.weasis.core.api.image.cv.RawImage;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
@@ -79,7 +64,6 @@ import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class SeriesBuilder {
@@ -271,7 +255,7 @@ public class SeriesBuilder {
                                      * of the original series stack
                                      */
                                     double sPixSize = writeBlock(secSeries, series, medias, viewParams, mprView, thread,
-                                        abort, seriesID);
+                                        abort, seriesID, size);
 
                                     if (thread.isInterrupted()) {
                                         return;
@@ -328,7 +312,6 @@ public class SeriesBuilder {
         double[] pixSpacing = new double[] { sPixSize, origPixSize };
 
         int dataType = 0;
-        ColorModel cm = null;
         SampleModel sampleModel = null;
         final JProgressBar bar = view.getProgressBar();
 
@@ -358,12 +341,11 @@ public class SeriesBuilder {
 
             String photometricInterpretation = TagD.getTagValue(img, Tag.PhotometricInterpretation, String.class);
             PhotometricInterpretation pmi = PhotometricInterpretation.fromString(photometricInterpretation);
-            cm = pmi.createColorModel(bitsStored, dataType, attributes);
             sampleModel = pmi.createSampleModel(dataType, dim.width, dim.height, samplesPerPixel, banded);
-
             int tmp = dim.width;
             dim.width = dim.height;
             dim.height = tmp;
+
         }
 
         final int[] COPIED_ATTRS = { Tag.SpecificCharacterSet, Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate,
@@ -388,72 +370,8 @@ public class SeriesBuilder {
         List<DicomImageElement> dcms = new ArrayList<>();
 
         for (int i = 0; i < newSeries.length; i++) {
-            File inFile = newSeries[i].getFile();
             if (params.rotateOutputImg) {
-
-                ByteBuffer byteBuffer = getBytesFromFile(inFile);
-                DataBuffer dataBuffer = null;
-                if (dataType == DataBuffer.TYPE_BYTE) {
-                    dataBuffer = new DataBufferByte(byteBuffer.array(), byteBuffer.limit());
-                } else if (dataType <= DataBuffer.TYPE_SHORT) {
-                    ShortBuffer sBuffer = byteBuffer.asShortBuffer();
-                    short[] data;
-                    if (sBuffer.hasArray()) {
-                        data = sBuffer.array();
-                    } else {
-                        data = new short[byteBuffer.limit() / 2];
-                        for (int k = 0; k < data.length; k++) {
-                            if (byteBuffer.hasRemaining()) {
-                                data[k] = byteBuffer.getShort();
-                            }
-                        }
-                    }
-                    dataBuffer = dataType == DataBuffer.TYPE_SHORT ? new DataBufferShort(data, data.length)
-                        : new DataBufferUShort(data, data.length);
-                } else if (dataType == DataBuffer.TYPE_INT) {
-                    IntBuffer sBuffer = byteBuffer.asIntBuffer();
-                    int[] data;
-                    if (sBuffer.hasArray()) {
-                        data = sBuffer.array();
-                    } else {
-                        data = new int[byteBuffer.limit() / 4];
-                        for (int k = 0; k < data.length; k++) {
-                            if (byteBuffer.hasRemaining()) {
-                                data[k] = byteBuffer.getInt();
-                            }
-                        }
-                    }
-                    dataBuffer = new DataBufferInt(data, data.length);
-                }
-
-                WritableRaster raster = Raster.createWritableRaster(sampleModel, dataBuffer, null);
-                BufferedImage bufImg = new BufferedImage(cm, raster, false, null);
-                bufImg = getImage(bufImg, Core.ROTATE_90_CLOCKWISE);
-
-                dataBuffer = bufImg.getRaster().getDataBuffer();
-                if (dataBuffer instanceof DataBufferByte) {
-                    byteBuffer = ByteBuffer.wrap(((DataBufferByte) dataBuffer).getData());
-                    writToFile(inFile, byteBuffer);
-                } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-                    short[] data = dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                        : ((DataBufferUShort) dataBuffer).getData();
-
-                    byteBuffer = ByteBuffer.allocate(data.length * 2);
-                    byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-                    ShortBuffer shortBuffer = byteBuffer.asShortBuffer();
-                    shortBuffer.put(data);
-
-                    writToFile(inFile, byteBuffer);
-                } else if (dataBuffer instanceof DataBufferInt) {
-                    int[] data = ((DataBufferInt) dataBuffer).getData();
-
-                    byteBuffer = ByteBuffer.allocate(data.length * 4);
-                    byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-                    IntBuffer intBuffer = byteBuffer.asIntBuffer();
-                    intBuffer.put(data);
-
-                    writToFile(inFile, byteBuffer);
-                }
+                newSeries[i].write(ImageProcessor.getRotatedImage(newSeries[i].read(), Core.ROTATE_90_CLOCKWISE));
                 if (bar != null) {
                     GuiExecutor.instance().execute(() -> {
                         bar.setValue(bar.getValue() + 1);
@@ -461,7 +379,7 @@ public class SeriesBuilder {
                     });
                 }
             }
-            RawImageIO rawIO = new RawImageIO(inFile.toURI(), null);
+            RawImageIO rawIO = new RawImageIO(newSeries[i], null);
             rawIO.setBaseAttributes(cpTags);
 
             // Tags with same values for all the Series
@@ -537,16 +455,12 @@ public class SeriesBuilder {
 
     private static double writeBlock(RawImage[] newSeries, MediaSeries<DicomImageElement> series,
         Iterable<DicomImageElement> medias, ViewParameter params, final MprView view, Thread thread,
-        final boolean[] abort, String seriesID) throws IOException {
+        final boolean[] abort, String seriesID, int dstHeight) throws IOException {
 
         // TODO should return the more frequent space!
         final JProgressBar bar = view.getProgressBar();
         try {
-            File dir = new File(MPR_CACHE_DIR, params.seriesUID);
-            dir.mkdirs();
-            for (int i = 0; i < newSeries.length; i++) {
-                newSeries[i] = new RawImage(new File(dir, "mpr_" + (i + 1)));//$NON-NLS-1$
-            }
+
             double epsilon = 1e-3;
             double lastPos = 0.0;
             double lastSpace = 0.0;
@@ -580,24 +494,22 @@ public class SeriesBuilder {
                     }
                 }
                 // TODO do not open more than 512 files (Limitation to open 1024 in the same time on Ubuntu)
-                RenderedImage image = dcm.getImage();
+                Mat image = dcm.getImage();
                 if (image == null) {
                     abort[0] = true;
                     throw new IIOException("Cannot read an image!"); //$NON-NLS-1$
                 }
-
                 if (MathUtil.isDifferent(dcm.getRescaleX(), dcm.getRescaleY())) {
-                    Dimension dim = new Dimension((int) (Math.abs(dcm.getRescaleX()) * image.getWidth()),
-                        (int) (Math.abs(dcm.getRescaleY()) * image.getHeight()));
+                    Dimension dim = new Dimension((int) (Math.abs(dcm.getRescaleX()) * image.width()),
+                        (int) (Math.abs(dcm.getRescaleY()) * image.height()));
                     image = ImageProcessor.scale(image, dim, Imgproc.INTER_LINEAR);
                 }
-                writeRasterInRaw(getImage(image, params.rotateCvType), newSeries);
+                writeRasterInRaw(image, newSeries, params, dstHeight);
             }
             return lastSpace;
         } finally {
             for (int i = 0; i < newSeries.length; i++) {
                 if (newSeries[i] != null) {
-                    newSeries[i].disposeOutputStream();
                     if (abort[0]) {
                         newSeries[i].getFile().delete();
                     }
@@ -606,55 +518,65 @@ public class SeriesBuilder {
         }
     }
 
-    private static void writeRasterInRaw(BufferedImage image, RawImage[] newSeries) throws IOException {
-        if (newSeries != null && image != null && image.getHeight() == newSeries.length) {
+    private static void writeRasterInRaw(Mat image, RawImage[] newSeries, ViewParameter params, int dstHeight)
+        throws IOException {
+        image = getImage(image, params.rotateCvType);
+        if (newSeries != null && image != null && image.height() == newSeries.length) {
+            // GuiExecutor.instance().execute(() ->
+            // TestProcess.show(ImageProcessor.toBufferedImage(ImageProcessor.rescaleToByte(image, 1.0, 0)),
+            // image.toString()));
 
-            DataBuffer dataBuffer = image.getRaster().getDataBuffer();
-            int width = image.getWidth();
-            int height = newSeries.length;
-            byte[] bytesOut;
-            if (dataBuffer instanceof DataBufferByte) {
-                bytesOut = ((DataBufferByte) dataBuffer).getData();
-                for (int j = 0; j < height; j++) {
-                    newSeries[j].getOutputStream().write(bytesOut, j * width, width);
-                }
-            } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-                short[] data = dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                    : ((DataBufferUShort) dataBuffer).getData();
-                bytesOut = new byte[data.length * 2];
-                for (int i = 0; i < data.length; i++) {
-                    bytesOut[i * 2] = (byte) (data[i] & 0xFF);
-                    bytesOut[i * 2 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
-                }
-                width *= 2;
-                for (int j = 0; j < height; j++) {
-                    newSeries[j].getOutputStream().write(bytesOut, j * width, width);
-                }
-            } else if (dataBuffer instanceof DataBufferInt) {
-                int[] data = ((DataBufferInt) dataBuffer).getData();
-                bytesOut = new byte[data.length * 4];
-                for (int i = 0; i < data.length; i++) {
-                    bytesOut[i * 4] = (byte) (data[i] & 0xFF);
-                    bytesOut[i * 4 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
-                    bytesOut[i * 4 + 2] = (byte) ((data[i] >>> 16) & 0xFF);
-                    bytesOut[i * 4 + 3] = (byte) ((data[i] >>> 24) & 0xFF);
-                }
-                width *= 4;
-                for (int j = 0; j < height; j++) {
-                    newSeries[j].getOutputStream().write(bytesOut, j * width, width);
+            if (newSeries[0] == null) {
+                File dir = new File(MPR_CACHE_DIR, params.seriesUID);
+                dir.mkdirs();
+                for (int i = 0; i < newSeries.length; i++) {
+                    newSeries[i] = new RawImage(new File(dir, "mpr_" + (i + 1)));//$NON-NLS-1$
+                    newSeries[i].writeHeader(image.type(), image.width(), dstHeight);
                 }
             }
+
+            for (int j = 0; j < newSeries.length; j++) {
+                newSeries[j].writeRow(image, j);
+            }
+
+            // int dataType = ImageProcessor.convertToDataType(image.type());
+            // if (dataType == DataBuffer.TYPE_BYTE) {
+            // byte[] bytesOut = new byte[width * height];
+            // image.get(0, 0, bytesOut);
+            // for (int j = 0; j < height; j++) {
+            // newSeries[j].getOutputStream().write(bytesOut, j * width, width);
+            // }
+            // } else if (dataType == DataBuffer.TYPE_SHORT || dataType == DataBuffer.TYPE_USHORT) {
+            // short[] data = new short[width * height];
+            // image.get(0, 0, data);
+            // byte[] bytesOut = new byte[width * 2];
+            // for (int j = 0; j < height; j++) {
+            // for (int i = 0; i < bytesOut.length; i += 2) {
+            // int offset = j * width + i / 2;
+            // bytesOut[i] = (byte) (data[offset] & 0xFF);
+            // bytesOut[i + 1] = (byte) ((data[offset] >>> 8) & 0xFF);
+            // }
+            // newSeries[j].getOutputStream().write(bytesOut);
+            // }
+            // } else if (dataType == DataBuffer.TYPE_INT) {
+            // int[] data = new int[width * height];
+            // image.get(0, 0, data);
+            // byte[] bytesOut = new byte[width * 4];
+            // for (int j = 0; j < height; j++) {
+            // for (int i = 0; i < bytesOut.length; i += 4) {
+            // int offset = j * width + i / 4;
+            // bytesOut[i] = (byte) (data[offset] & 0xFF);
+            // bytesOut[i + 1] = (byte) ((data[offset] >>> 8) & 0xFF);
+            // bytesOut[i + 2] = (byte) ((data[offset] >>> 16) & 0xFF);
+            // bytesOut[i + 3] = (byte) ((data[offset] >>> 24) & 0xFF);
+            // }
+            // newSeries[j].getOutputStream().write(bytesOut);
+            // }
+            // }
         }
     }
 
-    private static BufferedImage getImage(RenderedImage source, int rotateCvType) {
-        if (rotateCvType < 0) {
-            return source == null ? null : ImageToolkit.convertRenderedImage(source);
-        }
-        return ImageProcessor.getRotatedImage(source, rotateCvType);
-    }
-
-    private static BufferedImage getImage(BufferedImage source, int rotateCvType) {
+    private static Mat getImage(Mat source, int rotateCvType) {
         if (rotateCvType < 0) {
             return source == null ? null : source;
         }
@@ -669,38 +591,6 @@ public class SeriesBuilder {
             + vSrc.y * Math.cos(angle) + (axis.z * vSrc.x - axis.x * vSrc.z) * Math.sin(angle);
         vDst.z = axis.z * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
             + vSrc.z * Math.cos(angle) + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);
-    }
-
-    public static ByteBuffer getBytesFromFile(File file) {
-        FileInputStream is = null;
-        try {
-            ByteBuffer byteBuffer = ByteBuffer.allocate((int) file.length());
-            byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-            is = new FileInputStream(file);
-            FileChannel in = is.getChannel();
-            in.read(byteBuffer);
-            byteBuffer.flip();
-            return byteBuffer;
-        } catch (Exception e) {
-            LOGGER.error("Get bytes", e); //$NON-NLS-1$
-        } finally {
-            FileUtil.safeClose(is);
-        }
-        return null;
-    }
-
-    public static void writToFile(File file, ByteBuffer byteBuffer) {
-        FileOutputStream os = null;
-        try {
-            byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-            os = new FileOutputStream(file);
-            FileChannel out = os.getChannel();
-            out.write(byteBuffer);
-        } catch (Exception e) {
-            LOGGER.error("Write bytes", e); //$NON-NLS-1$
-        } finally {
-            FileUtil.safeClose(os);
-        }
     }
 
     public static void confirmMessage(final Component view, final String message, final boolean[] abort) {

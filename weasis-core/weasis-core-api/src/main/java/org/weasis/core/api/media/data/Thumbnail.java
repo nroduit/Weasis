@@ -21,8 +21,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
@@ -38,14 +36,15 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
@@ -65,7 +64,7 @@ public class Thumbnail extends JLabel {
     public static final int DEFAULT_SIZE = 112;
     public static final int MAX_SIZE = 256;
 
-    private SoftReference<BufferedImage> imageSoftRef;
+    private SoftReference<Mat> imageSoftRef;
     protected volatile boolean readable = true;
     protected volatile AtomicBoolean loading = new AtomicBoolean(false);
     protected File thumbnailPath = null;
@@ -100,7 +99,7 @@ public class Thumbnail extends JLabel {
         removeMouseAndKeyListener();
     }
 
-    public static RenderedImage createThumbnail(RenderedImage source) {
+    public static Mat createThumbnail(Mat source) {
         if (source == null) {
             return null;
         }
@@ -154,7 +153,7 @@ public class Thumbnail extends JLabel {
                 Graphics2D g2d = (Graphics2D) g;
                 int width = thumbnailSize;
                 int height = thumbnailSize;
-                final BufferedImage thumbnail = Thumbnail.this.getImage(media, keepMediaCache, opManager);
+                final Mat thumbnail = Thumbnail.this.getImage(media, keepMediaCache, opManager);
                 if (thumbnail == null) {
                     FontMetrics fontMetrics = g2d.getFontMetrics();
                     int fheight = y + (thumbnailSize - fontMetrics.getAscent() + 5 - mime.getIconHeight()) / 2;
@@ -163,11 +162,12 @@ public class Thumbnail extends JLabel {
                     int startx = x + (thumbnailSize - fontMetrics.stringWidth(type)) / 2;
                     g2d.drawString(type, startx, fheight + mime.getIconHeight() + fontMetrics.getAscent() + 5);
                 } else {
-                    width = thumbnail.getWidth();
-                    height = thumbnail.getHeight();
+                    width = thumbnail.width();
+                    height = thumbnail.height();
                     x += (thumbnailSize - width) / 2;
                     y += (thumbnailSize - height) / 2;
-                    g2d.drawImage(thumbnail, AffineTransform.getTranslateInstance(x, y), null);
+                    g2d.drawImage(ImageProcessor.toBufferedImage(thumbnail), AffineTransform.getTranslateInstance(x, y),
+                        null);
                 }
                 drawOverIcon(g2d, x, y, width, height);
             }
@@ -193,7 +193,7 @@ public class Thumbnail extends JLabel {
         return thumbnailPath;
     }
 
-    public synchronized BufferedImage getImage(final MediaElement media, final boolean keepMediaCache,
+    public synchronized Mat getImage(final MediaElement media, final boolean keepMediaCache,
         final OpManager opManager) {
         if ((imageSoftRef == null && readable) || (imageSoftRef != null && imageSoftRef.get() == null)) {
             if (loading.compareAndSet(false, true)) {
@@ -241,19 +241,19 @@ public class Thumbnail extends JLabel {
             if (noPath) {
                 if (media instanceof ImageElement) {
                     final ImageElement image = (ImageElement) media;
-                    RenderedImage imgPl = image.getImage(opManager);
+                    Mat imgPl = image.getImage(opManager);
                     if (imgPl != null) {
-                        RenderedImage img = image.getRenderedImage(imgPl);
-                        final RenderedImage thumb = createThumbnail(img);
+                        Mat img = image.getRenderedImage(imgPl);
+                        final Mat thumb = createThumbnail(img);
                         try {
                             file = thumbnailPath = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                         } catch (IOException e) {
                             LOGGER.error("Cannot create file for thumbnail!", e);//$NON-NLS-1$
                         }
                         try {
-                            BufferedImage thumbnail = null;
                             if (file != null) {
-                                if (ImageFiler.writeJPG(file, thumb, 0.75f)) {
+                                MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
+                                if (ImageProcessor.writeImage(thumb,file, map)) {
                                     /*
                                      * Write the thumbnail in temp folder, better than getting the thumbnail directly
                                      * from t.getAsBufferedImage() (it is true if the image is big and cannot handle all
@@ -265,14 +265,12 @@ public class Thumbnail extends JLabel {
                                     // out of memory
                                 }
 
-                            } else if (thumb instanceof RenderedImage) {
-                                thumbnail = ImageToolkit.convertRenderedImage(thumb);
-                            }
+                            } 
 
-                            if (thumbnail == null) {
+                            if (thumb == null) {
                                 readable = false;
                             } else {
-                                imageSoftRef = new SoftReference<>(thumbnail);
+                                imageSoftRef = new SoftReference<>(thumb);
                             }
                         } finally {
                             if (!keepMediaCache) {
@@ -285,15 +283,15 @@ public class Thumbnail extends JLabel {
             } else {
                 Load ref = new Load(file);
                 // loading images sequentially, only one thread pool
-                Future<BufferedImage> future = ImageElement.IMAGE_LOADER.submit(ref);
-                BufferedImage thumb = null;
+                Future<Mat> future = ImageElement.IMAGE_LOADER.submit(ref);
+                Mat thumb = null;
                 try {
-                    BufferedImage img = future.get();
+                    Mat img = future.get();
                     if (img == null) {
                         thumb = null;
                     } else {
-                        int width = img.getWidth();
-                        int height = img.getHeight();
+                        int width = img.width();
+                        int height = img.height();
                         if (width > thumbnailSize || height > thumbnailSize) {
                             thumb = ImageProcessor.buildThumbnail(img, new Dimension(thumbnailSize, thumbnailSize), true);
                         } else {
@@ -323,9 +321,9 @@ public class Thumbnail extends JLabel {
     public void dispose() {
         // Unload image from memory
         if (imageSoftRef != null) {
-            BufferedImage temp = imageSoftRef.get();
+            Mat temp = imageSoftRef.get();
             if (temp != null) {
-                temp.flush();
+                temp.release();
             }
         }
         removeMouseAndKeyListener();
@@ -350,7 +348,7 @@ public class Thumbnail extends JLabel {
         }
     }
 
-    class Load implements Callable<BufferedImage> {
+    class Load implements Callable<Mat> {
 
         private final File path;
 
@@ -359,8 +357,8 @@ public class Thumbnail extends JLabel {
         }
 
         @Override
-        public BufferedImage call() throws Exception {
-            return  ImageProcessor.readRenderedImage(path);
+        public Mat call() throws Exception {
+            return ImageProcessor.readImage(path);
         }
     }
 

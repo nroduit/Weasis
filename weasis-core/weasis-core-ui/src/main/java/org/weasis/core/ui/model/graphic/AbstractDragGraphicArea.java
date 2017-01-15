@@ -14,12 +14,12 @@ import java.awt.Point;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
-import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import org.opencv.core.Mat;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.TagW;
@@ -60,11 +60,9 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                     Double[] max = null;
                     Double[] mean = null;
                     Double[] stdv = null;
-//                    Double[] skew = null;
-//                    Double[] kurtosis = null;
 
                     if (releaseEvent && shape != null) {
-                        RenderedImage image = layer.getSourceRenderedImage();
+                        Mat image = layer.getSourceRenderedImage();
                         if (image == null) {
                             return null;
                         }
@@ -90,12 +88,6 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         double[][] extrema = ImageProcessor.meanStdDev(image, roi ,paddingValue, paddingLimit);
                         
                         
-                        // RenderedOp dst =
-                        // ImageStatisticsDescriptor.create(image, roi, 1, 1, excludedMin, excludedMax, null);
-                        // // To ensure this image is not stored in tile cache
-                        // ((OpImage) dst.getRendering()).setTileCache(null);
-                        // // For basic statistics, rescale values can be computed afterwards
-                        // double[][] extrema = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
                         if (extrema == null || extrema.length < 1 || extrema[0].length < 1) {
                             return Collections.emptyList();
                         }
@@ -106,6 +98,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
 
                         // LOGGER.error("Basic stats [ms]: {}", System.currentTimeMillis() - startTime);
                         // unit = pixelValue * rescale slope + rescale intercept
+                        // FIXME do not handle modality lookup table!
                         Double slopeVal = (Double) layer.getSourceTagValue(TagW.get("RescaleSlope")); //$NON-NLS-1$
                         Double interceptVal = (Double) layer.getSourceTagValue(TagW.get("RescaleIntercept")); //$NON-NLS-1$
                         double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
@@ -116,30 +109,6 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                             mean[i] = extrema[2][i] * slope + intercept;
                             stdv[i] = extrema[3][i];
                         }
-
-                        // TODO implement
-
-                        // if (IMAGE_STD.getComputed() || IMAGE_SKEW.getComputed() || IMAGE_KURTOSIS.getComputed()) {
-                        // // startTime = System.currentTimeMillis();
-                        // // Required the mean value (not rescaled), slope and intercept to calculate correctly std,
-                        // // skew and kurtosis
-                        // dst = ImageStatistics2Descriptor.create(image, roi, 1, 1, extrema[2][0], excludedMin,
-                        // excludedMax, slope, intercept, null);
-                        // // To ensure this image is not stored in tile cache
-                        // ((OpImage) dst.getRendering()).setTileCache(null);
-                        // double[][] extrema2 = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
-                        // if (extrema != null && extrema.length > 0 && extrema[0].length > 0) {
-                        // stdv = new Double[extrema2[0].length];
-                        // skew = new Double[extrema2[0].length];
-                        // kurtosis = new Double[extrema2[0].length];
-                        // // LOGGER.info("Adv. stats [ms]: {}", System.currentTimeMillis() - startTime);
-                        // for (int i = 0; i < extrema2[0].length; i++) {
-                        // stdv[i] = extrema2[0][i];
-                        // skew[i] = extrema2[1][i];
-                        // kurtosis[i] = extrema2[2][i];
-                        // }
-                        // }
-                        // }
                     }
 
                     String unit = layer.getPixelValueUnit();
@@ -155,13 +124,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                     if (IMAGE_STD.getComputed()) {
                         addMeasure(measVal, IMAGE_STD, stdv, unit);
                     }
-//                    if (IMAGE_SKEW.getComputed()) {
-//                        addMeasure(measVal, IMAGE_SKEW, skew, unit);
-//                    }
-//                    if (IMAGE_KURTOSIS.getComputed()) {
-//                        addMeasure(measVal, IMAGE_KURTOSIS, kurtosis, unit);
-//                    }
-
+                    
                     Double suv = (Double) layer.getSourceTagValue(TagW.SuvFactor);
                     if (Objects.nonNull(suv)) {
                         unit = "SUVbw"; //$NON-NLS-1$

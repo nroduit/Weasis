@@ -23,7 +23,6 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -61,6 +60,7 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.image.Overlays;
+import org.dcm4che3.image.PaletteColorModel;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
@@ -72,6 +72,7 @@ import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -79,7 +80,6 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.ImageToolkit;
-import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
@@ -705,7 +705,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     @Override
-    public RenderedImage getImageFragment(MediaElement media) throws Exception {
+    public Mat getImageFragment(MediaElement media) throws Exception {
         if (media != null && media.getKey() instanceof Integer && isReadableDicom()) {
             int frame = (Integer) media.getKey();
             if (frame >= 0 && frame < numberOfFrame && hasPixel) {
@@ -718,15 +718,20 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         return null;
     }
 
-    private RenderedImage getValidImage(RenderedImage buffer, MediaElement media) {
-        RenderedImage img = null;
+    private Mat getValidImage(RenderedImage buffer, MediaElement media) {
+        Mat img = null;
         if (buffer != null) {
-            img = ImageFiler.getReadableImage(buffer);
-            
+            RenderedImage image = ImageFiler.getReadableImage(buffer);
+
             if (dataType == DataBuffer.TYPE_SHORT && buffer.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
-                img = ImageToolkit.fixSignedShortDataBuffer(img); // sh
+                image = ImageToolkit.fixSignedShortDataBuffer(image); // sh
             }
 
+            // TODO free memory
+            img = ImageProcessor.toMat(image);
+            if (image.getColorModel() instanceof PaletteColorModel) {
+                img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
+            }
             /*
              * Handle overlay in pixel data: extract the overlay, serialize it in a file and set all values to O in the
              * pixel data.
@@ -764,7 +769,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 // Set to 0 all bits outside bitStored
                 img = ImageProcessor.bitwiseAnd(img, overlayBitMask);
             }
-            img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
         }
         return img;
     }

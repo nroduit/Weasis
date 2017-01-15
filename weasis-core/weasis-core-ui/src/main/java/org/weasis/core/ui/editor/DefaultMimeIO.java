@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.core.ui.editor;
 
-import java.awt.image.RenderedImage;
 import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
@@ -19,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import org.opencv.core.Mat;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.MimeInspector;
@@ -49,7 +49,7 @@ public class DefaultMimeIO implements MediaReader {
 
 
     @Override
-    public RenderedImage getImageFragment(MediaElement media) throws Exception {
+    public Mat getImageFragment(MediaElement media) throws Exception {
         return null;
     }
 

@@ -10,35 +10,30 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.Dimension;
+import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
+import org.opencv.core.Size;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.cv.ImageProcessor;
 
-public class ZoomOp extends AbstractOp {
+public class AffineTransformOp extends AbstractOp {
 
-    public static final String OP_NAME = Messages.getString("ZoomOperation.title"); //$NON-NLS-1$
+    public static final String OP_NAME = "Warp Affine";
 
     public static final String[] INTERPOLATIONS =
         { Messages.getString("ZoomOperation.nearest"), Messages.getString("ZoomOperation.bilinear"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ZoomOperation.bicubic"), Messages.getString("ZoomOperation.lanczos") }; //$NON-NLS-1$ //$NON-NLS-2$
 
+    public static final double[] identityMatrix = new double[] { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0 };
     /**
-     * Set a zoom factor in x-axis (Required parameter).
+     * Set a affine transformation (Required parameter).
      *
-     * Double value.
+     * Double array (length of 6).
      */
-    public static final String P_RATIO_X = "ratio.x"; //$NON-NLS-1$
-
-    /**
-     * Set a zoom factor in y-axis (Required parameter).
-     *
-     * Double value.
-     */
-    public static final String P_RATIO_Y = "ratio.y"; //$NON-NLS-1$
+    public static final String P_AFFINE_MATRIX = "affine.matrix"; //$NON-NLS-1$
 
     /**
      * Set the interpolation type (Optional parameter).
@@ -47,37 +42,37 @@ public class ZoomOp extends AbstractOp {
      */
     public static final String P_INTERPOLATION = "interpolation"; //$NON-NLS-1$
 
-    public ZoomOp() {
+    public static final String P_DST_BOUNDS = "dest.bounds"; //$NON-NLS-1$
+
+    public AffineTransformOp() {
         setName(OP_NAME);
     }
 
-    public ZoomOp(ZoomOp op) {
+    public AffineTransformOp(AffineTransformOp op) {
         super(op);
     }
 
     @Override
-    public ZoomOp copy() {
-        return new ZoomOp(this);
+    public AffineTransformOp copy() {
+        return new AffineTransformOp(this);
     }
 
     @Override
     public void process() throws Exception {
         Mat source = (Mat) params.get(Param.INPUT_IMG);
         Mat result = source;
-        Double zoomFactorX = (Double) params.get(P_RATIO_X);
-        Double zoomFactorY = (Double) params.get(P_RATIO_Y);
+        double[] matrix = (double[]) params.get(P_AFFINE_MATRIX);
+        Rectangle2D bound = (Rectangle2D) params.get(P_DST_BOUNDS);
 
-        if (zoomFactorX != null && zoomFactorY != null
-            && (MathUtil.isDifferent(zoomFactorX, 1.0) || MathUtil.isDifferent(zoomFactorY, 1.0))) {
-            Dimension dim = new Dimension((int) (Math.abs(zoomFactorX) * source.width()),
-                (int) (Math.abs(zoomFactorY) * source.height()));
+        if (bound != null && matrix != null && !Arrays.equals(identityMatrix, matrix)) {
+            Mat mat = new Mat(2, 3, CvType.CV_64FC1);
+            mat.put(0, 0, matrix);
             Integer interpolation = (Integer) params.get(P_INTERPOLATION);
-            if (Math.abs(zoomFactorX) < 0.1) {
-                interpolation = Imgproc.INTER_AREA;
-            } else if (interpolation != null && interpolation == 3) {
+            if (interpolation != null && interpolation == 3) {
                 interpolation = 4;
             }
-            result = ImageProcessor.scale(source, dim, interpolation);
+            result =
+                ImageProcessor.warpAffine(source, mat, new Size(bound.getWidth(), bound.getHeight()), interpolation);
         }
 
         params.put(Param.OUTPUT_IMG, result);

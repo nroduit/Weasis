@@ -28,7 +28,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
-import java.awt.image.RenderedImage;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -36,6 +35,7 @@ import java.util.Optional;
 
 import javax.swing.UIManager;
 
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
@@ -338,7 +338,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         zoom(zoomFactor);
     }
 
-    protected RenderedImage getSourceImage() {
+    protected Mat getSourceImage() {
         SyncType type = (SyncType) actionsInView.get(ZoomWin.FREEZE_CMD);
         if (SyncType.PARENT_PARAMETERS.equals(type) || SyncType.PARENT_IMAGE.equals(type)) {
             return freezeOperations.getLastNodeOutputImage();
@@ -347,7 +347,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         // return the image before the zoom operation from the parent view
         ImageOpNode node = view2d.getImageLayer().getDisplayOpManager().getNode(ZoomOp.OP_NAME);
         if (node != null) {
-            return (RenderedImage) node.getParam(Param.INPUT_IMG);
+            return (Mat) node.getParam(Param.INPUT_IMG);
         }
         return view2d.getImageLayer().getDisplayOpManager().getLastNodeOutputImage();
     }

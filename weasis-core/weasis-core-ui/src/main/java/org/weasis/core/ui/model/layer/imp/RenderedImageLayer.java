@@ -15,12 +15,12 @@ import java.awt.Point;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
@@ -29,6 +29,7 @@ import org.weasis.core.api.image.OpEventListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -55,9 +56,9 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
     private OpManager preprocessing;
     private E sourceImage;
-    private RenderedImage readIterator;
+    private Mat readIterator;
     private boolean buildIterator = false;
-    private RenderedImage displayImage;
+    private Mat displayImage;
     private Boolean visible = true;
     private boolean enableDispOperations = true;
     private Point offset;
@@ -83,7 +84,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     }
 
     @Override
-    public RenderedImage getReadIterator() {
+    public Mat getReadIterator() {
         return readIterator;
     }
 
@@ -93,7 +94,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     }
 
     @Override
-    public RenderedImage getSourceRenderedImage() {
+    public Mat getSourceRenderedImage() {
         if (sourceImage != null) {
             return sourceImage.getImage(preprocessing);
         }
@@ -101,7 +102,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     }
 
     @Override
-    public RenderedImage getDisplayImage() {
+    public Mat getDisplayImage() {
         return displayImage;
     }
 
@@ -211,8 +212,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
-            Rectangle2D rect = new Rectangle2D.Double(displayImage.getMinX(), displayImage.getMinY(),
-                displayImage.getWidth() - 1, displayImage.getHeight() - 1);
+            Rectangle2D rect = new Rectangle2D.Double(0, 0,
+                displayImage.width() - 1, displayImage.height() - 1);
             rect = rect.createIntersection((Rectangle2D) clip);
             if (rect.isEmpty()) {
                 return;
@@ -223,7 +224,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         }
 
         try {
-            g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0.0, 0.0));
+            g2d.drawRenderedImage(ImageProcessor.toBufferedImage(displayImage), AffineTransform.getTranslateInstance(0.0, 0.0));
         } catch (Exception | OutOfMemoryError e) {
             LOGGER.error("Draw rendered image", e);//$NON-NLS-1$
             if ("java.io.IOException: closed".equals(e.getMessage())) { //$NON-NLS-1$
@@ -256,8 +257,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
-            Rectangle2D rect = new Rectangle2D.Double(displayImage.getMinX(), displayImage.getMinY(),
-                displayImage.getWidth() - 1, displayImage.getHeight() - 1);
+            Rectangle2D rect = new Rectangle2D.Double(0, 0,
+                displayImage.width() - 1, displayImage.height() - 1);
             rect = rect.createIntersection((Rectangle2D) clip);
             if (rect.isEmpty()) {
                 return;
@@ -278,14 +279,14 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, imageResX);
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, imageResY);
 
-        RenderedImage img = disOpManager.process();
+        Mat img = disOpManager.process();
 
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, ratioX);
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, ratioY);
 
         ratioX /= imageResX;
         ratioY /= imageResY;
-        g2d.drawRenderedImage(img, AffineTransform.getScaleInstance(ratioX, ratioY));
+        g2d.drawRenderedImage(ImageProcessor.toBufferedImage(img), AffineTransform.getScaleInstance(ratioX, ratioY));
 
         g2d.setClip(clip);
     }
@@ -316,7 +317,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         if (displayImage == null) {
             disOpManager.clearNodeIOCache();
         }
-        RenderedImage img = null;
+        Mat img = null;
         if (buildIterator && sourceImage != null) {
             img = sourceImage.getImage(preprocessing);
         }

@@ -17,10 +17,10 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.util.HashMap;
 import java.util.Optional;
 
+import org.opencv.core.Mat;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
@@ -28,7 +28,6 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
@@ -252,7 +251,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         if (getDisplayPreferences(ROTATION)) {
             DefaultGraphicLabel.paintFontOutline(g2,
                 Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                    + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " //$NON-NLS-1$
+                    + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " //$NON-NLS-1$
                     + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
                 border, drawY);
             drawY -= fontHeight;
@@ -348,7 +347,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             }
 
             for (int k = 0; k < length; k++) {
-                g2.setPaint(new Color(table[0][k] & 0xff, table[1][k] & 0xff, table[2][k] & 0xff));
+                g2.setPaint(new Color(table[2][k] & 0xff, table[1][k] & 0xff, table[0][k] & 0xff));
                 rect.setRect(x, y + k, 19f, 1f);
                 g2.draw(rect);
             }
@@ -357,7 +356,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
     public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {
         ImageElement image = view2DPane.getImage();
-        RenderedImage source = view2DPane.getSourceImage();
+        Mat source = view2DPane.getSourceImage();
         if (source == null) {
             return;
         }
@@ -366,7 +365,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
         double scale = image.getPixelSize() / zoomFactor;
         double scaleSizex = ajustShowScale(scale,
-            (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
+            (int) Math.min(zoomFactor * source.width() * image.getRescaleX(), bound.width / 2.0));
         if (showBottomScale && scaleSizex > 50.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
@@ -432,7 +431,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         }
 
         double scaleSizeY = ajustShowScale(scale,
-            (int) Math.min(zoomFactor * source.getHeight() * image.getRescaleY(), bound.height / 2.0));
+            (int) Math.min(zoomFactor * source.height() * image.getRescaleY(), bound.height / 2.0));
 
         if (scaleSizeY > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };

@@ -39,6 +39,9 @@ public class PresentationStateReader implements Tagable {
     public static final int PRIVATE_CREATOR_TAG = 0x71070070;
     public static final int PR_MODEL_PRIVATE_TAG = 0x71077001;
     public static final String PR_MODEL_ID = "weasis/model/xml/2.5"; //$NON-NLS-1$
+    
+    public static final String TAG_PR_ROTATION = "pr.rotation"; //$NON-NLS-1$
+    public static final String TAG_PR_FLIP = "pr.flip"; //$NON-NLS-1$
 
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
@@ -150,8 +153,8 @@ public class PresentationStateReader implements Tagable {
     public void applySpatialTransformationModule(Map<String, Object> actionsInView) {
         if (dcmobj != null) {
             // Rotation and then Flip
-            actionsInView.put(ActionW.ROTATION.cmd(), dcmobj.getInt(Tag.ImageRotation, 0));
-            actionsInView.put(ActionW.FLIP.cmd(), "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip))); //$NON-NLS-1$
+            actionsInView.put(TAG_PR_ROTATION, dcmobj.getInt(Tag.ImageRotation, 0));
+            actionsInView.put(TAG_PR_FLIP, "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip))); //$NON-NLS-1$
         }
     }
 

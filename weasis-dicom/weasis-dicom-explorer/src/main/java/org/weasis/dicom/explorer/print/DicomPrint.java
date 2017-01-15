@@ -28,7 +28,6 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
-import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.util.Iterator;
@@ -49,6 +48,7 @@ import org.dcm4che3.net.DimseRSP;
 import org.dcm4che3.net.pdu.AAssociateRQ;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
+import org.opencv.core.Mat;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.image.ZoomOp;
@@ -200,14 +200,14 @@ public class DicomPrint {
         Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
         Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
         Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
-        RenderedImage img = image.getSourceImage();
+        Mat img = image.getSourceImage();
         if (img != null && originCenter != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;
             double canvasWidth;
             double canvasHeight;
             if (bestfit || originSize == null) {
-                canvasWidth = img.getWidth() * image.getImage().getRescaleX();
-                canvasHeight = img.getHeight() * image.getImage().getRescaleY();
+                canvasWidth = img.width() * image.getImage().getRescaleX();
+                canvasHeight = img.height() * image.getImage().getRescaleY();
             } else {
                 canvasWidth = originSize.getWidth() / originZoom;
                 canvasHeight = originSize.getHeight() / originZoom;

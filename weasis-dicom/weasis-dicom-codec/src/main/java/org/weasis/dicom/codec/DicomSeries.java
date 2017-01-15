@@ -269,23 +269,12 @@ public class DicomSeries extends Series<DicomImageElement> {
                 Boolean cache = (Boolean) img.getTagValue(TagW.ImageCache);
                 if (cache == null || !cache) {
                     long start = System.currentTimeMillis();
-                    RenderedImage i = img.getImage();
-                    if (i != null) {
-                        int tymin = i.getMinTileY();
-                        int tymax = tymin + i.getNumYTiles();
-                        int txmin = i.getMinTileX();
-                        int txmax = txmin + i.getNumXTiles() ;
-                        for (int tj = tymin; tj < tymax; tj++) {
-                            for (int ti = txmin; ti < txmax; ti++) {
-                                try {
-                                    i.getTile(ti, tj);
-                                } catch (OutOfMemoryError e) {
-                                    LOGGER.error("Out of memory when loading image: {}", img, e); //$NON-NLS-1$
-                                    freeMemory();
-                                    return;
-                                }
-                            }
-                        }
+                    try {
+                        img.getImage();
+                    } catch (OutOfMemoryError e) {
+                        LOGGER.error("Out of memory when loading image: {}", img, e); //$NON-NLS-1$
+                        freeMemory();
+                        return;
                     }
                     long stop = System.currentTimeMillis();
                     LOGGER.debug("Reading time: {} ms of image: {}", stop - start, img); //$NON-NLS-1$
@@ -305,6 +294,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                 if (model == null || index < 0 || index >= size) {
                     return;
                 }
+                // TODO need to be changed with openCV
                 long imgSize = evaluateImageSize(imageList.get(index)) * size + 5000;
                 long heapSize = Runtime.getRuntime().totalMemory();
                 long heapFreeSize = Runtime.getRuntime().freeMemory();

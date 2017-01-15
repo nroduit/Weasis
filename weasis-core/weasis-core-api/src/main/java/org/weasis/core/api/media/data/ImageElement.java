@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -49,22 +50,24 @@ public class ImageElement extends MediaElement {
     // TODO evaluate the difference, keep one thread with sun decoder. (seems to hangs on shutdown)
     public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader"); //$NON-NLS-1$
 
-    private static final SoftHashMap<ImageElement, RenderedImage> mCache = new SoftHashMap<ImageElement, RenderedImage>() {
+    // TODO With Mat objects the memory is not free
+    private static final SoftHashMap<ImageElement, Mat> mCache =
+        new SoftHashMap<ImageElement, Mat>() {
 
-        @Override
-        public void removeElement(Reference<? extends RenderedImage> soft) {
-            ImageElement key = reverseLookup.remove(soft);
-            if (key != null) {
-                hash.remove(key);
-                MediaReader reader = key.getMediaReader();
-                key.setTag(TagW.ImageCache, false);
-                if (reader != null) {
-                    // Close the image stream
-                    reader.close();
+            @Override
+            public void removeElement(Reference<? extends Mat> soft) {
+                ImageElement key = reverseLookup.remove(soft);
+                if (key != null) {
+                    hash.remove(key);
+                    MediaReader reader = key.getMediaReader();
+                    key.setTag(TagW.ImageCache, false);
+                    if (reader != null) {
+                        // Close the image stream
+                        reader.close();
+                    }
                 }
             }
-        }
-    };
+        };
     protected boolean readable = true;
 
     protected double pixelSizeX = 1.0;
@@ -80,14 +83,13 @@ public class ImageElement extends MediaElement {
         super(mediaIO, key);
     }
 
-    protected void findMinMaxValues(RenderedImage img, boolean exclude8bitImage) throws OutOfMemoryError {
+    protected void findMinMaxValues(Mat img, boolean exclude8bitImage) throws OutOfMemoryError {
         // This function can be called several times from the inner class Load.
         // Do not compute min and max it has already be done
 
         if (img != null && !isImageAvailable()) {
 
-            int datatype = img.getSampleModel().getDataType();
-            if (datatype == DataBuffer.TYPE_BYTE && exclude8bitImage) {
+            if (ImageProcessor.convertToDataType(img.type()) == DataBuffer.TYPE_BYTE && exclude8bitImage) {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
@@ -225,9 +227,12 @@ public class ImageElement extends MediaElement {
     }
 
     public void removeImageFromCache() {
-        mCache.remove(this);
-        MediaReader reader = this.getMediaReader();
+        Mat mat = mCache.remove(this);
+        if(mat != null){
+            mat.release();
+        }
         this.setTag(TagW.ImageCache, false);
+        MediaReader reader = this.getMediaReader();
         if (reader != null) {
             // Close the image stream
             reader.close();
@@ -236,10 +241,10 @@ public class ImageElement extends MediaElement {
 
     public boolean hasSameSize(ImageElement image) {
         if (image != null) {
-            RenderedImage img = getImage();
-            RenderedImage img2 = image.getImage();
-            if (img != null && img2 != null && getRescaleWidth(img.getWidth()) == image.getRescaleWidth(img2.getWidth())
-                && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight())) {
+            Mat img = getImage();
+            Mat img2 = image.getImage();
+            if (img != null && img2 != null && getRescaleWidth(img.width()) == image.getRescaleWidth(img2.width())
+                && getRescaleHeight(img.height()) == image.getRescaleHeight(img2.height())) {
                 return true;
             }
         }
@@ -254,11 +259,11 @@ public class ImageElement extends MediaElement {
      * @throws IOException
      */
 
-    protected RenderedImage loadImage() throws Exception {
+    protected Mat loadImage() throws Exception {
         return mediaIO.getImageFragment(this);
     }
 
-    public RenderedImage getRenderedImage(final RenderedImage imageSource) {
+    public Mat getRenderedImage(final Mat imageSource) {
         return getRenderedImage(imageSource, null);
     }
 
@@ -274,7 +279,7 @@ public class ImageElement extends MediaElement {
      *            considered
      * @return
      */
-    public RenderedImage getRenderedImage(final RenderedImage imageSource, Map<String, Object> params) {
+    public Mat getRenderedImage(final Mat imageSource, Map<String, Object> params) {
         if (imageSource == null) {
             return null;
         }
@@ -295,7 +300,7 @@ public class ImageElement extends MediaElement {
      *
      * @return
      */
-    public RenderedImage getImage(OpManager manager) {
+    public Mat getImage(OpManager manager) {
         return getImage(manager, true);
     }
 
@@ -304,7 +309,7 @@ public class ImageElement extends MediaElement {
         return getMediaURI().toString();
     }
 
-    public synchronized RenderedImage getImage(OpManager manager, boolean findMinMax) {
+    public synchronized Mat getImage(OpManager manager, boolean findMinMax) {
         try {
             return getCacheImage(startImageLoading(), manager, findMinMax);
         } catch (OutOfMemoryError e1) {
@@ -324,13 +329,13 @@ public class ImageElement extends MediaElement {
             return getCacheImage(startImageLoading(), manager, findMinMax);
         }
     }
-    
-    private RenderedImage getCacheImage(RenderedImage cacheImage, OpManager manager, boolean findMinMax) {
+
+    private Mat getCacheImage(Mat cacheImage, OpManager manager, boolean findMinMax) {
         if (findMinMax) {
             findMinMaxValues(cacheImage, true);
         }
         if (manager != null && cacheImage != null) {
-            RenderedImage img = manager.getLastNodeOutputImage();
+            Mat img = manager.getLastNodeOutputImage();
             if (manager.getFirstNodeInputImage() != cacheImage || manager.needProcessing()) {
                 manager.setFirstNode(cacheImage);
                 img = manager.process();
@@ -343,17 +348,17 @@ public class ImageElement extends MediaElement {
         return cacheImage;
     }
 
-    public RenderedImage getImage() {
+    public Mat getImage() {
         return getImage(null);
     }
 
-    private RenderedImage startImageLoading() throws OutOfMemoryError {
-        RenderedImage cacheImage;
+    private Mat startImageLoading() throws OutOfMemoryError {
+        Mat cacheImage;
         if ((cacheImage = mCache.get(this)) == null && readable && setAsLoading()) {
             LOGGER.debug("Asking for reading image: {}", this); //$NON-NLS-1$
             Load ref = new Load();
-            Future<RenderedImage> future = IMAGE_LOADER.submit(ref);
-            RenderedImage img = null;
+            Future<Mat> future = IMAGE_LOADER.submit(ref);
+            Mat img = null;
             try {
                 img = future.get();
 
@@ -396,10 +401,10 @@ public class ImageElement extends MediaElement {
         }
     }
 
-    class Load implements Callable<RenderedImage> {
+    class Load implements Callable<Mat> {
 
         @Override
-        public RenderedImage call() throws Exception {
+        public Mat call() throws Exception {
             return loadImage();
         }
     }
