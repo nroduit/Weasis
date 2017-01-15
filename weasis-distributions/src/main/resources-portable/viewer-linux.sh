@@ -3,77 +3,47 @@
 # requirement on a Linux machine.  If it is successful, it will export a JAVA_HOME environment
 # variable that can be used by another calling script.
 #
+# Rewritten by Abel 'Akronix' Serrano Juste <akronix5@gmail.com>
+#
 # To specify the required version, set the REQUIRED_VERSION to the major version required, 
-# e.g. 1.3, but not 1.3.1.
+# e.g. 1.3, but not 1.3.1. Also, always set decimal value: e.g. 2.0, but not 2 or 2.
 REQUIRED_TEXT_VERSION=1.8
 
 # Transform the required version string into a number that can be used in comparisons
-REQUIRED_VERSION=`echo $REQUIRED_TEXT_VERSION | sed -e 's;\.;0;g'`
-# Check JAVA_HOME directory to see if Java version is adequate
-if [ $JAVA_HOME ]
+REQUIRED_VERSION_INTEGER=`echo $REQUIRED_TEXT_VERSION | sed -e 's/\./0/'`
+
+# First, check if java is installed and accesible in $PATH. If so, get installed version.
+JAVA_EXE=`which java`
+if [ $JAVA_EXE ]
 then
-	JAVA_EXE=$JAVA_HOME/bin/java
-	VERSION=`$JAVA_EXE -version 2>&1 | head -1`
-	VERSION=`echo $VERSION | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
-	VERSION=`echo $VERSION | awk '{ print substr($1, 1, 3); }' | sed -e 's;\.;0;g'`
-	if [ $VERSION ]
-	then
-		if [ $VERSION -ge $REQUIRED_VERSION ]
-		then
-			JAVA_HOME=`echo $JAVA_EXE | awk '{ print substr($1, 1, length($1)-9); }'`
-		else
-			JAVA_HOME=
-		fi
-	else
-		JAVA_HOME=
-	fi
+	INSTALLED_VERSION=`java -version 2>&1 | awk '/version [0-9]*/ {print $3;}'`
+	echo "Found java $INSTALLED_VERSION"
+	
+	# Remove double quotes, replace first dot by 0 and remove the rest of the version string.
+	INSTALLED_VERSION_INTEGER=`echo $INSTALLED_VERSION | sed -e 's/"//' -e 's/\./0/' -e 's/\..*//'`
+else
+	echo -e "Java was not detected in your system.\nPlease, tell your administrator to install Java >=$REQUIRED_TEXT_VERSION and to make sure it's accesible from the PATH."
+	exit 3;
 fi
 
-# If the existing JAVA_HOME directory is adequate, then leave it alone
-# otherwise, use 'locate' to search for other possible java candidates and
-# check their versions.
-if [ $JAVA_HOME ]
+if (( INSTALLED_VERSION_INTEGER < REQUIRED_VERSION_INTEGER ))
 then
-	:
-else
-	for JAVA_EXE in `locate bin/java | grep java$ | xargs echo`
-	do
-		if [ $JAVA_HOME ] 
-		then
-			:
-		else
-			VERSION=`$JAVA_EXE -version 2>&1 | head -1`
-			VERSION=`echo $VERSION | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
-			VERSION=`echo $VERSION | awk '{ print substr($1, 1, 3); }' | sed -e 's;\.;0;g'`
-			if [ $VERSION ]
-			then
-				if [ $VERSION -ge $REQUIRED_VERSION ]
-				then
-					JAVA_HOME=`echo $JAVA_EXE | awk '{ print substr($1, 1, length($1)-9); }'`
-				fi
-			fi
-		fi
-	done
+	echo "Your version of java is too low to run Weasis. Please update to $REQUIRED_TEXT_VERSION or higher"
+	exit 4;
 fi
 
 # Get additional weasis arguments
 userParameters=()
 for var in "$@"
 do
-if  [[ $var == \$* ]]
+if [[ $var == \$* ]]
 then
-    userParameters+=("$var")
+  userParameters+=("$var")
 fi
 done
 echo user arguments: ${userParameters[@]}
 
-# If the correct Java version is detected, then export the JAVA_HOME environment variable
-if [ $JAVA_HOME ]
-then
-	export JAVA_HOME
-	echo Java Home: $JAVA_HOME/bin/java
-	curPath=$(dirname "`readlink -f "$0"`")
-	echo Weasis launcher directory: $curPath
-	$JAVA_HOME/bin/java -Xms64m -Xmx512m -Dgosh.args="-sc telnetd -p 17179 start" -Dweasis.portable.dir="$curPath" -classpath "$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}
-else echo 'Weasis requires Java Runtime '$REQUIRED_TEXT_VERSION' or higher, please install it'
-fi
+# If the correct Java version is detected, launch weasis from current path
+curPath=$(dirname "`readlink -f "$0"`")
+echo "Weasis launcher directory: $curPath"
+java -Xms64m -Xmx512m -Dgosh.args="-sc telnetd -p 17179 start" -Dweasis.portable.dir="$curPath" -classpath "$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}
