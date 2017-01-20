@@ -378,9 +378,9 @@ public class ImageElement extends MediaElement {
             }
             if (img != null) {
                 readable = true;
-                mCache.put(this, img);
+           //     mCache.put(this, img);
                 cacheImage = img;
-                this.setTag(TagW.ImageCache, true);
+           //     this.setTag(TagW.ImageCache, true);
             }
             setAsLoaded();
         }

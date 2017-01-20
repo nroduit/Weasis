@@ -32,6 +32,7 @@ import java.lang.ref.Reference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,6 +79,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.image.cv.RawImage;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.Codec;
@@ -106,6 +108,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaIO.class);
 
     public static final File DICOM_EXPORT_DIR = AppProperties.buildAccessibleTempDirectory("dicom"); //$NON-NLS-1$
+    public static final File CACHE_UNCOMPRESSED_DIR =
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "dcm-rawcv"); //$NON-NLS-1$
 
     public static final String MIMETYPE = "application/dicom"; //$NON-NLS-1$
     public static final String IMAGE_MIMETYPE = "image/dicom"; //$NON-NLS-1$
@@ -709,10 +713,29 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         if (media != null && media.getKey() instanceof Integer && isReadableDicom()) {
             int frame = (Integer) media.getKey();
             if (frame >= 0 && frame < numberOfFrame && hasPixel) {
-                // read as tiled rendered image
                 LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", //$NON-NLS-1$
                     frame, TagD.getTagValue(this, Tag.SOPInstanceUID));
-                return getValidImage(readAsRenderedImage(frame, null), media);
+
+                FileCache cache = media.getFileCache();
+
+                Path imgCachePath = null;
+                File file = cache.getTransformedFile();
+                if (file == null) {
+                    String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes());
+                    imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv"); //$NON-NLS-1$
+                    if (Files.isReadable(imgCachePath)) {
+                        file = imgCachePath.toFile();
+                        cache.setTransformedFile(file);
+                        imgCachePath = null;
+                    }
+                }
+
+                if (file == null) {
+                    Mat mat = getValidImage(readAsRenderedImage(frame, null), media);
+                    new RawImage(imgCachePath.toFile()).write(mat);
+                    return mat;
+                }
+                return new RawImage(file).read();
             }
         }
         return null;
@@ -743,6 +766,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     Attributes ds = getDicomObject();
                     int[] embeddedOverlayGroupOffsets = Overlays.getEmbeddedOverlayGroupOffsets(ds);
 
+                    // TODO remove if the output image is cache
                     if (embeddedOverlayGroupOffsets.length > 0) {
                         FileOutputStream fileOut = null;
                         ObjectOutput objOut = null;
