@@ -51,12 +51,11 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     private final HashMap<String, Boolean> displayPreferences = new HashMap<>();
     private boolean visible = true;
     private static final Color color = Color.yellow;
-    private static final int BORDER = 10;
     private final ViewCanvas view2DPane;
     private PixelInfo pixelInfo = null;
     private final Rectangle pixelInfoBound;
     private final Rectangle preloadingProgressBound;
-    private int border = BORDER;
+    private int border = 10;
     private boolean showBottomScale = true;
     private String name;
 

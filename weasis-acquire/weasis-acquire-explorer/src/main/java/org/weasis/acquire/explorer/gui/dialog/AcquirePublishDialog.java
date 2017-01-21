@@ -39,6 +39,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
 import org.opencv.core.Mat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.DicomizeTask;
 import org.weasis.acquire.explorer.Messages;
@@ -57,6 +59,7 @@ import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 
 @SuppressWarnings("serial")
 public class AcquirePublishDialog extends JDialog {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishDialog.class);
 
     public static final Integer MAX_RESOLUTION_THRESHOLD = 3000; // in pixels
 
@@ -67,7 +70,7 @@ public class AcquirePublishDialog extends JDialog {
 
         private String title;
 
-        private Resolution(String title) {
+        Resolution(String title) {
             this.title = title;
         }
 
@@ -86,7 +89,7 @@ public class AcquirePublishDialog extends JDialog {
     private JButton cancelButton;
     private JProgressBar progressBar;
 
-    private ActionListener clearAndHideActionListener;
+    private transient ActionListener clearAndHideActionListener;
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public AcquirePublishDialog(AcquirePublishPanel publishPanel) {
@@ -165,7 +168,8 @@ public class AcquirePublishDialog extends JDialog {
         cancelButton.addActionListener(clearAndHideActionListener);
 
         JPanel destPane = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 10));
-        JLabel lblDestination = new JLabel(Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON); //$NON-NLS-1$
+        JLabel lblDestination =
+            new JLabel(Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON); //$NON-NLS-1$
         destPane.add(lblDestination);
         AbstractDicomNode.addTooltipToComboList(comboNode);
 
@@ -197,7 +201,8 @@ public class AcquirePublishDialog extends JDialog {
         String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host", "localhost"); //$NON-NLS-1$ //$NON-NLS-2$
         String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.aet", "DCM4CHEE"); //$NON-NLS-1$ //$NON-NLS-2$
         String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.port", "11112"); //$NON-NLS-1$ //$NON-NLS-2$
-        return new DefaultDicomNode(Messages.getString("AcquirePublishDialog.def_archive"), aet, host, Integer.parseInt(port), UsageType.BOTH); //$NON-NLS-1$
+        return new DefaultDicomNode(Messages.getString("AcquirePublishDialog.def_archive"), aet, host, //$NON-NLS-1$
+            Integer.parseInt(port), UsageType.BOTH);
     }
 
     private void publishAction() {
@@ -245,7 +250,10 @@ public class AcquirePublishDialog extends JDialog {
                     if (!dicomizeTask.isCancelled()) {
                         try {
                             exportDirDicom = dicomizeTask.get();
-                        } catch (InterruptedException | ExecutionException doNothing) {
+                        } catch (InterruptedException doNothing) {
+                            LOGGER.warn("Dicomizing task Interruption");
+                        } catch (ExecutionException e) {
+                            LOGGER.error("Dicomizing task", e);
                         }
 
                         if (exportDirDicom != null) {
