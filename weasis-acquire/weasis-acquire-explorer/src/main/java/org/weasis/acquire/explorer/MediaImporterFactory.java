@@ -21,6 +21,8 @@ import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 
 @org.apache.felix.scr.annotations.Component(immediate = false)
@@ -28,6 +30,8 @@ import org.weasis.core.api.explorer.DataExplorerViewFactory;
 @Properties(value = { @Property(name = "service.name", value = "Media Dicomizer"),
     @Property(name = "service.description", value = "Import media and dicomize them") })
 public class MediaImporterFactory implements DataExplorerViewFactory {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MediaImporterFactory.class);
+
     private AcquireExplorer explorer = null;
 
     @Override
@@ -63,7 +67,7 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
             try {
                 val = context.getBundleContext().getServiceReferences(serviceClassName, null);
             } catch (InvalidSyntaxException e) {
-                // Do nothing
+                LOGGER.error("Get media importer services", e);
             }
             if (val == null || val.length == 0) {
                 Dictionary<String, Object> dict = new Hashtable<>();
