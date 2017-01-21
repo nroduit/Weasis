@@ -894,8 +894,6 @@ public class TagD extends TagW {
                         buf.append(" "); //$NON-NLS-1$
                     }
                     buf.append(vals[i]);
-                } else if (i == 0) {
-                    buf.append(TagW.NO_VALUE);
                 }
             }
 
