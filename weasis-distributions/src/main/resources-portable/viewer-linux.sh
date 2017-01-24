@@ -4,13 +4,14 @@
 # variable that can be used by another calling script.
 #
 # Rewritten by Abel 'Akronix' Serrano Juste <akronix5@gmail.com>
-#
-# To specify the required version, set the REQUIRED_VERSION to the major version required, 
-# e.g. 1.3, but not 1.3.1. Also, always set decimal value: e.g. 9.0, but not 9 or 9.
+
+# Specify the required JDK version.
+# Only major version is checked. Minor version or any other version string info is left out.
 REQUIRED_TEXT_VERSION=1.8
 
-# Transform the required version string into a number that can be used in comparisons
-REQUIRED_VERSION_INTEGER=`echo $REQUIRED_TEXT_VERSION | sed -e 's/\./0/'`
+# Extract major version number for comparisons from the required version string.
+# In order to do that, remove leading "1." if exists, and minor and security versions.
+REQUIRED_MAJOR_VERSION=`echo $REQUIRED_TEXT_VERSION | sed -e 's/^1\.//' -e 's/\..*//'`
 
 # Aux functions:
 die ( ) {
@@ -43,10 +44,10 @@ fi
 INSTALLED_VERSION=`$JAVACMD -version 2>&1 | awk '/version [0-9]*/ {print $3;}'`
 echo "Found java $INSTALLED_VERSION"
 
-# Remove double quotes, replace first dot by 0 and remove the rest of the version string.
-INSTALLED_VERSION_INTEGER=`echo $INSTALLED_VERSION | sed -e 's/"//' -e 's/\./0/' -e 's/\..*//'`
+# Remove double quotes, remove leading "1." if it exists and remove everything apart from the major version number.
+INSTALLED_MAJOR_VERSION=`echo $INSTALLED_VERSION | sed -e 's/"//' -e 's/^1\.//' -e 's/\..*//'`
 
-if (( INSTALLED_VERSION_INTEGER < REQUIRED_VERSION_INTEGER ))
+if (( INSTALLED_MAJOR_VERSION < REQUIRED_MAJOR_VERSION ))
 then
 	die "Your version of java is too low to run Weasis.\nPlease update to $REQUIRED_TEXT_VERSION or higher"
 fi
