@@ -126,28 +126,28 @@ public class RawImage {
             } else if (dataType == DataBuffer.TYPE_SHORT || dataType == DataBuffer.TYPE_USHORT) {
                 short[] data = new short[size];
                 mat.get(0, 0, data);
-                ByteBuffer buf = fc.map(FileChannel.MapMode.READ_WRITE, HEADER_LENGTH, 2 * data.length).order(ByteOrder.LITTLE_ENDIAN);
+                ByteBuffer buf = fc.map(FileChannel.MapMode.READ_WRITE, HEADER_LENGTH, 2L * data.length).order(ByteOrder.LITTLE_ENDIAN);
                 for (short i : data) {
                     buf.putShort(i);
                 }
             } else if (dataType == DataBuffer.TYPE_INT) {
                 int[] data = new int[size];
                 mat.get(0, 0, data);
-                ByteBuffer buf = fc.map(FileChannel.MapMode.READ_WRITE, HEADER_LENGTH, 4 * data.length).order(ByteOrder.LITTLE_ENDIAN);
+                ByteBuffer buf = fc.map(FileChannel.MapMode.READ_WRITE, HEADER_LENGTH, 4L * data.length).order(ByteOrder.LITTLE_ENDIAN);
                 for (int i : data) {
                     buf.putInt(i);
                 }
             } else if (dataType == DataBuffer.TYPE_FLOAT) {
                 float[] data = new float[size];
                 mat.get(0, 0, data);
-                ByteBuffer buf = fc.map(FileChannel.MapMode.READ_WRITE, HEADER_LENGTH, 4 * data.length).order(ByteOrder.LITTLE_ENDIAN);
+                ByteBuffer buf = fc.map(FileChannel.MapMode.READ_WRITE, HEADER_LENGTH, 4L * data.length).order(ByteOrder.LITTLE_ENDIAN);
                 for (float i : data) {
                     buf.putFloat(i);
                 }
             } else if (dataType == DataBuffer.TYPE_DOUBLE) {
                 double[] data = new double[size];
                 mat.get(0, 0, data);
-                ByteBuffer buf = fc.map(FileChannel.MapMode.READ_WRITE, HEADER_LENGTH, 8 * data.length).order(ByteOrder.LITTLE_ENDIAN);
+                ByteBuffer buf = fc.map(FileChannel.MapMode.READ_WRITE, HEADER_LENGTH, 8L * data.length).order(ByteOrder.LITTLE_ENDIAN);
                 for (double i : data) {
                     buf.putDouble(i);
                 }
