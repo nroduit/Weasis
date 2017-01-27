@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.weasis.core.api.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.awt.Color;
 
 import org.junit.Assert;
@@ -19,7 +17,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.osgi.framework.BundleContext;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -41,20 +38,7 @@ public class WPropertiesTest {
     @Before
     public void setUp() {
         PowerMockito.mockStatic(AppProperties.class);
-        PowerMockito.when(AppProperties.getBundleContext(Mockito.any())).thenReturn(context);
-    }
-    
-    @Test
-    public void testContext() {
-        WProperties prop = new WProperties();
-        
-        PowerMockito.when(context.getProperty(Mockito.eq("unknown2"))).thenReturn("test1"); //$NON-NLS-1$ //$NON-NLS-2$
-        
-        String result = prop.getProperty("unknown"); //$NON-NLS-1$
-        assertThat(result).isNull();
-        
-        String result2 = prop.getProperty("unknown2"); //$NON-NLS-1$
-        assertThat(result2).isEqualTo("test1"); //$NON-NLS-1$
+        PowerMockito.when(AppProperties.getBundleContext(null)).thenReturn(context);
     }
     
     @Test

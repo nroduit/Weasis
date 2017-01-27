@@ -13,10 +13,8 @@ package org.weasis.dicom.explorer;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
@@ -25,10 +23,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@Properties(value = { @Property(name = "service.name", value = "DICOM Explorer"),
-    @Property(name = "service.description", value = "Explore Dicom data by patient, study and series") })
+@org.osgi.service.component.annotations.Component(service = DataExplorerViewFactory.class, immediate = false)
 public class DicomExplorerFactory implements DataExplorerViewFactory {
 
     private DicomExplorer explorer = null;

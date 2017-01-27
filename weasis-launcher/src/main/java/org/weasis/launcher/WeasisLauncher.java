@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -427,7 +427,7 @@ public class WeasisLauncher {
             m_felix.waitForStop(0);
             System.exit(0);
 
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             exitStatus = -1;
             System.err.println("Cannot not start framework: " + ex); //$NON-NLS-1$
             System.err.println("Weasis cache will be cleaned at next launch."); //$NON-NLS-1$
@@ -628,7 +628,7 @@ public class WeasisLauncher {
         if (commandProcessor == null) {
             return null;
         }
-        Class<?>[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
+        Class<?>[] parameterTypes = new Class[] { InputStream.class, OutputStream.class, OutputStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
 
