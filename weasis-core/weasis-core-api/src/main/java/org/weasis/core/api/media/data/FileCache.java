@@ -15,10 +15,12 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.weasis.core.api.util.FileUtil;
+
 public class FileCache {
 
     private final MediaReader reader;
-    private volatile File downloadedFile;
+    private volatile File originalTempFile;
     private volatile File transformedFile;
     private volatile boolean requireTransformation;
 
@@ -37,8 +39,8 @@ public class FileCache {
 
     public Optional<File> getOriginalFile() {
         File originalFile = null;
-        if (downloadedFile != null) {
-            originalFile = downloadedFile;
+        if (originalTempFile != null) {
+            originalFile = originalTempFile;
         } else if (isLocalFile()) {
             originalFile = Paths.get(reader.getUri()).toFile();
         }
@@ -52,12 +54,12 @@ public class FileCache {
         return getOriginalFile().get();
     }
 
-    public File getDownloadedFile() {
-        return downloadedFile;
+    public File getOriginalTempFile() {
+        return originalTempFile;
     }
 
-    public void setDownloadedFile(File downloadedFile) {
-        this.downloadedFile = downloadedFile;
+    public void setOriginalTempFile(File downloadedFile) {
+        this.originalTempFile = downloadedFile;
     }
 
     public File getTransformedFile() {
@@ -90,6 +92,11 @@ public class FileCache {
             return f.get().lastModified();
         }
         return 0L;
+    }
+
+    public void dispose() {
+        FileUtil.delete(originalTempFile);
+        FileUtil.delete(transformedFile);
     }
 
 }

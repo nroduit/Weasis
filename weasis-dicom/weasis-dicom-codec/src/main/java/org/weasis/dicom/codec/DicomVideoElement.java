@@ -15,6 +15,7 @@ import java.io.File;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.AudioVideoElement;
+import org.weasis.core.api.util.FileUtil;
 
 public class DicomVideoElement extends AudioVideoElement implements FileExtractor {
 
@@ -55,7 +56,9 @@ public class DicomVideoElement extends AudioVideoElement implements FileExtracto
     }
 
     public void setVideoFile(File videoFile) {
+        FileUtil.delete(this.videoFile);
         this.videoFile = videoFile;
+        getFileCache().setOriginalTempFile(videoFile);
     }
 
     @Override

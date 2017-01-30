@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
@@ -181,15 +182,25 @@ public class ViewerPluginBuilder {
 
     public static MediaReader getMedia(File file, boolean systemReader) {
         if (file != null && file.canRead()) {
+            // If file has been downloaded or copied
+            boolean cache = file.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath());
             String mimeType = MimeInspector.getMimeType(file);
             if (mimeType != null) {
                 Codec codec = BundleTools.getCodec(mimeType, "dcm4che"); //$NON-NLS-1$
                 if (codec != null) {
-                    return codec.getMediaIO(file.toURI(), mimeType, null);
+                    MediaReader mreader = codec.getMediaIO(file.toURI(), mimeType, null);
+                    if (cache) {
+                        mreader.getFileCache().setOriginalTempFile(file);
+                    }
+                    return mreader;
                 }
             }
             if (systemReader) {
-                return new DefaultMimeIO(file.toURI(), null);
+                MediaReader mreader = new DefaultMimeIO(file.toURI(), null);
+                if (cache) {
+                    mreader.getFileCache().setOriginalTempFile(file);
+                }
+                return mreader;
             }
         }
         return null;

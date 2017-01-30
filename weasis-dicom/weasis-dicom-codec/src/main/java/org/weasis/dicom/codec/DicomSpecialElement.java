@@ -160,11 +160,6 @@ public class DicomSpecialElement extends MediaElement {
         return super.saveToFile(output);
     }
 
-    @Override
-    public void dispose() {
-        // Do nothing
-    }
-
     public static final List<DicomSpecialElement> getPRfromSopUID(String seriesUID, String sopUID, Integer frameNumber,
         List<DicomSpecialElement> studyElements) {
         List<DicomSpecialElement> filteredList = new ArrayList<>();

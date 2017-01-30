@@ -640,8 +640,7 @@ public class DownloadManager {
                 // Should not happen
                 dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             } else if (!wado.getWadoURL().equals(wadoParameters.getWadoURL())) {
-                LOGGER.error("Wado parameters must be unique for a DICOM Series: {}", dicomSeries); //$NON-NLS-1$
-                // Cannot have multiple wado parameters for a Series
+                LOGGER.error("Wado parameters must be unique within a DICOM Series: {}", dicomSeries); //$NON-NLS-1$
                 return dicomSeries;
             }
         }

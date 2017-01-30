@@ -49,6 +49,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.SeriesThumbnail;
@@ -207,8 +208,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             if (DicomModel.isSpecialModality(dicomSeries)) {
                 dicomModel.addSpecialModality(dicomSeries);
                 dicomSeries.getSortedMedias(null).stream().filter(KOSpecialElement.class::isInstance)
-                .map(KOSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+                    .map(KOSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
             }
 
             Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
@@ -769,6 +770,9 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 status = Status.COMPLETE;
                 if (tempFile != null) {
                     if (dicomSeries != null && dicomReader.isReadableDicom()) {
+                        if (cache) {
+                            dicomReader.getFileCache().setOriginalTempFile(tempFile);
+                        }
                         final DicomMediaIO reader = dicomReader;
                         // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
                         // before reaching done() of SwingWorker

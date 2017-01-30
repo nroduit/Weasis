@@ -375,12 +375,13 @@ public class AcquireManager {
      * @throws IOException
      */
     public void patient(String[] argv) throws IOException {
-        final String[] usage = { "Load Patient Context", "Usage: acquire:patient [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
-            "  -x --xml       Open Patient Context from an XML data containing all DICOM Tags ", //$NON-NLS-1$
-            "  -i --inbound       Open Patient Context from an XML data containing all DICOM Tags, supported syntax is [Base64/GZip]", //$NON-NLS-1$
-            "  -s --iurlsafe       Open Patient Context from an XML data containing all DICOM Tags, supported syntax is [Base64_URL_SAFE/GZip]", //$NON-NLS-1$
-            "  -u --url       Open Patient Context from an XML (URL) file containing all DICOM TAGs", //$NON-NLS-1$
-            "  -? --help       show help" }; //$NON-NLS-1$
+        final String[] usage = { "Load Patient Context from the first argument", "Usage: acquire:patient (-x | -i | -s | -u) arg", //$NON-NLS-1$ //$NON-NLS-2$
+            "arg is an XML text in UTF8 or an url with the option '--url'",
+            "  -x --xml         Open Patient Context from an XML data containing all DICOM Tags ", //$NON-NLS-1$
+            "  -i --inbound     Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64/GZip]", //$NON-NLS-1$
+            "  -s --iurlsafe    Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64_URL_SAFE/GZip]", //$NON-NLS-1$
+            "  -u --url         Open Patient Context from an URL (XML file containing all DICOM TAGs)", //$NON-NLS-1$
+            "  -? --help        show help" }; //$NON-NLS-1$
 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
@@ -390,9 +391,7 @@ public class AcquireManager {
             return;
         }
 
-        GuiExecutor.instance().execute(() -> {
-            patientCommand(opt, args.get(0));
-        });
+        GuiExecutor.instance().execute(() -> patientCommand(opt, args.get(0)));
     }
 
     private void patientCommand(Option opt, String arg) {

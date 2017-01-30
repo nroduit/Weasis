@@ -112,7 +112,5 @@ public class WeasisApp {
         } else {
             opt.usage();
         }
-
     }
-
 }

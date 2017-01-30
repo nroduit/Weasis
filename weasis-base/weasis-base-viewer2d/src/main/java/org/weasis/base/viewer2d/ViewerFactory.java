@@ -140,7 +140,8 @@ public class ViewerFactory implements SeriesViewerFactory {
     }
 
     public static void closeSeriesViewer(View2dContainer view2dContainer) {
-
+        // Unregister the PropertyChangeListener
+        ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(view2dContainer);
     }
 
     @Override

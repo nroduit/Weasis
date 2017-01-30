@@ -651,8 +651,8 @@ public class WeasisLauncher {
             return false;
         }
         try {
-            Method nameMethod = commandSession.getClass().getMethod("close", null); //$NON-NLS-1$
-            nameMethod.invoke(commandSession, null);
+            Method nameMethod = commandSession.getClass().getMethod("close"); //$NON-NLS-1$
+            nameMethod.invoke(commandSession);
             return true;
         } catch (Exception ex) {
             // Since the services returned by the tracker could become

@@ -332,6 +332,15 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         super.close();
     }
 
+    private boolean closeIfNoContent() {
+        if (getOpenSeries().isEmpty()) {
+            close();
+            handleFocusAfterClosing();
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
 
@@ -414,37 +423,42 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     }
                 }
             } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-                if (newVal instanceof DicomSeries) {
-                    DicomSeries dicomSeries = (DicomSeries) newVal;
-                    for (ViewCanvas<DicomImageElement> v : view2ds) {
-                        MediaSeries<DicomImageElement> s = v.getSeries();
-                        if (dicomSeries.equals(s)) {
-                            v.setSeries(null);
-                        }
-                    }
-                } else if (newVal instanceof MediaSeriesGroup) {
+                if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
                     if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
+                            handleFocusAfterClosing();
                         }
                     }
                     // Study Group
                     else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
-                            for (MediaSeriesGroup s : model.getChildren(group)) {
-                                for (ViewCanvas<DicomImageElement> v : view2ds) {
-                                    MediaSeries<DicomImageElement> series = v.getSeries();
-                                    if (s.equals(series)) {
-                                        v.setSeries(null);
+                            for (ViewCanvas<DicomImageElement> v : view2ds) {
+                                if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
+                                    v.setSeries(null);
+                                    if (closeIfNoContent()) {
+                                        return;
                                     }
                                 }
                             }
                         }
                     }
+                    // Series Group
+                    else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
+                        for (ViewCanvas<DicomImageElement> v : view2ds) {
+                            if (newVal.equals(v.getSeries())) {
+                                v.setSeries(null);
+                                if (closeIfNoContent()) {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
                 }
             } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
                 if (newVal instanceof Series) {
@@ -635,7 +649,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 DefaultAction action =
                     new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Osirix"), //$NON-NLS-1$
                         new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osirix.png")), //$NON-NLS-1$
-                        event -> exportTosirix(this,"Osirix", "/usr/bin/open -b com.rossetantoine.osirix")); //$NON-NLS-1$
+                        event -> exportTosirix(this, "Osirix", "/usr/bin/open -b com.rossetantoine.osirix")); //$NON-NLS-1$
                 actions.add(action);
             }
 
@@ -644,7 +658,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 DefaultAction action =
                     new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Horos"), //$NON-NLS-1$
                         new ImageIcon(View2dContainer.class.getResource("/icon/16x16/horos.png")), //$NON-NLS-1$
-                        event -> exportTosirix(this,"Horos", "/usr/bin/open -b com.horosproject.horos")); // $NON-NLS-1$
+                        event -> exportTosirix(this, "Horos", "/usr/bin/open -b com.horosproject.horos")); // $NON-NLS-1$
                 actions.add(action);
             }
         }

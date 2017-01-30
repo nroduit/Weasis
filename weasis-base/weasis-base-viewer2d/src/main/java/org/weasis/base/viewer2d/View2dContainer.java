@@ -46,8 +46,10 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
@@ -63,8 +65,8 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
-import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 
@@ -241,6 +243,15 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         super.close();
     }
 
+    private boolean closeIfNoContent() {
+        if (getOpenSeries().isEmpty()) {
+            close();
+            handleFocusAfterClosing();
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt instanceof ObservableEvent) {
@@ -293,12 +304,25 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     }
                 }
             } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-                if (newVal instanceof Series) {
-                    Series series = (Series) newVal;
-                    for (ViewCanvas<ImageElement> v : view2ds) {
-                        MediaSeries<ImageElement> s = v.getSeries();
-                        if (series.equals(s)) {
-                            v.setSeries(null);
+                if (newVal instanceof MediaSeriesGroup) {
+                    MediaSeriesGroup group = (MediaSeriesGroup) newVal;
+                    // Patient Group
+                    if (TagW.Group.equals(group.getTagID())) {
+                        if (group.equals(getGroupID())) {
+                            // Close the content of the plug-in
+                            close();
+                            handleFocusAfterClosing();
+                        }
+                    }
+                    // Series Group
+                    else if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
+                        for (ViewCanvas<ImageElement> v : view2ds) {
+                            if (newVal.equals(v.getSeries())) {
+                                v.setSeries(null);
+                                if (closeIfNoContent()) {
+                                    return;
+                                }
+                            }
                         }
                     }
                 }

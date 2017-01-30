@@ -22,7 +22,7 @@ import java.util.Optional;
 
 import org.weasis.core.api.util.FileUtil;
 
-public abstract class MediaElement implements Tagable {
+public class MediaElement implements Tagable {
 
     // Metadata of the media
     protected final Map<TagW, Object> tags;
@@ -87,7 +87,11 @@ public abstract class MediaElement implements Tagable {
         tags.clear();
     }
 
-    public abstract void dispose();
+    public void dispose() {
+        // Close image reader and image stream, but it should be already closed
+        mediaIO.close();
+        mediaIO.getFileCache().dispose();
+    }
 
     public URI getMediaURI() {
         return mediaIO.getUri();

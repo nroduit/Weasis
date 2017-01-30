@@ -26,6 +26,11 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.util.FileUtil;
 
+
+// TODO required to change the static ref
+//@org.osgi.service.component.annotations.Component(immediate = false, property = {
+//    CommandProcessor.COMMAND_SCOPE + "=image", CommandProcessor.COMMAND_FUNCTION + "=get",
+//    CommandProcessor.COMMAND_FUNCTION + "=close" }, service = FileModel.class)
 public class FileModel extends AbstractFileModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileModel.class);
 
@@ -47,12 +52,13 @@ public class FileModel extends AbstractFileModel {
                 return null;
             }
 
-            outFile = File.createTempFile("tumb_", FileUtil.getExtension(path), IMAGE_CACHE_DIR); // $NON-NLS-2$ //$NON-NLS-1$
+            outFile = File.createTempFile("img_", FileUtil.getExtension(path), IMAGE_CACHE_DIR); // $NON-NLS-2$ //$NON-NLS-1$
                                                                                                   // //$NON-NLS-3$
             LOGGER.debug("Start to download image {} to {}.", url, outFile.getName()); //$NON-NLS-1$
             if (FileUtil.writeFile(httpCon, outFile) == 0) {
                 return null;
             }
+            
         } catch (IOException e) {
             LOGGER.error("Dowloading image", e); //$NON-NLS-1$
         }
@@ -61,14 +67,16 @@ public class FileModel extends AbstractFileModel {
 
     @Override
     public void get(String[] argv) throws IOException {
-        final String[] usage = { "Load an image remotely or locally", "Usage: image:get [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
-            "  -f --file     Open an image from a file", // $NON-NLS-1$ //$NON-NLS-1$
-            "  -u --url      Open an image from an URL", "  -? --help        show help" }; // $NON-NLS-1$  //$NON-NLS-1$//$NON-NLS-2$
+        final String[] usage = { "Load images remotely or locally", "Usage: image:get ([-f file]... [-u url]...)", //$NON-NLS-1$ //$NON-NLS-2$
+            "  -f --file=FILE     open an image from a file", // $NON-NLS-1$ //$NON-NLS-1$
+            "  -u --url=URL       open an image from an URL", 
+            "  -? --help          show help" }; // $NON-NLS-1$ //$NON-NLS-1$
 
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> args = opt.args();
+        final List<String> fargs = opt.getList("file");
+        final List<String> uargs = opt.getList("url");
 
-        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+        if (opt.isSet("help") || (fargs.isEmpty() && uargs.isEmpty())) { //$NON-NLS-1$
             opt.usage();
             return;
         }
@@ -77,11 +85,11 @@ public class FileModel extends AbstractFileModel {
             dataModel.firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
             if (opt.isSet("file")) { //$NON-NLS-1$
-                args.stream().map(File::new).filter(File::isFile)
+                fargs.stream().map(File::new).filter(File::isFile)
                     .forEach(f -> ViewerPluginBuilder.openSequenceInDefaultPlugin(f, true, true));
             }
             if (opt.isSet("url")) { //$NON-NLS-1$
-                args.stream().map(this::getFile)
+                uargs.stream().map(this::getFile)
                     .forEach(f -> ViewerPluginBuilder.openSequenceInDefaultPlugin(f, true, true));
             }
         });

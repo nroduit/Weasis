@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -78,19 +79,16 @@ public class LoadRemoteDicomURL extends ExplorerTask {
         }
         if (seriesUID != null) {
             String unknown = TagW.NO_VALUE;
-            MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, unknown);
-            if (patient == null) {
-                patient =
-                    new MediaSeriesGroupNode(TagD.getUID(Level.PATIENT), unknown, DicomModel.patient.getTagView());
-                patient.setTag(TagD.get(Tag.PatientID), unknown);
-                patient.setTag(TagD.get(Tag.PatientName), unknown);
-                dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-            }
-            MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, unknown);
-            if (study == null) {
-                study = new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), unknown, DicomModel.study.getTagView());
-                dicomModel.addHierarchyNode(patient, study);
-            }
+            MediaSeriesGroup patient = new MediaSeriesGroupNode(TagD.getUID(Level.PATIENT), UIDUtils.createUID(),
+                DicomModel.patient.getTagView());
+            patient.setTag(TagD.get(Tag.PatientID), unknown);
+            patient.setTag(TagD.get(Tag.PatientName), unknown);
+            dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
+
+            MediaSeriesGroup study =
+                new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), UIDUtils.createUID(), DicomModel.study.getTagView());
+            dicomModel.addHierarchyNode(patient, study);
+
             Series dicomSeries = new DicomSeries(seriesUID);
             dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
             dicomSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);

@@ -10,9 +10,17 @@
  *******************************************************************************/
 package org.weasis.imageio.codec.internal;
 
+import java.util.Iterator;
+
 import javax.imageio.ImageIO;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
+import javax.media.jai.OperationDescriptorImpl;
+import javax.media.jai.OperationRegistry;
+import javax.media.jai.RegistryElementDescriptor;
+import javax.media.jai.registry.CollectionRegistryMode;
+import javax.media.jai.registry.RenderableRegistryMode;
+import javax.media.jai.registry.RenderedRegistryMode;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -41,6 +49,8 @@ import com.sun.media.imageioimpl.plugins.wbmp.WBMPImageWriterSpi;
 import com.sun.media.imageioimpl.stream.ChannelImageInputStreamSpi;
 import com.sun.media.imageioimpl.stream.ChannelImageOutputStreamSpi;
 import com.sun.media.jai.imageioimpl.ImageReadWriteSpi;
+import com.sun.media.jai.operator.ImageReadDescriptor;
+import com.sun.media.jai.operator.ImageWriteDescriptor;
 
 public class Activator implements BundleActivator {
 
@@ -64,8 +74,10 @@ public class Activator implements BundleActivator {
         }
 
         // Set priority to these codec which have better performance to the one in JRE
-        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageReaderSpi.class, ImageReaderSpi.class, "jpeg"); //$NON-NLS-1$
-        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageWriterSpi.class, ImageWriterSpi.class, "jpeg"); //$NON-NLS-1$
+        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageReaderSpi.class, ImageReaderSpi.class,
+            "jpeg"); //$NON-NLS-1$
+        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageWriterSpi.class, ImageWriterSpi.class,
+            "jpeg"); //$NON-NLS-1$
         ImageioUtil.registerServiceProviderInHighestPriority(CLibPNGImageReaderSpi.class, ImageReaderSpi.class, "png"); //$NON-NLS-1$
         ImageioUtil.registerServiceProviderInHighestPriority(CLibPNGImageWriterSpi.class, ImageWriterSpi.class, "png"); //$NON-NLS-1$
 
@@ -92,6 +104,24 @@ public class Activator implements BundleActivator {
             ImageioUtil.unRegisterServiceProvider(c);
         }
 
+        OperationRegistry reg = JAIUtil.getOperationRegistry();
+        OperationDescriptorImpl[] desc =
+            new OperationDescriptorImpl[] { new ImageReadDescriptor(), new ImageWriteDescriptor() };
+        for (OperationDescriptorImpl d : desc) {
+            String[] supportedModes =
+                { RenderedRegistryMode.MODE_NAME, RenderableRegistryMode.MODE_NAME, CollectionRegistryMode.MODE_NAME };
+            for (String mode : supportedModes) {
+                Iterator<?> list = reg.getFactoryIterator(mode, d.getName());
+                while (list.hasNext()) {
+                    Object obj = list.next();
+                    reg.unregisterFactory(mode, d.getName(), "com.sun.media.jai", obj);
+                }
+            }
+            RegistryElementDescriptor dr = reg.getDescriptor(RenderedRegistryMode.MODE_NAME, d.getName());
+            if (dr != null) {
+                reg.unregisterDescriptor(dr);
+            }
+        }
     }
 
 }
