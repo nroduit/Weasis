@@ -108,7 +108,13 @@ public class Activator implements BundleActivator, ServiceListener {
     public synchronized void serviceChanged(ServiceEvent event) {
         ServiceReference<?> sRef = event.getServiceReference();
         BundleContext context = sRef.getBundle().getBundleContext();
-        Codec codec = (Codec) context.getService(sRef);
+        Codec codec = null;
+        try {
+            codec = (Codec) context.getService(sRef);
+        } catch (RuntimeException e) {
+            // TODO find why sometimes service cannot be returned
+            LOGGER.info("Cannot get service of {}", sRef.getBundle()); //$NON-NLS-1$
+        }
         if (codec == null) {
             return;
         }
