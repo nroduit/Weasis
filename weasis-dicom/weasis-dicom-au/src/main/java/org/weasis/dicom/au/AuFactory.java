@@ -15,6 +15,8 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -115,4 +117,12 @@ public class AuFactory implements SeriesViewerFactory {
         return true;
     }
 
+    // *************************************************************** //
+    // ***************** OSGI service implementation ***************** //
+    // *************************************************************** //
+
+    @Deactivate
+    protected void deactivate(ComponentContext context) {
+        UIManager.closeSeriesViewerType(AuContainer.class);
+    }
 }

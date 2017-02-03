@@ -214,6 +214,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public void dispose() {
+        removeAllPropertyChangeListener();
+        
         synchronized (model) {
             for (MediaSeriesGroup pt : getChildren(MediaSeriesGroupNode.rootNode)) {
                 for (MediaSeriesGroup st : getChildren(pt)) {
@@ -223,7 +225,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             }
         }
-        model.clear();
+        model.clear();     
     }
 
     @Override
@@ -250,6 +252,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             propertyChange.removePropertyChangeListener(propertychangelistener);
         }
 
+    }
+    
+    public void removeAllPropertyChangeListener() {
+        for (PropertyChangeListener listener : propertyChange.getPropertyChangeListeners()) {
+            propertyChange.removePropertyChangeListener(listener);
+        }
     }
 
     @Override
