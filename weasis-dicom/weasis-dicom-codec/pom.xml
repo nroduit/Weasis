@@ -36,7 +36,6 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,org.weasis.dicom.*,org.dcm4che3.*</Export-Package>
 					</instructions>
 				</configuration>

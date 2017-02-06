@@ -73,14 +73,10 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
             return true;
         if (obj == null)
             return false;
-        if (getClass() != obj.getClass())
+        if (!(obj instanceof MediaSeriesGroup))
             return false;
-        Object value1 = tags.get(tagID);
-        if (value1 == null) {
-            return tags.equals(((MediaSeriesGroupNode) obj).tags);
-        }
-        Object value2 = ((MediaSeriesGroupNode) obj).tags.get(tagID);
-        return value1.equals(value2);
+        // According to the implementation of MediaSeriesGroupNode, the identifier cannot be null
+        return Objects.equals(tags.get(tagID), ((MediaSeriesGroup) obj).getTagValue(tagID));
     }
 
     @Override

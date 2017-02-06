@@ -394,11 +394,7 @@ public class ImageElement extends MediaElement {
     @Override
     public void dispose() {
         // Let the soft reference mechanism dispose the display image
-
-        // Close image reader and image stream, but it should be already closed
-        if (mediaIO != null) {
-            mediaIO.close();
-        }
+        super.dispose();
     }
 
     class Load implements Callable<Mat> {

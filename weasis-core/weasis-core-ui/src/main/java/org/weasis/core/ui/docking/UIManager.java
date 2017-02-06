@@ -155,9 +155,9 @@ public class UIManager {
     }
 
     public static void closeSeriesViewerType(Class<? extends SeriesViewer<?>> clazz) {
-        final List<SeriesViewer<?>> pluginsToRemove = new ArrayList<>();
+        final List<ViewerPlugin<?>> pluginsToRemove = new ArrayList<>();
         synchronized (UIManager.VIEWER_PLUGINS) {
-            for (final SeriesViewer<?> plugin : UIManager.VIEWER_PLUGINS) {
+            for (final ViewerPlugin<?> plugin : UIManager.VIEWER_PLUGINS) {
                 if (clazz.isInstance(plugin)) {
                     // Do not close Series directly, it can produce deadlock.
                     pluginsToRemove.add(plugin);
@@ -167,10 +167,11 @@ public class UIManager {
         closeSeriesViewer(pluginsToRemove);
     }
 
-    public static void closeSeriesViewer(final List<? extends SeriesViewer<?>> pluginsToRemove) {
+    public static void closeSeriesViewer(final List<? extends ViewerPlugin<?>> pluginsToRemove) {
         if (pluginsToRemove != null) {
-            for (final SeriesViewer<?> viewerPlugin : pluginsToRemove) {
+            for (final ViewerPlugin<?> viewerPlugin : pluginsToRemove) {
                 viewerPlugin.close();
+                viewerPlugin.handleFocusAfterClosing();
             }
         }
     }

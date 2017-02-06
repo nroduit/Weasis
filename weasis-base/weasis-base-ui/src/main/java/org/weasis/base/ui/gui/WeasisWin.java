@@ -459,6 +459,7 @@ public class WeasisWin {
                 viewer.setSelected(true);
             } else {
                 viewer.close();
+                viewer.handleFocusAfterClosing();
             }
         }
     }

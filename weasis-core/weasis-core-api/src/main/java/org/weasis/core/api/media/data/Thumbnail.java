@@ -46,6 +46,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
 
@@ -70,9 +71,8 @@ public class Thumbnail extends JLabel {
     protected File thumbnailPath = null;
     protected int thumbnailSize;
 
-    public Thumbnail(File thumbnailPath, int thumbnailSize) {
+    public Thumbnail(int thumbnailSize) {
         super(null, null, SwingConstants.CENTER);
-        this.thumbnailPath = thumbnailPath;
         this.thumbnailSize = thumbnailSize;
     }
 
@@ -232,9 +232,10 @@ public class Thumbnail extends JLabel {
             if (noPath && media != null) {
                 String path = (String) media.getTagValue(TagW.ThumbnailPath);
                 if (path != null) {
-                    file = thumbnailPath = new File(path);
+                    file = new File(path);
                     if (file.canRead()) {
                         noPath = false;
+                        thumbnailPath = file;
                     }
                 }
             }
@@ -246,7 +247,7 @@ public class Thumbnail extends JLabel {
                         Mat img = image.getRenderedImage(imgPl);
                         final Mat thumb = createThumbnail(img);
                         try {
-                            file = thumbnailPath = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                            file = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                         } catch (IOException e) {
                             LOGGER.error("Cannot create file for thumbnail!", e);//$NON-NLS-1$
                         }
@@ -260,6 +261,7 @@ public class Thumbnail extends JLabel {
                                      * the tiles in memory)
                                      */
                                     image.setTag(TagW.ThumbnailPath, file.getPath());
+                                    thumbnailPath = file;
                                     return;
                                 } else {
                                     // out of memory
@@ -324,6 +326,9 @@ public class Thumbnail extends JLabel {
             Mat temp = imageSoftRef.get();
             if (temp != null) {
                 temp.release();
+            }
+            if(thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())){
+                FileUtil.delete(thumbnailPath);
             }
         }
         removeMouseAndKeyListener();

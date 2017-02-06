@@ -15,6 +15,8 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -26,9 +28,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "service.name", value = "DICOM SR Viewer")
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class SRFactory implements SeriesViewerFactory {
 
     public static final String NAME = Messages.getString("SRFactory.viewer"); //$NON-NLS-1$
@@ -115,6 +115,15 @@ public class SRFactory implements SeriesViewerFactory {
     @Override
     public boolean canExternalizeSeries() {
         return true;
+    }
+    
+    // *************************************************************** //
+    // ***************** OSGI service implementation ***************** //
+    // *************************************************************** //
+    
+    @Deactivate
+    protected void deactivate(ComponentContext context) {
+        UIManager.closeSeriesViewerType(SRContainer.class);
     }
 
 }

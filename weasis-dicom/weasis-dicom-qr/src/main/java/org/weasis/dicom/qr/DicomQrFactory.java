@@ -14,8 +14,8 @@ import java.io.File;
 import java.util.Hashtable;
 import java.util.Properties;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Deactivate;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +24,7 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.explorer.DicomImportFactory;
 import org.weasis.dicom.explorer.ImportDicom;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "service.name", value = "DICOM Send")
+@org.osgi.service.component.annotations.Component(service = DicomImportFactory.class, immediate = false)
 public class DicomQrFactory implements DicomImportFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomQrFactory.class);
