@@ -56,7 +56,7 @@
 		<dependency>
 			<groupId>com.github.lgooddatepicker</groupId>
 			<artifactId>LGoodDatePicker</artifactId>
-			<version>7.6.3-rc1</version>
+			<version>8.3.0</version>
 		</dependency>
 		<!-- <dependency> -->
 		<!-- <groupId>com.xeiam.xchart</groupId> -->
