@@ -14,9 +14,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "service.name", value = "DICOM SR Element Factory")
+@org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class, immediate = false)
 public class SRElementFactory implements DicomSpecialElementFactory {
 
     public static final String SERIES_SR_MIMETYPE = "sr/dicom"; //$NON-NLS-1$

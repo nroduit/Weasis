@@ -18,6 +18,7 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 
 import javax.imageio.ImageReadParam;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
@@ -54,9 +55,6 @@ public class OpenJpegCodec implements NativeCodec {
     /** 1 mega of buffersize by default */
     public static final long OPJ_J2K_STREAM_CHUNK_SIZE = 0x100000;
 
-    public OpenJpegCodec() {
-    }
-
     @Override
     public String readHeader(NativeImage nImage) throws IOException {
         String msg = null;
@@ -64,7 +62,7 @@ public class OpenJpegCodec implements NativeCodec {
         if (seg != null) {
             J2kParameters params = (J2kParameters) nImage.getImageParameters();
 
-            Pointer l_stream = null;
+            Pointer lstream = null;
             Pointer codec = null;
             openjpeg.opj_image image = null;
             try {
@@ -76,8 +74,8 @@ public class OpenJpegCodec implements NativeCodec {
                 size.put(buffer.limit());
                 j2kFile.size(size);
 
-                l_stream = openjpeg.opj_stream_create_memory_stream(j2kFile, 0x10000, true); // 65536 bytes
-                if (l_stream.isNull()) {
+                lstream = openjpeg.opj_stream_create_memory_stream(j2kFile, 0x10000, true); // 65536 bytes
+                if (lstream.isNull()) {
                     throw new IOException("Cannot initialize stream!");
                 }
 
@@ -101,7 +99,7 @@ public class OpenJpegCodec implements NativeCodec {
 
                 /* Read the main header of the codestream and if necessary the JP2 boxes */
                 image = new openjpeg.opj_image();
-                if (!openjpeg.opj_read_header(l_stream, codec, image)) {
+                if (!openjpeg.opj_read_header(lstream, codec, image)) {
                     throw new IOException("Failed to read the j2k header");
                 }
                 setParameters(nImage.getImageParameters(), image);
@@ -109,9 +107,9 @@ public class OpenJpegCodec implements NativeCodec {
                 buffer.clear();
                 j2kFile.deallocate();
             } finally {
-                if (l_stream != null) {
-                    openjpeg.opj_stream_destroy(l_stream);
-                    l_stream.deallocate();
+                if (lstream != null) {
+                    openjpeg.opj_stream_destroy(lstream);
+                    lstream.deallocate();
                 }
                 if (codec != null) {
                     openjpeg.opj_destroy_codec(codec);
@@ -132,7 +130,7 @@ public class OpenJpegCodec implements NativeCodec {
         String msg = null;
         StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
-            Pointer l_stream = null;
+            Pointer lstream = null;
             Pointer codec = null;
             openjpeg.opj_image image = null;
             try {
@@ -149,8 +147,8 @@ public class OpenJpegCodec implements NativeCodec {
                 srcDataSize.put(buffer.limit());
                 j2kFile.size(srcDataSize);
 
-                l_stream = openjpeg.opj_stream_create_memory_stream(j2kFile, OPJ_J2K_STREAM_CHUNK_SIZE, true);
-                if (l_stream.isNull()) {
+                lstream = openjpeg.opj_stream_create_memory_stream(j2kFile, OPJ_J2K_STREAM_CHUNK_SIZE, true);
+                if (lstream.isNull()) {
                     throw new IOException("Cannot initialize stream!");
                 }
 
@@ -178,7 +176,7 @@ public class OpenJpegCodec implements NativeCodec {
 
                 /* Read the main header of the codestream and if necessary the JP2 boxes */
                 image = new openjpeg.opj_image();
-                if (!openjpeg.opj_read_header(l_stream, codec, image)) {
+                if (!openjpeg.opj_read_header(lstream, codec, image)) {
                     throw new IOException("Failed to read the j2k header");
                 }
                 setParameters(nImage.getImageParameters(), image);
@@ -235,7 +233,7 @@ public class OpenJpegCodec implements NativeCodec {
 
                 long start = System.currentTimeMillis();
                 /* Get the decoded image */
-                if (!(openjpeg.opj_decode(codec, l_stream, image) && openjpeg.opj_end_decompress(codec, l_stream))) {
+                if (!(openjpeg.opj_decode(codec, lstream, image) && openjpeg.opj_end_decompress(codec, lstream))) {
                     throw new IOException("Failed to set the decoded image!");
                 }
                 LOGGER.debug("OpenJPEG decode time: {} ms", (System.currentTimeMillis() - start)); //$NON-NLS-1$
@@ -267,10 +265,10 @@ public class OpenJpegCodec implements NativeCodec {
                  * native decode (ByteBuffer.allocateDirect() has PhantomReference)
                  */
                 buffer.clear();
-                openjpeg.opj_stream_destroy(l_stream);
+                openjpeg.opj_stream_destroy(lstream);
                 j2kFile.deallocate();
-                l_stream.deallocate();
-                l_stream = null;
+                lstream.deallocate();
+                lstream = null;
 
                 int bands = image.numcomps();
                 if (bands > 0) {
@@ -359,9 +357,9 @@ public class OpenJpegCodec implements NativeCodec {
                     }
                 }
             } finally {
-                if (l_stream != null) {
-                    openjpeg.opj_stream_destroy(l_stream);
-                    l_stream.deallocate();
+                if (lstream != null) {
+                    openjpeg.opj_stream_destroy(lstream);
+                    lstream.deallocate();
                 }
                 if (codec != null) {
                     openjpeg.opj_destroy_codec(codec);
@@ -378,7 +376,7 @@ public class OpenJpegCodec implements NativeCodec {
     }
 
     @Override
-    public String compress(NativeImage nImage, ImageOutputStream ouputStream, Rectangle region) throws IOException {
+    public String compress(NativeImage nImage, ImageOutputStream ouputStream, ImageWriteParam param) throws IOException {
         String msg = null;
         if (nImage != null && ouputStream != null && nImage.getInputBuffer() != null) {
             try {
@@ -398,7 +396,7 @@ public class OpenJpegCodec implements NativeCodec {
                 if (b instanceof ByteBuffer) {
                     buffer = ByteBuffer.allocateDirect(b.limit());
                     buffer.order(ByteOrder.LITTLE_ENDIAN);
-                    buffer.put(((ByteBuffer) b));
+                    buffer.put((ByteBuffer) b);
                 } else if (b instanceof ShortBuffer) {
                     ShortBuffer sBuf = (ShortBuffer) b;
                     buffer = ByteBuffer.allocateDirect(sBuf.limit() * 2);

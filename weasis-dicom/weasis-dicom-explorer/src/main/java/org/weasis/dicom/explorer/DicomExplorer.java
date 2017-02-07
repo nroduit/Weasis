@@ -29,10 +29,8 @@ import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -950,12 +948,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         if (patient != null) {
             synchronized (model) {
-                Collection<MediaSeriesGroup> studies = model.getChildren(patient);
-                for (Iterator<MediaSeriesGroup> iterator = studies.iterator(); iterator.hasNext();) {
-                    MediaSeriesGroup study = iterator.next();
-                    Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
-                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                        MediaSeriesGroup seq = it.next();
+                for (MediaSeriesGroup study : model.getChildren(patient)) {
+                    for (MediaSeriesGroup seq : model.getChildren(study)) {
                         if (seq instanceof Series && Boolean.TRUE.equals(seq.getTagValue(TagW.SeriesOpen))) {
                             openSeriesSet.add((Series) seq);
                         }
@@ -969,12 +963,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public boolean isPatientHasOpenSeries(MediaSeriesGroup patient) {
 
         synchronized (model) {
-            Collection<MediaSeriesGroup> studies = model.getChildren(patient);
-            for (Iterator<MediaSeriesGroup> iterator = studies.iterator(); iterator.hasNext();) {
-                MediaSeriesGroup study = iterator.next();
-                Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
-                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup seq = it.next();
+            for (MediaSeriesGroup study : model.getChildren(patient)) {
+                for (MediaSeriesGroup seq : model.getChildren(study)) {
                     if (seq instanceof Series) {
                         Boolean open = (Boolean) ((Series) seq).getTagValue(TagW.SeriesOpen);
                         return open == null ? false : open;
@@ -1026,9 +1016,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
         String uid = TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class);
         if (uid != null) {
-            Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
-            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                MediaSeriesGroup group = it.next();
+            for (MediaSeriesGroup group : model.getChildren(study)) {
                 if (group instanceof Series) {
                     Series s = (Series) group;
                     if (uid.equals(TagD.getTagValue(s, Tag.SeriesInstanceUID))) {
@@ -1306,9 +1294,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                         if (splitNb != null) {
                             updateSplitSeries(series);
-                        } else if ("KO".equals(TagD.getTagValue(series, Tag.Modality, String.class))) { //$NON-NLS-1$
-                            MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
-                            koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
+                        }
+                    } else if (newVal instanceof KOSpecialElement) {
+                        Object item = modelPatient.getSelectedItem();
+                        if (item instanceof MediaSeriesGroupNode) {
+                            koOpen.setVisible(DicomModel.hasSpecialElements((MediaSeriesGroup) item, KOSpecialElement.class));
                         }
                     }
                 } else if (ObservableEvent.BasicAction.LOADING_START.equals(action)) {

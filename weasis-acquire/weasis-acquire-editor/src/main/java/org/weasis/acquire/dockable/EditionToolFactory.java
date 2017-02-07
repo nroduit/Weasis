@@ -13,13 +13,14 @@ package org.weasis.acquire.dockable;
 import java.awt.event.KeyEvent;
 import java.util.Hashtable;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Deactivate;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.base.viewer2d.EventManager;
+import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
@@ -36,9 +37,9 @@ import org.weasis.core.ui.model.graphic.Graphic;
  * @since v2.5.0 - 2016-04-06 - ylar - creation
  *
  */
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "org.weasis.base.viewer2d.View2dContainer", value = "true")
+
+@org.osgi.service.component.annotations.Component(service = InsertableFactory.class, immediate = false, property = {
+    "org.weasis.base.viewer2d.View2dContainer=true"  })
 public class EditionToolFactory implements InsertableFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
 

@@ -84,16 +84,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
                 Dockable prevDockable = UIManager.DOCKING_CONTROL.getController().getFocusHistory()
                     .getNewestOn(dockable.getWorkingArea().getStation());
                 if (prevDockable == null) {
-                    int size = UIManager.VIEWER_PLUGINS.size();
-                    if (size > 0) {
-                        ViewerPlugin lp = UIManager.VIEWER_PLUGINS.get(size - 1);
-                        if (lp != null) {
-                            lp.dockable.toFront();
-                        }
-                    } else {
-                        ViewerPluginBuilder.DefaultDataModel.firePropertyChange(new ObservableEvent(
-                            ObservableEvent.BasicAction.NULL_SELECTION, ViewerPlugin.this, null, null));
-                    }
+                    handleFocusAfterClosing();
                 } else {
                     if (prevDockable instanceof DefaultCommonDockable) {
                         CDockable ld = ((DefaultCommonDockable) prevDockable).getDockable();
@@ -146,6 +137,19 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
     public void setSelectedAndGetFocus() {
         UIManager.DOCKING_CONTROL.getController()
             .setFocusedDockable(new DefaultFocusRequest(dockable.intern(), this, false, true, false));
+    }
+    
+    public void handleFocusAfterClosing() {
+        int size = UIManager.VIEWER_PLUGINS.size();
+        if (size > 0) {
+            ViewerPlugin<?> lp = UIManager.VIEWER_PLUGINS.get(size - 1);
+            if (lp != null) {
+                lp.dockable.toFront();
+            }
+        } else {
+            ViewerPluginBuilder.DefaultDataModel.firePropertyChange(new ObservableEvent(
+                ObservableEvent.BasicAction.NULL_SELECTION, ViewerPlugin.this, null, null));
+        }
     }
 
     @Override

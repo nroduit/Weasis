@@ -70,6 +70,7 @@ import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
+import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
@@ -258,6 +259,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         });
     }
 
+    static final DicomImageReaderSpi dicomImageReaderSpi = new DicomImageReaderSpi();
+    
     private static final SoftHashMap<DicomMediaIO, DicomMetaData> HEADER_CACHE =
         new SoftHashMap<DicomMediaIO, DicomMetaData>() {
 
@@ -312,7 +315,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     private final FileCache fileCache;
 
     public DicomMediaIO(URI uri) {
-        super(DicomCodec.DicomImageReaderSpi);
+        super(dicomImageReaderSpi);
         this.uri = Objects.requireNonNull(uri);
         this.numberOfFrame = 0;
         this.tags = new HashMap<>();
@@ -428,13 +431,15 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             smodel = pmi.createSampleModel(dataType, width, height,
                 TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), banded);
         }
+
+        ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next();
+        if (reader == null) {
+            throw new IllegalStateException("Cannot get RAW image reader");
+        }
         RawImageInputStream riis =
             new RawImageInputStream(iis, new ImageTypeSpecifier(cmodel, smodel), frameOffsets, imageDimensions);
-
         // endianess is already in iis?
         // riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-
-        ImageReader reader = new RawImageReader(DicomCodec.RawImageReaderSpi);
         reader.setInput(riis);
         return reader;
     }
@@ -986,8 +991,13 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     private ImageInputStreamImpl iisOfFrame(int frameIndex) throws IOException {
         // Extract compressed file
-        // FileUtil.writeFile(new SegmentedInputImageStream(iis, pixeldataFragments, frameIndex), new FileOutputStream(
-        // new File(AppProperties.FILE_CACHE_DIR, new File(uri).getName() + frameIndex + ".jpg")));
+        // if (!fileCache.isElementInMemory()) {
+        // String extension = "." + Optional.ofNullable(decompressor).map(d ->
+        // d.getOriginatingProvider().getFileSuffixes()[0]).orElse("raw");
+        // FileUtil.writeFile(buildSegmentedImageInputStream(frameIndex),
+        // new FileOutputStream(new File(AppProperties.FILE_CACHE_DIR,
+        // fileCache.getFinalFile().getName() + "-" + frameIndex + extension)));
+        // }
         org.dcm4che3.imageio.stream.SegmentedInputImageStream siis = buildSegmentedImageInputStream(frameIndex);
         return patchJpegLS != null ? new PatchJPEGLSImageInputStream(siis, patchJpegLS) : siis;
     }
@@ -1156,9 +1166,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 decompressor.setInput(iisOfFrame(frameIndex));
                 if (isRLELossless() && (pmi.isSubSambled() || pmi.name().startsWith("YBR"))) { //$NON-NLS-1$
                     bi = convertSubSambledAndYBR(frameIndex, param);
-                }
-                else {
-                    bi = decompressor.readAsRenderedImage(0, decompressParam(param));     
+                } else {
+                    bi = decompressor.readAsRenderedImage(0, decompressParam(param));
                 }
             } else {
                 // Rewrite image with subsampled model (otherwise cannot not be displayed as RenderedImage)

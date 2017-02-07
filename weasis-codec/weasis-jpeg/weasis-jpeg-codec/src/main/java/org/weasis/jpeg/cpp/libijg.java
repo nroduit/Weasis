@@ -234,6 +234,11 @@ public class libijg {
         public DJDecompressIJG12Bit() {
             allocate();
         }
+        
+        @Override
+        public void close() {
+            this.deallocate();
+        }
 
         private native void allocate();
 

@@ -20,7 +20,6 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 
+import org.apache.felix.service.command.CommandProcessor;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,10 +82,12 @@ import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
+@org.osgi.service.component.annotations.Component(immediate = false, property = {
+    CommandProcessor.COMMAND_SCOPE + "=dicom", CommandProcessor.COMMAND_FUNCTION + "=get",
+    CommandProcessor.COMMAND_FUNCTION + "=close" }, service = DicomModel.class)
 public class DicomModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
 
-    public static final String[] functions = { "get", "close" }; //$NON-NLS-1$ //$NON-NLS-2$
     public static final String NAME = "DICOM"; //$NON-NLS-1$
     public static final String PREFERENCE_NODE = "dicom.model"; //$NON-NLS-1$
 
@@ -95,17 +97,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         new TagView(TagD.getTagFromIDs(Tag.StudyDate, Tag.AccessionNumber, Tag.StudyID, Tag.StudyDescription)));
     public static final TreeModelNode series = new TreeModelNode(3, 0, TagW.SubseriesInstanceUID,
         new TagView(TagD.getTagFromIDs(Tag.SeriesDescription, Tag.SeriesNumber, Tag.SeriesTime)));
-
-    public static final List<TreeModelNode> modelStrucure = new ArrayList<>(5);
-
-    static {
-        modelStrucure.add(TreeModelNode.ROOT);
-        modelStrucure.add(patient);
-        modelStrucure.add(study);
-        modelStrucure.add(series);
-    }
-
     public static final ExecutorService LOADING_EXECUTOR = ThreadUtil.buildNewSingleThreadExecutor("Dicom Model"); //$NON-NLS-1$
+    
+    private static final List<TreeModelNode> modelStructure = Arrays.asList(TreeModelNode.ROOT, patient, study, series);
 
     private final Tree<MediaSeriesGroup> model;
     private PropertyChangeSupport propertyChange = null;
@@ -139,7 +133,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public MediaSeriesGroup getHierarchyNode(MediaSeriesGroup parent, Object valueID) {
         if (parent != null || valueID != null) {
             synchronized (model) {
-                for (MediaSeriesGroup node : model.getSuccessors(parent)) {
+                for (MediaSeriesGroup node : getChildren(parent)) {
                     if (node.matchIdValue(valueID)) {
                         return node;
                     }
@@ -152,10 +146,26 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public MediaSeriesGroup getStudyNode(String studyUID) {
         Objects.requireNonNull(studyUID);
         synchronized (model) {
-            for (MediaSeriesGroup pt : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-                for (MediaSeriesGroup st : model.getSuccessors(pt)) {
+            for (MediaSeriesGroup pt : getChildren(MediaSeriesGroupNode.rootNode)) {
+                for (MediaSeriesGroup st : getChildren(pt)) {
                     if (st.matchIdValue(studyUID)) {
                         return st;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public MediaSeriesGroup getSeriesNode(String seriesUID) {
+        Objects.requireNonNull(seriesUID);
+        synchronized (model) {
+            for (MediaSeriesGroup pt : getChildren(MediaSeriesGroupNode.rootNode)) {
+                for (MediaSeriesGroup st : getChildren(pt)) {
+                    for (MediaSeriesGroup item : getChildren(st)) {
+                        if (item.matchIdValue(seriesUID)) {
+                            return item;
+                        }
                     }
                 }
             }
@@ -204,24 +214,18 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public void dispose() {
+        removeAllPropertyChangeListener();
+        
         synchronized (model) {
-            for (Iterator<MediaSeriesGroup> iterator =
-                this.getChildren(MediaSeriesGroupNode.rootNode).iterator(); iterator.hasNext();) {
-                MediaSeriesGroup pt = iterator.next();
-                Collection<MediaSeriesGroup> studies = this.getChildren(pt);
-                for (Iterator<MediaSeriesGroup> iterator2 = studies.iterator(); iterator2.hasNext();) {
-                    MediaSeriesGroup st = iterator2.next();
-                    Collection<MediaSeriesGroup> seriesList = this.getChildren(st);
-                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                        Object item = it.next();
-                        if (item instanceof Series) {
-                            ((Series) item).dispose();
-                        }
+            for (MediaSeriesGroup pt : getChildren(MediaSeriesGroupNode.rootNode)) {
+                for (MediaSeriesGroup st : getChildren(pt)) {
+                    for (MediaSeriesGroup item : getChildren(st)) {
+                        item.dispose();
                     }
                 }
             }
         }
-        model.clear();
+        model.clear();     
     }
 
     @Override
@@ -231,7 +235,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     @Override
     public List<TreeModelNode> getModelStructure() {
-        return modelStrucure;
+        return modelStructure;
     }
 
     @Override
@@ -248,6 +252,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             propertyChange.removePropertyChangeListener(propertychangelistener);
         }
 
+    }
+    
+    public void removeAllPropertyChangeListener() {
+        for (PropertyChangeListener listener : propertyChange.getPropertyChangeListeners()) {
+            propertyChange.removePropertyChangeListener(listener);
+        }
     }
 
     @Override
@@ -362,17 +372,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             // remove in the data model
             MediaSeriesGroup studyGroup = getParent(dicomSeries, DicomModel.study);
             removeHierarchyNode(studyGroup, dicomSeries);
-            LOGGER.info("Remove Series: {}", dicomSeries); //$NON-NLS-1$
             dicomSeries.dispose();
+            LOGGER.info("Remove Series: {}", dicomSeries); //$NON-NLS-1$
         }
     }
 
     public void removeStudy(MediaSeriesGroup studyGroup) {
         if (studyGroup != null) {
             if (!DownloadManager.TASKS.isEmpty()) {
-                Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
-                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup group = it.next();
+                for (MediaSeriesGroup group : getChildren(studyGroup)) {
                     if (group instanceof DicomSeries) {
                         DownloadManager.stopDownloading((DicomSeries) group, this);
                     }
@@ -380,9 +388,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, studyGroup));
-            Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
-            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                MediaSeriesGroup group = it.next();
+            for (MediaSeriesGroup group : getChildren(studyGroup)) {
                 group.dispose();
             }
             MediaSeriesGroup patientGroup = getParent(studyGroup, DicomModel.patient);
@@ -394,12 +400,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public void removePatient(MediaSeriesGroup patientGroup) {
         if (patientGroup != null) {
             if (!DownloadManager.TASKS.isEmpty()) {
-                Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
-                for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup studyGroup = it.next();
-                    Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
-                    for (Iterator<MediaSeriesGroup> it2 = seriesList.iterator(); it2.hasNext();) {
-                        MediaSeriesGroup group = it2.next();
+                for (MediaSeriesGroup studyGroup : getChildren(patientGroup)) {
+                    for (MediaSeriesGroup group : getChildren(studyGroup)) {
                         if (group instanceof DicomSeries) {
                             DownloadManager.stopDownloading((DicomSeries) group, this);
                         }
@@ -408,15 +410,17 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, patientGroup));
-            Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
-            for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
-                MediaSeriesGroup studyGroup = it.next();
-                Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
-                for (Iterator<MediaSeriesGroup> it2 = seriesList.iterator(); it2.hasNext();) {
-                    MediaSeriesGroup group = it2.next();
-                    if (group instanceof DicomSeries) {
-                        ((DicomSeries) group).dispose();
-                    }
+            for (MediaSeriesGroup studyGroup : getChildren(patientGroup)) {
+                for (MediaSeriesGroup group : getChildren(studyGroup)) {
+                    group.dispose();
+                }
+            }
+
+            List<DicomSpecialElement> sps =
+                (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+            if (sps != null) {
+                for (DicomSpecialElement d : sps) {
+                    d.dispose();
                 }
             }
             removeHierarchyNode(MediaSeriesGroupNode.rootNode, patientGroup);
@@ -877,17 +881,22 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public void get(String[] argv) throws IOException {
-        final String[] usage = { "Load DICOM files remotely or locally", "Usage: dicom:get [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
-            "  -l --local		Open DICOMs from local disk", //$NON-NLS-1$
-            "  -r --remote       Open DICOMs from an URL", //$NON-NLS-1$
-            "  -p --portable       Open DICOMs from default directories at the same level of the executable", //$NON-NLS-1$
-            "  -i --iwado        Open DICOMs from an XML (GZIP, Base64) file containing UIDs", //$NON-NLS-1$
-            "  -w --wado		Open DICOMs from an XML (URL) file containing UIDs", "  -? --help		show help" }; //$NON-NLS-1$ //$NON-NLS-2$
+        final String[] usage = { "Load DICOM files remotely or locally", //$NON-NLS-1$
+            "Usage: dicom:get ([-l PATH]... [-r URI]... [-p] [-i DATA]... [-w URI]...)", //$NON-NLS-1$
+            "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk",
+            "  -r --remote=URI   open DICOMs from an URI", //$NON-NLS-1$
+            "  -p --portable     open DICOMs from configured directories at the same level of the executable", //$NON-NLS-1$
+            "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //$NON-NLS-1$
+            "  -w --wado=URI     open DICOMs from an XML manifest", "  -? --help         show help" }; //$NON-NLS-2$
 
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> args = opt.args();
+        final List<String> largs = opt.getList("local");
+        final List<String> rargs = opt.getList("remote");
+        final List<String> iargs = opt.getList("iwado");
+        final List<String> wargs = opt.getList("wado");
 
-        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("portable"))) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (opt.isSet("help") //$NON-NLS-1$
+            || (largs.isEmpty() && rargs.isEmpty() && iargs.isEmpty() && wargs.isEmpty() && !opt.isSet("portable"))) { //$NON-NLS-1$
             opt.usage();
             return;
         }
@@ -895,31 +904,37 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         GuiExecutor.instance().execute(() -> {
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-            getCommand(opt, args);
+            getCommand(opt, largs, rargs, iargs, wargs);
         });
     }
 
-    private void getCommand(Option opt, List<String> args) {
+    private void getCommand(Option opt, List<String> largs, List<String> rargs, List<String> iargs,
+        List<String> wargs) {
         // start importing local dicom series list
         if (opt.isSet("local")) { //$NON-NLS-1$
-            File[] files = new File[args.size()];
+            File[] files = new File[largs.size()];
             for (int i = 0; i < files.length; i++) {
-                files[i] = new File(args.get(i));
+                files[i] = new File(largs.get(i));
             }
             LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
-        } else if (opt.isSet("remote")) { //$NON-NLS-1$
-            LOADING_EXECUTOR.execute(new LoadRemoteDicomURL(args.toArray(new String[args.size()]), DicomModel.this));
         }
+
+        if (opt.isSet("remote")) { //$NON-NLS-1$
+            LOADING_EXECUTOR.execute(new LoadRemoteDicomURL(rargs.toArray(new String[rargs.size()]), DicomModel.this));
+        }
+
         // build WADO series list to download
-        else if (opt.isSet("wado")) { //$NON-NLS-1$
+        if (opt.isSet("wado")) { //$NON-NLS-1$
             LOADING_EXECUTOR
-                .execute(new LoadRemoteDicomManifest(args.toArray(new String[args.size()]), DicomModel.this));
-        } else if (opt.isSet("iwado")) { //$NON-NLS-1$
-            File[] xmlFiles = new File[args.size()];
+                .execute(new LoadRemoteDicomManifest(wargs.toArray(new String[wargs.size()]), DicomModel.this));
+        }
+
+        if (opt.isSet("iwado")) { //$NON-NLS-1$
+            File[] xmlFiles = new File[iargs.size()];
             for (int i = 0; i < xmlFiles.length; i++) {
                 try {
                     File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                    if (GzipManager.gzipUncompressToFile(Base64.getDecoder().decode(args.get(i)), tempFile)) {
+                    if (GzipManager.gzipUncompressToFile(Base64.getDecoder().decode(iargs.get(i)), tempFile)) {
                         xmlFiles[i] = tempFile;
                     }
 
@@ -929,9 +944,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(xmlFiles, DicomModel.this));
         }
+
         // Get DICOM folder (by default DICOM, dicom, IHE_PDI, ihe_pdi) at the same level at the Weasis
         // executable file
-        else if (opt.isSet("portable")) { //$NON-NLS-1$
+        if (opt.isSet("portable")) { //$NON-NLS-1$
 
             String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
             String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
@@ -974,16 +990,16 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public void close(String[] argv) throws IOException {
-        final String[] usage = { "Remove DICOM files in Dicom Explorer", //$NON-NLS-1$
-            "Usage: dicom:close [patient | study | series] [ARGS]", //$NON-NLS-1$
-            "  -a --all Close all patients", //$NON-NLS-1$
-            "  -p --patient <args>	Close patient, [arg] is patientUID (PatientID + Patient Birth Date, by default)", //$NON-NLS-1$
-            "  -y --study <args>	Close study, [arg] is Study Instance UID", //$NON-NLS-1$
-            "  -s --series <args>	Close series, [arg] is Series Instance UID", "  -? --help		show help" }; //$NON-NLS-1$ //$NON-NLS-2$
+        final String[] usage = { "Close DICOM files", //$NON-NLS-1$
+            "Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))", //$NON-NLS-1$
+            "  -a --all           close all the patients", //$NON-NLS-1$
+            "  -y --study=UID     close a study, UID is Study Instance UID", //$NON-NLS-1$
+            "  -s --series=UID    close a series, UID is Series Instance UID", "  -? --help          show help" };
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> args = opt.args();
+        final List<String> yargs = opt.getList("study");
+        final List<String> sargs = opt.getList("series");
 
-        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (opt.isSet("help") || (yargs.isEmpty() && sargs.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$ //$NON-NLS-2$
             opt.usage();
             return;
         }
@@ -991,50 +1007,49 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         GuiExecutor.instance().execute(() -> {
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-            closeCommand(opt, args);
-
+            closeCommand(opt, yargs, sargs);
         });
     }
 
-    private void closeCommand(Option opt, List<String> args) {
-        // start build local dicom series list
-        if (opt.isSet("patient")) { //$NON-NLS-1$
-            for (String patientUID : args) {
-                MediaSeriesGroup patientGroup;
-                // In Weasis, Global Identity of the patient is composed of the patientID and the name by default
-                // TODO handle preferences choice for patientUID, see DicomMediaUtils.buildPatientPseudoUID()
-                patientGroup = getHierarchyNode(MediaSeriesGroupNode.rootNode, patientUID);
-                if (patientGroup == null) {
-                    System.out.println("Cannot find patient: " + patientUID); //$NON-NLS-1$
-                    continue;
-                } else {
-                    removePatient(patientGroup);
-                }
-            }
-        } else if (opt.isSet("all")) { //$NON-NLS-1$
+    private void closeCommand(Option opt, List<String> yargs, List<String> sargs) {
+        if (opt.isSet("all")) { //$NON-NLS-1$
             for (MediaSeriesGroup patientGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
                 removePatient(patientGroup);
             }
-        } else if (opt.isSet("study")) { //$NON-NLS-1$
-            for (String studyUID : args) {
-                for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-                    MediaSeriesGroup stGroup = getHierarchyNode(ptGroup, studyUID);
-                    if (stGroup != null) {
-                        removeStudy(stGroup);
-                        break;
-                    }
+        } else {
+            if (opt.isSet("study")) { //$NON-NLS-1$
+                for (String studyUID : yargs) {
+                    removeStudy(getStudyNode(studyUID));
                 }
             }
-        } else if (opt.isSet("series")) { //$NON-NLS-1$
-            for (String seriesUID : args) {
-                patientLevel: for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-                    for (MediaSeriesGroup stGroup : model.getSuccessors(ptGroup)) {
-                        MediaSeriesGroup series = getHierarchyNode(stGroup, seriesUID);
-                        if (series instanceof Series) {
-                            removeSeries(series);
-                            break patientLevel;
-                        }
+            if (opt.isSet("series")) { //$NON-NLS-1$
+                for (String seriesUID : sargs) {
+                    findSeriesToRemove(seriesUID);
+                }
+            }
+        }
+    }
+
+    private void findSeriesToRemove(String seriesUID) {
+        for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
+            for (MediaSeriesGroup stGroup : model.getSuccessors(ptGroup)) {
+                // Remove all the split series
+                int k = 1;
+                while (true) {
+                    String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+                    MediaSeriesGroup group = getHierarchyNode(stGroup, uid);
+                    if (group != null) {
+                        removeSeries(group);
+                    } else {
+                        break;
                     }
+                    k++;
+                }
+
+                MediaSeriesGroup seGroup = getHierarchyNode(stGroup, seriesUID);
+                if (seGroup != null) {
+                    removeSeries(seGroup);
+                    return;
                 }
             }
         }

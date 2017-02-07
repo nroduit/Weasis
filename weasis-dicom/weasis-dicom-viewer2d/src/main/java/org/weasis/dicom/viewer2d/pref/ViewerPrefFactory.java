@@ -17,8 +17,7 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
+@org.osgi.service.component.annotations.Component(service = PreferencesPageFactory.class, immediate = false)
 public class ViewerPrefFactory implements PreferencesPageFactory {
 
     @Override

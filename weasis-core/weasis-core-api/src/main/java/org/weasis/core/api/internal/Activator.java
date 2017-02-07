@@ -25,7 +25,6 @@ import org.apache.felix.prefs.BackingStore;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
@@ -108,8 +107,14 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public synchronized void serviceChanged(ServiceEvent event) {
         ServiceReference<?> sRef = event.getServiceReference();
-        BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-        Codec codec = (Codec) context.getService(sRef);
+        BundleContext context = sRef.getBundle().getBundleContext();
+        Codec codec = null;
+        try {
+            codec = (Codec) context.getService(sRef);
+        } catch (RuntimeException e) {
+            // TODO find why sometimes service cannot be returned
+            LOGGER.info("Cannot get service of {}", sRef.getBundle()); //$NON-NLS-1$
+        }
         if (codec == null) {
             return;
         }

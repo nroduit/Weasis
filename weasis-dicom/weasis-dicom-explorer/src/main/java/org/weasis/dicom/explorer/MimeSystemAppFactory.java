@@ -27,9 +27,7 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.FilesExtractor;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "service.pluginName", value = "Default System Application")
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class MimeSystemAppFactory implements SeriesViewerFactory {
 
     public static final String NAME = Messages.getString("MimeSystemAppViewer.app"); //$NON-NLS-1$

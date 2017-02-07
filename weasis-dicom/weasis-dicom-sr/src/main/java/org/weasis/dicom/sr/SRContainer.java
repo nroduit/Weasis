@@ -61,7 +61,6 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ForcedAcceptPrintService;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -219,29 +218,31 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             Object newVal = event.getNewValue();
 
             if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-                if (newVal instanceof DicomSeries) {
-                    if (srview != null && srview.getSeries() == newVal) {
-                        close();
-                    }
-                } else if (newVal instanceof MediaSeriesGroup) {
+                if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
                     if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
+                            handleFocusAfterClosing();
                         }
                     }
                     // Study Group
                     else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
-                            for (MediaSeriesGroup s : model.getChildren(group)) {
-                                if (srview != null && srview.getSeries() == s) {
-                                    close();
-                                    break;
-                                }
+                            if (srview != null && group.equals(model.getParent(srview.getSeries(), DicomModel.study))) {
+                                close();
+                                handleFocusAfterClosing();
                             }
+                        }
+                    }
+                    // Series Group
+                    else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
+                        if (srview != null && srview.getSeries() == newVal) {
+                            close();
+                            handleFocusAfterClosing();
                         }
                     }
                 }

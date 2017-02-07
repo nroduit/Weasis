@@ -27,7 +27,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -50,6 +49,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.SeriesThumbnail;
@@ -68,7 +68,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TransferSyntax;
@@ -207,9 +207,9 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
             if (DicomModel.isSpecialModality(dicomSeries)) {
                 dicomModel.addSpecialModality(dicomSeries);
-                dicomSeries.getSortedMedias(null).stream().filter(DicomSpecialElement.class::isInstance)
-                .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+                dicomSeries.getSortedMedias(null).stream().filter(KOSpecialElement.class::isInstance)
+                    .map(KOSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
             }
 
             Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
@@ -286,9 +286,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         // for Dicom Video and other special Dicom
         String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
         if (study != null && uid != null) {
-            Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
-            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                MediaSeriesGroup group = it.next();
+            for (MediaSeriesGroup group : dicomModel.getChildren(study)) {
                 if (dicomSeries != group && group instanceof Series) {
                     Series s = (Series) group;
                     if (uid.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID))
@@ -772,6 +770,9 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 status = Status.COMPLETE;
                 if (tempFile != null) {
                     if (dicomSeries != null && dicomReader.isReadableDicom()) {
+                        if (cache) {
+                            dicomReader.getFileCache().setOriginalTempFile(tempFile);
+                        }
                         final DicomMediaIO reader = dicomReader;
                         // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
                         // before reaching done() of SwingWorker

@@ -101,8 +101,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                                 paddingValue = paddingLimit;
                                 paddingLimit = temp;
                             }
-                            excludedMin = paddingValue == null ? null : new Double(paddingValue);
-                            excludedMax = paddingLimit == null ? null : new Double(paddingLimit);
+                            excludedMin = paddingValue == null ? null : (double) paddingValue;
+                            excludedMax = paddingLimit == null ? null : (double) paddingLimit;
                         }
                         RenderedOp dst =
                             ImageStatisticsDescriptor.create(image, roi, 1, 1, excludedMin, excludedMax, null);

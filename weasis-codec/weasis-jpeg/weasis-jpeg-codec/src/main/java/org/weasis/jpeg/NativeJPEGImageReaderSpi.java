@@ -51,8 +51,8 @@ public class NativeJPEGImageReaderSpi extends ImageReaderSpi {
         List list = ImageUtil.getJDKImageReaderWriterSPI(registry, "JPEG", true);
 
         for (int i = 0; i < list.size(); i++) {
-            // Set this codec to higher priority
-            registry.setOrdering(category, this, list.get(i));
+            // Set this codec to lowest priority
+            registry.setOrdering(category, list.get(i), this);
         }
 
     }

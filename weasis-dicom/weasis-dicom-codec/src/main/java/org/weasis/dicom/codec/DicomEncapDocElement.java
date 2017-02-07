@@ -14,6 +14,7 @@ import java.io.File;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.util.FileUtil;
 
 public class DicomEncapDocElement extends MediaElement implements FileExtractor {
     private File document = null;
@@ -21,14 +22,7 @@ public class DicomEncapDocElement extends MediaElement implements FileExtractor 
     public DicomEncapDocElement(DicomMediaIO mediaIO, Object key) {
         super(mediaIO, key);
     }
-
-    @Override
-    public void dispose() {
-        if (mediaIO != null) {
-            mediaIO.close();
-        }
-    }
-
+    
     @Override
     public String getMimeType() {
         String val = TagD.getTagValue(this, Tag.MIMETypeOfEncapsulatedDocument, String.class);
@@ -36,7 +30,9 @@ public class DicomEncapDocElement extends MediaElement implements FileExtractor 
     }
 
     public void setDocument(File document) {
+        FileUtil.delete(this.document);
         this.document = document;
+        getFileCache().setOriginalTempFile(document);
     }
 
     @Override

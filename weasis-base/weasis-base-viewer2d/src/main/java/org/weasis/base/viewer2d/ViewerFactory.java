@@ -47,9 +47,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.DefaultAction;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "service.pluginName", value = "Image Viewer")
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class ViewerFactory implements SeriesViewerFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
@@ -142,7 +140,8 @@ public class ViewerFactory implements SeriesViewerFactory {
     }
 
     public static void closeSeriesViewer(View2dContainer view2dContainer) {
-
+        // Unregister the PropertyChangeListener
+        ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(view2dContainer);
     }
 
     @Override

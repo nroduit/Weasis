@@ -77,7 +77,7 @@ final class NativeJPEGImageWriter extends NativeImageWriter {
             formatInputDataBuffer(nImage, renderedImage, param, false, supportedFormats);
 
             JpegCodec encoder = getCodec();
-            String error = encoder.compress(nImage, stream.getStream(), null);
+            String error = encoder.compress(nImage, stream.getStream(), param);
             if (error != null) {
                 throw new IIOException("Native JPEG encoding error: " + error);
             }
@@ -98,7 +98,8 @@ final class NativeJPEGImageWriter extends NativeImageWriter {
  * This differs from the core JPEG ImageWriteParam in that:
  *
  * <ul>
- * <li>compression types are: "JPEG" (standard), "JPEG-LOSSLESS" (lossless JPEG from 10918-1/ITU-T81)</li>
+ * <li>compression types are: "JPEG" (standard), "JPEG-LOSSLESS"
+ * (lossless JPEG from 10918-1/ITU-T81), "JPEG-LS" (ISO 14495-1 lossless).</li>
  * <li>compression modes are: MODE_DEFAULT and MODE_EXPLICIT and the other modes (MODE_DISABLED and
  * MODE_COPY_FROM_METADATA) cause an UnsupportedOperationException.</li>
  * <li>isCompressionLossless() will return true if type is NOT "JPEG".</li>
@@ -109,6 +110,7 @@ final class CLibJPEGImageWriteParam extends ImageWriteParam {
 
     static final String LOSSY_COMPRESSION_TYPE = "JPEG";
     static final String LOSSLESS_COMPRESSION_TYPE = "JPEG-LOSSLESS";
+    static final String LS_COMPRESSION_TYPE = "JPEG-LS";
 
     private static final String[] compressionQualityDescriptions =
         new String[] { "Minimum useful", "Visually lossless", "Maximum useful" };
@@ -120,7 +122,7 @@ final class CLibJPEGImageWriteParam extends ImageWriteParam {
         compressionMode = MODE_EXPLICIT;
         compressionQuality = DEFAULT_COMPRESSION_QUALITY;
         compressionType = LOSSY_COMPRESSION_TYPE;
-        compressionTypes = new String[] { LOSSY_COMPRESSION_TYPE, LOSSLESS_COMPRESSION_TYPE };
+        compressionTypes = new String[] { LOSSY_COMPRESSION_TYPE, LOSSLESS_COMPRESSION_TYPE, LS_COMPRESSION_TYPE };
     }
 
     @Override

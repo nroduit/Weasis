@@ -154,4 +154,14 @@ public interface Option {
      * @return IllegalArgumentException
      */
     IllegalArgumentException usageError(String error);
+
+    default boolean isOnlyOneOptionActivate(String... options) {
+        int trueCount = 0;
+        for (String name : options) {
+            if (isSet(name)) {
+                trueCount++;
+            }
+        }
+        return trueCount == 1;
+    }
 }

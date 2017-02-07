@@ -5,11 +5,7 @@ package ${package};
 
 import java.util.Hashtable;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +13,8 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 
-@Component(immediate = false)
-@Service
-@Property(name = "org.weasis.dicom.viewer2d.View2dContainer", value = "true")
+@org.osgi.service.component.annotations.Component(service = InsertableFactory.class, immediate = false, property = {
+"org.weasis.dicom.viewer2d.View2dContainer=true"  })
 public class SampleToolFactory implements InsertableFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SampleToolFactory.class);
 

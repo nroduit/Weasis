@@ -13,8 +13,6 @@ package org.weasis.dicom.explorer;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -34,7 +32,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 
@@ -164,8 +162,8 @@ public class LoadDicomObjects extends ExplorerTask {
 
                 if (DicomModel.isSpecialModality(dicomSeries)) {
                     dicomModel.addSpecialModality(dicomSeries);
-                    Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
-                    .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                    Arrays.stream(medias).filter(KOSpecialElement.class::isInstance)
+                    .map(KOSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
                         new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                 } else {
                     dicomModel.firePropertyChange(
@@ -211,8 +209,8 @@ public class LoadDicomObjects extends ExplorerTask {
 
                     if (DicomModel.isSpecialModality(dicomSeries)) {
                         dicomModel.addSpecialModality(dicomSeries);
-                        Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
-                        .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                        Arrays.stream(medias).filter(KOSpecialElement.class::isInstance)
+                        .map(KOSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
                             new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                     }
 
@@ -241,9 +239,7 @@ public class LoadDicomObjects extends ExplorerTask {
         if (splitNb != null && study != null) {
             String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
             if (uid != null) {
-                Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
-                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup group = it.next();
+                for (MediaSeriesGroup group : dicomModel.getChildren(study)) {
                     if (dicomSeries != group && group instanceof Series) {
                         Series s = (Series) group;
                         if (uid.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID))) {

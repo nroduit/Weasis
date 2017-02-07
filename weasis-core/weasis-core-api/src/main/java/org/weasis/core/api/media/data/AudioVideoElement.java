@@ -15,12 +15,4 @@ public class AudioVideoElement extends MediaElement {
     public AudioVideoElement(MediaReader mediaIO, Object key) {
         super(mediaIO, key);
     }
-
-    @Override
-    public void dispose() {
-        if (mediaIO != null) {
-            mediaIO.close();
-        }
-    }
-
 }

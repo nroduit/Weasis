@@ -14,9 +14,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "service.name", value = "DICOM ECG Element Factory")
+@org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class, immediate = false)
 public class AuElementFactory implements DicomSpecialElementFactory {
     private static final String[] modalities = { "AU" }; //$NON-NLS-1$
 

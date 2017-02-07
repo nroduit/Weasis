@@ -124,7 +124,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
                 && !SeriesGroup.Type.NONE.equals(s.getType())) {
                 moveToMenu.add(new JMenuItem(new DefaultAction(s.getDisplayName(), event -> {
                     AcquireCentralThumnailList.this.acquireTabPanel.moveElements(s,
-                        AcquireManager.toImageElement(medias));
+                        AcquireManager.toAcquireImageInfo(medias));
                     repaint();
 
                 })));
@@ -135,7 +135,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
     private void moveToOther(JMenu moveToMenu, final List<E> medias) {
         moveToMenu.add(new JMenuItem(new DefaultAction(SeriesGroup.DEFAULT_SERIE_NAME, event -> {
             AcquireCentralThumnailList.this.acquireTabPanel.moveElements(AcquireManager.getDefaultSeries(),
-                AcquireManager.toImageElement(medias));
+                AcquireManager.toAcquireImageInfo(medias));
             repaint();
         })));
     }
@@ -178,8 +178,8 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
     }
 
     public void updateAll() {
-        AcquireManager.groupBySeries().forEach(acquireTabPanel::updateSerie);
         acquireTabPanel.clearUnusedSeries(AcquireManager.getBySeries());
+        acquireTabPanel.setSelected(acquireTabPanel.getSelected());
         acquireTabPanel.revalidate();
         acquireTabPanel.repaint();
     }
@@ -201,7 +201,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbna
             case KeyEvent.VK_DELETE:
                 List<E> selected = getSelectedValuesList();
                 if (!selected.isEmpty()) {
-                    List<ImageElement> list = AcquireManager.toImageElement(selected);
+                    List<AcquireImageInfo> list = AcquireManager.toAcquireImageInfo(selected);
                     clearSelection();
                     AcquireManager.getInstance().removeImages(list);
                 }

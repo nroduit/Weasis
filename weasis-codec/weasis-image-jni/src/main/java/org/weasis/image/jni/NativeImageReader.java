@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.image.jni;
 
+import java.awt.Point;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
@@ -58,8 +59,7 @@ public abstract class NativeImageReader extends ImageReader {
     // The number of images in the stream, if known, otherwise -1.
     private int numImages = -1;
 
-    protected HashMap<Integer, ArrayList<ImageTypeSpecifier>> imageTypes =
-        new HashMap<>();
+    protected HashMap<Integer, ArrayList<ImageTypeSpecifier>> imageTypes = new HashMap<>();
     protected HashMap<Integer, NativeImage> nativeImages = new HashMap<>();
 
     protected NativeImageReader(ImageReaderSpi originatingProvider) {
@@ -67,12 +67,19 @@ public abstract class NativeImageReader extends ImageReader {
     }
 
     protected abstract NativeCodec getCodec();
+
     /**
      * Creates a <code>ImageTypeSpecifier</code> from the <code>ImageParameters</code>. The default sample model is
      * pixel interleaved and the default color model is CS_GRAY or CS_sRGB and IndexColorModel with palettes.
      */
     protected static final ImageTypeSpecifier createImageType(ImageParameters params, ColorSpace colorSpace,
         byte[] redPalette, byte[] greenPalette, byte[] bluePalette, byte[] alphaPalette) throws IOException {
+        return createImageType(params,
+            createColorModel(params, colorSpace, redPalette, greenPalette, bluePalette, alphaPalette));
+    }
+
+    protected static final ImageTypeSpecifier createImageType(ImageParameters params, ColorModel colorModel)
+        throws IOException {
 
         int nType = params.getDataType();
         int nWidth = params.getWidth();
@@ -86,7 +93,7 @@ public abstract class NativeImageReader extends ImageReader {
             throw new UnsupportedOperationException("Unsupported data type" + " " + nType);
         }
 
-        SampleModel sampleModel = null;
+        SampleModel sampleModel;
         if (nType == ImageParameters.TYPE_BIT) {
             sampleModel =
                 new MultiPixelPackedSampleModel(nType, nWidth, nHeight, 1, nScanlineStride, params.getBitOffset());
@@ -97,6 +104,14 @@ public abstract class NativeImageReader extends ImageReader {
             }
             sampleModel = new PixelInterleavedSampleModel(nType, nWidth, nHeight, nBands, nScanlineStride, bandOffsets);
         }
+        return new ImageTypeSpecifier(colorModel, sampleModel);
+    }
+
+    private static ColorModel createColorModel(ImageParameters params, ColorSpace colorSpace, byte[] redPalette,
+        byte[] greenPalette, byte[] bluePalette, byte[] alphaPalette) {
+        int nType = params.getDataType();
+        int nBands = params.getSamplesPerPixel();
+        int nBitDepth = params.getBitsPerSample();
 
         ColorModel colorModel;
         if (nBands == 1 && redPalette != null && greenPalette != null && bluePalette != null
@@ -105,7 +120,7 @@ public abstract class NativeImageReader extends ImageReader {
             // Build IndexColorModel
             int paletteLength = redPalette.length;
             if (alphaPalette != null) {
-                byte[] alphaTmp = alphaPalette ;
+                byte[] alphaTmp = alphaPalette;
                 if (alphaPalette.length != paletteLength) {
                     alphaTmp = new byte[paletteLength];
                     if (alphaPalette.length > paletteLength) {
@@ -145,10 +160,8 @@ public abstract class NativeImageReader extends ImageReader {
             colorModel = new ComponentColorModel(cs, bits, hasAlpha, false,
                 hasAlpha ? Transparency.TRANSLUCENT : Transparency.OPAQUE, nType);
         }
-
-        return new ImageTypeSpecifier(colorModel, sampleModel);
+        return colorModel;
     }
-
 
     /**
      * Stores the location of the image at the specified index in the imageStartPosition List.
@@ -241,12 +254,12 @@ public abstract class NativeImageReader extends ImageReader {
      * @return Whether the image was successfully skipped.
      */
     protected boolean skipImage(int index) throws IOException {
-        boolean retval = false;
+        boolean retval;
 
         if (input == null) {
             throw new IllegalStateException("input cannot be null");
         }
-        InputStream stream = null;
+        InputStream stream;
         if (input instanceof ImageInputStream) {
             stream = new InputStreamAdapter((ImageInputStream) input);
         } else {
@@ -511,14 +524,25 @@ public abstract class NativeImageReader extends ImageReader {
             return null;
         }
 
-        ImageTypeSpecifier type = createImageType(img.getImageParameters(), null, null, null, null, null);
-        // Create a new raster and copy the data.
+        ColorModel cm = createColorModel(img.getImageParameters(), null, null, null, null, null);
+        ImageTypeSpecifier type = createImageType(img.getImageParameters(), cm);
         SampleModel sm = type.getSampleModel();
-        WritableRaster raster = Raster.createWritableRaster(sm, db, param.getDestinationOffset());
+        Point offset = null;
+        if (param != null) {
+            offset = param.getDestinationOffset();
+            if (param.getDestination() != null && param.getDestination().getColorModel() != null) {
+                cm = param.getDestination().getColorModel();
+                sm = cm.createCompatibleSampleModel(img.getImageParameters().getWidth(),
+                    img.getImageParameters().getHeight());
+            }
+        }
+        // Create a new raster and copy the data.
+        WritableRaster raster =
+            Raster.createWritableRaster(sm, db, offset);
 
         long stop = System.currentTimeMillis();
         LOGGER.debug("Building BufferedImage time: {} ms", stop - start); //$NON-NLS-1$
-        return new BufferedImage(type.getColorModel(), raster, false, null);
+        return new BufferedImage(cm, raster, false, null);
     }
 
     @Override
@@ -526,16 +550,15 @@ public abstract class NativeImageReader extends ImageReader {
 
         seekToImage(imageIndex);
 
-        ArrayList<ImageTypeSpecifier> types = null;
+        ArrayList<ImageTypeSpecifier> types;
         synchronized (imageTypes) {
-            Integer key = new Integer(imageIndex);
-            if (imageTypes.containsKey(key)) {
-                types = imageTypes.get(key);
+            if (imageTypes.containsKey(imageIndex)) {
+                types = imageTypes.get(imageIndex);
             } else {
                 types = new ArrayList<>();
                 ImageParameters info = getInfoImage(imageIndex, null);
                 types.add(createImageType(info, null, null, null, null, null));
-                imageTypes.put(key, types);
+                imageTypes.put(imageIndex, types);
             }
         }
         return types.iterator();
@@ -559,7 +582,7 @@ public abstract class NativeImageReader extends ImageReader {
     public void setInput(Object input, boolean seekForwardOnly, boolean ignoreMetadata) {
         super.setInput(input, seekForwardOnly, ignoreMetadata);
         if (input != null && !(input instanceof ImageInputStream)) {
-                throw new IllegalArgumentException("input is not an ImageInputStream!");
+            throw new IllegalArgumentException("input is not an ImageInputStream!");
         }
         resetLocal();
     }
