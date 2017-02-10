@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -628,7 +628,7 @@ public class WeasisLauncher {
         if (commandProcessor == null) {
             return null;
         }
-        Class<?>[] parameterTypes = new Class[] { InputStream.class, OutputStream.class, OutputStream.class };
+        Class<?>[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
 
