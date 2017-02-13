@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>animati-texture</artifactId>
 		<groupId>br.com.animati</groupId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>2.5.1-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -14,7 +14,6 @@
 	<properties>
 		<bundle.namespace>br.com.animati.texture.mpr3dview</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-                <weasis.version>2.5.0</weasis.version>
 	</properties>
 	<build>
 		<plugins>
@@ -37,31 +36,31 @@
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>[${weasis.version}]</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
-			<version>[${weasis.version}]</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-explorer</artifactId>
-			<version>[${weasis.version}]</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-viewer2d</artifactId>
-			<version>[${weasis.version}]</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.base</groupId>
 			<artifactId>weasis-base-ui</artifactId>
-			<version>[${weasis.version}]</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -73,7 +72,7 @@
 		<dependency>
 			<groupId>br.com.animati</groupId>
 			<artifactId>texture</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
