@@ -80,7 +80,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.image.cv.RawImage;
+import org.weasis.core.api.image.cv.FileRawImage;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.Codec;
@@ -88,6 +89,7 @@ import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SimpleTagable;
 import org.weasis.core.api.media.data.SoftHashMap;
@@ -714,8 +716,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     @Override
-    public Mat getImageFragment(MediaElement media) throws Exception {
-        if (media != null && media.getKey() instanceof Integer && isReadableDicom()) {
+    public PlanarImage getImageFragment(MediaElement media) throws Exception {
+        if (Objects.requireNonNull(media).getKey() instanceof Integer && isReadableDicom()) {
             int frame = (Integer) media.getKey();
             if (frame >= 0 && frame < numberOfFrame && hasPixel) {
                 LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", //$NON-NLS-1$
@@ -736,18 +738,23 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 }
 
                 if (file == null) {
-                    Mat mat = getValidImage(readAsRenderedImage(frame, null), media);
-                    new RawImage(imgCachePath.toFile()).write(mat);
+                    PlanarImage mat = getValidImage(readAsRenderedImage(frame, null), media);   
+                    try {
+                        new FileRawImage(imgCachePath.toFile()).write(mat);
+                    } catch (Exception e) {
+                        FileUtil.delete(imgCachePath.toFile());
+                        throw e;
+                    }
                     return mat;
                 }
-                return new RawImage(file).read();
+                return new FileRawImage(file).read();
             }
         }
         return null;
     }
 
-    private Mat getValidImage(RenderedImage buffer, MediaElement media) {
-        Mat img = null;
+    private PlanarImage getValidImage(RenderedImage buffer, MediaElement media) {
+        PlanarImage img = null;
         if (buffer != null) {
             RenderedImage image = ImageFiler.getReadableImage(buffer);
 
@@ -796,7 +803,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     }
                 }
                 // Set to 0 all bits outside bitStored
-                img = ImageProcessor.bitwiseAnd(img, overlayBitMask);
+                img = ImageProcessor.bitwiseAnd(ImageCV.toMat(img), overlayBitMask);
             }
         }
         return img;

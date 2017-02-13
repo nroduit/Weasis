@@ -13,9 +13,10 @@ package org.weasis.core.api.image;
 import java.util.Optional;
 
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class RotationOp extends AbstractOp {
 
@@ -43,8 +44,8 @@ public class RotationOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        Mat source = (Mat) params.get(Param.INPUT_IMG);
-        Mat result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         Integer rotationAngle = Optional.ofNullable((Integer) params.get(P_ROTATE)).orElse(0);
         rotationAngle = rotationAngle % 360;
 
@@ -58,10 +59,11 @@ public class RotationOp extends AbstractOp {
             } else if (rotationAngle == 270) {
                 rotOp = Core.ROTATE_90_COUNTERCLOCKWISE;
             }
+            
             if (rotOp != null) {
-                result = ImageProcessor.getRotatedImage(source, rotOp);
+                result = ImageProcessor.getRotatedImage(ImageCV.toMat(source), rotOp);
             } else {
-                result = ImageProcessor.getRotatedImage(source, rotationAngle, source.width() / 2.0,
+                result = ImageProcessor.getRotatedImage(ImageCV.toMat(source), rotationAngle, source.width() / 2.0,
                     source.height() / 2.0);
             }
         }

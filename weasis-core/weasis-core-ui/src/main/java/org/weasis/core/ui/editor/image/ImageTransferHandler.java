@@ -16,13 +16,13 @@ import java.awt.datatransfer.Transferable;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
     private static final long serialVersionUID = 7716040872158831560L;
@@ -50,7 +50,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
         // anonymize and other default remove annotations
         if (comp instanceof Image2DViewer) {
             Image2DViewer<?> view2DPane = (Image2DViewer<?>) comp;
-            Mat src = view2DPane.getSourceImage();
+            PlanarImage src = view2DPane.getSourceImage();
             if (src != null) {
                 SimpleOpManager opManager = view2DPane.getImageLayer().getDisplayOpManager().copy();
                 opManager.removeImageOperationAction(opManager.getNode(ZoomOp.OP_NAME));

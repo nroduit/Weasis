@@ -44,7 +44,6 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.media.DicomDirWriter;
 import org.dcm4che3.media.RecordType;
 import org.dcm4che3.util.UIDUtils;
-import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
@@ -54,9 +53,11 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
@@ -359,17 +360,17 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         File destinationDir = new File(exportDir, path);
                         destinationDir.mkdirs();
 
-                        Mat image = img.getImage(null);
+                        PlanarImage image = img.getImage(null);
                         if (image != null && !img16) {
                             image = img.getRenderedImage(image);
                         }
                         if (image != null) {
                             File destinationFile = new File(destinationDir, instance + getExtension(format));
                             if (EXPORT_FORMAT[3].equals(format)) {
-                                ImageProcessor.writePNG(image, destinationFile);
+                                ImageProcessor.writePNG(ImageCV.toMat(image) , destinationFile);
                             } else {
                                 MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, jpegQuality);
-                                ImageProcessor.writeImage(image, destinationFile, map);
+                                ImageProcessor.writeImage(ImageCV.toMat(image), destinationFile, map);
                             }
                             if (seriesGph.contains(img.getTagValue(TagD.get(Tag.SeriesInstanceUID)))) {
                                 XmlSerializer.writePresentation(img, destinationFile);
@@ -701,10 +702,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (image == null) {
             return null;
         }
-        Mat thumbnail = null;
-        Mat imgPl = image.getImage(null);
+        PlanarImage thumbnail = null;
+        PlanarImage imgPl = image.getImage(null);
         if (imgPl != null) {
-            Mat img = image.getRenderedImage(imgPl);
+            PlanarImage img = image.getRenderedImage(imgPl);
             thumbnail = ImageProcessor.buildThumbnail(img, new Dimension(128, 128), true);
         }
         // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
@@ -726,7 +727,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         Attributes iconItem = new Attributes();
 
         if ("PALETTE COLOR".equals(pmi)) { //$NON-NLS-1$
-            BufferedImage bi = ImageProcessor.convertTo(ImageProcessor.toBufferedImage(thumbnail), BufferedImage.TYPE_BYTE_INDEXED);
+            BufferedImage bi =
+                ImageProcessor.convertTo(ImageProcessor.toBufferedImage(thumbnail), BufferedImage.TYPE_BYTE_INDEXED);
             IndexColorModel cm = (IndexColorModel) bi.getColorModel();
             int[] lutDesc = { cm.getMapSize(), 0, 8 };
             byte[] r = new byte[lutDesc[0]];

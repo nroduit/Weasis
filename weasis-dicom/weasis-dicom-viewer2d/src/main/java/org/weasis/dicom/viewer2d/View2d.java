@@ -51,7 +51,6 @@ import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
 import org.dcm4che3.data.Tag;
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -75,6 +74,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
@@ -253,7 +253,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             return;
         }
 
-        Mat dispImage = imageLayer.getDisplayImage();
+        PlanarImage dispImage = imageLayer.getDisplayImage();
         OpManager disOp = imageLayer.getDisplayOpManager();
         final String name = evt.getPropertyName();
         if (name.equals(ActionW.SYNCH.cmd())) {
@@ -885,7 +885,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     pts2.add(new Point2D.Double(dimensions.y, p.getY()));
                     addCrosshairLine(layer, pts2, color2, centerPt);
 
-                    Mat dispImg = image.getImage();
+                    PlanarImage dispImg = image.getImage();
                     if (dispImg != null) {
                         Rectangle2D rect = new Rectangle2D.Double(0, 0, dispImg.width() * image.getRescaleX(),
                             dispImg.height() * image.getRescaleY());

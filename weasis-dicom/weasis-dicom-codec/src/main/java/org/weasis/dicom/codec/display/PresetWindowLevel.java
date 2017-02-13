@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.LutShape.eFunction;
-import org.weasis.core.api.image.util.LookupTableCV;
+import org.weasis.core.api.image.cv.LookupTableCV;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;

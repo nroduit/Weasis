@@ -12,8 +12,8 @@ package org.weasis.core.api.image;
 
 import java.util.List;
 
-import org.opencv.core.Mat;
 import org.weasis.core.api.image.ImageOpNode.Param;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.Copyable;
 
 public interface OpManager extends OpEventListener, Copyable<OpManager> {
@@ -26,9 +26,9 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
     
     List<ImageOpNode> getOperations();
 
-    void setFirstNode(Mat imgSource);
+    void setFirstNode(PlanarImage imgSource);
 
-    Mat getFirstNodeInputImage();
+    PlanarImage getFirstNodeInputImage();
 
     ImageOpNode getFirstNode();
 
@@ -36,9 +36,9 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
 
     ImageOpNode getLastNode();
 
-    Mat getLastNodeOutputImage();
+    PlanarImage getLastNodeOutputImage();
 
-    Mat process();
+    PlanarImage process();
 
     Object getParamValue(String opName, String param);
 

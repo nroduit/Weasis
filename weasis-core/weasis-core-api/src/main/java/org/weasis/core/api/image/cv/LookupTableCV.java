@@ -1,4 +1,4 @@
-package org.weasis.core.api.image.util;
+package org.weasis.core.api.image.cv;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -8,7 +8,6 @@ import java.util.Objects;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.weasis.core.api.image.cv.ImageProcessor;
 
 public class LookupTableCV {
 
@@ -132,7 +131,7 @@ public class LookupTableCV {
         return data.getElem(band, value - offsets[band]);
     }
 
-    public Mat lookup(Mat src) {
+    public ImageCV lookup(Mat src) {
         // Validate source.
         Objects.requireNonNull(src);
 
@@ -191,7 +190,7 @@ public class LookupTableCV {
                 throw new IllegalArgumentException("Not supported LUT conversion from source dataType " + srcDataType);
             }
 
-            Mat dst = new Mat(height, width, CvType.CV_8UC(lkbBands));
+            ImageCV dst = new ImageCV(height, width, CvType.CV_8UC(lkbBands));
             dst.put(0, 0, bDstData);
             return dst;
 
@@ -208,7 +207,7 @@ public class LookupTableCV {
                 throw new IllegalArgumentException("Not supported LUT conversion from source dataType " + srcDataType);
             }
 
-            Mat dst = new Mat(height, width,
+            ImageCV dst = new ImageCV(height, width,
                 lkpDataType == DataBuffer.TYPE_USHORT ? CvType.CV_16UC(channels) : CvType.CV_16SC(channels));
             dst.put(0, 0, sDstData);
             return dst;

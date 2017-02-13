@@ -12,11 +12,12 @@ package org.weasis.core.api.image;
 
 import java.awt.Dimension;
 
-import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class ZoomOp extends AbstractOp {
 
@@ -62,8 +63,8 @@ public class ZoomOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        Mat source = (Mat) params.get(Param.INPUT_IMG);
-        Mat result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         Double zoomFactorX = (Double) params.get(P_RATIO_X);
         Double zoomFactorY = (Double) params.get(P_RATIO_Y);
 
@@ -77,7 +78,7 @@ public class ZoomOp extends AbstractOp {
             } else if (interpolation != null && interpolation == 3) {
                 interpolation = 4;
             }
-            result = ImageProcessor.scale(source, dim, interpolation);
+            result = ImageProcessor.scale(ImageCV.toMat(source), dim, interpolation);
         }
 
         params.put(Param.OUTPUT_IMG, result);

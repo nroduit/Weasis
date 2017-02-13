@@ -12,7 +12,6 @@ package org.weasis.imageio.codec;
 
 import java.awt.image.RenderedImage;
 import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URI;
 import java.nio.file.Files;
@@ -29,13 +28,14 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.image.cv.FileRawImage;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.MimeInspector;
@@ -45,9 +45,11 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 
 public class ImageElementIO implements MediaReader {
@@ -79,7 +81,7 @@ public class ImageElementIO implements MediaReader {
     }
 
     @Override
-    public Mat getImageFragment(MediaElement media) throws Exception {
+    public PlanarImage getImageFragment(MediaElement media) throws Exception {
         Objects.requireNonNull(media);
         FileCache cache = media.getFileCache();
 
@@ -89,11 +91,10 @@ public class ImageElementIO implements MediaReader {
             file = cache.getTransformedFile();
             if (file == null) {
                 String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes());
-                imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".pnm"); //$NON-NLS-1$
+                imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv"); //$NON-NLS-1$
                 if (Files.isReadable(imgCachePath)) {
                     file = imgCachePath.toFile();
                     cache.setTransformedFile(file);
-                    this.mimeType = "image/x-portable-anymap"; //$NON-NLS-1$
                     imgCachePath = null;
                 } else {
                     file = cache.getOriginalFile().get();
@@ -104,11 +105,11 @@ public class ImageElementIO implements MediaReader {
         }
 
         if (file != null) {
-            Mat img = readImage(file, imgCachePath == null);
+            PlanarImage img = readImage(file, imgCachePath == null);
 
             if (imgCachePath != null) {
                 File rawFile = uncompress(imgCachePath, img);
-                if( rawFile != null){
+                if (rawFile != null) {
                     file = rawFile;
                 }
                 cache.setTransformedFile(file);
@@ -119,7 +120,15 @@ public class ImageElementIO implements MediaReader {
         return null;
     }
 
-    private Mat readImage(File file, boolean createTiledLayout) throws Exception {
+    private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
+        if(file.getPath().endsWith(".wcv")){
+            return new FileRawImage(file).read();
+        }
+        
+        if(mimeType.startsWith("image")){
+            return ImageProcessor.readImage(file);
+        }
+        
         ImageReader reader = getDefaultReader(mimeType);
         if (reader == null) {
             LOGGER.info("Cannot find a reader for the mime type: {}", mimeType); //$NON-NLS-1$
@@ -305,22 +314,20 @@ public class ImageElementIO implements MediaReader {
         return fileCache;
     }
 
-    private File uncompress(Path imgCachePath, Mat img) {
+    private File uncompress(Path imgCachePath, PlanarImage img) {
         /*
          * Make an image cache with its thumbnail when the image size is larger than a tile size and if not DICOM file
          */
         if (img != null && (img.width() > ImageFiler.TILESIZE || img.height() > ImageFiler.TILESIZE)
             && !mimeType.contains("dicom")) { //$NON-NLS-1$
             File outFile = imgCachePath.toFile();
-            if (ImageProcessor.writePNM(img, outFile, true)) {
-                this.mimeType = "image/x-portable-anymap"; //$NON-NLS-1$
+            try {
+                new FileRawImage(outFile).write(img);
+                ImageProcessor.writeThumbnail(ImageCV.toMat(img), new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")));
                 return outFile;
-            } else {
-                try {
-                    Files.deleteIfExists(outFile.toPath());
-                } catch (IOException e) {
-                    LOGGER.error("Deleting temp pnm file", e); //$NON-NLS-1$
-                }
+            } catch (Exception e) {
+                FileUtil.delete(outFile);
+                LOGGER.error("Uncompress temporary image", e);
             }
         }
         return null;

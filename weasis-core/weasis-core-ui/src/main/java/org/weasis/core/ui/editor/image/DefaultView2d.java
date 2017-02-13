@@ -67,7 +67,6 @@ import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
 import org.opencv.core.CvType;
-import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
@@ -99,6 +98,7 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
@@ -306,7 +306,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    protected Mat getPreprocessedImage(E imageElement) {
+    protected PlanarImage getPreprocessedImage(E imageElement) {
         return imageElement.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
     }
 
@@ -321,7 +321,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         PixelInfo pixelInfo = new PixelInfo();
         E imageElement = imageLayer.getSourceImage();
         if (imageElement != null && imageLayer.getReadIterator() != null) {
-            Mat image = imageLayer.getReadIterator();
+            PlanarImage image = imageLayer.getReadIterator();
             // realPoint to handle special case: non square pixel image
             Point realPoint = new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5),
                 (int) Math.ceil(p.y / imageElement.getRescaleY() - 0.5));
@@ -364,7 +364,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return pixelInfo;
     }
 
-    protected static String[] getChannelNames(Mat image) {
+    protected static String[] getChannelNames(PlanarImage image) {
         if (image != null) {
             int channels = CvType.channels(image.type());
             if (channels == 3) {
@@ -534,7 +534,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected Rectangle getImageBounds(E img) {
         if (img != null) {
-            Mat source = getPreprocessedImage(img);
+            PlanarImage source = getPreprocessedImage(img);
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
             boolean nosquarePixel = MathUtil.isDifferent(img.getRescaleX(), img.getRescaleY());
             int width = source == null || nosquarePixel
@@ -617,7 +617,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
                 if (AuditLog.LOGGER.isInfoEnabled()) {
-                    Mat image = img.getImage();
+                    PlanarImage image = img.getImage();
                     if (image != null) {
                         int elemSize = CvType.ELEM_SIZE(image.type());
                         int channels = CvType.channels(image.type());
@@ -755,7 +755,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     @Override
-    public Mat getSourceImage() {
+    public PlanarImage getSourceImage() {
         E image = getImage();
         return image == null ? null : getPreprocessedImage(image);
     }
@@ -1085,7 +1085,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (series == null) {
             return;
         }
-        Mat dispImage = imageLayer.getDisplayImage();
+        PlanarImage dispImage = imageLayer.getDisplayImage();
         OpManager manager = imageLayer.getDisplayOpManager();
         final String command = evt.getPropertyName();
         if (command.equals(ActionW.SYNCH.cmd())) {

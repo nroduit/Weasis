@@ -32,9 +32,11 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
 import org.weasis.core.ui.model.GraphicModel;
@@ -80,7 +82,7 @@ public final class Transform2Dicom {
 
             imgFile = new File(exportDirImage, sopInstanceUID + ".jpg"); //$NON-NLS-1$
             SimpleOpManager opManager = imageInfo.getPostProcessOpManager();
-            Mat transformedImage = imageElement.getImage(opManager, false);
+            PlanarImage transformedImage = imageElement.getImage(opManager, false);
             // TODO should be handled in the transformation
             // Rectangle area = (Rectangle) opManager.getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
             // Integer rotationAngle = Optional.ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME,
@@ -92,7 +94,7 @@ public final class Transform2Dicom {
             // }
 
             MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
-            if (!ImageProcessor.writeImage(transformedImage, imgFile, map)) {
+            if (!ImageProcessor.writeImage(ImageCV.toImageCV(transformedImage), imgFile, map)) {
                 // out of memory ??
                 imgFile.delete();
                 LOGGER.error("Cannot Transform to jpeg {}", imageElement.getName()); //$NON-NLS-1$

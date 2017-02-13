@@ -24,13 +24,14 @@ import java.nio.channels.FileChannel;
 import java.util.Objects;
 
 import org.opencv.core.Mat;
+import org.weasis.core.api.media.data.PlanarImage;
 
-public class RawImage {
+public class FileRawImage {
     public static final int HEADER_LENGTH = 50;
 
     private final File file;
 
-    public RawImage(File file) {
+    public FileRawImage(File file) {
         this.file = Objects.requireNonNull(file);
     }
 
@@ -38,7 +39,7 @@ public class RawImage {
         return file;
     }
 
-    public Mat read() throws IOException {
+    public ImageCV read() throws IOException {
         try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
             FileChannel fc = raf.getChannel();
 
@@ -53,7 +54,7 @@ public class RawImage {
 
             buffer.position(HEADER_LENGTH);
 
-            Mat mat = new Mat(height, width, cvType);
+            ImageCV mat = new ImageCV(height, width, cvType);
 
             int dataType = ImageProcessor.convertToDataType(cvType);
             if (dataType == DataBuffer.TYPE_BYTE) {
@@ -61,7 +62,7 @@ public class RawImage {
                 if (buffer.hasArray()) {
                     data = buffer.array();
                 } else {
-                    data = new byte[buffer.limit()];
+                    data = new byte[buffer.remaining()];
                     for (int i = 0; i < data.length; i++) {
                         data[i] = buffer.get();
                     }
@@ -69,28 +70,28 @@ public class RawImage {
                 mat.put(0, 0, data);
             } else if (dataType == DataBuffer.TYPE_SHORT || dataType == DataBuffer.TYPE_USHORT) {
                 ShortBuffer b = buffer.asShortBuffer();
-                short[] data = new short[b.limit()];
+                short[] data = new short[b.remaining()];
                 for (int i = 0; i < data.length; i++) {
                     data[i] = b.get();
                 }
                 mat.put(0, 0, data);
             } else if (dataType == DataBuffer.TYPE_INT) {
                 IntBuffer b = buffer.asIntBuffer();
-                int[] data = new int[b.limit()];
+                int[] data = new int[b.remaining()];
                 for (int i = 0; i < data.length; i++) {
                     data[i] = b.get();
                 }
                 mat.put(0, 0, data);
             } else if (dataType == DataBuffer.TYPE_FLOAT) {
                 FloatBuffer b = buffer.asFloatBuffer();
-                float[] data = new float[b.limit()];
+                float[] data = new float[b.remaining()];
                 for (int i = 0; i < data.length; i++) {
                     data[i] = b.get();
                 }
                 mat.put(0, 0, data);
             } else if (dataType == DataBuffer.TYPE_DOUBLE) {
                 DoubleBuffer b = buffer.asDoubleBuffer();
-                double[] data = new double[b.limit()];
+                double[] data = new double[b.remaining()];
                 for (int i = 0; i < data.length; i++) {
                     data[i] = b.get();
                 }
@@ -100,7 +101,7 @@ public class RawImage {
         }
     }
 
-    public void write(Mat mat) throws IOException {
+    public void write(PlanarImage mat) throws IOException {
         int cvType = mat.type();
         int dataType = ImageProcessor.convertToDataType(cvType);
         int width = mat.width();
@@ -169,7 +170,7 @@ public class RawImage {
         }
     }
 
-    public void writeHeader(Mat mat) throws IOException {
+    public void writeHeader(PlanarImage mat) throws IOException {
         writeHeader(mat.type(), mat.width(), mat.height());
     }
 

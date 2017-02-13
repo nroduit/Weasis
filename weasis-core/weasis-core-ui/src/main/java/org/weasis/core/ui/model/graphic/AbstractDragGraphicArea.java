@@ -19,9 +19,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import org.opencv.core.Mat;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.MeasurableLayer;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
@@ -62,7 +63,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                     Double[] stdv = null;
 
                     if (releaseEvent && shape != null) {
-                        Mat image = layer.getSourceRenderedImage();
+                        PlanarImage image = layer.getSourceRenderedImage();
                         if (image == null) {
                             return null;
                         }
@@ -85,7 +86,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         
                         Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue")); //$NON-NLS-1$
                         Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingRangeLimit")); //$NON-NLS-1$
-                        double[][] extrema = ImageProcessor.meanStdDev(image, roi ,paddingValue, paddingLimit);
+                        // TODO remove cast
+                        double[][] extrema = ImageProcessor.meanStdDev(ImageCV.toMat(image), roi ,paddingValue, paddingLimit);
                         
                         
                         if (extrema == null || extrema.length < 1 || extrema[0].length < 1) {

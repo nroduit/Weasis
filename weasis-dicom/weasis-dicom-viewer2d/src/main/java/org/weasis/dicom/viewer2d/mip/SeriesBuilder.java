@@ -22,7 +22,6 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
@@ -33,12 +32,13 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.image.cv.RawImage;
+import org.weasis.core.api.image.cv.FileRawImage;
 import org.weasis.core.api.image.op.MaxCollectionZprojection;
 import org.weasis.core.api.image.op.MeanCollectionZprojection;
 import org.weasis.core.api.image.op.MinCollectionZprojection;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
@@ -64,7 +64,7 @@ public class SeriesBuilder {
         final MediaSeries<DicomImageElement> series, List<DicomImageElement> dicoms, Type mipType, Integer extend,
         boolean fullSeries) {
 
-        Mat curImage = null;
+        PlanarImage curImage;
         if (series != null) {
 
             SeriesComparator sort = (SeriesComparator) view.getActionValue(ActionW.SORTSTACK.cmd());
@@ -144,13 +144,16 @@ public class SeriesBuilder {
                 if (curImage != null) {
 
                     DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
-                    RawImage raw = null;
+                    FileRawImage raw = null;
                     try {
                         File mipDir =
                             AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
-                        raw = new RawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$
+                        raw = new FileRawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$
                         raw.write(curImage);
                     } catch (Exception e) {
+                        if (raw != null) {
+                            FileUtil.delete(raw.getFile());
+                        }
                         LOGGER.error("Writing MIP", e);
                     }
                     if (raw == null) {
@@ -259,7 +262,8 @@ public class SeriesBuilder {
         return 1.0;
     }
 
-    public static Mat addCollectionOperation(Type mipType, List<ImageElement> sources, final TaskMonitor taskMonitor) {
+    public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources,
+        final TaskMonitor taskMonitor) {
         if (Type.MIN.equals(mipType)) {
             MinCollectionZprojection op = new MinCollectionZprojection(sources, taskMonitor);
             return op.computeMinCollectionOpImage();

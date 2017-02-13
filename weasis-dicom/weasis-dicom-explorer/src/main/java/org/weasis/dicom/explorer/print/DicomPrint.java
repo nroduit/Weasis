@@ -48,11 +48,11 @@ import org.dcm4che3.net.DimseRSP;
 import org.dcm4che3.net.pdu.AAssociateRQ;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
-import org.opencv.core.Mat;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ExportLayout;
@@ -200,7 +200,7 @@ public class DicomPrint {
         Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
         Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
         Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
-        Mat img = image.getSourceImage();
+        PlanarImage img = image.getSourceImage();
         if (img != null && originCenter != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;
             double canvasWidth;

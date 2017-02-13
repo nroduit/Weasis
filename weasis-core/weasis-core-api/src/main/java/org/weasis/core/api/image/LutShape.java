@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.util.LookupTableCV;
+import org.weasis.core.api.image.cv.LookupTableCV;
 
 /**
  * @author btja

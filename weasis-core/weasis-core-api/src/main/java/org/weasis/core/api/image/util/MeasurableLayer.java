@@ -14,8 +14,8 @@ package org.weasis.core.api.image.util;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 
-import org.opencv.core.Mat;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 
 /**
@@ -44,6 +44,6 @@ public interface MeasurableLayer {
      *
      * @return the source image for display
      */
-    Mat getSourceRenderedImage();
+    PlanarImage getSourceRenderedImage();
 
 }

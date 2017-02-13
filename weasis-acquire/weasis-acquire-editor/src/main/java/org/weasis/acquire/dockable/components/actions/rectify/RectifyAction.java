@@ -18,7 +18,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Optional;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
@@ -32,6 +31,7 @@ import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -62,7 +62,7 @@ public class RectifyAction extends AbstractAcquireAction {
         AcquireImageInfo imageInfo = getImageInfo();
         ViewCanvas<ImageElement> view = getView();
 
-        Mat img = view.getSourceImage();
+        PlanarImage img = view.getSourceImage();
         if (img != null) {
             Rectangle2D modelArea = view.getViewModel().getModelArea();
             Rectangle2D area =

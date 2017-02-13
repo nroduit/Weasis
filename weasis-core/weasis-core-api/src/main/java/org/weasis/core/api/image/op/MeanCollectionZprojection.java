@@ -12,13 +12,13 @@ package org.weasis.core.api.image.op;
 
 import java.util.List;
 
-import org.opencv.core.Mat;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.task.TaskMonitor;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.StringUtil;
 
 public class MeanCollectionZprojection {
@@ -58,7 +58,7 @@ public class MeanCollectionZprojection {
         }
     }
 
-    public Mat computeMeanCollectionOpImage() {
+    public PlanarImage computeMeanCollectionOpImage() {
           return ImageProcessor.meanStack(sources);
     }
 }

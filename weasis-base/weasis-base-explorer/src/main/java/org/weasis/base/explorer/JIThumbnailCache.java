@@ -22,7 +22,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.list.IThumbnailList;
@@ -31,6 +30,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.ThreadUtil;
 
 public final class JIThumbnailCache {
@@ -155,7 +155,7 @@ public final class JIThumbnailCache {
 
         @Override
         public void run() {
-            Mat img = null;
+            PlanarImage img = null;
 
             // Get the final that contain the thumbnail when the uncompress mode is activated
             File file = diskObject.getFile();
@@ -175,7 +175,7 @@ public final class JIThumbnailCache {
             }
 
             final BufferedImage tIcon =
-                ImageProcessor.toBufferedImage(ImageProcessor.buildThumbnail(img, ThumbnailRenderer.ICON_DIM, true));
+                ImageProcessor.toBufferedImage((PlanarImage)ImageProcessor.buildThumbnail(img, ThumbnailRenderer.ICON_DIM, true));
 
             // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
             diskObject.removeImageFromCache();

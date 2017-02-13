@@ -35,7 +35,6 @@ import java.util.Optional;
 
 import javax.swing.UIManager;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
@@ -54,6 +53,7 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
@@ -338,7 +338,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         zoom(zoomFactor);
     }
 
-    protected Mat getSourceImage() {
+    protected PlanarImage getSourceImage() {
         SyncType type = (SyncType) actionsInView.get(ZoomWin.FREEZE_CMD);
         if (SyncType.PARENT_PARAMETERS.equals(type) || SyncType.PARENT_IMAGE.equals(type)) {
             return freezeOperations.getLastNodeOutputImage();
@@ -347,7 +347,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         // return the image before the zoom operation from the parent view
         ImageOpNode node = view2d.getImageLayer().getDisplayOpManager().getNode(ZoomOp.OP_NAME);
         if (node != null) {
-            return (Mat) node.getParam(Param.INPUT_IMG);
+            return (PlanarImage) node.getParam(Param.INPUT_IMG);
         }
         return view2d.getImageLayer().getDisplayOpManager().getLastNodeOutputImage();
     }

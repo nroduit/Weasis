@@ -20,7 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
@@ -34,6 +33,7 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -56,9 +56,9 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
     private OpManager preprocessing;
     private E sourceImage;
-    private Mat readIterator;
+    private PlanarImage readIterator;
     private boolean buildIterator = false;
-    private Mat displayImage;
+    private PlanarImage displayImage;
     private Boolean visible = true;
     private boolean enableDispOperations = true;
     private Point offset;
@@ -84,7 +84,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     }
 
     @Override
-    public Mat getReadIterator() {
+    public PlanarImage getReadIterator() {
         return readIterator;
     }
 
@@ -94,7 +94,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     }
 
     @Override
-    public Mat getSourceRenderedImage() {
+    public PlanarImage getSourceRenderedImage() {
         if (sourceImage != null) {
             return sourceImage.getImage(preprocessing);
         }
@@ -102,7 +102,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     }
 
     @Override
-    public Mat getDisplayImage() {
+    public PlanarImage getDisplayImage() {
         return displayImage;
     }
 
@@ -279,7 +279,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, imageResX);
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, imageResY);
 
-        Mat img = disOpManager.process();
+        PlanarImage img = disOpManager.process();
 
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, ratioX);
         disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, ratioY);
@@ -317,7 +317,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         if (displayImage == null) {
             disOpManager.clearNodeIOCache();
         }
-        Mat img = null;
+        PlanarImage img = null;
         if (buildIterator && sourceImage != null) {
             img = sourceImage.getImage(preprocessing);
         }

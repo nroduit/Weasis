@@ -14,8 +14,10 @@ import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class AutoLevelsOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(AutoLevelsOp.class);
@@ -45,8 +47,8 @@ public class AutoLevelsOp extends AbstractOp {
     @Override
     public void process() throws Exception {
         ImageElement imageElement = (ImageElement) params.get(P_IMAGE_ELEMENT);
-        Mat source = (Mat) params.get(Param.INPUT_IMG);
-        Mat result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         Boolean auto = (Boolean) params.get(P_AUTO_LEVEL);
 
         if (auto != null && auto && imageElement != null) {
@@ -54,7 +56,7 @@ public class AutoLevelsOp extends AbstractOp {
             double max = imageElement.getMaxValue(null, true);
             double slope = 255.0 / (max -min);
             double yint = 255.0 - slope * max;
-            result = ImageProcessor.rescaleToByte(source, slope, yint);
+            result = ImageProcessor.rescaleToByte(ImageCV.toImageCV(source), slope, yint);
         }
 
         params.put(Param.OUTPUT_IMG, result);

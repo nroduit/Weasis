@@ -17,7 +17,9 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class AffineTransformOp extends AbstractOp {
 
@@ -59,8 +61,8 @@ public class AffineTransformOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        Mat source = (Mat) params.get(Param.INPUT_IMG);
-        Mat result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         double[] matrix = (double[]) params.get(P_AFFINE_MATRIX);
         Rectangle2D bound = (Rectangle2D) params.get(P_DST_BOUNDS);
 
@@ -72,7 +74,7 @@ public class AffineTransformOp extends AbstractOp {
                 interpolation = 4;
             }
             result =
-                ImageProcessor.warpAffine(source, mat, new Size(bound.getWidth(), bound.getHeight()), interpolation);
+                ImageProcessor.warpAffine(ImageCV.toMat(source), mat, new Size(bound.getWidth(), bound.getHeight()), interpolation);
         }
 
         params.put(Param.OUTPUT_IMG, result);

@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.KernelData;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class FilterOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(FilterOp.class);
@@ -44,11 +45,11 @@ public class FilterOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        Mat source = (Mat) params.get(Param.INPUT_IMG);
-        Mat result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         KernelData kernel = (KernelData) params.get(P_KERNEL_DATA);
         if (kernel != null && !kernel.equals(KernelData.NONE)) {
-            result = ImageProcessor.filter(source, kernel);
+            result = ImageProcessor.filter(ImageCV.toMat(source), kernel);
         }
         params.put(Param.OUTPUT_IMG, result);
     }

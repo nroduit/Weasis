@@ -28,8 +28,6 @@ import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +55,9 @@ import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.util.FileUtil;
 
 public class ImageProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageProcessor.class);
@@ -123,6 +123,10 @@ public class ImageProcessor {
 
     }
 
+    public static BufferedImage toBufferedImage(PlanarImage matrix) {
+        return toBufferedImage(ImageCV.toMat(matrix));
+    }
+
     public static int convertToDataType(int cvType) {
         switch (CvType.depth(cvType)) {
             case CvType.CV_8U:
@@ -143,11 +147,11 @@ public class ImageProcessor {
         }
     }
 
-    public static Mat toMat(RenderedImage img) {
+    public static ImageCV toMat(RenderedImage img) {
         return toMat(img, null);
     }
 
-    public static Mat toMat(RenderedImage img, Rectangle region) {
+    public static ImageCV toMat(RenderedImage img, Rectangle region) {
         Raster raster = region == null ? img.getData() : img.getData(region);
         DataBuffer buf = raster.getDataBuffer();
         int[] samples = raster.getSampleModel().getSampleSize();
@@ -162,7 +166,7 @@ public class ImageProcessor {
         }
 
         if (ImageToolkit.isBinary(raster.getSampleModel())) {
-            Mat mat = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_8UC1);
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_8UC1);
             mat.put(0, 0, ImageToolkit.getUnpackedBinaryData(raster, raster.getBounds()));
             return mat;
         }
@@ -179,37 +183,37 @@ public class ImageProcessor {
                 Mat r = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_8UC1);
                 b.put(0, 0, ((DataBufferByte) buf).getData(0));
                 mv.add(r);
-                Mat dstImg = new Mat();
+                ImageCV dstImg = new ImageCV();
                 Core.merge(mv, dstImg);
                 return dstImg;
             }
 
-            Mat mat = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_8UC(samples.length));
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_8UC(samples.length));
             mat.put(0, 0, ((DataBufferByte) buf).getData());
             if (Arrays.equals(offsets, new int[] { 0, 1, 2 })) {
-                Mat dstImg = new Mat();
+                ImageCV dstImg = new ImageCV();
                 Imgproc.cvtColor(mat, dstImg, Imgproc.COLOR_RGB2BGR);
                 return dstImg;
             }
             return mat;
         } else if (buf instanceof DataBufferUShort) {
-            Mat mat = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_16UC(samples.length));
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_16UC(samples.length));
             mat.put(0, 0, ((DataBufferUShort) buf).getData());
             return mat;
         } else if (buf instanceof DataBufferShort) {
-            Mat mat = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_16SC(samples.length));
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_16SC(samples.length));
             mat.put(0, 0, ((DataBufferShort) buf).getData());
             return mat;
         } else if (buf instanceof DataBufferInt) {
-            Mat mat = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_32SC(samples.length));
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_32SC(samples.length));
             mat.put(0, 0, ((DataBufferInt) buf).getData());
             return mat;
         } else if (buf instanceof DataBufferFloat) {
-            Mat mat = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_32FC(samples.length));
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_32FC(samples.length));
             mat.put(0, 0, ((DataBufferFloat) buf).getData());
             return mat;
         } else if (buf instanceof DataBufferDouble) {
-            Mat mat = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_64FC(samples.length));
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_64FC(samples.length));
             mat.put(0, 0, ((DataBufferDouble) buf).getData());
             return mat;
         }
@@ -217,7 +221,7 @@ public class ImageProcessor {
         return null;
     }
 
-    public static Rectangle getBounds(Mat img) {
+    public static Rectangle getBounds(PlanarImage img) {
         return new Rectangle(0, 0, img.width(), img.height());
     }
 
@@ -243,13 +247,9 @@ public class ImageProcessor {
         return destImage;
     }
 
-    public static Mat applyLUT(Mat source, byte[][] lut) {
-        if (source == null || lut == null) {
-            return source;
-        }
-
-        Mat srcImg = source;
-        int lutCh = lut.length;
+    public static ImageCV applyLUT(Mat source, byte[][] lut) {
+        Mat srcImg = Objects.requireNonNull(source);
+        int lutCh = Objects.requireNonNull(lut).length;
         Mat lutMat;
 
         if (lutCh > 1) {
@@ -269,32 +269,33 @@ public class ImageProcessor {
             lutMat.put(0, 0, lut[0]);
         }
 
-        Mat dstImg = new Mat();
+        ImageCV dstImg = new ImageCV();
         Core.LUT(srcImg, lutMat, dstImg);
         return dstImg;
     }
 
-    public static Mat rescaleToByte(Mat source, double alpha, double beta) {
-        Mat dstImg = new Mat();
+    public static ImageCV rescaleToByte(Mat source, double alpha, double beta) {
+        ImageCV dstImg = new ImageCV();
         Objects.requireNonNull(source).convertTo(dstImg, CvType.CV_8U, alpha, beta);
         return dstImg;
     }
 
-    public static Mat invertLUT(Mat source) {
+    public static ImageCV invertLUT(ImageCV source) {
         Objects.requireNonNull(source);
         Core.bitwise_not(source, source);
         return source;
     }
 
-    public static Mat bitwiseAnd(Mat source, int src2Cst) {
+    public static ImageCV bitwiseAnd(Mat source, int src2Cst) {
         Objects.requireNonNull(source);
-        Mat mask = new Mat(source.size(), source.type(), new Scalar(src2Cst));
-        Core.bitwise_and(source, mask, source);
-        return source;
+        ImageCV mask = new ImageCV(source.size(), source.type(), new Scalar(src2Cst));
+        Core.bitwise_and(source, mask, mask);
+        return mask;
     }
 
-    public static Mat crop(Mat source, Rectangle area) {
-        return Objects.requireNonNull(source).submat(new Rect(area.x, area.y, area.width, area.height));
+    public static ImageCV crop(Mat source, Rectangle area) {
+        return ImageCV
+            .toImageCV(Objects.requireNonNull(source).submat(new Rect(area.x, area.y, area.width, area.height)));
     }
 
     public static MinMaxLocResult minMaxLoc(RenderedImage source, Rectangle area) {
@@ -396,44 +397,44 @@ public class ImageProcessor {
         return contours;
     }
 
-    public static Mat scale(Mat source, Dimension dim) {
+    public static ImageCV scale(Mat source, Dimension dim) {
         if (Objects.requireNonNull(dim).width < 1 || dim.height < 1) {
             throw new IllegalArgumentException("Unsupported size: " + dim);
         }
-        Mat dstImg = new Mat();
+        ImageCV dstImg = new ImageCV();
         Imgproc.resize(Objects.requireNonNull(source), dstImg, new Size(dim.getWidth(), dim.getHeight()));
         return dstImg;
     }
 
-    public static Mat scale(Mat source, Dimension dim, Integer interpolation) {
+    public static ImageCV scale(Mat source, Dimension dim, Integer interpolation) {
         if (interpolation == null || interpolation < Imgproc.INTER_NEAREST || interpolation > Imgproc.INTER_LANCZOS4) {
             return scale(source, dim);
         }
         if (Objects.requireNonNull(dim).width < 1 || dim.height < 1) {
             throw new IllegalArgumentException("Unsupported size: " + dim);
         }
-        Mat dstImg = new Mat();
+        ImageCV dstImg = new ImageCV();
         Imgproc.resize(Objects.requireNonNull(source), dstImg, new Size(dim.getWidth(), dim.getHeight()), 0, 0,
             interpolation);
         return dstImg;
     }
 
-    public static Mat filter(Mat source, KernelData kernel) {
+    public static ImageCV filter(Mat source, KernelData kernel) {
         Objects.requireNonNull(kernel);
         Mat srcImg = Objects.requireNonNull(source);
         Mat k = new Mat(kernel.getHeight(), kernel.getWidth(), CvType.CV_32F);
         k.put(0, 0, kernel.getData());
-        Mat dstImg = new Mat();
+        ImageCV dstImg = new ImageCV();
         Imgproc.filter2D(srcImg, dstImg, -1, k);
         // TODO improve speed with dedicated call
         // Imgproc.blur(srcImg, dstImg, new Size(3,3));
         return dstImg;
     }
 
-    public static Mat combineTwoImages(Mat source, Mat imgOverlay, int transparency) {
+    public static ImageCV combineTwoImages(Mat source, Mat imgOverlay, int transparency) {
         Mat srcImg = Objects.requireNonNull(source);
         Mat src2Img = Objects.requireNonNull(imgOverlay);
-        Mat dstImg = new Mat();
+        ImageCV dstImg = new ImageCV();
         Core.addWeighted(srcImg, 1.0, src2Img, transparency, 0.0, dstImg);
         return dstImg;
     }
@@ -443,8 +444,8 @@ public class ImageProcessor {
         return r == color.getGreen() && r == color.getBlue();
     }
 
-    public static Mat overlay(Mat source, RenderedImage imgOverlay, Color color) {
-        Mat srcImg = Objects.requireNonNull(source);
+    public static ImageCV overlay(Mat source, RenderedImage imgOverlay, Color color) {
+        ImageCV srcImg = ImageCV.toImageCV(Objects.requireNonNull(source));
         Mat mask = toMat(Objects.requireNonNull(imgOverlay));
         if (isGray(color)) {
             Mat grayImg = new Mat(srcImg.size(), CvType.CV_8UC1, new Scalar(color.getRed()));
@@ -452,7 +453,7 @@ public class ImageProcessor {
             return srcImg;
         }
         if (srcImg.channels() < 3) {
-            Mat dstImg = new Mat();
+            ImageCV dstImg = new ImageCV();
             Imgproc.cvtColor(srcImg, dstImg, Imgproc.COLOR_GRAY2BGR);
             srcImg = dstImg;
         }
@@ -469,19 +470,19 @@ public class ImageProcessor {
         return toBufferedImage(srcImg);
     }
 
-    public static Mat applyShutter(Mat source, Shape shape, Color color) {
+    public static ImageCV applyShutter(Mat source, Shape shape, Color color) {
         Mat srcImg = Objects.requireNonNull(source);
         Mat mask = Mat.zeros(srcImg.size(), CvType.CV_8UC1);
         List<MatOfPoint> pts = transformShapeToContour(shape, true);
         Imgproc.fillPoly(mask, pts, new Scalar(1));
-        Mat dstImg =
-            new Mat(srcImg.size(), srcImg.type(), new Scalar(color.getBlue(), color.getGreen(), color.getRed()));
+        ImageCV dstImg =
+            new ImageCV(srcImg.size(), srcImg.type(), new Scalar(color.getBlue(), color.getGreen(), color.getRed()));
         srcImg.copyTo(dstImg, mask);
         return dstImg;
     }
 
-    public static Mat applyShutter(Mat source, RenderedImage imgOverlay, Color color) {
-        Mat srcImg = Objects.requireNonNull(source);
+    public static ImageCV applyShutter(Mat source, RenderedImage imgOverlay, Color color) {
+        ImageCV srcImg = ImageCV.toImageCV(Objects.requireNonNull(source));
         Mat mask = toMat(Objects.requireNonNull(imgOverlay));
         if (isGray(color)) {
             Mat grayImg = new Mat(srcImg.size(), CvType.CV_8UC1, new Scalar(color.getRed()));
@@ -490,7 +491,7 @@ public class ImageProcessor {
         }
 
         if (srcImg.channels() < 3) {
-            Mat dstImg = new Mat();
+            ImageCV dstImg = new ImageCV();
             Imgproc.cvtColor(srcImg, dstImg, Imgproc.COLOR_GRAY2BGR);
             srcImg = dstImg;
         }
@@ -512,45 +513,34 @@ public class ImageProcessor {
         return ti;
     }
 
-    public static Mat getRotatedImage(Mat source, int rotateCvType) {
+    public static ImageCV getRotatedImage(Mat source, int rotateCvType) {
         if (rotateCvType < 0) {
-            return source;
+            return ImageCV.toImageCV(source);
         }
         Mat srcImg = Objects.requireNonNull(source);
-        Mat dstImg = new Mat();
+        ImageCV dstImg = new ImageCV();
         Core.rotate(srcImg, dstImg, rotateCvType);
         return dstImg;
     }
 
-    public static Mat flip(Mat source, int flipCvType) {
+    public static ImageCV flip(Mat source, int flipCvType) {
         if (flipCvType < 0) {
-            return source;
+            return ImageCV.toImageCV(source);
         }
         Objects.requireNonNull(source);
-        Mat dstImg = new Mat();
+        ImageCV dstImg = new ImageCV();
         Core.flip(source, dstImg, flipCvType);
         return dstImg;
     }
 
-    public static Mat normalizeHisto(Mat source) {
-        return source;
-        // Mat srcImg = fromBufferedImage(source);
-        // Mat hist = new Mat();
-        //
-        // Imgproc.calcHist(srcImg, channels, mask, hist, histSize, ranges);
-        // Mat dstImg = new Mat();
-        // Core.normalize(dstImg, dstImg, alpha, beta, norm_type);
-        // return dstImg;
-    }
-
-    public static Mat getRotatedImage(Mat source, double angle, double centerx, double centery) {
+    public static ImageCV getRotatedImage(Mat source, double angle, double centerx, double centery) {
         if (MathUtil.isEqualToZero(angle)) {
-            return source;
+            return ImageCV.toImageCV(source);
         }
         Mat srcImg = Objects.requireNonNull(source);
         Point ptCenter = new Point(centerx, centery);
         Mat rot = Imgproc.getRotationMatrix2D(ptCenter, -angle, 1.0);
-        Mat dstImg = new Mat();
+        ImageCV dstImg = new ImageCV();
         // determine bounding rectangle
         Rect bbox = new RotatedRect(ptCenter, srcImg.size(), -angle).boundingRect();
         // double[] matrix = new double[rot.cols() * rot.rows()];
@@ -564,13 +554,13 @@ public class ImageProcessor {
         return dstImg;
     }
 
-    public static Mat warpAffine(Mat source, Mat matrix, Size boxSize, Integer interpolation) {
+    public static ImageCV warpAffine(Mat source, Mat matrix, Size boxSize, Integer interpolation) {
         if (matrix == null) {
-            return source;
+            return (ImageCV) source;
         }
         // System.out.println(matrix.dump());
         Mat srcImg = Objects.requireNonNull(source);
-        Mat dstImg = new Mat();
+        ImageCV dstImg = new ImageCV();
 
         if (interpolation == null) {
             interpolation = Imgproc.INTER_LINEAR;
@@ -600,7 +590,7 @@ public class ImageProcessor {
         return extrema;
     }
 
-    public static Mat buildThumbnail(Mat source, Dimension iconDim, boolean keepRatio) {
+    public static ImageCV buildThumbnail(PlanarImage source, Dimension iconDim, boolean keepRatio) {
         Objects.requireNonNull(source);
         if (Objects.requireNonNull(iconDim).width < 1 || iconDim.height < 1) {
             throw new IllegalArgumentException("Unsupported size: " + iconDim);
@@ -608,7 +598,7 @@ public class ImageProcessor {
 
         final double scale = Math.min(iconDim.getHeight() / source.height(), iconDim.getWidth() / source.width());
         if (scale >= 1.0) {
-            return source;
+            return ImageCV.toImageCV(source);
         }
         if (scale < 0.005) {
             return null; // Image is too large to be converted
@@ -617,8 +607,8 @@ public class ImageProcessor {
         Size dim = keepRatio ? new Size((int) (scale * source.width()), (int) (scale * source.height()))
             : new Size(iconDim.width, iconDim.height);
 
-        Mat srcImg = Objects.requireNonNull(source);
-        Mat dstImg = new Mat();
+        Mat srcImg = ImageCV.toMat(Objects.requireNonNull(source));
+        ImageCV dstImg = new ImageCV();
         Imgproc.resize(srcImg, dstImg, dim, 0, 0, Imgproc.INTER_AREA);
         return dstImg;
     }
@@ -630,23 +620,30 @@ public class ImageProcessor {
 
         try {
             if (addThumb) {
-                final double scale = Math.min(Thumbnail.MAX_SIZE / (double) source.height(),
-                    (double) Thumbnail.MAX_SIZE / source.width());
-                if (scale < 1.0) {
-                    Size dim = new Size((int) (scale * source.width()), (int) (scale * source.height()));
-                    Mat thumbnail = new Mat();
-                    Imgproc.resize(source, thumbnail, dim, 0, 0, Imgproc.INTER_AREA);
-                    Imgcodecs.imwrite(ImageFiler.changeExtension(file.getPath(), ".jpg"), thumbnail);
-                }
+                writeThumbnail(source, new File(ImageFiler.changeExtension(file.getPath(), ".jpg")));
             }
             return Imgcodecs.imwrite(file.getPath(), source);
         } catch (OutOfMemoryError | CvException e) {
             LOGGER.error("Writing PNM", e); //$NON-NLS-1$
-            try {
-                Files.deleteIfExists(file.toPath());
-            } catch (IOException ex) {
-                LOGGER.error("Deleting temp pnm file", ex); //$NON-NLS-1$
+            FileUtil.delete(file);
+            return false;
+        }
+    }
+
+    public static boolean writeThumbnail(Mat source, File file) {
+        try {
+            final double scale =
+                Math.min(Thumbnail.MAX_SIZE / (double) source.height(), (double) Thumbnail.MAX_SIZE / source.width());
+            if (scale < 1.0) {
+                Size dim = new Size((int) (scale * source.width()), (int) (scale * source.height()));
+                Mat thumbnail = new Mat();
+                Imgproc.resize(source, thumbnail, dim, 0, 0, Imgproc.INTER_AREA);
+                return Imgcodecs.imwrite(file.getPath(), thumbnail);
             }
+            return false;
+        } catch (OutOfMemoryError | CvException e) {
+            LOGGER.error("Writing PNM", e); //$NON-NLS-1$
+            FileUtil.delete(file);
             return false;
         }
     }
@@ -672,11 +669,7 @@ public class ImageProcessor {
             return Imgcodecs.imwrite(file.getPath(), srcImg);
         } catch (OutOfMemoryError | CvException e) {
             LOGGER.error("", e); //$NON-NLS-1$
-            try {
-                Files.deleteIfExists(file.toPath());
-            } catch (IOException ex) {
-                LOGGER.error("Deleting temp png file", ex); //$NON-NLS-1$
-            }
+            FileUtil.delete(file);
             return false;
         }
     }
@@ -703,84 +696,23 @@ public class ImageProcessor {
             return Imgcodecs.imwrite(file.getPath(), source, params);
         } catch (OutOfMemoryError | CvException e) {
             LOGGER.error("Writing image", e); //$NON-NLS-1$
-            try {
-                Files.deleteIfExists(file.toPath());
-            } catch (IOException ex) {
-                LOGGER.error("Deleting temp image file", ex); //$NON-NLS-1$
-            }
+            FileUtil.delete(file);
             return false;
         }
     }
 
-    public static Mat readImage(File file) {
+    public static ImageCV readImage(File file) {
         if (!file.canRead()) {
             return null;
         }
 
         try {
-            return Imgcodecs.imread(file.getPath());
+            return ImageCV.toImageCV(Imgcodecs.imread(file.getPath()));
         } catch (OutOfMemoryError | CvException e) {
             LOGGER.error("Reading image", e); //$NON-NLS-1$
             return null;
         }
     }
-
-    // private static void writeTIFF(OutputStream os, RenderedImage source, boolean tiled, boolean addThumb,
-    // boolean jpegCompression) throws IOException {
-    //
-    // TIFFEncodeParam param = new TIFFEncodeParam();
-    // if (tiled) {
-    // param.setWriteTiled(true);
-    // param.setTileSize(TILESIZE, TILESIZE);
-    // }
-    // boolean binary = ImageUtil.isBinary(source.getSampleModel());
-    // if (binary) {
-    // param.setCompression(TIFFEncodeParam.COMPRESSION_GROUP4);
-    // } else if (jpegCompression) {
-    // param.setCompression(TIFFEncodeParam.COMPRESSION_JPEG_TTN2);
-    // JPEGEncodeParam wparam = new JPEGEncodeParam();
-    // wparam.setQuality(1.0f);
-    // param.setJPEGEncodeParam(wparam);
-    // }
-    // if (addThumb) {
-    // ArrayList<TIFFField> extraFields = new ArrayList<>(6);
-    // int fileVal = getResolutionInDpi(source);
-    // if (fileVal > 0) {
-    // TIFFDirectory dir = (TIFFDirectory) source.getProperty(TIFF_TAG); // $NON-NLS-1$
-    // TIFFField f;
-    // f = dir.getField(282);
-    // long[][] xRes = f.getAsRationals();
-    // f = dir.getField(283);
-    // long[][] yRes = f.getAsRationals();
-    // f = dir.getField(296);
-    // char[] resUnit = f.getAsChars();
-    // f = dir.getField(271);
-    // if (f != null) {
-    // extraFields.add(new TIFFField(271, TIFFField.TIFF_ASCII, 1, new String[] { f.getAsString(0) }));
-    // }
-    // f = dir.getField(272);
-    // if (f != null) {
-    // extraFields.add(new TIFFField(272, TIFFField.TIFF_ASCII, 1, new String[] { f.getAsString(0) }));
-    // }
-    // extraFields.add(new TIFFField(282, TIFFField.TIFF_RATIONAL, xRes.length, xRes));
-    // extraFields.add(new TIFFField(283, TIFFField.TIFF_RATIONAL, yRes.length, yRes));
-    // extraFields.add(new TIFFField(296, TIFFField.TIFF_SHORT, resUnit.length, resUnit));
-    //
-    // }
-    // extraFields.add(new TIFFField(305, TIFFField.TIFF_ASCII, 1, new String[] { AppProperties.WEASIS_NAME }));
-    // param.setExtraFields(extraFields.toArray(new TIFFField[extraFields.size()]));
-    //
-    // if (!binary) {
-    // // Doesn't support bilevel image (or binary to grayscale).
-    // ArrayList<RenderedImage> list = new ArrayList<>();
-    // list.add(Thumbnail.createThumbnail(source));
-    // param.setExtraImages(list.iterator());
-    // }
-    // }
-    //
-    // ImageEncoder enc = ImageCodec.createImageEncoder("TIFF", os, param); //$NON-NLS-1$
-    // enc.encode(source);
-    // }
 
     public void process(Mat sourceImage, Mat resultImage, int tileSize) {
 
@@ -882,23 +814,25 @@ public class ImageProcessor {
 
     }
 
-    public static Mat meanStack(List<ImageElement> sources) {
+    public static ImageCV meanStack(List<ImageElement> sources) {
         if (sources.size() > 1) {
             ImageElement firstImg = sources.get(0);
-            Mat img = firstImg.getImage(null, false);
+            PlanarImage img = firstImg.getImage(null, false);
 
             Integer type = null;
             Mat mean = Mat.zeros(img.width(), img.height(), CvType.CV_32F);
             int numbSrc = sources.size();
             for (int i = 0; i < numbSrc; i++) {
                 ImageElement imgElement = sources.get(i);
-                Mat image = imgElement.getImage(null, false);
+                PlanarImage image = imgElement.getImage(null, false);
                 if (type == null) {
                     type = image.type();
                 }
-                Imgproc.accumulate(image, mean);
+                if (image instanceof Mat) {
+                    Imgproc.accumulate((Mat) image, mean);
+                }
             }
-            Mat dstImg = new Mat();
+            ImageCV dstImg = new ImageCV();
             Core.divide(mean, new Scalar(numbSrc), mean);
             mean.convertTo(dstImg, type);
             return dstImg;
@@ -906,32 +840,38 @@ public class ImageProcessor {
         return null;
     }
 
-    public static Mat minStack(List<ImageElement> sources) {
+    public static ImageCV minStack(List<ImageElement> sources) {
         if (sources.size() > 1) {
             ImageElement firstImg = sources.get(0);
-            Mat dstImg = firstImg.getImage(null, false).clone();
+            ImageCV dstImg = new ImageCV();
+            dstImg.copyTo(ImageCV.toMat(firstImg.getImage(null, false)));
 
             int numbSrc = sources.size();
             for (int i = 1; i < numbSrc; i++) {
                 ImageElement imgElement = sources.get(i);
-                Mat image = imgElement.getImage(null, false);
-                Core.min(dstImg, image, dstImg);
+                PlanarImage image = imgElement.getImage(null, false);
+                if (image instanceof Mat) {
+                    Core.min(dstImg, (Mat) image, dstImg);
+                }
             }
             return dstImg;
         }
         return null;
     }
 
-    public static Mat maxStack(List<ImageElement> sources) {
+    public static ImageCV maxStack(List<ImageElement> sources) {
         if (sources.size() > 1) {
             ImageElement firstImg = sources.get(0);
-            Mat dstImg = firstImg.getImage(null, false).clone();
+            ImageCV dstImg = new ImageCV();
+            dstImg.copyTo(ImageCV.toMat(firstImg.getImage(null, false)));
 
             int numbSrc = sources.size();
             for (int i = 1; i < numbSrc; i++) {
                 ImageElement imgElement = sources.get(i);
-                Mat image = imgElement.getImage(null, false);
-                Core.max(dstImg, image, dstImg);
+                PlanarImage image = imgElement.getImage(null, false);
+                if (image instanceof Mat) {
+                    Core.max(dstImg, (Mat) image, dstImg);
+                }
             }
             return dstImg;
         }

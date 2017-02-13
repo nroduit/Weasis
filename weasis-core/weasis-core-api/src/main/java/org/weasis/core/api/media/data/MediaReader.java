@@ -14,7 +14,6 @@ import java.io.File;
 import java.net.URI;
 import java.util.Map;
 
-import org.opencv.core.Mat;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 
 public interface MediaReader extends Tagable {
@@ -33,7 +32,7 @@ public interface MediaReader extends Tagable {
 
     MediaElement getPreview();
 
-    Mat getImageFragment(MediaElement media) throws Exception;
+    PlanarImage getImageFragment(MediaElement media) throws Exception;
 
     int getMediaElementNumber();
 

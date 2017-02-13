@@ -36,7 +36,6 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.util.UIDUtils;
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,10 +47,12 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.cv.FileRawImage;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.image.cv.RawImage;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.FileUtil;
@@ -249,7 +250,7 @@ public class SeriesBuilder {
                                             : SortSeriesStack.slicePosition);
                                     double origPixSize = img.getPixelSize();
 
-                                    RawImage[] secSeries = new RawImage[i == 0 ? height : width];
+                                    FileRawImage[] secSeries = new FileRawImage[i == 0 ? height : width];
                                     /*
                                      * Write the new image by tacking the lines (from first to last) of all the images
                                      * of the original series stack
@@ -303,9 +304,9 @@ public class SeriesBuilder {
         }
     }
 
-    private static DicomSeries buildDicomSeriesFromRaw(final RawImage[] newSeries, Dimension dim, DicomImageElement img,
-        ViewParameter params, double origPixSize, double sPixSize, GeometryOfSlice geometry, final MprView view,
-        final Attributes attributes) throws Exception {
+    private static DicomSeries buildDicomSeriesFromRaw(final FileRawImage[] newSeries, Dimension dim,
+        DicomImageElement img, ViewParameter params, double origPixSize, double sPixSize, GeometryOfSlice geometry,
+        final MprView view, final Attributes attributes) throws Exception {
 
         int bitsAllocated = img.getBitsAllocated();
         int bitsStored = img.getBitsStored();
@@ -371,7 +372,13 @@ public class SeriesBuilder {
 
         for (int i = 0; i < newSeries.length; i++) {
             if (params.rotateOutputImg) {
-                newSeries[i].write(ImageProcessor.getRotatedImage(newSeries[i].read(), Core.ROTATE_90_CLOCKWISE));
+                try {
+                    newSeries[i].write(ImageProcessor.getRotatedImage(newSeries[i].read(), Core.ROTATE_90_CLOCKWISE));
+                } catch (Exception e) {
+                    FileUtil.delete(newSeries[i].getFile());
+                    throw e;
+                }
+                
                 if (bar != null) {
                     GuiExecutor.instance().execute(() -> {
                         bar.setValue(bar.getValue() + 1);
@@ -453,7 +460,7 @@ public class SeriesBuilder {
         return new DicomSeries(params.seriesUID, dcms, DicomModel.series.getTagView());
     }
 
-    private static double writeBlock(RawImage[] newSeries, MediaSeries<DicomImageElement> series,
+    private static double writeBlock(FileRawImage[] newSeries, MediaSeries<DicomImageElement> series,
         Iterable<DicomImageElement> medias, ViewParameter params, final MprView view, Thread thread,
         final boolean[] abort, String seriesID, int dstHeight) throws IOException {
 
@@ -494,7 +501,7 @@ public class SeriesBuilder {
                     }
                 }
                 // TODO do not open more than 512 files (Limitation to open 1024 in the same time on Ubuntu)
-                Mat image = dcm.getImage();
+                PlanarImage image = dcm.getImage();
                 if (image == null) {
                     abort[0] = true;
                     throw new IIOException("Cannot read an image!"); //$NON-NLS-1$
@@ -502,7 +509,7 @@ public class SeriesBuilder {
                 if (MathUtil.isDifferent(dcm.getRescaleX(), dcm.getRescaleY())) {
                     Dimension dim = new Dimension((int) (Math.abs(dcm.getRescaleX()) * image.width()),
                         (int) (Math.abs(dcm.getRescaleY()) * image.height()));
-                    image = ImageProcessor.scale(image, dim, Imgproc.INTER_LINEAR);
+                    image = ImageProcessor.scale(ImageCV.toImageCV(image), dim, Imgproc.INTER_LINEAR);
                 }
                 writeRasterInRaw(image, newSeries, params, dstHeight);
             }
@@ -518,69 +525,23 @@ public class SeriesBuilder {
         }
     }
 
-    private static void writeRasterInRaw(Mat image, RawImage[] newSeries, ViewParameter params, int dstHeight)
-        throws IOException {
-        image = getImage(image, params.rotateCvType);
-        if (newSeries != null && image != null && image.height() == newSeries.length) {
-            // GuiExecutor.instance().execute(() ->
-            // TestProcess.show(ImageProcessor.toBufferedImage(ImageProcessor.rescaleToByte(image, 1.0, 0)),
-            // image.toString()));
-
+    private static void writeRasterInRaw(PlanarImage image, FileRawImage[] newSeries, ViewParameter params,
+        int dstHeight) throws IOException {
+        ImageCV img = ImageProcessor.getRotatedImage(ImageCV.toMat(image), params.rotateCvType);
+        if (newSeries != null && img != null && img.height() == newSeries.length) {
             if (newSeries[0] == null) {
                 File dir = new File(MPR_CACHE_DIR, params.seriesUID);
                 dir.mkdirs();
                 for (int i = 0; i < newSeries.length; i++) {
-                    newSeries[i] = new RawImage(new File(dir, "mpr_" + (i + 1)));//$NON-NLS-1$
-                    newSeries[i].writeHeader(image.type(), image.width(), dstHeight);
+                    newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1)));//$NON-NLS-1$
+                    newSeries[i].writeHeader(img.type(), img.width(), dstHeight);
                 }
             }
 
             for (int j = 0; j < newSeries.length; j++) {
-                newSeries[j].writeRow(image, j);
+                newSeries[j].writeRow(img, j);
             }
-
-            // int dataType = ImageProcessor.convertToDataType(image.type());
-            // if (dataType == DataBuffer.TYPE_BYTE) {
-            // byte[] bytesOut = new byte[width * height];
-            // image.get(0, 0, bytesOut);
-            // for (int j = 0; j < height; j++) {
-            // newSeries[j].getOutputStream().write(bytesOut, j * width, width);
-            // }
-            // } else if (dataType == DataBuffer.TYPE_SHORT || dataType == DataBuffer.TYPE_USHORT) {
-            // short[] data = new short[width * height];
-            // image.get(0, 0, data);
-            // byte[] bytesOut = new byte[width * 2];
-            // for (int j = 0; j < height; j++) {
-            // for (int i = 0; i < bytesOut.length; i += 2) {
-            // int offset = j * width + i / 2;
-            // bytesOut[i] = (byte) (data[offset] & 0xFF);
-            // bytesOut[i + 1] = (byte) ((data[offset] >>> 8) & 0xFF);
-            // }
-            // newSeries[j].getOutputStream().write(bytesOut);
-            // }
-            // } else if (dataType == DataBuffer.TYPE_INT) {
-            // int[] data = new int[width * height];
-            // image.get(0, 0, data);
-            // byte[] bytesOut = new byte[width * 4];
-            // for (int j = 0; j < height; j++) {
-            // for (int i = 0; i < bytesOut.length; i += 4) {
-            // int offset = j * width + i / 4;
-            // bytesOut[i] = (byte) (data[offset] & 0xFF);
-            // bytesOut[i + 1] = (byte) ((data[offset] >>> 8) & 0xFF);
-            // bytesOut[i + 2] = (byte) ((data[offset] >>> 16) & 0xFF);
-            // bytesOut[i + 3] = (byte) ((data[offset] >>> 24) & 0xFF);
-            // }
-            // newSeries[j].getOutputStream().write(bytesOut);
-            // }
-            // }
         }
-    }
-
-    private static Mat getImage(Mat source, int rotateCvType) {
-        if (rotateCvType < 0) {
-            return source == null ? null : source;
-        }
-        return ImageProcessor.getRotatedImage(source, rotateCvType);
     }
 
     private static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {

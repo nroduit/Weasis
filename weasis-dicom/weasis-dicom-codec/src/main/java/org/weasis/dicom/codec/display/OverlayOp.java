@@ -25,8 +25,10 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
@@ -73,8 +75,8 @@ public class OverlayOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        Mat source = (Mat) params.get(Param.INPUT_IMG);
-        Mat result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         Boolean overlay = (Boolean) params.get(P_SHOW);
 
         if (overlay != null && overlay) {
@@ -101,7 +103,7 @@ public class OverlayOp extends AbstractOp {
                     }
                 }
             }
-            result = imgOverlay == null ? source : ImageProcessor.overlay(source, imgOverlay, Color.WHITE);
+            result = imgOverlay == null ? source : ImageProcessor.overlay(ImageCV.toMat(source), imgOverlay, Color.WHITE);
         }
         params.put(Param.OUTPUT_IMG, result);
     }

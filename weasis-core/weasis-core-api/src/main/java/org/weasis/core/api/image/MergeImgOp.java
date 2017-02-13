@@ -10,10 +10,11 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class MergeImgOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(MergeImgOp.class);
@@ -50,13 +51,13 @@ public class MergeImgOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        Mat source = (Mat) params.get(Param.INPUT_IMG);
-        Mat source2 = (Mat) params.get(INPUT_IMG2);
-        Mat result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage source2 = (PlanarImage) params.get(INPUT_IMG2);
+        PlanarImage result = source;
 
         if (source2 != null) {
             Integer transparency = (Integer) params.get(P_OPACITY);
-            result = ImageProcessor.combineTwoImages(source, source2, transparency == null ? 255 : transparency);
+            result = ImageProcessor.combineTwoImages(ImageCV.toMat(source), ImageCV.toMat(source2), transparency == null ? 255 : transparency);
         }
         params.put(Param.OUTPUT_IMG, result);
     }

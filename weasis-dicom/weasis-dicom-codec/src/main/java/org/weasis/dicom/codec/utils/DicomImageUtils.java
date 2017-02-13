@@ -29,8 +29,10 @@ import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
 import org.opencv.core.Mat;
 import org.weasis.core.api.image.LutShape;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.image.util.LookupTableCV;
+import org.weasis.core.api.image.cv.LookupTableCV;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
@@ -47,7 +49,7 @@ public class DicomImageUtils {
     private DicomImageUtils() {
     }
 
-    public static Mat getRGBImageFromPaletteColorModel(Mat source, Attributes ds) {
+    public static PlanarImage getRGBImageFromPaletteColorModel(PlanarImage source, Attributes ds) {
         // Convert images with PaletteColorModel to RGB model
         if (ds != null) {
             int[] rDesc = DicomImageUtils.lutDescriptor(ds, Tag.RedPaletteColorLookupTableDescriptor);
@@ -61,7 +63,7 @@ public class DicomImageUtils {
                 Tag.SegmentedBluePaletteColorLookupTableData);
 
             // Replace the original image with the RGB image.
-            return ImageProcessor.applyLUT(source, new byte[][] { b, g, r });
+            return ImageProcessor.applyLUT(ImageCV.toMat(source), new byte[][] { b, g, r });
         }
         return source;
     }

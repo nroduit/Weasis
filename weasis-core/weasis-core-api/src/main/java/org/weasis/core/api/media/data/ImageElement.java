@@ -15,20 +15,19 @@ import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
-import java.lang.ref.Reference;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
@@ -50,24 +49,25 @@ public class ImageElement extends MediaElement {
     // TODO evaluate the difference, keep one thread with sun decoder. (seems to hangs on shutdown)
     public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader"); //$NON-NLS-1$
 
-    // TODO With Mat objects the memory is not free
-    private static final SoftHashMap<ImageElement, Mat> mCache =
-        new SoftHashMap<ImageElement, Mat>() {
+    private static final NativeCache<ImageElement, PlanarImage> mCache =
+        new NativeCache<ImageElement, PlanarImage>(Runtime.getRuntime().maxMemory() / 2) {
 
             @Override
-            public void removeElement(Reference<? extends Mat> soft) {
-                ImageElement key = reverseLookup.remove(soft);
+            protected void afterEntryRemove(ImageElement key, PlanarImage img) {
                 if (key != null) {
-                    hash.remove(key);
-                    MediaReader reader = key.getMediaReader();
                     key.setTag(TagW.ImageCache, false);
+                    MediaReader reader = key.getMediaReader();
                     if (reader != null) {
                         // Close the image stream
                         reader.close();
                     }
                 }
+                if (img != null) {
+                    img.release();
+                }
             }
         };
+
     protected boolean readable = true;
 
     protected double pixelSizeX = 1.0;
@@ -83,7 +83,7 @@ public class ImageElement extends MediaElement {
         super(mediaIO, key);
     }
 
-    protected void findMinMaxValues(Mat img, boolean exclude8bitImage) throws OutOfMemoryError {
+    protected void findMinMaxValues(PlanarImage img, boolean exclude8bitImage) throws OutOfMemoryError {
         // This function can be called several times from the inner class Load.
         // Do not compute min and max it has already be done
 
@@ -93,8 +93,7 @@ public class ImageElement extends MediaElement {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-
-                double[] val = ImageProcessor.findMinMaxValues(img);
+                double[] val = ImageProcessor.findMinMaxValues(ImageCV.toMat(img));
                 if (val != null && val.length == 2) {
                     this.minPixelValue = val[0];
                     this.maxPixelValue = val[1];
@@ -227,22 +226,13 @@ public class ImageElement extends MediaElement {
     }
 
     public void removeImageFromCache() {
-        Mat mat = mCache.remove(this);
-        if(mat != null){
-            mat.release();
-        }
-        this.setTag(TagW.ImageCache, false);
-        MediaReader reader = this.getMediaReader();
-        if (reader != null) {
-            // Close the image stream
-            reader.close();
-        }
+        mCache.remove(this);
     }
 
     public boolean hasSameSize(ImageElement image) {
         if (image != null) {
-            Mat img = getImage();
-            Mat img2 = image.getImage();
+            PlanarImage img = getImage();
+            PlanarImage img2 = image.getImage();
             if (img != null && img2 != null && getRescaleWidth(img.width()) == image.getRescaleWidth(img2.width())
                 && getRescaleHeight(img.height()) == image.getRescaleHeight(img2.height())) {
                 return true;
@@ -259,11 +249,11 @@ public class ImageElement extends MediaElement {
      * @throws IOException
      */
 
-    protected Mat loadImage() throws Exception {
+    protected PlanarImage loadImage() throws Exception {
         return mediaIO.getImageFragment(this);
     }
 
-    public Mat getRenderedImage(final Mat imageSource) {
+    public PlanarImage getRenderedImage(final PlanarImage imageSource) {
         return getRenderedImage(imageSource, null);
     }
 
@@ -279,7 +269,7 @@ public class ImageElement extends MediaElement {
      *            considered
      * @return
      */
-    public Mat getRenderedImage(final Mat imageSource, Map<String, Object> params) {
+    public PlanarImage getRenderedImage(final PlanarImage imageSource, Map<String, Object> params) {
         if (imageSource == null) {
             return null;
         }
@@ -300,7 +290,7 @@ public class ImageElement extends MediaElement {
      *
      * @return
      */
-    public Mat getImage(OpManager manager) {
+    public PlanarImage getImage(OpManager manager) {
         return getImage(manager, true);
     }
 
@@ -309,7 +299,7 @@ public class ImageElement extends MediaElement {
         return getMediaURI().toString();
     }
 
-    public synchronized Mat getImage(OpManager manager, boolean findMinMax) {
+    public synchronized PlanarImage getImage(OpManager manager, boolean findMinMax) {
         try {
             return getCacheImage(startImageLoading(), manager, findMinMax);
         } catch (OutOfMemoryError e1) {
@@ -330,12 +320,12 @@ public class ImageElement extends MediaElement {
         }
     }
 
-    private Mat getCacheImage(Mat cacheImage, OpManager manager, boolean findMinMax) {
+    private PlanarImage getCacheImage(PlanarImage cacheImage, OpManager manager, boolean findMinMax) {
         if (findMinMax) {
             findMinMaxValues(cacheImage, true);
         }
         if (manager != null && cacheImage != null) {
-            Mat img = manager.getLastNodeOutputImage();
+            PlanarImage img = manager.getLastNodeOutputImage();
             if (manager.getFirstNodeInputImage() != cacheImage || manager.needProcessing()) {
                 manager.setFirstNode(cacheImage);
                 img = manager.process();
@@ -348,17 +338,17 @@ public class ImageElement extends MediaElement {
         return cacheImage;
     }
 
-    public Mat getImage() {
+    public PlanarImage getImage() {
         return getImage(null);
     }
 
-    private Mat startImageLoading() throws OutOfMemoryError {
-        Mat cacheImage;
+    private PlanarImage startImageLoading() throws OutOfMemoryError {
+        PlanarImage cacheImage;
         if ((cacheImage = mCache.get(this)) == null && readable && setAsLoading()) {
             LOGGER.debug("Asking for reading image: {}", this); //$NON-NLS-1$
             Load ref = new Load();
-            Future<Mat> future = IMAGE_LOADER.submit(ref);
-            Mat img = null;
+            Future<PlanarImage> future = IMAGE_LOADER.submit(ref);
+            PlanarImage img = null;
             try {
                 img = future.get();
 
@@ -377,10 +367,12 @@ public class ImageElement extends MediaElement {
                 }
             }
             if (img != null) {
-                readable = true;
-           //     mCache.put(this, img);
-                cacheImage = img;
-           //     this.setTag(TagW.ImageCache, true);
+                readable = img.width() > 0;
+                if (readable) {
+                    mCache.put(this, img);
+                    cacheImage = img;
+                    this.setTag(TagW.ImageCache, true);
+                }
             }
             setAsLoaded();
         }
@@ -397,10 +389,10 @@ public class ImageElement extends MediaElement {
         super.dispose();
     }
 
-    class Load implements Callable<Mat> {
+    class Load implements Callable<PlanarImage> {
 
         @Override
-        public Mat call() throws Exception {
+        public PlanarImage call() throws Exception {
             return loadImage();
         }
     }

@@ -29,7 +29,6 @@ import java.util.Random;
 
 import javax.swing.SwingUtilities;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
@@ -334,7 +333,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         E media = this.getMedia(MEDIA_POSITION.MIDDLE, null, null);
         if (media instanceof ImageElement) {
             ImageElement image = (ImageElement) media;
-            Mat img = image.getImage();
+            PlanarImage img = image.getImage();
             if (img != null) {
                 toolTips.append(Messages.getString("Series.img_size")); //$NON-NLS-1$
                 toolTips.append(StringUtil.COLON_AND_SPACE);

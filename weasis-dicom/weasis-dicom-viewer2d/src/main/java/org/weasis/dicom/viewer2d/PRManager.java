@@ -28,7 +28,6 @@ import javax.swing.JPopupMenu;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
@@ -45,6 +44,7 @@ import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -164,7 +164,7 @@ public class PRManager {
             }
             Rectangle area = new Rectangle();
             area.setFrameFromDiagonal(tlhc[0], tlhc[1], brhc[0], brhc[1]);
-            Mat source = view.getSourceImage();
+            PlanarImage source = view.getSourceImage();
             if (source != null) {
                 area = area.intersection(ImageProcessor.getBounds(source));
                 if (area.width > 1 && area.height > 1 && !area.equals(view.getViewModel().getModelArea())) {

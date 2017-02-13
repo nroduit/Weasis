@@ -20,7 +20,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Optional;
 
-import org.opencv.core.Mat;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
@@ -32,6 +31,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.PixelInfo;
@@ -355,7 +355,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
     public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {
         ImageElement image = view2DPane.getImage();
-        Mat source = view2DPane.getSourceImage();
+        PlanarImage source = view2DPane.getSourceImage();
         if (source == null) {
             return;
         }

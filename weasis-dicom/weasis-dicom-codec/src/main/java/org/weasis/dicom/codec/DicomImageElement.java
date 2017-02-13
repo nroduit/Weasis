@@ -29,10 +29,12 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.image.util.LookupTableCV;
+import org.weasis.core.api.image.cv.LookupTableCV;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
@@ -493,7 +495,7 @@ public class DicomImageElement extends ImageElement {
     }
 
     @Override
-    protected void findMinMaxValues(Mat img, boolean exclude8bitImage) {
+    protected void findMinMaxValues(PlanarImage img, boolean exclude8bitImage) {
         /*
          * This function can be called several times from the inner class Load. min and max will be computed only once.
          */
@@ -554,13 +556,13 @@ public class DicomImageElement extends ImageElement {
      * @param paddingValueMin
      * @param paddingValueMax
      */
-    private void findMinMaxValues(Mat img, double paddingValueMin, double paddingValueMax) {
+    private void findMinMaxValues(PlanarImage img, double paddingValueMin, double paddingValueMax) {
         if (img != null) {
             if (ImageProcessor.convertToDataType(img.type()) == DataBuffer.TYPE_BYTE) {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-                double[] val = ImageProcessor.findMinMaxValues(img);
+                double[] val = ImageProcessor.findMinMaxValues(ImageCV.toMat(img));
                 if (val != null && val.length == 2) {
                     // TODO padding values?
                     this.minPixelValue = val[0];
@@ -623,7 +625,7 @@ public class DicomImageElement extends ImageElement {
      * @return
      */
     @Override
-    public Mat getRenderedImage(final Mat imageSource, Map<String, Object> params) {
+    public PlanarImage getRenderedImage(final PlanarImage imageSource, Map<String, Object> params) {
         if (imageSource == null) {
             return null;
         }
@@ -676,10 +678,8 @@ public class DicomImageElement extends ImageElement {
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
             LookupTableCV modalityLookup = getModalityLookup(prTags, pixPadding, invLUT);
-
-            // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, new ImageLayout(imageSource));
-            Mat imageModalityTransformed =
-                modalityLookup == null ? imageSource : modalityLookup.lookup(imageSource);
+            ImageCV imageModalityTransformed =
+                modalityLookup == null ? ImageCV.toImageCV(imageSource) : modalityLookup.lookup(ImageCV.toMat(imageSource));
 
             /*
              * C.11.2.1.2 Window center and window width
@@ -687,7 +687,7 @@ public class DicomImageElement extends ImageElement {
              * Theses Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
              * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
              */
-            if ((!JMVUtils.getNULLtoFalse(wlOnColorImage) || window == 255 && level == 127.5) && !isPhotometricInterpretationMonochrome()) {
+            if ((!JMVUtils.getNULLtoFalse(wlOnColorImage) || window == 255 && MathUtil.isEqual(level, 127.5)) && !isPhotometricInterpretationMonochrome()) {
                 /*
                  * If photometric interpretation is not monochrome do not apply VOILUT. It is necessary for
                  * PALETTE_COLOR.
@@ -705,7 +705,7 @@ public class DicomImageElement extends ImageElement {
                 return voiLookup.lookup(imageModalityTransformed);
             }
 
-            Mat imageVoiTransformed = voiLookup == null ? imageModalityTransformed
+            ImageCV imageVoiTransformed = voiLookup == null ? imageModalityTransformed
                 : voiLookup.lookup(imageModalityTransformed);
             return prLutData.lookup(imageVoiTransformed);
 
@@ -720,7 +720,7 @@ public class DicomImageElement extends ImageElement {
             double slope = 255.0 / range;
             double yint = 255.0 - slope * high;
 
-            return ImageProcessor.rescaleToByte(imageSource, slope, yint);
+            return ImageProcessor.rescaleToByte(ImageCV.toMat(imageSource), slope, yint);
         }
         return null;
     }

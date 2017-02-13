@@ -40,16 +40,16 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.io.DicomOutputStream;
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.image.cv.RawImage;
+import org.weasis.core.api.image.cv.FileRawImage;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -67,14 +67,14 @@ public class RawImageIO implements DcmMediaReader {
     private static final int[] OFFSETS_0_0_0 = { 0, 0, 0 };
     private static final int[] OFFSETS_0_1_2 = { 0, 1, 2 };
 
-    protected RawImage imageCV;
+    protected FileRawImage imageCV;
     private final FileCache fileCache;
 
     private final HashMap<TagW, Object> tags;
     private final Codec codec;
     private Attributes attributes;
 
-    public RawImageIO(RawImage imageCV, Codec codec) {
+    public RawImageIO(FileRawImage imageCV, Codec codec) {
         this.imageCV = Objects.requireNonNull(imageCV);
         this.fileCache = new FileCache(this);
         this.tags = new HashMap<>();
@@ -91,7 +91,7 @@ public class RawImageIO implements DcmMediaReader {
         DicomOutputStream out = null;
         try {
             File file = imageCV.getFile();
-            BulkData bdl = new BulkData(file.toURI().toString(), RawImage.HEADER_LENGTH, (int) file.length(), false);
+            BulkData bdl = new BulkData(file.toURI().toString(), FileRawImage.HEADER_LENGTH, (int) file.length(), false);
             dcm.setValue(Tag.PixelData, VR.OW, bdl);
             File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
             out = new DicomOutputStream(tmpFile);
@@ -124,7 +124,7 @@ public class RawImageIO implements DcmMediaReader {
     }
 
     @Override
-    public Mat getImageFragment(MediaElement media) throws Exception {
+    public PlanarImage getImageFragment(MediaElement media) throws Exception {
         if (media != null && media.getFile() != null) {
             return imageCV.read();
         }

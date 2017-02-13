@@ -15,8 +15,8 @@ import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
-import org.opencv.core.Mat;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -47,7 +47,7 @@ public class GraphicHelper {
      * @since 2.5.0
      */
     public static void newGridLayer(ViewCanvas<ImageElement> view) {
-        Mat sourceImage = view.getSourceImage();
+        PlanarImage sourceImage = view.getSourceImage();
 
         // Retrieve image size
         int width = sourceImage.width();

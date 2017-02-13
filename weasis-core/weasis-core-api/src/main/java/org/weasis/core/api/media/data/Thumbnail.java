@@ -23,7 +23,6 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -36,7 +35,6 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 
-import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
@@ -44,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FileUtil;
@@ -65,7 +64,16 @@ public class Thumbnail extends JLabel {
     public static final int DEFAULT_SIZE = 112;
     public static final int MAX_SIZE = 256;
 
-    private SoftReference<Mat> imageSoftRef;
+    private static final NativeCache<Thumbnail, PlanarImage> mCache = new NativeCache<Thumbnail, PlanarImage>(30_000_000) {
+
+        @Override
+        protected void afterEntryRemove(Thumbnail key, PlanarImage img) {
+            if(img != null){
+                img.release();
+            }
+        }
+    };
+
     protected volatile boolean readable = true;
     protected volatile AtomicBoolean loading = new AtomicBoolean(false);
     protected File thumbnailPath = null;
@@ -99,7 +107,7 @@ public class Thumbnail extends JLabel {
         removeMouseAndKeyListener();
     }
 
-    public static Mat createThumbnail(Mat source) {
+    public static PlanarImage createThumbnail(PlanarImage source) {
         if (source == null) {
             return null;
         }
@@ -107,7 +115,6 @@ public class Thumbnail extends JLabel {
     }
 
     protected synchronized void buildThumbnail(MediaElement media, boolean keepMediaCache, OpManager opManager) {
-        imageSoftRef = null;
         Icon icon = MimeInspector.unknownIcon;
         String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
         if (media != null) {
@@ -153,7 +160,7 @@ public class Thumbnail extends JLabel {
                 Graphics2D g2d = (Graphics2D) g;
                 int width = thumbnailSize;
                 int height = thumbnailSize;
-                final Mat thumbnail = Thumbnail.this.getImage(media, keepMediaCache, opManager);
+                final PlanarImage thumbnail = Thumbnail.this.getImage(media, keepMediaCache, opManager);
                 if (thumbnail == null) {
                     FontMetrics fontMetrics = g2d.getFontMetrics();
                     int fheight = y + (thumbnailSize - fontMetrics.getAscent() + 5 - mime.getIconHeight()) / 2;
@@ -193,35 +200,32 @@ public class Thumbnail extends JLabel {
         return thumbnailPath;
     }
 
-    public synchronized Mat getImage(final MediaElement media, final boolean keepMediaCache,
+    public synchronized PlanarImage getImage(final MediaElement media, final boolean keepMediaCache,
         final OpManager opManager) {
-        if ((imageSoftRef == null && readable) || (imageSoftRef != null && imageSoftRef.get() == null)) {
-            if (loading.compareAndSet(false, true)) {
-                try {
-                    SwingWorker<Boolean, String> thumbnailReader = new SwingWorker<Boolean, String>() {
-                        @Override
-                        protected void done() {
-                            repaint();
-                        }
+        PlanarImage cacheImage;
+        if ((cacheImage = mCache.get(this)) == null && readable && loading.compareAndSet(false, true)) {
+            try {
+                SwingWorker<Boolean, String> thumbnailReader = new SwingWorker<Boolean, String>() {
+                    @Override
+                    protected void done() {
+                        repaint();
+                    }
 
-                        @Override
-                        protected Boolean doInBackground() throws Exception {
-                            loadThumbnail(media, keepMediaCache, opManager);
-                            return Boolean.TRUE;
-                        }
+                    @Override
+                    protected Boolean doInBackground() throws Exception {
+                        loadThumbnail(media, keepMediaCache, opManager);
+                        return Boolean.TRUE;
+                    }
 
-                    };
-                    THUMB_LOADER.execute(thumbnailReader);
-                } catch (Exception e) {
-                    LOGGER.error("Cannot build thumbnail!", e);//$NON-NLS-1$
-                    loading.set(false);
-                }
+                };
+                THUMB_LOADER.execute(thumbnailReader);
+            } catch (Exception e) {
+                LOGGER.error("Cannot build thumbnail!", e);//$NON-NLS-1$
+                loading.set(false);
             }
+
         }
-        if (imageSoftRef == null) {
-            return null;
-        }
-        return imageSoftRef.get();
+        return cacheImage;
     }
 
     private void loadThumbnail(final MediaElement media, final boolean keepMediaCache, final OpManager opManager)
@@ -242,10 +246,10 @@ public class Thumbnail extends JLabel {
             if (noPath) {
                 if (media instanceof ImageElement) {
                     final ImageElement image = (ImageElement) media;
-                    Mat imgPl = image.getImage(opManager);
+                    PlanarImage imgPl = image.getImage(opManager);
                     if (imgPl != null) {
-                        Mat img = image.getRenderedImage(imgPl);
-                        final Mat thumb = createThumbnail(img);
+                        PlanarImage img = image.getRenderedImage(imgPl);
+                        final PlanarImage thumb = createThumbnail(img);
                         try {
                             file = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                         } catch (IOException e) {
@@ -254,7 +258,7 @@ public class Thumbnail extends JLabel {
                         try {
                             if (file != null) {
                                 MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
-                                if (ImageProcessor.writeImage(thumb,file, map)) {
+                                if (ImageProcessor.writeImage(ImageCV.toMat(thumb), file, map)) {
                                     /*
                                      * Write the thumbnail in temp folder, better than getting the thumbnail directly
                                      * from t.getAsBufferedImage() (it is true if the image is big and cannot handle all
@@ -267,12 +271,12 @@ public class Thumbnail extends JLabel {
                                     // out of memory
                                 }
 
-                            } 
+                            }
 
-                            if (thumb == null) {
+                            if (thumb == null || thumb.width() <= 0) {
                                 readable = false;
                             } else {
-                                imageSoftRef = new SoftReference<>(thumb);
+                                mCache.put(this, thumb);
                             }
                         } finally {
                             if (!keepMediaCache) {
@@ -285,17 +289,18 @@ public class Thumbnail extends JLabel {
             } else {
                 Load ref = new Load(file);
                 // loading images sequentially, only one thread pool
-                Future<Mat> future = ImageElement.IMAGE_LOADER.submit(ref);
-                Mat thumb = null;
+                Future<PlanarImage> future = ImageElement.IMAGE_LOADER.submit(ref);
+                PlanarImage thumb = null;
                 try {
-                    Mat img = future.get();
+                    PlanarImage img = future.get();
                     if (img == null) {
                         thumb = null;
                     } else {
                         int width = img.width();
                         int height = img.height();
                         if (width > thumbnailSize || height > thumbnailSize) {
-                            thumb = ImageProcessor.buildThumbnail(img, new Dimension(thumbnailSize, thumbnailSize), true);
+                            thumb =
+                                ImageProcessor.buildThumbnail(img, new Dimension(thumbnailSize, thumbnailSize), true);
                         } else {
                             thumb = img;
                         }
@@ -309,10 +314,10 @@ public class Thumbnail extends JLabel {
                 } catch (ExecutionException e) {
                     LOGGER.error("Cannot read thumbnail pixel data!: {}", file, e);//$NON-NLS-1$
                 }
-                if (thumb == null && media != null) {
+                if ((thumb == null && media != null) || (thumb != null && thumb.width() <= 0)) {
                     readable = false;
                 } else {
-                    imageSoftRef = new SoftReference<>(thumb);
+                    mCache.put(this, thumb);
                 }
             }
         } finally {
@@ -322,15 +327,12 @@ public class Thumbnail extends JLabel {
 
     public void dispose() {
         // Unload image from memory
-        if (imageSoftRef != null) {
-            Mat temp = imageSoftRef.get();
-            if (temp != null) {
-                temp.release();
-            }
-            if(thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())){
-                FileUtil.delete(thumbnailPath);
-            }
+        mCache.remove(this);
+
+        if (thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())) {
+            FileUtil.delete(thumbnailPath);
         }
+
         removeMouseAndKeyListener();
     }
 
@@ -353,7 +355,7 @@ public class Thumbnail extends JLabel {
         }
     }
 
-    class Load implements Callable<Mat> {
+    class Load implements Callable<PlanarImage> {
 
         private final File path;
 
@@ -362,7 +364,7 @@ public class Thumbnail extends JLabel {
         }
 
         @Override
-        public Mat call() throws Exception {
+        public PlanarImage call() throws Exception {
             return ImageProcessor.readImage(path);
         }
     }

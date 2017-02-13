@@ -26,10 +26,11 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.util.Hashtable;
 
-import org.opencv.core.Mat;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 
 /**
  * An image manipulation toolkit.
@@ -39,8 +40,6 @@ public class ImageToolkit {
 
     private ImageToolkit() {
     }
-
-
 
     public static boolean isBinary(SampleModel sm) {
         return sm instanceof MultiPixelPackedSampleModel && ((MultiPixelPackedSampleModel) sm).getPixelBitStride() == 1
@@ -74,7 +73,7 @@ public class ImageToolkit {
      * They convert signed short to unsigned short.
      * 
      * @param source
-     * @return 
+     * @return
      */
     public static RenderedImage fixSignedShortDataBuffer(RenderedImage source) {
         if (source != null && source.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
@@ -84,7 +83,7 @@ public class ImageToolkit {
                 DataBufferShort db = new DataBufferShort(s, s.length);
                 ColorModel cm = source.getColorModel();
                 WritableRaster wr = Raster.createWritableRaster(source.getSampleModel(), db, null);
-                return new BufferedImage(cm, wr , cm.isAlphaPremultiplied(), null);
+                return new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
             }
         }
         return source;
@@ -703,7 +702,7 @@ public class ImageToolkit {
      * @param pixelPadding
      * @return
      */
-    public static Mat getDefaultRenderedImage(ImageElement image, Mat source, double window,
+    public static PlanarImage getDefaultRenderedImage(ImageElement image, PlanarImage source, double window,
         double level, boolean pixelPadding) {
         if (image == null || source == null) {
             return null;
@@ -725,11 +724,11 @@ public class ImageToolkit {
         double slope = 255.0 / range;
         double yInt = 255.0 - slope * high;
 
-        return ImageProcessor.rescaleToByte(source, slope, yInt);
+        return ImageProcessor.rescaleToByte(ImageCV.toMat(source), slope, yInt);
+
     }
 
-    public static Mat getDefaultRenderedImage(ImageElement image, Mat source,
-        boolean pixelPadding) {
+    public static PlanarImage getDefaultRenderedImage(ImageElement image, PlanarImage source, boolean pixelPadding) {
         return getDefaultRenderedImage(image, source, image.getDefaultWindow(pixelPadding),
             image.getDefaultLevel(pixelPadding), true);
     }

@@ -26,8 +26,10 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
@@ -102,21 +104,21 @@ public class ShutterOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        Mat source = (Mat) params.get(Param.INPUT_IMG);
-        Mat result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
 
         Boolean shutter = (Boolean) params.get(P_SHOW);
         Area area = (Area) params.get(P_SHAPE);
         Object pr = params.get(P_PR_ELEMENT);
 
         if (shutter != null && shutter && area != null) {
-            result = ImageProcessor.applyShutter(source, area, getShutterColor());
+            result = ImageProcessor.applyShutter(ImageCV.toMat(source), area, getShutterColor());
         }
 
         // Potentially override the shutter in the original dicom
         if (shutter && params.get(P_PS_VALUE) != null && (pr instanceof PRSpecialElement)) {
             DicomMediaIO prReader = ((PRSpecialElement) pr).getMediaReader();
-            Mat imgOverlay = null;
+            ImageCV imgOverlay = null;
             ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
             boolean overlays = JMVUtils.getNULLtoFalse(prReader.getTagValue(TagW.HasOverlay));
 
@@ -131,7 +133,7 @@ public class ShutterOp extends AbstractOp {
                     if (shuttOverlayGroup != null) {
                         RenderedImage overlayImg =
                             OverlayUtils.getShutterOverlay(attributes, frame, width, height, shuttOverlayGroup);
-                        imgOverlay = ImageProcessor.applyShutter(result, overlayImg, getShutterColor());
+                        imgOverlay = ImageProcessor.applyShutter(ImageCV.toMat(result), overlayImg, getShutterColor());
                     }
                 }
             }

@@ -38,7 +38,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
@@ -49,6 +48,7 @@ import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
 import org.weasis.acquire.explorer.util.ImageInfoHelper;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
@@ -299,7 +299,7 @@ public class AcquirePublishDialog extends JDialog {
 
     private Predicate<AcquireImageInfo> oversizedImages() {
         return acqImg -> {
-            Mat img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
+            PlanarImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
 
             Integer width = img.width();
             Integer height = img.height();

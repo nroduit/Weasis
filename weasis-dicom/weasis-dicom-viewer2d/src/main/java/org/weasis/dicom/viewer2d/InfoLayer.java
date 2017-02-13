@@ -30,7 +30,6 @@ import javax.swing.Icon;
 import javax.vecmath.Vector3d;
 
 import org.dcm4che3.data.Tag;
-import org.opencv.core.Mat;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
@@ -45,6 +44,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
@@ -1175,7 +1175,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
     public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {
         ImageElement image = view2DPane.getImage();
-        Mat source = image.getImage();
+        PlanarImage source = image.getImage();
         if (source == null) {
             return;
         }
