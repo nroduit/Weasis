@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
+    <parent>	
         <artifactId>animati-texture</artifactId>
         <groupId>br.com.animati</groupId>
         <version>2.5.1-SNAPSHOT</version>
@@ -17,7 +17,7 @@
             <!-- texturedicom lib stays in local repository -->
             <id>project.local</id>
             <name>project-lib</name>
-            <url>file:${project.basedir}/animati-lib</url>
+            <url>file:///${project.basedir}/animati-lib</url>
         </repository>
     </repositories>
 
