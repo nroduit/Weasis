@@ -875,8 +875,11 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 boolean openNewTab = true;
                 MediaSeriesGroup entry1 = dicomModel.getParent(dicomSeries, DicomModel.patient);
                 if (entry1 != null) {
-                    // Fix when patientUID in xml have different patient name
-                    entry1.setTagNoNull(TagW.PatientPseudoUID, reader.getTagValue(TagW.PatientPseudoUID));
+                    String dicomPtUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
+                    if (!entry1.getTagValue(TagW.PatientPseudoUID).equals(dicomPtUID)) {
+                        // Fix when patientUID in xml have different patient name
+                        dicomModel.replacePatientUID((String) entry1.getTagValue(TagW.PatientPseudoUID), dicomPtUID);
+                    }
                     synchronized (UIManager.VIEWER_PLUGINS) {
                         for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
                             if (entry1.equals(p.getGroupID())) {
