@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -142,7 +143,29 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
         return null;
     }
-
+    
+    public void replacePatientUID(String oldPatientUID, String newPatientUID) {
+        MediaSeriesGroup pt = getHierarchyNode(MediaSeriesGroupNode.rootNode, oldPatientUID);
+        Collection<MediaSeriesGroup> studies = getChildren(pt);
+        Map<MediaSeriesGroup, Collection<MediaSeriesGroup>> studyMap = new HashMap<>();
+        for (MediaSeriesGroup st : studies) {
+            studyMap.put(st, getChildren(st));
+        }
+        
+        removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
+        pt.setTagNoNull(TagW.PatientPseudoUID, newPatientUID);
+        addHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
+        
+        for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
+            MediaSeriesGroup st = stEntry.getKey();
+            addHierarchyNode(pt, st);
+            for (MediaSeriesGroup s : stEntry.getValue()) {
+                addHierarchyNode(st, s);
+            }
+        }
+    }
+    
+    
     public MediaSeriesGroup getStudyNode(String studyUID) {
         Objects.requireNonNull(studyUID);
         synchronized (model) {

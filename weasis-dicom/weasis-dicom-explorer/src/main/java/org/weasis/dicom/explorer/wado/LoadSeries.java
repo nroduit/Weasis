@@ -49,7 +49,6 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.SeriesThumbnail;
@@ -876,6 +875,11 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 boolean openNewTab = true;
                 MediaSeriesGroup entry1 = dicomModel.getParent(dicomSeries, DicomModel.patient);
                 if (entry1 != null) {
+                    String dicomPtUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
+                    if (!entry1.getTagValue(TagW.PatientPseudoUID).equals(dicomPtUID)) {
+                        // Fix when patientUID in xml have different patient name
+                        dicomModel.replacePatientUID((String) entry1.getTagValue(TagW.PatientPseudoUID), dicomPtUID);
+                    }
                     synchronized (UIManager.VIEWER_PLUGINS) {
                         for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
                             if (entry1.equals(p.getGroupID())) {
