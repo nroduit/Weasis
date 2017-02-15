@@ -47,7 +47,7 @@
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 
-		<animati.plugins.version>1.0.0-SNAPSHOT</animati.plugins.version>
+		<animati.plugins.version>${project.version}</animati.plugins.version>
 		<jogamp.version>2.3.2</jogamp.version>
 
 		<windowsName>weasis-native</windowsName>
