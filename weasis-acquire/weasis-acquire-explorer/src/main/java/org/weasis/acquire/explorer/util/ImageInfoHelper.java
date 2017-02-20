@@ -35,23 +35,12 @@ public class ImageInfoHelper {
      * @param resolution
      * @return
      */
-    public static Double calculateRatio(AcquireImageInfo imgInfo, Resolution resolution, Double max) {
+    public static Double calculateRatio(AcquireImageInfo imgInfo, Resolution resolution) {
         try {
             Objects.requireNonNull(imgInfo);
             Objects.requireNonNull(resolution);
-            Objects.requireNonNull(max);
 
-            Double expectedImageSize;
-            switch (resolution) {
-                case HIGH_RES:
-                    expectedImageSize = max;
-                    break;
-                case MED_RES:
-                    expectedImageSize = Math.floor((max * 2) / 3);
-                    break;
-                default:
-                    return null;
-            }
+            double expectedImageSize = resolution.getMaxSize();
 
             ImageElement imgElt = imgInfo.getImage();
             Integer width = (Integer) imgElt.getTagValue(TagW.ImageWidth);

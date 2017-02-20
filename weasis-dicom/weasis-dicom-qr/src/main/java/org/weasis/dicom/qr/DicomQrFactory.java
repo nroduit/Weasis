@@ -14,9 +14,9 @@ import java.io.File;
 import java.util.Hashtable;
 import java.util.Properties;
 
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.BundlePreferences;
@@ -36,6 +36,10 @@ public class DicomQrFactory implements DicomImportFactory {
         return new DicomQrView();
     }
 
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+    
     @Activate
     protected void activate(ComponentContext context) throws Exception {
         LOGGER.info("DICOM Q/R is activated"); //$NON-NLS-1$
