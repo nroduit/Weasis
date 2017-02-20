@@ -14,7 +14,7 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 
 @org.osgi.service.component.annotations.Component(service = InsertableFactory.class, immediate = false, property = {
-"org.weasis.base.viewer2d.View2dContainer=true"  })
+    "org.weasis.base.viewer2d.View2dContainer=true" })
 public class SampleToolFactory implements InsertableFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SampleToolFactory.class);
 
@@ -44,6 +44,10 @@ public class SampleToolFactory implements InsertableFactory {
     public boolean isComponentCreatedByThisFactory(Insertable tool) {
         return tool instanceof SampleTool;
     }
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
 
     @Activate
     protected void activate(ComponentContext context) {
