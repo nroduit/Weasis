@@ -143,7 +143,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
         return null;
     }
-    
+
     public void replacePatientUID(String oldPatientUID, String newPatientUID) {
         MediaSeriesGroup pt = getHierarchyNode(MediaSeriesGroupNode.rootNode, oldPatientUID);
         Collection<MediaSeriesGroup> studies = getChildren(pt);
@@ -151,11 +151,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         for (MediaSeriesGroup st : studies) {
             studyMap.put(st, getChildren(st));
         }
-        
+
         removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
         pt.setTagNoNull(TagW.PatientPseudoUID, newPatientUID);
         addHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
-        
+
         for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
             MediaSeriesGroup st = stEntry.getKey();
             addHierarchyNode(pt, st);
@@ -163,9 +163,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 addHierarchyNode(st, s);
             }
         }
+        firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UPDATE, DicomModel.this, oldPatientUID, pt));
     }
-    
-    
+
     public MediaSeriesGroup getStudyNode(String studyUID) {
         Objects.requireNonNull(studyUID);
         synchronized (model) {
@@ -238,7 +238,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void dispose() {
         removeAllPropertyChangeListener();
-        
+
         synchronized (model) {
             for (MediaSeriesGroup pt : getChildren(MediaSeriesGroupNode.rootNode)) {
                 for (MediaSeriesGroup st : getChildren(pt)) {
@@ -248,7 +248,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             }
         }
-        model.clear();     
+        model.clear();
     }
 
     @Override
@@ -276,7 +276,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
 
     }
-    
+
     public void removeAllPropertyChangeListener() {
         for (PropertyChangeListener listener : propertyChange.getPropertyChangeListeners()) {
             propertyChange.removePropertyChangeListener(listener);
@@ -910,7 +910,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             "  -r --remote=URI   open DICOMs from an URI", //$NON-NLS-1$
             "  -p --portable     open DICOMs from configured directories at the same level of the executable", //$NON-NLS-1$
             "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //$NON-NLS-1$
-            "  -w --wado=URI     open DICOMs from an XML manifest", "  -? --help         show help" };  //$NON-NLS-1$//$NON-NLS-2$
+            "  -w --wado=URI     open DICOMs from an XML manifest", "  -? --help         show help" }; //$NON-NLS-1$//$NON-NLS-2$
 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> largs = opt.getList("local"); //$NON-NLS-1$
