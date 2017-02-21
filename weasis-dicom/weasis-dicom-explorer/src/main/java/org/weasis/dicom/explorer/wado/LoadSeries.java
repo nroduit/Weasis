@@ -215,7 +215,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             if (splitNb != null) {
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
-            } else if (dicomSeries.size(null) == 0) {
+            } else if (dicomSeries.size(null) == 0 && dicomSeries.getTagValue(TagW.DicomSpecialElementList) == null) {
                 // Remove in case of split Series and all the SopInstanceUIDs already exist
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.REMOVE, dicomModel, null, dicomSeries));
@@ -858,6 +858,18 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             MediaElement[] medias = reader.getMediaElement();
             if (medias != null) {
                 firstImageToDisplay = dicomSeries.size(null) == 0;
+                if (firstImageToDisplay) {
+                    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+                    if (patient != null) {
+                        String dicomPtUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
+                        if (!patient.getTagValue(TagW.PatientPseudoUID).equals(dicomPtUID)) {
+                            // Fix when patientUID in xml have different patient name
+                            dicomModel.replacePatientUID((String) patient.getTagValue(TagW.PatientPseudoUID),
+                                dicomPtUID);
+                        }
+                    }
+                }
+                
                 for (MediaElement media : medias) {
                     dicomModel.applySplittingRules(dicomSeries, media);
                 }
@@ -875,11 +887,6 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 boolean openNewTab = true;
                 MediaSeriesGroup entry1 = dicomModel.getParent(dicomSeries, DicomModel.patient);
                 if (entry1 != null) {
-                    String dicomPtUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
-                    if (!entry1.getTagValue(TagW.PatientPseudoUID).equals(dicomPtUID)) {
-                        // Fix when patientUID in xml have different patient name
-                        dicomModel.replacePatientUID((String) entry1.getTagValue(TagW.PatientPseudoUID), dicomPtUID);
-                    }
                     synchronized (UIManager.VIEWER_PLUGINS) {
                         for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
                             if (entry1.equals(p.getGroupID())) {
