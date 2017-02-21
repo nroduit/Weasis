@@ -67,6 +67,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -206,9 +207,13 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
             if (DicomModel.isSpecialModality(dicomSeries)) {
                 dicomModel.addSpecialModality(dicomSeries);
-                dicomSeries.getSortedMedias(null).stream().filter(KOSpecialElement.class::isInstance)
-                    .map(KOSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+                List<DicomSpecialElement> list =
+                    (List<DicomSpecialElement>) dicomSeries.getTagValue(TagW.DicomSpecialElementList);
+                if (list != null) {
+                    list.stream().filter(KOSpecialElement.class::isInstance).map(KOSpecialElement.class::cast)
+                        .findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+                }
             }
 
             Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
@@ -869,7 +874,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                         }
                     }
                 }
-                
+
                 for (MediaElement media : medias) {
                     dicomModel.applySplittingRules(dicomSeries, media);
                 }
