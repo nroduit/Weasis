@@ -68,7 +68,6 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
-import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TransferSyntax;
@@ -210,7 +209,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 List<DicomSpecialElement> list =
                     (List<DicomSpecialElement>) dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                 if (list != null) {
-                    list.stream().filter(KOSpecialElement.class::isInstance).map(KOSpecialElement.class::cast)
+                    list.stream().filter(DicomSpecialElement.class::isInstance).map(DicomSpecialElement.class::cast)
                         .findFirst().ifPresent(d -> dicomModel.firePropertyChange(
                             new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                 }
