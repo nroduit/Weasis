@@ -775,7 +775,7 @@ public class WeasisLauncher {
         InputStream is = null;
         try {
             // Try to load config.properties.
-            is = propURI.toURL().openConnection().getInputStream();
+            is = FileUtil.getAdaptedConnection(propURI.toURL()).getInputStream();
             props.load(is);
             is.close();
         } catch (Exception ex) {

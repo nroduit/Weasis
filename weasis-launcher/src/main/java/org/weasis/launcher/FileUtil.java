@@ -26,6 +26,8 @@ import java.util.zip.ZipInputStream;
 
 import javax.imageio.stream.ImageInputStream;
 
+import org.apache.felix.framework.util.Util;
+
 public class FileUtil {
     public static final int FILE_BUFFER = 4096;
 
@@ -154,8 +156,7 @@ public class FileUtil {
 
         String fileDate = null;
 
-        URL url = new URL(srcPath);
-        URLConnection urlConnection = url.openConnection();
+        URLConnection urlConnection = FileUtil.getAdaptedConnection(new URL(srcPath));
         long last = urlConnection.getLastModified();
         if (last != 0) {
             fileDate = Long.toString(last);
@@ -166,6 +167,21 @@ public class FileUtil {
             unzip(urlConnection.getInputStream(), cacheDir);
         }
         return fileDate;
+    }
+    
+    public static  URLConnection getAdaptedConnection(URL url) throws IOException {
+        URLConnection connection = url.openConnection();
+        // Prevent caching of Java WebStart.
+        connection.setUseCaches(false);
+        // Support for http proxy authentication.
+        String auth = System.getProperty("http.proxyAuth", null); //$NON-NLS-1$
+        if ((auth != null) && (auth.length() > 0)) {
+            if ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol())) { //$NON-NLS-1$ //$NON-NLS-2$
+                String base64 = Util.base64Encode(auth);
+                connection.setRequestProperty("Proxy-Authorization", "Basic " + base64); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+        }
+        return connection;
     }
 
     private static void copy(InputStream in, OutputStream out) throws IOException {

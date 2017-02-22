@@ -13,13 +13,11 @@
 package org.weasis.launcher;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,7 +32,6 @@ import java.util.jar.Pack200;
 import java.util.jar.Pack200.Unpacker;
 import java.util.zip.GZIPInputStream;
 
-import org.apache.felix.framework.util.Util;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -391,30 +388,24 @@ public class AutoProcessor {
     private static void loadTranslationBundle(BundleContext context, Bundle b,
         final Map<String, Bundle> installedBundleMap) {
         if (WeasisLauncher.modulesi18n != null) {
-            // Version v = b.getVersion();
             if (b != null) {
                 StringBuilder p = new StringBuilder(b.getSymbolicName());
                 p.append("-i18n-"); //$NON-NLS-1$
                 // From 2.0.0, i18n module can be plugged in any version. The date (the qualifier)
                 // will update the version.
                 p.append("2.0.0"); //$NON-NLS-1$
-                // p.append(v.getMajor());
-                // p.append("."); //$NON-NLS-1$
-                // p.append(v.getMinor());
-                // p.append("."); //$NON-NLS-1$
-                // p.append(v.getMicro());
                 p.append(".jar"); //$NON-NLS-1$
                 String filename = p.toString();
                 String value = WeasisLauncher.modulesi18n.getProperty(filename);
                 if (value != null) {
                     String baseURL = System.getProperty("weasis.i18n"); //$NON-NLS-1$
                     if (baseURL != null) {
-                        String translation_modules = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename); //$NON-NLS-1$ //$NON-NLS-2$
+                        String uri = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename); //$NON-NLS-1$ //$NON-NLS-2$
                         String bundleName = getBundleNameFromLocation(filename);
                         try {
                             Bundle b2 = installedBundleMap.get(bundleName);
                             if (b2 == null) {
-                                b2 = context.installBundle(translation_modules, null);
+                                b2 = context.installBundle(uri, FileUtil.getAdaptedConnection(new URI(uri).toURL()).getInputStream());
                                 installedBundleMap.put(bundleName, b);
                             }
                             if (b2 != null && !value.equals(b2.getVersion().getQualifier())) {
@@ -424,16 +415,15 @@ public class AutoProcessor {
                                     // Handle same bundle version with different location
                                     try {
                                         b2.uninstall();
-                                        context.installBundle(translation_modules, null);
-                                        b2 = context.installBundle(translation_modules, null);
+                                        context.installBundle(uri, FileUtil.getAdaptedConnection(new URI(uri).toURL()).getInputStream());
                                         installedBundleMap.put(bundleName, b);
                                     } catch (Exception exc) {
-                                        System.err.println("Cannot install translation pack: " + translation_modules); //$NON-NLS-1$
+                                        System.err.println("Cannot install translation pack: " + uri); //$NON-NLS-1$
                                     }
                                 }
                             }
                         } catch (Exception e) {
-                            System.err.println("Cannot install translation pack: " + translation_modules); //$NON-NLS-1$
+                            System.err.println("Cannot install translation pack: " + uri); //$NON-NLS-1$
                         }
                     }
                 }
@@ -503,16 +493,7 @@ public class AutoProcessor {
 
         if (pack) {
 
-            final URL url = new URL((URL) null, location + PACK200_COMPRESSION, null);
-
-            // URLConnection conn = url.openConnection();
-            // InputStream is = conn.getInputStream();
-            // Unpacker unpacker = Pack200.newUnpacker();
-            // File tmpFile = File.createTempFile("tmpPack200", ".jar");
-            // JarOutputStream origJarStream = new JarOutputStream(new FileOutputStream(tmpFile));
-            // unpacker.unpack(new GZIPInputStream(is), origJarStream);
-            // origJarStream.close();
-
+            final URL url = new URL(location + PACK200_COMPRESSION);
             final PipedInputStream in = new PipedInputStream();
             final PipedOutputStream out = new PipedOutputStream(in);
             new Thread(new Runnable() {
@@ -520,23 +501,13 @@ public class AutoProcessor {
                 public void run() {
                     JarOutputStream jarStream = null;
                     try {
-                        URLConnection conn = url.openConnection();
-                        // Support for http proxy authentication.
-                        String auth = System.getProperty("http.proxyAuth", null); //$NON-NLS-1$
-                        if ((auth != null) && (auth.length() > 0)) {
-                            if ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol())) { //$NON-NLS-1$ //$NON-NLS-2$
-                                String base64 = Util.base64Encode(auth);
-                                conn.setRequestProperty("Proxy-Authorization", "Basic " + base64); //$NON-NLS-1$ //$NON-NLS-2$
-                            }
-                        }
-                        InputStream is = conn.getInputStream();
+                        InputStream is = FileUtil.getAdaptedConnection(url).getInputStream();
                         Unpacker unpacker = Pack200.newUnpacker();
                         jarStream = new JarOutputStream(out);
                         unpacker.unpack(new GZIPInputStream(is), jarStream);
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    } catch (Exception e1) {
+                        System.err.println("Cannot install pack bundle: " + url); //$NON-NLS-1$
+                        e1.printStackTrace();
                     } finally {
                         FileUtil.safeClose(jarStream);
                     }
@@ -546,7 +517,7 @@ public class AutoProcessor {
             return context.installBundle(location, in);
 
         }
-        return context.installBundle(location, null);
+        return context.installBundle(location, FileUtil.getAdaptedConnection(new URI(location).toURL()).getInputStream());
     }
 
     static class BundleElement {
