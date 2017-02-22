@@ -644,21 +644,21 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 actions = new ArrayList<>();
             }
 
-            boolean expOsirix = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("export.menu.osirix", true);
+            boolean expOsirix = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("export.menu.osirix", true); //$NON-NLS-1$
             if (expOsirix) {
                 DefaultAction action =
-                    new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Osirix"), //$NON-NLS-1$
+                    new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Osirix"), //$NON-NLS-1$ //$NON-NLS-2$
                         new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osirix.png")), //$NON-NLS-1$
-                        event -> exportTosirix(this, "Osirix", "/usr/bin/open -b com.rossetantoine.osirix")); //$NON-NLS-1$
+                        event -> exportTosirix(this, "Osirix", "/usr/bin/open -b com.rossetantoine.osirix")); //$NON-NLS-1$ //$NON-NLS-2$
                 actions.add(action);
             }
 
-            boolean expHoros = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("export.menu.horos", true);
+            boolean expHoros = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("export.menu.horos", true); //$NON-NLS-1$
             if (expHoros) {
                 DefaultAction action =
-                    new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Horos"), //$NON-NLS-1$
+                    new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Horos"), //$NON-NLS-1$ //$NON-NLS-2$
                         new ImageIcon(View2dContainer.class.getResource("/icon/16x16/horos.png")), //$NON-NLS-1$
-                        event -> exportTosirix(this, "Horos", "/usr/bin/open -b com.horosproject.horos")); // $NON-NLS-1$
+                        event -> exportTosirix(this, "Horos", "/usr/bin/open -b com.horosproject.horos")); // $NON-NLS-1$ //$NON-NLS-1$ //$NON-NLS-2$
                 actions.add(action);
             }
         }

@@ -42,6 +42,11 @@ public class SampleToolbarFactory implements InsertableFactory {
         }
     }
 
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+    
     @Activate
     protected void activate(ComponentContext context) throws Exception {
         LOGGER.info("Activate the Sample tool bar");

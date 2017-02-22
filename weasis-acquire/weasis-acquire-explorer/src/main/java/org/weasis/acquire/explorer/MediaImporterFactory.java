@@ -13,12 +13,12 @@ package org.weasis.acquire.explorer;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
 import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
@@ -39,6 +39,11 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
         return explorer;
     }
 
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+    
     @Activate
     protected void activate(ComponentContext context) {
         registerCommands(context);
@@ -62,7 +67,7 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
             try {
                 val = context.getBundleContext().getServiceReferences(serviceClassName, null);
             } catch (InvalidSyntaxException e) {
-                LOGGER.error("Get media importer services", e);
+                LOGGER.error("Get media importer services", e); //$NON-NLS-1$
             }
             if (val == null || val.length == 0) {
                 Dictionary<String, Object> dict = new Hashtable<>();

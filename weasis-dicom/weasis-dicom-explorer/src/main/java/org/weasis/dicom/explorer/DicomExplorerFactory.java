@@ -36,8 +36,13 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
         return explorer;
     }
 
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+
     @Activate
     protected void activate(ComponentContext context) {
+        // Do nothing
     }
 
     @Deactivate

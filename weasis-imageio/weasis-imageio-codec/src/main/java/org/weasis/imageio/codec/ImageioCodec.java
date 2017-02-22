@@ -111,10 +111,10 @@ public class ImageioCodec implements Codec {
     public String[] getWriterMIMETypes() {
         return ImageIO.getWriterMIMETypes();
     }
-    
-    // *************************************************************** //
-    // ***************** OSGI service implementation ***************** //
-    // *************************************************************** //
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
     
     @Activate
     protected void activate(ComponentContext context) {

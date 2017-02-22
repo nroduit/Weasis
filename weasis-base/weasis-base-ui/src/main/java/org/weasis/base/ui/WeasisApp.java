@@ -38,27 +38,27 @@ public class WeasisApp {
 
     public void info(String[] argv) throws IOException {
         final String[] usage =
-            { "Show information about Weasis", "Usage: weasis:info (-v | -a)", 
+            { "Show information about Weasis", "Usage: weasis:info (-v | -a)",  //$NON-NLS-1$ //$NON-NLS-2$
                 "  -v --version    show version", //$NON-NLS-1$
-                "  -a --all        show weasis specifications", 
-                "  -? --help       show help" }; 
+                "  -a --all        show weasis specifications",  //$NON-NLS-1$
+                "  -? --help       show help" };  //$NON-NLS-1$
 
         Option opt = Options.compile(usage).parse(argv);
 
         if (opt.isSet("version")) { //$NON-NLS-1$
             System.out.println(AppProperties.WEASIS_VERSION);
         } else if (opt.isSet("all")) { //$NON-NLS-1$
-            System.out.println("  " + AppProperties.WEASIS_NAME + " " + AppProperties.WEASIS_VERSION);
-            System.out.println("  Installation path: " + AppProperties.WEASIS_PATH);
-            System.out.println("  Path for temporary files: " + AppProperties.APP_TEMP_DIR);
-            System.out.println("  Profile: " + AppProperties.WEASIS_PROFILE);
-            System.out.println("  User: " + AppProperties.WEASIS_USER);
-            System.out.println("  OSGI native specs: " + System.getProperty("native.library.spec"));
-            System.out.format("  Operating system: %s %s %s" , System.getProperty("os.name"), System.getProperty("os.version") , System.getProperty("os.arch"));
+            System.out.println("  " + AppProperties.WEASIS_NAME + " " + AppProperties.WEASIS_VERSION); //$NON-NLS-1$ //$NON-NLS-2$
+            System.out.println("  Installation path: " + AppProperties.WEASIS_PATH); //$NON-NLS-1$
+            System.out.println("  Path for temporary files: " + AppProperties.APP_TEMP_DIR); //$NON-NLS-1$
+            System.out.println("  Profile: " + AppProperties.WEASIS_PROFILE); //$NON-NLS-1$
+            System.out.println("  User: " + AppProperties.WEASIS_USER); //$NON-NLS-1$
+            System.out.println("  OSGI native specs: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
+            System.out.format("  Operating system: %s %s %s" , System.getProperty("os.name"), System.getProperty("os.version") , System.getProperty("os.arch")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             System.out.println();
-            System.out.println("  Java vendor: " + System.getProperty("java.vendor"));
-            System.out.println("  Java version: " + System.getProperty("java.version"));
-            System.out.println("  Java Path: " + System.getProperty("java.home"));          
+            System.out.println("  Java vendor: " + System.getProperty("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
+            System.out.println("  Java version: " + System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
+            System.out.println("  Java Path: " + System.getProperty("java.home"));           //$NON-NLS-1$ //$NON-NLS-2$
         } else {
             opt.usage();
         }
@@ -66,9 +66,9 @@ public class WeasisApp {
 
     public void ui(String[] argv) throws IOException {
         final String[] usage =
-            { "Manage user interface", "Usage: weasis:ui (-q | -v)", 
+            { "Manage user interface", "Usage: weasis:ui (-q | -v)",  //$NON-NLS-1$ //$NON-NLS-2$
                 "  -q --quit        shutdown Weasis", //$NON-NLS-1$ 
-                "  -v --visible     set window on top", 
+                "  -v --visible     set window on top",  //$NON-NLS-1$
                 "  -? --help        show help" }; //$NON-NLS-1$ 
 
         Option opt = Options.compile(usage).parse(argv);

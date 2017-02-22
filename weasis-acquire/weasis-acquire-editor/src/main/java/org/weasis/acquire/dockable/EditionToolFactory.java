@@ -13,14 +13,13 @@ package org.weasis.acquire.dockable;
 import java.awt.event.KeyEvent;
 import java.util.Hashtable;
 
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.base.viewer2d.EventManager;
-import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
@@ -103,6 +102,10 @@ public class EditionToolFactory implements InsertableFactory {
         return tool instanceof EditionTool;
     }
 
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+    
     @Activate
     protected void activate(ComponentContext context) {
         LOGGER.info("Activate the TransformationTool panel"); //$NON-NLS-1$

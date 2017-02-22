@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.util.Toolbar;
 
@@ -30,7 +29,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MimeSystemAppViewer.class);
 
-    private static final String ERROR_MSG = Messages.getString("MimeSystemAppViewer.cannot_open_msg"); //$NON-NLS-1$
+    private static final String ERROR_MSG = "Cannot open {} with the default system application";  //$NON-NLS-1$
 
     @Override
     public void close() {

@@ -244,7 +244,7 @@ public class AcquireManager {
     private static SeriesGroup findSeries(SeriesGroup searchedSeries, AcquireImageInfo imageInfo,
         int maxRangeInMinutes) {
 
-        Objects.requireNonNull(imageInfo, "findSeries imageInfo should not be null");
+        Objects.requireNonNull(imageInfo, "findSeries imageInfo should not be null"); //$NON-NLS-1$
 
         if (SeriesGroup.Type.DATE.equals(searchedSeries.getType())) {
             LocalDateTime imageDate = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, imageInfo.getImage());
@@ -376,7 +376,7 @@ public class AcquireManager {
      */
     public void patient(String[] argv) throws IOException {
         final String[] usage = { "Load Patient Context from the first argument", "Usage: acquire:patient (-x | -i | -s | -u) arg", //$NON-NLS-1$ //$NON-NLS-2$
-            "arg is an XML text in UTF8 or an url with the option '--url'",
+            "arg is an XML text in UTF8 or an url with the option '--url'", //$NON-NLS-1$
             "  -x --xml         Open Patient Context from an XML data containing all DICOM Tags ", //$NON-NLS-1$
             "  -i --inbound     Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64/GZip]", //$NON-NLS-1$
             "  -s --iurlsafe    Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64_URL_SAFE/GZip]", //$NON-NLS-1$
