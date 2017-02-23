@@ -181,7 +181,7 @@ public class DicomCodec implements Codec {
                     logConfiguration.update(loggingProperties);
                 }
             } catch (IOException e) {
-                LOGGER.error("", e);
+                LOGGER.error("", e); //$NON-NLS-1$
             }
         }
     }

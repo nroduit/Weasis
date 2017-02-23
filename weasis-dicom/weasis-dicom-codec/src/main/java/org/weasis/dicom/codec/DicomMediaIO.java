@@ -432,9 +432,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), banded);
         }
 
-        ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next();
+        ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next(); //$NON-NLS-1$
         if (reader == null) {
-            throw new IllegalStateException("Cannot get RAW image reader");
+            throw new IllegalStateException("Cannot get RAW image reader"); //$NON-NLS-1$
         }
         RawImageInputStream riis =
             new RawImageInputStream(iis, new ImageTypeSpecifier(cmodel, smodel), frameOffsets, imageDimensions);
