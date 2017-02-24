@@ -236,7 +236,7 @@ public class DownloadManager {
         void handle(LoadSeries loadSeries);
     }
 
-    public static List<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) {
+    public static List<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) throws WeasisDownloadException {
         ArrayList<LoadSeries> seriesList = new ArrayList<>();
         XMLStreamReader xmler = null;
         InputStream stream = null;
@@ -345,26 +345,10 @@ public class DownloadManager {
                 }
             }
 
-        } catch (Exception e) {
+        } catch (IOException | XMLStreamException e) {
             final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
-
             LOGGER.error("{}", message, e); //$NON-NLS-1$
-
-            final int messageType = JOptionPane.ERROR_MESSAGE;
-
-            GuiExecutor.instance().execute(() -> {
-                PluginTool explorer = null;
-                DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                if (dicomExplorer instanceof PluginTool) {
-                    explorer = (PluginTool) dicomExplorer;
-                }
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
-                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, null,
-                    JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
-                if (layer != null) {
-                    layer.hideUI();
-                }
-            });
+            throw new WeasisDownloadException(message, e);
 
         } finally {
             FileUtil.safeClose(xmler);

@@ -99,6 +99,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     private volatile DownloadPriority priority = null;
     private final boolean writeInCache;
 
+    private boolean hasError = false;
+
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
         super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
@@ -226,6 +228,10 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             }
             this.dicomSeries.setSeriesLoader(null);
         }
+    }
+
+    public boolean hasDownloadFail() {
+        return hasError;
     }
 
     private String getLoadType() {
@@ -619,6 +625,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
         private void error() {
             status = Status.ERROR;
+            hasError = true;
         }
 
         private String replaceToDefaultTSUID(URL url) {
