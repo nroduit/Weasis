@@ -133,12 +133,12 @@ public class PresetWindowLevel {
     }
 
     public static List<PresetWindowLevel> getPresetCollection(DicomImageElement image, TagReadable tagable,
-        boolean pixelPadding) {
+        boolean pixelPadding, String type) {
         if (image == null || tagable == null) {
             return null;
         }
 
-        String dicomKeyWord = " " + Messages.getString("PresetWindowLevel.dcm_preset"); //$NON-NLS-1$ //$NON-NLS-2$
+        String dicomKeyWord = " " + type; //$NON-NLS-1$
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<>();
 
@@ -220,20 +220,18 @@ public class PresetWindowLevel {
             }
         }
 
-        if (!(tagable instanceof PRSpecialElement)) {
-            PresetWindowLevel autoLevel = new PresetWindowLevel(Messages.getString("PresetWindowLevel.full"), //$NON-NLS-1$
-                image.getFullDynamicWidth(tagable, pixelPadding), image.getFullDynamicCenter(tagable, pixelPadding),
-                defaultLutShape);
-            // Set O shortcut for auto levels
-            autoLevel.setKeyCode(KeyEvent.VK_0);
-            presetList.add(autoLevel);
+        PresetWindowLevel autoLevel = new PresetWindowLevel(Messages.getString("PresetWindowLevel.full"), //$NON-NLS-1$
+            image.getFullDynamicWidth(tagable, pixelPadding), image.getFullDynamicCenter(tagable, pixelPadding),
+            defaultLutShape);
+        // Set O shortcut for auto levels
+        autoLevel.setKeyCode(KeyEvent.VK_0);
+        presetList.add(autoLevel);
 
-            // Exclude Secondary Capture CT
-            if (image.getBitsStored() > 8) {
-                List<PresetWindowLevel> modPresets = presetListByModality.get(TagD.getTagValue(image, Tag.Modality));
-                if (modPresets != null) {
-                    presetList.addAll(modPresets);
-                }
+        // Exclude Secondary Capture CT
+        if (image.getBitsStored() > 8) {
+            List<PresetWindowLevel> modPresets = presetListByModality.get(TagD.getTagValue(image, Tag.Modality));
+            if (modPresets != null) {
+                presetList.addAll(modPresets);
             }
         }
 
@@ -284,7 +282,7 @@ public class PresetWindowLevel {
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
-            File file = ResourceUtil.getResource("presets.xml");
+            File file = ResourceUtil.getResource("presets.xml"); //$NON-NLS-1$
             if (!file.canRead()) {
                 return Collections.emptyMap();
             }

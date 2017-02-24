@@ -80,7 +80,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
             SAXAdapter adapter = new SAXAdapter();
             parser.parse(stream, adapter);
         } catch (Exception e) {
-            LOGGER.error("Loading layout xml", e);
+            LOGGER.error("Loading layout xml", e); //$NON-NLS-1$
         }
     }
 

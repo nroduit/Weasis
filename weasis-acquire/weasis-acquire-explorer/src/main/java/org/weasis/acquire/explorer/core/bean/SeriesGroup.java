@@ -17,11 +17,12 @@ import java.util.Objects;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
 
-public class Serie extends AbstractTagable implements Comparable<Serie> {
+public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGroup> {
     public enum Type {
         NONE, DATE, NAME;
     }
@@ -30,26 +31,26 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
     private String name;
     private LocalDateTime date;
 
-    public static final Serie DEFAULT_SERIE = new Serie();
-    public static final Serie DATE_SERIE = new Serie(LocalDateTime.now());
-    public static final String DEFAULT_SERIE_NAME = "Other";
+    public static final SeriesGroup DATE_SERIE = new SeriesGroup(LocalDateTime.now());
 
-    public Serie() {
+    public static final String DEFAULT_SERIE_NAME = Messages.getString("Serie.other"); //$NON-NLS-1$
+
+    public SeriesGroup() {
         this(Type.NONE);
     }
 
-    private Serie(Type type) {
+    private SeriesGroup(Type type) {
         this.type = type;
         init();
     }
 
-    public Serie(String name) {
+    public SeriesGroup(String name) {
         this.type = Type.NAME;
         this.name = name;
         init();
     }
 
-    public Serie(LocalDateTime date) {
+    public SeriesGroup(LocalDateTime date) {
         Objects.requireNonNull(date);
         this.type = Type.DATE;
         this.date = date;
@@ -58,8 +59,12 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
 
     private void init() {
         // Default Modality if not overridden
-        tags.put(TagD.get(Tag.Modality), "XC");
+        tags.put(TagD.get(Tag.Modality), "XC"); //$NON-NLS-1$
         tags.put(TagD.get(Tag.SeriesInstanceUID), UIDUtils.createUID());
+        updateDicomTags();
+    }
+
+    public void updateDicomTags() {
         TagW operator = TagD.get(Tag.OperatorsName);
         tags.put(operator, AcquireManager.GLOBAL.getTagValue(operator));
     }
@@ -86,6 +91,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
                 return name;
             case DATE:
                 return TagUtil.formatDateTime(date);
+            case NONE:
             default:
                 return DEFAULT_SERIE_NAME;
         }
@@ -112,7 +118,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        Serie other = (Serie) obj;
+        SeriesGroup other = (SeriesGroup) obj;
         if (date == null) {
             if (other.date != null) {
                 return false;
@@ -146,7 +152,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
     }
 
     @Override
-    public int compareTo(Serie that) {
+    public int compareTo(SeriesGroup that) {
         final int BEFORE = -1;
         final int EQUAL = 0;
         final int AFTER = 1;
@@ -197,7 +203,7 @@ public class Serie extends AbstractTagable implements Comparable<Serie> {
         }
 
         // Check equals
-        assert this.equals(that) : "compareTo inconsistent with equals.";
+        assert this.equals(that) : "compareTo inconsistent with equals."; //$NON-NLS-1$
 
         return EQUAL;
     }

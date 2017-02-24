@@ -470,7 +470,8 @@ public class DicomImageElement extends ImageElement {
 
     public List<PresetWindowLevel> getPresetList(boolean pixelPadding) {
         if (windowingPresetCollection == null && isImageAvailable()) {
-            windowingPresetCollection = PresetWindowLevel.getPresetCollection(this, this, pixelPadding);
+            String type = Messages.getString("PresetWindowLevel.dcm_preset"); //$NON-NLS-1$
+            windowingPresetCollection = PresetWindowLevel.getPresetCollection(this, this, pixelPadding, type);
         }
         return windowingPresetCollection;
     }

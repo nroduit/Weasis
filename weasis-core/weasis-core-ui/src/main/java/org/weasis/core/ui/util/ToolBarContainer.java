@@ -37,6 +37,7 @@ public class ToolBarContainer extends JPanel {
         unregisterAll();
 
         if (toolBars == null || toolBars.isEmpty()) {
+            add(ToolBarContainer.EMPTY.getComponent());
             bars.add(ToolBarContainer.EMPTY);
         } else {
             // Sort toolbars according the the position

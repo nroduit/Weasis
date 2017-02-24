@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>2.5.0-SNAPSHOT</version>
+		<version>2.5.3-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -14,8 +14,9 @@
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<dcm4che.version>dcm4chee-arc-light-5.2.1</dcm4che.version>
+		<dcm4che.version>dcm4chee-arc-light-5.7.0</dcm4che.version>
 		<powermock.version>1.6.5</powermock.version>
+		<weasis-dicom-tools.version>1.0.2</weasis-dicom-tools.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -35,7 +36,6 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,org.weasis.dicom.*,org.dcm4che3.*</Export-Package>
 					</instructions>
 				</configuration>
@@ -76,7 +76,7 @@
 		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-tools</artifactId>
-			<version>1.0.0</version>
+			<version>${weasis-dicom-tools.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>junit</groupId>
@@ -107,7 +107,7 @@
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>
 			<artifactId>weasis-imageio-codec</artifactId>
-			<version>2.5.0-SNAPSHOT</version>
+			<version>2.5.3-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

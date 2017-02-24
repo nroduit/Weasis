@@ -84,7 +84,7 @@ public class SeriesThumbnail extends Thumbnail
     private DragSource dragSource = null;
 
     public SeriesThumbnail(final MediaSeries<? extends MediaElement> sequence, int thumbnailSize) {
-        super((File) null, thumbnailSize);
+        super(thumbnailSize);
         if (sequence == null) {
             throw new IllegalArgumentException("Sequence cannot be null"); //$NON-NLS-1$
         }
@@ -162,6 +162,9 @@ public class SeriesThumbnail extends Thumbnail
         }
         if (file != null || media != null) {
             mediaPosition = position;
+            if(thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())){
+                FileUtil.delete(thumbnailPath); // delete old temp file
+            }
             thumbnailPath = file;
             readable = true;
             /*
@@ -202,7 +205,7 @@ public class SeriesThumbnail extends Thumbnail
             glassPane.setVisible(true);
             dge.startDrag(null, series, this);
         } catch (Exception e) {
-            LOGGER.error("Prepare to drag",e);
+            LOGGER.error("Prepare to drag",e); //$NON-NLS-1$
         }
 
     }

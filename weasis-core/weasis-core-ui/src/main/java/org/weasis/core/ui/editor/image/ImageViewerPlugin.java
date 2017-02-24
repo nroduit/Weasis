@@ -65,7 +65,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
     private static final long serialVersionUID = -5804430771962614157L;
 
-    private static final String patterViews = Messages.getString("ImageViewerPlugin.2");
+    private static final String patterViews = Messages.getString("ImageViewerPlugin.2"); //$NON-NLS-1$
 
     // A model must have at least one view that inherited of DefaultView2d
     public static final Class<?> view2dClass = ViewCanvas.class;
@@ -122,8 +122,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     private final MouseHandler mouseHandler;
 
-    public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String PluginName) {
-        this(eventManager, VIEWS_1x1, PluginName, null, null, null);
+    public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String pluginName) {
+        this(eventManager, VIEWS_1x1, pluginName, null, null, null);
     }
 
     public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, GridBagLayoutModel layoutModel, String uid,
@@ -241,7 +241,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<MediaSeries<E>> getOpenSeries() {
         List<MediaSeries<E>> list = new ArrayList<>();
         for (ViewCanvas<E> v : view2ds) {
@@ -273,7 +272,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
      * Set a layout to this view panel. The layout is defined by the provided number corresponding the layout definition
      * in the property file.
      */
-    @SuppressWarnings("unchecked")
     protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
         this.layoutModel = layoutModel == null ? VIEWS_1x1.copy() : layoutModel.copy();
         grid.removeAll();

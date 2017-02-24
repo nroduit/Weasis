@@ -14,8 +14,6 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -29,6 +27,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.explorer.Messages;
 
+@SuppressWarnings("serial")
 public class SeriesDownloadPrefView extends AbstractItemDialogPage {
     public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately"; //$NON-NLS-1$
 
@@ -44,44 +43,39 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
         panel.setBorder(new TitledBorder(null, org.weasis.core.ui.Messages.getString("SeriesDownloadPrefView.download"), //$NON-NLS-1$
             TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(panel);
-        GridBagLayout gbl_panel = new GridBagLayout();
-        panel.setLayout(gbl_panel);
+        GridBagLayout gblPanel = new GridBagLayout();
+        panel.setLayout(gblPanel);
 
         Box verticalBox = Box.createVerticalBox();
-        GridBagConstraints gbc_verticalBox = new GridBagConstraints();
-        gbc_verticalBox.weighty = 10.0;
-        gbc_verticalBox.weightx = 1.0;
-        gbc_verticalBox.insets = new Insets(0, 0, 5, 0);
-        gbc_verticalBox.fill = GridBagConstraints.BOTH;
-        gbc_verticalBox.anchor = GridBagConstraints.NORTHWEST;
-        gbc_verticalBox.gridx = 0;
-        gbc_verticalBox.gridy = 1;
-        panel.add(verticalBox, gbc_verticalBox);
-        GridBagConstraints gbc_downloadImmediatelyCheckbox = new GridBagConstraints();
-        gbc_downloadImmediatelyCheckbox.anchor = GridBagConstraints.LINE_START;
-        gbc_downloadImmediatelyCheckbox.insets = new Insets(0, 2, 5, 5);
-        gbc_downloadImmediatelyCheckbox.gridx = 0;
-        gbc_downloadImmediatelyCheckbox.gridy = 0;
-        panel.add(downloadImmediatelyCheckbox, gbc_downloadImmediatelyCheckbox);
+        GridBagConstraints gbcVerticalBox = new GridBagConstraints();
+        gbcVerticalBox.weighty = 10.0;
+        gbcVerticalBox.weightx = 1.0;
+        gbcVerticalBox.insets = new Insets(0, 0, 5, 0);
+        gbcVerticalBox.fill = GridBagConstraints.BOTH;
+        gbcVerticalBox.anchor = GridBagConstraints.NORTHWEST;
+        gbcVerticalBox.gridx = 0;
+        gbcVerticalBox.gridy = 1;
+        panel.add(verticalBox, gbcVerticalBox);
+        GridBagConstraints gbcDownloadImmediatelyCheckbox = new GridBagConstraints();
+        gbcDownloadImmediatelyCheckbox.anchor = GridBagConstraints.LINE_START;
+        gbcDownloadImmediatelyCheckbox.insets = new Insets(0, 2, 5, 5);
+        gbcDownloadImmediatelyCheckbox.gridx = 0;
+        gbcDownloadImmediatelyCheckbox.gridy = 0;
+        panel.add(downloadImmediatelyCheckbox, gbcDownloadImmediatelyCheckbox);
 
         downloadImmediatelyCheckbox
             .setSelected(BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
 
-        JPanel panel_2 = new JPanel();
-        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
-        flowLayout_1.setHgap(10);
-        flowLayout_1.setAlignment(FlowLayout.RIGHT);
-        flowLayout_1.setVgap(7);
-        add(panel_2);
+        JPanel panel2 = new JPanel();
+        FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
+        flowLayout1.setHgap(10);
+        flowLayout1.setAlignment(FlowLayout.RIGHT);
+        flowLayout1.setVgap(7);
+        add(panel2);
 
         JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
-        panel_2.add(btnNewButton);
-        btnNewButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetoDefaultValues();
-            }
-        });
+        panel2.add(btnNewButton);
+        btnNewButton.addActionListener(e -> resetoDefaultValues());
     }
 
     @Override

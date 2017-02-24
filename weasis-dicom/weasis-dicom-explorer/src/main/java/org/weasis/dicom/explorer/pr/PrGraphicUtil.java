@@ -379,7 +379,7 @@ public class PrGraphicUtil {
                 try {
                     return buildPresentationModel(dcmobj.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG));
                 } catch (Exception e) {
-                    LOGGER.error("Cannot extract binary model: ", e);
+                    LOGGER.error("Cannot extract binary model: ", e); //$NON-NLS-1$
                 }
             }
         }
@@ -408,11 +408,11 @@ public class PrGraphicUtil {
             int length = model.getModels().size();
             model.getModels().removeIf(g -> g.getLayer() == null);
             if (length > model.getModels().size()) {
-                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length);
+                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length); //$NON-NLS-1$
             }
             return model;
         } catch (Exception e) {
-            LOGGER.error("Cannot load xml graphic model: ", e);
+            LOGGER.error("Cannot load xml graphic model: ", e); //$NON-NLS-1$
         }
         return null;
     }

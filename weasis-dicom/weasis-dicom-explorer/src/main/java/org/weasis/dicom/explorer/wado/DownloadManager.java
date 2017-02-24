@@ -86,11 +86,11 @@ public class DownloadManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadManager.class);
 
     public static final String SCHEMA =
-        "xmlns=\"http://manifest.service.weasis/v2.5\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"";
+        "xmlns=\"http://manifest.service.weasis/v2.5\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""; //$NON-NLS-1$
     public static final String TAG_XML_ROOT = "manifest"; //$NON-NLS-1$
-    public static final String TAG_ARC_QUERY = "arcQuery";
-    public static final String TAG_ARCHIVE_ID = "arcId";
-    public static final String TAG_BASE_URL = "baseUrl";
+    public static final String TAG_ARC_QUERY = "arcQuery"; //$NON-NLS-1$
+    public static final String TAG_ARCHIVE_ID = "arcId"; //$NON-NLS-1$
+    public static final String TAG_BASE_URL = "baseUrl"; //$NON-NLS-1$
     public static final String TAG_PR_ROOT = "presentations"; //$NON-NLS-1$
     public static final String TAG_PR = "presentation"; //$NON-NLS-1$
 
@@ -348,7 +348,7 @@ public class DownloadManager {
         } catch (Exception e) {
             final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
 
-            LOGGER.error("{}", message, e);
+            LOGGER.error("{}", message, e); //$NON-NLS-1$
 
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
@@ -508,7 +508,7 @@ public class DownloadManager {
                     }
                 }
             } catch (IOException e) {
-                LOGGER.error("lOG http response message", e);
+                LOGGER.error("lOG http response message", e); //$NON-NLS-1$
             }
         }
     }
@@ -640,8 +640,7 @@ public class DownloadManager {
                 // Should not happen
                 dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             } else if (!wado.getWadoURL().equals(wadoParameters.getWadoURL())) {
-                LOGGER.error("Wado parameters must be unique for a DICOM Series: {}", dicomSeries); //$NON-NLS-1$
-                // Cannot have multiple wado parameters for a Series
+                LOGGER.error("Wado parameters must be unique within a DICOM Series: {}", dicomSeries); //$NON-NLS-1$
                 return dicomSeries;
             }
         }

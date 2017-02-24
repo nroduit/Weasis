@@ -27,7 +27,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -68,6 +67,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TransferSyntax;
@@ -206,14 +206,20 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
             if (DicomModel.isSpecialModality(dicomSeries)) {
                 dicomModel.addSpecialModality(dicomSeries);
+                List<DicomSpecialElement> list =
+                    (List<DicomSpecialElement>) dicomSeries.getTagValue(TagW.DicomSpecialElementList);
+                if (list != null) {
+                    list.stream().filter(DicomSpecialElement.class::isInstance).map(DicomSpecialElement.class::cast)
+                        .findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+                }
             }
 
             Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-            Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
-            if (splitNb != null || dicomObject != null) {
+            if (splitNb != null) {
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
-            } else if (dicomSeries.size(null) == 0) {
+            } else if (dicomSeries.size(null) == 0 && dicomSeries.getTagValue(TagW.DicomSpecialElementList) == null) {
                 // Remove in case of split Series and all the SopInstanceUIDs already exist
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.REMOVE, dicomModel, null, dicomSeries));
@@ -283,9 +289,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         // for Dicom Video and other special Dicom
         String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
         if (study != null && uid != null) {
-            Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
-            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                MediaSeriesGroup group = it.next();
+            for (MediaSeriesGroup group : dicomModel.getChildren(study)) {
                 if (dicomSeries != group && group instanceof Series) {
                     Series s = (Series) group;
                     if (uid.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID))
@@ -316,7 +320,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             return false;
         }
         ExecutorService imageDownloader =
-            ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader");
+            ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader"); //$NON-NLS-1$
         ArrayList<Callable<Boolean>> tasks = new ArrayList<>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
         GuiExecutor.instance().execute(() -> progressBar.setValue(0));
@@ -769,6 +773,9 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 status = Status.COMPLETE;
                 if (tempFile != null) {
                     if (dicomSeries != null && dicomReader.isReadableDicom()) {
+                        if (cache) {
+                            dicomReader.getFileCache().setOriginalTempFile(tempFile);
+                        }
                         final DicomMediaIO reader = dicomReader;
                         // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
                         // before reaching done() of SwingWorker
@@ -835,7 +842,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             } catch (InterruptedIOException e) {
                 return e.bytesTransferred;
             } catch (Exception e) {
-                LOGGER.error("Error when writing DICOM temp file", e);
+                LOGGER.error("Error when writing DICOM temp file", e); //$NON-NLS-1$
                 return 0;
             } finally {
                 SafeClose.close(dos);
@@ -855,6 +862,18 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             MediaElement[] medias = reader.getMediaElement();
             if (medias != null) {
                 firstImageToDisplay = dicomSeries.size(null) == 0;
+                if (firstImageToDisplay) {
+                    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+                    if (patient != null) {
+                        String dicomPtUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
+                        if (!patient.getTagValue(TagW.PatientPseudoUID).equals(dicomPtUID)) {
+                            // Fix when patientUID in xml have different patient name
+                            dicomModel.replacePatientUID((String) patient.getTagValue(TagW.PatientPseudoUID),
+                                dicomPtUID);
+                        }
+                    }
+                }
+
                 for (MediaElement media : medias) {
                     dicomModel.applySplittingRules(dicomSeries, media);
                 }

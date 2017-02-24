@@ -8,14 +8,14 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class FourPointsAngleToolGraphicTest extends GraphicTester<FourPointsAngleToolGraphic> {
-    private static final String XML_0 = "/graphic/fourPointsAngle/fourPointsAngle.graphic.0.xml";
-    private static final String XML_1 = "/graphic/fourPointsAngle/fourPointsAngle.graphic.1.xml";
+    private static final String XML_0 = "/graphic/fourPointsAngle/fourPointsAngle.graphic.0.xml"; //$NON-NLS-1$
+    private static final String XML_1 = "/graphic/fourPointsAngle/fourPointsAngle.graphic.1.xml"; //$NON-NLS-1$
     
     public static final String BASIC_TPL = 
-        "<fourPointsAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"
-      +     "<paint rgb=\"%s\"/>"
-      +     "<pts/>"
-      + "</fourPointsAngle>";
+        "<fourPointsAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
+      +     "<paint rgb=\"%s\"/>" //$NON-NLS-1$
+      +     "<pts/>" //$NON-NLS-1$
+      + "</fourPointsAngle>"; //$NON-NLS-1$
     
     public static final FourPointsAngleToolGraphic COMPLETE_OBJECT =  new FourPointsAngleToolGraphic();
     static {

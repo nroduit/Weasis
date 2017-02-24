@@ -580,7 +580,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         if (val == null || type.isAssignableFrom(val.getClass())) {
             return Optional.ofNullable((T) val);
         }
-        LOGGER.error("The request class [{}] doesn't match to the object [{}]", type, val.getClass());
+        LOGGER.error("The request class [{}] doesn't match to the object [{}]", type, val.getClass()); //$NON-NLS-1$
         return Optional.empty();
     }
 

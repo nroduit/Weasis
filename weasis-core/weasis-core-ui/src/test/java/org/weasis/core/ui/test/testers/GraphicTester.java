@@ -78,7 +78,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
         try {
             return getGraphicClass().newInstance();
         } catch (InstantiationException | IllegalAccessException e) {
-            Assert.fail("Cannot create instance");
+            Assert.fail("Cannot create instance"); //$NON-NLS-1$
         }
         return null;
     }

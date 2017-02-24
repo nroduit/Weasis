@@ -79,40 +79,40 @@ public class TagW implements Serializable {
         }
     }
 
-    public static final TagW UnknownTag = new TagW(0, "UnknownTag", "Unknown Tag", TagType.STRING);
+    public static final TagW UnknownTag = new TagW(0, "UnknownTag", "Unknown Tag", TagType.STRING); //$NON-NLS-1$ //$NON-NLS-2$
 
-    public static final TagW Group = new TagW("Group", Messages.getString("TagW.group"), TagType.STRING); //$NON-NLS-1$
+    public static final TagW Group = new TagW("Group", Messages.getString("TagW.group"), TagType.STRING); //$NON-NLS-1$ //$NON-NLS-2$
     // Pseudo unique identifier: as PatientID is not a unique identifier for the patient outside an institution,
     // PatientPseudoUID tend to be unique (PatientID, PatientName and PatientBirthDate can be used simultaneously to
     // enforce the unique behavior)
     public static final TagW PatientPseudoUID = new TagW("PatientPseudoUID", //$NON-NLS-1$
-        Messages.getString("TagElement.pat_uid"), TagType.STRING);
+        Messages.getString("TagElement.pat_uid"), TagType.STRING); //$NON-NLS-1$
     public static final TagW SeriesLoading =
-        new TagW("SeriesLoading", Messages.getString("TagElement.laod"), TagType.INTEGER); //$NON-NLS-1$
+        new TagW("SeriesLoading", Messages.getString("TagElement.laod"), TagType.INTEGER); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW Thumbnail =
-        new TagW("Thumbnail", Messages.getString("TagElement.thumb"), TagType.THUMBNAIL); //$NON-NLS-1$
+        new TagW("Thumbnail", Messages.getString("TagElement.thumb"), TagType.THUMBNAIL); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW ThumbnailPath = new TagW("ThumbnailPath", TagType.STRING); //$NON-NLS-1$
     public static final TagW ExplorerModel =
-        new TagW("ExplorerModel", Messages.getString("TagElement.exp_model"), TagType.OBJECT); //$NON-NLS-1$
+        new TagW("ExplorerModel", Messages.getString("TagElement.exp_model"), TagType.OBJECT); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW PresentationModel = new TagW("PesentationModel", TagType.OBJECT); //$NON-NLS-1$
     public static final TagW PresentationModelBirary = new TagW("PesentationModelBinary", TagType.BYTE); //$NON-NLS-1$
     public static final TagW SplitSeriesNumber =
-        new TagW("SplitSeriesNumber", Messages.getString("TagElement.split_no"), TagType.INTEGER); //$NON-NLS-1$
+        new TagW("SplitSeriesNumber", Messages.getString("TagElement.split_no"), TagType.INTEGER); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW SeriesSelected =
-        new TagW("SeriesSelected", Messages.getString("TagElement.select"), TagType.BOOLEAN); //$NON-NLS-1$
+        new TagW("SeriesSelected", Messages.getString("TagElement.select"), TagType.BOOLEAN); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW SeriesOpen =
-        new TagW("SeriesOpen", Messages.getString("TagElement.open"), TagType.BOOLEAN); //$NON-NLS-1$
+        new TagW("SeriesOpen", Messages.getString("TagElement.open"), TagType.BOOLEAN); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW SeriesFocused = new TagW("SeriesFocused", TagType.BOOLEAN); //$NON-NLS-1$
     public static final TagW ImageWidth =
-        new TagW("ImageWidth", Messages.getString("TagElement.img_w"), TagType.INTEGER); //$NON-NLS-1$
+        new TagW("ImageWidth", Messages.getString("TagElement.img_w"), TagType.INTEGER); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW ImageHeight =
-        new TagW("ImageHeight", Messages.getString("TagElement.img_h"), TagType.INTEGER); //$NON-NLS-1$
+        new TagW("ImageHeight", Messages.getString("TagElement.img_h"), TagType.INTEGER); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW ImageDepth =
-        new TagW("ImageDepth", Messages.getString("TagElement.img_d"), TagType.INTEGER); //$NON-NLS-1$
+        new TagW("ImageDepth", Messages.getString("TagElement.img_d"), TagType.INTEGER); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW ImageOrientationPlane =
-        new TagW("ImageOrientationPlane", Messages.getString("TagElement.img_or"), TagType.STRING); //$NON-NLS-1$
+        new TagW("ImageOrientationPlane", Messages.getString("TagElement.img_or"), TagType.STRING); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW ImageBitsPerPixel =
-        new TagW("ImageBitsPerPixel", Messages.getString("TagElement.img_bpp"), TagType.INTEGER); //$NON-NLS-1$
+        new TagW("ImageBitsPerPixel", Messages.getString("TagElement.img_bpp"), TagType.INTEGER); //$NON-NLS-1$ //$NON-NLS-2$
     public static final TagW ImageCache = new TagW("ImageCache", TagType.BOOLEAN); //$NON-NLS-1$
     public static final TagW ShutterFinalShape = new TagW("ShutterFinalShape", TagType.OBJECT); //$NON-NLS-1$
     public static final TagW ShutterRGBColor = new TagW("ShutterRGBColor", TagType.COLOR); //$NON-NLS-1$
@@ -120,6 +120,7 @@ public class TagW implements Serializable {
     public static final TagW OverlayBitMask = new TagW("OverlayBitMask", TagType.INTEGER); //$NON-NLS-1$
     public static final TagW OverlayBurninDataPath = new TagW("OverlayBurninDataPath", TagType.STRING); //$NON-NLS-1$
     public static final TagW HasOverlay = new TagW("HasOverlay", TagType.BOOLEAN); //$NON-NLS-1$
+    public static final TagW ObjectToSave = new TagW("ObjectToSave", TagType.BOOLEAN); //$NON-NLS-1$
 
     public static final TagW WadoCompressionRate = new TagW("WadoCompressionRate", TagType.INTEGER); //$NON-NLS-1$
     public static final TagW WadoTransferSyntaxUID = new TagW("WadoTransferSyntaxUID", TagType.STRING); //$NON-NLS-1$
@@ -137,7 +138,8 @@ public class TagW implements Serializable {
     public static final TagW FilePath = new TagW("FilePath", TagType.STRING); //$NON-NLS-1$
     public static final TagW FileName = new TagW("FileName", TagType.STRING); //$NON-NLS-1$
     public static final TagW CurrentFolder =
-        new TagW("CurrentFolder", Messages.getString("TagElement.cur_dir"), TagType.STRING); //$NON-NLS-2$
+        new TagW("CurrentFolder", Messages.getString("TagElement.cur_dir"), TagType.STRING);  //$NON-NLS-1$//$NON-NLS-2$
+    public static final TagW Checked = new TagW("Checked", TagType.BOOLEAN); //$NON-NLS-1$
 
     /**
      * DICOM common tags
@@ -212,7 +214,7 @@ public class TagW implements Serializable {
         this.vmMin = vmMin < 1 ? 1 : vmMin;
 
         if (!isTypeCompliant(defaultValue)) {
-            throw new IllegalArgumentException("defaultValue is not compliant to the tag type");
+            throw new IllegalArgumentException("defaultValue is not compliant to the tag type"); //$NON-NLS-1$
         }
     }
 
@@ -408,19 +410,19 @@ public class TagW implements Serializable {
         if (value instanceof String) {
             str = (String) value;
         } else if (value instanceof String[]) {
-            str = Arrays.asList((String[]) value).stream().collect(Collectors.joining("\\"));
+            str = Arrays.asList((String[]) value).stream().collect(Collectors.joining("\\")); //$NON-NLS-1$
         } else if (value instanceof TemporalAccessor) {
             str = TagUtil.formatDateTime((TemporalAccessor) value);
         } else if (value instanceof TemporalAccessor[]) {
-            str = Stream.of((TemporalAccessor[]) value).map(TagUtil::formatDateTime).collect(Collectors.joining(", "));
+            str = Stream.of((TemporalAccessor[]) value).map(TagUtil::formatDateTime).collect(Collectors.joining(", ")); //$NON-NLS-1$
         } else if (value instanceof float[]) {
             float[] array = (float[]) value;
             str = IntStream.range(0, array.length).mapToObj(i -> String.valueOf(array[i]))
-                .collect(Collectors.joining(", "));
+                .collect(Collectors.joining(", ")); //$NON-NLS-1$
         } else if (value instanceof double[]) {
-            str = DoubleStream.of((double[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", "));
+            str = DoubleStream.of((double[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", ")); //$NON-NLS-1$
         } else if (value instanceof int[]) {
-            str = IntStream.of((int[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", "));
+            str = IntStream.of((int[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", ")); //$NON-NLS-1$
         } else {
             str = value.toString();
         }
@@ -449,7 +451,7 @@ public class TagW implements Serializable {
                         try {
                             str = new DecimalFormat(pattern).format(Double.parseDouble(str));
                         } catch (NumberFormatException e) {
-                            LOGGER.warn("Cannot apply pattern to decimal value", e);
+                            LOGGER.warn("Cannot apply pattern to decimal value", e); //$NON-NLS-1$
                         }
                     }
                 } else if (format.charAt(index + fmLength) == 'l') {
@@ -464,7 +466,7 @@ public class TagW implements Serializable {
                                 str = str.substring(0, limit) + "..."; //$NON-NLS-1$
                             }
                         } catch (NumberFormatException e) {
-                            LOGGER.warn("Cannot apply pattern to decimal value", e);
+                            LOGGER.warn("Cannot apply pattern to decimal value", e); //$NON-NLS-1$
                         }
                     }
                 }
@@ -501,7 +503,7 @@ public class TagW implements Serializable {
             try {
                 return type.cast(tagable.getTagValue(tag));
             } catch (ClassCastException e) {
-                LOGGER.error("Cannot cast the value of \"{}\" into {}", tag.getKeyword(), type, e);
+                LOGGER.error("Cannot cast the value of \"{}\" into {}", tag.getKeyword(), type, e); //$NON-NLS-1$
             }
         }
         return null;

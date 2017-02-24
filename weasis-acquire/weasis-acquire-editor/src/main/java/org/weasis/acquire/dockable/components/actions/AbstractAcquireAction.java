@@ -18,6 +18,7 @@ import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.AcquireObject;
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.AcquireActionButton;
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
@@ -60,7 +61,7 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
                 reset();
                 break;
             default:
-                LOGGER.warn("Unkown command : " + e.getActionCommand());
+                LOGGER.warn("Unkown command : " + e.getActionCommand()); //$NON-NLS-1$
                 break;
         }
     }
@@ -93,8 +94,8 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
         boolean dirty = imageInfo.isDirtyFromDefault();
 
         if (dirty) {
-            int confirm = JOptionPane.showConfirmDialog((Component) centralPanel, "Are you sure you want to reset ?",
-                "RESET", JOptionPane.YES_NO_OPTION);
+            int confirm = JOptionPane.showConfirmDialog((Component) centralPanel, Messages.getString("AbstractAcquireAction.reset_msg"), //$NON-NLS-1$
+                "" , JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
             if (confirm == 0) {
                 centralPanel.initValues(imageInfo, imageInfo.getDefaultValues());
             }

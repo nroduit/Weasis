@@ -316,7 +316,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 if (rates != null && rates.length > 0) {
                     for (int i = 0; i < rates.length; i++) {
                         if (i > 0) {
-                            buf.append(",");
+                            buf.append(","); //$NON-NLS-1$
                         }
                         buf.append(" ["); //$NON-NLS-1$
                         buf.append((int) rates[i]);
@@ -341,7 +341,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
 
             if (koElement != null) {
                 float y = midy;
-                String message = "Not a valid image: " + koElement.getDocumentTitle();
+                String message = "Not a valid image: " + koElement.getDocumentTitle(); //$NON-NLS-1$
                 DefaultGraphicLabel.paintColorFontOutline(g2, message,
                     midx - g2.getFontMetrics().stringWidth(message) / 2, y, Color.RED);
             }

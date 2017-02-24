@@ -29,10 +29,8 @@ import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -116,6 +114,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public static final String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat"); //$NON-NLS-1$
     public static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st"); //$NON-NLS-1$
     public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
+    public static final Icon KO_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png")); // $NON-NLS-0$ //$NON-NLS-1$
 
     private JPanel panel = null;
     private PatientPane selectedPatient = null;
@@ -161,8 +160,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     private final JButton btnExport;
     private final JButton btnImport;
-    private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), new ImageIcon( //$NON-NLS-1$
-        DicomExplorer.class.getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
+    private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), KO_ICON); //$NON-NLS-1$
 
     public DicomExplorer() {
         this(null);
@@ -950,12 +948,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         if (patient != null) {
             synchronized (model) {
-                Collection<MediaSeriesGroup> studies = model.getChildren(patient);
-                for (Iterator<MediaSeriesGroup> iterator = studies.iterator(); iterator.hasNext();) {
-                    MediaSeriesGroup study = iterator.next();
-                    Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
-                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                        MediaSeriesGroup seq = it.next();
+                for (MediaSeriesGroup study : model.getChildren(patient)) {
+                    for (MediaSeriesGroup seq : model.getChildren(study)) {
                         if (seq instanceof Series && Boolean.TRUE.equals(seq.getTagValue(TagW.SeriesOpen))) {
                             openSeriesSet.add((Series) seq);
                         }
@@ -969,12 +963,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public boolean isPatientHasOpenSeries(MediaSeriesGroup patient) {
 
         synchronized (model) {
-            Collection<MediaSeriesGroup> studies = model.getChildren(patient);
-            for (Iterator<MediaSeriesGroup> iterator = studies.iterator(); iterator.hasNext();) {
-                MediaSeriesGroup study = iterator.next();
-                Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
-                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup seq = it.next();
+            for (MediaSeriesGroup study : model.getChildren(patient)) {
+                for (MediaSeriesGroup seq : model.getChildren(study)) {
                     if (seq instanceof Series) {
                         Boolean open = (Boolean) ((Series) seq).getTagValue(TagW.SeriesOpen);
                         return open == null ? false : open;
@@ -1026,9 +1016,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
         String uid = TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class);
         if (uid != null) {
-            Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
-            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                MediaSeriesGroup group = it.next();
+            for (MediaSeriesGroup group : model.getChildren(study)) {
                 if (group instanceof Series) {
                     Series s = (Series) group;
                     if (uid.equals(TagD.getTagValue(s, Tag.SeriesInstanceUID))) {
@@ -1306,9 +1294,32 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                         if (splitNb != null) {
                             updateSplitSeries(series);
-                        } else if ("KO".equals(TagD.getTagValue(series, Tag.Modality, String.class))) {
-                            MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
-                            koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
+                        }
+                    } else if (newVal instanceof MediaSeriesGroup && event.getOldValue() instanceof String) {
+                        MediaSeriesGroup patient = (MediaSeriesGroup) newVal;
+                        if (TagW.PatientPseudoUID.equals(patient.getTagID())) {
+                            // Fix hash of key when patientUID has changed
+                            MediaSeriesGroupNode oldPt = new MediaSeriesGroupNode(patient.getTagID(), event.getOldValue(), null) {
+
+                                @Override
+                                public boolean equals(Object obj) {
+                                    if (this == obj)
+                                        return true;
+                                    if (obj == null)
+                                        return false;
+                                    if (!(obj instanceof MediaSeriesGroup))
+                                        return false;
+                                    // According to the implementation of MediaSeriesGroupNode, the identifier cannot be null
+                                    return Objects.equals(patient.getTagValue(getTagID()), ((MediaSeriesGroup) obj).getTagValue(getTagID()));
+                                }
+                            };
+                            patient2study.put(patient, patient2study.remove(oldPt));
+                        }
+                    } else if (newVal instanceof KOSpecialElement) {
+                        Object item = modelPatient.getSelectedItem();
+                        if (item instanceof MediaSeriesGroupNode) {
+                            koOpen.setVisible(
+                                DicomModel.hasSpecialElements((MediaSeriesGroup) item, KOSpecialElement.class));
                         }
                     }
                 } else if (ObservableEvent.BasicAction.LOADING_START.equals(action)) {
@@ -1412,7 +1423,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         try {
             result = future.get();
         } catch (InterruptedException | ExecutionException e) {
-            LOGGER.error("Building Series thumbnail", e);
+            LOGGER.error("Building Series thumbnail", e); //$NON-NLS-1$
         }
         return result;
     }
@@ -1433,8 +1444,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public List<Action> getOpenImportDialogAction() {
         ArrayList<Action> actions = new ArrayList<>(2);
         actions.add(btnImport.getAction());
-        DefaultAction importCDAction =
-            new DefaultAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), event ->  openImportDialogAction("DICOM CD")); //$NON-NLS-1$ //$NON-NLS-2$
+        DefaultAction importCDAction = new DefaultAction(Messages.getString("DicomExplorer.dcmCD"), //$NON-NLS-1$
+            new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), //$NON-NLS-1$
+            event -> openImportDialogAction(Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
         actions.add(importCDAction);
         return actions;
     }

@@ -8,14 +8,14 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class PolygonGraphicTest extends GraphicTester<PolygonGraphic> {
-    private static final String XML_0 = "/graphic/polygon/polygon.graphic.0.xml";
-    private static final String XML_1 = "/graphic/polygon/polygon.graphic.1.xml";
+    private static final String XML_0 = "/graphic/polygon/polygon.graphic.0.xml"; //$NON-NLS-1$
+    private static final String XML_1 = "/graphic/polygon/polygon.graphic.1.xml"; //$NON-NLS-1$
     
     public static final String BASIC_TPL =
-         "<polygon fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"
-       +     "<paint rgb=\"%s\"/>"
-       +     "<pts/>"
-       + "</polygon>";
+         "<polygon fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
+       +     "<paint rgb=\"%s\"/>" //$NON-NLS-1$
+       +     "<pts/>" //$NON-NLS-1$
+       + "</polygon>"; //$NON-NLS-1$
     
     public static final PolygonGraphic COMPLETE_OBJECT =  new PolygonGraphic();
     static {

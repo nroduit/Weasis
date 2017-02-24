@@ -21,13 +21,22 @@ import org.weasis.dicom.codec.TagD;
 public class AcquireGlobalMeta extends AcquireMetadataTableModel {
     private static final long serialVersionUID = 8912202268139591519L;
 
+    private static final AcquireGlobalMeta instance = new AcquireGlobalMeta();
+
     private static final TagW[] TAGS_TO_DISPLAY = TagD.getTagFromIDs(Tag.PatientID, Tag.PatientName,
-        Tag.PatientBirthDate, Tag.PatientSex, Tag.AccessionNumber, Tag.StudyDescription);
+        Tag.PatientBirthDate, Tag.PatientSex, Tag.AccessionNumber, Tag.StudyID, Tag.StudyDescription);
 
     private static final TagW[] TAGS_EDITABLE = TagD.getTagFromIDs(Tag.StudyDescription);
 
-    public AcquireGlobalMeta() {
+    private static final TagW[] TAGS_TO_PUBLISH = TagD.getTagFromIDs(Tag.PatientID, Tag.PatientName,
+        Tag.PatientBirthDate, Tag.PatientSex, Tag.AccessionNumber, Tag.StudyID, Tag.StudyDescription);
+
+    private AcquireGlobalMeta() {
         super(AcquireManager.GLOBAL);
+    }
+
+    public static AcquireGlobalMeta getInstance() {
+        return instance;
     }
 
     @Override
@@ -37,6 +46,11 @@ public class AcquireGlobalMeta extends AcquireMetadataTableModel {
 
     @Override
     protected Optional<TagW[]> tagsEditable() {
-        return Optional.of(TAGS_EDITABLE);
+        return AcquireManager.GLOBAL.isAllowFullEdition() ? Optional.of(TAGS_TO_DISPLAY) : Optional.of(TAGS_EDITABLE);
+    }
+
+    @Override
+    protected Optional<TagW[]> tagsToPublish() {
+        return Optional.of(TAGS_TO_PUBLISH);
     }
 }

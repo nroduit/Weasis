@@ -38,11 +38,11 @@ public class XmlSerializer {
                 int length = model.getModels().size();
                 model.getModels().removeIf(g -> g.getLayer() == null);
                 if (length > model.getModels().size()) {
-                    LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length);
+                    LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length); //$NON-NLS-1$
                 }
                 return model;
             } catch (Exception e) {
-                LOGGER.error("Cannot load xml: ", e);
+                LOGGER.error("Cannot load xml: ", e); //$NON-NLS-1$
             }
         }
         return null;
@@ -63,7 +63,7 @@ public class XmlSerializer {
                 // jaxbMarshaller.marshal(model, System.out);
                 jaxbMarshaller.marshal(model, gpxFile);
             } catch (Exception e) {
-                LOGGER.error("Cannot save xml: ", e);
+                LOGGER.error("Cannot save xml: ", e); //$NON-NLS-1$
             }
         }
     }
@@ -85,7 +85,7 @@ public class XmlSerializer {
             jaxbMarshaller.marshal(model, sw);
             return sw.toString();
         } catch (Exception e) {
-            LOGGER.error("Cannot serialize xml: ", e);
+            LOGGER.error("Cannot serialize xml: ", e); //$NON-NLS-1$
         }
         return null;
     }

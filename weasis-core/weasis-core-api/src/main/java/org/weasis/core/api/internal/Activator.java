@@ -25,7 +25,6 @@ import org.apache.felix.prefs.BackingStore;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
@@ -93,7 +92,7 @@ public class Activator implements BundleActivator, ServiceListener {
         scheduler.setPrefetchParallelism(nbThread - 1);
 
         // Trick for avoiding 403 error when downloading from some web sites
-        System.setProperty("http.agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1");
+        System.setProperty("http.agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1"); //$NON-NLS-1$ //$NON-NLS-2$
         // Allows to connect through a proxy initialized by Java Webstart
         ProxyDetector.setProxyFromJavaWebStart();
 
@@ -108,8 +107,14 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public synchronized void serviceChanged(ServiceEvent event) {
         ServiceReference<?> sRef = event.getServiceReference();
-        BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-        Codec codec = (Codec) context.getService(sRef);
+        BundleContext context = sRef.getBundle().getBundleContext();
+        Codec codec = null;
+        try {
+            codec = (Codec) context.getService(sRef);
+        } catch (RuntimeException e) {
+            // TODO find why sometimes service cannot be returned
+            LOGGER.info("Cannot get service of {}", sRef.getBundle()); //$NON-NLS-1$
+        }
         if (codec == null) {
             return;
         }
@@ -143,7 +148,7 @@ public class Activator implements BundleActivator, ServiceListener {
             AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", //$NON-NLS-1$
                 AppProperties.WEASIS_PATH + File.separator + "log" + File.separator + "audit-" //$NON-NLS-1$ //$NON-NLS-2$
                     + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$
-                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null, "0"); //$NON-NLS-1$
+                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null, "0"); //$NON-NLS-1$ //$NON-NLS-2$
             AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {
             ServiceReference<ConfigurationAdmin> configurationAdminReference =

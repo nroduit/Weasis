@@ -59,6 +59,7 @@ import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
@@ -85,21 +86,25 @@ public class PRManager {
         Map<String, Object> actionsInView = view.getActionsInView();
         reader.applySpatialTransformationModule(actionsInView);
         List<PresetWindowLevel> presets = reader.getPresetCollection(img);
-        if (presets != null && !presets.isEmpty()) {
-            ImageOpNode node = view.getDisplayOpManager().getNode(WindowOp.OP_NAME);
-            if (node != null) {
-                List<PresetWindowLevel> presetList =
-                    img.getPresetList(JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
-                presets.addAll(presetList);
+        ImageOpNode node = view.getDisplayOpManager().getNode(WindowOp.OP_NAME);
+        if (node != null) {
+            List<PresetWindowLevel> presetList =
+                img.getPresetList(JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
+            PresetWindowLevel auto = presets.remove(presets.size() - 1);
+            if (!presetList.get(presetList.size() - 1).equals(auto)) {
+                // It happens when PR contains a new Modality LUT
+                String name = Messages.getString("PresetWindowLevel.full"); //$NON-NLS-1$
+                presets.add(new PresetWindowLevel(name + " [PR]", auto.getWindow(), auto.getLevel(), auto.getShape())); //$NON-NLS-1$
             }
-            PresetWindowLevel p = presets.get(0);
-            actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
-            actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
-            actionsInView.put(PRManager.PR_PRESETS, presets);
-            actionsInView.put(ActionW.PRESET.cmd(), p);
-            actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());
-            actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
+            presets.addAll(presetList);
         }
+        PresetWindowLevel p = presets.get(0);
+        actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
+        actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
+        actionsInView.put(PRManager.PR_PRESETS, presets);
+        actionsInView.put(ActionW.PRESET.cmd(), p);
+        actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());
+        actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
 
         applyPixelSpacing(view, reader, img);
 
@@ -119,12 +124,12 @@ public class PRManager {
         reader.readDisplayArea(img);
 
         String presentationMode = TagD.getTagValue(reader, Tag.PresentationSizeMode, String.class);
-        boolean trueSize = "TRUE SIZE".equalsIgnoreCase(presentationMode);
+        boolean trueSize = "TRUE SIZE".equalsIgnoreCase(presentationMode); //$NON-NLS-1$
 
         double[] prPixSize = TagD.getTagValue(reader, Tag.PresentationPixelSpacing, double[].class);
         if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
             if (trueSize) {
-                img.setPixelSize(prPixSize[0], prPixSize[1]);
+                img.setPixelSize(prPixSize[1], prPixSize[0]);
                 img.setPixelSpacingUnit(Unit.MILLIMETER);
                 actionsInView.put(PRManager.TAG_CHANGE_PIX_CONFIG, true);
                 ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
@@ -163,12 +168,14 @@ public class PRManager {
                 area = area.intersection(
                     new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight()));
                 if (area.width > 1 && area.height > 1 && !area.equals(view.getViewModel().getModelArea())) {
-                    SimpleOpManager manager = new SimpleOpManager();
+                    SimpleOpManager opManager =
+                        Optional.ofNullable((SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()))
+                            .orElseGet(SimpleOpManager::new);
                     CropOp crop = new CropOp();
                     crop.setParam(CropOp.P_AREA, area);
                     crop.setParam(CropOp.P_SHIFT_TO_ORIGIN, true);
-                    manager.addImageOperationAction(crop);
-                    actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
+                    opManager.addImageOperationAction(crop);
+                    actionsInView.put(ActionW.PREPROCESSING.cmd(), opManager);
                 }
             }
             actionsInView.put(ActionW.CROP.cmd(), area);
@@ -207,7 +214,7 @@ public class PRManager {
         ArrayList<GraphicLayer> layers = new ArrayList<>();
         int k = 0;
         for (GraphicLayer layer : graphicModel.getLayers()) {
-            layer.setName(Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName) + " [DICOM]");
+            layer.setName(Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName) + " [DICOM]"); //$NON-NLS-1$
             layer.setLocked(true);
             layer.setSerializable(false);
             layer.setLevel(270 + k++);
@@ -264,16 +271,14 @@ public class PRManager {
                 layers = new ArrayList<>();
 
                 for (Attributes gram : gams) {
-                    // TODO filter sop
-                    Sequence refImgs = gram.getSequence(Tag.ReferencedImageSequence);
                     String graphicLayerName = gram.getString(Tag.GraphicLayer);
                     Attributes glm = glms.get(graphicLayerName);
-                    if (glm == null) {
+                    if (glm == null || !PresentationStateReader.isModuleAppicable(gram, img)) {
                         continue;
                     }
 
                     GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
-                    layer.setName(graphicLayerName + " [DICOM]");
+                    layer.setName(graphicLayerName + " [DICOM]"); //$NON-NLS-1$
                     layer.setSerializable(false);
                     layer.setLocked(true);
                     layer.setSelectable(false);

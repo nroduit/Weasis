@@ -23,25 +23,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultTreeCheckingModel;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
 public class PublishTreeModel {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PublishTreeModel.class);
-
     private final DefaultTreeModel model;
     private final TreeCheckingModel checkingModel;
     private final List<TreePath> defaultSelectedPaths;
 
-    private final List<Serie> series;
-    private final Map<Serie, List<AcquireImageInfo>> dictionary;
+    private final List<SeriesGroup> seriesGroups;
+    private final Map<SeriesGroup, List<AcquireImageInfo>> dictionary;
 
     DefaultMutableTreeNode rootNode, serieNode;
 
     public PublishTreeModel() {
-        this.series = AcquireManager.getBySeries();
+        this.seriesGroups = AcquireManager.getBySeries();
         this.dictionary = AcquireManager.groupBySeries();
         this.model = buildModel();
         this.rootNode = (DefaultMutableTreeNode) model.getRoot();
@@ -52,7 +50,7 @@ public class PublishTreeModel {
 
     private DefaultTreeModel buildModel() {
         rootNode = new DefaultMutableTreeNode(AcquireManager.GLOBAL);
-        series.stream().forEach(s -> {
+        seriesGroups.stream().forEach(s -> {
             serieNode = new DefaultMutableTreeNode(s);
             rootNode.add(serieNode);
             dictionary.get(s).forEach(image -> serieNode.add(new DefaultMutableTreeNode(image)));

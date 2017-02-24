@@ -70,6 +70,7 @@ import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
+import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
@@ -258,6 +259,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         });
     }
 
+    static final DicomImageReaderSpi dicomImageReaderSpi = new DicomImageReaderSpi();
+    
     private static final SoftHashMap<DicomMediaIO, DicomMetaData> HEADER_CACHE =
         new SoftHashMap<DicomMediaIO, DicomMetaData>() {
 
@@ -312,7 +315,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     private final FileCache fileCache;
 
     public DicomMediaIO(URI uri) {
-        super(DicomCodec.DicomImageReaderSpi);
+        super(dicomImageReaderSpi);
         this.uri = Objects.requireNonNull(uri);
         this.numberOfFrame = 0;
         this.tags = new HashMap<>();
@@ -329,7 +332,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     public DicomMediaIO(Attributes dcmItems) throws URISyntaxException {
-        this(new URI("data:" + Objects.requireNonNull(dcmItems).getString(Tag.SOPInstanceUID)));
+        this(new URI("data:" + Objects.requireNonNull(dcmItems).getString(Tag.SOPInstanceUID))); //$NON-NLS-1$
         this.dcmMetadata = new DicomMetaData(null, Objects.requireNonNull(dcmItems));
     }
 
@@ -346,7 +349,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
      * @return true when the DICOM Object has no source file (only in memory)
      */
     public boolean isEditableDicom() {
-        return dcmMetadata != null && "data".equals(uri.getScheme());
+        return dcmMetadata != null && "data".equals(uri.getScheme()); //$NON-NLS-1$
     }
 
     public boolean isReadableDicom() {
@@ -354,7 +357,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             // Return true only to display the error message in the view
             return true;
         }
-        if ("data".equals(uri.getScheme()) && dcmMetadata == null) {
+        if ("data".equals(uri.getScheme()) && dcmMetadata == null) { //$NON-NLS-1$
             return false;
         }
 
@@ -428,13 +431,15 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             smodel = pmi.createSampleModel(dataType, width, height,
                 TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), banded);
         }
+
+        ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next(); //$NON-NLS-1$
+        if (reader == null) {
+            throw new IllegalStateException("Cannot get RAW image reader"); //$NON-NLS-1$
+        }
         RawImageInputStream riis =
             new RawImageInputStream(iis, new ImageTypeSpecifier(cmodel, smodel), frameOffsets, imageDimensions);
-
         // endianess is already in iis?
         // riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-
-        ImageReader reader = new RawImageReader(DicomCodec.RawImageReaderSpi);
         reader.setInput(riis);
         return reader;
     }
@@ -910,7 +915,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         if (desc[1] == null) {
             String ts = tsuid;
             if (ts == null) {
-                ts = "unknown";
+                ts = "unknown"; //$NON-NLS-1$
             }
             desc[1] = Messages.getString("DicomMediaIO.msg_no_reader") + StringUtil.COLON_AND_SPACE + ts; //$NON-NLS-1$
         }
@@ -986,8 +991,13 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     private ImageInputStreamImpl iisOfFrame(int frameIndex) throws IOException {
         // Extract compressed file
-        // FileUtil.writeFile(new SegmentedInputImageStream(iis, pixeldataFragments, frameIndex), new FileOutputStream(
-        // new File(AppProperties.FILE_CACHE_DIR, new File(uri).getName() + frameIndex + ".jpg")));
+        // if (!fileCache.isElementInMemory()) {
+        // String extension = "." + Optional.ofNullable(decompressor).map(d ->
+        // d.getOriginatingProvider().getFileSuffixes()[0]).orElse("raw");
+        // FileUtil.writeFile(buildSegmentedImageInputStream(frameIndex),
+        // new FileOutputStream(new File(AppProperties.FILE_CACHE_DIR,
+        // fileCache.getFinalFile().getName() + "-" + frameIndex + extension)));
+        // }
         org.dcm4che3.imageio.stream.SegmentedInputImageStream siis = buildSegmentedImageInputStream(frameIndex);
         return patchJpegLS != null ? new PatchJPEGLSImageInputStream(siis, patchJpegLS) : siis;
     }
@@ -1017,7 +1027,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 // Multi-frames where each frames can have multiple fragments.
                 if (fragmentsPositions.isEmpty()) {
                     if (decompressor == null) {
-                        throw new IOException("no decompressor!");
+                        throw new IOException("no decompressor!"); //$NON-NLS-1$
                     }
 
                     for (int i = 1; i < nbFragments; i++) {
@@ -1043,7 +1053,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                         length[i] = bulkData.length();
                     }
                 } else {
-                    throw new IOException("Cannot match all the fragments to all the frames!");
+                    throw new IOException("Cannot match all the fragments to all the frames!"); //$NON-NLS-1$
                 }
             }
         }
@@ -1154,39 +1164,16 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             RenderedImage bi;
             if (decompressor != null) {
                 decompressor.setInput(iisOfFrame(frameIndex));
-                bi = decompressor.readAsRenderedImage(0, decompressParam(param));
+                if (isRLELossless() && (pmi.isSubSambled() || pmi.name().startsWith("YBR"))) { //$NON-NLS-1$
+                    bi = convertSubSambledAndYBR(frameIndex, param);
+                } else {
+                    bi = decompressor.readAsRenderedImage(0, decompressParam(param));
+                }
             } else {
                 // Rewrite image with subsampled model (otherwise cannot not be displayed as RenderedImage)
                 // Convert YBR_FULL into RBG as the ybr model is not well supported.
                 if (pmi.isSubSambled() || pmi.name().startsWith("YBR")) { //$NON-NLS-1$
-                    // TODO improve this
-                    WritableRaster raster = (WritableRaster) readRaster(frameIndex, param);
-                    ColorModel cm = createColorModel(bitsStored, dataType);
-                    ColorModel cmodel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB),
-                        new int[] { 8, 8, 8 }, false, // has alpha
-                        false, // alpha premultipled
-                        Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
-                    int width = raster.getWidth();
-                    int height = raster.getHeight();
-                    SampleModel sampleModel = cmodel.createCompatibleSampleModel(width, height);
-                    DataBuffer dataBuffer = sampleModel.createDataBuffer();
-                    WritableRaster rasterDst = Raster.createWritableRaster(sampleModel, dataBuffer, null);
-
-                    ColorSpace cs = cm.getColorSpace();
-                    for (int i = 0; i < height; i++) {
-                        for (int j = 0; j < width; j++) {
-                            byte[] ba = (byte[]) raster.getDataElements(j, i, null);
-                            float[] fba =
-                                new float[] { (ba[0] & 0xFF) / 255f, (ba[1] & 0xFF) / 255f, (ba[2] & 0xFF) / 255f };
-                            float[] rgb = cs.toRGB(fba);
-                            ba[0] = (byte) (rgb[0] * 255);
-                            ba[1] = (byte) (rgb[1] * 255);
-                            ba[2] = (byte) (rgb[2] * 255);
-                            rasterDst.setDataElements(j, i, ba);
-                        }
-                    }
-                    bi = new BufferedImage(cmodel, rasterDst, false, null);
-                    readingImage = true;
+                    bi = convertSubSambledAndYBR(frameIndex, param);
                 } else {
                     ImageReader reader = initRawImageReader();
                     bi = reader.readAsRenderedImage(frameIndex, param);
@@ -1199,6 +1186,39 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
              * readAsRenderedImage() do not read data immediately: RenderedImage delays the image reading
              */
         }
+    }
+
+    private BufferedImage convertSubSambledAndYBR(int frameIndex, ImageReadParam param) throws IOException {
+        // TODO improve this
+        WritableRaster raster = (WritableRaster) readRaster(frameIndex, param);
+        ColorModel cm = createColorModel(bitsStored, dataType);
+        ColorModel cmodel =
+            new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[] { 8, 8, 8 }, false, // has
+                                                                                                              // alpha
+                false, // alpha premultipled
+                Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+        int width = raster.getWidth();
+        int height = raster.getHeight();
+        SampleModel sampleModel = cmodel.createCompatibleSampleModel(width, height);
+        DataBuffer dataBuffer = sampleModel.createDataBuffer();
+        WritableRaster rasterDst = Raster.createWritableRaster(sampleModel, dataBuffer, null);
+
+        ColorSpace cs = cm.getColorSpace();
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                byte[] ba = (byte[]) raster.getDataElements(j, i, null);
+                float[] fba = new float[] { (ba[0] & 0xFF) / 255f, (ba[1] & 0xFF) / 255f, (ba[2] & 0xFF) / 255f };
+                float[] rgb = cs.toRGB(fba);
+                ba[0] = (byte) (rgb[0] * 255);
+                ba[1] = (byte) (rgb[1] * 255);
+                ba[2] = (byte) (rgb[2] * 255);
+                rasterDst.setDataElements(j, i, ba);
+            }
+        }
+        BufferedImage bi = new BufferedImage(cmodel, rasterDst, false, null);
+        readingImage = true;
+
+        return bi;
     }
 
     public RenderedImage validateSignedShortDataBuffer(RenderedImage source) {

@@ -24,7 +24,7 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.ImageToolkit;
 
 public class RotationOp extends AbstractOp {
-    
+
     public static final String OP_NAME = Messages.getString("RotationOperation.title"); //$NON-NLS-1$
 
     /**
@@ -52,9 +52,9 @@ public class RotationOp extends AbstractOp {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         Integer rotationAngle = Optional.ofNullable((Integer) params.get(P_ROTATE)).orElse(0);
-        rotationAngle = rotationAngle%360;
-        
-        if (rotationAngle != null && rotationAngle != 0) {
+        rotationAngle = rotationAngle % 360;
+
+        if (rotationAngle != 0) {
             // optimize rotation by right angles
             TransposeType rotOp = null;
             if (rotationAngle == 90) {
@@ -103,7 +103,6 @@ public class RotationOp extends AbstractOp {
                 // result = JAI.create("rotate", pb, hints);
             }
         }
-
         params.put(Param.OUTPUT_IMG, result);
     }
 

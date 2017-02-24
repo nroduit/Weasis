@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.Enumeration;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -135,6 +136,18 @@ public final class FileUtil {
             deleteFile(dir);
         }
     }
+    
+    public static void getAllFilesInDirectory(File directory, List<File> files) {
+        File[] fList = directory.listFiles();
+        for (File f : fList) {
+            if (f.isFile()) {
+                files.add(f);
+            } else if (f.isDirectory()) {
+                getAllFilesInDirectory(f, files);
+            }
+        }
+    }
+
 
     private static void deleteFile(File fileOrDirectory) {
         try {

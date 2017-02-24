@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.api.media.data;
 
+import java.awt.Point;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
@@ -216,7 +217,7 @@ public class ImageElement extends MediaElement {
         return pixelSizeCalibrationDescription;
     }
 
-    public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit) {
+    public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit, Point offset) {
         Unit unit = displayUnit;
         if (unit == null || pixelSpacingUnit == null || pixelSpacingUnit.equals(Unit.PIXEL)) {
             unit = Unit.PIXEL;
@@ -228,7 +229,9 @@ public class ImageElement extends MediaElement {
         } else {
             unitRatio = getPixelSize() * unit.getConversionRatio(pixelSpacingUnit.getConvFactor());
         }
-        return new MeasurementsAdapter(unitRatio, 0, 0, false, 0, unit.getAbbreviation());
+        int offsetx = offset == null ? 0 : -offset.x;
+        int offsety = offset == null ? 0 : -offset.y;
+        return new MeasurementsAdapter(unitRatio, offsetx, offsety, false, 0, unit.getAbbreviation());
     }
 
     public boolean isImageInCache() {
@@ -316,12 +319,8 @@ public class ImageElement extends MediaElement {
     }
 
     public synchronized PlanarImage getImage(OpManager manager, boolean findMinMax) {
-        PlanarImage cacheImage;
         try {
-            cacheImage = startImageLoading();
-            if (findMinMax) {
-                findMinMaxValues(cacheImage, true);
-            }
+            return getCacheImage(startImageLoading(), manager, findMinMax);
         } catch (OutOfMemoryError e1) {
             /*
              * Appends when loading a big image without tiling, the memory left is not enough for the renderedop (like
@@ -330,15 +329,19 @@ public class ImageElement extends MediaElement {
             LOGGER.warn("Out of MemoryError: {}", this, e1); //$NON-NLS-1$
             mCache.expungeStaleEntries();
             System.gc();
+            System.gc();
             try {
                 Thread.sleep(100);
             } catch (InterruptedException et) {
                 // Do nothing
             }
-            cacheImage = startImageLoading();
-            if (findMinMax) {
-                findMinMaxValues(cacheImage, true);
-            }
+            return getCacheImage(startImageLoading(), manager, findMinMax);
+        }
+    }
+
+    private PlanarImage getCacheImage(PlanarImage cacheImage, OpManager manager, boolean findMinMax) {
+        if (findMinMax) {
+            findMinMaxValues(cacheImage, true);
         }
         if (manager != null && cacheImage != null) {
             RenderedImage img = manager.getLastNodeOutputImage();
@@ -348,7 +351,7 @@ public class ImageElement extends MediaElement {
             }
 
             if (img != null) {
-                cacheImage = PlanarImage.wrapRenderedImage(img);
+                return PlanarImage.wrapRenderedImage(img);
             }
         }
         return cacheImage;
@@ -400,11 +403,7 @@ public class ImageElement extends MediaElement {
     @Override
     public void dispose() {
         // Let the soft reference mechanism dispose the display image
-
-        // Close image reader and image stream, but it should be already closed
-        if (mediaIO != null) {
-            mediaIO.close();
-        }
+        super.dispose();
     }
 
     class Load implements Callable<PlanarImage> {

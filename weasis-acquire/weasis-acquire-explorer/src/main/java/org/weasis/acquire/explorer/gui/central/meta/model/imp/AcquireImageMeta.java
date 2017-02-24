@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
@@ -37,7 +38,7 @@ public class AcquireImageMeta extends AcquireMetadataTableModel {
 
     @Override
     protected Optional<TagW[]> tagsEditable() {
-        return Optional.of(TAGS_EDITABLE);
+        return AcquireManager.GLOBAL.isAllowFullEdition() ? Optional.of(TAGS_TO_DISPLAY) : Optional.of(TAGS_EDITABLE);
     }
 
 }

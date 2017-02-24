@@ -19,12 +19,13 @@ import javax.media.jai.PlanarImage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.image.util.ImageToolkit;
 
 public class AutoLevelsOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(AutoLevelsOp.class);
 
-    public static final String OP_NAME = "Auto Contrast";
+    public static final String OP_NAME = Messages.getString("AutoLevelsOp.auto_ct"); //$NON-NLS-1$
 
     /**
      * Set whether auto levels is applied to the image (Required parameter).

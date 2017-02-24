@@ -83,7 +83,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         try {
             return new DataFlavor(mt, prn, Series.class.getClassLoader()); // $NON-NLS-1$
         } catch (Exception e) {
-            LOGGER.error("Build series flavor", e);
+            LOGGER.error("Build series flavor", e); //$NON-NLS-1$
             return null;
         }
     }
@@ -437,7 +437,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     @Override
     public String getSeriesNumber() {
-        Integer val = (Integer) getTagValue(TagW.get("SeriesNumber"));
-        return Optional.ofNullable(val).map(String::valueOf).orElseGet(() -> "");
+        Integer val = (Integer) getTagValue(TagW.get("SeriesNumber")); //$NON-NLS-1$
+        return Optional.ofNullable(val).map(String::valueOf).orElseGet(() -> ""); //$NON-NLS-1$
     }
 }

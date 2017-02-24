@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -85,6 +84,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -332,6 +332,15 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         super.close();
     }
 
+    private boolean closeIfNoContent() {
+        if (getOpenSeries().isEmpty()) {
+            close();
+            handleFocusAfterClosing();
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
 
@@ -414,37 +423,42 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     }
                 }
             } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-                if (newVal instanceof DicomSeries) {
-                    DicomSeries dicomSeries = (DicomSeries) newVal;
-                    for (ViewCanvas<DicomImageElement> v : view2ds) {
-                        MediaSeries<DicomImageElement> s = v.getSeries();
-                        if (dicomSeries.equals(s)) {
-                            v.setSeries(null);
-                        }
-                    }
-                } else if (newVal instanceof MediaSeriesGroup) {
+                if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
                     if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
+                            handleFocusAfterClosing();
                         }
                     }
                     // Study Group
                     else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
-                            for (MediaSeriesGroup s : model.getChildren(group)) {
-                                for (ViewCanvas<DicomImageElement> v : view2ds) {
-                                    MediaSeries<DicomImageElement> series = v.getSeries();
-                                    if (s.equals(series)) {
-                                        v.setSeries(null);
+                            for (ViewCanvas<DicomImageElement> v : view2ds) {
+                                if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
+                                    v.setSeries(null);
+                                    if (closeIfNoContent()) {
+                                        return;
                                     }
                                 }
                             }
                         }
                     }
+                    // Series Group
+                    else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
+                        for (ViewCanvas<DicomImageElement> v : view2ds) {
+                            if (newVal.equals(v.getSeries())) {
+                                v.setSeries(null);
+                                if (closeIfNoContent()) {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
                 }
             } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
                 if (newVal instanceof Series) {
@@ -483,11 +497,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         if (view instanceof View2d) {
                             DicomImageElement img = view.getImage();
                             if (img != null) {
-                                Attributes[] seq =
-                                    TagD.getTagValue(specialElement, Tag.ReferencedSeriesSequence, Attributes[].class);
-                                if (DicomSpecialElement.isSopuidInReferencedSeriesSequence(seq,
-                                    TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class),
-                                    TagD.getTagValue(img, Tag.SOPInstanceUID, String.class), (Integer) img.getKey())) {
+                                if (PresentationStateReader.isModuleAppicable(
+                                    TagD.getTagValue(specialElement, Tag.ReferencedSeriesSequence, Attributes[].class),
+                                    img)) {
                                     ((View2d) view).updatePR();
                                 }
                             }
@@ -588,7 +600,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view", e);
+                LOGGER.error("Checking view", e); //$NON-NLS-1$
             }
         }
         return false;
@@ -614,7 +626,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             return component;
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e);
+            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
         }
         return null;
     }
@@ -627,21 +639,33 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     @Override
     public List<Action> getExportActions() {
         List<Action> actions = selectedImagePane == null ? null : selectedImagePane.getExportToClipboardAction();
-        // TODO Add option in properties to deactivate this option
         if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
-            DefaultAction action = new DefaultAction(Messages.getString("View2dContainer.expOsirixMes"), //$NON-NLS-1$
-                new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png")), //$NON-NLS-1$
-                event -> exportTosirix(this));
             if (actions == null) {
-                return Arrays.asList(action);
+                actions = new ArrayList<>();
             }
-            actions.add(action);
+
+            boolean expOsirix = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("export.menu.osirix", true); //$NON-NLS-1$
+            if (expOsirix) {
+                DefaultAction action =
+                    new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Osirix"), //$NON-NLS-1$ //$NON-NLS-2$
+                        new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osirix.png")), //$NON-NLS-1$
+                        event -> exportTosirix(this, "Osirix", "/usr/bin/open -b com.rossetantoine.osirix")); //$NON-NLS-1$ //$NON-NLS-2$
+                actions.add(action);
+            }
+
+            boolean expHoros = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("export.menu.horos", true); //$NON-NLS-1$
+            if (expHoros) {
+                DefaultAction action =
+                    new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Horos"), //$NON-NLS-1$ //$NON-NLS-2$
+                        new ImageIcon(View2dContainer.class.getResource("/icon/16x16/horos.png")), //$NON-NLS-1$
+                        event -> exportTosirix(this, "Horos", "/usr/bin/open -b com.horosproject.horos")); // $NON-NLS-1$ //$NON-NLS-1$ //$NON-NLS-2$
+                actions.add(action);
+            }
         }
         return actions;
     }
 
-    private static void exportTosirix(Component parent) {
-        String cmd = "/usr/bin/open -b com.rossetantoine.osirix"; //$NON-NLS-1$
+    private static void exportTosirix(Component parent, String AppName, String cmd) {
         String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (baseDir != null) {
             String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
@@ -675,12 +699,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 val = p.exitValue();
             }
             if (val != 0) {
-                JOptionPane.showMessageDialog(parent, Messages.getString("View2dContainer.expOsirixTitle"), //$NON-NLS-1$
+                JOptionPane.showMessageDialog(parent,
+                    String.format(Messages.getString("View2dContainer.expOsirixTitle"), //$NON-NLS-1$
+                        AppName),
                     Messages.getString("View2dContainer.expOsirixMes"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             }
 
         } catch (IOException e1) {
-            LOGGER.error("Running cmd", e1);
+            LOGGER.error("Running cmd", e1); //$NON-NLS-1$
         } catch (InterruptedException e2) {
             LOGGER.error("Cannot get the exit status of the open Osirix command", e2); //$NON-NLS-1$
         }

@@ -14,10 +14,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -258,10 +256,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 }
             }
 
-            Collection<MediaSeriesGroup> studyList = model.getChildren(patient);
             synchronized (model) {
-                for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup st = it.next();
+                for (MediaSeriesGroup st : model.getChildren(patient)) {
                     if (st != study) {
                         s = findSOPInstanceReference(model, st, sopUID);
                     }
@@ -297,10 +293,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     private static Series<?> findSOPInstanceReference(DicomModel model, MediaSeriesGroup study, String sopUID) {
         if (model != null && study != null) {
             TagW sopTag = TagD.getUID(Level.INSTANCE);
-            Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
             synchronized (model) {
-                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup seq = it.next();
+                for (MediaSeriesGroup seq: model.getChildren(study)) {
                     if (seq instanceof Series) {
                         Series<?> s = (Series<?>) seq;
                         if (s.hasMediaContains(sopTag, sopUID)) {

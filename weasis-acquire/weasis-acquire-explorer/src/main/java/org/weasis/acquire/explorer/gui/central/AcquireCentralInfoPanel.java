@@ -16,7 +16,8 @@ import javax.swing.JPanel;
 
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.Messages;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel;
@@ -27,21 +28,25 @@ import org.weasis.core.api.media.data.ImageElement;
 @SuppressWarnings("serial")
 public class AcquireCentralInfoPanel extends JPanel {
 
-    private AcquireMetadataPanel globalInfoPanel = new AcquireGlobalMetaPanel("Global");
+    private AcquireMetadataPanel globalInfoPanel = new AcquireGlobalMetaPanel(Messages.getString("AcquireCentralInfoPanel.global")); //$NON-NLS-1$
     private AcquireSerieMetaPanel serieInfoPanel = new AcquireSerieMetaPanel(null);
-    private AcquireMetadataPanel imageInfoPanel = new AcquireImageMetaPanel("Image");
+    private AcquireMetadataPanel imageInfoPanel = new AcquireImageMetaPanel(Messages.getString("AcquireCentralInfoPanel.image")); //$NON-NLS-1$
 
     private AcquireImageInfo imageInfo;
 
-    public AcquireCentralInfoPanel(Serie serie) {
+    public AcquireCentralInfoPanel(SeriesGroup seriesGroup) {
         setLayout(new GridLayout(1, 3));
-        JMVUtils.setPreferredHeight(this, 200);
+        JMVUtils.setPreferredHeight(this, 230);
 
-        serieInfoPanel.setSerie(serie);
+        setSerie(seriesGroup);
 
         add(globalInfoPanel);
         add(serieInfoPanel);
         add(imageInfoPanel);
+    }
+
+    public void setSerie(SeriesGroup newSerie) {
+        serieInfoPanel.setSerie(newSerie);
     }
 
     public void setImage(ImageElement newImage) {
@@ -60,9 +65,11 @@ public class AcquireCentralInfoPanel extends JPanel {
 
     }
 
-    public void refreshSerieMeta() {
-        serieInfoPanel.setMetaVisible(true);
+    protected void refreshGUI() {
+        globalInfoPanel.update();
         serieInfoPanel.update();
+        imageInfoPanel.update();
+
         revalidate();
         repaint();
     }

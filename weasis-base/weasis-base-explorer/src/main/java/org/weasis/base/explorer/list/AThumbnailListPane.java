@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.base.explorer.list;
 
+import java.awt.Dimension;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import javax.swing.JComponent;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 
@@ -28,19 +30,20 @@ import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
 @SuppressWarnings("serial")
-public abstract class AThumbnailListPane<E extends MediaElement> extends JScrollPane
-    implements IThumbnailListPane<E> {
-    protected IThumbnailList<E> thumbnailList;
-    protected ExecutorService pool;
+public abstract class AThumbnailListPane<E extends MediaElement> extends JScrollPane implements IThumbnailListPane<E> {
+    protected final IThumbnailList<E> thumbnailList;
+    protected final ExecutorService pool;
 
     public AThumbnailListPane(IThumbnailList<E> thumbList) {
-        this.pool = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail List");
+        super(thumbList.asComponent(), ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        this.pool = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail List"); //$NON-NLS-1$
 
         this.thumbnailList = thumbList;
         this.thumbnailList.addListSelectionListener(new JIListSelectionAdapter());
         this.thumbnailList.registerListeners();
 
-        setViewportView(thumbnailList.asComponent());
+        this.setPreferredSize(new Dimension(200,200));
         this.setAutoscrolls(true);
     }
 
@@ -123,5 +126,4 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
     public IThumbnailList<E> getThumbnailList() {
         return thumbnailList;
     }
-
 }

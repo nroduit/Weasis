@@ -2,21 +2,22 @@
 
 The master branch contains Weasis 2.5.x (requires Java 8+) and the old branches are 2.0.x and 1.2.x (both require Java 6+).
 
-[General information](http://www.dcm4che.org/confluence/display/WEA/Home)
+[General information](https://dcm4che.atlassian.net/wiki/display/WEA/Building+Weasis+from+source/Home)
+
+[Live Demo with different datasets](https://dcm4che.atlassian.net/wiki/display/WEA/DICOM+Samples)
 
 [Download binary releases](http://sourceforge.net/projects/dcm4che/files/Weasis)
 
-[How to build Weasis](http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source)
+[How to build Weasis](https://dcm4che.atlassian.net/wiki/display/WEA/Building+Weasis+from+source)
 
 [Issue Tracker](http://www.dcm4che.org/jira/browse/WEA)
 
-## Weasis 2.5 ##
 
-### New ###
+### New features in Weasis 2.5 ###
 * Embedded new codecs compiled for Windows 32/64-bit, Linux x86 32/64-bit and Mac OS X 64-bit.    
-	* jpeg-basline, jpeg-extended and jpeg-lossless (IJG 6b)   
-	* jpeg-ls (CharLS 1.0)   
-	* jpeg2000 codecs (OpegJPEG 2.1)   
+	* jpeg-baseline, jpeg-extended and jpeg-lossless (IJG 6b)   
+	* jpeg-ls (CharLS 1.1.0)   
+	* jpeg2000 codecs (OpegJPEG 2.1.2)   
 * Allows to order the codecs by priority with a unique configuration for all the systems
 * Supports multi-frame and multiple fragments at the same time
 * DICOM send module (DICOM node configuration at the server side and/or locally)
@@ -52,15 +53,15 @@ The master branch contains Weasis 2.5.x (requires Java 8+) and the old branches 
 * Advanced series synchronization options
 * Display Presentation States (GSPS) and Key Object Selection
 * Create key images (Key Object Selection object)
-* Support of Modality LUTs and VOI LUTs (even non-linear)
+* Support of Modality LUTs, VOI LUTs Presentation LUTs (even non-linear)
 * Support of several screens, full-screen mode.
 * Multiplanar reconstructions and Maximum Intensity Projection
 * Display Structured Reports
 * Display cross-lines
 * Measurement and annotation tools
-* SUV measurement
 * Region statistics of pixels (Min, Max, Mean, StDev, Skewness, Kurtosis)
-* Save measurements and annotations
+* SUV measurement
+* Save measurements and annotations in DICOM PR or xml file
 * Import CD/DVD and local DICOM files
 * Export DICOM with several options (DICOMDIR, ZIP, ISO image file with Weasis, TIFF, JPEG, PNG...)
 * Magnifier glass

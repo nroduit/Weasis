@@ -82,7 +82,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
                             this.add(media);
                             return;
                         } catch (Exception e) {
-                            LOGGER.error("Cannot extract video stream", e);
+                            LOGGER.error("Cannot extract video stream", e); //$NON-NLS-1$
                         } finally {
                             FileUtil.safeClose(out);
                             FileUtil.safeClose(in);
@@ -134,7 +134,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
         int hours = totalSecs / 3600;
         int minutes = (totalSecs % 3600) / 60;
         int seconds = totalSecs % 60;
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds); //$NON-NLS-1$
     }
 
     @Override

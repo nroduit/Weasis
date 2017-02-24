@@ -61,7 +61,6 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ForcedAcceptPrintService;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -219,29 +218,31 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             Object newVal = event.getNewValue();
 
             if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-                if (newVal instanceof DicomSeries) {
-                    if (srview != null && srview.getSeries() == newVal) {
-                        close();
-                    }
-                } else if (newVal instanceof MediaSeriesGroup) {
+                if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
                     if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
+                            handleFocusAfterClosing();
                         }
                     }
                     // Study Group
                     else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
-                            for (MediaSeriesGroup s : model.getChildren(group)) {
-                                if (srview != null && srview.getSeries() == s) {
-                                    close();
-                                    break;
-                                }
+                            if (srview != null && group.equals(model.getParent(srview.getSeries(), DicomModel.study))) {
+                                close();
+                                handleFocusAfterClosing();
                             }
+                        }
+                    }
+                    // Series Group
+                    else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
+                        if (srview != null && srview.getSeries() == newVal) {
+                            close();
+                            handleFocusAfterClosing();
                         }
                     }
                 }
@@ -261,7 +262,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e);
+                LOGGER.error("Checking view type", e); //$NON-NLS-1$
             }
         }
         return false;
@@ -286,7 +287,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             }
             return component;
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e);
+            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
         }
         return null;
     }
@@ -300,7 +301,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public List<Action> getPrintActions() {
         final String title = Messages.getString("SRContainer.print_layout"); //$NON-NLS-1$
         return Arrays.asList(
-            new DefaultAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")),
+            new DefaultAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), //$NON-NLS-1$
                 event -> printCurrentView()));
     }
 

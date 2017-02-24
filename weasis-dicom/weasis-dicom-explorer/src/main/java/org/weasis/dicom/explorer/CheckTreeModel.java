@@ -14,18 +14,20 @@ import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -34,7 +36,10 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 
@@ -43,6 +48,8 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
 public class CheckTreeModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckTreeModel.class);
+
+    public static final TagW SourceSeriesForPR = new TagW("SourceSeriesForPR", TagType.OBJECT); //$NON-NLS-1$
 
     private final DefaultMutableTreeNode rootNode;
     private final DefaultTreeModel model;
@@ -91,55 +98,80 @@ public class CheckTreeModel {
                     @Override
                     public String toString() {
                         DicomSpecialElement d = (DicomSpecialElement) getUserObject();
-                        return d.getShortLabel();
+                        StringBuilder buf = new StringBuilder();
+                        boolean newElement = JMVUtils.getNULLtoFalse(d.getTagValue(TagW.ObjectToSave));
+                        if (newElement) {
+                            buf.append("<html>"); //$NON-NLS-1$
+                            buf.append("<font color='orange'><b>NEW </b></font>"); //$NON-NLS-1$
+                        }
+                        buf.append(d.getShortLabel());
+                        if (newElement) {
+                            buf.append("</html>"); //$NON-NLS-1$
+                        }
+                        return buf.toString();
                     }
                 });
             }
         }
+
+        boolean hasGraphics = false;
         for (MediaElement dicom : series.getMedias(null, null)) {
             seriesNode.add(new DefaultMutableTreeNode(dicom, false) {
                 @Override
                 public String toString() {
                     MediaElement m = (MediaElement) getUserObject();
                     Integer val = TagD.getTagValue(m, Tag.InstanceNumber, Integer.class);
-                    StringBuilder buffer = new StringBuilder();
+                    StringBuilder buf = new StringBuilder();
                     if (val != null) {
-                        buffer.append("["); //$NON-NLS-1$
-                        buffer.append(val);
-                        buffer.append("] "); //$NON-NLS-1$
+                        buf.append("["); //$NON-NLS-1$
+                        buf.append(val);
+                        buf.append("] "); //$NON-NLS-1$
                     }
                     String sopUID = TagD.getTagValue(m, Tag.SOPInstanceUID, String.class);
                     if (sopUID != null) {
-                        buffer.append(sopUID);
+                        buf.append(sopUID);
                     }
-                    return buffer.toString();
+                    return buf.toString();
                 }
             });
+
+            if (!hasGraphics) {
+                GraphicModel grModel = (GraphicModel) dicom.getTagValue(TagW.PresentationModel);
+                hasGraphics = grModel != null && grModel.hasSerializableGraphics();
+            }
         }
 
         List children = Collections.list(studyNode.children());
         int index = Collections.binarySearch(children, seriesNode, DicomSorter.SERIES_COMPARATOR);
-        if (index < 0) {
-            studyNode.insert(seriesNode, -(index + 1));
-        } else {
-            studyNode.insert(seriesNode, index);
+        index = index < 0 ? -(index + 1) : index;
+        studyNode.insert(seriesNode, index);
+
+        if (hasGraphics) {
+            String seriesInstanceUID = UIDUtils.createUID();
+            Series prSeries = new DicomSeries(seriesInstanceUID);
+            prSeries.setTag(TagD.get(Tag.SeriesNumber), TagD.getTagValue(series, Tag.SeriesNumber, Integer.class));
+            prSeries.setTag(TagD.get(Tag.Modality), "PR"); //$NON-NLS-1$
+            prSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesInstanceUID);
+            prSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
+            prSeries.setTag(SourceSeriesForPR, series);
+            prSeries.setTag(TagD.get(Tag.SeriesDescription),
+                Optional.ofNullable(TagD.getTagValue(series, Tag.SeriesDescription, String.class)).orElse("") //$NON-NLS-1$
+                    + " [GRAPHICS]"); //$NON-NLS-1$
+            DefaultMutableTreeNode prVirtualNode = new ToolTipTreeNode(prSeries, false);
+            studyNode.insert(prVirtualNode, index + 1);
         }
+
+        return;
     }
 
     public static DefaultTreeModel buildModel(DicomModel dicomModel) {
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(DicomExplorer.ALL_PATIENTS);
         synchronized (dicomModel) {
-            for (Iterator<MediaSeriesGroup> iterator =
-                dicomModel.getChildren(MediaSeriesGroupNode.rootNode).iterator(); iterator.hasNext();) {
-                MediaSeriesGroup pt = iterator.next();
+            for (MediaSeriesGroup pt : dicomModel.getChildren(MediaSeriesGroupNode.rootNode)) {
                 DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);
-                Collection<MediaSeriesGroup> studies = dicomModel.getChildren(pt);
-                for (Iterator<MediaSeriesGroup> iterator2 = studies.iterator(); iterator2.hasNext();) {
-                    MediaSeriesGroup study = iterator2.next();
+                for (MediaSeriesGroup study : dicomModel.getChildren(pt)) {
                     DefaultMutableTreeNode studyNode = new DefaultMutableTreeNode(study, true);
-                    Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
-                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                        Object item = it.next();
+                    for (MediaSeriesGroup item : dicomModel.getChildren(study)) {
                         if (item instanceof Series) {
                             buildSeries(studyNode, (Series) item);
                         }
@@ -167,10 +199,7 @@ public class CheckTreeModel {
     static class ToolTipTreeNode extends DefaultMutableTreeNode {
 
         public ToolTipTreeNode(TagReadable userObject, boolean allowsChildren) {
-            super(userObject, allowsChildren);
-            if (userObject == null) {
-                throw new IllegalArgumentException();
-            }
+            super(Objects.requireNonNull(userObject), allowsChildren);
         }
 
         public String getToolTipText() {
@@ -196,7 +225,7 @@ public class CheckTreeModel {
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Display tooltip", e);
+                    LOGGER.error("Display tooltip", e); //$NON-NLS-1$
                 }
             }
             return null;
@@ -206,6 +235,11 @@ public class CheckTreeModel {
         public String toString() {
             MediaSeries<?> s = (MediaSeries<?>) getUserObject();
             StringBuilder buf = new StringBuilder();
+            boolean newElement = JMVUtils.getNULLtoFalse(s.getTagValue(TagW.ObjectToSave));
+            if (newElement) {
+                buf.append("<html>"); //$NON-NLS-1$
+                buf.append("<font color='orange'><b>NEW </b></font>"); //$NON-NLS-1$
+            }
             Integer val = TagD.getTagValue(s, Tag.SeriesNumber, Integer.class);
             if (val != null) {
                 buf.append("["); //$NON-NLS-1$
@@ -220,6 +254,9 @@ public class CheckTreeModel {
             String desc = TagD.getTagValue(s, Tag.SeriesDescription, String.class);
             if (desc != null) {
                 buf.append(desc);
+            }
+            if (newElement) {
+                buf.append("</html>"); //$NON-NLS-1$
             }
             return buf.toString();
         }

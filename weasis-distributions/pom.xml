@@ -5,7 +5,7 @@
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
 		<!-- Remove "-SNAPSHOT" for release -->
-		<version>2.5.0-SNAPSHOT</version>
+		<version>2.5.3-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -24,21 +24,21 @@
 
 		<pack200.ext></pack200.ext>
 
-		<felix.framework.version>5.6.0-p1</felix.framework.version>
+		<felix.framework.version>5.6.1-p1</felix.framework.version>
 		<felix.gogo.version>0.16.2</felix.gogo.version>
 		<felix.gogo.shell.version>0.12.0</felix.gogo.shell.version>
 		<felix.gogo.command.version>0.16.0</felix.gogo.command.version>
 
 		<felix.servlet.version>1.0.0</felix.servlet.version>
 		<felix.bundlerepository.version>2.0.8</felix.bundlerepository.version>
-		<felix.configadmin.version>1.8.10</felix.configadmin.version>
-		<felix.prefs.version>1.0.6</felix.prefs.version>
-		<felix.scr.version>2.0.6</felix.scr.version>
+		<felix.configadmin.version>1.8.12</felix.configadmin.version>
+		<felix.prefs.version>1.1.0</felix.prefs.version>
+		<felix.scr.version>2.0.8</felix.scr.version>
 		<felix.metatype.version>1.1.2</felix.metatype.version>
 		<slf4j.version>1.7.5</slf4j.version>
 		<sling.commons.log.version>3.0.2-r2</sling.commons.log.version>
 
-		<dockingframes.version>1.1.2-P17</dockingframes.version>
+		<dockingframes.version>1.1.2-P18a</dockingframes.version>
 		<substance.version>7.3</substance.version>
 		<jai.version>1.1.4-b07</jai.version>
 		<jai.native.version>1.1.4-b03</jai.native.version>
@@ -391,6 +391,12 @@
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-au</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.dicom</groupId>
+									<artifactId>weasis-dicom-send</artifactId>
 									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>

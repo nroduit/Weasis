@@ -77,7 +77,7 @@ public final class JIThumbnailList<E extends MediaElement> extends AThumbnailLis
                     menu.add(menuItem);
                     popupMenu.add(menu);
 
-                    menu = new JMenu(Messages.getString("JIThumbnailList.add_to_win")); //$NON-NLS-1$
+                    menu = new JMenu(Messages.getString("JIThumbnailList.open_sel_win")); //$NON-NLS-1$
                     menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.stack_mode"), //$NON-NLS-1$
                         event -> openGroup(selMedias, true, false, false, true)));
                     menu.add(menuItem);
@@ -91,7 +91,7 @@ public final class JIThumbnailList<E extends MediaElement> extends AThumbnailLis
 
             }
         } catch (Exception ex) {
-            LOGGER.error("Build context menu", ex);
+            LOGGER.error("Build context menu", ex); //$NON-NLS-1$
         } finally {
             e.consume();
         }

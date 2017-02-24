@@ -22,7 +22,7 @@ import org.weasis.core.api.media.data.MediaElement;
 
 public final class JIUtility {
 
-    private static final File USER_HOME = new File(System.getProperty("user.home"));
+    private static final File USER_HOME = new File(System.getProperty("user.home")); //$NON-NLS-1$
     public static final String ROOT_FOLDER;
 
     static {

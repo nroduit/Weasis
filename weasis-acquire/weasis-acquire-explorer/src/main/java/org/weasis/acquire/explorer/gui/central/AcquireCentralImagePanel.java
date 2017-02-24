@@ -14,6 +14,7 @@ import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.swing.JPanel;
@@ -22,34 +23,38 @@ import javax.swing.event.ListSelectionListener;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
-import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.acquire.explorer.core.bean.Serie;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.tumbnail.AcquireCentralTumbnailPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.TagD;
 
+@SuppressWarnings("serial")
 public class AcquireCentralImagePanel extends JPanel implements ListSelectionListener {
-    private static final long serialVersionUID = 1270219114006046523L;
 
     private final AcquireCentralTumbnailPane<ImageElement> imageListPane;
-    private AcquireCentralInfoPanel imageInfo;
+    private final AcquireCentralInfoPanel imageInfo;
 
     public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel) {
-        this(acquireTabPanel, null, new ArrayList<AcquireImageInfo>());
-    }
-
-    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, Serie serie, List<AcquireImageInfo> imageInfos) {
         setLayout(new BorderLayout());
+        this.imageInfo = new AcquireCentralInfoPanel(null);
+        this.imageListPane = new AcquireCentralTumbnailPane<>(new ArrayList<ImageElement>());
 
-        imageInfo = new AcquireCentralInfoPanel(serie);
-
-        imageListPane = new AcquireCentralTumbnailPane<>(toImageElement(imageInfos));
-        imageListPane.setAcquireTabPanel(acquireTabPanel);
+        imageListPane.setAcquireTabPanel(Objects.requireNonNull(acquireTabPanel));
         imageListPane.addListSelectionListener(this);
 
         add(imageListPane, BorderLayout.CENTER);
         add(imageInfo, BorderLayout.SOUTH);
+    }
+
+    public void getCurrentSerie(SeriesGroup newSerie) {
+        imageInfo.setSerie(newSerie);
+    }
+
+    public void setSeriesGroup(SeriesGroup seriesGroup, List<AcquireImageInfo> imageInfos) {
+        imageInfo.setSerie(seriesGroup);
+        List<ImageElement> list = imageInfos == null ? null : toImageElement(imageInfos);
+        imageListPane.setList(list);
     }
 
     private List<ImageElement> toImageElement(List<AcquireImageInfo> list) {
@@ -59,28 +64,51 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
 
     }
 
+    public void addImagesInfo(List<AcquireImageInfo> imageInfos) {
+        List<ImageElement> list = imageInfos == null ? null : toImageElement(imageInfos);
+        imageListPane.addElements(list);
+    }
+
     public void updateList(List<AcquireImageInfo> imageInfos) {
-        imageListPane.setList(toImageElement(imageInfos));
+        List<ImageElement> list = imageInfos == null ? null : toImageElement(imageInfos);
+        imageListPane.setList(list);
+    }
+
+    public void updateSerie(SeriesGroup newSerie) {
+        imageInfo.setSerie(newSerie);
     }
 
     public IThumbnailModel<ImageElement> getFileListModel() {
         return imageListPane.getFileListModel();
     }
 
+    public boolean containsImageElement(ImageElement image) {
+        return getFileListModel().contains(image);
+    }
+
+    public void removeElement(ImageElement image) {
+        getFileListModel().removeElement(image);
+    }
+
     public void removeElements(List<ImageElement> medias) {
         IThumbnailModel<ImageElement> model = getFileListModel();
-        medias.forEach(m -> {
-            model.removeElement(m);
-            AcquireManager.remove(m);
-        });
+        medias.forEach(model::removeElement);
+    }
+
+    public void clearAll() {
+        getFileListModel().clear();
+        imageListPane.repaintList();
     }
 
     public boolean isEmpty() {
         return getFileListModel().isEmpty();
     }
 
-    public void refreshSerieMeta() {
-        imageInfo.refreshSerieMeta();
+    protected void refreshGUI() {
+        imageListPane.repaintList();
+        imageListPane.revalidate();
+        imageListPane.repaint();
+        imageInfo.refreshGUI();
     }
 
     @Override

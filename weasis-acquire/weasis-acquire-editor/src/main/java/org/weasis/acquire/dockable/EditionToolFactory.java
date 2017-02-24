@@ -13,9 +13,9 @@ package org.weasis.acquire.dockable;
 import java.awt.event.KeyEvent;
 import java.util.Hashtable;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Deactivate;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
@@ -36,13 +36,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
  * @since v2.5.0 - 2016-04-06 - ylar - creation
  *
  */
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "org.weasis.base.viewer2d.View2dContainer", value = "true")
+
+@org.osgi.service.component.annotations.Component(service = InsertableFactory.class, immediate = false, property = {
+    "org.weasis.base.viewer2d.View2dContainer=true"  })
 public class EditionToolFactory implements InsertableFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
 
-    public static final ActionW EDITON = new ActionW("Edit", "draw.edition", KeyEvent.VK_G, 0, null) { //$NON-NLS-1$ $NON-NLS-2$
+    public static final ActionW EDITON = new ActionW("Edit", "draw.edition", KeyEvent.VK_G, 0, null) { //$NON-NLS-1$ //$NON-NLS-2$
         @Override
         public boolean isDrawingAction() {
             return true;
@@ -102,14 +102,18 @@ public class EditionToolFactory implements InsertableFactory {
         return tool instanceof EditionTool;
     }
 
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+    
     @Activate
     protected void activate(ComponentContext context) {
-        LOGGER.info("Activate the TransformationTool panel");
+        LOGGER.info("Activate the TransformationTool panel"); //$NON-NLS-1$
     }
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("Deactivate the TransformationTool panel");
+        LOGGER.info("Deactivate the TransformationTool panel"); //$NON-NLS-1$
     }
 
 }

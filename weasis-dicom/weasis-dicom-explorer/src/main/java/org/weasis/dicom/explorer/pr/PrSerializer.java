@@ -66,20 +66,26 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 public class PrSerializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrSerializer.class);
 
-    private static final String PIXEL = "PIXEL";
+    private static final String PIXEL = "PIXEL"; //$NON-NLS-1$
 
     private PrSerializer() {
     }
 
     public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,
-        String sopInstanceUID) {
+        String seriesInstanceUID, String sopInstanceUID) {
+        return writePresentation(model, parentAttributes, outputFile,seriesInstanceUID, sopInstanceUID, null);
+    }
+
+    public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,
+        String seriesInstanceUID, String sopInstanceUID, Point2D offset) {
         Objects.requireNonNull(model);
         Objects.requireNonNull(outputFile);
 
         if (parentAttributes != null) {
             try {
-                GraphicModel m = getModelForSerialization(model);
-                Attributes attributes = DicomMediaUtils.createDicomPR(parentAttributes, null, sopInstanceUID);
+                GraphicModel m = getModelForSerialization(model, offset);
+                Attributes attributes =
+                    DicomMediaUtils.createDicomPR(parentAttributes, seriesInstanceUID, sopInstanceUID);
 
                 writeCommonTags(attributes);
                 writeReferences(attributes, m, parentAttributes.getString(Tag.SOPClassUID));
@@ -89,26 +95,35 @@ public class PrSerializer {
                 saveToFile(outputFile, attributes);
                 return attributes;
             } catch (Exception e) {
-                LOGGER.error("Cannot DICOM PR: ", e);
+                LOGGER.error("Cannot write Presentation State : ", e); //$NON-NLS-1$
             }
         }
         return null;
     }
 
     public static Attributes writePresentation(GraphicModel model, DicomImageElement img, File outputFile,
-        String sopInstanceUID) {
+        String seriesInstanceUID, String sopInstanceUID) {
         Attributes imgAttributes = img.getMediaReader() instanceof DcmMediaReader
             ? ((DcmMediaReader) img.getMediaReader()).getDicomObject() : null;
-        return writePresentation(model, imgAttributes, outputFile, sopInstanceUID);
+        return writePresentation(model, imgAttributes, outputFile, seriesInstanceUID, sopInstanceUID, null);
     }
 
-    private static GraphicModel getModelForSerialization(GraphicModel model) {
+    private static GraphicModel getModelForSerialization(GraphicModel model, Point2D offset) {
         // Remove non serializable graphics
         XmlGraphicModel xmlModel = new XmlGraphicModel();
         xmlModel.setReferencedSeries(model.getReferencedSeries());
         for (Graphic g : model.getModels()) {
             if (g.getLayer().getSerializable() && !g.getPts().isEmpty()) {
-                xmlModel.addGraphic(g);
+                if (offset != null) {
+                    Graphic graphic = g.copy();
+                    for (Point2D.Double p : graphic.getPts()) {
+                        p.x -= offset.getX();
+                        p.y -= offset.getY();
+                    }
+                    graphic.buildShape();
+                    xmlModel.addGraphic(graphic);
+                } else
+                    xmlModel.addGraphic(g);
             }
         }
         return xmlModel;
@@ -126,23 +141,23 @@ public class PrSerializer {
             attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB,
                 GzipManager.gzipCompressToByte(outputStream.toByteArray()));
         } catch (Exception e) {
-            LOGGER.error("Cannot save xml: ", e);
+            LOGGER.error("Cannot save xml: ", e); //$NON-NLS-1$
         }
     }
 
     private static void writeCommonTags(Attributes attributes) {
-        String gsps = "GSPS";
+        String gsps = "GSPS"; //$NON-NLS-1$
         attributes.setString(Tag.ContentCreatorName, VR.PN, AppProperties.WEASIS_USER);
         attributes.setString(Tag.ContentLabel, VR.CS, gsps);
-        attributes.setString(Tag.ContentDescription, VR.LO, "Description");
+        attributes.setString(Tag.ContentDescription, VR.LO, "Description"); //$NON-NLS-1$
         attributes.setInt(Tag.SeriesNumber, VR.IS, 999);
         try {
             attributes.setString(Tag.StationName, VR.SH, InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException e) {
-            LOGGER.error("Cannot get host name: ", e);
+            LOGGER.error("Cannot get host name: ", e); //$NON-NLS-1$
         }
         attributes.setString(Tag.SoftwareVersions, VR.LO, AppProperties.WEASIS_VERSION);
-        attributes.setString(Tag.SeriesDescription, VR.LO, String.join(" ", AppProperties.WEASIS_NAME, gsps));
+        attributes.setString(Tag.SeriesDescription, VR.LO, String.join(" ", AppProperties.WEASIS_NAME, gsps)); //$NON-NLS-1$
     }
 
     private static void writeReferences(Attributes attributes, GraphicModel model, String sopClassUID) {
@@ -187,7 +202,8 @@ public class PrSerializer {
                 Attributes l = new Attributes(2);
                 l.setString(Tag.GraphicLayer, VR.CS, layerName);
                 l.setInt(Tag.GraphicLayerOrder, VR.IS, i);
-                float[] lab = PresentationStateReader.colorToLAB(Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW));
+                float[] lab = PresentationStateReader
+                    .colorToLAB(Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW));
                 if (lab != null) {
                     l.setInt(Tag.GraphicLayerRecommendedDisplayCIELabValue, VR.US, CIELab.convertToDicomLab(lab));
                 }
@@ -206,7 +222,7 @@ public class PrSerializer {
             }
         }
     }
-    
+
     private static List<Graphic> getGraphicsByLayer(GraphicModel model, String layerUid) {
         return model.getModels().stream().filter(g -> layerUid.equals(g.getLayer().getUuid()))
             .collect(Collectors.toList());
@@ -226,7 +242,7 @@ public class PrSerializer {
         Attributes dcm = new Attributes(5);
         dcm.setString(Tag.GraphicAnnotationUnits, VR.CS, PIXEL);
         dcm.setInt(Tag.GraphicDimensions, VR.US, 2);
-        dcm.setString(Tag.GraphicFilled, VR.CS, graphic.getFilled() ? "Y" : "N");
+        dcm.setString(Tag.GraphicFilled, VR.CS, graphic.getFilled() ? "Y" : "N"); //$NON-NLS-1$ //$NON-NLS-2$
 
         Sequence style = dcm.newSequence(Tag.LineStyleSequence, 1);
         Attributes styles = new Attributes();
@@ -305,21 +321,21 @@ public class PrSerializer {
                 Rectangle2D bound = label.getTransformedBounds(null);
 
                 Attributes text =
-                    bluildLabelAndBounds(bound, Arrays.stream(label.getLabels()).collect(Collectors.joining("\r\n")));
+                    bluildLabelAndBounds(bound, Arrays.stream(label.getLabels()).collect(Collectors.joining("\r\n"))); //$NON-NLS-1$
                 textSeq.add(text);
             }
         }
     }
 
     private static Attributes bluildLabelAndAnchor(AnnotationGraphic g) {
-        Rectangle2D bound = g.getLabelBounds(); 
-        Point2D anchor=g.getAnchorPoint(); 
-        String text = Arrays.stream(g.getLabels()).collect(Collectors.joining("\r\n"));
-        
+        Rectangle2D bound = g.getLabelBounds();
+        Point2D anchor = g.getAnchorPoint();
+        String text = Arrays.stream(g.getLabels()).collect(Collectors.joining("\r\n")); //$NON-NLS-1$
+
         Attributes attributes = new Attributes(7);
         attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
         attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());
-        attributes.setString(Tag.AnchorPointVisibility, VR.CS, "Y");
+        attributes.setString(Tag.AnchorPointVisibility, VR.CS, "Y"); //$NON-NLS-1$
         Sequence style = attributes.newSequence(Tag.LineStyleSequence, 1);
         Attributes styles = new Attributes();
         styles.setFloat(Tag.LineThickness, VR.FL, g.getLineThickness());

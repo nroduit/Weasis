@@ -26,6 +26,8 @@ import java.util.zip.ZipInputStream;
 
 import javax.imageio.stream.ImageInputStream;
 
+import org.apache.felix.framework.util.Util;
+
 public class FileUtil {
     public static final int FILE_BUFFER = 4096;
 
@@ -58,14 +60,11 @@ public class FileUtil {
         if (childDirs != null) {
             for (File f : childDirs) {
                 if (f.isDirectory()) {
-                    recursiveDelete(f, deleteRoot);
-                    f.delete();
+                    // deleteRoot used only for the first level, directory is deleted in next line
+                    recursiveDelete(f, false);
+                    deleteFile(f);
                 } else {
-                    try {
-                        f.delete();
-                    } catch (Exception e) {
-                        // Do nothing, wait next start to delete it
-                    }
+                    deleteFile(f);
                 }
             }
         }
@@ -84,20 +83,20 @@ public class FileUtil {
                 if (f.isDirectory()) {
                     deleteDirectoryContents(f, deleteDirLevel, level + 1);
                 } else {
-                    try {
-                        f.delete();
-                    } catch (Exception e) {
-                        // Do nothing, wait next start to delete it
-                    }
+                    deleteFile(f);
                 }
             }
         }
         if (level >= deleteDirLevel) {
-            try {
-                dir.delete();
-            } catch (Exception e) {
-                // Do nothing, wait next start to delete it
-            }
+            deleteFile(dir);
+        }
+    }
+
+    private static void deleteFile(File fileOrDirectory) {
+        try {
+            fileOrDirectory.delete();
+        } catch (Exception e) {
+            // Do nothing, wait next start to delete it
         }
     }
 
@@ -154,8 +153,7 @@ public class FileUtil {
 
         String fileDate = null;
 
-        URL url = new URL(srcPath);
-        URLConnection urlConnection = url.openConnection();
+        URLConnection urlConnection = FileUtil.getAdaptedConnection(new URL(srcPath));
         long last = urlConnection.getLastModified();
         if (last != 0) {
             fileDate = Long.toString(last);
@@ -166,6 +164,21 @@ public class FileUtil {
             unzip(urlConnection.getInputStream(), cacheDir);
         }
         return fileDate;
+    }
+    
+    public static  URLConnection getAdaptedConnection(URL url) throws IOException {
+        URLConnection connection = url.openConnection();
+        // Prevent caching of Java WebStart.
+        connection.setUseCaches(false);
+        // Support for http proxy authentication.
+        String auth = System.getProperty("http.proxyAuth", null); //$NON-NLS-1$
+        if ((auth != null) && (auth.length() > 0)) {
+            if ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol())) { //$NON-NLS-1$ //$NON-NLS-2$
+                String base64 = Util.base64Encode(auth);
+                connection.setRequestProperty("Proxy-Authorization", "Basic " + base64); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+        }
+        return connection;
     }
 
     private static void copy(InputStream in, OutputStream out) throws IOException {
@@ -181,11 +194,8 @@ public class FileUtil {
     }
 
     private static void copyZip(InputStream in, File file) throws IOException {
-        OutputStream out = new FileOutputStream(file);
-        try {
+        try (OutputStream out = new FileOutputStream(file)) {
             copy(in, out);
-        } finally {
-            out.close();
         }
     }
 
@@ -193,8 +203,9 @@ public class FileUtil {
         if (inputStream == null || directory == null) {
             return;
         }
-        ZipInputStream zis = new ZipInputStream(new BufferedInputStream(inputStream));
-        try {
+
+        try (BufferedInputStream bufInStream = new BufferedInputStream(inputStream);
+                        ZipInputStream zis = new ZipInputStream(bufInStream)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 File file = new File(directory, entry.getName());
@@ -206,8 +217,7 @@ public class FileUtil {
                 }
             }
         } finally {
-            safeClose(zis);
+            FileUtil.safeClose(inputStream);
         }
-
     }
 }

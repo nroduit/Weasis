@@ -10,36 +10,46 @@
  *******************************************************************************/
 package org.weasis.dicom.codec;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.dcm4che3.data.ItemPointer;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
-import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi;
 import org.dcm4che3.io.BulkDataDescriptor;
 import org.dcm4che3.util.TagUtils;
+import org.dcm4che3.util.UIDUtils;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 
-import com.sun.media.imageioimpl.plugins.raw.RawImageReaderSpi;
+import com.sun.media.imageioimpl.common.ImageioUtil;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "service.name", value = "DICOM (dcm4chee toolkit)")
+@org.osgi.service.component.annotations.Component(service = Codec.class, immediate = false)
 public class DicomCodec implements Codec {
-    public static final DicomImageReaderSpi DicomImageReaderSpi = new DicomImageReaderSpi();
-    public static final RLEImageReaderSpi RLEImageReaderSpi = new RLEImageReaderSpi();
-    // public static final DicomImageWriterSpi DicomImageWriterSpi = new DicomImageWriterSpi();
-    public static final RawImageReaderSpi RawImageReaderSpi = new RawImageReaderSpi();
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomCodec.class);
 
     public static final String NAME = "dcm4che"; //$NON-NLS-1$
     public static final String[] FILE_EXTENSIONS = { "dcm", "dicm" }; //$NON-NLS-1$ //$NON-NLS-2$
+
+    private static final String LOGGER_KEY = "always.info.ItemParser"; //$NON-NLS-1$
+    private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser"; //$NON-NLS-1$
 
     public static final BulkDataDescriptor BULKDATA_DESCRIPTOR = new BulkDataDescriptor() {
 
@@ -62,9 +72,23 @@ public class DicomCodec implements Codec {
             if (TagUtils.isPrivateTag(tag)) {
                 return length > 5000; // Do no read in memory private value more than 5 KB
             }
+
+            switch (vr) {
+                case OB:
+                case OD:
+                case OF:
+                case OL:
+                case OW:
+                case UN:
+                    return length > 64;
+            }
             return false;
         }
     };
+
+    private final RLEImageReaderSpi rleImageReaderSpi = new RLEImageReaderSpi();
+    // private final DicomImageWriterSpi DicomImageWriterSpi = new DicomImageWriterSpi();
+    // private final RawImageReaderSpi RawImageReaderSpi = new RawImageReaderSpi();
 
     @Override
     public String[] getReaderMIMETypes() {
@@ -110,6 +134,89 @@ public class DicomCodec implements Codec {
     @Override
     public String[] getWriterMIMETypes() {
         return new String[] { DicomMediaIO.MIMETYPE };
+    }
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+
+    @Activate
+    protected void activate(ComponentContext context) {
+        LOGGER.info("Activate DicomCodec"); //$NON-NLS-1$
+
+        /**
+         * Set value for dicom root UID which should be registered at the
+         * http://www.iana.org/assignments/enterprise-numbers <br>
+         * Default value is 2.25, this enables users to generate OIDs without any registration procedure
+         *
+         * @see http://www.dclunie.com/medical-image-faq/html/part2.html#UUID <br>
+         *      http://www.oid-info.com/get/2.25 <br>
+         *      http://www.itu.int/ITU-T/asn1/uuid.html<br>
+         *      http://healthcaresecprivacy.blogspot.ch/2011/02/creating-and-using-unique-id-uuid-oid.html
+         */
+        String weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot()); //$NON-NLS-1$
+        UIDUtils.setRoot(weasisRootUID);
+
+        // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
+        // discovering the SPI files). Here are the codecs:
+        // org.dcm4che3.imageioimpl.plugins.rle.RLEImageReaderSpi
+        // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageReaderSpi
+        // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageWriterSpi
+        ImageioUtil.registerServiceProvider(rleImageReaderSpi);
+        ImageioUtil.registerServiceProvider(DicomMediaIO.dicomImageReaderSpi);
+
+        ConfigurationAdmin confAdmin =
+            BundlePreferences.getService(context.getBundleContext(), ConfigurationAdmin.class);
+        if (confAdmin != null) {
+            try {
+                Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, LOGGER_KEY, LOGGER_VAL);
+                if (logConfiguration == null) {
+                    logConfiguration = confAdmin
+                        .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                    Dictionary<String, Object> loggingProperties = new Hashtable<>();
+                    loggingProperties.put("org.apache.sling.commons.log.level", "INFO"); //$NON-NLS-1$ //$NON-NLS-2$
+                    loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL); //$NON-NLS-1$
+                    // add this property to give us something unique to re-find this configuration
+                    loggingProperties.put(LOGGER_KEY, LOGGER_VAL);
+                    logConfiguration.update(loggingProperties);
+                }
+            } catch (IOException e) {
+                LOGGER.error("", e); //$NON-NLS-1$
+            }
+        }
+    }
+
+    @Deactivate
+    protected void deactivate(ComponentContext context) {
+        LOGGER.info("Deactivate DicomCodec"); //$NON-NLS-1$
+        ImageioUtil.deregisterServiceProvider(rleImageReaderSpi);
+        ImageioUtil.deregisterServiceProvider(DicomMediaIO.dicomImageReaderSpi);
+    }
+
+    @Reference(service = DicomSpecialElementFactory.class, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC, unbind = "removeDicomSpecialElementFactory")
+    void addDicomSpecialElementFactory(DicomSpecialElementFactory factory) {
+        String name = factory.getClass().getName();
+        for (String modality : factory.getModalities()) {
+            DicomSpecialElementFactory prev = DicomMediaIO.DCM_ELEMENT_FACTORIES.put(modality, factory);
+            if (prev != null) {
+                LOGGER.warn("{} factory has been replaced by {}", prev.getClass().getName(), name); //$NON-NLS-1$
+            }
+            LOGGER.info("Register DicomSpecialElementFactory: {} => {}", modality, name); //$NON-NLS-1$
+        }
+    }
+
+    void removeDicomSpecialElementFactory(DicomSpecialElementFactory factory) {
+        String name = factory.getClass().getName();
+        for (String modality : factory.getModalities()) {
+            DicomSpecialElementFactory f = DicomMediaIO.DCM_ELEMENT_FACTORIES.get(modality);
+            if (factory.equals(f)) {
+                DicomMediaIO.DCM_ELEMENT_FACTORIES.remove(modality);
+                LOGGER.info("Unregister DicomSpecialElementFactory: {} => {}", modality, name); //$NON-NLS-1$
+            } else {
+                LOGGER.warn("{}: Unregistering {} has no effect, {} is registered instead", modality, name, //$NON-NLS-1$
+                    f.getClass().getName());
+            }
+        }
     }
 
 }

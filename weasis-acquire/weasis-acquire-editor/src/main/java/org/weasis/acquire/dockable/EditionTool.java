@@ -20,6 +20,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.AcquireActionButton;
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.dockable.components.AcquireSubmitButtonsPanel;
@@ -40,6 +41,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
 import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 /**
  *
@@ -51,7 +53,7 @@ import bibliothek.gui.dock.common.CLocation;
 public class EditionTool extends PluginTool implements SeriesViewerListener {
     private static final long serialVersionUID = -3662409181835644699L;
 
-    public static final String BUTTON_NAME = "Photo Editor";
+    public static final String BUTTON_NAME = Messages.getString("EditionTool.title_btn"); //$NON-NLS-1$
 
     private final JScrollPane rootPane = new JScrollPane();
 
@@ -63,7 +65,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
     private final AcquireSubmitButtonsPanel bottomPanel = new AcquireSubmitButtonsPanel();
 
     public EditionTool(Type type) {
-        super(BUTTON_NAME, BUTTON_NAME, type, 9);
+        super(BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, type, 9);
         dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
         setDockableWidth(300);
         setLayout(new BorderLayout());

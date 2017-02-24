@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.SubsampleAverageDescriptor;
-import javax.swing.Icon;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,7 @@ public final class JIThumbnailCache {
     private static final LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     // Set only one concurrent thread. The time consuming part is in loading image thread (see ImageElement)
     private static final ExecutorService qExecutor =
-        new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, ThreadUtil.getThreadFactory("Thumbnail Cache"));
+        new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, ThreadUtil.getThreadFactory("Thumbnail Cache")); //$NON-NLS-1$
 
     private static final JIThumbnailCache instance = new JIThumbnailCache();
 
@@ -84,7 +83,7 @@ public final class JIThumbnailCache {
         }
     }
 
-    public Icon getThumbnailFor(final ImageElement diskObject, final IThumbnailList aThumbnailList, final int index) {
+    public ThumbnailIcon getThumbnailFor(final ImageElement diskObject, final IThumbnailList aThumbnailList, final int index) {
         try {
 
             final ThumbnailIcon jiIcon = this.cachedThumbnails.get(diskObject.getMediaURI());
@@ -93,7 +92,7 @@ public final class JIThumbnailCache {
             }
 
         } catch (final Exception e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
         }
         if (!diskObject.isLoading()) {
             loadThumbnail(diskObject, aThumbnailList, index);

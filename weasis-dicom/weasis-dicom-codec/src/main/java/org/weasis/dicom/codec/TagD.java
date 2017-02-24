@@ -50,7 +50,6 @@ import org.dcm4che3.util.DateUtils;
 import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
@@ -69,9 +68,46 @@ public class TagD extends TagW {
     static final DateTimeFormatter DICOM_TIME = new DateTimeFormatterBuilder().appendValue(HOUR_OF_DAY, 2)
         .optionalStart().appendValue(MINUTE_OF_HOUR, 2).optionalStart().appendValue(SECOND_OF_MINUTE, 2)
         .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true).toFormatter();
+    
+    public enum Sex {
+        SEX_MALE("M", org.weasis.core.api.Messages.getString("TagW.Male")), //$NON-NLS-1$ //$NON-NLS-2$
+        SEX_FEMALE("F", org.weasis.core.api.Messages.getString("TagW.female")), //$NON-NLS-1$ //$NON-NLS-2$
+        SEX_OTHER("O", org.weasis.core.api.Messages.getString("TagW.other")); //$NON-NLS-1$ //$NON-NLS-2$
+
+        private final String value;
+        private final String displayValue;
+
+        private Sex(String value, String displayValue) {
+            this.value = value;
+            this.displayValue = displayValue;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return displayValue;
+        }
+        
+        public static Sex getSex(String sex) {
+            Sex s = Sex.SEX_OTHER;
+            if (StringUtil.hasText(sex)) {
+               // Sex attribute can have the following values: M(male), F(female), or O(other)
+               return sex.toUpperCase().startsWith("F") ? Sex.SEX_FEMALE //$NON-NLS-1$
+                    : sex.toUpperCase().startsWith("M") ? Sex.SEX_MALE : s; //$NON-NLS-1$
+            }
+            return s;
+        }
+    }
 
     public enum Level {
-        PATIENT("Patient"), STUDY("Study"), SERIES("Series"), INSTANCE("Instance"), FRAME("Frame");
+        PATIENT("Patient"), 
+        STUDY("Study"), 
+        SERIES("Series"), 
+        INSTANCE("Instance"),
+        FRAME("Frame"); 
 
         private final String tag;
 
@@ -155,7 +191,7 @@ public class TagD extends TagW {
         try {
             return vr.vmOf(value);
         } catch (Exception e) {
-            LOGGER.error("Cannot evaluate mulitplicity from DICOM VR", e);
+            LOGGER.error("Cannot evaluate mulitplicity from DICOM VR", e); //$NON-NLS-1$
         }
         return getValueMultiplicity(value);
     }
@@ -375,8 +411,9 @@ public class TagD extends TagW {
         }
 
         if (TagType.DICOM_PERSON_NAME.equals(type)) {
-            if(value instanceof String[]){
-                return Arrays.asList((String[]) value).stream().map(TagD::getDicomPersonName).collect(Collectors.joining(", "));
+            if (value instanceof String[]) {
+                return Arrays.asList((String[]) value).stream().map(TagD::getDicomPersonName)
+                    .collect(Collectors.joining(", ")); //$NON-NLS-1$
             }
             return getDicomPersonName(value.toString());
         } else if (TagType.DICOM_PERIOD.equals(type)) {
@@ -503,12 +540,12 @@ public class TagD extends TagW {
                         String disp = xmler.getText();
                         if (StringUtil.hasText(disp)) {
                             try {
-                                if (tag.startsWith("F")) {
+                                if (tag.startsWith("F")) { //$NON-NLS-1$
                                     return;
                                 }
                                 int tagID = Integer.parseInt(tag.replace('x', '0'), 16);
 
-                                String[] vms = vm.split("-", 2);
+                                String[] vms = vm.split("-", 2); //$NON-NLS-1$
                                 int vmMin;
                                 int vmMax;
                                 if (vms.length == 1) {
@@ -537,12 +574,12 @@ public class TagD extends TagW {
                                 }
                                 TagW.addTag(t);
                             } catch (Exception e) {
-                                LOGGER.error("Cannot read {}", disp, e);
+                                LOGGER.error("Cannot read {}", disp, e); //$NON-NLS-1$
                             }
                         }
                     } else {
                         // Exclude delimitation tags
-                        if (tag == null || !tag.startsWith("FFFEE0")) {
+                        if (tag == null || !tag.startsWith("FFFEE0")) { //$NON-NLS-1$
                             LOGGER.error("Missing attribute: {} {} {} {}", //$NON-NLS-1$
                                 new Object[] { tag, keyword, vr, vm }); // $NON-NLS-1$
                         }
@@ -561,7 +598,7 @@ public class TagD extends TagW {
     }
 
     private static int getVM(String val) {
-        if ("n".equals(val) || val.contains("n")) {
+        if ("n".equals(val) || val.contains("n")) { //$NON-NLS-1$ //$NON-NLS-2$
             return Integer.MAX_VALUE;
         }
         return Integer.parseInt(val);
@@ -613,7 +650,7 @@ public class TagD extends TagW {
                 try {
                     return type.cast(tagable.getTagValue(tags.get(key)));
                 } catch (ClassCastException e) {
-                    LOGGER.error("Cannot cast the value of \"{}\" into {}", key, type, e);
+                    LOGGER.error("Cannot cast the value of \"{}\" into {}", key, type, e); //$NON-NLS-1$
                 }
             }
         }
@@ -663,7 +700,7 @@ public class TagD extends TagW {
                 }
                 return LocalDate.parse(date, DICOM_DATE);
             } catch (Exception e) {
-                LOGGER.error("Parse DICOM date", e);
+                LOGGER.error("Parse DICOM date", e); //$NON-NLS-1$
             }
         }
         return null;
@@ -680,7 +717,7 @@ public class TagD extends TagW {
                     time.chars().filter(i -> ':' != (char) i).forEachOrdered(i -> buf.append((char) i));
                     return LocalTime.parse(buf.toString().trim(), DICOM_TIME);
                 } catch (Exception e1) {
-                    LOGGER.error("Parse DICOM time", e1);
+                    LOGGER.error("Parse DICOM time", e1); //$NON-NLS-1$
                 }
             }
         }
@@ -697,7 +734,7 @@ public class TagD extends TagW {
                 Date date = DateUtils.parseDT(tz, value, ceil, new DatePrecision());
                 return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
             } catch (Exception e) {
-                LOGGER.error("Parse DICOM dateTime", e);
+                LOGGER.error("Parse DICOM dateTime", e); //$NON-NLS-1$
             }
         }
         return null;
@@ -759,7 +796,7 @@ public class TagD extends TagW {
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
         TemporalAccessor[] defaultValue) {
-        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\");
+        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\"); //$NON-NLS-1$
     }
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
@@ -810,13 +847,13 @@ public class TagD extends TagW {
                 unit = ChronoUnit.DAYS.toString();
                 break;
             default:
-                LOGGER.error("Get period format: \"{}\" is not valid", value);
+                LOGGER.error("Get period format: \"{}\" is not valid", value); //$NON-NLS-1$
                 return StringUtil.EMPTY_STRING;
         }
 
         // Remove the last character and leading 0
-        StringBuilder builder = new StringBuilder(value.substring(0, value.length() - 1).replaceFirst("^0+(?!$)", ""));
-        builder.append(" ");
+        StringBuilder builder = new StringBuilder(value.substring(0, value.length() - 1).replaceFirst("^0+(?!$)", "")); //$NON-NLS-1$ //$NON-NLS-2$
+        builder.append(" "); //$NON-NLS-1$
         builder.append(unit);
         return builder.toString();
     }
@@ -857,8 +894,6 @@ public class TagD extends TagW {
                         buf.append(" "); //$NON-NLS-1$
                     }
                     buf.append(vals[i]);
-                } else if (i == 0) {
-                    buf.append(TagW.NO_VALUE);
                 }
             }
 
@@ -870,9 +905,7 @@ public class TagD extends TagW {
         if (!StringUtil.hasText(val)) {
             return StringUtil.EMPTY_STRING;
         }
-        // Sex attribute can have the following values: M(male), F(female), or O(other)
-        return val.toUpperCase().startsWith("F") ? Messages.getString("TagW.female") //$NON-NLS-1$ //$NON-NLS-2$
-            : val.toUpperCase().startsWith("M") ? Messages.getString("TagW.Male") : Messages.getString("TagW.other"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        return Sex.getSex(val).toString();
     }
 
 }

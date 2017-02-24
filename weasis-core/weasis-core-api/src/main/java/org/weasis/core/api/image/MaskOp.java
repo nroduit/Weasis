@@ -31,7 +31,7 @@ import org.weasis.core.api.image.op.ShutterDescriptor;
 
 public class MaskOp extends AbstractOp {
 
-    public static final String OP_NAME = "Mask";
+    public static final String OP_NAME = "Mask"; //$NON-NLS-1$
 
     /**
      * Set whether the shutter is applied (Required parameter).

@@ -11,10 +11,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -202,10 +200,8 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                         if (fruid != null) {
                             selList.clear();
                             MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
-                            Collection<MediaSeriesGroup> seriesList1 = dicomModel.getChildren(studyGroup);
                             synchronized (dicomModel) {
-                                for (Iterator<MediaSeriesGroup> it = seriesList1.iterator(); it.hasNext();) {
-                                    MediaSeriesGroup seq = it.next();
+                                for (MediaSeriesGroup seq : dicomModel.getChildren(studyGroup)) {
                                     if (seq instanceof Series) {
                                         Series s = (Series) seq;
                                         if (fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
@@ -224,10 +220,8 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                         if (fruid != null) {
                             selList.clear();
                             MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
-                            Collection<MediaSeriesGroup> seriesList1 = dicomModel.getChildren(studyGroup);
                             synchronized (dicomModel) {
-                                for (Iterator<MediaSeriesGroup> it = seriesList1.iterator(); it.hasNext();) {
-                                    MediaSeriesGroup seq = it.next();
+                                for (MediaSeriesGroup seq : dicomModel.getChildren(studyGroup)) {
                                     if (seq instanceof Series) {
                                         Series s = (Series) seq;
                                         if (fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
@@ -345,7 +339,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
 
     @Override
     public void keyTyped(KeyEvent e) {
-     // Do nothing
+        // Do nothing
     }
 
     @Override
@@ -383,7 +377,6 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     public void keyReleased(KeyEvent e) {
         // Do nothing
     }
-    
 
     public static SeriesSelectionModel getSeriesSelectionModel() {
         DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);

@@ -160,11 +160,6 @@ public class DicomSpecialElement extends MediaElement {
         return super.saveToFile(output);
     }
 
-    @Override
-    public void dispose() {
-        // Do nothing
-    }
-
     public static final List<DicomSpecialElement> getPRfromSopUID(String seriesUID, String sopUID, Integer frameNumber,
         List<DicomSpecialElement> studyElements) {
         List<DicomSpecialElement> filteredList = new ArrayList<>();
@@ -182,28 +177,29 @@ public class DicomSpecialElement extends MediaElement {
     }
 
     public static boolean isSopuidInReferencedSeriesSequence(Attributes[] seq, String seriesUID, String sopUID,
-        Integer frameNumber) {
+        Integer dicomFrameNumber) {
         if (seq != null) {
             for (Attributes item : seq) {
                 if (seriesUID.equals(item.getString(Tag.SeriesInstanceUID))) {
-                    Sequence seq2 = item.getSequence(Tag.ReferencedImageSequence);
-                    if (seq2 != null) {
-                        for (Attributes sop : seq2) {
-                            if (sopUID.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
-                                if (frameNumber != null) {
-                                    int[] seqFrame = DicomMediaUtils.getIntAyrrayFromDicomElement(sop,
-                                        Tag.ReferencedFrameNumber, null);
-                                    if (seqFrame == null || seqFrame.length == 0) {
+                    Sequence refImgs = item.getSequence(Tag.ReferencedImageSequence);
+                    if (refImgs == null || refImgs.isEmpty()) {
+                        return true;
+                    }
+
+                    for (Attributes sop : refImgs) {
+                        if (sopUID.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
+                            if (dicomFrameNumber == null) {
+                                return true;
+                            }
+                            int[] seqFrame =
+                                DicomMediaUtils.getIntAyrrayFromDicomElement(sop, Tag.ReferencedFrameNumber, null);
+                            if (seqFrame == null || seqFrame.length == 0) {
+                                return true;
+                            } else {
+                                for (int k : seqFrame) {
+                                    if (k == dicomFrameNumber) {
                                         return true;
-                                    } else {
-                                        for (int k : seqFrame) {
-                                            if (k == frameNumber) {
-                                                return true;
-                                            }
-                                        }
                                     }
-                                } else {
-                                    return true;
                                 }
                             }
                         }
@@ -215,16 +211,16 @@ public class DicomSpecialElement extends MediaElement {
     }
 
     public static boolean isSopuidInReferencedSeriesSequence(Map<String, SOPInstanceReferenceAndMAC> seq, String sopUID,
-        Integer frameNumber) {
+        Integer dicomFrameNumber) {
         if (seq != null && StringUtil.hasText(sopUID) && seq.containsKey(sopUID)) {
-            if (frameNumber != null && frameNumber > 1) {
+            if (dicomFrameNumber != null && dicomFrameNumber > 1) {
                 SOPInstanceReferenceAndMAC val = seq.get(sopUID);
                 int[] seqFrame = val == null ? null : val.getReferencedFrameNumber();
                 if (seqFrame == null || seqFrame.length == 0) {
                     return true;
                 } else {
                     for (int k : seqFrame) {
-                        if (k == frameNumber) {
+                        if (k == dicomFrameNumber) {
                             return true;
                         }
                     }
@@ -305,7 +301,7 @@ public class DicomSpecialElement extends MediaElement {
     }
 
     public static final RejectedKOSpecialElement getRejectionKoSpecialElement(
-        Collection<DicomSpecialElement> specialElements, String seriesUID, String sopUID, Integer frameNumber) {
+        Collection<DicomSpecialElement> specialElements, String seriesUID, String sopUID, Integer dicomFrameNumber) {
 
         if (specialElements == null) {
             return null;
@@ -316,7 +312,7 @@ public class DicomSpecialElement extends MediaElement {
             if (element instanceof RejectedKOSpecialElement) {
                 RejectedKOSpecialElement koElement = (RejectedKOSpecialElement) element;
                 if (isSopuidInReferencedSeriesSequence(koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID,
-                    frameNumber)) {
+                    dicomFrameNumber)) {
                     if (koList == null) {
                         koList = new ArrayList<>();
                     }
@@ -334,7 +330,7 @@ public class DicomSpecialElement extends MediaElement {
     }
 
     public static final List<PRSpecialElement> getPRSpecialElements(Collection<DicomSpecialElement> specialElements,
-        String seriesUID, String sopUID, Integer frameNumber) {
+        String seriesUID, String sopUID, Integer dicomFrameNumber) {
 
         if (specialElements == null) {
             return Collections.emptyList();
@@ -346,7 +342,7 @@ public class DicomSpecialElement extends MediaElement {
             if (element instanceof PRSpecialElement) {
                 PRSpecialElement prElement = (PRSpecialElement) element;
                 Attributes[] seq = TagD.getTagValue(prElement, Tag.ReferencedSeriesSequence, Attributes[].class);
-                if (isSopuidInReferencedSeriesSequence(seq, seriesUID, sopUID, frameNumber)) {
+                if (isSopuidInReferencedSeriesSequence(seq, seriesUID, sopUID, dicomFrameNumber)) {
                     if (prList == null) {
                         prList = new ArrayList<>();
                     }

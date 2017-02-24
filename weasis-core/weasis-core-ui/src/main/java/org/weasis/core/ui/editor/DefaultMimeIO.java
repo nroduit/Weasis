@@ -119,18 +119,12 @@ public class DefaultMimeIO implements MediaReader {
 
     @Override
     public int getMediaElementNumber() {
-        // TODO Auto-generated method stub
-        return 0;
+        return 1;
     }
 
     private MediaElement getSingleImage() {
         if (mediaElement == null) {
-            mediaElement = new MediaElement(this, null) {
-                @Override
-                public void dispose() {
-                    // TODO Auto-generated method stub
-                }
-            };
+            mediaElement = new MediaElement(this, null);
         }
         return mediaElement;
     }

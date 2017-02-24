@@ -74,7 +74,6 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -267,6 +266,15 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     }
 
+    private boolean closeIfNoContent() {
+        if (getOpenSeries().isEmpty()) {
+            close();
+            handleFocusAfterClosing();
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void close() {
         if (process != null) {
@@ -285,33 +293,37 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             ObservableEvent.BasicAction action = event.getActionCommand();
             Object newVal = event.getNewValue();
             if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-                if (newVal instanceof DicomSeries) {
-                    DicomSeries dicomSeries = (DicomSeries) newVal;
-                    for (ViewCanvas<DicomImageElement> v : view2ds) {
-                        MediaSeries<DicomImageElement> s = v.getSeries();
-                        if (dicomSeries.equals(s)) {
-                            v.setSeries(null);
-                        }
-                    }
-                } else if (newVal instanceof MediaSeriesGroup) {
+                if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
                     if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
+                            handleFocusAfterClosing();
                         }
                     }
                     // Study Group
                     else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
-                            for (MediaSeriesGroup s : model.getChildren(group)) {
-                                for (ViewCanvas<DicomImageElement> v : view2ds) {
-                                    MediaSeries series = v.getSeries();
-                                    if (s.equals(series)) {
-                                        v.setSeries(null);
+                            for (ViewCanvas<DicomImageElement> v : view2ds) {
+                                if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
+                                    v.setSeries(null);
+                                    if (closeIfNoContent()) {
+                                        return;
                                     }
+                                }
+                            }
+                        }
+                    }
+                    // Series Group
+                    else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
+                        for (ViewCanvas<DicomImageElement> v : view2ds) {
+                            if (newVal.equals(v.getSeries())) {
+                                v.setSeries(null);
+                                if (closeIfNoContent()) {
+                                    return;
                                 }
                             }
                         }
@@ -344,7 +356,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e);
+                LOGGER.error("Checking view type", e); //$NON-NLS-1$
             }
         }
         return false;
@@ -371,7 +383,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             return component;
 
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e);
+            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
         }
         return null;
     }

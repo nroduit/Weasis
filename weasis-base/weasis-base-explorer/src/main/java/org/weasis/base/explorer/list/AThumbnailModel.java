@@ -47,7 +47,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
     public AThumbnailModel(final JList<E> list) {
         this.list = list;
         // Fix list reselection interval when dragging
-        this.list.putClientProperty("List.isFileList", Boolean.TRUE);
+        this.list.putClientProperty("List.isFileList", Boolean.TRUE); //$NON-NLS-1$
         listModel = new DefaultListModel<>();
         list.setModel(listModel);
     }
@@ -101,6 +101,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
                 JIThumbnailCache.removeInQueue((ImageElement) m);
             }
         }
+        list.getSelectionModel().clearSelection();
         listModel.clear();
     }
 
@@ -121,6 +122,9 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
 
     @Override
     public boolean removeElement(E obj) {
+        if (obj instanceof ImageElement) {
+            JIThumbnailCache.removeInQueue((ImageElement) obj);
+        }
         return listModel.removeElement(obj);
     }
 
@@ -148,7 +152,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
                     }
                 });
         } catch (IOException e) {
-            LOGGER.error("Building child directories", e);
+            LOGGER.error("Building child directories", e); //$NON-NLS-1$
         }
     }
 

@@ -44,7 +44,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
 
     private static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
-    private static final String DEFAULT_LABEL = Messages.getString("LabelPrefView.default");
+    private static final String DEFAULT_LABEL = Messages.getString("LabelPrefView.default"); //$NON-NLS-1$
     
     private final JButton jButtonApply = new JButton();
     private final JPanel jPanel2 = new JPanel();

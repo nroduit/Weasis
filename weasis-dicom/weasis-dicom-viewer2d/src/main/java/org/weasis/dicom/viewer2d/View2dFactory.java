@@ -56,9 +56,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Property(name = "service.name", value = "2D DICOM Viewer")
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class View2dFactory implements SeriesViewerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dFactory.class);
 
@@ -66,7 +64,7 @@ public class View2dFactory implements SeriesViewerFactory {
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/dicom.png")); //$NON-NLS-1$
 
     private static final DefaultAction preferencesAction =
-        new DefaultAction(Messages.getString("OpenDicomAction.title"), View2dFactory::getOpenImageAction);
+        new DefaultAction(Messages.getString("OpenDicomAction.title"), View2dFactory::getOpenImageAction); //$NON-NLS-1$
 
     public View2dFactory() {
         super();
@@ -144,7 +142,7 @@ public class View2dFactory implements SeriesViewerFactory {
                         val++;
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Checking view", e);
+                    LOGGER.error("Checking view", e); //$NON-NLS-1$
                 }
             }
         }
@@ -244,7 +242,7 @@ public class View2dFactory implements SeriesViewerFactory {
                 } else {
                     Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
                     JOptionPane.showMessageDialog(c, Messages.getString("OpenDicomAction.open_err_msg"), //$NON-NLS-1$
-                        Messages.getString("OpenDicomAction.desc"), JOptionPane.WARNING_MESSAGE);
+                        Messages.getString("OpenDicomAction.desc"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
                 }
             }
             BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent()); //$NON-NLS-1$

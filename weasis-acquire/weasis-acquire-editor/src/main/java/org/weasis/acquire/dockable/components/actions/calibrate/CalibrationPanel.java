@@ -12,6 +12,7 @@ package org.weasis.acquire.dockable.components.actions.calibrate;
 
 import javax.swing.JLabel;
 
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.EditionToolFactory;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
@@ -30,7 +31,7 @@ public class CalibrationPanel extends AbstractAcquireActionPanel {
     public static final CalibrationGraphic CALIBRATION_LINE_GRAPHIC = new CalibrationGraphic();
 
     public CalibrationPanel() {
-        add(new JLabel("Draw a line on the image"));
+        add(new JLabel(Messages.getString("CalibrationPanel.draw_line"))); //$NON-NLS-1$
     }
 
     @Override

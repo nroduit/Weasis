@@ -12,17 +12,13 @@ package org.weasis.base.explorer;
 
 import java.util.Hashtable;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Property;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@org.apache.felix.scr.annotations.Service
-@org.apache.felix.scr.annotations.Properties(value = { @Property(name = "service.name", value = "Media Explorer"),
-    @Property(name = "service.description", value = "Explore supported media files in tree view") })
+@org.osgi.service.component.annotations.Component(service = DataExplorerViewFactory.class, immediate = false)
 public class DefaultExplorerFactory implements DataExplorerViewFactory {
 
     private DefaultExplorer explorer = null;
@@ -40,6 +36,11 @@ public class DefaultExplorerFactory implements DataExplorerViewFactory {
         return explorer;
     }
 
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+    
     @Activate
     protected void activate(ComponentContext context) {
         if (model == null) {

@@ -25,11 +25,11 @@ import org.weasis.dicom.codec.TransferSyntax;
 public class DicomWebNode extends AbstractDicomNode {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomWebNode.class);
 
-    private static final String T_URL = "url";
-    private static final String T_WEB_TYPE = "webtype";
+    private static final String T_URL = "url"; //$NON-NLS-1$
+    private static final String T_WEB_TYPE = "webtype"; //$NON-NLS-1$
 
     public enum WebType {
-        WADO("WADO"), WADORS("WADO-RS"), STOWRS("STOW-RS");
+        WADO("WADO"), WADORS("WADO-RS"), STOWRS("STOW-RS"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         String title;
 

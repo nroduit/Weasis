@@ -23,7 +23,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.Messages;
 
 public class ActionW implements KeyActionValue {
-    public static final String DRAW_CMD_PREFIX = "draw.sub.";
+    public static final String DRAW_CMD_PREFIX = "draw.sub."; //$NON-NLS-1$
 
     public static final ActionW NO_ACTION =
         new ActionW(Messages.getString("ActionW.no"), "none", KeyEvent.VK_N, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
@@ -70,7 +70,7 @@ public class ActionW implements KeyActionValue {
                 return true;
             }
         };
-    public static final ActionW DRAW = new ActionW("Draw", "draw", KeyEvent.VK_G, 0, null) { //$NON-NLS-2$
+    public static final ActionW DRAW = new ActionW(Messages.getString("ActionW.draws"), "draw", KeyEvent.VK_G, 0, null) {  //$NON-NLS-1$//$NON-NLS-2$
         @Override
         public boolean isDrawingAction() {
             return true;
@@ -80,7 +80,7 @@ public class ActionW implements KeyActionValue {
     public static final ActionW DRAW_MEASURE =
         new ActionW(Messages.getString("ActionW.measurement"), DRAW_CMD_PREFIX + MEASURE.cmd(), 0, 0, null); //$NON-NLS-1$
     public static final ActionW DRAW_GRAPHICS =
-        new ActionW(Messages.getString("ActionW.draw"), DRAW_CMD_PREFIX + DRAW.cmd(), 0, 0, null);
+        new ActionW(Messages.getString("ActionW.draw"), DRAW_CMD_PREFIX + DRAW.cmd(), 0, 0, null); //$NON-NLS-1$
     public static final ActionW SPATIAL_UNIT =
         new ActionW(Messages.getString("ActionW.spatial_unit"), "spunit", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW SORTSTACK = new ActionW("", "sortStack", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$

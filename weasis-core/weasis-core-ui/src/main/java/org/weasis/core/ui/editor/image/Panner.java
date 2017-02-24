@@ -17,7 +17,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
-import java.io.File;
 
 import javax.swing.event.MouseInputAdapter;
 
@@ -43,7 +42,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
     private boolean updatingImageDisplay;
 
     public Panner(DefaultView2d<E> view) {
-        super((File) null, 156);
+        super(156);
         this.view = view;
         setForeground(JMVUtils.TREE_SELECTION_BACKROUND);
         slider = new Rectangle(0, 0, 0, 0);

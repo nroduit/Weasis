@@ -10,28 +10,30 @@
  *******************************************************************************/
 package org.weasis.core.ui.model.layer;
 
+import org.weasis.core.ui.Messages;
+
 public enum LayerType {
-    IMAGE(10, "Image", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE),
+    IMAGE(10, Messages.getString("LayerType.img"), Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE), //$NON-NLS-1$
 
-    CROSSLINES(20, "Crosslines", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE),
+    CROSSLINES(20, Messages.getString("LayerType.crosslines"), Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE), //$NON-NLS-1$
 
-    IMAGE_ANNOTATION(10_000, "Image Annotations", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE),
+    IMAGE_ANNOTATION(10_000, Messages.getString("LayerType.img_anont"), Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE), //$NON-NLS-1$
 
-    ANNOTATION(31, "Annotations", Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE),
+    ANNOTATION(31, Messages.getString("LayerType.annot"), Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE), //$NON-NLS-1$
 
-    DRAW(40, "Drawings", Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE),
+    DRAW(40, Messages.getString("LayerType.drawings"), Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE), //$NON-NLS-1$
 
-    MEASURE(50, "Measurements", Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE),
+    MEASURE(50, Messages.getString("LayerType.measurements"), Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE), //$NON-NLS-1$
 
-    TEMP_DRAW(60, "Drawings [Temp]", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE),
+    TEMP_DRAW(60, "Drawings [Temp]", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE), //$NON-NLS-1$
 
-    ACQUIRE(70, "Dicomizer [Temp]", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE),
+    ACQUIRE(70, "Dicomizer [Temp]", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE), //$NON-NLS-1$
 
-    BLOB(80, "Objects", Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE),
+    BLOB(80, Messages.getString("LayerType.obj"), Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE), //$NON-NLS-1$
 
-    POINTS(90, "Points", Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE),
+    POINTS(90, Messages.getString("LayerType.pts"), Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE), //$NON-NLS-1$
 
-    DICOM_PR(100, "DICOM PR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE);
+    DICOM_PR(100, "DICOM PR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE); //$NON-NLS-1$
 
     private final Integer level;
     private final Boolean visible;

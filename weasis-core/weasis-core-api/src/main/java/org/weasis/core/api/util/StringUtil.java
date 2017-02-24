@@ -126,16 +126,9 @@ public class StringUtil {
         return result;
     }
 
-    public static String integer2String(Integer val) {
-        if (val != null) {
-            return val.toString();
-        }
-        return null;
-    }
-
     public static String splitCamelCaseString(String s) {
         StringBuilder builder = new StringBuilder();
-        for (String w : s.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
+        for (String w : s.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) { //$NON-NLS-1$
             builder.append(w);
             builder.append(' ');
         }
@@ -175,8 +168,8 @@ public class StringUtil {
      */
     public static String deAccent(String str) {
         String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
-        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-        return pattern.matcher(nfdNormalizedString).replaceAll("");
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+"); //$NON-NLS-1$
+        return pattern.matcher(nfdNormalizedString).replaceAll(""); //$NON-NLS-1$
     }
 
     /**
@@ -211,7 +204,7 @@ public class StringUtil {
     }
 
     public static String bytesToMD5(byte[] val) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest md = MessageDigest.getInstance("MD5"); //$NON-NLS-1$
         return bytesToHex(md.digest(val));
     }
 

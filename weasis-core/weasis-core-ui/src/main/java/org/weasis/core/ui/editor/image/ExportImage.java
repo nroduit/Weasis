@@ -136,7 +136,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
         graphicManager.updateLabels(Boolean.TRUE, this);
 
-        if (g2d.getClass().getName().contains("print")) {
+        if (g2d.getClass().getName().contains("print")) { //$NON-NLS-1$
             imageLayer.drawImageForPrinter(g2d, imagePrintingResolution);
         } else {
             imageLayer.drawImage(g2d);

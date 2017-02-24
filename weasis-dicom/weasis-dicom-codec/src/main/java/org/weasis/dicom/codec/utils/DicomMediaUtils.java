@@ -396,11 +396,11 @@ public class DicomMediaUtils {
         if (years < 2) {
             long months = ChronoUnit.MONTHS.between(first, last);
             if (months < 2) {
-                return String.format("%03dD", ChronoUnit.DAYS.between(first, last));
+                return String.format("%03dD", ChronoUnit.DAYS.between(first, last)); //$NON-NLS-1$
             }
-            return String.format("%03dM", months);
+            return String.format("%03dM", months); //$NON-NLS-1$
         }
-        return String.format("%03dY", years);
+        return String.format("%03dY", years); //$NON-NLS-1$
     }
 
     public static Float getFloatFromDicomElement(Attributes dicom, int tag, Float defaultValue) {
@@ -848,7 +848,7 @@ public class DicomMediaUtils {
                      * be ignored from the perspective of applying window values, and for those SOP Classes, window
                      * values shall be applied directly to the stored pixel values without rescaling.
                      */
-                    LOGGER.info("Do not apply RescaleSlope and RescaleIntercept to {}", modlality);//$NON-NLS-1$
+                    LOGGER.trace("Do not apply RescaleSlope and RescaleIntercept to {}", modlality);//$NON-NLS-1$
                 } else {
                     TagD.get(Tag.RescaleSlope).readValue(mLutItems, tagable);
                     TagD.get(Tag.RescaleIntercept).readValue(mLutItems, tagable);
@@ -856,7 +856,7 @@ public class DicomMediaUtils {
                 }
 
             } else if (seqParentTag != null) {
-                LOGGER.info("Cannot apply Modality LUT from {} with inconsistent attributes", //$NON-NLS-1$
+                LOGGER.warn("Cannot apply Modality LUT from {} with inconsistent attributes", //$NON-NLS-1$
                     TagUtils.toString(seqParentTag));
             }
 
@@ -891,7 +891,7 @@ public class DicomMediaUtils {
                 }
             }
 
-            if (LOGGER.isDebugEnabled()) {
+            if (LOGGER.isTraceEnabled()) {
 
                 // The output range of the Modality LUT Module depends on whether or not Rescale Slope and Rescale
                 // Intercept or the Modality LUT Sequence are used.
@@ -909,10 +909,10 @@ public class DicomMediaUtils {
 
                 if (tagable.getTagValue(TagW.ModalityLUTData) != null) {
                     if (TagD.getTagValue(tagable, Tag.RescaleIntercept) != null) {
-                        LOGGER.debug("Modality LUT Sequence shall NOT be present if Rescale Intercept is present"); //$NON-NLS-1$
+                        LOGGER.trace("Modality LUT Sequence shall NOT be present if Rescale Intercept is present"); //$NON-NLS-1$
                     }
                     if (TagD.getTagValue(tagable, Tag.ModalityLUTType) == null) {
-                        LOGGER.debug("Modality Type is required if Modality LUT Sequence is present. "); //$NON-NLS-1$
+                        LOGGER.trace("Modality Type is required if Modality LUT Sequence is present. "); //$NON-NLS-1$
                     }
                 } else if (TagD.getTagValue(tagable, Tag.RescaleIntercept) != null) {
                     if (TagD.getTagValue(tagable, Tag.RescaleSlope) == null) {
@@ -923,7 +923,7 @@ public class DicomMediaUtils {
                     if ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         || !"PT".equals(modlality)) { //$NON-NLS-1$
                         LOGGER
-                            .debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
+                            .trace("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
                     }
                 }
             }
@@ -1038,7 +1038,7 @@ public class DicomMediaUtils {
                     tagable.setTag(TagW.PRLUTsData, createLut(presentationLUT));
                     tagable.setTag(TagW.PRLUTsExplanation,
                         getStringFromDicomElement(presentationLUT, Tag.LUTExplanation));
-                    tagable.setTagNoNull(TagD.get(Tag.PresentationLUTShape), "IDENTITY");
+                    tagable.setTagNoNull(TagD.get(Tag.PresentationLUTShape), "IDENTITY"); //$NON-NLS-1$
                 } else {
                     // value: INVERSE, IDENTITY
                     // INVERSE => must inverse values (same as monochrome 1)
@@ -1368,7 +1368,7 @@ public class DicomMediaUtils {
         }
 
         catch (XMLStreamException e) {
-            LOGGER.error("Reading KO Codes", e);
+            LOGGER.error("Reading KO Codes", e); //$NON-NLS-1$
             codeByValue = null;
         } finally {
             FileUtil.safeClose(xmler);
@@ -1523,7 +1523,7 @@ public class DicomMediaUtils {
 
     public static TemporalAccessor[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,
         TemporalAccessor[] defaultValue) {
-        return getDatesFromDicomElement(xmler, attribute, type, defaultValue, "\\");
+        return getDatesFromDicomElement(xmler, attribute, type, defaultValue, "\\"); //$NON-NLS-1$
     }
 
     public static TemporalAccessor[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,

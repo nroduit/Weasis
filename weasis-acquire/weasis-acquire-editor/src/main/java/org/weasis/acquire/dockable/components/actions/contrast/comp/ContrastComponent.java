@@ -16,6 +16,7 @@ import java.util.StringJoiner;
 
 import javax.swing.JLabel;
 
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.contrast.ContrastPanel;
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.core.api.util.StringUtil;
@@ -30,13 +31,13 @@ public class ContrastComponent extends AbstractSliderComponent {
     private static final Hashtable<Integer, JLabel> labels = new Hashtable<>();
 
     static {
-        labels.put(CONTRAST_MIN, new JLabel("0.01"));
-        labels.put(CONTRAST_VALUE, new JLabel("1"));
-        labels.put(CONTRAST_MAX, new JLabel("2"));
+        labels.put(CONTRAST_MIN, new JLabel("0.01")); //$NON-NLS-1$
+        labels.put(CONTRAST_VALUE, new JLabel("1")); //$NON-NLS-1$
+        labels.put(CONTRAST_MAX, new JLabel("2")); //$NON-NLS-1$
     }
 
     public ContrastComponent(ContrastPanel panel) {
-        super(panel, "Contrasts");
+        super(panel, Messages.getString("ContrastComponent.contrast")); //$NON-NLS-1$
         addChangeListener(panel);
     }
 

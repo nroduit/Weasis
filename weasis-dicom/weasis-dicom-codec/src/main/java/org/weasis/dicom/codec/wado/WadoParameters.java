@@ -66,7 +66,7 @@ public class WadoParameters {
                 try {
                     overrideDicomTagIDList[i] = Integer.decode(val[i].trim());
                 } catch (NumberFormatException e) {
-                    LOGGER.error("Cannot read dicom tag list", e);
+                    LOGGER.error("Cannot read dicom tag list", e); //$NON-NLS-1$
                 }
             }
         } else {

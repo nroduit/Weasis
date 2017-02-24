@@ -406,7 +406,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public void reset() {
         super.reset();
-        setPresentationState(ActionState.NoneLabel.NONE, false);
+        DicomImageElement img = getImage();
+        if (img != null) {
+            Object key = img.getKey();
+            List<PRSpecialElement> prList =
+                DicomModel.getPrSpecialElements(series, TagD.getTagValue(img, Tag.SOPInstanceUID, String.class),
+                    key instanceof Integer ? (Integer) key + 1 : null);
+            if (!prList.isEmpty()) {
+                setPresentationState(prList.get(0), false);
+            }
+        }
     }
 
     void setPresentationState(Object val, boolean newImage) {
@@ -449,16 +458,21 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
             // Reset crop
             updateCanvas(false);
-            actionsInView.remove(DefaultView2d.PROP_LAYER_OFFSET);
+            getImageLayer().setOffset(null);
         }
         // If no Presentation State use the current image
         if (pr == null) {
             // Keeps KO properties (series level)
             Object ko = actionsInView.get(ActionW.KO_SELECTION.cmd());
             Object filter = actionsInView.get(ActionW.FILTERED_SERIES.cmd());
+            OpManager disOp = getDisplayOpManager();
+            Object preset = disOp.getParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd());
             initActionWState();
             setActionsInView(ActionW.KO_SELECTION.cmd(), ko);
             setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
+            disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), preset);
+            resetZoom();
+            resetPan();
         } else {
             PRManager.applyPresentationState(this, pr, m);
         }
@@ -467,9 +481,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (area != null && !area.equals(getViewModel().getModelArea())) {
             ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
             getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
-            actionsInView.put(DefaultView2d.PROP_LAYER_OFFSET, new Point(area.x, area.y));
+            getImageLayer().setOffset(new Point(area.x, area.y));
         }
-        imageLayer.setPreprocessing((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+
+        SimpleOpManager opManager = (SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd());
+        imageLayer.setPreprocessing(opManager);
+        if(opManager == null && spatialTransformation){
+            // Reset preprocessing cache
+            imageLayer.getDisplayOpManager().setFirstNode(imageLayer.getSourceRenderedImage());
+        }
+        
         if (pr != null) {
             imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ApplyPR, series, m, actionsInView));
             ImageOpNode rotation = imageLayer.getDisplayOpManager().getNode(RotationOp.OP_NAME);
@@ -743,7 +764,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     graphicManager.addGraphic(graphic);
 
                 } catch (InvalidShapeException e) {
-                    LOGGER.error("Building crossline", e);
+                    LOGGER.error("Building crossline", e); //$NON-NLS-1$
                 }
             }
         }
@@ -901,7 +922,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
                 graphicManager.addGraphic(graphic);
             } catch (InvalidShapeException e) {
-                LOGGER.error("Add crosshair line", e);
+                LOGGER.error("Add crosshair line", e); //$NON-NLS-1$
             }
 
         }
@@ -919,7 +940,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 graphicManager.addGraphic(graphic);
 
             } catch (InvalidShapeException e) {
-                LOGGER.error("Add rectangle", e);
+                LOGGER.error("Add rectangle", e); //$NON-NLS-1$
             }
         }
     }
@@ -1287,7 +1308,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 try {
                     files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable files", e);
+                    LOGGER.error("Get dragable files", e); //$NON-NLS-1$
                 }
                 return dropDicomFiles(files);
             }
@@ -1300,7 +1321,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable URIs", e);
+                    LOGGER.error("Get dragable URIs", e); //$NON-NLS-1$
                 }
                 return dropDicomFiles(files);
             }
@@ -1351,7 +1372,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     return false;
                 }
             } catch (Exception e) {
-                LOGGER.error("Get dragable series", e);
+                LOGGER.error("Get dragable series", e); //$NON-NLS-1$
                 return false;
             } finally {
                 if (selList != null) {

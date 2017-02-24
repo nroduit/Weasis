@@ -35,7 +35,7 @@ public interface SeriesViewer<E extends MediaElement> {
 
     void removeSeries(MediaSeries<E> series);
 
-    JMenu fillSelectedPluginMenu(JMenu menu);
+    JMenu fillSelectedPluginMenu(JMenu menuRoot);
 
     List<Toolbar> getToolBar();
 
