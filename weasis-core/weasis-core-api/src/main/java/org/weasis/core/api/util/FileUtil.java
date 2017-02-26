@@ -298,6 +298,28 @@ public final class FileUtil {
         }
     }
 
+    
+    /**
+     * @param inputStream
+     * @param out
+     * @throws StreamIOException 
+     */
+    public static void writeStreamWithIOException(InputStream inputStream, OutputStream out) throws StreamIOException {
+        try {
+            byte[] buf = new byte[FILE_BUFFER];
+            int offset;
+            while ((offset = inputStream.read(buf)) > 0) {
+                out.write(buf, 0, offset);
+            }
+            out.flush();
+        } catch (IOException e) {
+            throw new StreamIOException(e);
+        } finally {
+            FileUtil.safeClose(inputStream);
+            FileUtil.safeClose(out);
+        }
+    }
+    
     /**
      * @param inputStream
      * @param out

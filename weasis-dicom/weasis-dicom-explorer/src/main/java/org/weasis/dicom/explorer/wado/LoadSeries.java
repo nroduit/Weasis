@@ -57,6 +57,7 @@ import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.docking.UIManager;
@@ -99,7 +100,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     private volatile DownloadPriority priority = null;
     private final boolean writeInCache;
 
-    private boolean hasError = false;
+    private volatile boolean hasError = false;
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
         super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
@@ -221,7 +222,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             if (splitNb != null) {
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
-            } else if (dicomSeries.size(null) == 0 && dicomSeries.getTagValue(TagW.DicomSpecialElementList) == null) {
+            } else if (dicomSeries.size(null) == 0 && dicomSeries.getTagValue(TagW.DicomSpecialElementList) == null
+                && !hasDownloadFail()) {
                 // Remove in case of split Series and all the SopInstanceUIDs already exist
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.REMOVE, dicomModel, null, dicomSeries));
@@ -647,48 +649,49 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             return buffer.toString();
         }
 
-        private URLConnection initConnection(URL url) throws IOException {
-            URLConnection httpCon = null;
+        private InputStream initConnection(URL url) throws IOException {
+            URLConnection urlConnection = null;
             try {
                 // If there is a proxy, it should be already configured
-                httpCon = url.openConnection();
+                urlConnection = url.openConnection();
                 // Set http login (no protection, only convert in base64)
                 if (wadoParameters.getWebLogin() != null) {
-                    httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
+                    urlConnection.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
                 }
                 if (!wadoParameters.getHttpTaglist().isEmpty()) {
                     for (HttpTag tag : wadoParameters.getHttpTaglist()) {
-                        httpCon.setRequestProperty(tag.getKey(), tag.getValue());
+                        urlConnection.setRequestProperty(tag.getKey(), tag.getValue());
                     }
                 }
                 // Connect to server.
-                httpCon.connect();
+                urlConnection.connect();
             } catch (IOException e) {
                 error();
                 LOGGER.error("Init connection for {}", url, e); //$NON-NLS-1$
                 return null;
             }
-            if (httpCon instanceof HttpURLConnection) {
-                int responseCode = ((HttpURLConnection) httpCon).getResponseCode();
+            if (urlConnection instanceof HttpURLConnection) {
+                int responseCode = ((HttpURLConnection) urlConnection).getResponseCode();
                 // Make sure response code is in the 200 range.
-                if (responseCode / 100 != 2) {
+                if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
                     error();
                     LOGGER.error("Http Response error {} for {}", responseCode, url); //$NON-NLS-1$
                     return null;
                 }
             }
-            return httpCon;
+
+            try {
+                return urlConnection.getInputStream();
+            } catch (IOException e) {
+                throw new StreamIOException(e);
+            }
         }
 
         // Download file.
         @Override
         public Boolean call() throws Exception {
 
-            InputStream stream;
-            URLConnection httpCon = initConnection(url);
-            if (httpCon == null) {
-                return false;
-            }
+            InputStream stream = initConnection(url);
 
             boolean cache = true;
             if (!writeInCache && getUrl().startsWith("file:")) { //$NON-NLS-1$
@@ -698,7 +701,6 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 tempFile = File.createTempFile("image_", ".dcm", DICOM_TMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
-            stream = httpCon.getInputStream();
             // Cannot resume with WADO because the stream is modified on the fly by the wado server. In dcm4chee, see
             // http://www.dcm4che.org/jira/browse/DCMEE-421
             progressBar.setIndeterminate(progressBar.getMaximum() < 3);
@@ -725,11 +727,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                         return false;
                     } else if (bytesTransferred == Integer.MIN_VALUE) {
                         LOGGER.warn("Stop downloading unsupported TSUID, retry to download non compressed TSUID"); //$NON-NLS-1$
-                        httpCon = initConnection(new URL(replaceToDefaultTSUID(url)));
-                        if (httpCon == null) {
-                            return false;
-                        }
-                        stream = httpCon.getInputStream();
+                        stream = initConnection(new URL(replaceToDefaultTSUID(url)));
                         if (overrideList == null && wado != null) {
                             bytesTransferred =
                                 FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, false),
@@ -948,15 +946,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 synchronized (DownloadManager.TASKS) {
                     for (LoadSeries s : DownloadManager.TASKS) {
                         if (s != this && StateValue.STARTED.equals(s.getState())) {
-                            LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
-                                s.getConcurrentDownloads(), s.writeInCache);
-                            s.cancel(true);
-                            taskResume.setPriority(s.getPriority());
-                            Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
-                            if (thumbnail != null) {
-                                LoadSeries.removeThumbnailMouseAndKeyAdapter(thumbnail);
-                                addListenerToThumbnail(thumbnail, taskResume, dicomModel);
-                            }
+                            LoadSeries taskResume = getCopy(s);
                             DownloadManager.addLoadSeries(taskResume, dicomModel, true);
                             DownloadManager.removeLoadSeries(s, dicomModel);
                             break;
@@ -965,6 +955,19 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 }
             }
         }
+    }
+
+    LoadSeries getCopy(LoadSeries s) {
+        LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
+            s.getConcurrentDownloads(), s.writeInCache);
+        s.cancel(true);
+        taskResume.setPriority(s.getPriority());
+        Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
+        if (thumbnail != null) {
+            LoadSeries.removeThumbnailMouseAndKeyAdapter(thumbnail);
+            addListenerToThumbnail(thumbnail, taskResume, dicomModel);
+        }
+        return taskResume;
     }
 
     public int getConcurrentDownloads() {

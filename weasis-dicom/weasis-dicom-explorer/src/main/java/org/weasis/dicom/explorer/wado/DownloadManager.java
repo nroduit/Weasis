@@ -64,6 +64,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -236,7 +237,8 @@ public class DownloadManager {
         void handle(LoadSeries loadSeries);
     }
 
-    public static List<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) throws WeasisDownloadException {
+    public static List<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model)
+        throws DownloadException {
         ArrayList<LoadSeries> seriesList = new ArrayList<>();
         XMLStreamReader xmler = null;
         InputStream stream = null;
@@ -257,21 +259,20 @@ public class DownloadManager {
             }
 
             LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
-            logHttpError(urlConnection);
+            InputStream urlInputStream = getUrlInputStream(urlConnection);
 
             if (path.endsWith(".gz")) { //$NON-NLS-1$
-                stream = new BufferedInputStream(new GZIPInputStream(urlConnection.getInputStream()));
+                stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
             } else if (path.endsWith(".xml")) { //$NON-NLS-1$
-                stream = urlConnection.getInputStream();
+                stream = urlInputStream;
             } else {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                if (FileUtil.writeStream(urlConnection.getInputStream(), new FileOutputStream(outFile)) == -1) {
-                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
-                        stream = new BufferedInputStream(new GZIPInputStream(new FileInputStream(outFile)));
-                    } else {
-                        stream = new FileInputStream(outFile);
-                    }
+                FileUtil.writeStreamWithIOException(urlInputStream, new FileOutputStream(outFile));
+                if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
+                    stream = new BufferedInputStream(new GZIPInputStream(new FileInputStream(outFile)));
+                } else {
+                    stream = new FileInputStream(outFile);
                 }
             }
 
@@ -280,7 +281,7 @@ public class DownloadManager {
                 tempFile = new File(path);
             } else {
                 tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                FileUtil.writeStream(stream, new FileOutputStream(tempFile));
+                FileUtil.writeStreamWithIOException(stream, new FileOutputStream(tempFile));
             }
             xmler = xmlif.createXMLStreamReader(new FileInputStream(tempFile));
 
@@ -344,12 +345,27 @@ public class DownloadManager {
                         break;
                 }
             }
-
-        } catch (IOException | XMLStreamException e) {
+        } catch (StreamIOException e) {
+            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
+            throw new DownloadException(message, e); // rethrow network issue
+        } catch (Exception e) {
             final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
             LOGGER.error("{}", message, e); //$NON-NLS-1$
-            throw new WeasisDownloadException(message, e);
+            final int messageType = JOptionPane.ERROR_MESSAGE;
 
+            GuiExecutor.instance().execute(() -> {
+                PluginTool explorer = null;
+                DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+                if (dicomExplorer instanceof PluginTool) {
+                    explorer = (PluginTool) dicomExplorer;
+                }
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
+                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, null,
+                    JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                if (layer != null) {
+                    layer.hideUI();
+                }
+            });
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
@@ -464,7 +480,7 @@ public class DownloadManager {
 
     }
 
-    private static void logHttpError(URLConnection urlConnection) {
+    private static InputStream getUrlInputStream(URLConnection urlConnection) throws StreamIOException {
         if (urlConnection instanceof HttpURLConnection) {
             HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
             httpURLConnection.setConnectTimeout(5000);
@@ -492,8 +508,14 @@ public class DownloadManager {
                     }
                 }
             } catch (IOException e) {
-                LOGGER.error("lOG http response message", e); //$NON-NLS-1$
+                LOGGER.error("lOG http response:{}", e.getMessage()); //$NON-NLS-1$
+                throw new StreamIOException(e);
             }
+        }
+        try {
+            return urlConnection.getInputStream();
+        } catch (IOException e) {
+           throw new StreamIOException(e);
         }
     }
 
