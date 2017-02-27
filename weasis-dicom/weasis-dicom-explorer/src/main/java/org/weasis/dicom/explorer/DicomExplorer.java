@@ -1277,7 +1277,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         int[] positionSeries = new int[1];
         createSeriesPaneInstance(series, positionSeries);
         if (addSeries && positionSeries[0] != -1) {
-            koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
             // If new study
             if (positionStudy[0] != -1) {
                 if (modelStudy.getIndexOf(study) < 0) {
@@ -1399,10 +1398,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 // update
                 else if (ObservableEvent.BasicAction.Update.equals(action)) {
                     if (newVal instanceof Series) {
-                        Series dcm = (Series) newVal;
-                        Integer splitNb = (Integer) dcm.getTagValue(TagW.SplitSeriesNumber);
+                        Series series = (Series) newVal;
+                        Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                         if (splitNb != null) {
-                            updateSplitSeries(dcm);
+                            updateSplitSeries(series);
+                        } else if ("KO".equals(series.getTagValue(TagW.Modality))) {
+                            MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
+                            koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
                         }
                     }
                 } else if (ObservableEvent.BasicAction.LoadingStart.equals(action)) {
@@ -1554,8 +1556,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         plugin = DefaultMimeAppFactory.getInstance();
                     }
 
-                    ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-                        new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
+                    ArrayList<MediaSeries<? extends MediaElement<?>>> list = new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
                     list.add(series);
                     ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, dicomModel, props);
                     ViewerPluginBuilder.openSequenceInPlugin(builder);
