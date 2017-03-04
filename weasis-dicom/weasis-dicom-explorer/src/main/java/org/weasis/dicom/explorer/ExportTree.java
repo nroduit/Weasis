@@ -109,13 +109,16 @@ public class ExportTree extends JScrollPane {
 
     public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {
         if (maxDeep > 1) {
-            for (Enumeration children = start.children(); children.hasMoreElements();) {
-                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-                if (!dtm.isLeaf()) {
-                    TreePath tp = new TreePath(dtm.getPath());
-                    tree.expandPath(tp);
-
-                    expandTree(tree, dtm, maxDeep - 1);
+            Enumeration<?> children = start.children();
+            while (children.hasMoreElements()) {
+                Object child = children.nextElement();
+                if (child instanceof DefaultMutableTreeNode) {
+                    DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+                    if (!dtm.isLeaf()) {
+                        TreePath tp = new TreePath(dtm.getPath());
+                        tree.expandPath(tp);
+                        expandTree(tree, dtm, maxDeep - 1);
+                    }
                 }
             }
         }

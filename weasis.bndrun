@@ -1,5 +1,5 @@
--runfw: org.apache.felix.framework;version='[5.2.0,5.2.0]'
--runee: JavaSE-1.7
+-runfw: org.apache.felix.framework;version='[5.4.0,5.4.0]'
+-runee: JavaSE-1.8
 -runsystemcapabilities: ${native_capability}
 -runsystempackages: \
 	com.sun.awt, \
@@ -52,30 +52,30 @@
 	jai-lib;version='[1.1.4,1.1.5)',\
 	jai-lib-linux-x86-64;version='[1.1.4,1.1.5)',\
 	javax.vecmath;version='[1.5.2,1.5.3)',\
-	org.apache.felix.bundlerepository;version='[2.0.6,2.0.7)',\
-	org.apache.felix.configadmin;version='[1.8.8,1.8.9)',\
+	org.apache.felix.bundlerepository;version='[2.0.8,2.0.9)',\
+	org.apache.felix.configadmin;version='[1.8.12,1.8.13)',\
 	org.apache.felix.gogo.command;version='[0.16.0,0.16.1)',\
 	org.apache.felix.gogo.runtime;version='[0.16.2,0.16.3)',\
 	org.apache.felix.gogo.shell;version='[0.12.0,0.12.1)',\
 	org.apache.felix.metatype;version='[1.1.2,1.1.3)',\
-	org.apache.felix.prefs;version='[1.0.6,1.0.7)',\
-	org.apache.felix.scr;version='[2.0.2,2.0.3)',\
+	org.apache.felix.prefs;version='[1.1.0,1.1.1)',\
+	org.apache.felix.scr;version='[2.0.8,2.0.9)',\
 	org.apache.sling.commons.log;version='[3.0.2,3.0.3)',\
 	slf4j.api;version='[1.7.5,1.7.6)',\
-	weasis-base-ui;version='[2.5.0,2.5.1)',\
-	weasis-core-api;version='[2.5.0,2.5.1)',\
-	weasis-core-ui;version='[2.5.0,2.5.1)',\
-	weasis-dicom-codec;version='[2.5.0,2.5.1)',\
-	weasis-dicom-explorer;version='[2.5.0,2.5.1)',\
-	weasis-dicom-sr;version='[2.5.0,2.5.1)',\
-	weasis-dicom-viewer2d;version='[2.5.0,2.5.1)',\
-	weasis-image-jni;version='[2.5.0,2.5.1)',\
-	weasis-imageio-codec;version='[2.5.0,2.5.1)',\
+	weasis-base-ui;version='[2.5.3,2.5.4)',\
+	weasis-core-api;version='[2.5.3,2.5.4)',\
+	weasis-core-ui;version='[2.5.3,2.5.4)',\
+	weasis-dicom-codec;version='[2.5.3,2.5.4)',\
+	weasis-dicom-explorer;version='[2.5.3,2.5.4)',\
+	weasis-dicom-sr;version='[2.5.3,2.5.4)',\
+	weasis-dicom-viewer2d;version='[2.5.3,2.5.4)',\
+	weasis-image-jni;version='[2.5.3,2.5.4)',\
+	weasis-imageio-codec;version='[2.5.3,2.5.4)',\
 	weasis-imageio-codec-linux-x86-64;version='[1.2.0,1.2.1)',\
-	weasis-jpeg-codec;version='[2.5.0,2.5.1)',\
-	weasis-jpeg-codec-linux-x86-64;version='[1.0.3,1.0.4)',\
-	weasis-openjpeg-codec;version='[2.5.0,2.5.1)',\
-	weasis-openjpeg-codec-linux-x86-64;version='[2.1.5,2.1.6)'
+	weasis-jpeg-codec;version='[2.5.3,2.5.4)',\
+	weasis-jpeg-codec-linux-x86-64;version='[1.0.7,1.0.8)',\
+	weasis-openjpeg-codec;version='[2.5.3,2.5.4)',\
+	weasis-openjpeg-codec-linux-x86-64;version='[2.1.8,2.1.9)'
 
 -runrequires: \
 	osgi.identity;filter:='(osgi.identity=org.apache.felix.gogo.runtime)',\
@@ -107,26 +107,26 @@
 	osgi.identity;filter:='(osgi.identity=weasis-openjpeg-codec-linux-x86-64)'
 
 -runproperties: \
-	weasis.name=Weasis,\
-	weasis.profile=default,\
-	weasis.aet=WEASIS_AE,\
 	weasis.releasenotes='http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=11282',\
-	weasis.copyrights='\u00a9 2009-2015 Weasis Team',\
-	weasis.help.online='http://www.dcm4che.org/confluence/display/WEA/Home',\
-	weasis.help.shortcuts='http://www.dcm4che.org/confluence/display/WEA/Keyboard+and+Mouse+Shortcuts',\
-	weasis.portable.dicom.directory='dicom,DICOM,IMAGES,images',\
 	weasis.all.cinetoolbar.visible=false,\
 	weasis.all.keyobjecttoolbar.visible=false,\
-	weasis-dicom-viewer2d.all.rotationtoolbar.visible=false,\
-	weasis.contextmenu.lutShape=false,\
 	weasis.contextmenu.lut=false,\
-	weasis.contextmenu.filter=false,\
-	weasis.path=${user.home}/.weasis,\
-	weasis.resources.path='weasis-distributions/resources', \
-#	gosh.args='-sc telnetd -p 17179 start',\
-	weasis.version=2.5.0-SNAPSHOT,\
+	weasis.copyrights=© 2009-2015 Weasis Team,\
+	weasis.user.prefs=superuser,\
 	weasis.user=${user.name},\
-	weasis.user.prefs=superuser
+	weasis-dicom-viewer2d.all.rotationtoolbar.visible=false,\
+	weasis.name=Weasis,\
+	weasis.help.shortcuts=http://www.dcm4che.org/confluence/display/WEA/Keyboard+and+Mouse+Shortcuts,\
+	weasis.version=2.5.0-SNAPSHOT,\
+	weasis.help.online=http://www.dcm4che.org/confluence/display/WEA/Home,\
+	weasis.path=${user.home}/.weasis,\
+	weasis.portable.dicom.directory='dicom,DICOM,IMAGES,images',\
+	weasis.aet=WEASIS_AE,\
+	weasis.resources.path=weasis-distributions/resources,\
+	gosh.args=-sc telnetd -p 17179 start,\
+	weasis.contextmenu.filter=false,\
+	weasis.profile=default,\
+	weasis.contextmenu.lutShape=false
 
 -runvm: -Xms32m -Xmx512m -Dsun.awt.disablegrab=true
 

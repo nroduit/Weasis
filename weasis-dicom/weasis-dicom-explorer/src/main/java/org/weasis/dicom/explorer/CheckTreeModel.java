@@ -141,14 +141,14 @@ public class CheckTreeModel {
             }
         }
 
-        List children = Collections.list(studyNode.children());
+        List<?> children = Collections.list(studyNode.children());
         int index = Collections.binarySearch(children, seriesNode, DicomSorter.SERIES_COMPARATOR);
         index = index < 0 ? -(index + 1) : index;
         studyNode.insert(seriesNode, index);
 
         if (hasGraphics) {
             String seriesInstanceUID = UIDUtils.createUID();
-            Series prSeries = new DicomSeries(seriesInstanceUID);
+            Series<?> prSeries = new DicomSeries(seriesInstanceUID);
             prSeries.setTag(TagD.get(Tag.SeriesNumber), TagD.getTagValue(series, Tag.SeriesNumber, Integer.class));
             prSeries.setTag(TagD.get(Tag.Modality), "PR"); //$NON-NLS-1$
             prSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesInstanceUID);
@@ -173,10 +173,10 @@ public class CheckTreeModel {
                     DefaultMutableTreeNode studyNode = new DefaultMutableTreeNode(study, true);
                     for (MediaSeriesGroup item : dicomModel.getChildren(study)) {
                         if (item instanceof Series) {
-                            buildSeries(studyNode, (Series) item);
+                            buildSeries(studyNode, (Series<?>) item);
                         }
                     }
-                    List children = Collections.list(patientNode.children());
+                    List<?> children = Collections.list(patientNode.children());
                     int index = Collections.binarySearch(children, studyNode, DicomSorter.STUDY_COMPARATOR);
                     if (index < 0) {
                         patientNode.insert(studyNode, -(index + 1));
@@ -184,7 +184,7 @@ public class CheckTreeModel {
                         patientNode.insert(studyNode, index);
                     }
                 }
-                List children = Collections.list(rootNode.children());
+                List<?> children = Collections.list(rootNode.children());
                 int index = Collections.binarySearch(children, patientNode, DicomSorter.PATIENT_COMPARATOR);
                 if (index < 0) {
                     rootNode.insert(patientNode, -(index + 1));
@@ -197,6 +197,8 @@ public class CheckTreeModel {
     }
 
     static class ToolTipTreeNode extends DefaultMutableTreeNode {
+
+        private static final long serialVersionUID = 6815757092280682077L;
 
         public ToolTipTreeNode(TagReadable userObject, boolean allowsChildren) {
             super(Objects.requireNonNull(userObject), allowsChildren);
