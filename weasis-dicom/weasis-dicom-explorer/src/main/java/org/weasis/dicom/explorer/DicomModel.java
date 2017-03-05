@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -143,6 +144,28 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return null;
     }
 
+    public void replacePatientUID(String oldPatientUID, String newPatientUID) {
+        MediaSeriesGroup pt = getHierarchyNode(MediaSeriesGroupNode.rootNode, oldPatientUID);
+        Collection<MediaSeriesGroup> studies = getChildren(pt);
+        Map<MediaSeriesGroup, Collection<MediaSeriesGroup>> studyMap = new HashMap<>();
+        for (MediaSeriesGroup st : studies) {
+            studyMap.put(st, getChildren(st));
+        }
+
+        removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
+        pt.setTagNoNull(TagW.PatientPseudoUID, newPatientUID);
+        addHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
+
+        for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
+            MediaSeriesGroup st = stEntry.getKey();
+            addHierarchyNode(pt, st);
+            for (MediaSeriesGroup s : stEntry.getValue()) {
+                addHierarchyNode(st, s);
+            }
+        }
+        firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UPDATE, DicomModel.this, oldPatientUID, pt));
+    }
+
     public MediaSeriesGroup getStudyNode(String studyUID) {
         Objects.requireNonNull(studyUID);
         synchronized (model) {
@@ -215,7 +238,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void dispose() {
         removeAllPropertyChangeListener();
-        
+
         synchronized (model) {
             for (MediaSeriesGroup pt : getChildren(MediaSeriesGroupNode.rootNode)) {
                 for (MediaSeriesGroup st : getChildren(pt)) {
@@ -225,7 +248,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             }
         }
-        model.clear();     
+        model.clear();
     }
 
     @Override
@@ -253,7 +276,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
 
     }
-    
+
     public void removeAllPropertyChangeListener() {
         for (PropertyChangeListener listener : propertyChange.getPropertyChangeListeners()) {
             propertyChange.removePropertyChangeListener(listener);
@@ -883,17 +906,17 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public void get(String[] argv) throws IOException {
         final String[] usage = { "Load DICOM files remotely or locally", //$NON-NLS-1$
             "Usage: dicom:get ([-l PATH]... [-r URI]... [-p] [-i DATA]... [-w URI]...)", //$NON-NLS-1$
-            "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk",
+            "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk", //$NON-NLS-1$ //$NON-NLS-2$
             "  -r --remote=URI   open DICOMs from an URI", //$NON-NLS-1$
             "  -p --portable     open DICOMs from configured directories at the same level of the executable", //$NON-NLS-1$
             "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //$NON-NLS-1$
-            "  -w --wado=URI     open DICOMs from an XML manifest", "  -? --help         show help" }; //$NON-NLS-2$
+            "  -w --wado=URI     open DICOMs from an XML manifest", "  -? --help         show help" }; //$NON-NLS-1$//$NON-NLS-2$
 
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> largs = opt.getList("local");
-        final List<String> rargs = opt.getList("remote");
-        final List<String> iargs = opt.getList("iwado");
-        final List<String> wargs = opt.getList("wado");
+        final List<String> largs = opt.getList("local"); //$NON-NLS-1$
+        final List<String> rargs = opt.getList("remote"); //$NON-NLS-1$
+        final List<String> iargs = opt.getList("iwado"); //$NON-NLS-1$
+        final List<String> wargs = opt.getList("wado"); //$NON-NLS-1$
 
         if (opt.isSet("help") //$NON-NLS-1$
             || (largs.isEmpty() && rargs.isEmpty() && iargs.isEmpty() && wargs.isEmpty() && !opt.isSet("portable"))) { //$NON-NLS-1$
@@ -994,10 +1017,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             "Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))", //$NON-NLS-1$
             "  -a --all           close all the patients", //$NON-NLS-1$
             "  -y --study=UID     close a study, UID is Study Instance UID", //$NON-NLS-1$
-            "  -s --series=UID    close a series, UID is Series Instance UID", "  -? --help          show help" };
+            "  -s --series=UID    close a series, UID is Series Instance UID", "  -? --help          show help" }; //$NON-NLS-1$ //$NON-NLS-2$
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> yargs = opt.getList("study");
-        final List<String> sargs = opt.getList("series");
+        final List<String> yargs = opt.getList("study"); //$NON-NLS-1$
+        final List<String> sargs = opt.getList("series"); //$NON-NLS-1$
 
         if (opt.isSet("help") || (yargs.isEmpty() && sargs.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$ //$NON-NLS-2$
             opt.usage();

@@ -66,9 +66,9 @@ public class ImportTask extends SwingWorker<List<AcquireImageInfo>, AcquireImage
         try {
             AcquireManager.importImages(get(), searchedSeries, maxRangeInMinutes);
         } catch (InterruptedException doNothing) {
-            LOGGER.warn("Importing task Interruption");
+            LOGGER.warn("Importing task Interruption"); //$NON-NLS-1$
         } catch (ExecutionException e) {
-            LOGGER.error("Importing task", e);
+            LOGGER.error("Importing task", e); //$NON-NLS-1$
         }
     }
 

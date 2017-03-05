@@ -206,11 +206,11 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
         final String[] usage = { "Close images", //$NON-NLS-1$
             "Usage: dicom:close (-a | ([-g UID]... [-s UID]...)) ", //$NON-NLS-1$
             "  -a --all         close all series", //$NON-NLS-1$
-            "  -g --group=UID   close a group from its UID", "  -s --series=UID   close an series/image from its UID",
+            "  -g --group=UID   close a group from its UID", "  -s --series=UID   close an series/image from its UID", //$NON-NLS-1$ //$NON-NLS-2$
             "  -? --help        show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> gargs = opt.getList("group");
-        final List<String> iargs = opt.getList("series");
+        final List<String> gargs = opt.getList("group"); //$NON-NLS-1$
+        final List<String> iargs = opt.getList("series"); //$NON-NLS-1$
 
         if (opt.isSet("help") || (gargs.isEmpty() && iargs.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$ //$NON-NLS-2$
             opt.usage();

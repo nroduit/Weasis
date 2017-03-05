@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -555,11 +555,9 @@ public class WeasisLauncher {
 
                     StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
                     ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-                        + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000)
-                            .substring(1)
+                        + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1)
                         + ";color:#" //$NON-NLS-1$
-                        + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000)
-                            .substring(1)
+                        + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
                         + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
                     message.append("<BR>"); //$NON-NLS-1$
                     String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
@@ -628,7 +626,7 @@ public class WeasisLauncher {
         if (commandProcessor == null) {
             return null;
         }
-        Class<?>[] parameterTypes = new Class[] { InputStream.class, OutputStream.class, OutputStream.class };
+        Class<?>[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
 
@@ -785,7 +783,7 @@ public class WeasisLauncher {
         InputStream is = null;
         try {
             // Try to load config.properties.
-            is = propURI.toURL().openConnection().getInputStream();
+            is = FileUtil.getAdaptedConnection(propURI.toURL()).getInputStream();
             props.load(is);
             is.close();
         } catch (Exception ex) {

@@ -20,9 +20,9 @@ public class Tree<T> {
 
     private final ArrayList<Tree<T>> leafs = new ArrayList<>();
 
-    private Tree<T> parent = null;
+    private volatile Tree<T> parent = null;
 
-    private HashMap<T, Tree<T>> locate = new HashMap<>();
+    private volatile HashMap<T, Tree<T>> locate = new HashMap<>();
 
     public Tree(T head) {
         this.head = head;
@@ -36,7 +36,7 @@ public class Tree<T> {
             addLeaf(root).addLeaf(leaf);
         }
     }
-
+    
     private Tree<T> addLeaf(T leaf) {
         Tree<T> t = new Tree<>(leaf);
         leafs.add(t);

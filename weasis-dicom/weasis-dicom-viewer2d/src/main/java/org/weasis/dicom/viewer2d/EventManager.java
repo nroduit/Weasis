@@ -1459,7 +1459,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { //$NON-NLS-1$
+        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             opt.usage();
             return;
         }
@@ -1472,11 +1472,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             Optional<SliderChangeListener> zoomAction = getAction(ActionW.ZOOM, SliderChangeListener.class);
             if (zoomAction.isPresent()) {
                 if (opt.isSet("increase")) { //$NON-NLS-1$
-                    zoomAction.get().setSliderValue(zoomAction.get().getSliderValue() + opt.getNumber("increase"));
+                    zoomAction.get().setSliderValue(zoomAction.get().getSliderValue() + opt.getNumber("increase")); //$NON-NLS-1$
                 } else if (opt.isSet("decrease")) { //$NON-NLS-1$
-                    zoomAction.get().setSliderValue(zoomAction.get().getSliderValue() - opt.getNumber("decrease"));
+                    zoomAction.get().setSliderValue(zoomAction.get().getSliderValue() - opt.getNumber("decrease")); //$NON-NLS-1$
                 } else if (opt.isSet("set")) { //$NON-NLS-1$
-                    double val3 = Double.parseDouble(opt.get("set"));
+                    double val3 = Double.parseDouble(opt.get("set")); //$NON-NLS-1$
                     if (val3 <= 0.0) {
                         firePropertyChange(ActionW.SYNCH.cmd(), null,
                             new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), val3));
@@ -1555,7 +1555,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             "  -? --help             show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
 
-        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { //$NON-NLS-1$
+        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             opt.usage();
             return;
         }
@@ -1567,12 +1567,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     SliderCineListener moveTroughSliceAction = cineAction.get();
                     if (opt.isSet("increase")) { //$NON-NLS-1$
                         moveTroughSliceAction
-                            .setSliderValue(moveTroughSliceAction.getSliderValue() + opt.getNumber("increase"));
+                            .setSliderValue(moveTroughSliceAction.getSliderValue() + opt.getNumber("increase")); //$NON-NLS-1$
                     } else if (opt.isSet("decrease")) { //$NON-NLS-1$
                         moveTroughSliceAction
-                            .setSliderValue(moveTroughSliceAction.getSliderValue() - opt.getNumber("decrease"));
+                            .setSliderValue(moveTroughSliceAction.getSliderValue() - opt.getNumber("decrease")); //$NON-NLS-1$
                     } else if (opt.isSet("set")) { //$NON-NLS-1$
-                        moveTroughSliceAction.setSliderValue(opt.getNumber("set"));
+                        moveTroughSliceAction.setSliderValue(opt.getNumber("set")); //$NON-NLS-1$
                     }
                 }
             } catch (Exception e) {
@@ -1589,7 +1589,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             "  -? --help           show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
 
-        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("number", "id")) { //$NON-NLS-1$
+        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("number", "id")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             opt.usage();
             return;
         }
@@ -1598,12 +1598,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 if (opt.isSet("number")) { //$NON-NLS-1$
                     if (selectedView2dContainer != null) {
                         GridBagLayoutModel val1 =
-                            selectedView2dContainer.getBestDefaultViewLayout(opt.getNumber("number"));
+                            selectedView2dContainer.getBestDefaultViewLayout(opt.getNumber("number")); //$NON-NLS-1$
                         getAction(ActionW.LAYOUT, ComboItemListener.class).ifPresent(a -> a.setSelectedItem(val1));
                     }
                 } else if (opt.isSet("id")) { //$NON-NLS-1$
                     if (selectedView2dContainer != null) {
-                        GridBagLayoutModel val2 = selectedView2dContainer.getViewLayout(opt.get("id"));
+                        GridBagLayoutModel val2 = selectedView2dContainer.getViewLayout(opt.get("id")); //$NON-NLS-1$
                         if (val2 != null) {
                             getAction(ActionW.LAYOUT, ComboItemListener.class).ifPresent(a -> a.setSelectedItem(val2));
                         }
@@ -1668,8 +1668,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         final String[] usage = { "Set a synchronization mode", //$NON-NLS-1$
             "Usage: dcmview2d:synch VALUE", //$NON-NLS-1$
             "VALUE is " + View2dContainer.SYNCH_LIST.stream().map(s -> s.getCommand()) //$NON-NLS-1$
-                .collect(Collectors.joining("|", "(", ")")),
-            "  -? --help       show help" };
+                .collect(Collectors.joining("|", "(", ")")), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -1710,7 +1710,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || args.isEmpty() && !opt.isSet("all")) { //$NON-NLS-1$
+        if (opt.isSet("help") || args.isEmpty() && !opt.isSet("all")) { //$NON-NLS-1$ //$NON-NLS-2$
             opt.usage();
             return;
         }

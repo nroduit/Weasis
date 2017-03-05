@@ -32,7 +32,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 
@@ -162,8 +162,8 @@ public class LoadDicomObjects extends ExplorerTask {
 
                 if (DicomModel.isSpecialModality(dicomSeries)) {
                     dicomModel.addSpecialModality(dicomSeries);
-                    Arrays.stream(medias).filter(KOSpecialElement.class::isInstance)
-                    .map(KOSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                    Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
+                    .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
                         new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                 } else {
                     dicomModel.firePropertyChange(
@@ -209,8 +209,8 @@ public class LoadDicomObjects extends ExplorerTask {
 
                     if (DicomModel.isSpecialModality(dicomSeries)) {
                         dicomModel.addSpecialModality(dicomSeries);
-                        Arrays.stream(medias).filter(KOSpecialElement.class::isInstance)
-                        .map(KOSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                        Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
+                        .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
                             new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                     }
 
