@@ -332,11 +332,7 @@ public class AcquirePublishDialog extends JDialog {
     private Predicate<AcquireImageInfo> oversizedImages() {
         return acqImg -> {
             PlanarImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
-
-            Integer width = img.width();
-            Integer height = img.height();
-
-            return width > Resolution.ULTRA_HD.maxSize || height > Resolution.ULTRA_HD.maxSize;
+            return img.width() > Resolution.ULTRA_HD.maxSize || img.height() > Resolution.ULTRA_HD.maxSize;
         };
     }
 

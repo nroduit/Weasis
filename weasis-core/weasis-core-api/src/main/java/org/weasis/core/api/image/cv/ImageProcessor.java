@@ -702,16 +702,24 @@ public class ImageProcessor {
     }
 
     public static ImageCV readImage(File file) {
-        if (!file.canRead()) {
-            return null;
-        }
-
         try {
-            return ImageCV.toImageCV(Imgcodecs.imread(file.getPath()));
+            return readImageWithCvException(file);
         } catch (OutOfMemoryError | CvException e) {
             LOGGER.error("Reading image", e); //$NON-NLS-1$
             return null;
         }
+    }
+
+    public static ImageCV readImageWithCvException(File file) {
+        if (!file.canRead()) {
+            return null;
+        }
+
+        Mat img = Imgcodecs.imread(file.getPath());
+        if (img.width() < 1 || img.height() < 1) {
+            throw new CvException("OpenCV cannot read " + file.getPath());
+        }
+        return ImageCV.toImageCV(img);
     }
 
     public void process(Mat sourceImage, Mat resultImage, int tileSize) {

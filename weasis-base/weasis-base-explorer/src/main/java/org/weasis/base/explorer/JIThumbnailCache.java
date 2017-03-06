@@ -159,7 +159,7 @@ public final class JIThumbnailCache {
 
             // Get the final that contain the thumbnail when the uncompress mode is activated
             File file = diskObject.getFile();
-            if (file != null && file.getName().endsWith(".pnm")) {
+            if (file != null && file.getName().endsWith(".wcv")) {
                 File thumbFile = new File(ImageFiler.changeExtension(file.getPath(), ".jpg"));
                 if (thumbFile.canRead()) {
                     img = ImageProcessor.readImage(thumbFile);

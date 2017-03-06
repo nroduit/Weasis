@@ -8,11 +8,9 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.imageio.codec;
+package org.opencv.internal;
 
-import java.awt.image.RenderedImage;
 import java.io.File;
-import java.io.RandomAccessFile;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,10 +21,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
-import javax.imageio.stream.FileImageInputStream;
-import javax.imageio.stream.ImageInputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +47,8 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 
-public class ImageElementIO implements MediaReader {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ImageElementIO.class);
+public class ImageCVIO implements MediaReader {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImageCVIO.class);
 
     public static final File CACHE_UNCOMPRESSED_DIR =
         AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "uncompressed"); //$NON-NLS-1$
@@ -61,12 +56,11 @@ public class ImageElementIO implements MediaReader {
     protected final URI uri;
     protected final String mimeType;
 
-    private final FileCache fileCache;
     private final Codec codec;
+    private final FileCache fileCache;
     private ImageElement image = null;
 
-
-    public ImageElementIO(URI media, String mimeType, Codec codec) {
+    public ImageCVIO(URI media, String mimeType, Codec codec) {
         this.uri = Objects.requireNonNull(media);
         this.fileCache = new FileCache(this);
         if (mimeType == null) {
@@ -118,33 +112,18 @@ public class ImageElementIO implements MediaReader {
     }
 
     private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
-        if(file.getPath().endsWith(".wcv")){
-            return new FileRawImage(file).read();
+        PlanarImage img = null;
+        if (file.getPath().endsWith(".wcv")) {
+            img = new FileRawImage(file).read();
+        } else if (mimeType.startsWith("image")) {
+            img = ImageProcessor.readImageWithCvException(file);
         }
 
-        ImageReader reader = getDefaultReader(mimeType);
-        if (reader == null) {
-            LOGGER.info("Cannot find a reader for the mime type: {}", mimeType); //$NON-NLS-1$
-            return null;
+        if (img != null && image != null) {
+            image.setTag(TagW.ImageWidth, img.width());
+            image.setTag(TagW.ImageHeight, img.height());
         }
-
-        ImageInputStream stream = new FileImageInputStream(new RandomAccessFile(file, "r")); //$NON-NLS-1$
-        ImageReadParam param = reader.getDefaultReadParam();
-        reader.setInput(stream, true, true);
-        RenderedImage bi;
-        try {
-            bi = reader.read(0, param);
-        } finally {
-            reader.dispose();
-            stream.close();
-        }
-
-        // to avoid problem with alpha channel and png encoded in 24 and 32 bits
-        bi = ImageFiler.getReadableImage(bi);
-
-        image.setTag(TagW.ImageWidth, bi.getWidth());
-        image.setTag(TagW.ImageHeight, bi.getHeight());
-        return ImageProcessor.toMat(bi);
+        return img;
     }
 
     @Override
@@ -316,7 +295,8 @@ public class ImageElementIO implements MediaReader {
             File outFile = imgCachePath.toFile();
             try {
                 new FileRawImage(outFile).write(img);
-                ImageProcessor.writeThumbnail(ImageCV.toMat(img), new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")));
+                ImageProcessor.writeThumbnail(ImageCV.toMat(img),
+                    new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")));
                 return outFile;
             } catch (Exception e) {
                 FileUtil.delete(outFile);

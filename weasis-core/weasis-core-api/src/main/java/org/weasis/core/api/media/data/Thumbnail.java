@@ -365,7 +365,7 @@ public class Thumbnail extends JLabel {
 
         @Override
         public PlanarImage call() throws Exception {
-            return ImageProcessor.readImage(path);
+            return ImageProcessor.readImageWithCvException(path);
         }
     }
 

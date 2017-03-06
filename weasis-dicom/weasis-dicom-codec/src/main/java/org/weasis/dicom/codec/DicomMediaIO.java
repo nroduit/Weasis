@@ -737,7 +737,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     }
                 }
 
-                if (file == null) {
+                if (file == null && imgCachePath != null) {
                     PlanarImage mat = getValidImage(readAsRenderedImage(frame, null), media);   
                     try {
                         new FileRawImage(imgCachePath.toFile()).write(mat);
