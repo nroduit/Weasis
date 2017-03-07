@@ -11,17 +11,11 @@
 package org.weasis.dicom.explorer.wado;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -64,6 +58,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
@@ -237,8 +232,7 @@ public class DownloadManager {
         void handle(LoadSeries loadSeries);
     }
 
-    public static List<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model)
-        throws DownloadException {
+    public static List<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) throws DownloadException {
         ArrayList<LoadSeries> seriesList = new ArrayList<>();
         XMLStreamReader xmler = null;
         InputStream stream = null;
@@ -246,9 +240,7 @@ public class DownloadManager {
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
 
             String path = uri.getPath();
-
-            URL url = uri.toURL();
-            URLConnection urlConnection = url.openConnection();
+            URLConnection urlConnection = uri.toURL().openConnection();
 
             if (BundleTools.SESSION_TAGS_MANIFEST.size() > 0) {
                 for (Iterator<Entry<String, String>> iter =
@@ -257,9 +249,10 @@ public class DownloadManager {
                     urlConnection.setRequestProperty(element.getKey(), element.getValue());
                 }
             }
+            urlConnection.setUseCaches(false);
 
-            LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
-            InputStream urlInputStream = getUrlInputStream(urlConnection);
+            LOGGER.info("Downloading XML manifest: {}", path); //$NON-NLS-1$
+            InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection);
 
             if (path.endsWith(".gz")) { //$NON-NLS-1$
                 stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
@@ -268,7 +261,7 @@ public class DownloadManager {
             } else {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                FileUtil.writeStreamWithIOException(urlInputStream, new FileOutputStream(outFile));
+                FileUtil.writeStreamWithIOException(urlInputStream, outFile);
                 if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
                     stream = new BufferedInputStream(new GZIPInputStream(new FileInputStream(outFile)));
                 } else {
@@ -281,7 +274,7 @@ public class DownloadManager {
                 tempFile = new File(path);
             } else {
                 tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                FileUtil.writeStreamWithIOException(stream, new FileOutputStream(tempFile));
+                FileUtil.writeStreamWithIOException(stream, tempFile);
             }
             xmler = xmlif.createXMLStreamReader(new FileInputStream(tempFile));
 
@@ -425,11 +418,9 @@ public class DownloadManager {
                         final String message = TagUtil.getTagAttribute(xmler, "description", null); //$NON-NLS-1$
                         if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
                             String severity = TagUtil.getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
-                            final int messageType =
-                                "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE //$NON-NLS-1$
-                                    : "INFO" //$NON-NLS-1$
-                                        .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
-                                            : JOptionPane.WARNING_MESSAGE;
+                            final int messageType = "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE //$NON-NLS-1$
+                                : "INFO" //$NON-NLS-1$
+                                    .equals(severity) ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE;
 
                             GuiExecutor.instance().execute(() -> {
                                 PluginTool explorer = null;
@@ -478,45 +469,6 @@ public class DownloadManager {
             }
         }
 
-    }
-
-    private static InputStream getUrlInputStream(URLConnection urlConnection) throws StreamIOException {
-        if (urlConnection instanceof HttpURLConnection) {
-            HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
-            httpURLConnection.setConnectTimeout(5000);
-
-            try {
-                int responseCode = httpURLConnection.getResponseCode();
-                if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
-                    // Following is only intended LOG more info about Http Server Error
-
-                    InputStream errorStream = httpURLConnection.getErrorStream();
-                    if (errorStream != null) {
-                        try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8"); //$NON-NLS-1$
-                                        BufferedReader reader = new BufferedReader(inputStream)) {
-                            StringBuilder stringBuilder = new StringBuilder();
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                stringBuilder.append(line);
-                            }
-                            String errorDescription = stringBuilder.toString();
-                            if (StringUtil.hasText(errorDescription)) {
-                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " [" //$NON-NLS-1$ //$NON-NLS-2$
-                                    + httpURLConnection.getResponseMessage() + "]", errorDescription); //$NON-NLS-1$
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                LOGGER.error("lOG http response:{}", e.getMessage()); //$NON-NLS-1$
-                throw new StreamIOException(e);
-            }
-        }
-        try {
-            return urlConnection.getInputStream();
-        } catch (IOException e) {
-           throw new StreamIOException(e);
-        }
     }
 
     private static MediaSeriesGroup readPatient(DicomModel model, ArrayList<LoadSeries> seriesList,
