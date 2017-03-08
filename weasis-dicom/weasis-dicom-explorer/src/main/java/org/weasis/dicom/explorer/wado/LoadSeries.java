@@ -186,6 +186,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     @Override
     protected void done() {
         if (!isStopped()) {
+            // Ensure to stop downloading and must be set before reusing LoadSeries to download again
+            this.dicomSeries.setSeriesLoader(null);
             DownloadManager.removeLoadSeries(this, dicomModel);
 
             AuditLog.LOGGER.info("{}:series uid:{} modality:{} nbImages:{} size:{} {}", //$NON-NLS-1$
@@ -223,16 +225,15 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
             } else if (dicomSeries.size(null) == 0 && dicomSeries.getTagValue(TagW.DicomSpecialElementList) == null
-                && !hasDownloadFail()) {
+                && !hasDownloadFailed()) {
                 // Remove in case of split Series and all the SopInstanceUIDs already exist
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.REMOVE, dicomModel, null, dicomSeries));
             }
-            this.dicomSeries.setSeriesLoader(null);
         }
     }
 
-    public boolean hasDownloadFail() {
+    public boolean hasDownloadFailed() {
         return hasError;
     }
 

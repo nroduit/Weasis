@@ -49,10 +49,6 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
     private final List<String> xmlFiles;
     private final List<LoadSeries> loadSeriesList = new ArrayList<>();
     private final PropertyChangeListener propertyChangeListener = evt -> {
-        // System.out.println(" Property change do dicom model: " + evt);
-        // Esperar por eventod LOAD_FINISHED de cada loader (vai precisar guardar uma lista).
-        // A cada um que chega ver se tem erro...
-        // Depois que terminar de vir todos, se tiver erro oferece para tentar de novo!
         if (evt instanceof ObservableEvent) {
             ObservableEvent event = (ObservableEvent) evt;
             if (ObservableEvent.BasicAction.LOADING_STOP.equals(event.getActionCommand())) {
@@ -73,7 +69,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
     }
 
     private void checkDownloadIssues(LoadSeries loadSeries) {
-        if (!loadSeries.hasDownloadFail()) {
+        if (!loadSeries.hasDownloadFailed()) {
             loadSeriesList.remove(loadSeries);
         }
 
