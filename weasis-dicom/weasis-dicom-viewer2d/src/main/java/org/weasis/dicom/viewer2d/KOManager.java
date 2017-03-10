@@ -402,6 +402,9 @@ public final class KOManager {
 
             if (selectedKO == null || view2D.getSeries() == null || (view2D.getImage() == null && !tiledMode)) {
                 if (newSelectedKO != null) {
+                    if (updateImage) {
+                        updateImage(view2D, null, view2D.getFrameIndex());
+                    }
                     // Update the None KO selection
                     ((View2d) view2D).updateKOButtonVisibleState();
                 }
@@ -450,27 +453,35 @@ public final class KOManager {
                     }
                 }
 
-                if (view2D == view2D.getEventManager().getSelectedViewPane()) {
-                    /*
-                     * Update the sliceAction action according to nearest image when the filter hides the image of the
-                     * previous state. And update the action min and max.
-                     */
-                    ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
-                    if (seqAction instanceof SliderCineListener) {
-                        SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
-                        moveTroughSliceAction.setSliderMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter),
-                            newImageIndex + 1);
-                    }
-                }
-                DicomImageElement newImage =
-                    dicomSeries.getMedia(newImageIndex, sopInstanceUIDFilter, view2D.getCurrentSortComparator());
-                if (newImage != null && !newImage.isImageAvailable()) {
-                    newImage.getImage();
-                }
-                ((View2d) view2D).setImage(newImage);
-
+                updateImage(view2D, sopInstanceUIDFilter, newImageIndex);
             }
             ((View2d) view2D).updateKOButtonVisibleState();
         }
+    }
+
+    private static void updateImage(ViewCanvas<DicomImageElement> view2D,
+        Filter<DicomImageElement> sopInstanceUIDFilter, int newImageIndex) {
+        int imgIndex = newImageIndex < 0 ? 0 : newImageIndex;
+        if (view2D == view2D.getEventManager().getSelectedViewPane()) {
+            /*
+             * Update the sliceAction action according to nearest image when the filter hides the image of the previous
+             * state. And update the action min and max.
+             */
+            ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
+            if (seqAction instanceof SliderCineListener) {
+                SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
+                moveTroughSliceAction.setSliderMinMaxValue(1, view2D.getSeries().size(sopInstanceUIDFilter),
+                    imgIndex + 1);
+            }
+        }
+
+        DicomImageElement newImage = null;
+        if (view2D.getSeries() != null) {
+            newImage = view2D.getSeries().getMedia(imgIndex, sopInstanceUIDFilter, view2D.getCurrentSortComparator());
+        }
+        if (newImage != null && !newImage.isImageAvailable()) {
+            newImage.getImage();
+        }
+        ((View2d) view2D).setImage(newImage);
     }
 }
