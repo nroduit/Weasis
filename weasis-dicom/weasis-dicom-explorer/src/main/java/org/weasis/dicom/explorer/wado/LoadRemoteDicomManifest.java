@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
@@ -47,6 +48,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
 
     private final DicomModel dicomModel;
     private final List<String> xmlFiles;
+    private final AtomicInteger retryNb = new AtomicInteger(0);
     private final List<LoadSeries> loadSeriesList = new ArrayList<>();
     private final PropertyChangeListener propertyChangeListener = evt -> {
         if (evt instanceof ObservableEvent) {
@@ -75,7 +77,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
 
         if (DownloadManager.TASKS.isEmpty()) {
             if (!loadSeriesList.isEmpty() && tryDownloadingAgain()) {
-                LOGGER.info("Try donloaging again series");
+                LOGGER.info("Try downloading ({}) the missing elements", retryNb.get());
                 List<LoadSeries> oldList = new ArrayList<>(loadSeriesList);
                 loadSeriesList.clear();
                 for (LoadSeries s : oldList) {
@@ -92,6 +94,9 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
     }
 
     private boolean tryDownloadingAgain() {
+        if(retryNb.getAndIncrement() == 0) {
+            return true;
+        }
         boolean[] ret = { false };
         GuiExecutor.instance().invokeAndWait(() -> {
             PluginTool explorer = null;

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
@@ -740,28 +741,28 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
         private int downloadInFileCache(InputStream stream, File tempFile) throws IOException {
             final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-            int[] overrideList = wado.getOverrideDicomTagIDList();
+            int[] overrideList = Optional.ofNullable(wado).map(p -> p.getOverrideDicomTagIDList()).orElse(null);
 
             boolean readTsuid =
                 DicomManager.getInstance().hasAllImageCodecs() ? false : getUrl().contains("?requestType=WADO"); //$NON-NLS-1$
-            int bytesTransferred = 0;
-            if (overrideList == null && wado != null) {
+            int bytesTransferred;
+            if (overrideList == null) {
                 bytesTransferred =
                     FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, readTsuid), tempFile);
-            } else if (wado != null) {
+            } else {
                 bytesTransferred =
                     writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, readTsuid), tempFile, overrideList);
             }
 
             if (bytesTransferred == Integer.MIN_VALUE) {
                 LOGGER.warn("Stop downloading unsupported TSUID, retry to download non compressed TSUID"); //$NON-NLS-1$
-                stream = replaceToDefaultTSUID();
-                if (overrideList == null && wado != null) {
+                InputStream stream2 = replaceToDefaultTSUID();
+                if (overrideList == null) {
                     bytesTransferred =
-                        FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile);
-                } else if (wado != null) {
+                        FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream2, false), tempFile);
+                } else {
                     bytesTransferred =
-                        writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile, overrideList);
+                        writFile(new DicomSeriesProgressMonitor(dicomSeries, stream2, false), tempFile, overrideList);
                 }
             }
             return bytesTransferred;

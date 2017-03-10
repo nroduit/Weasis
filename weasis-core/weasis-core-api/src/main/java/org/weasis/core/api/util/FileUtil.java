@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
@@ -265,7 +266,6 @@ public final class FileUtil {
         return false;
     }
 
-
     /**
      * Write URL content into a file
      * 
@@ -287,7 +287,7 @@ public final class FileUtil {
             throw new StreamIOException(e);
         }
     }
-    
+
     /**
      * Write inputStream content into a file
      * 
@@ -316,9 +316,9 @@ public final class FileUtil {
      * @param out
      * @return bytes transferred. O = error, -1 = all bytes has been transferred, other = bytes transferred before
      *         interruption
-     * @throws StreamIOException 
+     * @throws StreamIOException
      */
-    public static int writeStream(InputStream inputStream,  File outFile) throws StreamIOException {
+    public static int writeStream(InputStream inputStream, File outFile) throws StreamIOException {
         try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
             byte[] buf = new byte[FILE_BUFFER];
             int offset;
@@ -327,8 +327,12 @@ public final class FileUtil {
             }
             outputStream.flush();
             return -1;
+        } catch (SocketTimeoutException e) {
+            FileUtil.delete(outFile);
+            throw new StreamIOException(e);
         } catch (InterruptedIOException e) {
             FileUtil.delete(outFile);
+            // Specific for SeriesProgressMonitor
             LOGGER.error("Interruption when writing file: {}", e.getMessage()); //$NON-NLS-1$
             return e.bytesTransferred;
         } catch (IOException e) {
@@ -348,9 +352,13 @@ public final class FileUtil {
             }
             outputStream.flush();
             return -1;
+        } catch (SocketTimeoutException e) {
+            FileUtil.delete(outFile);
+            throw new StreamIOException(e);
         } catch (InterruptedIOException e) {
             FileUtil.delete(outFile);
-            LOGGER.error("Interruption when writing image", e); //$NON-NLS-1$
+            // Specific for SeriesProgressMonitor
+            LOGGER.error("Interruption when writing image", e.getMessage()); //$NON-NLS-1$
             return e.bytesTransferred;
         } catch (IOException e) {
             FileUtil.delete(outFile);
