@@ -16,7 +16,6 @@ import java.io.InterruptedIOException;
 
 import org.weasis.core.api.gui.task.SeriesProgressMonitor;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.dicom.codec.TransferSyntax;
 
 public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
 
@@ -108,7 +107,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
             // (0x0002, 0x0010) Transfer Syntax UID
             if (element == 0x0010 && vl != 0 && byteOffset + vl < b.length) {
                 String tsuid = new String(b, byteOffset, vl);
-                if (!TransferSyntax.containsImageioCodec(tsuid)) {
+                if (!DicomManager.getInstance().containsImageioCodec(tsuid)) {
                     InterruptedIOException exc =
                         new InterruptedIOException("No image decoder found for the syntax " + tsuid); //$NON-NLS-1$
                     exc.bytesTransferred = Integer.MIN_VALUE;

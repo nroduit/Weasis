@@ -411,12 +411,16 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     private static void expandTree(JTree tree, DefaultMutableTreeNode start) {
-        for (Enumeration<?> children = start.children(); children.hasMoreElements();) {
-            DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-            if (!dtm.isLeaf()) {
-                TreePath tp = new TreePath(dtm.getPath());
-                tree.expandPath(tp);
-                expandTree(tree, dtm);
+        Enumeration<?> children = start.children();
+        while (children.hasMoreElements()) {
+            Object child = children.nextElement();
+            if (child instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+                if (!dtm.isLeaf()) {
+                    TreePath tp = new TreePath(dtm.getPath());
+                    tree.expandPath(tp);
+                    expandTree(tree, dtm);
+                }
             }
         }
         return;

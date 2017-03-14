@@ -949,16 +949,16 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         // build WADO series list to download
         if (opt.isSet("wado")) { //$NON-NLS-1$
             LOADING_EXECUTOR
-                .execute(new LoadRemoteDicomManifest(wargs.toArray(new String[wargs.size()]), DicomModel.this));
+                .execute(new LoadRemoteDicomManifest(wargs, DicomModel.this));
         }
 
         if (opt.isSet("iwado")) { //$NON-NLS-1$
-            File[] xmlFiles = new File[iargs.size()];
-            for (int i = 0; i < xmlFiles.length; i++) {
+            List<String> xmlFiles = new ArrayList<>(iargs.size());
+            for (int i = 0; i < iargs.size(); i++) {
                 try {
                     File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                     if (GzipManager.gzipUncompressToFile(Base64.getDecoder().decode(iargs.get(i)), tempFile)) {
-                        xmlFiles[i] = tempFile;
+                        xmlFiles.add(tempFile.getPath());
                     }
 
                 } catch (Exception e) {

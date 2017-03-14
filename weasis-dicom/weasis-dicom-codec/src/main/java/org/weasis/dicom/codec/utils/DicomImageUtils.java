@@ -548,17 +548,6 @@ public class DicomImageUtils {
         }
     }
 
-    public static boolean hasPlatformAllImageioCodecs() {
-        TransferSyntax[] syntaxes = { TransferSyntax.JPEG_LOSSY_12, TransferSyntax.JPEG_LOSSLESS_57,
-            TransferSyntax.JPEG_LOSSLESS_70, TransferSyntax.JPEGLS_LOSSLESS, TransferSyntax.JPEGLS_NEAR_LOSSLESS };
-        for (TransferSyntax tsuid : syntaxes) {
-            if (!DicomImageUtils.hasImageReader(tsuid.getTransferSyntaxUID())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public static boolean hasImageReader(String tsuid) {
         ImageReaderFactory factory = ImageReaderFactory.getDefault();
         if (factory != null) {

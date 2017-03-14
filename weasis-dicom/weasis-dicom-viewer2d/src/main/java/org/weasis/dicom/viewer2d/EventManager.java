@@ -1197,6 +1197,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         cineAction.ifPresent(a -> a.stateChanged(a.getSliderModel()));
 
                     } else if (Mode.TILE.equals(synch.getMode())) {
+                        // Limit the scroll
+                        final int maxShift = series.size((Filter<DicomImageElement>) viewPane.getActionValue(ActionW.FILTERED_SERIES.cmd())) - panes.size();
+                        cineAction.ifPresent(a -> a.setSliderMinMaxValue(1, maxShift < 1 ? 1 : maxShift, viewPane.getFrameIndex() + 1, false));
+                        
                         Object selectedKO = viewPane.getActionValue(ActionW.KO_SELECTION.cmd());
                         Boolean enableFilter = (Boolean) viewPane.getActionValue(ActionW.KO_FILTER.cmd());
                         int frameIndex = JMVUtils.getNULLtoFalse(enableFilter) ? 0
