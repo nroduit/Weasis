@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
+import java.awt.Window;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.MalformedURLException;
@@ -82,7 +83,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
                 loadSeriesList.clear();
                 for (LoadSeries s : oldList) {
                     LoadSeries taskResume = s.getCopy(s);
-                    loadSeriesList.add(taskResume);      
+                    loadSeriesList.add(taskResume);
                 }
 
                 startDownloadingSeries(loadSeriesList, true);
@@ -99,12 +100,14 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
         }
         boolean[] ret = { false };
         GuiExecutor.instance().invokeAndWait(() -> {
-            PluginTool explorer = null;
+            Window win = null;
             DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
             if (dicomExplorer instanceof PluginTool) {
-                explorer = (PluginTool) dicomExplorer;
+                win = WinUtil.getParentWindow((PluginTool) dicomExplorer);
+            } else {
+                win = UIManager.getApplicationWindow();
             }
-            int confirm = JOptionPane.showConfirmDialog(WinUtil.getParentWindow(explorer),
+            int confirm = JOptionPane.showConfirmDialog(win,
                 "Network error, cannot download.\nTry to download again the missing elements?", null,
                 JOptionPane.YES_NO_OPTION);
             ret[0] = JOptionPane.YES_OPTION == confirm;

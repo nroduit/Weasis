@@ -532,6 +532,9 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             new ThumbnailMouseAndKeyAdapter(loadSeries.getDicomSeries(), dicomModel, loadSeries);
         thumbnail.addMouseListener(thumbAdapter);
         thumbnail.addKeyListener(thumbAdapter);
+        if (thumbnail instanceof SeriesThumbnail) {
+            ((SeriesThumbnail) thumbnail).setProgressBar(loadSeries.getProgressBar());
+        }
     }
 
     public Series<?> getDicomSeries() {
@@ -658,7 +661,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
         /**
          * Download file.
-         * 
+         *
          * @return
          * @throws IOException
          * @throws URISyntaxException

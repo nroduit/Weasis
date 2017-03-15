@@ -119,6 +119,8 @@ public class SeriesThumbnail extends Thumbnail
     public void setProgressBar(JProgressBar progressBar) {
         if (progressBar == null) {
             removeMouseListener(this);
+        } else {
+            addMouseListener(this);
         }
         this.progressBar = progressBar;
     }

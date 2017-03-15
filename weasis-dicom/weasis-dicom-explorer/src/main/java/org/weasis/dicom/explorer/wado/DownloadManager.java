@@ -178,7 +178,7 @@ public class DownloadManager {
     public static synchronized void removeLoadSeries(LoadSeries series, DicomModel dicomModel) {
         if (series != null) {
             DownloadManager.TASKS.remove(series);
-            if (dicomModel != null) {
+            if (dicomModel != null && !series.isCancelled()) {
                 dicomModel.firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, series));
             }
