@@ -155,12 +155,21 @@ public final class Transform2Dicom {
      * @param dicomTags
      */
     public static void buildStudySeriesDate(Collection<AcquireImageInfo> collection, final Tagable dicomTags) {
-
+   
         TagW seriesDate = TagD.get(Tag.SeriesDate);
         TagW seriesTime = TagD.get(Tag.SeriesTime);
         TagW studyDate = TagD.get(Tag.StudyDate);
         TagW studyTime = TagD.get(Tag.StudyTime);
 
+        // Reset study and series values
+        dicomTags.setTag(studyDate, null);
+        dicomTags.setTag(studyTime, null);
+        collection.forEach(i -> {
+            i.getSeries().setTag(seriesDate, null);
+            i.getSeries().setTag(seriesTime, null);
+        });
+        
+        
         for (AcquireImageInfo imageInfo : collection) {
             ImageElement imageElement = imageInfo.getImage();
             LocalDateTime date = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, imageElement);
