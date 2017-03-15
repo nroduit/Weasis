@@ -45,7 +45,6 @@ import javax.xml.validation.Validator;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -61,7 +60,6 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -71,7 +69,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.Messages;
@@ -347,12 +344,7 @@ public class DownloadManager {
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
             GuiExecutor.instance().execute(() -> {
-                PluginTool explorer = null;
-                DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                if (dicomExplorer instanceof PluginTool) {
-                    explorer = (PluginTool) dicomExplorer;
-                }
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
                 JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, null,
                     JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
                 if (layer != null) {
@@ -423,12 +415,7 @@ public class DownloadManager {
                                     .equals(severity) ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE;
 
                             GuiExecutor.instance().execute(() -> {
-                                PluginTool explorer = null;
-                                DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                                if (dicomExplorer instanceof PluginTool) {
-                                    explorer = (PluginTool) dicomExplorer;
-                                }
-                                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
+                                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
                                 JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, title,
                                     JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
                                 if (layer != null) {

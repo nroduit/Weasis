@@ -34,6 +34,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -120,7 +121,9 @@ public class SeriesThumbnail extends Thumbnail
         if (progressBar == null) {
             removeMouseListener(this);
         } else {
-            addMouseListener(this);
+            if (!Arrays.asList(this.getMouseListeners()).contains(this)) {
+                addMouseListener(this);
+            }
         }
         this.progressBar = progressBar;
     }
@@ -164,7 +167,7 @@ public class SeriesThumbnail extends Thumbnail
         }
         if (file != null || media != null) {
             mediaPosition = position;
-            if(thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())){
+            if (thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())) {
                 FileUtil.delete(thumbnailPath); // delete old temp file
             }
             thumbnailPath = file;
@@ -207,7 +210,7 @@ public class SeriesThumbnail extends Thumbnail
             glassPane.setVisible(true);
             dge.startDrag(null, series, this);
         } catch (Exception e) {
-            LOGGER.error("Prepare to drag",e); //$NON-NLS-1$
+            LOGGER.error("Prepare to drag", e); //$NON-NLS-1$
         }
 
     }

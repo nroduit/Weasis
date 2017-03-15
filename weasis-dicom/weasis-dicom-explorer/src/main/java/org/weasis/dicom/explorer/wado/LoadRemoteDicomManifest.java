@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
-import java.awt.Window;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.MalformedURLException;
@@ -29,15 +28,11 @@ import javax.swing.JOptionPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
@@ -100,14 +95,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
         }
         boolean[] ret = { false };
         GuiExecutor.instance().invokeAndWait(() -> {
-            Window win = null;
-            DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-            if (dicomExplorer instanceof PluginTool) {
-                win = WinUtil.getParentWindow((PluginTool) dicomExplorer);
-            } else {
-                win = UIManager.getApplicationWindow();
-            }
-            int confirm = JOptionPane.showConfirmDialog(win,
+            int confirm = JOptionPane.showConfirmDialog(UIManager.getApplicationWindow(),
                 "Network error, cannot download.\nTry to download again the missing elements?", null,
                 JOptionPane.YES_NO_OPTION);
             ret[0] = JOptionPane.YES_OPTION == confirm;
@@ -126,7 +114,9 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
             LOGGER.error("Download failed", e); //$NON-NLS-1$
             if (tryDownloadingAgain()) {
                 LOGGER.info("Try donloaging again: {}", xmlFiles);
-                new LoadRemoteDicomManifest(xmlFiles, dicomModel).execute();
+                LoadRemoteDicomManifest mf = new LoadRemoteDicomManifest(xmlFiles, dicomModel);
+                mf.retryNb.set(retryNb.get());
+                mf.execute();
             }
         }
 
