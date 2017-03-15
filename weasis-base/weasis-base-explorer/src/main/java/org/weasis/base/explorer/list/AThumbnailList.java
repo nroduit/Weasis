@@ -136,8 +136,6 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
      * most recent change, so that the <tt>hasChanged</tt> method will now return <tt>false</tt>. This method is called
      * automatically by the <code>notifyObservers</code> methods.
      *
-     * @see java.util.Observable#notifyObservers()
-     * @see java.util.Observable#notifyObservers(java.lang.Object)
      */
     @Override
     public synchronized void clearChanged() {
@@ -149,8 +147,6 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
      *
      * @return <code>true</code> if and only if the <code>setChanged</code> method has been called more recently than
      *         the <code>clearChanged</code> method on this object; <code>false</code> otherwise.
-     * @see java.util.Observable#clearChanged()
-     * @see java.util.Observable#setChanged()
      */
     @Override
     public synchronized boolean hasChanged() {
@@ -572,9 +568,6 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
      * <code>null</code>. In other words, this method is equivalent to: <blockquote><tt>
      * notifyObservers(null)</tt> </blockquote>
      *
-     * @see java.util.Observable#clearChanged()
-     * @see java.util.Observable#hasChanged()
-     * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
      */
     public void notifyObservers() {
         notifyObservers(null);
@@ -589,9 +582,6 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
      *
      * @param arg
      *            any object.
-     * @see java.util.Observable#clearChanged()
-     * @see java.util.Observable#hasChanged()
-     * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
      */
     @Override
     public void notifyObservers(final Object arg) {

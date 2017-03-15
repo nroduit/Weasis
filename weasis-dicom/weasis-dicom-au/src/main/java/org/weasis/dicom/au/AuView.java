@@ -353,9 +353,9 @@ public class AuView extends JPanel implements SeriesViewerListener {
         s.setValue((int) ((fval - min) / width * 1000));
 
         java.util.Hashtable<Integer, JLabel> labels = new java.util.Hashtable<>(3);
-        labels.put(new Integer(0), new JLabel(c.getMinLabel()));
-        labels.put(new Integer(500), new JLabel(c.getMidLabel()));
-        labels.put(new Integer(1000), new JLabel(c.getMaxLabel()));
+        labels.put(0, new JLabel(c.getMinLabel()));
+        labels.put(500, new JLabel(c.getMidLabel()));
+        labels.put(1000, new JLabel(c.getMaxLabel()));
         s.setLabelTable(labels);
         s.setPaintLabels(true);
 
