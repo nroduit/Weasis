@@ -60,6 +60,7 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -175,9 +176,15 @@ public class DownloadManager {
     public static synchronized void removeLoadSeries(LoadSeries series, DicomModel dicomModel) {
         if (series != null) {
             DownloadManager.TASKS.remove(series);
-            if (dicomModel != null && !series.isCancelled()) {
-                dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, series));
+            if (dicomModel != null) {
+                if (series.isCancelled()) {
+                    dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_CANCEL, dicomModel, null, series));
+                } else {
+                    dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, series));
+                }
+
             }
             if (DownloadManager.TASKS.isEmpty()) {
                 // When all loadseries are ended, reset to default the number of simultaneous download (series)
@@ -336,10 +343,10 @@ public class DownloadManager {
                 }
             }
         } catch (StreamIOException e) {
-            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
+            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + StringUtil.getTruncatedString(uri.toString(), 100, Suffix.THREE_PTS);  //$NON-NLS-1$//$NON-NLS-2$
             throw new DownloadException(message, e); // rethrow network issue
         } catch (Exception e) {
-            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
+            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + StringUtil.getTruncatedString(uri.toString(), 100, Suffix.THREE_PTS); //$NON-NLS-1$//$NON-NLS-2$
             LOGGER.error("{}", message, e); //$NON-NLS-1$
             final int messageType = JOptionPane.ERROR_MESSAGE;
 

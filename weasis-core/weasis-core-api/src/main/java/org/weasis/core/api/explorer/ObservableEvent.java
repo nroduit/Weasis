@@ -18,7 +18,7 @@ public class ObservableEvent extends PropertyChangeEvent {
 
     public enum BasicAction {
         SELECT, ADD, REMOVE, UPDATE, UDPATE_PARENT, NULL_SELECTION, UPDATE_TOOLS, UPDTATE_TOOLBARS, REGISTER, UNREGISTER,
-        REPLACE, LOADING_START, LOADING_STOP
+        REPLACE, LOADING_START, LOADING_CANCEL, LOADING_STOP
     }
 
     private final BasicAction actionCommand;

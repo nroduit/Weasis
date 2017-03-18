@@ -166,21 +166,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     @Override
     public void resume() {
         if (isStopped()) {
-            LoadSeries taskResume =
-                new LoadSeries(dicomSeries, dicomModel, progressBar, concurrentDownloads, writeInCache);
-            DownloadPriority p = this.getPriority();
-            p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
-            taskResume.setPriority(p);
-            Thumbnail thumbnail = (Thumbnail) this.getDicomSeries().getTagValue(TagW.Thumbnail);
-            if (thumbnail != null) {
-                LoadSeries.removeThumbnailMouseAndKeyAdapter(thumbnail);
-                ThumbnailMouseAndKeyAdapter thumbAdapter =
-                    new ThumbnailMouseAndKeyAdapter(taskResume.getDicomSeries(), dicomModel, taskResume);
-                thumbnail.addMouseListener(thumbAdapter);
-                thumbnail.addKeyListener(thumbAdapter);
-            }
-            DownloadManager.addLoadSeries(taskResume, dicomModel, true);
-            DownloadManager.removeLoadSeries(this, dicomModel);
+            this.getPriority().setPriority(DownloadPriority.COUNTER.getAndDecrement());
+            cancelAndReplace(this);
         }
     }
 
@@ -886,7 +873,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                             if (entry1.equals(p.getGroupID())) {
                                 if (p instanceof ImageViewerPlugin) {
                                     ViewCanvas pane = ((ImageViewerPlugin) p).getSelectedImagePane();
-                                    if (pane != null && pane.getImageLayer().getSourceImage() == null) {
+                                    if (pane != null && pane.getImageLayer() != null
+                                        && pane.getImageLayer().getSourceImage() == null) {
                                         // When the selected view has no image send, open in it.
                                         break;
                                     }
@@ -931,9 +919,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 synchronized (DownloadManager.TASKS) {
                     for (LoadSeries s : DownloadManager.TASKS) {
                         if (s != this && StateValue.STARTED.equals(s.getState())) {
-                            LoadSeries taskResume = getCopy(s);
-                            DownloadManager.addLoadSeries(taskResume, dicomModel, true);
-                            DownloadManager.removeLoadSeries(s, dicomModel);
+                            cancelAndReplace(s);
                             break;
                         }
                     }
@@ -942,7 +928,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         }
     }
 
-    LoadSeries getCopy(LoadSeries s) {
+    public LoadSeries cancelAndReplace(LoadSeries s) {
         LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
             s.getConcurrentDownloads(), s.writeInCache);
         s.cancel(true);
@@ -952,6 +938,9 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             LoadSeries.removeThumbnailMouseAndKeyAdapter(thumbnail);
             addListenerToThumbnail(thumbnail, taskResume, dicomModel);
         }
+        DownloadManager.addLoadSeries(taskResume, dicomModel, true);
+        DownloadManager.removeLoadSeries(s, dicomModel);
+        
         return taskResume;
     }
 
