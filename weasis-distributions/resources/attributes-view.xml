@@ -45,10 +45,15 @@
 		</corner>
 	</modality>
 	 -->
-	 
-	 
+
 	<modality name="SC" extend="DEFAULT">
 		<corner name="BOTTOM_RIGHT">
+			<p index="6" format="$V:l$25$">ImageComments</p>
+		</corner>
+	</modality>
+	<modality name="XC" extend="DEFAULT">
+		<corner name="BOTTOM_RIGHT">
+			<p index="4" format="$V">BodyPartExamined</p>
 			<p index="6" format="$V:l$25$">ImageComments</p>
 		</corner>
 	</modality>
