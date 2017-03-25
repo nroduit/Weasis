@@ -179,7 +179,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             DownloadManager.removeLoadSeries(this, dicomModel);
 
             AuditLog.LOGGER.info("{}:series uid:{} modality:{} nbImages:{} size:{} {}", //$NON-NLS-1$
-                new Object[] { getLoadType(), dicomSeries.toString(),
+                new Object[] { getLoadType(), dicomSeries.getTagValue(dicomSeries.getTagID()),
                     TagD.getTagValue(dicomSeries, Tag.Modality, String.class), getImageNumber(),
                     (long) dicomSeries.getFileSize(), getDownloadTime() });
             dicomSeries.removeTag(DOWNLOAD_START_TIME);
