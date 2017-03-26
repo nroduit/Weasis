@@ -119,14 +119,14 @@
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty</groupId>
-			<artifactId>substance</artifactId>
-			<version>7.3</version>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>docking-frames</artifactId>
 			<version>1.1.2-P18a</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.pushingpixels</groupId>
+			<artifactId>substance</artifactId>
+			<version>7.0.1</version>
 		</dependency>
 	</dependencies>
 </project>

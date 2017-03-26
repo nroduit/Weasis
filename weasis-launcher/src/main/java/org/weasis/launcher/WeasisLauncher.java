@@ -1042,8 +1042,7 @@ public class WeasisLauncher {
                 // Set look and feels
                 boolean substance = look.startsWith("org.pushingpixels"); //$NON-NLS-1$
                 if (substance) {
-                    // TODO should be true: bug with docking-frame
-                    JFrame.setDefaultLookAndFeelDecorated(false);
+                    JFrame.setDefaultLookAndFeelDecorated(true);
                     JDialog.setDefaultLookAndFeelDecorated(true);
                 }
                 look = setLookAndFeel(look);
