@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -34,6 +33,9 @@ import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.StreamIOException;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
@@ -54,7 +56,8 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
             if (event.getNewValue() instanceof LoadSeries) {
                 LoadSeries s = (LoadSeries) event.getNewValue();
                 BasicAction cmd = event.getActionCommand();
-                if (ObservableEvent.BasicAction.LOADING_STOP.equals(cmd) || ObservableEvent.BasicAction.LOADING_CANCEL.equals(cmd)) {
+                if (ObservableEvent.BasicAction.LOADING_STOP.equals(cmd)
+                    || ObservableEvent.BasicAction.LOADING_CANCEL.equals(cmd)) {
                     checkDownloadIssues(s);
                 } else if (ObservableEvent.BasicAction.LOADING_START.equals(cmd)) {
                     if (!loadSeriesList.contains(s)) {
@@ -81,7 +84,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
 
         if (DownloadManager.TASKS.isEmpty() || DownloadManager.TASKS.stream().allMatch(l -> l.isStopped())) {
             if (!loadSeriesList.isEmpty() && tryDownloadingAgain(null)) {
-                LOGGER.info("Try downloading ({}) the missing elements", retryNb.get());
+                LOGGER.info("Try downloading ({}) the missing elements", retryNb.get()); //$NON-NLS-1$
                 List<LoadSeries> oldList = new ArrayList<>(loadSeriesList);
                 loadSeriesList.clear();
                 dicomModel.removePropertyChangeListener(propertyChangeListener);
@@ -90,7 +93,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
                     loadSeriesList.add(task);
                 }
                 startDownloadingSeries(loadSeriesList, true);
-                
+
                 dicomModel.addPropertyChangeListener(propertyChangeListener);
             } else {
                 dicomModel.removePropertyChangeListener(propertyChangeListener);
@@ -104,15 +107,32 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
         }
         boolean[] ret = { false };
         GuiExecutor.instance().invokeAndWait(() -> {
-            StringBuilder buf = new StringBuilder();
-            buf.append(Optional.ofNullable(e).map(ex -> ex.getMessage()).orElseGet(() -> "Cannot download"));
-            buf.append("\n\n");
-            buf.append("Try to download again the missing elements ?");
-            int confirm = JOptionPane.showConfirmDialog(UIManager.getApplicationWindow(), buf.toString(),
-                "Network error", JOptionPane.YES_NO_OPTION);
+            int confirm = JOptionPane.showConfirmDialog(UIManager.getApplicationWindow(), getErrorMessage(e),
+                Messages.getString("LoadRemoteDicomManifest.net_err_msg"), JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
             ret[0] = JOptionPane.YES_OPTION == confirm;
         });
         return ret[0];
+    }
+
+    private static String getErrorMessage(DownloadException e) {
+        StringBuilder buf = new StringBuilder();
+        if (e == null) { // images
+            buf.append(Messages.getString("LoadRemoteDicomManifest.cannot_download")); //$NON-NLS-1$
+        } else { // xml manifest
+            buf.append(StringUtil.getTruncatedString(e.getMessage(), 130, Suffix.THREE_PTS));
+            if(e.getCause() instanceof StreamIOException) {
+                String serverMessage = e.getCause().getMessage();
+                if (StringUtil.hasText(serverMessage)) {
+                    buf.append("\n"); //$NON-NLS-1$
+                    buf.append(Messages.getString("LoadRemoteDicomManifest.server_resp")); //$NON-NLS-1$
+                    buf.append(StringUtil.COLON_AND_SPACE);
+                    buf.append(StringUtil.getTruncatedString(serverMessage, 100, Suffix.THREE_PTS));
+                }
+            }
+        }
+        buf.append("\n\n"); //$NON-NLS-1$
+        buf.append(Messages.getString("LoadRemoteDicomManifest.download_again")); //$NON-NLS-1$
+        return buf.toString();
     }
 
     @Override
@@ -125,7 +145,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
         } catch (DownloadException e) {
             LOGGER.error("Download failed", e); //$NON-NLS-1$
             if (tryDownloadingAgain(e)) {
-                LOGGER.info("Try donloaging again: {}", xmlFiles);
+                LOGGER.info("Try donloaging again: {}", xmlFiles); //$NON-NLS-1$
                 LoadRemoteDicomManifest mf = new LoadRemoteDicomManifest(xmlFiles, dicomModel);
                 mf.retryNb.set(retryNb.get());
                 mf.execute();
@@ -167,7 +187,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
                 startDownloadingSeries(wadoTasks, downloadImmediately);
             }
         } catch (URISyntaxException | MalformedURLException e) {
-            LOGGER.error("Loading manifest", e);
+            LOGGER.error("Loading manifest", e); //$NON-NLS-1$
         }
     }
 

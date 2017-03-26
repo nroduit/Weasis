@@ -282,6 +282,8 @@ public final class FileUtil {
                 outputStream.write(buf, 0, offset);
             }
             outputStream.flush();
+        } catch (StreamIOException e) {
+            throw e;
         } catch (IOException e) {
             FileUtil.delete(outFile);
             throw new StreamIOException(e);

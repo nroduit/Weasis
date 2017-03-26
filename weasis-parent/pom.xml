@@ -85,7 +85,7 @@
 						<instructions>
 							<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
 							<Bundle-Version>${project.version}</Bundle-Version>
-							<Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
+							<Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
 							<!-- Using <_exportcontents> requires to configure <Export-Package>, 
 								there is no default export (All packages, except any containing 'impl' or 
 								'internal' -->

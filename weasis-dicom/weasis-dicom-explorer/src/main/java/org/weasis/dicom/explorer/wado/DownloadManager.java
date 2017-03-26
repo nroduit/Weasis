@@ -343,16 +343,15 @@ public class DownloadManager {
                 }
             }
         } catch (StreamIOException e) {
-            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + StringUtil.getTruncatedString(uri.toString(), 100, Suffix.THREE_PTS);  //$NON-NLS-1$//$NON-NLS-2$
-            throw new DownloadException(message, e); // rethrow network issue
+            throw new DownloadException(getErrorMessage(uri), e); // rethrow network issue
         } catch (Exception e) {
-            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + StringUtil.getTruncatedString(uri.toString(), 100, Suffix.THREE_PTS); //$NON-NLS-1$//$NON-NLS-2$
-            LOGGER.error("{}", message, e); //$NON-NLS-1$
+            String message = getErrorMessage(uri);
+            LOGGER.error("{}", message , e); //$NON-NLS-1$
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
             GuiExecutor.instance().execute(() -> {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
-                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, null,
+                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS), null,
                     JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
                 if (layer != null) {
                     layer.hideUI();
@@ -363,6 +362,13 @@ public class DownloadManager {
             FileUtil.safeClose(stream);
         }
         return seriesList;
+    }
+
+    private static String getErrorMessage(URI uri) {
+        StringBuilder buf = new StringBuilder(Messages.getString("DownloadManager.error_load_xml")); //$NON-NLS-1$
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(uri.toString());
+        return buf.toString();
     }
 
     private static void readArcQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)

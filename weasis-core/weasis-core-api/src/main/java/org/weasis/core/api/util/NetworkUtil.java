@@ -26,31 +26,18 @@ public class NetworkUtil {
             try {
                 int responseCode = httpURLConnection.getResponseCode();
                 if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
-                    LOGGER.warn("HttpURLConnection Status {} - {}", responseCode,
-                        httpURLConnection.getResponseMessage());// $NON-NLS-1$
+                    LOGGER.warn("http Status {} - {}", responseCode, httpURLConnection.getResponseMessage());// $NON-NLS-1$
 
                     // Following is only intended LOG more info about Http Server Error
                     if (LOGGER.isTraceEnabled()) {
-                        InputStream errorStream = httpURLConnection.getErrorStream();
-                        if (errorStream != null) {
-                            try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8"); //$NON-NLS-1$
-                                            BufferedReader reader = new BufferedReader(inputStream)) {
-                                StringBuilder stringBuilder = new StringBuilder();
-                                String line;
-                                while ((line = reader.readLine()) != null) {
-                                    stringBuilder.append(line);
-                                }
-                                String errorDescription = stringBuilder.toString();
-                                if (StringUtil.hasText(errorDescription)) {
-                                    LOGGER.trace("HttpURLConnection ERROR, server response: {}", //$NON-NLS-1$
-                                        errorDescription);
-                                }
-                            }
-                        }
+                        writeErrorResponse(httpURLConnection);
                     }
+                    throw new StreamIOException(httpURLConnection.getResponseMessage()); 
                 }
+            } catch (StreamIOException e) {
+                throw e;
             } catch (IOException e) {
-                LOGGER.error("lOG http response:{}", e.getMessage()); //$NON-NLS-1$
+                LOGGER.error("http response: {}", e.getMessage()); //$NON-NLS-1$
                 throw new StreamIOException(e);
             }
         }
@@ -58,6 +45,25 @@ public class NetworkUtil {
             return urlConnection.getInputStream();
         } catch (IOException e) {
             throw new StreamIOException(e);
+        }
+    }
+    
+    private static void writeErrorResponse(HttpURLConnection httpURLConnection) throws IOException {
+        InputStream errorStream = httpURLConnection.getErrorStream();
+        if (errorStream != null) {
+            try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8"); //$NON-NLS-1$
+                            BufferedReader reader = new BufferedReader(inputStream)) {
+                StringBuilder stringBuilder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    stringBuilder.append(line);
+                }
+                String errorDescription = stringBuilder.toString();
+                if (StringUtil.hasText(errorDescription)) {
+                    LOGGER.trace("HttpURLConnection ERROR, server response: {}", //$NON-NLS-1$
+                        errorDescription);
+                }
+            }
         }
     }
 }

@@ -379,11 +379,11 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 request.append(wado.getAdditionnalParameters());
                 urlConnection = initConnection(new URL(request.toString()), wado);
             } catch (MalformedURLException e) {
-                LOGGER.error("Invalid URL", e);
+                LOGGER.error("Invalid URL", e); //$NON-NLS-1$
                 continue;
             } catch (IOException e) {
                 hasError = true;
-                LOGGER.error("Cannot open URL", e);
+                LOGGER.error("Cannot open URL", e); //$NON-NLS-1$
                 continue;
             }
             LOGGER.debug("Download DICOM instance {} index {}.", urlConnection, k); //$NON-NLS-1$
