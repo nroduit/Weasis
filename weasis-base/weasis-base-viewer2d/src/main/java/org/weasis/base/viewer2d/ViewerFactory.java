@@ -1,16 +1,19 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.base.viewer2d;
 
-import java.util.ArrayList;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,33 +21,45 @@ import java.util.Map;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.util.DefaultAction;
 
-@Component(immediate = false)
-@Service
-@Property(name = "service.pluginName", value = "Image Viewer")
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class ViewerFactory implements SeriesViewerFactory {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
 
     public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/image-x-generic.png")); //$NON-NLS-1$
 
+    private static final DefaultAction preferencesAction =
+        new DefaultAction(Messages.getString("OpenImageAction.img"), ViewerFactory::getOpenImageAction); //$NON-NLS-1$
+
     public ViewerFactory() {
+        super();
     }
 
     @Override
@@ -59,11 +74,11 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return ""; //$NON-NLS-1$
+        return NAME;
     }
 
     @Override
-    public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
+    public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
         String uid = null;
         if (properties != null) {
@@ -71,14 +86,14 @@ public class ViewerFactory implements SeriesViewerFactory {
             if (obj instanceof GridBagLayoutModel) {
                 model = (GridBagLayoutModel) obj;
             } else {
-                obj = properties.get(DefaultView2d.class.getName());
+                obj = properties.get(ViewCanvas.class.getName());
                 if (obj instanceof Integer) {
                     ActionState layout = EventManager.getInstance().getAction(ActionW.LAYOUT);
                     if (layout instanceof ComboItemListener) {
                         Object[] list = ((ComboItemListener) layout).getAllItem();
                         for (Object m : list) {
                             if (m instanceof GridBagLayoutModel) {
-                                if (getViewTypeNumber((GridBagLayoutModel) m, DefaultView2d.class) >= (Integer) obj) {
+                                if (getViewTypeNumber((GridBagLayoutModel) m, ViewCanvas.class) >= (Integer) obj) {
                                     model = (GridBagLayoutModel) m;
                                     break;
                                 }
@@ -106,18 +121,18 @@ public class ViewerFactory implements SeriesViewerFactory {
         return instance;
     }
 
-    public static int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public static int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         int val = 0;
         if (layout != null && defaultClass != null) {
             Iterator<LayoutConstraints> enumVal = layout.getConstraints().keySet().iterator();
             while (enumVal.hasNext()) {
                 try {
-                    Class clazz = Class.forName(enumVal.next().getType());
+                    Class<?> clazz = Class.forName(enumVal.next().getType());
                     if (defaultClass.isAssignableFrom(clazz)) {
                         val++;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Checking view type", e); //$NON-NLS-1$
                 }
             }
         }
@@ -125,7 +140,8 @@ public class ViewerFactory implements SeriesViewerFactory {
     }
 
     public static void closeSeriesViewer(View2dContainer view2dContainer) {
-
+        // Unregister the PropertyChangeListener
+        ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(view2dContainer);
     }
 
     @Override
@@ -137,7 +153,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer) {
+    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
         if (viewer instanceof View2dContainer) {
             return true;
         }
@@ -151,9 +167,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public List<Action> getOpenActions() {
-        ArrayList<Action> actions = new ArrayList<Action>(1);
-        actions.add(OpenImageAction.getInstance());
-        return actions;
+        return Arrays.asList(preferencesAction);
     }
 
     @Override
@@ -164,5 +178,54 @@ public class ViewerFactory implements SeriesViewerFactory {
     @Override
     public boolean canExternalizeSeries() {
         return true;
+    }
+
+    private static void getOpenImageAction(ActionEvent e) {
+        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
+        JFileChooser fileChooser = new JFileChooser(directory);
+
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(true);
+        // TODO add format from plugins
+        FileFormatFilter.setImageDecodeFilters(fileChooser);
+        File[] selectedFiles;
+        if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION
+            || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
+            return;
+        } else {
+            MediaSeries<MediaElement> series = null;
+            for (File file : selectedFiles) {
+                String mimeType = MimeInspector.getMimeType(file);
+                if (mimeType != null && mimeType.startsWith("image")) { //$NON-NLS-1$
+                    Codec codec = BundleTools.getCodec(mimeType, null);
+                    if (codec != null) {
+                        MediaReader reader = codec.getMediaIO(file.toURI(), mimeType, null);
+                        if (reader != null) {
+                            if (series == null) {
+                                // TODO improve group model for image, uid for group ?
+                                series = reader.getMediaSeries();
+                            } else {
+                                MediaElement[] elements = reader.getMediaElement();
+                                if (elements != null) {
+                                    for (MediaElement media : elements) {
+                                        series.addMedia(media);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (series != null && series.size(null) > 0) {
+                ViewerPluginBuilder.openSequenceInDefaultPlugin(series, ViewerPluginBuilder.DefaultDataModel, true,
+                    false);
+            } else {
+                Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
+                JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"), //$NON-NLS-1$
+                    Messages.getString("OpenImageAction.open_img"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+            }
+            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
+        }
     }
 }

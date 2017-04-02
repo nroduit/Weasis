@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.util;
 
 import java.awt.FlowLayout;
@@ -20,9 +20,10 @@ import javax.swing.JPanel;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableUtil;
 
+@SuppressWarnings("serial")
 public class ToolBarContainer extends JPanel {
     public static final Toolbar EMPTY = ToolBarContentBuilder.buildEmptyToolBar("empty"); //$NON-NLS-1$
-    private final List<Toolbar> bars = new ArrayList<Toolbar>();
+    private final List<Toolbar> bars = new ArrayList<>();
 
     public ToolBarContainer() {
         setOpaque(false);
@@ -34,22 +35,22 @@ public class ToolBarContainer extends JPanel {
      */
     public void registerToolBar(List<Toolbar> toolBars) {
         unregisterAll();
-        if (toolBars == null) {
-            toolBars = new ArrayList<Toolbar>(1);
-        }
-        if (toolBars.isEmpty()) {
-            toolBars.add(ToolBarContainer.EMPTY);
-        }
-        // Sort toolbars according the the position
-        InsertableUtil.sortInsertable(toolBars);
 
-        synchronized (toolBars) {
-            for (Toolbar b : toolBars) {
-                WtoolBar bar = b.getComponent();
-                if (bar.isComponentEnabled()) {
-                    add(bar);
+        if (toolBars == null || toolBars.isEmpty()) {
+            add(ToolBarContainer.EMPTY.getComponent());
+            bars.add(ToolBarContainer.EMPTY);
+        } else {
+            // Sort toolbars according the the position
+            InsertableUtil.sortInsertable(toolBars);
+
+            synchronized (toolBars) {
+                for (Toolbar b : toolBars) {
+                    WtoolBar bar = b.getComponent();
+                    if (bar.isComponentEnabled()) {
+                        add(bar);
+                    }
+                    bars.add(b);
                 }
-                bars.add(b);
             }
         }
 
@@ -89,12 +90,12 @@ public class ToolBarContainer extends JPanel {
 
     /**
      * Returns the list of currently registered toolbars.
-     * 
+     *
      * <p>
      * returns a new list at each invocation.
      */
     public List<Toolbar> getRegisteredToolBars() {
-        return new ArrayList<Toolbar>(bars);
+        return new ArrayList<>(bars);
     }
 
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<point fill="false" showLabel="true" thickness="3.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ff0000" />
+	<pts>
+		<pt x="1665.5" y="987.0" />
+	</pts>
+</point>

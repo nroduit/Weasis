@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.Insets;
@@ -20,6 +20,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
+@SuppressWarnings("serial")
 public abstract class DropDownButton extends JButton implements PopupMenuListener, ActionListener {
 
     private final String type;
@@ -45,7 +46,6 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
 
     private void init() {
         addActionListener(this);
-        // arrowButton.setMargin(new Insets(3, 0, 3, 0));
     }
 
     public GroupRadioMenu getMenuModel() {
@@ -83,8 +83,6 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
         getModel().setRollover(false);
         getModel().setSelected(false);
         ((JPopupMenu) e.getSource()).removePopupMenuListener(this);
-        // remove parent of the radiobutton in actionPeformed() item.getParent()
-        // ((JPopupMenu) e.getSource()).removeAll();
     }
 
     @Override

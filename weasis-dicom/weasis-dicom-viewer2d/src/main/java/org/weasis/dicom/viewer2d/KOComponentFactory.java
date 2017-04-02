@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 
 package org.weasis.dicom.viewer2d;
 
@@ -36,7 +36,7 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 
 /**
  * @author benoit jacquemoud
- * 
+ *
  * @version $Rev$ $Date$
  */
 public final class KOComponentFactory {
@@ -70,13 +70,13 @@ public final class KOComponentFactory {
             public void showPopup(Component invoker, int x, int y) {
 
                 final EventManager evtMgr = EventManager.getInstance();
-                ComboItemListener koSelectionAction = ((ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION));
+                ComboItemListener<Object> koSelectionAction = ((ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION));
                 JPopupMenu popupMenu = new JPopupMenu();
 
                 popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
                 popupMenu.addSeparator();
 
-                GroupRadioMenu groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
+                GroupRadioMenu<Object> groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
                 for (RadioMenuItem item : groupRadioMenu.getRadioMenuItemListCopy()) {
                     popupMenu.add(item);
                 }

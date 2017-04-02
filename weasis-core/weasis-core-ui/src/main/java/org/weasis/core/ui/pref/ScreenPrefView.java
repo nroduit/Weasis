@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.pref;
 
 import java.awt.BasicStroke;
@@ -23,8 +23,6 @@ import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 import javax.swing.Box;
@@ -61,25 +59,20 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         BorderLayout borderLayout = new BorderLayout();
         setLayout(borderLayout);
 
-        JPanel panel_2 = new JPanel();
-        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
-        flowLayout_1.setHgap(10);
-        flowLayout_1.setAlignment(FlowLayout.RIGHT);
-        flowLayout_1.setVgap(7);
-        add(panel_2, BorderLayout.SOUTH);
+        JPanel panel2 = new JPanel();
+        FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
+        flowLayout1.setHgap(10);
+        flowLayout1.setAlignment(FlowLayout.RIGHT);
+        flowLayout1.setVgap(7);
+        add(panel2, BorderLayout.SOUTH);
 
         JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
-        panel_2.add(btnNewButton);
-        btnNewButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetoDefaultValues();
-            }
-        });
+        panel2.add(btnNewButton);
+        btnNewButton.addActionListener(e -> resetoDefaultValues());
 
         JPanel panel1 = new JPanel();
-        panel1
-            .setBorder(new TitledBorder(null, Messages.getString("ScreenPrefView.settings"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        panel1.setBorder(new TitledBorder(null, Messages.getString("ScreenPrefView.settings"), TitledBorder.LEADING, //$NON-NLS-1$
+            TitledBorder.TOP, null, null));
         add(panel1, BorderLayout.NORTH);
         panel1.setLayout(new BorderLayout(0, 0));
 
@@ -110,10 +103,11 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
             if (monitor.getRealScaleFactor() > 0) {
                 buf.append(" ("); //$NON-NLS-1$
-                buf.append((int) Math.round(mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
+                buf.append(
+                    (int) Math.round(mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
                 buf.append("x"); //$NON-NLS-1$
-                buf.append((int) Math.round(mb.height
-                    * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
+                buf.append(
+                    (int) Math.round(mb.height * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
                 buf.append(" "); //$NON-NLS-1$
                 buf.append(Unit.MILLIMETER.getAbbreviation());
                 buf.append(")"); //$NON-NLS-1$
@@ -121,16 +115,12 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             p.add(new JLabel(buf.toString()));
 
             JButton realZoomButton = new JButton(Messages.getString("ScreenPrefView.sp_calib")); //$NON-NLS-1$
-            realZoomButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final CalibDialog dialog =
-                        new CalibDialog(WinUtil.getParentFrame((Component) e.getSource()), title,
-                            ModalityType.APPLICATION_MODAL, monitor);
-                    dialog.setBounds(monitor.getFullscreenBounds());
-                    dialog.setVisible(true);
+            realZoomButton.addActionListener(e -> {
+                final CalibDialog dialog = new CalibDialog(WinUtil.getParentFrame((Component) e.getSource()), title,
+                    ModalityType.APPLICATION_MODAL, monitor);
+                dialog.setBounds(monitor.getFullscreenBounds());
+                dialog.setVisible(true);
 
-                }
             });
             realZoomButton.setToolTipText(Messages.getString("ScreenPrefView.calib_real")); //$NON-NLS-1$
             p.add(realZoomButton);
@@ -201,14 +191,12 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             g2d.drawLine(xv1, yv1, xv2, yv2);
 
             if (monitor.getRealScaleFactor() > 0) {
-                String hlength =
-                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())
-                        * horizontalLength)
-                        + " " + Unit.MILLIMETER.getAbbreviation(); //$NON-NLS-1$
-                String vlength =
-                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())
-                        * verticalLength)
-                        + " " + Unit.MILLIMETER.getAbbreviation(); //$NON-NLS-1$
+                String hlength = DecFormater
+                    .oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor()) * horizontalLength)
+                    + " " + Unit.MILLIMETER.getAbbreviation(); //$NON-NLS-1$
+                String vlength = DecFormater
+                    .oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor()) * verticalLength) + " " //$NON-NLS-1$
+                    + Unit.MILLIMETER.getAbbreviation();
                 g2d.drawString(hlength, x2 - 70, y2 + 15);
                 g2d.drawString(vlength, xv1 + 10, yv2 - 5);
             }
@@ -232,11 +220,11 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
         private final Cross cross;
         private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField(LocalUtil.getIntegerInstance());
-        private final JComboBox jComboBoxType = new JComboBox(new String[] {
-            Messages.getString("ScreenPrefView.horiz_line"), //$NON-NLS-1$
-            Messages.getString("ScreenPrefView.vertical_line"), Messages.getString("ScreenPrefView.screen_size") }); //$NON-NLS-1$ //$NON-NLS-2$
-        private final JComboBox jComboBoxUnit = new JComboBox(new Unit[] { Unit.MILLIMETER, Unit.CENTIMETER,
-            Unit.MILLIINCH, Unit.INCH });
+        private final JComboBox<String> jComboBoxType =
+            new JComboBox<>(new String[] { Messages.getString("ScreenPrefView.horiz_line"), //$NON-NLS-1$
+                Messages.getString("ScreenPrefView.vertical_line"), Messages.getString("ScreenPrefView.screen_size") }); //$NON-NLS-1$ //$NON-NLS-2$
+        private final JComboBox<Unit> jComboBoxUnit =
+            new JComboBox<>(new Unit[] { Unit.MILLIMETER, Unit.CENTIMETER, Unit.MILLIINCH, Unit.INCH });
 
         public CalibDialog(Window parentWindow, String title, ModalityType applicationModal, Monitor monitor) {
             super(parentWindow, title, applicationModal, monitor.getGraphicsConfiguration());
@@ -251,20 +239,13 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             final JPanel inputPanel = new JPanel();
             jTextFieldLineWidth.setValue(0L);
             JMVUtils.setPreferredWidth(jTextFieldLineWidth, 100);
-            inputPanel.add(new JLabel(Messages.getString("ScreenPrefView.enter_dist") + StringUtil.COLON)); //$NON-NLS-1$ 
+            inputPanel.add(new JLabel(Messages.getString("ScreenPrefView.enter_dist") + StringUtil.COLON)); //$NON-NLS-1$
             inputPanel.add(jComboBoxType);
             inputPanel.add(jTextFieldLineWidth);
             inputPanel.add(jComboBoxUnit);
             inputPanel.add(Box.createHorizontalStrut(15));
             JButton apply = new JButton(Messages.getString("ScreenPrefView.apply")); //$NON-NLS-1$
-            apply.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    computeScaleFactor();
-                }
-
-            });
+            apply.addActionListener(e -> computeScaleFactor());
             inputPanel.add(apply);
 
             content.add(cross, BorderLayout.CENTER);

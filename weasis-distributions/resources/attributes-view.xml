@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Configuration of the attribute list which are displayed in a DICOM view. The "Default" modality configuration will be 
+<!-- Configuration of the attribute list which are displayed in a DICOM view. The "DEFAULT" modality configuration will be 
 	applied on all the modalities without configuration (or unknown) -->
 <modalities>
 	<!-- <modality> attributes: name is a mandatory attribute, extend is optional. -->
@@ -11,15 +11,16 @@
 	<!-- <p> attributes: index is a mandatory attribute (gives the position of the attribute from top to bottom), format is 
 		optional -->	
 	<!-- format associated to the DICOM attribute:
-		$V => the value
+		$V => the value which can be inserted into a text
 		$V:l$25$ => the value is limited to 25 characters followed by "..."
 		$V:f$#,##0.##$ => java pattern to display decimal number -->
-	<!-- The value of <p> is the name of variable available of the class TagW (see https://github.com/nroduit/Weasis/blob/master/weasis-core/weasis-core-api/src/main/java/org/weasis/core/api/media/data/TagW.java), 
+	<!-- The value of <p> is the name of variable of DICOM Attributes (see http://dicom.nema.org/medical/dicom/current/output/chtml/part06/chapter_6.html) 
+		or available in the class TagW (see https://github.com/nroduit/Weasis/blob/master/weasis-core/weasis-core-api/src/main/java/org/weasis/core/api/media/data/TagW.java), 
 		it can contain several values separated by a comma to display a value when the previous one is not available (null) -->
 
 	<!-- Uncomment to override the default configuration which is already defined in Weasis source code  -->
 	<!--
-	<modality name="Default">
+	<modality name="DEFAULT">
 		<corner name="TOP_LEFT">
 			<p index="1">PatientName</p>
 			<p index="2">PatientBirthDate</p>
@@ -44,10 +45,15 @@
 		</corner>
 	</modality>
 	 -->
-	 
-	 
-	<modality name="SC" extend="Default">
+
+	<modality name="SC" extend="DEFAULT">
 		<corner name="BOTTOM_RIGHT">
+			<p index="6" format="$V:l$25$">ImageComments</p>
+		</corner>
+	</modality>
+	<modality name="XC" extend="DEFAULT">
+		<corner name="BOTTOM_RIGHT">
+			<p index="4" format="$V">BodyPartExamined</p>
 			<p index="6" format="$V:l$25$">ImageComments</p>
 		</corner>
 	</modality>

@@ -1,10 +1,22 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderedImageFactory;
 
+import javax.media.jai.ImageLayout;
 import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptorImpl;
 import javax.media.jai.OperationRegistry;
@@ -13,7 +25,11 @@ import javax.media.jai.RegistryElementDescriptor;
 import javax.media.jai.TileCache;
 import javax.media.jai.registry.RIFRegistry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class JAIUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JAIUtil.class);
 
     private JAIUtil() {
     }
@@ -61,11 +77,9 @@ public class JAIUtil {
         if (img != null && tileBounds != null) {
             TileCache tileCache = getJAI().getTileCache();
 
-            int ti, tj;
-
             // Loop over tiles within the clipping region
-            for (tj = tileBounds.y; tj <= tileBounds.height; tj++) {
-                for (ti = tileBounds.x; ti <= tileBounds.width; ti++) {
+            for (int tj = tileBounds.y; tj <= tileBounds.height; tj++) {
+                for (int ti = tileBounds.x; ti <= tileBounds.width; ti++) {
                     try {
                         Raster tile = tileCache.getTile(img, ti, tj);
                         if (tile == null) {
@@ -73,10 +87,18 @@ public class JAIUtil {
                             tileCache.add(img, ti, tj, tile);
                         }
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        LOGGER.error("Cannot add tile to cache", ex); //$NON-NLS-1$
                     }
                 }
             }
+        }
+    }
+
+    public static ImageLayout getImageLayoutHint(RenderingHints renderHints) {
+        if (renderHints == null) {
+            return null;
+        } else {
+            return (ImageLayout) renderHints.get(JAI.KEY_IMAGE_LAYOUT);
         }
     }
 }

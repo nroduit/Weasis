@@ -1,15 +1,16 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.internal;
 
+import java.awt.RenderingHints;
 import java.io.File;
 import java.io.IOException;
 import java.util.Dictionary;
@@ -17,13 +18,13 @@ import java.util.Hashtable;
 
 import javax.media.jai.JAI;
 import javax.media.jai.OperationRegistry;
-import javax.media.jai.util.ImagingListener;
+import javax.media.jai.RecyclingTileFactory;
+import javax.media.jai.TileScheduler;
 
 import org.apache.felix.prefs.BackingStore;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
@@ -55,11 +56,7 @@ public class Activator implements BundleActivator, ServiceListener {
         bundleContext.registerService(BackingStore.class.getName(), new DataFileBackingStoreImpl(bundleContext), null);
 
         for (ServiceReference<Codec> service : bundleContext.getServiceReferences(Codec.class, null)) {
-            Codec codec = bundleContext.getService(service);
-            if (codec != null && !BundleTools.CODEC_PLUGINS.contains(codec)) {
-                BundleTools.CODEC_PLUGINS.add(codec);
-                LOGGER.info("Register Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
-            }
+            registerCodecPlugins(bundleContext.getService(service));
         }
 
         bundleContext.addServiceListener(this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()));//$NON-NLS-1$
@@ -67,14 +64,9 @@ public class Activator implements BundleActivator, ServiceListener {
         JAI jai = JAIUtil.getJAI();
         OperationRegistry or = jai.getOperationRegistry();
 
-        jai.setImagingListener(new ImagingListener() {
-
-            @Override
-            public boolean errorOccurred(String message, Throwable thrown, Object where, boolean isRetryable)
-                throws RuntimeException {
-                LOGGER.error("JAI error ocurred: {}", message); //$NON-NLS-1$
-                return false;
-            }
+        jai.setImagingListener((String message, Throwable thrown, Object where, boolean isRetryable) -> {
+            LOGGER.error("JAI Error in {}: {}", where, message, thrown); //$NON-NLS-1$
+            return false;
         });
         JAIUtil.registerOp(or, new FormatBinaryDescriptor());
         JAIUtil.registerOp(or, new NotBinaryDescriptor());
@@ -85,9 +77,22 @@ public class Activator implements BundleActivator, ServiceListener {
         JAIUtil.registerOp(or, new RectifySignedShortDataDescriptor());
         JAIUtil.registerOp(or, new RectifyUShortToShortDataDescriptor());
 
-        // TODO manage memory setting ?
-        jai.getTileCache().setMemoryCapacity(128 * 1024L * 1024L);
+        // Set 1/4 of the total memory for TileCache
+        jai.getTileCache().setMemoryCapacity(Runtime.getRuntime().maxMemory() / 4);
 
+        RecyclingTileFactory recyclingTileFactory = new RecyclingTileFactory();
+        RenderingHints rh = jai.getRenderingHints();
+        rh.put(JAI.KEY_TILE_FACTORY, recyclingTileFactory);
+        rh.put(JAI.KEY_TILE_RECYCLER, recyclingTileFactory);
+        rh.put(JAI.KEY_CACHED_TILE_RECYCLING_ENABLED, Boolean.TRUE);
+        jai.setRenderingHints(rh);
+        TileScheduler scheduler = jai.getTileScheduler();
+        int nbThread = Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
+        scheduler.setParallelism(nbThread);
+        scheduler.setPrefetchParallelism(nbThread - 1);
+
+        // Trick for avoiding 403 error when downloading from some web sites
+        System.setProperty("http.agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1"); //$NON-NLS-1$ //$NON-NLS-2$
         // Allows to connect through a proxy initialized by Java Webstart
         ProxyDetector.setProxyFromJavaWebStart();
 
@@ -96,43 +101,54 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
+        // TODO should be stop in after all bundles implementing preferences
     }
 
     @Override
     public synchronized void serviceChanged(ServiceEvent event) {
-        ServiceReference<?> m_ref = event.getServiceReference();
-        BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-        Codec codec = (Codec) context.getService(m_ref);
+        ServiceReference<?> sRef = event.getServiceReference();
+        BundleContext context = sRef.getBundle().getBundleContext();
+        Codec codec = null;
+        try {
+            codec = (Codec) context.getService(sRef);
+        } catch (RuntimeException e) {
+            // TODO find why sometimes service cannot be returned
+            LOGGER.info("Cannot get service of {}", sRef.getBundle()); //$NON-NLS-1$
+        }
         if (codec == null) {
             return;
         }
 
         // TODO manage when several identical MimeType, register the default one
         if (event.getType() == ServiceEvent.REGISTERED) {
-
-            if (!BundleTools.CODEC_PLUGINS.contains(codec)) {
-                BundleTools.CODEC_PLUGINS.add(codec);
-                LOGGER.info("Register Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
-            }
+            registerCodecPlugins(codec);
         } else if (event.getType() == ServiceEvent.UNREGISTERING) {
             if (BundleTools.CODEC_PLUGINS.contains(codec)) {
-                LOGGER.info("Unregister Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
+                LOGGER.info("Unregister Image Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
                 BundleTools.CODEC_PLUGINS.remove(codec);
             }
             // Unget service object and null references.
-            context.ungetService(m_ref);
+            context.ungetService(sRef);
         }
     }
 
-    private void initLoggerAndAudit(BundleContext bundleContext) throws IOException {
+    private static void registerCodecPlugins(Codec codec) {
+        if (codec != null && !BundleTools.CODEC_PLUGINS.contains(codec)) {
+            BundleTools.CODEC_PLUGINS.add(codec);
+            LOGGER.info("Register Image Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
+        }
+    }
+
+    private static void initLoggerAndAudit(BundleContext bundleContext) throws IOException {
         // Audit log for giving statistics about usage of Weasis
         String loggerKey = "audit.log"; //$NON-NLS-1$
         String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" }; //$NON-NLS-1$
         // Activate audit log by adding an entry "audit.log=true" in Weasis.
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(loggerKey, false)) {
-            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", AppProperties.WEASIS_PATH //$NON-NLS-1$
-                + File.separator + "log" + File.separator + "audit-" + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null); //$NON-NLS-1$
+            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", //$NON-NLS-1$
+                AppProperties.WEASIS_PATH + File.separator + "log" + File.separator + "audit-" //$NON-NLS-1$ //$NON-NLS-2$
+                    + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$
+                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null, "0"); //$NON-NLS-1$ //$NON-NLS-2$
             AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {
             ServiceReference<ConfigurationAdmin> configurationAdminReference =
@@ -142,12 +158,10 @@ public class Activator implements BundleActivator, ServiceListener {
                 if (confAdmin != null) {
                     Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
                     if (logConfiguration == null) {
-                        logConfiguration =
-                            confAdmin.createFactoryConfiguration(
-                                "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
-                        Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
+                        logConfiguration = confAdmin
+                            .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                        Dictionary<String, Object> loggingProperties = new Hashtable<>();
                         loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); //$NON-NLS-1$ //$NON-NLS-2$
-                        // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
                         loggingProperties.put("org.apache.sling.commons.log.names", loggerVal); //$NON-NLS-1$
                         // add this property to give us something unique to re-find this configuration
                         loggingProperties.put(loggerKey, loggerVal[0]);

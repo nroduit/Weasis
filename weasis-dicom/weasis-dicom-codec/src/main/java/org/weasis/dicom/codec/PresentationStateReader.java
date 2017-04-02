@@ -1,42 +1,56 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.codec;
 
 import java.awt.Color;
-import java.awt.Rectangle;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Tagable;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public class PresentationStateReader {
-    private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
+public class PresentationStateReader implements Tagable {
 
-    public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
-    public static final String TAG_OLD_PIX_SIZE = "original.pixel.spacing"; //$NON-NLS-1$
-    public static final String TAG_OLD_ModalityLUTData = "original.modality.lut"; //$NON-NLS-1$
-    public static final String TAG_OLD_RescaleSlope = "original.rescale.slope"; //$NON-NLS-1$
-    public static final String TAG_OLD_RescaleIntercept = "original.rescale.intercept"; //$NON-NLS-1$
-    public static final String TAG_OLD_RescaleType = "original.rescale.type"; //$NON-NLS-1$
-    public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers"; //$NON-NLS-1$
+    public static final String TAG_PR_READER = "pr.reader"; //$NON-NLS-1$
+
+    public static final int PRIVATE_CREATOR_TAG = 0x71070070;
+    public static final int PR_MODEL_PRIVATE_TAG = 0x71077001;
+    public static final String PR_MODEL_ID = "weasis/model/xml/2.5"; //$NON-NLS-1$
+
+    private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
     private final PRSpecialElement prSpecialElement;
     private final Attributes dcmobj;
-    private final HashMap<String, Object> tags = new HashMap<String, Object>();
+    private final HashMap<TagW, Object> tags = new HashMap<>();
 
     public PresentationStateReader(PRSpecialElement dicom) {
-        if (dicom == null) {
-            throw new IllegalArgumentException("Dicom parameter cannot be null"); //$NON-NLS-1$
-        }
+        Objects.requireNonNull(dicom, "Dicom parameter cannot be null"); //$NON-NLS-1$
         this.prSpecialElement = dicom;
         DicomMediaIO dicomImageLoader = dicom.getMediaReader();
-        dcmobj = dicomImageLoader.getDicomObject();
+        this.dcmobj = dicomImageLoader.getDicomObject();
     }
 
     public PRSpecialElement getDicom() {
@@ -52,134 +66,102 @@ public class PresentationStateReader {
         return dcmobj;
     }
 
-    public HashMap<String, Object> getTags() {
-        return tags;
+    @Override
+    public Object getTagValue(TagW tag) {
+        return tag == null ? null : tags.get(tag);
     }
 
-    public Object getTagValue(String key, Object defaultValue) {
-        if (key == null) {
-            return defaultValue;
+    @Override
+    public void setTag(TagW tag, Object value) {
+        DicomMediaUtils.setTag(tags, tag, value);
+    }
+
+    @Override
+    public void setTagNoNull(TagW tag, Object value) {
+        if (value != null) {
+            setTag(tag, value);
         }
-        Object object = tags.get(key);
-        return object == null ? defaultValue : object;
     }
 
-    private boolean isModuleAppicable(Attributes item, DicomImageElement img) {
-        if (dcmobj != null && img != null) {
-            Sequence sops = item.getSequence(Tag.ReferencedImageSequence);
-            if (sops == null || sops.isEmpty()) {
-                return true;
-            }
-            String imgSop = (String) img.getTagValue(TagW.SOPInstanceUID);
-            if (imgSop != null) {
-                for (Attributes sop : sops) {
-                    if (imgSop.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
-                        int[] frames =
-                            DicomMediaUtils.getIntAyrrayFromDicomElement(sop, Tag.ReferencedFrameNumber, null);
-                        if (frames == null) {
-                            return true;
-                        }
-                        int frame = 0;
-                        if (img.getKey() instanceof Integer) {
-                            frame = (Integer) img.getKey();
-                        }
-                        for (int f : frames) {
-                            if (f == frame) {
-                                return true;
-                            }
-                        }
-                        // if the frame has been excluded
-                        return false;
-                    }
+    @Override
+    public boolean containTagKey(TagW tag) {
+        return tags.containsKey(tag);
+    }
+
+    @Override
+    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
+        return tags.entrySet().iterator();
+    }
+
+    private static Predicate<Attributes> isSequenceApplicable(DicomImageElement img) {
+        return attributes -> isModuleAppicable(attributes, img);
+    }
+
+    public static boolean isModuleAppicable(Attributes[] refSeriesSeqParent, DicomImageElement img) {
+        if (refSeriesSeqParent != null) {
+            for (Attributes refImgSeqParent : refSeriesSeqParent) {
+                String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
+                if (seriesUID.equals(refImgSeqParent.getString(Tag.SeriesInstanceUID))) {
+                    return isModuleAppicable(refImgSeqParent, img);
                 }
             }
         }
         return false;
     }
 
-    public void readGrayscaleSoftcopyModule(DicomImageElement img) {
-        if (dcmobj != null) {
-            List<PresetWindowLevel> presets =
-                PresetWindowLevel.getPresetCollection(img, prSpecialElement.geTags(), true);
-            if (presets != null && presets.size() > 0) {
-                tags.put(ActionW.PRESET.cmd(), presets);
+    public static boolean isModuleAppicable(Attributes refImgSeqParent, DicomImageElement img) {
+        Objects.requireNonNull(refImgSeqParent);
+        Objects.requireNonNull(img);
+
+        Sequence sops = refImgSeqParent.getSequence(Tag.ReferencedImageSequence);
+        if (sops == null || sops.isEmpty()) {
+            return true;
+        }
+        String imgSop = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
+        if (imgSop != null) {
+            for (Attributes sop : sops) {
+                if (imgSop.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
+                    int[] frames = DicomMediaUtils.getIntAyrrayFromDicomElement(sop, Tag.ReferencedFrameNumber, null);
+                    if (frames == null || frames.length == 0) {
+                        return true;
+                    }
+                    int dicomFrame = 1;
+                    if (img.getKey() instanceof Integer) {
+                        dicomFrame = (Integer) img.getKey() + 1;
+                    }
+                    for (int f : frames) {
+                        if (f == dicomFrame) {
+                            return true;
+                        }
+                    }
+                    // if the frame has been excluded
+                    return false;
+                }
             }
         }
+        return false;
     }
 
-    public void readSpatialTransformationModule() {
+    public List<PresetWindowLevel> getPresetCollection(DicomImageElement img) {
+        return Optional.ofNullable(PresetWindowLevel.getPresetCollection(img, prSpecialElement, true, "[PR]")) //$NON-NLS-1$
+            .orElseGet(ArrayList::new);
+    }
+
+    public void applySpatialTransformationModule(Map<String, Object> actionsInView) {
         if (dcmobj != null) {
             // Rotation and then Flip
-            tags.put(ActionW.ROTATION.cmd(), dcmobj.getInt(Tag.ImageRotation, 0));
-            tags.put(ActionW.FLIP.cmd(), "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip))); //$NON-NLS-1$
+            actionsInView.put(ActionW.ROTATION.cmd(), dcmobj.getInt(Tag.ImageRotation, 0));
+            actionsInView.put(ActionW.FLIP.cmd(), "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip))); //$NON-NLS-1$
         }
     }
 
     public void readDisplayArea(DicomImageElement img) {
         if (dcmobj != null) {
-            Sequence srcSeq = dcmobj.getSequence(Tag.DisplayedAreaSelectionSequence);
-            if (srcSeq == null || srcSeq.isEmpty()) {
-                return;
-            }
-            for (Attributes item : srcSeq) {
-                if (isModuleAppicable(item, img)) {
-                    double[] pixelsize = null;
-                    float[] spacing =
-                        DicomMediaUtils.getFloatArrayFromDicomElement(item, Tag.PresentationPixelSpacing, null);
-                    if (spacing != null && spacing.length == 2) {
-                        pixelsize = new double[] { spacing[1], spacing[0] };
-                    }
-                    if (spacing == null) {
-                        int[] aspects =
-                            DicomMediaUtils.getIntAyrrayFromDicomElement(item, Tag.PresentationPixelAspectRatio, null);
-                        if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
-                            // set the aspects to the pixel size of the image to stretch the image rendering (square
-                            // pixel)
-                            if (aspects[1] < aspects[0]) {
-                                pixelsize = new double[] { 1.0, (double) aspects[0] / (double) aspects[1] };
-                            } else {
-                                pixelsize = new double[] { (double) aspects[1] / (double) aspects[0], 1.0 };
-                            }
-                        }
-                    }
-                    tags.put(TagW.PixelSpacing.getName(), pixelsize);
-
-                    String presentationMode = item.getString(Tag.PresentationSizeMode);
-                    int[] tlhc =
-                        DicomMediaUtils.getIntAyrrayFromDicomElement(item, Tag.DisplayedAreaTopLeftHandCorner, null);
-                    int[] brhc =
-                        DicomMediaUtils
-                            .getIntAyrrayFromDicomElement(item, Tag.DisplayedAreaBottomRightHandCorner, null);
-
-                    if (tlhc != null && tlhc.length == 2 && brhc != null && brhc.length == 2) {
-                        // Lots of systems encode topLeft as 1,1, even when they mean 0,0
-                        if (tlhc[0] == 1) {
-                            tlhc[0] = 0;
-                        }
-                        if (tlhc[1] == 1) {
-                            tlhc[1] = 0;
-
-                        }
-                        Rectangle rect = new Rectangle();
-                        rect.setFrameFromDiagonal(tlhc[0], tlhc[1], brhc[0], brhc[1]);
-                        tags.put(ActionW.CROP.cmd(), rect);
-                    }
-                    tags.put("presentationMode", presentationMode); //$NON-NLS-1$
-                    if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
-                        tags.put(ActionW.ZOOM.cmd(), 0.0);
-                    } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
-                        tags.put(ActionW.ZOOM.cmd(),
-                            (double) item.getFloat(Tag.PresentationPixelMagnificationRatio, 1.0f));
-                    } else if ("TRUE SIZE".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
-                        // TODO required to calibrate the screen (Measure physically two lines displayed on screen, must
-                        // be
-                        // square pixel)
-                        // tags.put(ActionW.ZOOM.cmd(), 0.0);
-                    }
-                    // Cannot apply a second DisplayedAreaModule to the image. It makes no sense.
-                    break;
-                }
-            }
+            TagW[] tagList = TagD.getTagFromIDs(Tag.PresentationPixelSpacing, Tag.PresentationPixelAspectRatio,
+                Tag.PixelOriginInterpretation, Tag.PresentationSizeMode, Tag.DisplayedAreaTopLeftHandCorner,
+                Tag.DisplayedAreaBottomRightHandCorner, Tag.PresentationPixelMagnificationRatio);
+            TagSeq.MacroSeqData data = new TagSeq.MacroSeqData(dcmobj, tagList, isSequenceApplicable(img));
+            TagD.get(Tag.DisplayedAreaSelectionSequence).readValue(data, this);
         }
     }
 
@@ -204,7 +186,7 @@ public class PresentationStateReader {
                 b >>= 8;
             }
         } else {
-            r = g = b = (pGray >> 8);
+            r = g = b = pGray >> 8;
         }
         r &= 0xFF;
         g &= 0xFF;
@@ -213,4 +195,12 @@ public class PresentationStateReader {
         return new Color(conv);
     }
 
+    public static float[] colorToLAB(Color color) {
+        float[] rgb = new float[3];
+        rgb[0] = color.getRed() / 255.f;
+        rgb[1] = color.getGreen() / 255.f;
+        rgb[2] = color.getBlue() / 255.f;
+
+        return LAB.fromRGB(rgb);
+    }
 }

@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.util;
 
 import java.io.File;
@@ -19,7 +29,7 @@ public class ResourceUtil {
 
     public static String getResource(String resource, Class<?> c) {
         URL url = getResourceURL(resource, c);
-        return url != null ? url.toString() : null;
+        return url == null ? null : url.toString();
     }
 
     public InputStream getResourceAsStream(String name, Class<?> c) {
@@ -27,9 +37,9 @@ public class ResourceUtil {
         try {
             return url != null ? url.openStream() : null;
         } catch (IOException e) {
-            LOGGER.error("Cannot read resource:{}", e.getMessage()); //$NON-NLS-1$
-            return null;
+            LOGGER.error("Cannot read resource", e); //$NON-NLS-1$
         }
+        return null;
     }
 
     public static URL getResourceURL(String resource, Class<?> c) {
@@ -61,23 +71,45 @@ public class ResourceUtil {
     }
 
     public static ImageIcon getLogo(String filename) {
-        ImageIcon icon = null;
-        try {
-            File file = getResource(filename);
-            if (file != null && file.canRead()) {
-                icon = new ImageIcon(file.toURI().toURL());
+        File file = getResource(filename);
+        if (file.canRead()) {
+            try {
+                return new ImageIcon(file.toURI().toURL());
+            } catch (Exception e) {
+                LOGGER.error("Cannot read logo image:{}", e); //$NON-NLS-1$
             }
-        } catch (Exception e) {
-            LOGGER.error("Cannot read logo image:{}", e.getMessage()); //$NON-NLS-1$
-        }
-        return icon;
-    }
-
-    public static File getResource(String filename) {
-        if (filename != null) {
-            return new File(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"), filename); //$NON-NLS-1$
         }
         return null;
     }
 
+    private static String getResourcePath() {
+        String path = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"); //$NON-NLS-1$
+        if (!StringUtil.hasText(path)) {
+            throw new IllegalArgumentException("Empty system property: weasis.resources.path"); //$NON-NLS-1$
+        }
+        return path;
+    }
+
+    public static File getResource(String filename) {
+        if (!StringUtil.hasText(filename)) {
+            throw new IllegalArgumentException("Empty filename"); //$NON-NLS-1$
+        }
+        return new File(getResourcePath(), filename);
+    }
+
+    public static File getResource(String filename, String... subFolderName) {
+        if (!StringUtil.hasText(filename)) {
+            throw new IllegalArgumentException("Empty filename"); //$NON-NLS-1$
+        }
+        String path = getResourcePath();
+        if (subFolderName != null) {
+            StringBuilder buf = new StringBuilder(path);
+            for (String s : subFolderName) {
+                buf.append(File.separator);
+                buf.append(s);
+            }
+            path = buf.toString();
+        }
+        return new File(path, filename);
+    }
 }

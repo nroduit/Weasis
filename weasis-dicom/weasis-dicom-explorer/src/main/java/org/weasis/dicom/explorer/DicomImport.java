@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.dicom.explorer;
 
 import java.awt.Dimension;
@@ -31,11 +31,12 @@ import org.weasis.core.api.gui.util.AbstractWizardDialog;
 
 public class DicomImport extends AbstractWizardDialog {
 
+    private boolean cancelVeto = false;
     private final DicomModel dicomModel;
 
     public DicomImport(Window parent, final DicomModel dicomModel) {
-        super(parent,
-            Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
+        super(parent, Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, //$NON-NLS-1$
+            new Dimension(640, 480));
         this.dicomModel = dicomModel;
 
         final JButton importandClose = new JButton(Messages.getString("DicomImport.impAndClose0")); //$NON-NLS-1$
@@ -78,7 +79,7 @@ public class DicomImport extends AbstractWizardDialog {
 
     @Override
     protected void initializePages() {
-        ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
+        ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
         list.add(new LocalImport());
         list.add(new DicomZipImport());
         list.add(new DicomDirImport());
@@ -118,9 +119,17 @@ public class DicomImport extends AbstractWizardDialog {
         }
     }
 
+    public void setCancelVeto(boolean cancelVeto) {
+        this.cancelVeto = cancelVeto;
+    }
+
     @Override
     public void cancel() {
-        dispose();
+        if (cancelVeto) {
+            cancelVeto = false;
+        } else {
+            dispose();
+        }
     }
 
     @Override

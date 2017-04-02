@@ -1,19 +1,19 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2010, 2016 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
 package org.weasis.core.api.service;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -35,7 +35,7 @@ import org.weasis.core.api.util.FileUtil;
 
 public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
 
-    private static final Logger logger = LoggerFactory.getLogger(DataFileBackingStoreImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataFileBackingStoreImpl.class);
 
     private final BundleContext context;
     private final File prefRootDirectory;
@@ -129,11 +129,11 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
         final File file = this.getFile(desc);
         if (file != null && file.exists()) {
             XMLStreamReader xmler = null;
-            FileReader fileReader = null;
+            FileInputStream fileReader = null;
             try {
                 final PreferencesImpl root = new PreferencesImpl(desc, manager);
                 XMLInputFactory xmlif = XMLInputFactory.newInstance();
-                fileReader = new FileReader(file);
+                fileReader = new FileInputStream(file);
                 xmler = xmlif.createXMLStreamReader(fileReader);
                 int eventType;
                 while (xmler.hasNext()) {
@@ -145,7 +145,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
                                 while (xmler.hasNext()) {
                                     eventType = xmler.next();
                                     switch (eventType) {
-                                    // It is a child of the preferences node
+                                        // It is a child of the preferences node
                                         case XMLStreamConstants.START_ELEMENT:
                                             this.read(root, xmler, xmler.getName().getLocalPart());
                                             break;
@@ -164,7 +164,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
             }
 
             catch (XMLStreamException e) {
-                logger.error("Preferences file is corrupted: ", file.getAbsolutePath()); //$NON-NLS-1$
+                LOGGER.error("Preferences file is corrupted: ", file.getAbsolutePath()); //$NON-NLS-1$
                 throw new BackingStoreException("Unable to load preferences.", e); //$NON-NLS-1$
             } catch (FileNotFoundException e) {
                 throw new BackingStoreException("Unable to load preferences.", e); //$NON-NLS-1$
@@ -178,7 +178,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
 
     /**
      * Get the file for the preferences tree.
-     * 
+     *
      * @param desc
      * @return the preference file
      */

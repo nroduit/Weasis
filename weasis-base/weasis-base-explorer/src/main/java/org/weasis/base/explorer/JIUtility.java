@@ -1,180 +1,69 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.base.explorer;
 
 import java.io.File;
-import java.util.Vector;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.Icon;
 import javax.swing.filechooser.FileSystemView;
 
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaElement;
 
 public final class JIUtility {
 
-    public static final String[] DATE_FORMAT = { "yyyyMMddHHmmssSSS", "yyyy-MMM-dd-HHmmssSSS" };
-    private static final String osName = System.getProperty("os.name").toLowerCase();
-    public static final String USER_ROOT = System.getProperty("user.home");
+    private static final File USER_HOME = new File(System.getProperty("user.home")); //$NON-NLS-1$
     public static final String ROOT_FOLDER;
+
     static {
-        if (osName.startsWith("win")) {
-            ROOT_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "My Computer";
+        if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+            ROOT_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "rootFolder"; //$NON-NLS-1$ //$NON-NLS-2$
         } else {
             ROOT_FOLDER = File.separator;
         }
     }
 
+    private JIUtility() {
+    }
+
     public static FileTreeModel createTreeModel() {
-        // Using "My Computer" as root.
-        TreeNode rootNode = null;
-
-        if (osName.startsWith("windows")) {
-            // Create a temp "My Computer" folder.
-            final File MY_COMPUTER_FOLDER_FILE = new File(ROOT_FOLDER);
-
-            MY_COMPUTER_FOLDER_FILE.mkdirs();
-            // Delete temp file when program exits.
-            MY_COMPUTER_FOLDER_FILE.deleteOnExit();
-
-            rootNode = new TreeNode(MY_COMPUTER_FOLDER_FILE);
-            rootNode.setRoot(true);
-            rootNode.explore();
-
+        Path rootPath;
+        if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+            final File winRootFoler = new File(ROOT_FOLDER);
+            winRootFoler.mkdirs();
+            winRootFoler.deleteOnExit();
+            rootPath = winRootFoler.toPath();
         } else {
-
-            final File rootFile = new File(ROOT_FOLDER);
-
-            rootNode = new TreeNode(rootFile);
-            rootNode.setRoot(true);
-            rootNode.explore();
+            rootPath = Paths.get(ROOT_FOLDER);
         }
+
+        TreeNode rootNode = new TreeNode(rootPath);
+        rootNode.setRoot(true);
+        rootNode.explore();
 
         return new FileTreeModel(rootNode);
     }
 
-    public static String portablePath(final String path) {
-
-        final StringBuilder result = new StringBuilder();
-        // startIdx and idxOld delimit various chunks of aInput; these
-        // chunks always end where aOldPattern begins
-        int startIdx = 0;
-        int idxOld = 0;
-        while ((idxOld = path.indexOf("\\", startIdx)) >= 0) {
-            // grab a part of aInput which does not include aOldPattern
-            result.append(path.substring(startIdx, idxOld));
-            // add aNewPattern to take place of aOldPattern
-            result.append("/");
-
-            // reset the startIdx to just after the current match, to see
-            // if there are any further matches
-            startIdx = idxOld + 1;
-        }
-        // the final chunk will go to the end of aInput
-        result.append(path.substring(startIdx));
-
-        return result.toString();
-    }
-
-    public static String systemPath(final String path) {
-
-        if (File.separator.equals("\\")) {
-            final StringBuilder result = new StringBuilder();
-            // startIdx and idxOld delimit various chunks of aInput; these
-            // chunks always end where aOldPattern begins
-            int startIdx = 0;
-            int idxOld = 0;
-            while ((idxOld = path.indexOf("/", startIdx)) >= 0) {
-                // grab a part of aInput which does not include aOldPattern
-                result.append(path.substring(startIdx, idxOld));
-                // add aNewPattern to take place of aOldPattern
-                result.append("\\");
-
-                // reset the startIdx to just after the current match, to see
-                // if there are any further matches
-                startIdx = idxOld + 1;
-            }
-            // the final chunk will go to the end of aInput
-            result.append(path.substring(startIdx));
-            return result.toString();
-        }
-        return path;
-    }
-
-    public static String length2KB(final long length) {
-        final long kbCount = (length + 1024) / 1024;
-        final String strlength = String.valueOf(kbCount);
-        return String.valueOf((kbCount > 999 ? strlength.substring(0, strlength.length() - 3) + ","
-            + strlength.substring(strlength.length() - 3) : strlength)
-            + " KB ");
-    }
-
-    public static File[] getRoots() {
-        return constructRoots();
-    }
-
-    private static File[] constructRoots() {
-        File[] roots;
-        final Vector<File> rootsVector = new Vector<File>();
-
-        if (osName.toLowerCase().startsWith("win")) {
-            // Run through all possible mount points and check
-            // for their existance.
-            for (char c = 'C'; c <= 'Z'; c++) {
-                final char device[] = { c, ':', '\\' };
-                final String deviceName = new String(device);
-                final File deviceFile = new File(deviceName);
-
-                if ((deviceFile != null) && deviceFile.exists()) {
-                    rootsVector.addElement(deviceFile);
-                }
-            }
-        } else if (osName.toLowerCase().startsWith("mac")) {
-            for (final File root : (new File("/Volumes")).listFiles()) {
-                rootsVector.addElement(root);
-            }
-        } else {
-            for (final File root : File.listRoots()) {
-                rootsVector.addElement(root);
-            }
-        }
-        roots = new File[rootsVector.size()];
-        rootsVector.copyInto(roots);
-
-        return roots;
-    }
-
     public static Icon getSystemIcon(final MediaElement dObj) {
-        if (dObj.getFile().exists()) {
-            return FileSystemView.getFileSystemView().getSystemIcon(dObj.getFile());
-        } else {
-            return FileSystemView.getFileSystemView().getSystemIcon(new File(System.getProperty("user.home")));
-        }
+        return getSystemIcon(dObj.getFileCache().getOriginalFile().get());
     }
 
     public static Icon getSystemIcon(final File f) {
-        if (f.exists()) {
+        if (f != null && f.exists()) {
             return FileSystemView.getFileSystemView().getSystemIcon(f);
         } else {
-            return FileSystemView.getFileSystemView().getSystemIcon(new File(System.getProperty("user.home")));
+            return FileSystemView.getFileSystemView().getSystemIcon(USER_HOME); // $NON-NLS-1$
         }
-    }
-
-    public static String suffix(final String name) {
-        final int i = name.lastIndexOf('.');
-        if (i > 0) {
-            return name.toLowerCase().substring(i + 1);
-        }
-        return null;
-    }
-
-    public static String getNumericPaddedString(final int value, final int radix, final int padding) {
-        final String str = Integer.toString(value, radix);
-        final StringBuilder strBuf = new StringBuilder();
-
-        while ((padding > str.length()) && (strBuf.length() < (padding - str.length()))) {
-            strBuf.append("0");
-        }
-
-        strBuf.append(str);
-        return strBuf.toString();
     }
 
 }

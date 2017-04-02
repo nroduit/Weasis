@@ -1,24 +1,26 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.gui.util.MathUtil;
 
-// A simple histogram class to count the frequency of
-// values of a parameter of interest.
-
+// A simple histogram class 
 public class BasicHist {
 
-    public static final String[] STATISTICS_LIST =
-        { Messages.getString("BasicHist.pix"), Messages.getString("BasicHist.min"), Messages.getString("BasicHist.max"), Messages.getString("BasicHist.mean"), Messages.getString("BasicHist.median"), Messages.getString("BasicHist.thresh"), Messages.getString("BasicHist.std"), Messages.getString("BasicHist.skew"), Messages.getString("BasicHist.kurtosis"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+    private static final String[] STATISTICS_LIST =
+        { Messages.getString("BasicHist.pix"), Messages.getString("BasicHist.min"), Messages.getString("BasicHist.max"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            Messages.getString("BasicHist.mean"), Messages.getString("BasicHist.median"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("BasicHist.thresh"), Messages.getString("BasicHist.std"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("BasicHist.skew"), Messages.getString("BasicHist.kurtosis"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("BasicHist.entropy") }; //$NON-NLS-1$
     private int[] bins;
     private int numBins;
@@ -29,7 +31,7 @@ public class BasicHist {
 
     // The constructor will create an array of a given
     // number of bins. The range of the histogram given
-    // by the upper and lower limt values.
+    // by the upper and lower limit values.
     public BasicHist(int numBins, double lo, double hi) {
         this.numBins = numBins;
         bins = new int[numBins];
@@ -71,7 +73,7 @@ public class BasicHist {
 
     /**
      * add
-     * 
+     *
      * @param obj
      *            Object[]
      */
@@ -141,10 +143,10 @@ public class BasicHist {
             stat[2] = -Double.MAX_VALUE;
             for (int i = 0; i < bins.length; i++) {
                 double val = bins[i];
-                if (val != 0 && i < stat[1]) {
+                if (MathUtil.isDifferentFromZero(val) && i < stat[1]) {
                     stat[1] = i;
                 }
-                if (val != 0 && i > stat[2]) {
+                if (MathUtil.isDifferentFromZero(val) && i > stat[2]) {
                     stat[2] = i;
                 }
                 stat[0] += val;
@@ -168,9 +170,8 @@ public class BasicHist {
             stat[6] = Math.sqrt(variance);
             if (bins.length > 3 && variance > 10E-20) {
                 stat[7] = (stat[0] * stat[7]) / ((stat[0] - 1) * (stat[0] - 2) * stat[6] * variance);
-                stat[8] =
-                    (stat[0] * (stat[0] + 1) * stat[8] - 3 * m2 * m2 * (stat[0] - 1))
-                        / ((stat[0] - 1) * (stat[0] - 2) * (stat[0] - 3) * variance * variance);
+                stat[8] = (stat[0] * (stat[0] + 1) * stat[8] - 3 * m2 * m2 * (stat[0] - 1))
+                    / ((stat[0] - 1) * (stat[0] - 2) * (stat[0] - 3) * variance * variance);
             } else {
                 stat[7] = 0.0;
                 stat[8] = 0.0;
@@ -181,40 +182,40 @@ public class BasicHist {
     }
 
     public static double getEntropy(int[] data, double nbPixels) {
-        double H = 0.0;
+        double entropy = 0.0;
         if (data == null || data.length < 1) {
             return 0.0;
         } else {
             double log2 = Math.log(2.0);
             for (int b = 0; b < data.length; b++) {
                 double p = data[b] / nbPixels;
-                if (p != 0.0) {
-                    H -= p * (Math.log(p) / log2);
+                if (MathUtil.isDifferentFromZero(p)) {
+                    entropy -= p * (Math.log(p) / log2);
                 }
             }
         }
-        return H;
+        return entropy;
     }
 
     public static double medianBin(final int[] bin, int halfEntries) {
         if (bin == null || bin.length < 1) {
             return 0.0;
         } else {
-            int sum_bin_entries = 0;
-            int sum = 0;
+            int sumBinEntries = 0;
+            int sum;
             for (int i = 0; i < bin.length; i++) {
-                sum = sum_bin_entries + bin[i];
+                sum = sumBinEntries + bin[i];
                 // Check if bin crosses halfTotal point
                 if (sum >= halfEntries) {
                     // Scale linearly across the bin
-                    int dif = halfEntries - sum_bin_entries;
+                    int dif = halfEntries - sumBinEntries;
                     double frac = 0.0;
                     if (bin[i] > 0) {
                         frac = ((double) dif) / (double) bin[i];
                     }
-                    return (i + frac);
+                    return i + frac;
                 }
-                sum_bin_entries = sum;
+                sumBinEntries = sum;
             }
         }
         return 0.0;

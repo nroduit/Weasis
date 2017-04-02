@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import java.awt.Rectangle;
@@ -32,15 +32,15 @@ import javax.media.jai.TileCache;
 
 /**
  * The Class LayoutUtil.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class LayoutUtil {
 
-    public static RenderingHints BORDER_COPY = new RenderingHints(JAI.KEY_BORDER_EXTENDER,
-        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+    public static RenderingHints BORDER_COPY =
+        new RenderingHints(JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
-    public LayoutUtil() {
+    private LayoutUtil() {
     }
 
     public static ImageLayout getImageLayoutHint(RenderingHints renderinghints) {
@@ -81,14 +81,13 @@ public class LayoutUtil {
         return new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
     }
 
-    private static RenderingHints createRenderedImage(ColorSpace cs, int bits[]) {
+    private static RenderingHints createRenderedImage(ColorSpace cs, int[] bits) {
         ColorModel colorModel =
             new ComponentColorModel(cs, bits, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
         ImageLayout layout = new ImageLayout();
         layout.setColorModel(colorModel);
         layout.setSampleModel(colorModel.createCompatibleSampleModel(ImageFiler.TILESIZE, ImageFiler.TILESIZE));
-        RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
-        return hints;
+        return new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
     }
 
     public static RenderingHints createGrayRenderedImage() {
@@ -105,8 +104,8 @@ public class LayoutUtil {
         if (layout == null) {
             layout = new ImageLayout();
         }
-        layout.setColorModel(new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 },
-            false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE));
+        layout.setColorModel(new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 }, false,
+            false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE));
         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
         oldhints.add(hints);
         oldhints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
@@ -132,27 +131,27 @@ public class LayoutUtil {
     }
 
     public static WritableRaster createCompatibleRaster(PlanarImage img, Rectangle region) {
+        Rectangle rect;
         if (region == null) { // copy the entire image
-            region = img.getBounds();
+            rect = img.getBounds();
         } else {
-            region = region.intersection(img.getBounds());
-
-            if (region.isEmpty()) {
+            rect = region.intersection(img.getBounds());
+            if (rect.isEmpty()) {
                 return null;
             }
         }
 
         SampleModel sm = img.getSampleModel();
-        if (sm.getWidth() != region.width || sm.getHeight() != region.height) {
-            sm = sm.createCompatibleSampleModel(region.width, region.height);
+        if (sm.getWidth() != rect.width || sm.getHeight() != rect.height) {
+            sm = sm.createCompatibleSampleModel(rect.width, rect.height);
         }
 
-        WritableRaster raster = RasterFactory.createWritableRaster(sm, region.getLocation());
+        WritableRaster raster = RasterFactory.createWritableRaster(sm, rect.getLocation());
 
-        // int startTileX = img.XToTileX(region.x);
-        // int startTileY = img.YToTileY(region.y);
-        // int endTileX = img.XToTileX(region.x + region.width - 1);
-        // int endTileY = img.YToTileY(region.y + region.height - 1);
+        // int startTileX = img.XToTileX(rect.x);
+        // int startTileY = img.YToTileY(rect.y);
+        // int endTileX = img.XToTileX(rect.x + rect.width - 1);
+        // int endTileY = img.YToTileY(rect.y + rect.height - 1);
         //
         // SampleModel[] sampleModels = { img.getSampleModel() };
         // int tagID = RasterAccessor.findCompatibleTag(sampleModels, raster.getSampleModel());
@@ -163,7 +162,7 @@ public class LayoutUtil {
         // for (int ty = startTileY; ty <= endTileY; ty++) {
         // for (int tx = startTileX; tx <= endTileX; tx++) {
         // Raster tile = img.getTile(tx, ty);
-        // Rectangle subRegion = region.intersection(tile.getBounds());
+        // Rectangle subRegion = rect.intersection(tile.getBounds());
         //
         // RasterAccessor s = new RasterAccessor(tile, subRegion, srcTag, img.getColorModel());
         // RasterAccessor d = new RasterAccessor(raster, subRegion, dstTag, null);
@@ -174,7 +173,7 @@ public class LayoutUtil {
     }
 
     public static ColorModel createBinaryIndexColorModel() {
-        // 0xffffff -> white, 0x000000 -> black
+        // 0 -> 0x00 (black), 1 -> 0xff (white)
         byte[] comp = new byte[] { (byte) 0x00, (byte) 0xFF };
         return new IndexColorModel(1, 2, comp, comp, comp);
     }

@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.viewer2d.mip;
 
 import java.io.File;
@@ -7,14 +17,17 @@ import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.task.TaskMonitor;
+import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -23,12 +36,13 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
@@ -37,10 +51,11 @@ import org.weasis.dicom.viewer2d.View2dFactory;
 public class MipView extends View2d {
     private static final Logger LOGGER = LoggerFactory.getLogger(MipView.class);
 
-    public static final ImageIcon MIP_ICON_SETTING = new ImageIcon(
-        MipView.class.getResource("/icon/22x22/mip-setting.png")); //$NON-NLS-1$
+    public static final ImageIcon MIP_ICON_SETTING =
+        new ImageIcon(MipView.class.getResource("/icon/22x22/mip-setting.png")); //$NON-NLS-1$
     public static final ActionW MIP = new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW MIP_THICKNESS = new ActionW("Image Extension", "mip_thick", 0, 0, null); //$NON-NLS-2$
+    public static final ActionW MIP_THICKNESS =
+        new ActionW(Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
 
     public enum Type {
         MIN, MEAN, MAX;
@@ -55,7 +70,7 @@ public class MipView extends View2d {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
+        actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.BEST_FIT);
         actionsInView.put(MIP_THICKNESS.cmd(), 2);
         actionsInView.put(MipView.MIP.cmd(), MipView.Type.MAX);
         actionsInView.put("no.ko", true); //$NON-NLS-1$
@@ -63,10 +78,9 @@ public class MipView extends View2d {
         // Propagate the preset
         OpManager disOp = getDisplayOpManager();
         disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
-        // disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), null);
     }
 
-    public void initMIPSeries(DefaultView2d selView) {
+    public void initMIPSeries(ViewCanvas<?> selView) {
         if (selView != null) {
             actionsInView.put(ActionW.SORTSTACK.cmd(), selView.getActionValue(ActionW.SORTSTACK.cmd()));
             actionsInView.put(ActionW.INVERSESTACK.cmd(), selView.getActionValue(ActionW.INVERSESTACK.cmd()));
@@ -124,8 +138,8 @@ public class MipView extends View2d {
         }
 
         view.process =
-            new MipProcess(
-                Messages.getString("MipView.build"), new TaskMonitor(dialog == null ? view : dialog, "Monitoring Progress", "Initializing...", 0, 2 * extend + 1)) { //$NON-NLS-1$
+            new MipProcess(Messages.getString("MipView.build"), new TaskMonitor(dialog == null ? view : dialog, //$NON-NLS-1$
+                Messages.getString("MipView.monitoring_proc"), Messages.getString("MipView.init"), 0, 2 * extend + 1)) { //$NON-NLS-1$ //$NON-NLS-2$
                 @Override
                 public void run() {
                     final List<DicomImageElement> dicoms = new ArrayList<DicomImageElement>();
@@ -137,7 +151,7 @@ public class MipView extends View2d {
                         LOGGER.info(e.getMessage());
                     } catch (Throwable t) {
                         dicoms.clear();
-                        AuditLog.logError(LOGGER, t, "Mip renderding error");
+                        AuditLog.logError(LOGGER, t, "Mip renderding error"); //$NON-NLS-1$
                     } finally {
                         // Following actions need to be executed in EDT thread
                         GuiExecutor.instance().execute(new Runnable() {
@@ -149,7 +163,8 @@ public class MipView extends View2d {
                                         view.setMip(dicoms.get(0));
                                     } else if (dicoms.size() > 1) {
                                         DicomImageElement dcm = dicoms.get(0);
-                                        Series s = new DicomSeries((String) dcm.getTagValue(TagW.SeriesInstanceUID));
+                                        Series s =
+                                            new DicomSeries(TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
                                         s.addAll(dicoms);
                                         ((DcmMediaReader) dcm.getMediaReader()).writeMetaData(s);
                                         DataExplorerModel model =
@@ -161,7 +176,7 @@ public class MipView extends View2d {
                                                 s.setTag(TagW.ExplorerModel, dicomModel);
                                                 dicomModel.addHierarchyNode(study, s);
                                                 dicomModel.firePropertyChange(new ObservableEvent(
-                                                    ObservableEvent.BasicAction.Add, dicomModel, null, s));
+                                                    ObservableEvent.BasicAction.ADD, dicomModel, null, s));
                                             }
 
                                             View2dFactory factory = new View2dFactory();
@@ -190,6 +205,12 @@ public class MipView extends View2d {
         if (oldImage == null) {
             eventManager.updateComponentsListener(MipView.this);
         } else {
+            // Force to draw crosslines without changing the slice position
+            ActionState sequence = eventManager.getAction(ActionW.SCROLL_SERIES);
+            if (sequence instanceof SliderCineListener) {
+                SliderCineListener cineAction = (SliderCineListener) sequence;
+                cineAction.stateChanged(cineAction.getSliderModel());
+            }
             // Close stream
             oldImage.dispose();
             // Delete file in cache

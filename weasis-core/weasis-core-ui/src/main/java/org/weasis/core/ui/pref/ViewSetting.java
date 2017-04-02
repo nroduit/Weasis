@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2011 Weasis Team.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.pref;
 
 import java.awt.Color;
@@ -24,9 +24,9 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.ImageStatistics;
-import org.weasis.core.ui.graphic.Measurement;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.utils.ImageStatistics;
+import org.weasis.core.ui.model.utils.bean.Measurement;
 
 public class ViewSetting {
     public static final String PREFERENCE_NODE = "view2d.default"; //$NON-NLS-1$
@@ -38,7 +38,7 @@ public class ViewSetting {
     private int lineWidth;
     private boolean basicStatistics;
     private boolean moreStatistics;
-    private final List<Monitor> monitors = new ArrayList<Monitor>(2);
+    private final List<Monitor> monitors = new ArrayList<>(2);
 
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
@@ -81,10 +81,10 @@ public class ViewSetting {
             }
 
             // Forget the Selection Graphic
-            for (int i = 1; i < MeasureToolBar.graphicList.size(); i++) {
-                Graphic graph = MeasureToolBar.graphicList.get(i);
+            for (int i = 1; i < MeasureToolBar.measureGraphicList.size(); i++) {
+                Graphic graph = MeasureToolBar.measureGraphicList.get(i);
                 List<Measurement> list = graph.getMeasurementList();
-                if (list != null && list.size() > 0) {
+                if (list != null && !list.isEmpty()) {
                     Preferences gpref = p.node(graph.getClass().getSimpleName());
                     labels = gpref.get("label", null); //$NON-NLS-1$
                     if (labels != null) {
@@ -107,7 +107,7 @@ public class ViewSetting {
     }
 
     public List<Monitor> getMonitors() {
-        return new ArrayList<Monitor>(monitors);
+        return new ArrayList<>(monitors);
     }
 
     public Monitor getMonitor(GraphicsDevice device) {
@@ -145,14 +145,14 @@ public class ViewSetting {
         }
     }
 
-    private boolean isTrueValue(String val) {
+    private static boolean isTrueValue(String val) {
         return "1".equals(val.trim()); //$NON-NLS-1$
     }
 
-    private void writeLabels(StringBuilder buffer, Measurement m) {
+    private static void writeLabels(StringBuilder buffer, Measurement m) {
         buffer.append(m.getId());
         buffer.append(":"); //$NON-NLS-1$
-        buffer.append((m.isGraphicLabel() ? "1" : "0")); //$NON-NLS-1$ //$NON-NLS-2$
+        buffer.append(m.getGraphicLabel() ? "1" : "0"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public void savePreferences(Preferences prefs) {
@@ -180,10 +180,10 @@ public class ViewSetting {
             BundlePreferences.putStringPreferences(stats, "label", buffer.toString()); //$NON-NLS-1$
 
             // Forget the Selection Graphic
-            for (int i = 1; i < MeasureToolBar.graphicList.size(); i++) {
-                Graphic graph = MeasureToolBar.graphicList.get(i);
+            for (int i = 1; i < MeasureToolBar.measureGraphicList.size(); i++) {
+                Graphic graph = MeasureToolBar.measureGraphicList.get(i);
                 List<Measurement> list = graph.getMeasurementList();
-                if (list != null && list.size() > 0) {
+                if (list != null && !list.isEmpty()) {
                     Preferences gpref = p.node(graph.getClass().getSimpleName());
                     buffer = new StringBuilder();
                     writeLabels(buffer, list.get(0));

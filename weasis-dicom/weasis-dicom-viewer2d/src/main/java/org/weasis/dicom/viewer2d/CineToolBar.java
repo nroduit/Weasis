@@ -1,7 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.viewer2d;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -15,8 +22,8 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.util.WtoolBar;
 
+@SuppressWarnings("serial")
 public class CineToolBar<DicomImageElement> extends WtoolBar {
-    private final Logger LOGGER = LoggerFactory.getLogger(CineToolBar.class);
 
     public CineToolBar(int index) {
         super(Messages.getString("CineToolBar.name"), index); //$NON-NLS-1$
@@ -29,13 +36,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 final JButton rwdButton = new JButton();
                 rwdButton.setToolTipText(Messages.getString("CineToolBar.start")); //$NON-NLS-1$
                 rwdButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-rwd.png"))); //$NON-NLS-1$
-                rwdButton.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        cineAction.setValue(0);
-                    }
-                });
+                rwdButton.addActionListener(e -> cineAction.setSliderValue(0));
                 add(rwdButton);
                 sequence.registerActionState(rwdButton);
             }
@@ -44,13 +45,9 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 final JButton prevButton = new JButton();
                 prevButton.setToolTipText(Messages.getString("CineToolBar.prev")); //$NON-NLS-1$
                 prevButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-prev.png"))); //$NON-NLS-1$
-                prevButton.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        cineAction.stop();
-                        cineAction.setValue(cineAction.getValue() - 1);
-                    }
+                prevButton.addActionListener(e -> {
+                    cineAction.stop();
+                    cineAction.setSliderValue(cineAction.getSliderValue() - 1);
                 });
                 add(prevButton);
                 sequence.registerActionState(prevButton);
@@ -80,13 +77,9 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 final JButton stopButton = new JButton();
                 stopButton.setToolTipText(Messages.getString("CineToolBar.stop")); //$NON-NLS-1$
                 stopButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-stop.png"))); //$NON-NLS-1$
-                stopButton.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        cineAction.stop();
-                        cineAction.setValue(0);
-                    }
+                stopButton.addActionListener(e -> {
+                    cineAction.stop();
+                    cineAction.setSliderValue(0);
                 });
                 add(stopButton);
                 sequence.registerActionState(stopButton);
@@ -96,13 +89,9 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 final JButton nextButton = new JButton();
                 nextButton.setToolTipText(Messages.getString("CineToolBar.next")); //$NON-NLS-1$
                 nextButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-next.png"))); //$NON-NLS-1$
-                nextButton.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        cineAction.stop();
-                        cineAction.setValue(cineAction.getValue() + 1);
-                    }
+                nextButton.addActionListener(e -> {
+                    cineAction.stop();
+                    cineAction.setSliderValue(cineAction.getSliderValue() + 1);
                 });
                 add(nextButton);
                 sequence.registerActionState(nextButton);
@@ -112,14 +101,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 final JButton fwdButton = new JButton();
                 fwdButton.setToolTipText(Messages.getString("CineToolBar.end")); //$NON-NLS-1$
                 fwdButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-fwd.png"))); //$NON-NLS-1$
-                fwdButton.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        // No need to know the last series index
-                        cineAction.setValue(Integer.MAX_VALUE);
-                    }
-                });
+                fwdButton.addActionListener(e -> cineAction.setSliderValue(Integer.MAX_VALUE));
                 add(fwdButton);
                 sequence.registerActionState(fwdButton);
             }

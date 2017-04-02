@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.dicom.viewer2d.pref;
 
 import java.awt.FlowLayout;
@@ -37,7 +37,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
@@ -81,8 +81,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         JPanel panel_1 = new JPanel();
         ((FlowLayout) panel_1.getLayout()).setAlignment(FlowLayout.LEADING);
-        panel_1.setBorder(new TitledBorder(null,
-            Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        panel_1.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, //$NON-NLS-1$
+            TitledBorder.TOP, null, null));
         add(panel_1);
 
         JLabel lblInterpolation = new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON); //$NON-NLS-1$
@@ -95,8 +95,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         JPanel winlevelPanel = new JPanel();
         ((FlowLayout) winlevelPanel.getLayout()).setAlignment(FlowLayout.LEADING);
-        winlevelPanel.setBorder(new TitledBorder(null,
-            Messages.getString("ViewerPrefView.other"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        winlevelPanel.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.other"), TitledBorder.LEADING, //$NON-NLS-1$
+            TitledBorder.TOP, null, null));
         add(winlevelPanel);
 
         checkBoxWLcolor =
@@ -264,7 +264,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
             for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
                 if (p instanceof View2dContainer) {
                     View2dContainer viewer = (View2dContainer) p;
-                    for (DefaultView2d<DicomImageElement> v : viewer.getImagePanels()) {
+                    for (ViewCanvas<DicomImageElement> v : viewer.getImagePanels()) {
                         OpManager disOp = v.getDisplayOpManager();
                         disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
                         v.changeZoomInterpolation(interpolation);

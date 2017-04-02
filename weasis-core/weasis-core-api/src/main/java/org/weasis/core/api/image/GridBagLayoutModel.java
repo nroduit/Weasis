@@ -1,57 +1,55 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.swing.Icon;
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.util.Copyable;
+import org.weasis.core.api.util.StringUtil;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * GridBagLayoutModel is the model for the plugin container.
- * 
+ *
  */
-public class GridBagLayoutModel implements GUIEntry, Cloneable {
+public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GridBagLayoutModel.class);
 
     private String title;
     private final Icon icon;
     private final String id;
 
-    private final LinkedHashMap<LayoutConstraints, Component> constraints;
+    private final Map<LayoutConstraints, Component> constraints;
 
     public GridBagLayoutModel(String id, String title, int rows, int cols, String defaultClass, Icon icon) {
         this.title = title;
         this.id = id;
         this.icon = icon;
-        if (cols < 1) {
-            cols = 1;
-        }
-        if (rows < 1) {
-            rows = 1;
-        }
-        this.constraints = new LinkedHashMap<LayoutConstraints, Component>(cols * rows);
+        this.constraints = new LinkedHashMap<>(cols * rows);
         double weightx = 1.0 / cols;
         double weighty = 1.0 / rows;
         for (int y = 0; y < rows; y++) {
@@ -62,8 +60,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
     }
 
-    public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, Component> constraints, String id, String title,
-        Icon icon) {
+    public GridBagLayoutModel(Map<LayoutConstraints, Component> constraints, String id, String title, Icon icon) {
         if (constraints == null) {
             throw new IllegalArgumentException("constraints cannot be null"); //$NON-NLS-1$
         }
@@ -77,13 +74,25 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         this.title = title;
         this.id = id;
         this.icon = icon;
-        this.constraints = new LinkedHashMap<LayoutConstraints, Component>();
+        this.constraints = new LinkedHashMap<>();
         try {
-            loadXML(stream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
+            SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+            SAXAdapter adapter = new SAXAdapter();
+            parser.parse(stream, adapter);
+        } catch (Exception e) {
+            LOGGER.error("Loading layout xml", e); //$NON-NLS-1$
+        }
+    }
+
+    public GridBagLayoutModel(GridBagLayoutModel layoutModel) {
+        this.title = layoutModel.title;
+        this.id = layoutModel.id;
+        this.icon = layoutModel.icon;
+
+        this.constraints = new LinkedHashMap<>(layoutModel.constraints.size());
+        Iterator<LayoutConstraints> enumVal = layoutModel.constraints.keySet().iterator();
+        while (enumVal.hasNext()) {
+            this.constraints.put(enumVal.next().copy(), null);
         }
     }
 
@@ -96,7 +105,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         return title;
     }
 
-    public LinkedHashMap<LayoutConstraints, Component> getConstraints() {
+    public Map<LayoutConstraints, Component> getConstraints() {
         return constraints;
     }
 
@@ -116,22 +125,34 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         return new Dimension(lastx + 1, lasty + 1);
     }
 
-    public void loadXML(InputStream stream) throws IOException, SAXException {
-        try {
-            SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-            SAXAdapter adapter = new SAXAdapter();
-            parser.parse(stream, adapter);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (FactoryConfigurationError e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    public String getDescription() {
+        return null;
+    }
+
+    @Override
+    public Icon getIcon() {
+        return icon;
+    }
+
+    @Override
+    public String getUIName() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    @Override
+    public GridBagLayoutModel copy() {
+        return new GridBagLayoutModel(this);
     }
 
     private final class SAXAdapter extends DefaultHandler {
         /**
          * Specifies the component position and size
-         * 
+         *
          */
 
         /**
@@ -186,7 +207,8 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
 
         @Override
-        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+        public void startElement(String uri, String localName, String qName, Attributes attributes)
+            throws SAXException {
             if ("element".equals(qName)) { //$NON-NLS-1$
                 type = attributes.getValue("type"); //$NON-NLS-1$
                 x = Integer.parseInt(attributes.getValue("x")); //$NON-NLS-1$
@@ -207,15 +229,16 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         public void endElement(String uri, String localName, String qName) throws SAXException {
             if ("element".equals(qName)) { //$NON-NLS-1$
                 increment++;
-                constraints.put(new LayoutConstraints(type, increment, x, y, width, height, weightx, weighty, position,
-                    expand), null);
+                constraints.put(
+                    new LayoutConstraints(type, increment, x, y, width, height, weightx, weighty, position, expand),
+                    null);
                 name.setLength(0);
                 tag = -1;
             }
         }
 
         private double getDoubleValue(String val) {
-            if (val.trim().equals("")) { //$NON-NLS-1$
+            if (!StringUtil.hasText(val)) { // $NON-NLS-1$
                 return 0.0;
             }
             // handle fraction format
@@ -226,35 +249,5 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
             return Double.parseDouble(val);
         }
 
-    }
-
-    @Override
-    public String getDescription() {
-        return null;
-    }
-
-    @Override
-    public Icon getIcon() {
-        return icon;
-    }
-
-    @Override
-    public String getUIName() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        LinkedHashMap<LayoutConstraints, Component> map =
-            new LinkedHashMap<LayoutConstraints, Component>(constraints.size());
-        Iterator<LayoutConstraints> enumVal = constraints.keySet().iterator();
-        while (enumVal.hasNext()) {
-            map.put((LayoutConstraints) enumVal.next().clone(), null);
-        }
-        return new GridBagLayoutModel(map, id, title, icon);
     }
 }

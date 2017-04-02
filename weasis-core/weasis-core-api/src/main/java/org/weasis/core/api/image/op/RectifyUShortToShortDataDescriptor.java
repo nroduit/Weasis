@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.op;
 
 import java.awt.RenderingHints;
@@ -35,29 +35,27 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.registry.RenderableRegistryMode;
 import javax.media.jai.registry.RenderedRegistryMode;
 
-import com.sun.media.jai.opimage.RIFUtil;
+import org.weasis.core.api.image.util.JAIUtil;
 
 public class RectifyUShortToShortDataDescriptor extends OperationDescriptorImpl implements RenderedImageFactory {
 
     /**
      * The resource strings that provide the general documentation and specify the parameter list for this operation.
      */
-    private static final String[][] resources =
-        {
-            { "GlobalName", "RectifyUShortToShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
+    private static final String[][] resources = { { "GlobalName", "RectifyUShortToShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "LocalName", "RectifyUShortToShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "RectifyUShortToShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            {
-                "Description", "Rectify image with unsigned short data to signed short data (Workaround for imageio codecs issue" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Description", //$NON-NLS-1$
+            "Rectify image with unsigned short data to signed short data (Workaround for imageio codecs issue" }, //$NON-NLS-1$
 
-            { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "Version", "1.0" } //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" } //$NON-NLS-1$ //$NON-NLS-2$
 
-        };
+    };
 
     private static final Class[] paramClasses = {};
 
@@ -76,7 +74,7 @@ public class RectifyUShortToShortDataDescriptor extends OperationDescriptorImpl 
 
     /**
      * Validates the input source and parameter.
-     * 
+     *
      * <p>
      * In addition to the standard checks performed by the superclass method, this method checks that the source image
      * has an integral data type.
@@ -105,7 +103,7 @@ public class RectifyUShortToShortDataDescriptor extends OperationDescriptorImpl 
     public RenderedImage create(ParameterBlock args, RenderingHints renderHints) {
         // Get ImageLayout from renderHints if any.
         RenderedImage src = args.getRenderedSource(0);
-        ImageLayout layout = RIFUtil.getImageLayoutHint(renderHints);
+        ImageLayout layout = JAIUtil.getImageLayoutHint(renderHints);
         if (layout == null) {
             layout = new ImageLayout(src);
         }
@@ -122,25 +120,21 @@ public class RectifyUShortToShortDataDescriptor extends OperationDescriptorImpl 
             if (model instanceof BandedSampleModel) {
                 model = new BandedSampleModel(DataBuffer.TYPE_SHORT, w, h, scanlineStride, bankIndices, bandOffsets);
             } else if (model instanceof PixelInterleavedSampleModel) {
-                model =
-                    new PixelInterleavedSampleModel(DataBuffer.TYPE_SHORT, w, h, pixelStride, scanlineStride,
-                        bandOffsets);
+                model = new PixelInterleavedSampleModel(DataBuffer.TYPE_SHORT, w, h, pixelStride, scanlineStride,
+                    bandOffsets);
             } else if (model instanceof ComponentSampleModelJAI) {
-                model =
-                    new ComponentSampleModelJAI(DataBuffer.TYPE_SHORT, w, h, pixelStride, scanlineStride, bankIndices,
-                        bandOffsets);
+                model = new ComponentSampleModelJAI(DataBuffer.TYPE_SHORT, w, h, pixelStride, scanlineStride,
+                    bankIndices, bandOffsets);
             } else {
-                model =
-                    new ComponentSampleModel(DataBuffer.TYPE_SHORT, w, h, pixelStride, scanlineStride, bankIndices,
-                        bandOffsets);
+                model = new ComponentSampleModel(DataBuffer.TYPE_SHORT, w, h, pixelStride, scanlineStride, bankIndices,
+                    bandOffsets);
             }
         } else if (model instanceof SinglePixelPackedSampleModel) {
             final SinglePixelPackedSampleModel cast = (SinglePixelPackedSampleModel) model;
             final int scanlineStride = cast.getScanlineStride();
             final int[] bitMasks = cast.getBitMasks();
-            model =
-                new SinglePixelPackedSampleModel(DataBuffer.TYPE_SHORT, cast.getWidth(), cast.getHeight(),
-                    scanlineStride, bitMasks);
+            model = new SinglePixelPackedSampleModel(DataBuffer.TYPE_SHORT, cast.getWidth(), cast.getHeight(),
+                scanlineStride, bitMasks);
         }
         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
         layout.setSampleModel(model);

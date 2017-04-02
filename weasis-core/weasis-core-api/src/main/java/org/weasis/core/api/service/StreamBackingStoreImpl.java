@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2010, 2016 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -27,6 +27,8 @@ import org.apache.felix.prefs.PreferencesDescription;
 import org.apache.felix.prefs.PreferencesImpl;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.FileUtil;
 
@@ -35,6 +37,7 @@ import org.weasis.core.api.util.FileUtil;
  * complete preferences tree in a single stream.
  */
 public abstract class StreamBackingStoreImpl implements BackingStore {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamBackingStoreImpl.class);
 
     /** The bundle context. */
     protected final BundleContext bundleContext;
@@ -46,7 +49,7 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
 
     /**
      * This method is invoked to check if the backing store is accessible right now.
-     * 
+     *
      * @throws BackingStoreException
      */
     protected abstract void checkAccess() throws BackingStoreException;
@@ -72,22 +75,27 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
             savedData = this.load(prefs.getBackingStoreManager(), prefs.getDescription());
         } catch (BackingStoreException e1) {
             // if the file is empty or corrupted
+            LOGGER.error("Cannot store preferences", e1); //$NON-NLS-1$
         }
-        if (savedData != null) {
+
+        final PreferencesImpl rootPrefs;
+        if (savedData == null) {
+            rootPrefs = prefs.getRoot();
+        } else {
             // merge with saved version
             final PreferencesImpl n = savedData.getOrCreateNode(prefs.absolutePath());
             n.applyChanges(prefs);
-            prefs = n;
+            rootPrefs = n.getRoot();
         }
-        final PreferencesImpl root = prefs.getRoot();
+
         XMLStreamWriter writer = null;
         try {
-            final OutputStream os = this.getOutputStream(root.getDescription());
+            final OutputStream os = this.getOutputStream(rootPrefs.getDescription());
             XMLOutputFactory factory = XMLOutputFactory.newInstance();
             writer = factory.createXMLStreamWriter(os, "UTF-8"); //$NON-NLS-1$
             writer.writeStartDocument("UTF-8", "1.0"); //$NON-NLS-1$ //$NON-NLS-2$
             writer.writeStartElement("preferences"); //$NON-NLS-1$
-            this.write(root, writer);
+            this.write(rootPrefs, writer);
             writer.writeEndElement();
             writer.writeEndDocument();
         } catch (IOException ioe) {
@@ -100,13 +108,16 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
     }
 
     /**
-     * Has the tree changes?
+     * Has the tree changes.
+     *
+     * @param prefs the prefs
+     * @return true, if successful
      */
     protected boolean hasChanges(PreferencesImpl prefs) {
         if (prefs.getChangeSet().hasChanges()) {
             return true;
         }
-        final Iterator i = prefs.getChildren().iterator();
+        final Iterator<?> i = prefs.getChildren().iterator();
         while (i.hasNext()) {
             final PreferencesImpl current = (PreferencesImpl) i.next();
             if (this.hasChanges(current)) {
@@ -121,19 +132,12 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
      */
     @Override
     public void update(PreferencesImpl prefs) throws BackingStoreException {
-        // final PreferencesImpl root = this.load(prefs.getBackingStoreManager(), prefs.getDescription());
-        // if (root != null) {
-        // // and now update
-        // if (root.nodeExists(prefs.absolutePath())) {
-        // final PreferencesImpl updated = (PreferencesImpl) root.node(prefs.absolutePath());
-        // prefs.update(updated);
-        // }
-        // }
+        // Do nothing, only update when writing
     }
 
     /**
      * Write the preferences recursively to the output stream.
-     * 
+     *
      * @param prefs
      * @param os
      * @throws IOException
@@ -144,8 +148,8 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
         if (size > 0) {
             this.writePreferences(prefs, writer);
         }
-        final Collection children = prefs.getChildren();
-        final Iterator i = children.iterator();
+        final Collection<?> children = prefs.getChildren();
+        final Iterator<?> i = children.iterator();
         while (i.hasNext()) {
             final PreferencesImpl child = (PreferencesImpl) i.next();
             writer.writeStartElement(child.name());
@@ -171,12 +175,11 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
                     break;
                 case XMLStreamConstants.END_ELEMENT:
                     // In case the tag does not contain values or inner tag
-                    if (prefs.getProperties().size() == 0 && prefs.getChildren().size() == 0) {
-                        impl = prefs.getOrCreateNode(startKey);
+                    if (prefs.getProperties().isEmpty() && prefs.getChildren().isEmpty()) {
+                        prefs.getOrCreateNode(startKey);
                     }
-                    // Return to the parent tag
                     if (startKey.equals(xmler.getName().getLocalPart())) {
-                        return;
+                        return; // Return to the parent tag
                     }
                     break;
                 default:
@@ -187,9 +190,9 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
     }
 
     protected void writePreferences(PreferencesImpl prefs, XMLStreamWriter writer) throws XMLStreamException {
-        final Iterator i = prefs.getProperties().entrySet().iterator();
+        final Iterator<?> i = prefs.getProperties().entrySet().iterator();
         while (i.hasNext()) {
-            final Map.Entry entry = (Map.Entry) i.next();
+            final Map.Entry<?, ?> entry = (Map.Entry<?, ?>) i.next();
             writer.writeStartElement(entry.getKey().toString());
             writer.writeCharacters(EscapeChars.forXML(entry.getValue().toString()));
             writer.writeEndElement();

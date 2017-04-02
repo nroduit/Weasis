@@ -1,19 +1,37 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.base.explorer;
 
-import java.io.File;
-import java.util.Arrays;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.stream.StreamSupport;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@SuppressWarnings("serial")
 public class TreeNode extends DefaultMutableTreeNode {
 
-    private static final long serialVersionUID = -4938264429078819992L;
+    private static final Logger LOGGER = LoggerFactory.getLogger(TreeNode.class);
 
     private boolean explored = false;
     private boolean root = false;
 
-    public TreeNode(final File file) {
-        setUserObject(file);
+    public TreeNode(Path path) {
+        setUserObject(path);
     }
 
     @Override
@@ -26,19 +44,18 @@ public class TreeNode extends DefaultMutableTreeNode {
         if (!this.explored) {
             return false;
         }
-        if ((this.children != null) && (this.children.size() > 0)) {
+        if ((this.children != null) && !this.children.isEmpty()) {
             return false;
         }
         return true;
     }
 
-    public File getFile() {
-        final Object obj = getUserObject();
-        if (obj instanceof String) {
-            final File file = new File((File) ((TreeNode) this.parent).getUserObject(), (String) obj);
-            setUserObject(file);
-        }
-        return (File) getUserObject();
+    public Path getNodePath() {
+        return (Path) getUserObject();
+    }
+
+    public void setNodePath(Path path) {
+        setUserObject(path);
     }
 
     public boolean isExplored() {
@@ -46,9 +63,7 @@ public class TreeNode extends DefaultMutableTreeNode {
     }
 
     public boolean isDirectory() {
-        final File file = getFile();
-
-        return file.isDirectory();
+        return Files.isDirectory(getNodePath());
     }
 
     public void refresh() {
@@ -58,25 +73,23 @@ public class TreeNode extends DefaultMutableTreeNode {
     }
 
     public void explore() {
-        final File file = getFile();
+        Path path = getNodePath();
 
-        if (!isDirectory()) {
+        if (!Files.isDirectory(path)) {
             return;
         }
 
         if (!isExplored()) {
-            File[] files = null;
             if (isRoot()) {
-                files = JIUtility.getRoots();
+                path.getFileSystem().getRootDirectories().forEach(p -> add(new TreeNode(p)));
             } else {
-                files = file.listFiles(new FolderFilter());
-                if (files != null) {
-                    Arrays.sort(files, new NameSortingComparator<File>());
-                }
-            }
-            if (files != null) {
-                for (final File element : files) {
-                    add(new TreeNode(element));
+                DirectoryStream.Filter<Path> filter = Files::isDirectory;
+
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(path, filter)) {
+                    StreamSupport.stream(stream.spliterator(), false).sorted(Comparator.comparing(Path::getFileName))
+                        .forEachOrdered(p -> add(new TreeNode(p)));
+                } catch (IOException e) {
+                    LOGGER.error("Building child directories", e); //$NON-NLS-1$
                 }
             }
             this.explored = true;
@@ -85,47 +98,17 @@ public class TreeNode extends DefaultMutableTreeNode {
 
     @Override
     public String toString() {
-        final File file = getFile();
-        return file.getName().length() > 0 ? file.getName() : file.getPath();
+        Path p = getNodePath().getFileName();
+        return p == null ? getNodePath().toString() : p.toString();
     }
 
-    /**
-     * Gets size of this file object.
-     */
-    public long getSize() {
-        final File file = getFile();
-
-        if (!file.canRead()) {
-            return 0;
-        }
-        if (!isDirectory()) {
-            return (file.length());
-        }
-
-        final File[] children = file.listFiles();
-
-        long size = 0;
-        if (children != null) {
-            for (final File element : children) {
-                size += element.length();
-            }
-        }
-        return size;
-    }
-
-    /**
-     * @return the root
-     */
     @Override
     public final boolean isRoot() {
         return this.root;
     }
 
-    /**
-     * @param root
-     *            the root to set
-     */
     public final void setRoot(final boolean root) {
         this.root = root;
     }
+
 }

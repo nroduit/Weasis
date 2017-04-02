@@ -1,42 +1,34 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media.data;
 
-import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.weasis.core.api.Messages;
 
 public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
+    public static final MediaSeriesGroup rootNode = new MediaSeriesGroupNode(TagW.RootElement, "__ROOT__", null); //$NON-NLS-1$
+
     private final TagW tagID;
-    private final TagW displayTag;
-    private final HashMap<TagW, Object> tags;
-    private Comparator<TagW> comparator;
+    private final TagView displayTag;
+    private final HashMap<TagW, Object> tags = new HashMap<>();
 
-    public MediaSeriesGroupNode(TagW tagID, Object identifier) {
-        this(tagID, identifier, null);
-    }
-
-    public MediaSeriesGroupNode(TagW tagID, Object identifier, TagW displayTag) {
-        if (tagID == null || identifier == null) {
-            throw new IllegalArgumentException("tagID or identifier cannot be null"); //$NON-NLS-1$
-        }
-        this.displayTag = displayTag == null ? tagID : displayTag;
-        this.tags = new HashMap<TagW, Object>();
-        this.tagID = tagID;
-        tags.put(tagID, identifier);
+    public MediaSeriesGroupNode(TagW tagID, Object identifier, TagView displayTag) {
+        this.tagID = Objects.requireNonNull(tagID);
+        tags.put(tagID, Objects.requireNonNull(identifier));
+        this.displayTag = displayTag == null ? new TagView(tagID) : displayTag;
     }
 
     @Override
@@ -50,42 +42,41 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     }
 
     @Override
-    public String toString() {
-        Object val = tags.get(displayTag);
-        if (val instanceof Date) {
-            val = TagW.DATETIME_FORMATTER.format(val);
+    public boolean matchIdValue(Object valueID) {
+        Object v = tags.get(tagID);
+        if (v == valueID)
+            return true;
+        if (v == null) {
+            return false;
         }
-        return val == null
-            ? Messages.getString("MediaSeriesGroupNode.no_val") + " " + displayTag.getName() : val.toString(); //$NON-NLS-1$ //$NON-NLS-2$
+        return v.equals(valueID);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        Object value1 = tags.get(tagID);
-        if (value1 == obj) {
-            return true;
-        }
-        if (value1 == null) {
-            return false;
-        }
-        if (obj instanceof MediaSeriesGroupNode) {
-            Object value2 = ((MediaSeriesGroupNode) obj).tags.get(tagID);
-            return value1.equals(value2);
-        }
-        return value1.equals(obj);
+    public String toString() {
+        String val = displayTag.getFormattedText(false, this);
+        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") : val; //$NON-NLS-1$
     }
 
     @Override
     public int hashCode() {
+        final int prime = 31;
+        int result = 1;
         Object val = tags.get(tagID);
-        if (val instanceof Integer) {
-            return (Integer) val;
-        }
-        // Should never happens, but it does very rarely ?
-        if (val == null) {
-            return super.hashCode();
-        }
-        return val.hashCode();
+        result = prime * result + ((val == null) ? tags.hashCode() : val.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (!(obj instanceof MediaSeriesGroup))
+            return false;
+        // According to the implementation of MediaSeriesGroupNode, the identifier cannot be null
+        return Objects.equals(tags.get(tagID), ((MediaSeriesGroup) obj).getTagValue(tagID));
     }
 
     @Override
@@ -110,7 +101,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
     @Override
     public Object getTagValue(TagW tag) {
-        return tags.get(tag);
+        return tag == null ? null : tags.get(tag);
     }
 
     @Override
@@ -125,25 +116,14 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         return null;
     }
 
+    @Override
     public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
         return tags.entrySet().iterator();
     }
 
     @Override
     public void dispose() {
-
-    }
-
-    // can be null
-    @Override
-    public Comparator<TagW> getComparator() {
-        return comparator;
-    }
-
-    @Override
-    public void setComparator(Comparator<TagW> comparator) {
-        this.comparator = comparator;
-
+        // Nothing to dispose
     }
 
 }

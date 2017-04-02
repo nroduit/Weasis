@@ -1,17 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.util.Date;
+import java.time.LocalTime;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 
@@ -22,8 +23,8 @@ public final class SortSeriesStack {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
-            Integer val1 = (Integer) m1.getTagValue(TagW.InstanceNumber);
-            Integer val2 = (Integer) m2.getTagValue(TagW.InstanceNumber);
+            Integer val1 = TagD.getTagValue(m1, Tag.InstanceNumber, Integer.class);
+            Integer val2 = TagD.getTagValue(m2, Tag.InstanceNumber, Integer.class);
             if (val1 == null || val2 == null) {
                 return 0;
             }
@@ -57,8 +58,8 @@ public final class SortSeriesStack {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
-            Float val1 = (Float) m1.getTagValue(TagW.SliceLocation);
-            Float val2 = (Float) m2.getTagValue(TagW.SliceLocation);
+            Double val1 = TagD.getTagValue(m1, Tag.SliceLocation, Double.class);
+            Double val2 = TagD.getTagValue(m2, Tag.SliceLocation, Double.class);
             if (val1 == null || val2 == null) {
                 return 0;
             }
@@ -76,8 +77,8 @@ public final class SortSeriesStack {
 
             @Override
             public int compare(DicomImageElement m1, DicomImageElement m2) {
-                Date val1 = (Date) m1.getTagValue(TagW.AcquisitionTime);
-                Date val2 = (Date) m2.getTagValue(TagW.AcquisitionTime);
+                LocalTime val1 = TagD.getTagValue(m1, Tag.AcquisitionTime, LocalTime.class);
+                LocalTime val2 = TagD.getTagValue(m2, Tag.AcquisitionTime, LocalTime.class);
                 if (val1 == null || val2 == null) {
                     return 0;
                 }
@@ -93,8 +94,8 @@ public final class SortSeriesStack {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
-            Date val1 = (Date) m1.getTagValue(TagW.ContentTime);
-            Date val2 = (Date) m2.getTagValue(TagW.ContentTime);
+            LocalTime val1 = TagD.getTagValue(m1, Tag.ContentTime, LocalTime.class);
+            LocalTime val2 = TagD.getTagValue(m2, Tag.ContentTime, LocalTime.class);
             if (val1 == null || val2 == null) {
                 return 0;
             }
@@ -107,7 +108,30 @@ public final class SortSeriesStack {
         }
     };
 
+    public static final SeriesComparator<DicomImageElement> diffusionBValue =
+        new SeriesComparator<DicomImageElement>() {
+
+            @Override
+            public int compare(DicomImageElement m1, DicomImageElement m2) {
+                Double val1 = TagD.getTagValue(m1, Tag.DiffusionBValue, Double.class);
+                Double val2 = TagD.getTagValue(m2, Tag.DiffusionBValue, Double.class);
+                if (val1 == null || val2 == null) {
+                    return 0;
+                }
+                return val1.compareTo(val2);
+            }
+
+            @Override
+            public String toString() {
+                return Messages.getString("SortSeriesStack.dvalue"); //$NON-NLS-1$
+            }
+        };
+
+    private SortSeriesStack() {
+    }
+
     public static SeriesComparator<DicomImageElement>[] getValues() {
-        return new SeriesComparator[] { instanceNumber, slicePosition, sliceLocation, contentTime, acquisitionTime };
+        return new SeriesComparator[] { instanceNumber, slicePosition, sliceLocation, contentTime, acquisitionTime,
+            diffusionBValue };
     }
 }

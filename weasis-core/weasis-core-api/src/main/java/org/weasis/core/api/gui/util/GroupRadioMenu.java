@@ -1,19 +1,20 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.ButtonGroup;
 import javax.swing.ComboBoxModel;
@@ -23,18 +24,21 @@ import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.event.ListDataEvent;
 
-public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
+public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T> {
 
     protected final List<RadioMenuItem> itemList;
     protected final ButtonGroup group;
-    protected ComboBoxModel dataModel;
+    protected ComboBoxModel<T> dataModel;
 
     public GroupRadioMenu() {
-        this.itemList = new ArrayList<RadioMenuItem>();
-        group = new ButtonGroup();
+        this.itemList = new ArrayList<>();
+        this.group = new ButtonGroup();
     }
 
     private void init() {
+        for (RadioMenuItem item : itemList) {
+            group.remove(item);
+        }
         itemList.clear();
         Object selectedItem = dataModel.getSelectedItem();
 
@@ -47,13 +51,13 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
             RadioMenuItem radioMenuItem = new RadioMenuItem(object.toString(), icon, object);
             radioMenuItem.setSelected(object == selectedItem);
             group.add(radioMenuItem);
-            radioMenuItem.addActionListener(this);
             itemList.add(radioMenuItem);
+            radioMenuItem.addActionListener(this);
         }
     }
 
     public List<RadioMenuItem> getRadioMenuItemListCopy() {
-        return new ArrayList<RadioMenuItem>(itemList);
+        return new ArrayList<>(itemList);
     }
 
     public JPopupMenu createJPopupMenu() {
@@ -79,13 +83,13 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
 
     @Override
     public void intervalAdded(ListDataEvent e) {
-        // TODO Auto-generated method stub
+        // Do nothing
 
     }
 
     @Override
     public void intervalRemoved(ListDataEvent e) {
-        // TODO Auto-generated method stub
+        // Do nothing
 
     }
 
@@ -97,7 +101,7 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
                 dataModel.setSelectedItem(item.getUserObject());
             }
         }
-    };
+    }
 
     public void setSelected(Object selected) {
         if (selected == null) {
@@ -132,19 +136,19 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
         return dataModel.getSelectedItem();
     }
 
-    public ComboBoxModel getModel() {
+    public ComboBoxModel<T> getModel() {
         return dataModel;
     }
 
     @Override
-    public void setModel(ComboBoxModel dataModel) {
+    public void setModel(ComboBoxModel<T> dataModel) {
         if (this.dataModel != null) {
             this.dataModel.removeListDataListener(this);
         }
         if (dataModel != null) {
             dataModel.removeListDataListener(this);
         }
-        this.dataModel = dataModel == null ? new DefaultComboBoxModel() : dataModel;
+        this.dataModel = Optional.ofNullable(dataModel).orElseGet(DefaultComboBoxModel::new);
         init();
         this.dataModel.addListDataListener(this);
     }

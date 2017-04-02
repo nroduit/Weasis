@@ -1,16 +1,17 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.weasis.core.api.Messages;
 
@@ -98,8 +99,8 @@ public enum Unit {
         return calibRatio / convFactor;
     }
 
-    public static ArrayList<AbbreviationUnit> getAbbreviationUnits() {
-        ArrayList<AbbreviationUnit> units = new ArrayList<AbbreviationUnit>();
+    public static List<AbbreviationUnit> getAbbreviationUnits() {
+        ArrayList<AbbreviationUnit> units = new ArrayList<>();
         for (Unit u : Unit.values()) {
             if (u.getId() != Unit.PIXEL.getId()) {
                 units.add(new AbbreviationUnit(u));
@@ -117,8 +118,8 @@ public enum Unit {
         return Unit.PIXEL;
     }
 
-    public static final ArrayList<String> getUnitsName() {
-        ArrayList<String> list = new ArrayList<String>();
+    public static final List<String> getUnitsName() {
+        ArrayList<String> list = new ArrayList<>();
         for (Unit u : Unit.values()) {
             list.add(u.getFullName());
         }
@@ -143,8 +144,8 @@ public enum Unit {
         return null;
     }
 
-    public static ArrayList<Unit> getUnitExceptPixel() {
-        ArrayList<Unit> list = new ArrayList<Unit>();
+    public static List<Unit> getUnitExceptPixel() {
+        ArrayList<Unit> list = new ArrayList<>();
         for (Unit u : Unit.values()) {
             if (u.getId() != Unit.PIXEL.getId()) {
                 list.add(u);

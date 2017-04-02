@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<presentation uuid="test.presentation-abcd-123-efg45.0">
+	<references>
+		<series uuid="test.presentation-abcd-123-efg45.2">
+			<image frames="" uuid="test.presentation-abcd-123-efg45.1" />
+		</series>
+	</references>
+	<layers>
+		<layer level="40" locked="false" type="DRAW" visible="true"
+			uuid="test.layer-abcd-123-efg45.0" />
+	</layers>
+	<graphics>
+		<point fill="false" showLabel="true" thickness="3.0"
+			variablePointsNumber="false" uuid="test.graphic-abcd-123-efg45.0">
+			<layer>test.layer-abcd-123-efg45.0</layer>
+			<paint rgb="ff0000" />
+			<pts>
+				<pt x="1665.5" y="987.0" />
+			</pts>
+		</point>
+	</graphics>
+</presentation>

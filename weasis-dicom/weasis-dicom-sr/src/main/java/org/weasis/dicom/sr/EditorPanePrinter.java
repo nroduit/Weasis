@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.sr;
 
 import java.awt.Color;
@@ -28,7 +38,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
 public class EditorPanePrinter extends JPanel implements Pageable, Printable {
-    public static int PAGE_SHIFT = 20;
+    public static final int PAGE_SHIFT = 20;
 
     JEditorPane sourcePane;
 
@@ -46,7 +56,8 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
         tmpPane.setContentType(pane.getContentType());
         HTMLEditorKit kit = new HTMLEditorKit();
         StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:white;color:black;margin:3;font-weight:normal;}"); //$NON-NLS-1$
+        ss.addRule(
+            "body {font-family:sans-serif;font-size:12pt;background-color:white;color:black;margin:3;font-weight:normal;}"); //$NON-NLS-1$
         tmpPane.setEditorKit(kit);
         tmpPane.setBorder(null);
         tmpPane.setText(pane.getText());
@@ -61,7 +72,6 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
         paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
         pageFormat.setPaper(paper);
 
-        // updateUIToRemoveLF(this);
         doPagesLayout();
     }
 
@@ -89,22 +99,20 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
     }
 
     protected void calculatePageInfo() {
-        pages = new ArrayList<PagePanel>();
+        pages = new ArrayList<>();
         int startY = 0;
         int endPageY = getEndPageY(startY);
         while (startY + pageHeight - margins.top - margins.bottom < sourcePane.getHeight()) {
-            Shape pageShape =
-                getPageShape(startY, pageWidth - margins.left - margins.right, pageHeight - margins.top
-                    - margins.bottom, sourcePane);
+            Shape pageShape = getPageShape(startY, pageWidth - margins.left - margins.right,
+                pageHeight - margins.top - margins.bottom, sourcePane);
             PagePanel p = new PagePanel(startY, endPageY, pageShape);
             updateUIToRemoveLF(p);
             pages.add(p);
             startY = endPageY;
             endPageY = getEndPageY(startY);
         }
-        Shape pageShape =
-            getPageShape(startY, pageWidth - margins.left - margins.right, pageHeight - margins.top - margins.bottom,
-                sourcePane);
+        Shape pageShape = getPageShape(startY, pageWidth - margins.left - margins.right,
+            pageHeight - margins.top - margins.bottom, sourcePane);
         PagePanel p = new PagePanel(startY, endPageY, pageShape);
         updateUIToRemoveLF(p);
         pages.add(p);
@@ -136,7 +144,7 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
         return realY;
     }
 
-    private void updateUIToRemoveLF(JPanel panel) {
+    private static void updateUIToRemoveLF(JPanel panel) {
         panel.setUI(new javax.swing.plaf.PanelUI() {
         });
         panel.setBackground(Color.WHITE);
@@ -209,12 +217,12 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
     }
 
     @Override
-    public PageFormat getPageFormat(int pageIndex) throws IndexOutOfBoundsException {
+    public PageFormat getPageFormat(int pageIndex) {
         return pageFormat;
     }
 
     @Override
-    public Printable getPrintable(int pageIndex) throws IndexOutOfBoundsException {
+    public Printable getPrintable(int pageIndex) {
         return this;
     }
 
@@ -284,8 +292,8 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
             setSize(pageWidth, pageHeight);
             setLayout(null);
             add(innerPage);
-            innerPage.setBounds(margins.left, margins.top, pageWidth - margins.left - margins.right, pageHeight
-                - margins.top - margins.bottom);
+            innerPage.setBounds(margins.left, margins.top, pageWidth - margins.left - margins.right,
+                pageHeight - margins.top - margins.bottom);
         }
     }
 

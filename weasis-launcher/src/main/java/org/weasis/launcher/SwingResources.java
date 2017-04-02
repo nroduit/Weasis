@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.launcher;
 
 import java.io.IOException;
@@ -22,15 +32,15 @@ public class SwingResources {
      * <code>TextAndMnemonicHashMap</code> stores swing resource strings. Many of strings can have a mnemonic. For
      * example: FileChooser.saveButton.textAndMnemonic=&Save For this case method get returns "Save" for the key
      * "FileChooser.saveButtonText" and mnemonic "S" for the key "FileChooser.saveButtonMnemonic"
-     * 
+     *
      * There are several patterns for the text and mnemonic suffixes which are checked by the
      * <code>TextAndMnemonicHashMap</code> class. Patterns which are converted to the xxx.textAndMnemonic key:
      * (xxxNameText, xxxNameMnemonic) (xxxNameText, xxxMnemonic) (xxx.nameText, xxx.mnemonic) (xxxText, xxxMnemonic)
-     * 
+     *
      * These patterns can have a mnemonic index in format (xxxDisplayedMnemonicIndex)
-     * 
+     *
      * Pattern which is converted to the xxx.titleAndMnemonic key: (xxxTitle, xxxMnemonic)
-     * 
+     *
      */
     public static void loadResources(String path) {
         InputStream inStream = WeasisLauncher.class.getResourceAsStream(path);

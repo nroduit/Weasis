@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<polygon fill="true" showLabel="true" thickness="2.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Area : 55'149.7 pix</label>
+		<label>Mean 1 : 137.9</label>
+		<label>Mean 2 : 114.9</label>
+		<label>Mean 3 : 96.5</label>
+	</label>
+	<pts>
+		<pt x="1132.5" y="1100.0" />
+		<pt x="1300.5" y="1033.0" />
+		<pt x="1345.5" y="1089.0" />
+		<pt x="1329.5" y="1296.0" />
+		<pt x="1034.5" y="1292.0" />
+		<pt x="1249.5" y="1469.0" />
+	</pts>
+</polygon>

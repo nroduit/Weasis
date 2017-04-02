@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.dicom.explorer;
 
 import java.awt.GridBagConstraints;
@@ -54,9 +54,8 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     public void initGUI() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         setLayout(gridBagLayout);
-        setBorder(new TitledBorder(
-            null,
-            Messages.getString("LocalImport.imp_files") + StringUtil.COLON, TitledBorder.LEADING, TitledBorder.TOP, null, null));//$NON-NLS-1$
+        setBorder(new TitledBorder(null, Messages.getString("LocalImport.imp_files") + StringUtil.COLON, //$NON-NLS-1$
+            TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
         lblImportAFolder = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON); //$NON-NLS-1$
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
@@ -141,7 +140,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
                 lastDir = files[0].getParent();
                 textField.setText(Messages.getString("LocalImport.multi_dir")); //$NON-NLS-1$
             }
-            if (lastDir != null) {
+            if (StringUtil.hasText(lastDir)) {
                 Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDirKey, lastDir);
             }
         }
@@ -175,6 +174,10 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         return null;
     }
 
+    public void setImportPath(String path) {
+        textField.setText(path);
+    }
+
     @Override
     public void importDICOM(DicomModel dicomModel, JProgressBar info) {
         if (files == null) {
@@ -197,7 +200,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         }
         if (files != null) {
             LoadLocalDicom dicom = new LoadLocalDicom(files, chckbxSearch.isSelected(), dicomModel);
-            DicomModel.loadingExecutor.execute(dicom);
+            DicomModel.LOADING_EXECUTOR.execute(dicom);
             files = null;
         }
     }

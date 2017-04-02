@@ -1,20 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2011 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.editor;
 
 import java.awt.Desktop;
-import java.util.List;
 import java.util.Map;
 
-import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -36,11 +34,11 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
         }
 
         @Override
-        public void addSeries(MediaSeries<MediaElement<?>> series) {
+        public void addSeries(MediaSeries<MediaElement> series) {
             if (series != null) {
-                Iterable<MediaElement<?>> list = series.getMedias(null, null);
+                Iterable<MediaElement> list = series.getMedias(null, null);
                 synchronized (series) {
-                    for (MediaElement<?> m : list) {
+                    for (MediaElement m : list) {
                         // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
                         // in KDE session, but actually does not support it.
                         // http://bugs.sun.com/view_bug.do?bug_id=6486393
@@ -95,23 +93,18 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer) {
+    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
         return false;
     }
 
     @Override
-    public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
+    public SeriesViewer<MediaElement> createSeriesViewer(Map<String, Object> properties) {
         return MimeSystemViewer;
     }
 
     @Override
     public int getLevel() {
         return 100;
-    }
-
-    @Override
-    public List<Action> getOpenActions() {
-        return null;
     }
 
     @Override

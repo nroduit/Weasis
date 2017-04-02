@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media.data;
 
 import java.awt.Component;
@@ -28,7 +28,6 @@ import java.lang.ref.SoftReference;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -40,27 +39,34 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.MimeInspector;
-import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ThreadUtil;
 
+@SuppressWarnings("serial")
 public class Thumbnail extends JLabel {
     private static final Logger LOGGER = LoggerFactory.getLogger(Thumbnail.class);
 
-    public static final File THUMBNAIL_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
-        AppProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
-    public static final ExecutorService THUMB_LOADER = Executors.newFixedThreadPool(1);
-    public static final RenderingHints DownScaleQualityHints = new RenderingHints(RenderingHints.KEY_RENDERING,
-        RenderingHints.VALUE_RENDER_QUALITY);
+    public static final File THUMBNAIL_CACHE_DIR =
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
+    public static final ExecutorService THUMB_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail Loader"); //$NON-NLS-1$
+
+    public static final RenderingHints DownScaleQualityHints =
+        new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
     static {
         DownScaleQualityHints.add(new RenderingHints(JAI.KEY_TILE_CACHE, null));
     }
+
     public static final int MIN_SIZE = 48;
     public static final int DEFAULT_SIZE = 112;
     public static final int MAX_SIZE = 256;
@@ -71,19 +77,18 @@ public class Thumbnail extends JLabel {
     protected File thumbnailPath = null;
     protected int thumbnailSize;
 
-    public Thumbnail(File thumbnailPath, int thumbnailSize) {
+    public Thumbnail(int thumbnailSize) {
         super(null, null, SwingConstants.CENTER);
-        this.thumbnailPath = thumbnailPath;
         this.thumbnailSize = thumbnailSize;
     }
 
-    public Thumbnail(final MediaElement<?> media, int thumbnailSize, boolean keepMediaCache) {
+    public Thumbnail(final MediaElement media, int thumbnailSize, boolean keepMediaCache, OpManager opManager) {
         super(null, null, SwingConstants.CENTER);
         if (media == null) {
             throw new IllegalArgumentException("image cannot be null"); //$NON-NLS-1$
         }
         this.thumbnailSize = thumbnailSize;
-        init(media, keepMediaCache);
+        init(media, keepMediaCache, opManager);
     }
 
     /**
@@ -91,9 +96,9 @@ public class Thumbnail extends JLabel {
      * @param keepMediaCache
      *            if true will remove the media from cache after building the thumbnail. Only when media is an image.
      */
-    protected void init(MediaElement<?> media, boolean keepMediaCache) {
+    protected void init(MediaElement media, boolean keepMediaCache, OpManager opManager) {
         this.setFont(FontTools.getFont10());
-        buildThumbnail(media, keepMediaCache);
+        buildThumbnail(media, keepMediaCache, opManager);
     }
 
     public void registerListeners() {
@@ -106,11 +111,12 @@ public class Thumbnail extends JLabel {
         }
         final double scale =
             Math.min(Thumbnail.MAX_SIZE / (double) source.getHeight(), Thumbnail.MAX_SIZE / (double) source.getWidth());
-        return scale < 1.0 ? SubsampleAverageDescriptor.create(source, scale, scale, Thumbnail.DownScaleQualityHints)
-            .getRendering() : source;
+        return scale < 1.0
+            ? SubsampleAverageDescriptor.create(source, scale, scale, Thumbnail.DownScaleQualityHints).getRendering()
+            : source;
     }
 
-    protected synchronized void buildThumbnail(MediaElement<?> media, boolean keepMediaCache) {
+    protected synchronized void buildThumbnail(MediaElement media, boolean keepMediaCache, OpManager opManager) {
         imageSoftRef = null;
         Icon icon = MimeInspector.unknownIcon;
         String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
@@ -143,10 +149,11 @@ public class Thumbnail extends JLabel {
                 }
             }
         }
-        setIcon(media, icon, type, keepMediaCache);
+        setIcon(media, icon, type, keepMediaCache, opManager);
     }
 
-    private void setIcon(final MediaElement<?> media, final Icon mime, final String type, final boolean keepMediaCache) {
+    private void setIcon(final MediaElement media, final Icon mime, final String type, final boolean keepMediaCache,
+        OpManager opManager) {
         this.setSize(thumbnailSize, thumbnailSize);
 
         ImageIcon icon = new ImageIcon() {
@@ -156,7 +163,7 @@ public class Thumbnail extends JLabel {
                 Graphics2D g2d = (Graphics2D) g;
                 int width = thumbnailSize;
                 int height = thumbnailSize;
-                final BufferedImage thumbnail = Thumbnail.this.getImage(media, keepMediaCache);
+                final BufferedImage thumbnail = Thumbnail.this.getImage(media, keepMediaCache, opManager);
                 if (thumbnail == null) {
                     FontMetrics fontMetrics = g2d.getFontMetrics();
                     int fheight = y + (thumbnailSize - fontMetrics.getAscent() + 5 - mime.getIconHeight()) / 2;
@@ -171,7 +178,6 @@ public class Thumbnail extends JLabel {
                     y += (thumbnailSize - height) / 2;
                     g2d.drawImage(thumbnail, AffineTransform.getTranslateInstance(x, y), null);
                 }
-                // super.paintIcon(c, g2d, x, y);
                 drawOverIcon(g2d, x, y, width, height);
             }
 
@@ -196,132 +202,27 @@ public class Thumbnail extends JLabel {
         return thumbnailPath;
     }
 
-    public synchronized BufferedImage getImage(final MediaElement<?> media, final boolean keepMediaCache) {
+    public synchronized BufferedImage getImage(final MediaElement media, final boolean keepMediaCache,
+        final OpManager opManager) {
         if ((imageSoftRef == null && readable) || (imageSoftRef != null && imageSoftRef.get() == null)) {
             if (loading.compareAndSet(false, true)) {
-                Runnable runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            File file = thumbnailPath;
-                            boolean noPath = file == null || !file.canRead();
-                            if (noPath && media != null) {
-                                String path = (String) media.getTagValue(TagW.ThumbnailPath);
-                                if (path != null) {
-                                    file = thumbnailPath = new File(path);
-                                    if (file.canRead()) {
-                                        noPath = false;
-                                    }
-                                }
-                            }
-                            if (noPath) {
-                                if (media instanceof ImageElement) {
-                                    final ImageElement image = (ImageElement) media;
-                                    PlanarImage imgPl = image.getImage(null);
-                                    if (imgPl != null) {
-                                        RenderedImage img = image.getRenderedImage(imgPl);
-                                        final RenderedImage thumb = createThumbnail(img);
-                                        try {
-                                            file =
-                                                thumbnailPath =
-                                                    File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                                        } catch (IOException e) {
-                                            AuditLog.logError(LOGGER, e, "Cannot create file for thumbnail!"); //$NON-NLS-1$
-                                        }
-                                        try {
-                                            BufferedImage thumbnail = null;
-                                            if (file != null) {
-                                                if (ImageFiler.writeJPG(file, thumb, 0.75f)) {
-                                                    /*
-                                                     * Write the thumbnail in temp folder, better than getting the
-                                                     * thumbnail directly from t.getAsBufferedImage() (it is true if the
-                                                     * image is big and cannot handle all the tiles in memory)
-                                                     */
-                                                    image.setTag(TagW.ThumbnailPath, file.getPath());
-                                                    repaint(50L);
-                                                    return;
-                                                } else {
-                                                    // out of memory
-                                                }
-
-                                            } else if (thumb instanceof PlanarImage) {
-                                                thumbnail = ((PlanarImage) thumb).getAsBufferedImage();
-                                            }
-                                            if (thumbnail == null && (file != null || image != null)) {
-                                                readable = false;
-                                            } else {
-                                                imageSoftRef = new SoftReference<BufferedImage>(thumbnail);
-                                                repaint(5L);
-                                                try {
-                                                    Thread.sleep(50L);
-                                                } catch (InterruptedException e) {
-                                                    // DO nothing
-                                                }
-                                            }
-                                        } finally {
-                                            if (!keepMediaCache) {
-                                                // Prevent to many files open on Linux (Ubuntu => 1024) and close image
-                                                // stream
-                                                image.removeImageFromCache();
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                Load ref = new Load(file);
-                                // loading images sequentially, only one thread pool
-                                Future<BufferedImage> future = ImageElement.IMAGE_LOADER.submit(ref);
-                                BufferedImage img = null;
-                                BufferedImage thumb = null;
-                                try {
-                                    img = future.get();
-                                    if (img == null) {
-                                        thumb = null;
-                                    } else {
-                                        int width = img.getWidth();
-                                        int height = img.getHeight();
-                                        if (width > thumbnailSize || height > thumbnailSize) {
-                                            final double scale =
-                                                Math.min(thumbnailSize / (double) height, thumbnailSize
-                                                    / (double) width);
-                                            PlanarImage t =
-                                                scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale, scale,
-                                                    DownScaleQualityHints) : PlanarImage.wrapRenderedImage(img);
-                                            thumb = t.getAsBufferedImage();
-                                            t.dispose();
-                                        } else {
-                                            thumb = img;
-                                        }
-                                    }
-
-                                } catch (InterruptedException e) {
-                                    // Re-assert the thread's interrupted status
-                                    Thread.currentThread().interrupt();
-                                    // We don't need the result, so cancel the task too
-                                    future.cancel(true);
-                                } catch (ExecutionException e) {
-                                    AuditLog.logError(LOGGER, e, "Error: Cannot read pixel data!:" + file); //$NON-NLS-1$
-                                }
-                                if (thumb == null && (file != null || media != null)) {
-                                    readable = false;
-                                } else {
-                                    imageSoftRef = new SoftReference<BufferedImage>(thumb);
-                                    repaint(5L);
-                                    try {
-                                        Thread.sleep(50L);
-                                    } catch (InterruptedException e) {
-                                        // DO nothing
-                                    }
-                                }
-                            }
-                        } finally {
-                            loading.set(false);
-                        }
-                    }
-                };
                 try {
-                    THUMB_LOADER.submit(runnable);
+                    SwingWorker<Boolean, String> thumbnailReader = new SwingWorker<Boolean, String>() {
+                        @Override
+                        protected void done() {
+                            repaint();
+                        }
+
+                        @Override
+                        protected Boolean doInBackground() throws Exception {
+                            loadThumbnail(media, keepMediaCache, opManager);
+                            return Boolean.TRUE;
+                        }
+
+                    };
+                    THUMB_LOADER.execute(thumbnailReader);
                 } catch (Exception e) {
+                    LOGGER.error("Cannot build thumbnail!", e);//$NON-NLS-1$
                     loading.set(false);
                 }
             }
@@ -332,6 +233,111 @@ public class Thumbnail extends JLabel {
         return imageSoftRef.get();
     }
 
+    private void loadThumbnail(final MediaElement media, final boolean keepMediaCache, final OpManager opManager)
+        throws Exception {
+        try {
+            File file = thumbnailPath;
+            boolean noPath = file == null || !file.canRead();
+            if (noPath && media != null) {
+                String path = (String) media.getTagValue(TagW.ThumbnailPath);
+                if (path != null) {
+                    file = new File(path);
+                    if (file.canRead()) {
+                        noPath = false;
+                        thumbnailPath = file;
+                    }
+                }
+            }
+            if (noPath) {
+                if (media instanceof ImageElement) {
+                    final ImageElement image = (ImageElement) media;
+                    PlanarImage imgPl = image.getImage(opManager);
+                    if (imgPl != null) {
+                        RenderedImage img = image.getRenderedImage(imgPl);
+                        final RenderedImage thumb = createThumbnail(img);
+                        try {
+                            file = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                        } catch (IOException e) {
+                            LOGGER.error("Cannot create file for thumbnail!", e);//$NON-NLS-1$
+                        }
+                        try {
+                            BufferedImage thumbnail = null;
+                            if (file != null) {
+                                if (ImageFiler.writeJPG(file, thumb, 0.75f)) {
+                                    /*
+                                     * Write the thumbnail in temp folder, better than getting the thumbnail directly
+                                     * from t.getAsBufferedImage() (it is true if the image is big and cannot handle all
+                                     * the tiles in memory)
+                                     */
+                                    image.setTag(TagW.ThumbnailPath, file.getPath());
+                                    thumbnailPath = file;
+                                    return;
+                                } else {
+                                    // out of memory
+                                }
+
+                            } else if (thumb instanceof PlanarImage) {
+                                thumbnail = ((PlanarImage) thumb).getAsBufferedImage();
+                            }
+
+                            if (thumbnail == null) {
+                                readable = false;
+                            } else {
+                                imageSoftRef = new SoftReference<>(thumbnail);
+                            }
+                        } finally {
+                            if (!keepMediaCache) {
+                                // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
+                                image.removeImageFromCache();
+                            }
+                        }
+                    }
+                }
+            } else {
+                Load ref = new Load(file);
+                // loading images sequentially, only one thread pool
+                Future<BufferedImage> future = ImageElement.IMAGE_LOADER.submit(ref);
+                BufferedImage img = null;
+                BufferedImage thumb = null;
+                try {
+                    img = future.get();
+                    if (img == null) {
+                        thumb = null;
+                    } else {
+                        int width = img.getWidth();
+                        int height = img.getHeight();
+                        if (width > thumbnailSize || height > thumbnailSize) {
+                            final double scale =
+                                Math.min(thumbnailSize / (double) height, thumbnailSize / (double) width);
+                            PlanarImage t = scale < 1.0
+                                ? SubsampleAverageDescriptor.create(img, scale, scale, DownScaleQualityHints)
+                                : PlanarImage.wrapRenderedImage(img);
+                            thumb = t.getAsBufferedImage();
+                            t.dispose();
+                        } else {
+                            thumb = img;
+                        }
+                    }
+
+                } catch (InterruptedException e) {
+                    // Re-assert the thread's interrupted status
+                    Thread.currentThread().interrupt();
+                    // We don't need the result, so cancel the task too
+                    future.cancel(true);
+                } catch (ExecutionException e) {
+                    LOGGER.error("Cannot read thumbnail pixel data!: {}", file, e);//$NON-NLS-1$
+                }
+                if (thumb == null && media != null) {
+                    readable = false;
+                } else {
+                    imageSoftRef = new SoftReference<>(thumb);
+                }
+            }
+        } finally {
+            loading.set(false);
+        }
+    }
+
     public void dispose() {
         // Unload image from memory
         if (imageSoftRef != null) {
@@ -339,7 +345,9 @@ public class Thumbnail extends JLabel {
             if (temp != null) {
                 temp.flush();
             }
-            // image = null;
+            if(thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())){
+                FileUtil.delete(thumbnailPath);
+            }
         }
         removeMouseAndKeyListener();
     }
@@ -375,7 +383,6 @@ public class Thumbnail extends JLabel {
         public BufferedImage call() throws Exception {
             return ImageIO.read(path);
         }
-
     }
 
 }

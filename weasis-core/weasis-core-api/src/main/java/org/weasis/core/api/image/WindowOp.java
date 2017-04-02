@@ -1,19 +1,17 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -21,7 +19,6 @@ import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.media.data.ImageElement;
 
 public class WindowOp extends AbstractOp {
-    private static final Logger LOGGER = LoggerFactory.getLogger(WindowOp.class);
 
     public static final String OP_NAME = Messages.getString("WindowLevelOperation.title"); //$NON-NLS-1$
 
@@ -31,6 +28,15 @@ public class WindowOp extends AbstractOp {
 
     public WindowOp() {
         setName(OP_NAME);
+    }
+
+    public WindowOp(WindowOp op) {
+        super(op);
+    }
+
+    @Override
+    public WindowOp copy() {
+        return new WindowOp(this);
     }
 
     @Override
@@ -50,25 +56,23 @@ public class WindowOp extends AbstractOp {
                 boolean pixelPadding = JMVUtils.getNULLtoTrue(getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
                 setParam(ActionW.WINDOW.cmd(), img.getDefaultWindow(pixelPadding));
                 setParam(ActionW.LEVEL.cmd(), img.getDefaultLevel(pixelPadding));
-                setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pixelPadding));
-                setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(pixelPadding));
+                setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(null, pixelPadding));
+                setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(null, pixelPadding));
             }
         }
     }
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         ImageElement imageElement = (ImageElement) params.get(P_IMAGE_ELEMENT);
 
-        if (imageElement == null) {
-            LOGGER.warn("Cannot apply \"{}\" ", OP_NAME); //$NON-NLS-1$
-        } else {
+        if (imageElement != null) {
             result = imageElement.getRenderedImage(source, params);
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
 }

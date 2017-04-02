@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.Color;
@@ -22,12 +22,16 @@ import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
 import javax.swing.JPanel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The Class PickerView.
- * 
- * @author Nicolas Roduit
+ *
  */
+@SuppressWarnings("serial")
 public class PickerView extends JPanel {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PickerView.class);
 
     private int matrixSize = 3;
     private Rectangle area = null;
@@ -39,14 +43,6 @@ public class PickerView extends JPanel {
 
     public PickerView(PickerOwner pickerOwner) {
         this.pickerOwner = pickerOwner;
-        try {
-            jbInit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void jbInit() throws Exception {
         this.setPreferredSize(new Dimension(21, 21));
     }
 
@@ -95,6 +91,7 @@ public class PickerView extends JPanel {
         try {
             it = RectIterFactory.create(imageData, area);
         } catch (Exception ex) {
+            LOGGER.error("Create image data iterator", ex); //$NON-NLS-1$
             it = null;
         }
         int[][] val = null;
@@ -152,6 +149,7 @@ public class PickerView extends JPanel {
             rectIter = RectIterFactory.create(imageView, area);
             nbBand = imageView.getSampleModel().getNumBands();
         } catch (Exception ex) {
+            LOGGER.error("Create image data iterator", ex); //$NON-NLS-1$
             rectIter = null;
         }
         repaint();

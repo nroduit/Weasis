@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.op;
 
 import java.awt.RenderingHints;
@@ -27,35 +27,33 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
     /**
      * The resource strings that provide the general documentation and specify the parameter list for this operation.
      */
-    private static final String[][] resources =
-        {
-            { "GlobalName", "ImageStatistics2" }, //$NON-NLS-1$ //$NON-NLS-2$
+    private static final String[][] resources = { { "GlobalName", "ImageStatistics2" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "LocalName", "ImageStatistics2" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "ImageStatistics2" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            {
-                "Description", //$NON-NLS-1$
-                "Finds the standard deviation, skewness and kurtosis of pixel values in each band with the option to exclude a range of values." }, //$NON-NLS-1$
+        { "Description", //$NON-NLS-1$
+            "Finds the standard deviation, skewness and kurtosis of pixel values in each band with the option to exclude a range of values." }, //$NON-NLS-1$
 
-            { "DocURL", "" }, { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg0Desc", "The region of the image to scan" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg0Desc", "The region of the image to scan" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg1Desc", "The horizontal sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg1Desc", "The horizontal sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg3Desc", "Mean of pixel values" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg3Desc", "Mean of pixel values" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg3Desc", "The lowest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg3Desc", "The lowest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg4Desc", "The highest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg4Desc", "The highest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg5Desc", "The rescale slope" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg5Desc", "The rescale slope" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg6Desc", "The rescale intercept" } }; //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg6Desc", "The rescale intercept" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The modes that this operator supports. maybe one or more of "rendered", "renderable", "collection", and
@@ -64,13 +62,13 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
     private static final String[] supportedModes = { "rendered" }; //$NON-NLS-1$
 
     /** The parameter name list for this operation. */
-    private static final String[] paramNames = {
-        "roi", "xPeriod", "yPeriod", "mean", "excludedMin", "excludedMax", "slope", "intercept" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
+    private static final String[] paramNames =
+        { "roi", "xPeriod", "yPeriod", "mean", "excludedMin", "excludedMax", "slope", "intercept" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
     /** The parameter class list for this operation. */
-    private static final Class[] paramClasses = { javax.media.jai.ROI.class, java.lang.Integer.class,
-        java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Double.class,
-        java.lang.Double.class, java.lang.Double.class };
+    private static final Class[] paramClasses =
+        { javax.media.jai.ROI.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Double.class,
+            java.lang.Double.class, java.lang.Double.class, java.lang.Double.class, java.lang.Double.class };
 
     /** The parameter default value list for this operation. */
     private static final Object[] paramDefaults = { null, 1, 1, null, null, null, null, null };
