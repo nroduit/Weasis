@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.Component;
@@ -30,12 +30,9 @@ import javax.swing.SwingUtilities;
 
 /**
  * The Class WinUtil.
- * 
- * @author Nicolas Roduit
+ *
  */
-public abstract class WinUtil {
-
-    protected static boolean c_beep_allowed = true;
+public class WinUtil {
 
     private WinUtil() {
     }
@@ -83,13 +80,13 @@ public abstract class WinUtil {
         return SwingUtilities.getWindowAncestor(component);
     }
 
-    public static Component getParentOfClass(Component component, Class class1) {
-        Object obj;
-        for (obj = component; obj != null && !class1.isAssignableFrom(obj.getClass()); obj =
-            ((Component) (obj)).getParent()) {
-            ;
+    @SuppressWarnings("unchecked")
+    public static <T> T getParentOfClass(Component component, Class<T> class1) {
+        Object obj = component;
+        while (obj != null && !class1.isAssignableFrom(obj.getClass())) {
+            obj = ((Component) (obj)).getParent();
         }
-        return ((Component) (obj));
+        return (T) (obj);
     }
 
     public static void center(Component component, int i, int j, int k, int l) {
@@ -222,7 +219,7 @@ public abstract class WinUtil {
         if (window == null) {
             centerOnScreen(component);
         } else {
-            center(component, ((window)));
+            center(component, window);
         }
     }
 

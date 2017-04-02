@@ -1,15 +1,16 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse  License v1.0
+ * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.editor;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -20,11 +21,11 @@ import org.weasis.core.api.media.data.MediaElement;
 
 public interface SeriesViewerFactory extends GUIEntry {
 
-    SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties);
+    SeriesViewer<?> createSeriesViewer(Map<String, Object> properties);
 
     boolean canReadMimeType(String mimeType);
 
-    boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer);
+    boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer);
 
     int getLevel();
 
@@ -32,5 +33,7 @@ public interface SeriesViewerFactory extends GUIEntry {
 
     boolean canExternalizeSeries();
 
-    List<Action> getOpenActions();
+    default List<Action> getOpenActions() {
+        return Collections.emptyList();
+    }
 }

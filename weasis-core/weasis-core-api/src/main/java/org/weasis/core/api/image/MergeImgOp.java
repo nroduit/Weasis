@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
@@ -25,11 +25,6 @@ import org.weasis.core.api.image.util.ImageFiler;
 
 import com.sun.media.jai.util.ImageUtil;
 
-/**
- * This operation should
- * 
- * @version $Rev$ $Date$
- */
 public class MergeImgOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(MergeImgOp.class);
 
@@ -38,14 +33,14 @@ public class MergeImgOp extends AbstractOp {
     /**
      * The second image for merging operation (Required parameter). Note: calling clearIOCache will remove the parameter
      * value.
-     * 
+     *
      * java.awt.image.RenderedImage value.
      */
     public static final String INPUT_IMG2 = "op.input.img.2"; //$NON-NLS-1$
 
     /**
      * Opacity of the top image (Optional parameter).
-     * 
+     *
      * Integer value. Default value is 255 (highest value => no transparency).
      */
     public static final String P_OPACITY = "opacity"; //$NON-NLS-1$
@@ -54,19 +49,26 @@ public class MergeImgOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public MergeImgOp(MergeImgOp op) {
+        super(op);
+    }
+
+    @Override
+    public MergeImgOp copy() {
+        return new MergeImgOp(this);
+    }
+
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage source2 = (RenderedImage) params.get(INPUT_IMG2);
         RenderedImage result = source;
 
-        if (source2 == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else {
+        if (source2 != null) {
             Integer transparency = (Integer) params.get(P_OPACITY);
             result = MergeImgOp.combineTwoImages(source, source2, transparency == null ? 255 : transparency);
         }
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
     public static PlanarImage combineTwoImages(RenderedImage sourceDown, RenderedImage sourceUp, int transparency) {
@@ -83,9 +85,8 @@ public class MergeImgOp extends AbstractOp {
             sourceUp = convertBinaryToColor(sourceUp);
         }
         if (sourceDown.getWidth() < sourceUp.getWidth() || sourceDown.getHeight() < sourceUp.getHeight()) {
-            sourceUp =
-                CropDescriptor.create(sourceUp, 0.0f, 0.0f, (float) sourceDown.getWidth(),
-                    (float) sourceDown.getHeight(), null);
+            sourceUp = CropDescriptor.create(sourceUp, 0.0f, 0.0f, (float) sourceDown.getWidth(),
+                (float) sourceDown.getHeight(), null);
         }
 
         pb.addSource(formatIfBinary(sourceDown));
@@ -106,9 +107,8 @@ public class MergeImgOp extends AbstractOp {
             sourceUp = convertBinaryToColor(sourceUp);
         }
         if (sourceDown.getWidth() < sourceUp.getWidth() || sourceDown.getHeight() < sourceUp.getHeight()) {
-            sourceUp =
-                CropDescriptor.create(sourceUp, 0.0f, 0.0f, (float) sourceDown.getWidth(),
-                    (float) sourceDown.getHeight(), null);
+            sourceUp = CropDescriptor.create(sourceUp, 0.0f, 0.0f, (float) sourceDown.getWidth(),
+                (float) sourceDown.getHeight(), null);
         }
 
         pb.addSource(formatIfBinary(sourceDown));

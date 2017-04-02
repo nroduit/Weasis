@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2010, 2016 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -20,13 +20,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.util.FileUtil;
 
 public class BundleTools {
-    public static final Map<String, String> SESSION_TAGS_MANIFEST = new HashMap<String, String>(3);
-    public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<String, String>(3);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BundleTools.class);
+
+    public static final Map<String, String> SESSION_TAGS_MANIFEST = new HashMap<>(3);
+    public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<>(3);
+
     static {
         for (Iterator<Entry<Object, Object>> iter = System.getProperties().entrySet().iterator(); iter.hasNext();) {
             Entry<Object, Object> element = iter.next();
@@ -38,12 +43,16 @@ public class BundleTools {
             }
         }
     }
+
     public static final String CONFIRM_CLOSE = "weasis.confirm.closing"; //$NON-NLS-1$
     public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
     private static final File propsFile;
+
     static {
         StringBuilder bufDir = new StringBuilder(AppProperties.WEASIS_PATH);
-        bufDir.append(File.separator);
+        if (!AppProperties.WEASIS_PATH.endsWith(File.separator)) {
+            bufDir.append(File.separator);
+        }
         bufDir.append("preferences"); //$NON-NLS-1$
         bufDir.append(File.separator);
         bufDir.append(AppProperties.WEASIS_USER);
@@ -55,10 +64,11 @@ public class BundleTools {
             dir.mkdirs();
         } catch (Exception e) {
             dir = new File(AppProperties.WEASIS_PATH);
-            e.printStackTrace();
+            LOGGER.error("Init weasis path dir", e); //$NON-NLS-1$
         }
         propsFile = new File(dir, "weasis.properties"); //$NON-NLS-1$
     }
+
     public static final WProperties SYSTEM_PREFERENCES = new WProperties();
     public static final WProperties LOCAL_PERSISTENCE = new WProperties();
 
@@ -68,9 +78,12 @@ public class BundleTools {
             try {
                 propsFile.createNewFile();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("", e); //$NON-NLS-1$
             }
         }
+    }
+
+    private BundleTools() {
     }
 
     public static Codec getCodec(String mimeType, String preferredCodec) {

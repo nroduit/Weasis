@@ -1,9 +1,20 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.gui.task;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.util.Objects;
 
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.Series;
@@ -12,38 +23,32 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 
 public class SeriesProgressMonitor extends FilterInputStream {
-    protected final Series series;
+    private static final String INTERUPTION_LABEL = "progress";//$NON-NLS-1$
+    protected final Series<?> series;
     protected int nread = 0;
     protected int size = 0;
 
-    public SeriesProgressMonitor(final Series series, InputStream in) {
+    public SeriesProgressMonitor(final Series<?> series, InputStream in) {
         super(in);
-        if (series == null) {
-            throw new IllegalArgumentException("Series cannot be null!"); //$NON-NLS-1$
-        }
-        this.series = series;
+        this.series = Objects.requireNonNull(series);
         try {
             size = in.available();
-        } catch (IOException ioe) {
-            size = 0;
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
     }
 
     protected boolean isLoadingSeriesCanceled() {
         SeriesImporter loader = series.getSeriesLoader();
-        return (loader == null || loader.isStopped());
+        return loader == null || loader.isStopped();
     }
 
     protected void updateSeriesProgression(double addSize) {
         series.setFileSize(series.getFileSize() + addSize);
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
-                if (thumb != null) {
-                    thumb.repaint();
-                }
+        GuiExecutor.instance().execute(() -> {
+            Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
+            if (thumb != null) {
+                thumb.repaint();
             }
         });
     }
@@ -51,7 +56,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
     @Override
     public int read() throws IOException {
         if (isLoadingSeriesCanceled()) {
-            InterruptedIOException exc = new InterruptedIOException("progress"); //$NON-NLS-1$
+            InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL); 
             exc.bytesTransferred = nread;
             series.setFileSize(series.getFileSize() - nread);
             nread = 0;
@@ -67,9 +72,9 @@ public class SeriesProgressMonitor extends FilterInputStream {
     }
 
     @Override
-    public int read(byte b[]) throws IOException {
+    public int read(byte[] b) throws IOException {
         if (isLoadingSeriesCanceled()) {
-            InterruptedIOException exc = new InterruptedIOException("progress"); //$NON-NLS-1$
+            InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL); 
             exc.bytesTransferred = nread;
             series.setFileSize(series.getFileSize() - nread);
             nread = 0;
@@ -84,9 +89,9 @@ public class SeriesProgressMonitor extends FilterInputStream {
     }
 
     @Override
-    public int read(byte b[], int off, int len) throws IOException {
+    public int read(byte[] b, int off, int len) throws IOException {
         if (isLoadingSeriesCanceled()) {
-            InterruptedIOException exc = new InterruptedIOException("progress"); //$NON-NLS-1$
+            InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL); 
             exc.bytesTransferred = nread;
             series.setFileSize(series.getFileSize() - nread);
             nread = 0;

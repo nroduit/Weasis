@@ -1,14 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.dicom.codec.display;
+
+import java.util.Arrays;
+
+import org.weasis.core.api.media.data.TagView;
 
 public class CornerInfoData {
 
@@ -18,11 +22,14 @@ public class CornerInfoData {
 
     public CornerInfoData(CornerDisplay corner, Modality extendModality) {
         this.corner = corner;
-        ModalityInfoData mdata = null;
+        TagView[] extInfos = null;
         if (extendModality != null) {
-            mdata = ModalityView.MODALITY_VIEW_MAP.get(extendModality);
+            ModalityInfoData mdata = ModalityView.MODALITY_VIEW_MAP.get(extendModality);
+            if (mdata != null) {
+                extInfos = mdata.getCornerInfo(corner).getInfos();
+            }
         }
-        this.infos = mdata == null ? new TagView[ELEMENT_NUMBER] : mdata.getCornerInfo(corner).getInfos().clone();
+        this.infos = extInfos == null ? new TagView[ELEMENT_NUMBER] : Arrays.copyOf(extInfos, extInfos.length);
     }
 
     public TagView[] getInfos() {

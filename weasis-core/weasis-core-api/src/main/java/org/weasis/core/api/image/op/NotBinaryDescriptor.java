@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.op;
 
 import java.awt.RenderingHints;
@@ -27,15 +27,15 @@ public class NotBinaryDescriptor extends OperationDescriptorImpl implements Rend
 
     private static final String resources[][] = { { "GlobalName", "NotBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "LocalName", "NotBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "NotBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Description", "Not for binary image (better than use transform colormodel)" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Description", "Not for binary image (better than use transform colormodel)" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Version", "1.0" } //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" } //$NON-NLS-1$ //$NON-NLS-2$
 
     };
 

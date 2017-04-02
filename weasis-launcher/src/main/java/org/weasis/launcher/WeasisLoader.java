@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.launcher;
 
 import java.awt.BorderLayout;
@@ -45,8 +45,8 @@ public class WeasisLoader {
 
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
-    public static final String FRM_TITLE = String.format(
-        Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final String FRM_TITLE =
+        String.format(Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$ //$NON-NLS-2$
     public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end"); //$NON-NLS-1$
 
     private javax.swing.JButton cancelButton;
@@ -106,15 +106,9 @@ public class WeasisLoader {
         downloadProgress.setString(LBL_LOADING);
 
         cancelButton.setText(Messages.getString("WebStartLoader.cancel")); //$NON-NLS-1$
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
+        cancelButton.addActionListener(evt -> closing());
 
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                closing();
-            }
-        });
-
-        Icon icon = null;
+        Icon icon;
         File iconFile = null;
         if (resPath != null) {
             iconFile = new File(resPath, "images" + File.separator + "about.png"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -187,13 +181,7 @@ public class WeasisLoader {
         if (isClosed()) {
             return;
         }
-        EventQueue.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                downloadProgress.setMaximum(max);
-            }
-        });
+        EventQueue.invokeLater(() -> downloadProgress.setMaximum(max));
     }
 
     /*
@@ -203,14 +191,10 @@ public class WeasisLoader {
         if (isClosed()) {
             return;
         }
-        EventQueue.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                downloadProgress.setString(String.format(PRG_STRING_FORMAT, val, downloadProgress.getMaximum()));
-                downloadProgress.setValue(val);
-                downloadProgress.repaint();
-            }
+        EventQueue.invokeLater(() -> {
+            downloadProgress.setString(String.format(PRG_STRING_FORMAT, val, downloadProgress.getMaximum()));
+            downloadProgress.setValue(val);
+            downloadProgress.repaint();
         });
 
     }
@@ -225,15 +209,11 @@ public class WeasisLoader {
 
     public void open() {
         try {
-            EventQueue.invokeAndWait(new Runnable() {
-
-                @Override
-                public void run() {
-                    if (container == null) {
-                        initGUI();
-                    }
-                    displayOnScreen();
+            EventQueue.invokeAndWait(() -> {
+                if (container == null) {
+                    initGUI();
                 }
+                displayOnScreen();
             });
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -246,31 +226,26 @@ public class WeasisLoader {
         if (isClosed()) {
             return;
         }
-        EventQueue.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                container.setVisible(false);
-                if (container.getParent() != null) {
-                    container.getParent().remove(container);
-                }
-                if (container instanceof Window) {
-                    ((Window) container).dispose();
-                }
-                container = null;
-                cancelButton = null;
-                downloadProgress = null;
-                loadingLabel = null;
+        EventQueue.invokeLater(() -> {
+            container.setVisible(false);
+            if (container.getParent() != null) {
+                container.getParent().remove(container);
             }
+            if (container instanceof Window) {
+                ((Window) container).dispose();
+            }
+            container = null;
+            cancelButton = null;
+            downloadProgress = null;
+            loadingLabel = null;
         });
     }
 
     private void displayOnScreen() {
         if (container instanceof Window) {
             try {
-                Rectangle bounds =
-                    GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
-                        .getDefaultConfiguration().getBounds();
+                Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+                    .getDefaultConfiguration().getBounds();
                 int x = bounds.x + (bounds.width - container.getWidth()) / 2;
                 int y = bounds.y + (bounds.height - container.getHeight()) / 2;
 

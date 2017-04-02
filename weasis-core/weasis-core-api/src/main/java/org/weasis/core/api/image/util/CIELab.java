@@ -1,14 +1,25 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import java.awt.color.ColorSpace;
 
 public class CIELab extends ColorSpace {
-
+    private static final long serialVersionUID = -8341937056180131312L;
+    
     private static final ColorSpace CIEXYZ = ColorSpace.getInstance(ColorSpace.CS_CIEXYZ);
     private static final double N = 4.0 / 29.0;
 
-    private Object readResolve() {
-        return getInstance();
+    private CIELab() {
+        super(ColorSpace.TYPE_Lab, 3);
     }
 
     private static class Holder {
@@ -52,20 +63,16 @@ public class CIELab extends ColorSpace {
     @Override
     public float[] toCIEXYZ(float[] colorvalue) {
         double i = (colorvalue[0] + 16.0) * (1.0 / 116.0);
-        double X = fInv(i + colorvalue[1] * (1.0 / 500.0));
-        double Y = fInv(i);
-        double Z = fInv(i - colorvalue[2] * (1.0 / 200.0));
-        return new float[] { (float) X, (float) Y, (float) Z };
+        double x = fInv(i + colorvalue[1] * (1.0 / 500.0));
+        double y = fInv(i);
+        double z = fInv(i - colorvalue[2] * (1.0 / 200.0));
+        return new float[] { (float) x, (float) y, (float) z };
     }
 
     @Override
     public float[] toRGB(float[] colorvalue) {
         float[] xyz = toCIEXYZ(colorvalue);
         return CIEXYZ.toRGB(xyz);
-    }
-
-    CIELab() {
-        super(ColorSpace.TYPE_Lab, 3);
     }
 
     private static double f(double x) {
@@ -86,7 +93,7 @@ public class CIELab extends ColorSpace {
 
     /**
      * This method converts integer DICOM encoded L*a*b* values to CIE L*a*b* regular float encoded values.
-     * 
+     *
      * @param lab
      * @return float array of 3 components L* on 0..1 and a*,b* on -128...127
      */
@@ -98,6 +105,17 @@ public class CIELab extends ColorSpace {
         ret[0] = lab[0] / 655.35f;
         ret[1] = lab[1] / 257.0f - 128;
         ret[2] = lab[2] / 257.0f - 128;
+        return ret;
+    }
+
+    public static int[] convertToDicomLab(float[] lab) {
+        if (lab == null || lab.length != 3) {
+            return null;
+        }
+        int[] ret = new int[3];
+        ret[0] = (int) (lab[0] * 655.35f);
+        ret[1] = (int) ((lab[1] + 128f) * 257.0f);
+        ret[2] = (int) ((lab[2] + 128f) * 257.0f);
         return ret;
     }
 }

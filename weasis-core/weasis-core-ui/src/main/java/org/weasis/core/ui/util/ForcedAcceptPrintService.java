@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.ui.util;
 
 import java.awt.print.PrinterException;
@@ -41,22 +51,10 @@ public class ForcedAcceptPrintService implements PrintService {
     private final PrintService delegate;
 
     /**
-     * Tweak the PrintJob to think this class is it's PrintService, long enough to override the PrinterIsAcceptingJobs
-     * attribute. If it doesn't work out or the printer really is offline then it's no worse than if this hack was not
-     * used.
-     * 
-     * @param printJob
-     *            the print job to affect
-     */
-    public static void setupPrintJob(PrinterJob printJob) {
-        new ForcedAcceptPrintService(printJob);
-    }
-
-    /**
      * Private constructor as this only works as a one-shot per print attempt. Use the static method above to hack a
      * PrintJob, then tell it to print. The hack is gone by the time printing occurs and this instance will be garbage
      * collected due to having no other references once the PrintJob is back to its original state.
-     * 
+     *
      * @param printJob
      *            the print job to affect
      */
@@ -81,8 +79,19 @@ public class ForcedAcceptPrintService implements PrintService {
 
     }
 
-    /** Restore the PrintJob's PrintService to what it was originally. */
+    /**
+     * Tweak the PrintJob to think this class is it's PrintService, long enough to override the PrinterIsAcceptingJobs
+     * attribute. If it doesn't work out or the printer really is offline then it's no worse than if this hack was not
+     * used.
+     *
+     * @param printJob
+     *            the print job to affect
+     */
+    public static void setupPrintJob(PrinterJob printJob) {
+        new ForcedAcceptPrintService(printJob);
+    }
 
+    /** Restore the PrintJob's PrintService to what it was originally. */
     private void restoreServiceReference() {
 
         try {
@@ -94,12 +103,11 @@ public class ForcedAcceptPrintService implements PrintService {
     }
 
     /**
-     * 
+     *
      * getAttribute is the one PrintService method we want to intercept to override the
-     * 
+     *
      * PrinterIsAcceptingJobs attribute.
      */
-
     @Override
     public <T extends PrintServiceAttribute> T getAttribute(Class<T> category) {
 

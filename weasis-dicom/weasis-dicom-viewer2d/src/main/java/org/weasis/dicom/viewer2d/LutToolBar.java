@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Component;
@@ -17,15 +27,20 @@ import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.dicom.codec.DicomImageElement;
 
-public class LutToolBar<DicomImageElement> extends WtoolBar {
+public class LutToolBar extends WtoolBar {
 
-    public LutToolBar(int index) {
+    public LutToolBar(final ImageViewerEventManager<DicomImageElement> eventManager, int index) {
         super(Messages.getString("LutToolBar.lookupbar"), index); //$NON-NLS-1$
+        if (eventManager == null) {
+            throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+        }
 
         GroupRadioMenu menu = null;
-        ActionState presetAction = EventManager.getInstance().getAction(ActionW.PRESET);
+        ActionState presetAction = eventManager.getAction(ActionW.PRESET);
         if (presetAction instanceof ComboItemListener) {
             menu = ((ComboItemListener) presetAction).createGroupRadioMenu();
         }
@@ -46,7 +61,7 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
         }
 
         GroupRadioMenu menuLut = null;
-        ActionState lutAction = EventManager.getInstance().getAction(ActionW.LUT);
+        ActionState lutAction = eventManager.getAction(ActionW.LUT);
         if (lutAction instanceof ComboItemListener) {
             menuLut = ((ComboItemListener) lutAction).createGroupRadioMenu();
         }
@@ -69,7 +84,7 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
         final JToggleButton invertButton = new JToggleButton();
         invertButton.setToolTipText(ActionW.INVERT_LUT.getTitle());
         invertButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/invert.png"))); //$NON-NLS-1$
-        ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERT_LUT);
+        ActionState invlutAction = eventManager.getAction(ActionW.INVERT_LUT);
         if (invlutAction instanceof ToggleButtonListener) {
             ((ToggleButtonListener) invlutAction).registerActionState(invertButton);
         }

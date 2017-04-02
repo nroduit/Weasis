@@ -1,8 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     ${user} - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.image.measure;
 
-/**
- * @author Nicolas Roduit
- */
+
 public class MeasurementsAdapter {
     private final double calibRatio;
     private final boolean upYAxis;
@@ -46,10 +54,7 @@ public class MeasurementsAdapter {
     }
 
     public double getYUncalibratedValue(double yVal) {
-        if (upYAxis) {
-            yVal = imageHeight - yVal;
-        }
-        return yVal + offsetY;
+        return (upYAxis ? imageHeight - yVal: yVal) + offsetY;
     }
 
     public double getXCalibratedValue(double xVal) {
@@ -57,10 +62,7 @@ public class MeasurementsAdapter {
     }
 
     public double getYCalibratedValue(double yVal) {
-        if (upYAxis) {
-            yVal = imageHeight - yVal;
-        }
-        return calibRatio * (yVal + offsetY);
+        return calibRatio * ((upYAxis ? imageHeight - yVal: yVal) + offsetY);
     }
 
 }

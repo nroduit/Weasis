@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<annotation labelHeight="13.125" labelWidth="93.140625"
+	lineABvalid="true" fill="false" showLabel="true" thickness="8.0"
+	uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="808080" />
+	<pts>
+		<pt x="1281.5" y="856.0" />
+		<pt x="1347.5" y="1068.0" />
+	</pts>
+	<labelBounds x="1294.9296875" y="1042.3125" width="105.140625"
+		height="51.375" />
+	<labels>
+		<label>Lorem ipsum</label>
+		<label>Test 2</label>
+		<label>weasis blablabla</label>
+	</labels>
+</annotation>

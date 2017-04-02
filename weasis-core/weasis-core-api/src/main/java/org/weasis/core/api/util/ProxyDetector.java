@@ -1,29 +1,35 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.util;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.SocketAddress;
+import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * 
+ *
  * Detecting and selecting a proxy
- * 
- * 
+ *
+ *
  */
 
 public class ProxyDetector {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyDetector.class);
 
     public static final String HTTP_PROXY_HOST_PROPERTY = "http.proxyHost"; //$NON-NLS-1$
     public static final String HTTP_PROXY_PORT_PROPERTY = "http.proxyPort"; //$NON-NLS-1$
@@ -45,6 +51,7 @@ public class ProxyDetector {
     public static final String DIRECT_CONNECTION_PROPERTY = "javaplugin.proxy.config.type"; //$NON-NLS-1$
 
     private static final String PROXY_PROPERTY = "java.net.useSystemProxies"; //$NON-NLS-1$
+    private static final ProxyDetector INSTANCE = new ProxyDetector();
 
     private final List<Proxy> proxies;
     private final Proxy proxyToUse;
@@ -55,59 +62,47 @@ public class ProxyDetector {
     }
 
     /**
-     * 
-     * ProxyDetectorHolder is loaded on the first execution of ProxyDetector.getInstance() or the first access to
-     * ProxyDetectorHolder.INSTANCE, not before.
-     */
-
-    private static class ProxyDetectorHolder {
-        private static final ProxyDetector INSTANCE = new ProxyDetector();
-    }
-
-    /**
-     * 
+     *
      * @return the instance
      */
 
     public static ProxyDetector getInstance() {
-        return ProxyDetectorHolder.INSTANCE;
+        return INSTANCE;
     }
 
     /**
-     * 
+     *
      * Find the proxy, use the property <code>java.net.useSystemProxies</code> to force the usage of the system proxy.
      * The value of this setting is restored afterwards.
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * @return a list of found proxies
      */
 
-    private List<Proxy> initProxies() {
+    private static List<Proxy> initProxies() {
 
         final String valuePropertyBefore = System.getProperty(PROXY_PROPERTY);
+        System.setProperty(PROXY_PROPERTY, "true"); //$NON-NLS-1$
 
         try {
-            System.setProperty(PROXY_PROPERTY, "true"); //$NON-NLS-1$
             return ProxySelector.getDefault().select(new java.net.URI("http://www.google.com")); //$NON-NLS-1$
-
         } catch (Exception e) {
-            System.out.println(e.getMessage());
-
+            LOGGER.error("Cannot find proxy configuration", e); //$NON-NLS-1$
         } finally {
             if (valuePropertyBefore != null) {
                 System.setProperty(PROXY_PROPERTY, valuePropertyBefore);
             }
         }
-        return java.util.Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 
     /**
-     * 
+     *
      * Is there a direct connection available? If I return <tt>true</tt> it is not necessary to detect a proxy address.
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * @return <tt>true</tt> if the is a direct connection to the internet
      */
 
@@ -123,7 +118,7 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * @return did we detect a proxy?
      */
 
@@ -132,12 +127,12 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * I will determine the right proxy, there might be several proxies available, but some might not support the HTTP
      * protocol.
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * @return a proxy which can be used to access the given url, <tt>null</tt> if there is no proxy which supports
      *         HTTP.
      */
@@ -159,7 +154,7 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * @return a String representing the hostname of the proxy, <tt>null</tt> if there is no proxy
      */
 
@@ -175,7 +170,7 @@ public class ProxyDetector {
     }
 
     /**
-     * 
+     *
      * @return the port of the proxy, <tt>-1</tt> if there is no proxy
      */
 

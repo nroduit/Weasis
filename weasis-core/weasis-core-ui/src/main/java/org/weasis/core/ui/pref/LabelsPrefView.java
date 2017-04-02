@@ -1,23 +1,22 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.pref;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -33,25 +32,24 @@ import org.weasis.core.api.gui.util.PageProps;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.Measurement;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.utils.bean.Measurement;
 
 public class LabelsPrefView extends AbstractItemDialogPage {
+    private static final long serialVersionUID = -1727609322145775651L;
+
     private final JPanel panelList = new JPanel();
-    private final JComboBox comboBoxTool;
-    private final ItemListener toolsListener = new ItemListener() {
+    private final JComboBox<Graphic> comboBoxTool;
 
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                selectTool((Graphic) e.getItem());
-            }
-
+    private final ItemListener toolsListener = e -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            selectTool((Graphic) e.getItem());
         }
     };
 
@@ -62,26 +60,20 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         BorderLayout borderLayout = new BorderLayout();
         setLayout(borderLayout);
 
-        JPanel panel_2 = new JPanel();
-        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
-        flowLayout_1.setHgap(10);
-        flowLayout_1.setAlignment(FlowLayout.RIGHT);
-        flowLayout_1.setVgap(7);
-        add(panel_2, BorderLayout.SOUTH);
+        JPanel panel2 = new JPanel();
+        FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
+        flowLayout1.setHgap(10);
+        flowLayout1.setAlignment(FlowLayout.RIGHT);
+        flowLayout1.setVgap(7);
+        add(panel2, BorderLayout.SOUTH);
 
         JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
-        panel_2.add(btnNewButton);
-        btnNewButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetoDefaultValues();
-            }
-        });
+        panel2.add(btnNewButton);
+        btnNewButton.addActionListener(e -> resetoDefaultValues());
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(null,
-            Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING, TitledBorder.TOP, null, //$NON-NLS-1$
-            null));
+        panel1.setBorder(new TitledBorder(null, Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING, //$NON-NLS-1$
+            TitledBorder.TOP, null, null));
         add(panel1, BorderLayout.CENTER);
         panel1.setLayout(new BorderLayout(0, 0));
 
@@ -93,9 +85,9 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
         JLabel lblNewLabel = new JLabel(Messages.getString("LabelsPrefView.geometricshape") + StringUtil.COLON); //$NON-NLS-1$
         panel.add(lblNewLabel);
-        ArrayList<Graphic> tools = new ArrayList<Graphic>(MeasureToolBar.graphicList);
+        ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.measureGraphicList);
         tools.remove(0);
-        comboBoxTool = new JComboBox(tools.toArray());
+        comboBoxTool = new JComboBox<>(tools.stream().toArray(Graphic[]::new));
         comboBoxTool.setMaximumRowCount(12);
         selectTool((Graphic) comboBoxTool.getSelectedItem());
         comboBoxTool.addItemListener(toolsListener);
@@ -113,15 +105,11 @@ public class LabelsPrefView extends AbstractItemDialogPage {
             List<Measurement> list = graph.getMeasurementList();
             if (list != null) {
                 for (final Measurement m : list) {
-                    JCheckBox box = new JCheckBox(m.getName(), m.isGraphicLabel());
-                    box.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            Object source = e.getSource();
-                            if (source instanceof JCheckBox) {
-                                m.setGraphicLabel(((JCheckBox) source).isSelected());
-                            }
+                    JCheckBox box = new JCheckBox(m.getName(), m.getGraphicLabel());
+                    box.addActionListener(e -> {
+                        Object source = e.getSource();
+                        if (source instanceof JCheckBox) {
+                            m.setGraphicLabel(((JCheckBox) source).isSelected());
                         }
                     });
                     panelList.add(box);
@@ -140,15 +128,13 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         }
         synchronized (UIManager.VIEWER_PLUGINS) {
             for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
                 if (p instanceof ImageViewerPlugin) {
-                    for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
-                        if (v instanceof DefaultView2d) {
-                            DefaultView2d view = (DefaultView2d) v;
-                            List<Graphic> list = view.getLayerModel().getAllGraphics();
-                            for (Graphic graphic : list) {
-                                graphic.updateLabel(true, view);
-                            }
+                    for (Object v : ((ImageViewerPlugin<?>) p).getImagePanels()) {
+                        if (v instanceof ViewCanvas) {
+                            ViewCanvas<?> view = (ViewCanvas<?>) v;
+                            GraphicModel graphicList = view.getGraphicManager();
+                            graphicList.updateLabels(true, view);
                         }
                     }
                 }
@@ -158,14 +144,11 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        for (Graphic graph : MeasureToolBar.graphicList) {
-            List<Measurement> list = graph.getMeasurementList();
-            if (list != null) {
-                for (Measurement m : list) {
-                    m.resetToGraphicLabelValue();
-                }
-            }
-        }
+        MeasureToolBar.measureGraphicList.forEach(g -> {
+            List<Measurement> list = g.getMeasurementList();
+            Optional.ofNullable(list).ifPresent(l -> l.forEach(m -> m.resetToGraphicLabelValue()));
+        });
+
         selectTool((Graphic) comboBoxTool.getSelectedItem());
     }
 

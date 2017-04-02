@@ -1,24 +1,26 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.internal.mime;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class InvalidMagicMimeEntryException extends Exception {
 
-    public InvalidMagicMimeEntryException() {
-        super("Invalid Magic Mime Entry: Unknown entry"); //$NON-NLS-1$
+    private static final long serialVersionUID = -1765168312253063736L;
+
+    public InvalidMagicMimeEntryException(Throwable cause) {
+        super("Invalid Magic Mime Entry: Unknown entry", cause); //$NON-NLS-1$
     }
 
-    public InvalidMagicMimeEntryException(ArrayList mimeMagicEntry) {
-        super("Invalid Magic Mime Entry: " + mimeMagicEntry.toString()); //$NON-NLS-1$
+    public InvalidMagicMimeEntryException(List<String> mimeMagicEntry, Throwable cause) {
+        super("Invalid Magic Mime Entry: " + mimeMagicEntry.toString(), cause); //$NON-NLS-1$
     }
 }

@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2011 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.pref;
 
 import java.awt.event.ItemEvent;
@@ -15,7 +15,6 @@ import java.awt.event.ItemListener;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Locale;
 
 import javax.swing.JComboBox;
@@ -23,9 +22,10 @@ import javax.swing.JComboBox;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.LocalUtil;
 
-public class JLocaleLanguage extends JComboBox implements ItemListener {
+@SuppressWarnings("serial")
+public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener, Refreshable {
 
-    private final ArrayList<Locale> languages = new ArrayList<Locale>();
+    private final ArrayList<Locale> languages = new ArrayList<>();
 
     public JLocaleLanguage() {
         super();
@@ -56,13 +56,7 @@ public class JLocaleLanguage extends JComboBox implements ItemListener {
         Locale defaultLocale = Locale.getDefault();
         // Allow to sort correctly string in each language
         final Collator collator = Collator.getInstance(defaultLocale);
-        Collections.sort(languages, new Comparator<Locale>() {
-
-            @Override
-            public int compare(Locale l1, Locale l2) {
-                return collator.compare(l1.getDisplayName(), l2.getDisplayName());
-            }
-        });
+        Collections.sort(languages, (l1, l2) -> collator.compare(l1.getDisplayName(), l2.getDisplayName()));
 
         JLocale dloc = null;
         for (Locale locale : languages) {
@@ -80,15 +74,13 @@ public class JLocaleLanguage extends JComboBox implements ItemListener {
     public void selectLocale(String locale) {
         Locale sLoc = LocalUtil.textToLocale(locale);
         Object item = getSelectedItem();
-        if (item instanceof JLocale) {
-            if (sLoc.equals(((JLocale) item).getLocale())) {
-                return;
-            }
+        if (item instanceof JLocale && sLoc.equals(((JLocale) item).getLocale())) {
+            return;
         }
 
         int defaultIndex = -1;
         for (int i = 0; i < getItemCount(); i++) {
-            Locale l = ((JLocale) getItemAt(i)).getLocale();
+            Locale l = getItemAt(i).getLocale();
             if (l.equals(sLoc)) {
                 defaultIndex = i;
                 break;
@@ -113,12 +105,8 @@ public class JLocaleLanguage extends JComboBox implements ItemListener {
                 sortLocales();
                 addItemListener(this);
                 firePropertyChange("locale", null, locale); //$NON-NLS-1$
-                handleChange();
+                valueHasChanged();
             }
         }
     }
-
-    protected void handleChange() {
-    }
-
 }

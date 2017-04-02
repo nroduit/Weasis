@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.ui.util;
 
 import java.awt.AlphaComposite;
@@ -7,8 +17,6 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.JComponent;
 import javax.swing.RootPaneContainer;
@@ -19,6 +27,7 @@ import org.jdesktop.jxlayer.plaf.AbstractLayerUI;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 
+@SuppressWarnings("serial")
 public class ColorLayerUI extends AbstractLayerUI<JComponent> {
 
     protected static final float MAX_ALPHA = 0.75f;
@@ -41,7 +50,7 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
             final ColorLayerUI ui = new ColorLayerUI(layer, parent);
             layer.setUI(ui);
             parent.setContentPane(layer);
-            ui.ShowUI();
+            ui.showUI();
             return ui;
         }
         return null;
@@ -77,20 +86,16 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
         g.fillRect(0, 0, comp.getWidth(), comp.getHeight());
     }
 
-    public synchronized void ShowUI() {
+    public synchronized void showUI() {
         this.alpha = 0.0f;
         final Timer timer = new Timer(3, null);
         timer.setRepeats(true);
-        timer.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                alpha = Math.min(alpha + 0.1f, 1.0F);
-                if (alpha >= 1.0) {
-                    timer.stop();
-                }
-                xlayer.repaint();
+        timer.addActionListener(e -> {
+            alpha = Math.min(alpha + 0.1f, 1.0F);
+            if (alpha >= 1.0) {
+                timer.stop();
             }
+            xlayer.repaint();
         });
         this.xlayer.repaint();
         timer.start();
@@ -101,18 +106,14 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
         this.alpha = 1.0f;
         final Timer timer = new Timer(3, null);
         timer.setRepeats(true);
-        timer.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                alpha = Math.max(alpha - 0.1f, 0.0F);
-                if (alpha <= 0.0) {
-                    timer.stop();
-                    parent.setContentPane(xlayer.getView());
-                    return;
-                }
-                xlayer.repaint();
+        timer.addActionListener(e -> {
+            alpha = Math.max(alpha - 0.1f, 0.0F);
+            if (alpha <= 0.0) {
+                timer.stop();
+                parent.setContentPane(xlayer.getView());
+                return;
             }
+            xlayer.repaint();
         });
         this.xlayer.repaint();
         timer.start();

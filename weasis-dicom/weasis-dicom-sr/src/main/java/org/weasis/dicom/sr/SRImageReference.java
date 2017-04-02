@@ -1,13 +1,23 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.sr;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.dicom.codec.macro.SOPInstanceReference;
 
 public class SRImageReference {
-    private ImageSOPInstanceReference imageSOPInstanceReference;
+    private SOPInstanceReference sopInstanceReference;
     private List<Graphic> graphics;
     private final String nodeLevel;
 
@@ -19,18 +29,18 @@ public class SRImageReference {
     public void addGraphic(Graphic g) {
         if (g != null) {
             if (graphics == null) {
-                graphics = new ArrayList<Graphic>();
+                graphics = new ArrayList<>();
             }
             graphics.add(g);
         }
     }
 
-    public ImageSOPInstanceReference getImageSOPInstanceReference() {
-        return imageSOPInstanceReference;
+    public SOPInstanceReference getSopInstanceReference() {
+        return sopInstanceReference;
     }
 
-    public void setImageSOPInstanceReference(ImageSOPInstanceReference imageSOPInstanceReference) {
-        this.imageSOPInstanceReference = imageSOPInstanceReference;
+    public void setSopInstanceReference(SOPInstanceReference sopInstanceReference) {
+        this.sopInstanceReference = sopInstanceReference;
     }
 
     public List<Graphic> getGraphics() {

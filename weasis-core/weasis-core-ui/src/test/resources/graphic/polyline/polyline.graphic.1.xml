@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<polyline fill="false" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Length : 1'711.3 pix</label>
+	</label>
+	<pts>
+		<pt x="935.5" y="902.0" />
+		<pt x="1042.5" y="863.0" />
+		<pt x="1188.5" y="902.0" />
+		<pt x="1242.5" y="997.0" />
+		<pt x="1409.5" y="950.0" />
+		<pt x="1453.5" y="1059.0" />
+		<pt x="1288.5" y="1105.0" />
+		<pt x="1391.5" y="1224.0" />
+		<pt x="1641.5" y="1250.0" />
+		<pt x="1600.5" y="1365.0" />
+		<pt x="1413.5" y="1376.0" />
+		<pt x="1260.5" y="1356.0" />
+		<pt x="1262.5" y="1355.0" />
+	</pts>
+</polyline>

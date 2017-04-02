@@ -1,13 +1,32 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.util;
 
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Locale;
 
 import org.weasis.core.api.service.BundleTools;
 
 public class LocalUtil {
-    private static Locale LOCALE_FORMAT = null;
+    private static final String FORMAT_CODE = "locale.format.code"; //$NON-NLS-1$
+
+    private static final DateTimeFormatter defaultDateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
+    private static final DateTimeFormatter defaultTimeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM);
+    private static final DateTimeFormatter defaultDateTimeFormatter =
+        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM);
+
+    private static Locale localeFormat = null;
 
     private LocalUtil() {
     }
@@ -44,9 +63,9 @@ public class LocalUtil {
     }
 
     public static Locale getLocaleFormat() {
-        Locale l = LOCALE_FORMAT;
+        Locale l = LocalUtil.localeFormat;
         if (l == null) {
-            String code = BundleTools.SYSTEM_PREFERENCES.getProperty("locale.format.code"); //$NON-NLS-1$
+            String code = BundleTools.SYSTEM_PREFERENCES.getProperty(FORMAT_CODE);
             if (StringUtil.hasLength(code)) {
                 l = LocalUtil.textToLocale(code);
             }
@@ -59,11 +78,11 @@ public class LocalUtil {
 
     public static void setLocaleFormat(Locale value) {
         if (value == null) {
-            BundleTools.SYSTEM_PREFERENCES.remove("locale.format.code"); //$NON-NLS-1$
+            BundleTools.SYSTEM_PREFERENCES.remove(FORMAT_CODE);
         } else {
-            BundleTools.SYSTEM_PREFERENCES.put("locale.format.code", LocalUtil.localeToText(value)); //$NON-NLS-1$
+            BundleTools.SYSTEM_PREFERENCES.put(FORMAT_CODE, LocalUtil.localeToText(value));
         }
-        LOCALE_FORMAT = value;
+        LocalUtil.localeFormat = value;
     }
 
     public static NumberFormat getNumberInstance() {
@@ -78,27 +97,32 @@ public class LocalUtil {
         return NumberFormat.getPercentInstance(getLocaleFormat());
     }
 
-    public static DateFormat getDateInstance() {
-        return DateFormat.getDateInstance(DateFormat.DEFAULT, getLocaleFormat());
-    }
 
     public static DateFormat getDateInstance(int style) {
         return DateFormat.getDateInstance(style, getLocaleFormat());
     }
 
-    public static DateFormat getTimeInstance() {
-        return DateFormat.getTimeInstance(DateFormat.DEFAULT, getLocaleFormat());
+    public static DateTimeFormatter getDateFormatter() {
+        return defaultDateFormatter.withLocale(getLocaleFormat());
     }
 
-    public static DateFormat getTimeInstance(int style) {
-        return DateFormat.getTimeInstance(style, getLocaleFormat());
+    public static DateTimeFormatter getDateFormatter(FormatStyle style) {
+        return DateTimeFormatter.ofLocalizedDate(style).withLocale(getLocaleFormat());
     }
 
-    public static DateFormat getDateTimeInstance() {
-        return DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, getLocaleFormat());
+    public static DateTimeFormatter getTimeFormatter() {
+        return defaultTimeFormatter.withLocale(getLocaleFormat());
     }
 
-    public static DateFormat getDateTimeInstance(int dateStyle, int timeStyle) {
-        return DateFormat.getDateTimeInstance(dateStyle, timeStyle, getLocaleFormat());
+    public static DateTimeFormatter getTimeFormatter(FormatStyle style) {
+        return DateTimeFormatter.ofLocalizedTime(style).withLocale(getLocaleFormat());
+    }
+
+    public static DateTimeFormatter getDateTimeFormatter() {
+        return defaultDateTimeFormatter.withLocale(getLocaleFormat());
+    }
+
+    public static DateTimeFormatter getDateTimeFormatter(FormatStyle style) {
+        return DateTimeFormatter.ofLocalizedDateTime(style).withLocale(getLocaleFormat());
     }
 }

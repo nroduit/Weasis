@@ -1,26 +1,33 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
+import java.awt.event.InputEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.SwingPropertyChangeSupport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -42,13 +49,13 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.model.DefaultViewModel;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
 
-public abstract class ImageViewerEventManager<E extends ImageElement> {
-    public static final int ZOOM_SLIDER_MIN = -100;
-    public static final int ZOOM_SLIDER_MAX = 100;
+public abstract class ImageViewerEventManager<E extends ImageElement> implements KeyListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImageViewerEventManager.class);
+
     public static final int WINDOW_SMALLEST = 0;
     public static final int WINDOW_LARGEST = 4096;
     public static final int WINDOW_DEFAULT = 700;
@@ -56,18 +63,27 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     public static final int LEVEL_LARGEST = 4096;
     public static final int LEVEL_DEFAULT = 300;
 
-    protected final ArrayList<SeriesViewerListener> seriesViewerListeners = new ArrayList<SeriesViewerListener>();
+    protected final ArrayList<SeriesViewerListener> seriesViewerListeners = new ArrayList<>();
     protected final MouseActions mouseActions = new MouseActions(null);
     protected final ZoomSetting zoomSetting = new ZoomSetting();
     protected final WProperties options = new WProperties();
-    protected ImageViewerPlugin<E> selectedView2dContainer;
     // Manages all PropertyChangeListeners in EDT
     protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
-    protected final HashMap<ActionW, ActionState> actions = new HashMap<ActionW, ActionState>();
-    protected boolean enabledAction = true;
+    protected final HashMap<ActionW, ActionState> actions = new HashMap<>();
+
+    protected volatile boolean enabledAction = true;
+    protected volatile ImageViewerPlugin<E> selectedView2dContainer;
 
     public ImageViewerEventManager() {
         super();
+    }
+
+    public void setAction(ActionState action) {
+        actions.put(action.getActionW(), action);
+    }
+
+    public void removeAction(ActionW action) {
+        actions.remove(action);
     }
 
     protected SliderCineListener getMoveTroughSliceAction(int speed, final TIME time, double mouseSensivity) {
@@ -80,13 +96,13 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
             @Override
             public void stateChanged(BoundedRangeModel model) {
 
-                DefaultView2d<ImageElement> view2d = null;
+                ViewCanvas<ImageElement> view2d = null;
                 Series<ImageElement> series = null;
                 SynchCineEvent mediaEvent = null;
                 ImageElement image = null;
 
                 if (selectedView2dContainer != null) {
-                    view2d = (DefaultView2d<ImageElement>) selectedView2dContainer.getSelectedImagePane();
+                    view2d = (ViewCanvas<ImageElement>) selectedView2dContainer.getSelectedImagePane();
                 }
 
                 if (view2d != null && view2d.getSeries() instanceof Series) {
@@ -94,10 +110,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                     if (series != null) {
                         // Model contains display value, value-1 is the index value of a sequence
                         int index = model.getValue() - 1;
-                        image =
-                            series.getMedia(index,
-                                (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
-                                view2d.getCurrentSortComparator());
+                        image = series.getMedia(index,
+                            (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                            view2d.getCurrentSortComparator());
                         mediaEvent = new SynchCineEvent(view2d, image, index);
                         // Ensure to load image before calling the default preset (requires pixel min and max)
                         if (image != null && !image.isImageAvailable()) {
@@ -106,21 +121,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                     }
                 }
 
-                // ActionState synch = getAction(ActionW.SYNCH);
-                // if (media != null && synch instanceof ComboItemListener) {
-                // SynchView synchview = (SynchView) ((ComboItemListener) synch).getSelectedItem();
-                // if (synchview.isActionEnable(ActionW.SCROLL_SERIES)) {
-                // Float val = (Float) media.getTagValue(TagW.SliceLocation);
-                // if (val != null) {
-                // location = val;
-                // }
-                // }
-                // }
-
                 firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
                 if (image != null) {
-                    fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
-                        EVENT.SELECT));
+                    fireSeriesViewerListeners(
+                        new SeriesViewerEvent(selectedView2dContainer, series, image, EVENT.SELECT));
                 }
             }
 
@@ -140,41 +144,25 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 private volatile int wait;
                 private volatile int currentCineRate;
                 private volatile long start;
-                private final int timeDiv = TIME.second.equals(time) ? 1000 : TIME.minute.equals(time) ? 60000
-                    : 3600000;
+                private final int timeDiv =
+                    TIME.SECOND.equals(time) ? 1000 : TIME.MINUTE.equals(time) ? 60000 : 3600000;
 
                 @Override
                 public void run() {
                     iniSpeed();
-                    // Create a robot to monitor the paintImageViewerEventManager
-                    // Robot robot = null;
-                    //
-                    // try {
-                    // robot = new java.awt.Robot();
-                    // }
-                    // catch (Exception e) {
-                    // }
 
                     while (cining) {
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                int frameIndex = getValue() + 1;
-                                frameIndex = frameIndex > getMax() ? 0 : frameIndex;
-                                setValue(frameIndex);
-                            }
+                        GuiExecutor.instance().execute(() -> {
+                            int frameIndex = getSliderValue() + 1;
+                            frameIndex = frameIndex > getSliderMax() ? 0 : frameIndex;
+                            setSliderValue(frameIndex);
                         });
-
                         iteration++;
-                        // Wait until the paint is finished
-                        // robot.waitForIdle();
 
                         // adjust the delay time based on the current performance
                         long elapsed = (System.currentTimeMillis() - start) / 1000;
                         if (elapsed > 0) {
                             currentCineRate = (int) (iteration / elapsed);
-                            // System.out.println("fps:" + fps);
 
                             if (currentCineRate < getSpeed()) {
                                 wait--;
@@ -216,7 +204,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 if (currentCine != null) {
                     stop();
                 }
-                if (getMax() - getMin() > 0) {
+                if (getSliderMax() - getSliderMin() > 0) {
                     cining = true;
                     currentCine = new CineThread();
                     currentCine.start();
@@ -242,7 +230,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                setValue(getValue() + e.getWheelRotation());
+                setSliderValue(getSliderValue() + e.getWheelRotation());
             }
 
             @Override
@@ -262,8 +250,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
             }
         };
     }
@@ -273,8 +261,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
             }
         };
     }
@@ -284,31 +272,45 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), model.getValue()));
             }
 
             @Override
             public String getValueToDisplay() {
-                return getValue() + " \u00b0"; //$NON-NLS-1$
+                return getSliderValue() + " \u00b0"; //$NON-NLS-1$
             }
         };
     }
 
     protected SliderChangeListener newZoomAction() {
-        return new SliderChangeListener(ActionW.ZOOM, ZOOM_SLIDER_MIN, ZOOM_SLIDER_MAX, 0, true, 0.1) {
+
+        return new SliderChangeListener(ActionW.ZOOM, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX, 1.0, true,
+            0.1, 100) { // special case will set range -100 to 100
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    sliderValueToViewScale(model.getValue())));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
             }
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue())); 
+                return DecFormater.percentTwoDecimal(getRealValue());
             }
 
+            @Override
+            public int toSliderValue(double viewScale) {
+                double v = Math.log(viewScale) / Math.log(DefaultViewModel.SCALE_MAX) * getSliderMax();
+                return (int) Math.round(v);
+            }
+
+            @Override
+            public double toModelValue(int sliderValue) {
+                double v = sliderValue / (double) getSliderMax();
+                double viewScale = Math.exp(v * Math.log(DefaultViewModel.SCALE_MAX));
+                return roundAndCropViewScale(viewScale, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX);
+            }
         };
     }
 
@@ -317,8 +319,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    point));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
             }
 
         };
@@ -329,8 +331,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    point));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
             }
         };
     }
@@ -340,8 +342,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
 
         };
@@ -352,8 +354,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
         };
     }
@@ -363,57 +365,54 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
 
         };
     }
 
     protected SliderChangeListener newLensZoomAction() {
-        return new SliderChangeListener(ActionW.LENSZOOM, ZOOM_SLIDER_MIN, ZOOM_SLIDER_MAX,
-            viewScaleToSliderValue(2.0), true, 0.1) {
+        return new SliderChangeListener(ActionW.LENSZOOM, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX, 2.0,
+            true, 0.1, 100) { // special case will set range -100 to 100
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    sliderValueToViewScale(model.getValue())));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
             }
 
             @Override
             public String getValueToDisplay() {
-                return DecFormater.percentTwoDecimal(sliderValueToViewScale(getValue())); 
+                return DecFormater.percentTwoDecimal(getRealValue());
+            }
+
+            @Override
+            public int toSliderValue(double viewScale) {
+                double v = Math.log(viewScale) / Math.log(DefaultViewModel.SCALE_MAX) * getSliderMax();
+                return (int) Math.round(v);
+            }
+
+            @Override
+            public double toModelValue(int sliderValue) {
+                double v = sliderValue / (double) getSliderMax();
+                double viewScale = Math.exp(v * Math.log(DefaultViewModel.SCALE_MAX));
+                return roundAndCropViewScale(viewScale, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX);
             }
 
         };
     }
 
-    // protected ComboItemListener getViewModeAction() {
-    // return new ComboItemListener(ActionW.VIEW_MODE, Mode.values()) {
-    //
-    // @Override
-    // public void itemStateChanged(Object object) {
-    // if (object instanceof Mode && selectedView2dContainer != null) {
-    // Mode synchView = (Mode) object;
-    // selectedView2dContainer.setViewingMode(synchView);
-    // updateAllListeners(synchView);
-    // }
-    // }
-    // };
-    // }
-
-    protected ComboItemListener newLayoutAction(GridBagLayoutModel[] layouts) {
-        if (layouts == null) {
-            layouts = new GridBagLayoutModel[0];
-        }
-        return new ComboItemListener(ActionW.LAYOUT, layouts) {
+    protected ComboItemListener<GridBagLayoutModel> newLayoutAction(GridBagLayoutModel[] layouts) {
+        return new ComboItemListener<GridBagLayoutModel>(ActionW.LAYOUT,
+            Optional.ofNullable(layouts).orElseGet(() -> new GridBagLayoutModel[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
                 if (object instanceof GridBagLayoutModel && selectedView2dContainer != null) {
                     // change layout
                     clearAllPropertyChangeListeners();
-                    DefaultView2d view = selectedView2dContainer.getSelectedImagePane();
+                    ViewCanvas<E> view = selectedView2dContainer.getSelectedImagePane();
                     selectedView2dContainer.setLayoutModel((GridBagLayoutModel) object);
                     if (!selectedView2dContainer.isContainingView(view)) {
                         view = selectedView2dContainer.getSelectedImagePane();
@@ -428,11 +427,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
-    protected ComboItemListener newSynchAction(SynchView[] synchViewList) {
-        if (synchViewList == null) {
-            synchViewList = new SynchView[0];
-        }
-        return new ComboItemListener(ActionW.SYNCH, synchViewList) {
+    protected ComboItemListener<SynchView> newSynchAction(SynchView[] synchViewList) {
+        return new ComboItemListener<SynchView>(ActionW.SYNCH,
+            Optional.ofNullable(synchViewList).orElseGet(() -> new SynchView[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
@@ -449,25 +446,31 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
             }
         };
     }
 
-    protected ComboItemListener newMeasurementAction(Graphic[] graphics) {
-        if (graphics == null) {
-            graphics = new Graphic[0];
-        }
-        return new ComboItemListener(ActionW.DRAW_MEASURE, graphics) {
+    protected static ComboItemListener<Graphic> newMeasurementAction(Graphic[] graphics) {
+        return new ComboItemListener<Graphic>(ActionW.DRAW_MEASURE,
+            Optional.ofNullable(graphics).orElseGet(() -> new Graphic[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
-                if (object instanceof Graphic && selectedView2dContainer != null) {
-                    selectedView2dContainer.setDrawActions((Graphic) object);
-                }
+                // Do nothing
             }
+        };
+    }
 
+    protected static ComboItemListener<Graphic> newDrawAction(Graphic[] graphics) {
+        return new ComboItemListener<Graphic>(ActionW.DRAW_GRAPHICS,
+            Optional.ofNullable(graphics).orElseGet(() -> new Graphic[0])) {
+
+            @Override
+            public void itemStateChanged(Object object) {
+                // Do nothing
+            }
         };
     }
 
@@ -476,43 +479,41 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
                 MeasureTool.viewSetting.setDrawOnlyOnce(selected);
             }
         };
     }
 
-    protected ComboItemListener newSpatialUnit(Unit[] units) {
-        if (units == null) {
-            units = new Unit[0];
-        }
-        return new ComboItemListener(ActionW.SPATIAL_UNIT, units) {
+    protected ComboItemListener<Unit> newSpatialUnit(Unit[] units) {
+        return new ComboItemListener<Unit>(ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElseGet(() -> new Unit[0])) {
 
             @Override
             public void itemStateChanged(Object object) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    object));
+                firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(getSelectedViewPane(), action.cmd(), object));
             }
         };
     }
 
-    public abstract boolean updateComponentsListener(DefaultView2d<E> defaultView2d);
+    public abstract boolean updateComponentsListener(ViewCanvas<E> viewCanvas);
 
     private static double roundAndCropViewScale(double viewScale, double minViewScale, double maxViewScale) {
-        viewScale *= 1000.0;
-        double v = Math.floor(viewScale);
-        if (viewScale - v >= 0.5) {
+        double ratio = viewScale;
+        ratio *= 1000.0;
+        double v = Math.floor(ratio);
+        if (ratio - v >= 0.5) {
             v += 0.5;
         }
-        viewScale = v / 1000.0;
-        if (viewScale < minViewScale) {
-            viewScale = minViewScale;
+        ratio = v / 1000.0;
+        if (ratio < minViewScale) {
+            ratio = minViewScale;
         }
-        if (viewScale > maxViewScale) {
-            viewScale = maxViewScale;
+        if (ratio > maxViewScale) {
+            ratio = maxViewScale;
         }
-        return viewScale;
+        return ratio;
     }
 
     /** Fire property change event. */
@@ -563,32 +564,98 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         return null;
     }
 
-    public ActionW getActionFromCommand(String command) {
-        if (command != null) {
-            for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
-                ActionW action = iterator.next();
-                if (action.cmd().equals(command)) {
-                    return action;
-                }
-            }
+    public boolean isActionRegistered(ActionW action) {
+        if (action != null) {
+            return actions.containsKey(action);
         }
-        return null;
+        return false;
     }
 
-    public ActionW getActionFromkeyEvent(int keyEvent, int modifier) {
-        if (keyEvent != 0) {
-            for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
-                ActionW action = iterator.next();
-                if (action.getKeyCode() == keyEvent && action.getModifier() == modifier) {
-                    return action;
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getAction(ActionW action, Class<T> type) {
+        Objects.requireNonNull(action);
+        Objects.requireNonNull(type);
+
+        ActionState val = actions.get(action);
+        if (val == null || type.isAssignableFrom(val.getClass())) {
+            return Optional.ofNullable((T) val);
+        }
+        LOGGER.error("The request class [{}] doesn't match to the object [{}]", type, val.getClass()); //$NON-NLS-1$
+        return Optional.empty();
+    }
+
+    public Optional<ActionW> getActionKey(String command) {
+        if (command == null) {
+            return Optional.empty();
+        }
+        return actions.keySet().stream().filter(k -> k != null && k.cmd().equals(command)).findFirst();
+    }
+
+    public <T> Optional<T> getAction(String command, Class<T> type) {
+        Objects.requireNonNull(command);
+        Objects.requireNonNull(type);
+
+        return actions.keySet().stream().filter(k -> k != null && k.cmd().equals(command)).findFirst().map(actions::get)
+            .filter(type::isInstance).map(type::cast);
+    }
+
+    public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
+        if (keyEvent == 0) {
+            return Optional.empty();
+        }
+        return actions.keySet().stream()
+            .filter(k -> k != null && k.getKeyCode() == keyEvent && k.getModifier() == modifier).findFirst();
+    }
+
+    public void changeLeftMouseAction(String command) {
+        ImageViewerPlugin<E> view = getSelectedView2dContainer();
+        if (view != null) {
+            ViewerToolBar<E> toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                MouseActions mActions = getMouseActions();
+                if (!command.equals(mActions.getAction(MouseActions.LEFT))) {
+                    mActions.setAction(MouseActions.LEFT, command);
+                    view.setMouseActions(mActions);
+                    toolBar.changeButtonState(MouseActions.LEFT, command);
                 }
             }
         }
-        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void nextLeftMouseAction() {
+        ImageViewerPlugin<E> view = getSelectedView2dContainer();
+        if (view != null) {
+            ViewerToolBar<E> toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                String command = ViewerToolBar
+                    .getNextCommand(ViewerToolBar.actionsButtons, toolBar.getMouseLeft().getActionCommand()).cmd();
+                changeLeftMouseAction(command);
+            }
+        }
+    }
+
+    public Optional<ActionW> getMouseAction(int modifiers) {
+        Optional<ActionW> action = Optional.empty();
+        // left mouse button, always active
+        if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
+            action = getActionKey(mouseActions.getLeft());
+        }
+        // middle mouse button
+        else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0
+            && ((mouseActions.getActiveButtons() & InputEvent.BUTTON2_DOWN_MASK) != 0)) {
+            action = getActionKey(mouseActions.getMiddle());
+        }
+        // right mouse button
+        else if ((modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0
+            && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
+            action = getActionKey(mouseActions.getRight());
+        }
+        return action;
     }
 
     public Collection<ActionState> getAllActionValues() {
-        return actions.values();
+        return actions.values().stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public MouseActions getMouseActions() {
@@ -603,26 +670,14 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         return options;
     }
 
-    public static int viewScaleToSliderValue(double viewScale) {
-        final double v = Math.log(viewScale) / Math.log(DefaultViewModel.SCALE_MAX) * ZOOM_SLIDER_MAX;
-        return (int) Math.round(v);
-    }
-
-    public static double sliderValueToViewScale(final int sliderValue) {
-        final double v = sliderValue / (double) ZOOM_SLIDER_MAX;
-        double viewScale = Math.exp(v * Math.log(DefaultViewModel.SCALE_MAX));
-        viewScale = roundAndCropViewScale(viewScale, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX);
-        return viewScale;
-    }
-
     public synchronized void enableActions(boolean enabled) {
         enabledAction = enabled;
-        for (ActionState a : actions.values()) {
+        for (ActionState a : getAllActionValues()) {
             a.enableAction(enabled);
         }
     }
 
-    public DefaultView2d<E> getSelectedViewPane() {
+    public ViewCanvas<E> getSelectedViewPane() {
         ImageViewerPlugin<E> container = selectedView2dContainer;
         if (container != null) {
             return container.getSelectedImagePane();
@@ -637,7 +692,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     public boolean isSelectedView2dContainerInTileMode() {
         ImageViewerPlugin<E> container = selectedView2dContainer;
         if (container != null) {
-            return SynchData.Mode.Tile.equals(container.getSynchView().getSynchData().getMode());
+            return SynchData.Mode.TILE.equals(container.getSynchView().getSynchData().getMode());
         }
         return false;
     }
@@ -645,7 +700,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     public void updateAllListeners(ImageViewerPlugin<E> viewerPlugin, SynchView synchView) {
         clearAllPropertyChangeListeners();
         if (viewerPlugin != null) {
-            DefaultView2d<E> viewPane = viewerPlugin.getSelectedImagePane();
+            ViewCanvas<E> viewPane = viewerPlugin.getSelectedImagePane();
             if (viewPane == null) {
                 return;
             }
@@ -654,31 +709,61 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
                 addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
 
-                final ArrayList<DefaultView2d<E>> panes = viewerPlugin.getImagePanels();
+                final List<ViewCanvas<E>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 if (SynchView.NONE.equals(synchView)) {
                     for (int i = 0; i < panes.size(); i++) {
                         panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
                     }
-                } else if (Mode.Stack.equals(synch.getMode())) {
+                } else if (Mode.STACK.equals(synch.getMode())) {
                     // TODO if Pan is activated than rotation is required
-
                     boolean hasLink = false;
                     for (int i = 0; i < panes.size(); i++) {
                         boolean synchByDefault = isCompatible(viewPane.getSeries(), panes.get(i).getSeries());
-                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synch.clone() : null);
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synch.copy() : null);
                         if (synchByDefault) {
                             hasLink = true;
                             addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
                         }
                     }
-                } else if (Mode.Tile.equals(synch.getMode())) {
+                } else if (Mode.TILE.equals(synch.getMode())) {
                     for (int i = 0; i < panes.size(); i++) {
-                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.clone());
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.copy());
                         addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
                     }
                 }
 
+            }
+        }
+    }
+
+    protected void triggerDrawingToolKeyEvent(int keyEvent, int modifiers) {
+        triggerDrawActionKeyEvent(ActionW.DRAW_MEASURE, ActionW.MEASURE.cmd(), keyEvent, modifiers);
+        triggerDrawActionKeyEvent(ActionW.DRAW_GRAPHICS, ActionW.DRAW.cmd(), keyEvent, modifiers);
+    }
+
+    private void triggerDrawActionKeyEvent(ActionW action, String cmd, int keyEvent, int modifiers) {
+        Optional<ComboItemListener> drawAction = getAction(action, ComboItemListener.class);
+        if (drawAction.isPresent() && drawAction.get().isActionEnabled()) {
+            for (Object obj : drawAction.get().getAllItem()) {
+                if (obj instanceof Graphic) {
+                    Graphic g = (Graphic) obj;
+                    if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
+                        ImageViewerPlugin<E> view = getSelectedView2dContainer();
+                        if (view != null) {
+                            final ViewerToolBar<?> toolBar = view.getViewerToolBar();
+                            if (toolBar != null) {
+                                if (!toolBar.isCommandActive(cmd)) {
+                                    mouseActions.setAction(MouseActions.LEFT, cmd);
+                                    view.setMouseActions(mouseActions);
+                                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                                }
+                            }
+                        }
+                        drawAction.get().setSelectedItem(obj);
+                        return;
+                    }
+                }
             }
         }
     }
@@ -690,17 +775,11 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     public void setSelectedView2dContainer(ImageViewerPlugin<E> selectedView2dContainer) {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
-            this.selectedView2dContainer.setDrawActions(null);
         }
+
         this.selectedView2dContainer = selectedView2dContainer;
         if (selectedView2dContainer != null) {
             selectedView2dContainer.setMouseActions(mouseActions);
-            Graphic graphic = null;
-            ActionState action = getAction(ActionW.DRAW_MEASURE);
-            if (action instanceof ComboItemListener) {
-                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-            }
-            selectedView2dContainer.setDrawActions(graphic);
         }
     }
 

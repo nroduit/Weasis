@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.op;
 
 import java.awt.Rectangle;
@@ -15,6 +15,7 @@ import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
+import java.util.Arrays;
 import java.util.Map;
 
 import javax.media.jai.ColormapOpImage;
@@ -31,7 +32,7 @@ final class RectifySignedShortDataOpImage extends ColormapOpImage {
 
     /**
      * Constructor.
-     * 
+     *
      * @param source
      *            The source image.
      * @param layout
@@ -50,7 +51,7 @@ final class RectifySignedShortDataOpImage extends ColormapOpImage {
                 this.shift[i] = constants[0];
             }
         } else {
-            this.shift = constants.clone();
+            this.shift = Arrays.copyOf(constants, constants.length);
         }
 
         // Set flag to permit in-place operation.
@@ -76,7 +77,7 @@ final class RectifySignedShortDataOpImage extends ColormapOpImage {
 
     /**
      * Operation to correct signed images (9-15 bits) read by imageio codecs.
-     * 
+     *
      * @param sources
      *            Cobbled sources, guaranteed to provide all the source data necessary for computing the rectangle.
      * @param dest

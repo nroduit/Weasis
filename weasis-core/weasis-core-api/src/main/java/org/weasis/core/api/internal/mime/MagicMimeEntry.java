@@ -1,15 +1,13 @@
-/**
- * Copyright 2005 The Apache Software Foundation
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- */
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 
 package org.weasis.core.api.internal.mime;
 
@@ -18,7 +16,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Vector;
+import java.util.List;
 
 import org.weasis.core.api.util.StringUtil;
 
@@ -33,7 +31,7 @@ public class MagicMimeEntry {
     public static final int BYTE_TYPE = 7;
     public static final int UNKNOWN_TYPE = 20;
 
-    private final ArrayList<MagicMimeEntry> subEntries = new ArrayList<MagicMimeEntry>();
+    private final ArrayList<MagicMimeEntry> subEntries = new ArrayList<>();
     private int checkBytesFrom;
     private int type;
     private String typeStr;
@@ -43,28 +41,27 @@ public class MagicMimeEntry {
 
     boolean isBetween;
 
-    public MagicMimeEntry(ArrayList<String> entries) throws InvalidMagicMimeEntryException {
-
+    public MagicMimeEntry(List<String> entries) throws InvalidMagicMimeEntryException {
         this(0, null, entries);
     }
 
-    private MagicMimeEntry(int level, MagicMimeEntry parent, ArrayList<String> entries)
+    private MagicMimeEntry(int level, MagicMimeEntry parent, List<String> entries)
         throws InvalidMagicMimeEntryException {
 
-        if (entries == null || entries.size() == 0) {
+        if (entries == null || entries.isEmpty()) {
             return;
         }
         try {
             addEntry(entries.get(0));
         } catch (Exception e) {
-            throw new InvalidMagicMimeEntryException(entries);
+            throw new InvalidMagicMimeEntryException(entries, e);
         }
         entries.remove(0);
         if (parent != null) {
             parent.subEntries.add(this);
         }
 
-        while (entries.size() > 0) {
+        while (!entries.isEmpty()) {
             int thisLevel = howManyGreaterThans(entries.get(0));
             if (thisLevel > level) {
                 new MagicMimeEntry(thisLevel, this, entries);
@@ -77,15 +74,6 @@ public class MagicMimeEntry {
     @Override
     public String toString() {
         return "MimeMagicType: " + checkBytesFrom + ", " + type + ", " + content + ", " + mimeType + ", " + mimeEnc; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-    }
-
-    public void traverseAndPrint(String tabs) {
-        System.out.println(tabs + toString());
-        int len = subEntries.size();
-        for (int i = 0; i < len; i++) {
-            MagicMimeEntry me = subEntries.get(i);
-            me.traverseAndPrint(tabs + "\t"); //$NON-NLS-1$
-        }
     }
 
     private int howManyGreaterThans(String aLine) {
@@ -107,20 +95,19 @@ public class MagicMimeEntry {
     // There are problems with the magic.mime file. It seems that some of the fields
     // are space deliniated and not tab deliniated as defined in the spec.
     // We will attempt to handle the case for space deliniation here so that we can parse
-    // as much of the file as possible. Currently about 70 entries are incorrect
+    // as much of the file as possible.
     void addEntry(String aLine) {
         String trimmed = aLine.replaceAll("^>*", ""); //$NON-NLS-1$ //$NON-NLS-2$
         String[] tokens = trimmed.split("\t"); //$NON-NLS-1$
 
         // Now strip the empty entries
-        Vector v = new Vector();
+        List<String> entries = new ArrayList<>();
         for (int i = 0; i < tokens.length; i++) {
-            if (StringUtil.hasText(tokens[i])) { //$NON-NLS-1$
-                v.add(tokens[i]);
+            if (StringUtil.hasText(tokens[i])) {
+                entries.add(tokens[i]);
             }
         }
-        tokens = new String[v.size()];
-        tokens = (String[]) v.toArray(tokens);
+        tokens = entries.toArray(new String[entries.size()]);
 
         if (tokens.length > 0) {
             String tok = tokens[0].trim();
@@ -209,7 +196,7 @@ public class MagicMimeEntry {
             int subLen = subEntries.size();
             String myMimeType = getMimeType();
             if (subLen > 0) {
-                String mtype = null;
+                String mtype;
                 for (int k = 0; k < subLen; k++) {
                     MagicMimeEntry me = subEntries.get(k);
                     mtype = me.getMatch(content);
@@ -224,7 +211,6 @@ public class MagicMimeEntry {
                 return myMimeType;
             }
         }
-
         return null;
     }
 
@@ -236,8 +222,8 @@ public class MagicMimeEntry {
         boolean matches = match(buf);
         if (matches) {
             String myMimeType = getMimeType();
-            if (subEntries.size() > 0) {
-                String mtype = null;
+            if (!subEntries.isEmpty()) {
+                String mtype;
                 for (int i = 0; i < subEntries.size(); i++) {
                     MagicMimeEntry me = subEntries.get(i);
                     mtype = me.getMatch(raf);
@@ -252,7 +238,6 @@ public class MagicMimeEntry {
                 return myMimeType;
             }
         }
-
         return null;
     }
 
@@ -266,38 +251,22 @@ public class MagicMimeEntry {
         }
 
         ByteBuffer buf;
-        switch (getType()) {
-            case MagicMimeEntry.STRING_TYPE: {
-                int len = getContent().length();
-                buf = ByteBuffer.allocate(len + 1);
-                buf.put(content, startPos, len);
-                break;
-            }
 
-            case MagicMimeEntry.SHORT_TYPE:
-            case MagicMimeEntry.LESHORT_TYPE:
-            case MagicMimeEntry.BESHORT_TYPE: {
-                buf = ByteBuffer.allocate(2);
-                buf.put(content, startPos, 2);
-                break;
-            }
-
-            case MagicMimeEntry.LELONG_TYPE:
-            case MagicMimeEntry.BELONG_TYPE: {
-                buf = ByteBuffer.allocate(4);
-                buf.put(content, startPos, 4);
-                break;
-            }
-
-            case MagicMimeEntry.BYTE_TYPE: {
-                buf = ByteBuffer.allocate(1);
-                buf.put(buf.array(), startPos, 1);
-            }
-
-            default: {
-                buf = null;
-                break;
-            }
+        if (STRING_TYPE == type) {
+            int len = getContent().length();
+            buf = ByteBuffer.allocate(len + 1);
+            buf.put(content, startPos, len);
+        } else if (SHORT_TYPE == type || LESHORT_TYPE == type || BESHORT_TYPE == type) {
+            buf = ByteBuffer.allocate(2);
+            buf.put(content, startPos, 2);
+        } else if (LELONG_TYPE == type || BELONG_TYPE == type) {
+            buf = ByteBuffer.allocate(4);
+            buf.put(content, startPos, 4);
+        } else if (BYTE_TYPE == type) {
+            buf = ByteBuffer.allocate(1);
+            buf.put(buf.array(), startPos, 1);
+        } else {
+            buf = null;
         }
         return buf;
     }
@@ -308,47 +277,31 @@ public class MagicMimeEntry {
             return null;
         }
         raf.seek(startPos);
+        
         ByteBuffer buf;
-        switch (getType()) {
-            case MagicMimeEntry.STRING_TYPE: {
-                int len = 0;
-                // Lets check if its a between test
-                int index = typeStr.indexOf(">"); //$NON-NLS-1$
-                if (index != -1) {
-                    len = Integer.parseInt(typeStr.substring(index + 1, typeStr.length() - 1));
-                    isBetween = true;
-                } else {
-                    len = getContent().length();
-                }
-                buf = ByteBuffer.allocate(len + 1);
-                raf.read(buf.array(), 0, len);
-                break;
+        if (STRING_TYPE == type) {
+            int len;
+            // Lets check if its a between test
+            int index = typeStr.indexOf(">"); //$NON-NLS-1$
+            if (index != -1) {
+                len = Integer.parseInt(typeStr.substring(index + 1, typeStr.length() - 1));
+                isBetween = true;
+            } else {
+                len = getContent().length();
             }
-
-            case MagicMimeEntry.SHORT_TYPE:
-            case MagicMimeEntry.LESHORT_TYPE:
-            case MagicMimeEntry.BESHORT_TYPE: {
-                buf = ByteBuffer.allocate(2);
-                raf.read(buf.array(), 0, 2);
-                break;
-            }
-
-            case MagicMimeEntry.LELONG_TYPE:
-            case MagicMimeEntry.BELONG_TYPE: {
-                buf = ByteBuffer.allocate(4);
-                raf.read(buf.array(), 0, 4);
-                break;
-            }
-
-            case MagicMimeEntry.BYTE_TYPE: {
-                buf = ByteBuffer.allocate(1);
-                raf.read(buf.array(), 0, 1);
-            }
-
-            default: {
-                buf = null;
-                break;
-            }
+            buf = ByteBuffer.allocate(len + 1);
+            raf.read(buf.array(), 0, len);
+        } else if (SHORT_TYPE == type || LESHORT_TYPE == type || BESHORT_TYPE == type) {
+            buf = ByteBuffer.allocate(2);
+            raf.read(buf.array(), 0, 2);
+        } else if (LELONG_TYPE == type || BELONG_TYPE == type) {
+            buf = ByteBuffer.allocate(4);
+            raf.read(buf.array(), 0, 4);
+        } else if (BYTE_TYPE == type) {
+            buf = ByteBuffer.allocate(1);
+            raf.read(buf.array(), 0, 1);
+        } else {
+            buf = null;
         }
         return buf;
     }
@@ -356,69 +309,51 @@ public class MagicMimeEntry {
     /*
      * private methods used for matching different types
      */
-
     private boolean match(ByteBuffer buf) throws IOException {
-        boolean matches = true;
-        switch (getType()) {
-            case MagicMimeEntry.STRING_TYPE: {
-                matches = matchString(buf);
-                break;
-            }
+        boolean matches;
 
-            case MagicMimeEntry.SHORT_TYPE: {
-                matches = matchShort(buf, ByteOrder.BIG_ENDIAN, false, (short) 0xFF);
-                break;
+        if (STRING_TYPE == type) {
+            matches = matchString(buf);
+        } else if (SHORT_TYPE == type) {
+            matches = matchShort(buf, ByteOrder.BIG_ENDIAN, false, (short) 0xFF);
+        } else if (LESHORT_TYPE == type || BESHORT_TYPE == type) {
+            ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
+            if (getType() == MagicMimeEntry.LESHORT_TYPE) {
+                byteOrder = ByteOrder.LITTLE_ENDIAN;
             }
-
-            case MagicMimeEntry.LESHORT_TYPE:
-            case MagicMimeEntry.BESHORT_TYPE: {
-                ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
-                if (getType() == MagicMimeEntry.LESHORT_TYPE) {
-                    byteOrder = ByteOrder.LITTLE_ENDIAN;
-                }
-                boolean needMask = false;
-                short sMask = 0xFF;
-                int indx = typeStr.indexOf('&');
-                if (indx >= 0) {
-                    sMask = (short) Integer.parseInt(typeStr.substring(indx + 3), 16);
-                    needMask = true;
-                } else if (getContent().startsWith("&")) { //$NON-NLS-1$
-                    sMask = (short) Integer.parseInt(getContent().substring(3), 16);
-                    needMask = true;
-                }
-                matches = matchShort(buf, byteOrder, needMask, sMask);
-                break;
+            boolean needMask = false;
+            short sMask = 0xFF;
+            int indx = typeStr.indexOf('&');
+            if (indx >= 0) {
+                sMask = (short) Integer.parseInt(typeStr.substring(indx + 3), 16);
+                needMask = true;
+            } else if (getContent().startsWith("&")) { //$NON-NLS-1$
+                sMask = (short) Integer.parseInt(getContent().substring(3), 16);
+                needMask = true;
             }
-
-            case MagicMimeEntry.LELONG_TYPE:
-            case MagicMimeEntry.BELONG_TYPE: {
-                ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
-                if (getType() == MagicMimeEntry.LELONG_TYPE) {
-                    byteOrder = ByteOrder.LITTLE_ENDIAN;
-                }
-                boolean needMask = false;
-                long lMask = 0xFFFFFFFF;
-                int indx = typeStr.indexOf('&');
-                if (indx >= 0) {
-                    lMask = Long.parseLong(typeStr.substring(indx + 3), 16);
-                    needMask = true;
-                } else if (getContent().startsWith("&")) { //$NON-NLS-1$
-                    lMask = Long.parseLong(getContent().substring(3), 16);
-                    needMask = true;
-                }
-                matches = matchLong(buf, byteOrder, needMask, lMask);
-                break;
+            matches = matchShort(buf, byteOrder, needMask, sMask);
+        } else if (LELONG_TYPE == type || BELONG_TYPE == type) {
+            ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
+            if (getType() == MagicMimeEntry.LELONG_TYPE) {
+                byteOrder = ByteOrder.LITTLE_ENDIAN;
             }
-
-            case MagicMimeEntry.BYTE_TYPE: {
-                matches = matchByte(buf);
+            boolean needMask = false;
+            long lMask = 0xFFFFFFFF;
+            int indx = typeStr.indexOf('&');
+            if (indx >= 0) {
+                lMask = Long.parseLong(typeStr.substring(indx + 3), 16);
+                needMask = true;
+            } else if (getContent().startsWith("&")) { //$NON-NLS-1$
+                lMask = Long.parseLong(getContent().substring(3), 16);
+                needMask = true;
             }
-                break;
-            default: {
-                matches = false;
-                break;
-            }
+            matches = matchLong(buf, byteOrder, needMask, lMask);
+        } else if (BYTE_TYPE == type) {
+            matches = matchByte(buf);
+        } else {
+            matches = false;
         }
+
         return matches;
     }
 
@@ -481,10 +416,10 @@ public class MagicMimeEntry {
             got = Long.parseLong(testContent);
         }
 
-        long found = bbuf.getInt();
+        long found = Integer.toUnsignedLong(bbuf.getInt());
 
         if (needMask) {
-            found = (short) (found & lMask);
+            found = found & lMask;
         }
 
         if (got != found) {
@@ -499,7 +434,7 @@ public class MagicMimeEntry {
      * That is, a sequence like \040 (represengint ' ' - space character) will be read as a backslash followed by a
      * zero, four and zero -- 4 different bytes and not a single byte representing space. This method parses the string
      * and converts the sequence of bytes representing escape sequence to a single byte
-     * 
+     *
      * NOTE: not all regular escape sequences are added yet. add them, if you don't find one here
      */
     private static String stringWithEscapeSubstitutions(String s) {

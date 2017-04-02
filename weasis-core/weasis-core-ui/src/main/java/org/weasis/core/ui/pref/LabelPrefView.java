@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2011 Weasis Team.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.pref;
 
 import java.awt.BorderLayout;
@@ -18,10 +18,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -33,25 +30,29 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.model.GraphicModel;
 
 public class LabelPrefView extends AbstractItemDialogPage {
-    public static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+    private static final long serialVersionUID = -189458600074707084L;
+
+    private static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+
+    private static final String DEFAULT_LABEL = Messages.getString("LabelPrefView.default"); //$NON-NLS-1$
+    
     private final JButton jButtonApply = new JButton();
     private final JPanel jPanel2 = new JPanel();
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
     private final JLabel jLabelFont = new JLabel();
-    private final JComboBox jComboName = new JComboBox();
+    private final JComboBox<String> jComboName = new JComboBox<>();
     private final JLabel jLabelSize = new JLabel();
-    private final JComboBox jComboSize = new JComboBox(fontSize);
+    private final JComboBox<String> jComboSize = new JComboBox<>(fontSize);
     private final JCheckBox jCheckBoxBold = new JCheckBox();
     private final JCheckBox jCheckBoxItalic = new JCheckBox();
     private final ViewSetting viewSetting;
@@ -65,18 +66,15 @@ public class LabelPrefView extends AbstractItemDialogPage {
         this.viewSetting = viewSetting;
         setComponentPosition(5);
         setBorder(new EmptyBorder(15, 10, 10, 10));
-        try {
-            JMVUtils.setList(jComboName,
-                Messages.getString("LabelPrefView.default"), GraphicsEnvironment.getLocalGraphicsEnvironment() //$NON-NLS-1$
-                    .getAvailableFontFamilyNames());
-            jbInit();
-            initialize();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+
+        jComboName.addItem(DEFAULT_LABEL); 
+        Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames())
+            .forEach(jComboName::addItem);
+        jbInit();
+        initialize();
     }
 
-    private void jbInit() throws Exception {
+    private void jbInit() {
         this.setLayout(new BorderLayout());
         this.add(jPanel2, BorderLayout.CENTER);
         jPanel2.setLayout(gridBagLayout1);
@@ -98,37 +96,26 @@ public class LabelPrefView extends AbstractItemDialogPage {
         jPanel2.add(jLabelSize, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
             GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
 
-        GridBagConstraints gbc_verticalStrut = new GridBagConstraints();
-        gbc_verticalStrut.weighty = 1.0;
-        gbc_verticalStrut.weightx = 1.0;
-        gbc_verticalStrut.gridx = 4;
-        gbc_verticalStrut.gridy = 2;
-        jPanel2.add(verticalStrut, gbc_verticalStrut);
+        GridBagConstraints gbcVerticalStrut = new GridBagConstraints();
+        gbcVerticalStrut.weighty = 1.0;
+        gbcVerticalStrut.weightx = 1.0;
+        gbcVerticalStrut.gridx = 4;
+        gbcVerticalStrut.gridy = 2;
+        jPanel2.add(verticalStrut, gbcVerticalStrut);
 
-        JPanel panel_2 = new JPanel();
-        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
-        flowLayout_1.setHgap(10);
-        flowLayout_1.setAlignment(FlowLayout.RIGHT);
-        flowLayout_1.setVgap(7);
-        add(panel_2, BorderLayout.SOUTH);
-        panel_2.add(jButtonApply);
+        JPanel panel2 = new JPanel();
+        FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
+        flowLayout1.setHgap(10);
+        flowLayout1.setAlignment(FlowLayout.RIGHT);
+        flowLayout1.setVgap(7);
+        add(panel2, BorderLayout.SOUTH);
+        panel2.add(jButtonApply);
         jButtonApply.setText(Messages.getString("LabelPrefView.apply")); //$NON-NLS-1$
-        jButtonApply.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                apply();
-            }
-        });
+        jButtonApply.addActionListener(e -> apply());
 
         JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
-        panel_2.add(btnNewButton);
-        btnNewButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetoDefaultValues();
-            }
-        });
-
+        panel2.add(btnNewButton);
+        btnNewButton.addActionListener(e -> resetoDefaultValues());
     }
 
     private void initialize() {
@@ -163,15 +150,13 @@ public class LabelPrefView extends AbstractItemDialogPage {
         closeAdditionalWindow();
         synchronized (UIManager.VIEWER_PLUGINS) {
             for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
                 if (p instanceof ImageViewerPlugin) {
-                    for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
-                        if (v instanceof DefaultView2d) {
-                            DefaultView2d view = (DefaultView2d) v;
-                            List<Graphic> list = view.getLayerModel().getAllGraphics();
-                            for (Graphic graphic : list) {
-                                graphic.updateLabel(true, view);
-                            }
+                    for (Object v : ((ImageViewerPlugin<?>) p).getImagePanels()) {
+                        if (v instanceof ViewCanvas) {
+                            ViewCanvas<?> view = (ViewCanvas<?>) v;
+                            GraphicModel graphicList = view.getGraphicManager();
+                            graphicList.updateLabels(true, view);
                         }
                     }
                 }
@@ -182,7 +167,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        viewSetting.setFontName(Messages.getString("LabelPrefView.default")); //$NON-NLS-1$
+        viewSetting.setFontName(DEFAULT_LABEL); 
         viewSetting.setFontType(0);
         viewSetting.setFontSize(12);
         initialize();
@@ -201,13 +186,10 @@ public class LabelPrefView extends AbstractItemDialogPage {
         }
         String name = jComboName.getSelectedItem().toString();
 
-        viewSetting.setFontName(Messages.getString("LabelPrefView.default").equals(name) ? "default" : name); //$NON-NLS-1$ //$NON-NLS-2$
+        viewSetting.setFontName(DEFAULT_LABEL.equals(name) ? "default" : name); //$NON-NLS-1$ 
         viewSetting.setFontSize(size);
         viewSetting.setFontType(style);
 
-        ArrayList<Graphic> graphicList = MeasureToolBar.graphicList;
-        for (int i = 1; i < graphicList.size(); i++) {
-            MeasureToolBar.applyDefaultSetting(viewSetting, graphicList.get(i));
-        }
+        MeasureToolBar.measureGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
     }
 }

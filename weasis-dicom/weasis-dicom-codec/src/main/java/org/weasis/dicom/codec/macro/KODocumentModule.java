@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.codec.macro;
 
 import java.util.Collection;
@@ -13,8 +23,6 @@ public class KODocumentModule extends Module {
         super(dcmItems);
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public String getInstanceNumber() {
         return dcmItems.getString(Tag.InstanceNumber);
     }
@@ -24,15 +32,12 @@ public class KODocumentModule extends Module {
     }
 
     public Date getContentDateTime() {
-        return dcmItems.getDate(Tag.ContentDate, Tag.ContentTime);
+        return dcmItems.getDate(Tag.ContentDateAndTime);
     }
 
     public void setContentDateTime(Date d) {
-        dcmItems.setDate(Tag.ContentDate, VR.DA, d);
-        dcmItems.setDate(Tag.ContentTime, VR.TM, d);
+        dcmItems.setDate(Tag.ContentDateAndTime, d);
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public Collection<ReferencedRequest> getReferencedRequests() {
         return ReferencedRequest.toReferencedRequestMacros(dcmItems.getSequence(Tag.ReferencedRequestSequence));
@@ -43,8 +48,8 @@ public class KODocumentModule extends Module {
     }
 
     public Collection<HierachicalSOPInstanceReference> getCurrentRequestedProcedureEvidences() {
-        return HierachicalSOPInstanceReference.toHierachicalSOPInstanceReferenceMacros(dcmItems
-            .getSequence(Tag.CurrentRequestedProcedureEvidenceSequence));
+        return HierachicalSOPInstanceReference.toHierachicalSOPInstanceReferenceMacros(
+            dcmItems.getSequence(Tag.CurrentRequestedProcedureEvidenceSequence));
     }
 
     public void setCurrentRequestedProcedureEvidences(Collection<HierachicalSOPInstanceReference> refs) {
@@ -52,8 +57,8 @@ public class KODocumentModule extends Module {
     }
 
     public Collection<HierachicalSOPInstanceReference> getIdenticalDocuments() {
-        return HierachicalSOPInstanceReference.toHierachicalSOPInstanceReferenceMacros(dcmItems
-            .getSequence(Tag.IdenticalDocumentsSequence));
+        return HierachicalSOPInstanceReference
+            .toHierachicalSOPInstanceReferenceMacros(dcmItems.getSequence(Tag.IdenticalDocumentsSequence));
     }
 
     public void setIdenticalDocuments(Collection<HierachicalSOPInstanceReference> refs) {

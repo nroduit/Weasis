@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.Rectangle;
@@ -10,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.MathUtil;
 
 public class CropOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(CropOp.class);
@@ -18,14 +29,14 @@ public class CropOp extends AbstractOp {
 
     /**
      * Set the area to crop (Required parameter).
-     * 
+     *
      * java.awt.Rectangle value.
      */
     public static final String P_AREA = "area"; //$NON-NLS-1$
 
     /**
      * Whether or not the image origin is shift after cropping.
-     * 
+     *
      * Boolean value. Default value is false (keep the original image referential).
      */
     public static final String P_SHIFT_TO_ORIGIN = "shift.origin"; //$NON-NLS-1$
@@ -34,18 +45,24 @@ public class CropOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public CropOp(CropOp op) {
+        super(op);
+    }
+
+    @Override
+    public CropOp copy() {
+        return new CropOp(this);
+    }
+
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         Rectangle area = (Rectangle) params.get(P_AREA);
 
-        if (area == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else {
-            area =
-                area.intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source
-                    .getHeight()));
+        if (area != null) {
+            area = area
+                .intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight()));
             if (area.width > 1 && area.height > 1) {
                 ParameterBlock pb = new ParameterBlock();
                 pb.addSource(source);
@@ -54,9 +71,9 @@ public class CropOp extends AbstractOp {
                 result = JAI.create("crop", pb, null); //$NON-NLS-1$
 
                 if (JMVUtils.getNULLtoFalse(params.get(P_SHIFT_TO_ORIGIN))) {
-                    float diffw = source.getMinX() - result.getMinX();
-                    float diffh = source.getMinY() - result.getMinY();
-                    if (diffw != 0.0f || diffh != 0.0f) {
+                    float diffw = (float) source.getMinX() - result.getMinX();
+                    float diffh = (float) source.getMinY() - result.getMinY();
+                    if (MathUtil.isDifferentFromZero(diffw) || MathUtil.isDifferentFromZero(diffh)) {
                         pb = new ParameterBlock();
                         pb.addSource(result);
                         pb.add(diffw);
@@ -66,7 +83,7 @@ public class CropOp extends AbstractOp {
                 }
             }
         }
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
 }

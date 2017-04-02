@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<rectangle fill="true" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Area : 54'943 pix</label>
+		<label>Mean 1 : 115.3</label>
+		<label>Mean 2 : 94.8</label>
+		<label>Mean 3 : 78.4</label>
+	</label>
+	<pts>
+		<pt x="1440.5" y="1161.0" />
+		<pt x="1769.5" y="1328.0" />
+		<pt x="1769.5" y="1161.0" />
+		<pt x="1440.5" y="1328.0" />
+		<pt x="1605.0" y="1161.0" />
+		<pt x="1605.0" y="1328.0" />
+		<pt x="1769.5" y="1244.5" />
+		<pt x="1440.5" y="1244.5" />
+	</pts>
+</rectangle>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<line fill="false" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="000000" />
+	<label>
+		<label>Length : 268 pix</label>
+	</label>
+	<pts>
+		<pt x="1028.5" y="1110.0" />
+		<pt x="1231.5" y="1285.0" />
+	</pts>
+</line>

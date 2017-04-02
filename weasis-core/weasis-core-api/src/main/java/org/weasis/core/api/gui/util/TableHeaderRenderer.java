@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.Color;
@@ -23,9 +23,9 @@ import javax.swing.table.TableCellRenderer;
 
 /**
  * The Class TableHaederRenderer.
- * 
- * @author Nicolas Roduit
+ *
  */
+@SuppressWarnings("serial")
 public class TableHeaderRenderer extends JLabel implements TableCellRenderer {
 
     public TableHeaderRenderer() {
@@ -70,20 +70,23 @@ public class TableHeaderRenderer extends JLabel implements TableCellRenderer {
         return this;
     }
 
-    // The following methods override the defaults for performance reasons
     @Override
     public void validate() {
+        // Override for performance reasons
     }
 
     @Override
     public void revalidate() {
+        // Override for performance reasons
     }
 
     @Override
     protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        // Override for performance reasons
     }
 
     @Override
     public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+        // Override for performance reasons
     }
 }
