@@ -54,8 +54,8 @@ import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
@@ -178,8 +178,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             this.dicomSeries.setSeriesLoader(null);
             DownloadManager.removeLoadSeries(this, dicomModel);
 
-            AuditLog.LOGGER.info("{}:series uid:{} modality:{} nbImages:{} size:{} {}", //$NON-NLS-1$
-                new Object[] { getLoadType(), dicomSeries.getTagValue(dicomSeries.getTagID()),
+            LOGGER.info("{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} {}", //$NON-NLS-1$
+                new Object[] {AuditLog.MARKER_PERF, getLoadType(), dicomSeries.getTagValue(dicomSeries.getTagID()),
                     TagD.getTagValue(dicomSeries, Tag.Modality, String.class), getImageNumber(),
                     (long) dicomSeries.getFileSize(), getDownloadTime() });
             dicomSeries.removeTag(DOWNLOAD_START_TIME);
