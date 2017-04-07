@@ -204,13 +204,13 @@
 		<dependency>
 			<groupId>org.apache.sling</groupId>
 			<artifactId>org.apache.sling.commons.log</artifactId>
-			<version>3.0.2-r2</version>
+			<version>3.0.2-r3</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.5</version>
+			<version>1.7.25</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
