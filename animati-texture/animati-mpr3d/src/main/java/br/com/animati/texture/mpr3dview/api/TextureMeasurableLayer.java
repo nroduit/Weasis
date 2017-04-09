@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
@@ -30,13 +31,12 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.graphic.Graphic;
 
+import br.com.animati.texture.mpr3dview.View3DFactory;
 import br.com.animati.texture.mpr3dview.ViewTexture;
-import br.com.animati.texture.mpr3dview.internal.Activator;
 import br.com.animati.texturedicom.TextureData;
 import br.com.animati.texturedicom.rendering.RenderHelper;
 import br.com.animati.texturedicom.rendering.RenderResult;
 import br.com.animati.texturedicom.rendering.RenderResultListener;
-import java.awt.Point;
 
 /**
  *
@@ -123,7 +123,7 @@ public class TextureMeasurableLayer implements MeasurableLayer {
             startRendering(true);
         }
 
-        if (Activator.showMeasurementsOnFrame) {
+        if (View3DFactory.showMeasurementsOnFrame) {
             if (bufferedDirty) {
                 startRendering(false);
             } else {

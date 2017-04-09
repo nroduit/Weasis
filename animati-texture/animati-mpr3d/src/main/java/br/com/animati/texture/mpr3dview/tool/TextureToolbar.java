@@ -25,10 +25,10 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.WtoolBar;
 
 import br.com.animati.texture.mpr3dview.GUIManager;
+import br.com.animati.texture.mpr3dview.HaPrefsPage;
 import br.com.animati.texture.mpr3dview.View3DContainer;
 import br.com.animati.texture.mpr3dview.ViewTexture;
 import br.com.animati.texture.mpr3dview.internal.Messages;
-import br.com.animati.texture.mpr3dview.pref.HaPrefsPage;
 
 /**
  *

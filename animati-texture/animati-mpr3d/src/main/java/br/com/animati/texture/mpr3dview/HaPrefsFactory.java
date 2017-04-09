@@ -3,12 +3,10 @@
  * (http://www.animati.com.br)
  */
 
-package br.com.animati.texture.mpr3dview.pref;
+package br.com.animati.texture.mpr3dview;
 
 import java.util.Hashtable;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -19,8 +17,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
  * @version
  */
 
-@Component(immediate = false)
-@Service
+@org.osgi.service.component.annotations.Component(service = PreferencesPageFactory.class, immediate = false)
 public class HaPrefsFactory implements PreferencesPageFactory {
 
     @Override

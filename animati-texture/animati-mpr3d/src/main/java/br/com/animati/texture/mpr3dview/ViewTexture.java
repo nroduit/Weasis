@@ -130,7 +130,6 @@ import br.com.animati.texture.mpr3dview.api.CanvasTexure;
 import br.com.animati.texture.mpr3dview.api.DisplayUtils;
 import br.com.animati.texture.mpr3dview.api.PixelInfo3d;
 import br.com.animati.texture.mpr3dview.api.TextureMeasurableLayer;
-import br.com.animati.texture.mpr3dview.internal.Activator;
 import br.com.animati.texture.mpr3dview.internal.Messages;
 import br.com.animati.texturedicom.ColorMask;
 import br.com.animati.texturedicom.ControlAxes;
@@ -286,7 +285,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight());
             getGraphicManager().draw(g2d, transform, inverseTransform, clip);
 
-            if (Activator.showModelArea) {
+            if (View3DFactory.showModelArea) {
                 Stroke oldStr = g2d.getStroke();
                 Color oldColor = g2d.getColor();
 
@@ -2027,7 +2026,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
             JMVUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
             JMVUtils.addItemToMenu(popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
-            if (Activator.sortOpt) {
+            if (View3DFactory.isSortOpt()) {
                 JMVUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
             }
 

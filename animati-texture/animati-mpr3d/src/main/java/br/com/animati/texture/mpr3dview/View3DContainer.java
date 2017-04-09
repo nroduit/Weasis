@@ -84,7 +84,6 @@ import br.com.animati.texture.codec.ImageSeriesFactory;
 import br.com.animati.texture.codec.TextureDicomSeries;
 import br.com.animati.texture.mpr3dview.ViewTexture.ViewType;
 import br.com.animati.texture.mpr3dview.api.ActionWA;
-import br.com.animati.texture.mpr3dview.internal.Activator;
 import br.com.animati.texture.mpr3dview.internal.Messages;
 import br.com.animati.texture.mpr3dview.tool.DisplayTool;
 import br.com.animati.texture.mpr3dview.tool.ImageTool;
@@ -203,7 +202,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
             return;
         }
         try {
-            if (Activator.useHardwareAcceleration) {
+            if (View3DFactory.isUseHardwareAcceleration()) {
                 ImageSeriesFactory factory = new ImageSeriesFactory();
                 try {
                     Comparator sort = null;
@@ -464,7 +463,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
                 menuRoot.add(new JSeparator());
                 JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
                 JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
-                if (Activator.sortOpt) {
+                if (View3DFactory.isSortOpt()) {
                     JMVUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
                 }
                 menuRoot.add(new JSeparator());

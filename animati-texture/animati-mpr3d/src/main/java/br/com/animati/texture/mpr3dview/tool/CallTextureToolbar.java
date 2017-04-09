@@ -4,9 +4,6 @@
  */
 package br.com.animati.texture.mpr3dview.tool;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
@@ -35,17 +32,13 @@ public class CallTextureToolbar extends WtoolBar {
 
         JButton open = new JButton(new ImageIcon(CallTextureToolbar.class.getResource("/icon/32x32/3Dplugin.png")));
         open.setToolTipText(Messages.getString("CallTextureToolbar.open"));
-        open.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                EventManager eventManager = EventManager.getInstance();
-                MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = eventManager.getSelectedSeries();
-                if (s != null && s.size(null) >= 5) {
-                    DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
-                    if (model instanceof DicomModel) {
-                        ViewerPluginBuilder.openSequenceInPlugin(new View3DFactory(), s, model, false, false);
-                    }
+        open.addActionListener(e -> {
+            EventManager eventManager = EventManager.getInstance();
+            MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = eventManager.getSelectedSeries();
+            if (s != null && s.size(null) >= 5) {
+                DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
+                if (model instanceof DicomModel) {
+                    ViewerPluginBuilder.openSequenceInPlugin(new View3DFactory(), s, model, false, false);
                 }
             }
         });

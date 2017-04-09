@@ -6,8 +6,6 @@ package br.com.animati.texture.mpr3dview.tool;
 
 import java.util.Hashtable;
 
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableFactory;
 
@@ -16,9 +14,9 @@ import org.weasis.core.api.gui.InsertableFactory;
  * @author Gabriela Carla Bauerman (gabriela@animati.com.br)
  * @version 2015, 14 May.
  */
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@Service
-@Property(name = "org.weasis.dicom.viewer2d.View2dContainer", value = "true")
+
+@org.osgi.service.component.annotations.Component(service = InsertableFactory.class, immediate = false, property = {
+"org.weasis.dicom.viewer2d.View2dContainer=true"  })
 public class CallTextureBarFactory implements InsertableFactory {
 
     @Override

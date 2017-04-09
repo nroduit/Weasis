@@ -5,24 +5,34 @@
 package br.com.animati.texture.mpr3dview;
 
 import java.awt.Component;
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
+import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -31,8 +41,11 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
-import br.com.animati.texture.mpr3dview.internal.Activator;
+import com.jogamp.opengl.Threading;
+
 import br.com.animati.texture.mpr3dview.internal.Messages;
+import br.com.animati.texturedicom.ImageSeries;
+import br.com.animati.texturedicom.cl.CLManager;
 
 /**
  *
@@ -40,13 +53,41 @@ import br.com.animati.texture.mpr3dview.internal.Messages;
  * @version 2013, 16 Jul.
  */
 
-@org.apache.felix.scr.annotations.Component(immediate = false)
-@Service
-@Property(name = "service.name", value = "MPR 3D Viewer")
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class View3DFactory implements SeriesViewerFactory {
+    private static final Logger LOGGER = LoggerFactory.getLogger(View3DFactory.class);
 
     public static final String NAME = "MPR 3D";
     public static final ImageIcon ICON = new ImageIcon(View3DContainer.class.getResource("/icon/16x16/mpr3d.png"));
+    
+    public static String SORT_OPT = "animatitexture.sortOpt";
+    public static String CONFIG_HARDWARE = "Video card: Not detected!";
+    public static String LOG_MESSAGE;
+    public static String TRACE;
+
+    /**
+     * Hardware acceleration config name.
+     */
+    public static final String HA_PROP_NAME = "enableHardwareAcceleration";
+    public static final String CL_PROP_NAME = "enableOpenCL";
+
+    /**
+     * Hardware acceleration crash flag.
+     */
+    public static final String CRASH_FLAG = "HAcrash";
+
+    // Debug functions
+    public static boolean showModelArea = false;
+    public static boolean showMeasurementsOnFrame = false;
+
+    /**
+     * Will be true if hardware acceleration is to be tried.
+     */
+    private static boolean useHardwareAcceleration = true;
+    private static boolean useOpenCL = true;
+    private static boolean sortOpt = false;
+
+    static final Properties localConfiguration = new Properties();
 
     @Override
     public Icon getIcon() {
@@ -66,7 +107,7 @@ public class View3DFactory implements SeriesViewerFactory {
     @Override
     public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
 
-        if (Activator.useHardwareAcceleration) {
+        if (isUseHardwareAcceleration()) {
             GridBagLayoutModel model = View3DContainer.VIEWS_2x1_mpr;
             String uid = null;
             if (properties != null) {
@@ -110,23 +151,22 @@ public class View3DFactory implements SeriesViewerFactory {
             return instance;
         }
 
-        // TODO: parent!
-        showHANotAvailableMsg(null);
+        showHANotAvailableMsg(UIManager.BASE_AREA);
         return null;
     }
 
-    public static int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public static int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         int val = 0;
         if (layout != null && defaultClass != null) {
             Iterator<LayoutConstraints> enumVal = layout.getConstraints().keySet().iterator();
             while (enumVal.hasNext()) {
                 try {
-                    Class clazz = Class.forName(enumVal.next().getType());
+                    Class<?> clazz = Class.forName(enumVal.next().getType());
                     if (defaultClass.isAssignableFrom(clazz)) {
                         val++;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Checking view", e); //$NON-NLS-1$
                 }
             }
         }
@@ -178,5 +218,106 @@ public class View3DFactory implements SeriesViewerFactory {
     public static void showHANotAvailableMsg(Component parent) {
         JOptionPane.showMessageDialog(parent, Messages.getString("View3DFactory.error.HANotAvailable"));
     }
+    
+    
+    
+    private void checkFor3dSupport() {
+        if (useHardwareAcceleration) {
+            localConfiguration.put(CRASH_FLAG, true);
 
+            Threading.invoke(false, () -> {
+                support3D();
+            }, null);
+        }
+    }
+    
+    private void support3D() {
+        try {
+            long startTime = System.currentTimeMillis();
+            LOGGER.info("Checking 3D support.");
+            ImageSeries.setDRMSerial("BGJ3P-V2TYC-DHXW7"); // development serial
+            ImageSeries.checkFor3dSupport();
+            if (ImageSeries.getGPUDefinition() != null) {
+                CONFIG_HARDWARE = ImageSeries.getGPUDefinition().toString();
+            }
+            localConfiguration.put(CRASH_FLAG, false);
+            LOGGER.info("3D Support is active. Time of checking: " + (System.currentTimeMillis() - startTime) / 1000D
+                + " seconds.");
+        } catch (Exception ex) {
+            LOG_MESSAGE = "Cant get context: " + ex.getMessage();
+            LOGGER.info("Cant get context: " + ex.getMessage());
+            if (ImageSeries.getGPUDefinition() != null) {
+                CONFIG_HARDWARE = ImageSeries.getGPUDefinition().toString();
+            }
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            TRACE = sw.toString();
+
+            // Set acceleration to false and save it to props
+            useHardwareAcceleration = false;
+            localConfiguration.put(HA_PROP_NAME, useHardwareAcceleration);
+
+            if (TRACE == null) {
+                TRACE = "Stack trace: null";
+            }
+        }
+        LOGGER.info("Video card: " + CONFIG_HARDWARE);
+    }
+
+    public static boolean isUseHardwareAcceleration() {
+        return useHardwareAcceleration;
+    }
+
+    public static boolean isUseOpenCL() {
+        return useOpenCL;
+    }
+
+    public static boolean isSortOpt() {
+        return sortOpt;
+    }
+
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+
+    @Activate
+    protected void activate(ComponentContext context) throws Exception {
+        LOGGER.info(" Mpr 3D View [Animati] is activated"); //$NON-NLS-1$
+        // Must be done very early:
+        System.setProperty("jogl.1thread", "worker");
+
+        FileUtil.readProperties(new File(BundlePreferences.getDataFolder(context.getBundleContext()), "config-3d.properties"), //$NON-NLS-1$
+            localConfiguration);
+
+        sortOpt = JMVUtils.getNULLtoFalse(localConfiguration.get(SORT_OPT));
+        useHardwareAcceleration = JMVUtils.getNULLtoTrue(localConfiguration.get(HA_PROP_NAME));
+        useOpenCL = JMVUtils.getNULLtoTrue(localConfiguration.get(CL_PROP_NAME));
+        boolean hasCrashed = JMVUtils.getNULLtoFalse(localConfiguration.get(CRASH_FLAG));
+        if (hasCrashed) {
+            TRACE = "Has crashed before.";
+        }
+        
+        // TODO disable for testing
+        if (hasCrashed && useHardwareAcceleration) {
+            LOGGER.info("Turning H Acceleration OFF, because has cashed before.");
+            useHardwareAcceleration = false;
+            localConfiguration.put(HA_PROP_NAME, useHardwareAcceleration);
+            useOpenCL = false;
+        }
+
+        if (useHardwareAcceleration) {
+            if (!useOpenCL) {
+                CLManager.OPENCL_ENABLED = false;
+            }
+            checkFor3dSupport();
+        }
+
+    }
+
+    @Deactivate
+    protected void deactivate(ComponentContext context) {
+        LOGGER.info(" Mpr 3D View [Animati] is deactivated"); //$NON-NLS-1$
+    }
 }
