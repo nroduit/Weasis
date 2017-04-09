@@ -31,6 +31,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
@@ -241,8 +242,7 @@ public class View3DFactory implements SeriesViewerFactory {
                 CONFIG_HARDWARE = ImageSeries.getGPUDefinition().toString();
             }
             localConfiguration.put(CRASH_FLAG, false);
-            LOGGER.info("3D Support is active. Time of checking: " + (System.currentTimeMillis() - startTime) / 1000D
-                + " seconds.");
+            LOGGER.info("{} 3D Support is active. Time of checking: {}  seconds.", AuditLog.MARKER_PERF, (System.currentTimeMillis() - startTime) / 1000D);
         } catch (Exception ex) {
             LOG_MESSAGE = "Cant get context: " + ex.getMessage();
             LOGGER.info("Cant get context: " + ex.getMessage());
