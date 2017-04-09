@@ -606,8 +606,8 @@ public class DicomImageElement extends ImageElement {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-                RenderedOp dst = ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, new Double(paddingValueMin),
-                    new Double(paddingValueMax), null);
+                RenderedOp dst = ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, paddingValueMin,
+                    paddingValueMax, null);
                 // To ensure this image won't be stored in tile cache
                 ((OpImage) dst.getRendering()).setTileCache(null);
 

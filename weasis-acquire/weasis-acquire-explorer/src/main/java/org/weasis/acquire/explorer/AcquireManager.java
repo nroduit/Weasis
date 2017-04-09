@@ -13,19 +13,15 @@ package org.weasis.acquire.explorer;
 import java.awt.Component;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -60,6 +56,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -584,17 +581,11 @@ public class AcquireManager {
     private static byte[] getURIContent(URI uri) {
         try {
             URL url = Objects.requireNonNull(uri).toURL();
-            URLConnection urlConnection = url.openConnection();
-
-            LOGGER.debug("download from URL: {}", url); //$NON-NLS-1$
-            logHttpError(urlConnection);
-
-            // TODO urlConnection.setRequestProperty with session TAG ??
-            // @see >> org.weasis.dicom.explorer.wado.downloadmanager.buildDicomSeriesFromXml
-
+            LOGGER.debug("Download from URL: {}", url); //$NON-NLS-1$
+            
             // note: fastest way to convert inputStream to string according to :
             // http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
-            try (InputStream inputStream = urlConnection.getInputStream()) {
+            try (InputStream inputStream = NetworkUtil.getUrlInputStream(url.openConnection())) {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 byte[] buffer = new byte[1024];
                 int length;
@@ -605,50 +596,13 @@ public class AcquireManager {
             }
 
         } catch (Exception e) {
-            LOGGER.error("getURIContent from : {}", uri.getPath(), e); //$NON-NLS-1$
+            LOGGER.error("Downloading URI content", e); //$NON-NLS-1$
         }
 
         return null;
     }
 
-    /**
-     * @param urlConnection
-     */
-    private static void logHttpError(URLConnection urlConnection) {
-        // TODO same method as in dicom.explorer.wado.downloadmanager => move this in a common place
 
-        if (urlConnection instanceof HttpURLConnection) {
-            HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
-            httpURLConnection.setConnectTimeout(5000);
-
-            try {
-                int responseCode = httpURLConnection.getResponseCode();
-                if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
-                    // Following is only intended LOG more info about Http
-                    // Server Error
-
-                    InputStream errorStream = httpURLConnection.getErrorStream();
-                    if (errorStream != null) {
-                        try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8"); //$NON-NLS-1$
-                                        BufferedReader reader = new BufferedReader(inputStream)) {
-                            StringBuilder stringBuilder = new StringBuilder();
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                stringBuilder.append(line);
-                            }
-                            String errorDescription = stringBuilder.toString();
-                            if (StringUtil.hasText(errorDescription)) {
-                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " [" //$NON-NLS-1$//$NON-NLS-2$
-                                    + httpURLConnection.getResponseMessage() + "]", errorDescription); //$NON-NLS-1$
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                LOGGER.error("LOG http response message", e); //$NON-NLS-1$
-            }
-        }
-    }
 
     private void addImageToDataMapping(AcquireImageInfo imageInfo) {
         Objects.requireNonNull(imageInfo);

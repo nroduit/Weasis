@@ -1326,7 +1326,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     if (newVal instanceof ExplorerTask) {
                         addTaskToGlobalProgression((ExplorerTask) newVal);
                     }
-                } else if (ObservableEvent.BasicAction.LOADING_STOP.equals(action)) {
+                } else if (ObservableEvent.BasicAction.LOADING_STOP.equals(action) || ObservableEvent.BasicAction.LOADING_CANCEL.equals(action)) {
                     if (newVal instanceof ExplorerTask) {
                         removeTaskToGlobalProgression((ExplorerTask) newVal);
                     }

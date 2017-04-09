@@ -23,6 +23,7 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
@@ -257,7 +258,7 @@ public class WeasisLoader {
         }
     }
 
-    public void setFelix(Properties configProps, BundleContext bundleContext) {
-        AutoProcessor.process(configProps, bundleContext, this);
+    public void setFelix(Map<String, String> serverProp, BundleContext bundleContext) {
+        AutoProcessor.process(serverProp, bundleContext, this);
     }
 }

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.dicom.sr;
 
+import java.awt.Color;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.Map;
@@ -24,10 +25,13 @@ import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
+import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 
 public class SRReader {
 
@@ -152,8 +156,8 @@ public class SRReader {
         }
     }
 
-    private  static void convertContentToHTML(StringBuilder html, SRDocumentContent c, boolean continuous, boolean noCodeName,
-        Map<String, SRImageReference> map, String level) {
+    private static void convertContentToHTML(StringBuilder html, SRDocumentContent c, boolean continuous,
+        boolean noCodeName, Map<String, SRImageReference> map, String level) {
         if (c != null) {
             html.append("<A name=\""); //$NON-NLS-1$
             html.append(level);
@@ -231,35 +235,39 @@ public class SRReader {
                 }
             } else if ("SCOORD".equals(type)) { //$NON-NLS-1$
                 Attributes graphicsItems = c.getAttributes();
-                // TODO register a SR layer on referenced image
-                // Sequence sc = c.getContent();
-                // if (sc != null) {
-                // for (Attributes attributes : sc) {
-                // SRDocumentContent c2 = new SRDocumentContent(attributes);
-                // String id = getReferencedContentItemIdentifier(c2.getReferencedContentItemIdentifier());
-                // if (id != null) {
-                // SRImageReference imgRef = map.get(id);
-                // if (imgRef == null) {
-                // imgRef = new SRImageReference(id);
-                // map.put(id, imgRef);
-                // }
-                // // Identifier layerId = new Identifier(350, " [DICOM SR Graphics]");
-                // // DefaultLayer layer = new DefaultLayer(view.getLayerModel(), layerId);$
-                // try {
-                // Graphic graphic =
-                // PrGraphicUtil.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false,
-                // null, true);
-                // if (graphic != null) {
-                // imgRef.addGraphic(graphic);
-                // }
-                // } catch (InvalidShapeException e) {
-                // e.printStackTrace();
-                // }
-                // }
-                // }
-                // }
-                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
-                convertTextToHTML(html, graphicsItems.getString(Tag.GraphicType));
+                Sequence sc = c.getContent();
+                if (sc != null) {
+                    for (Attributes attributes : sc) {
+                        SRDocumentContent c2 = new SRDocumentContent(attributes);
+                        String id = getReferencedContentItemIdentifier(c2.getReferencedContentItemIdentifier());
+                        if (id != null) {
+                            SRImageReference imgRef = map.get(id);
+                            if (imgRef == null) {
+                                imgRef = new SRImageReference(id);
+                                map.put(id, imgRef);
+                            }
+
+                            try {
+                                Graphic graphic = PrGraphicUtil.buildGraphic(graphicsItems, Color.MAGENTA, false, 1, 1,
+                                    false, null, true);
+                                if (graphic != null) {
+                                    imgRef.addGraphic(graphic);
+                                }
+                            } catch (InvalidShapeException e) {
+                                e.printStackTrace();
+                            }
+
+                            html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+
+                            html.append("<a href=\"http://"); //$NON-NLS-1$
+                            html.append(id);
+                            html.append("\" style=\"color:#FF9900\">"); //$NON-NLS-1$
+                            html.append(graphicsItems.getString(Tag.GraphicType));
+                            html.append("</a>"); //$NON-NLS-1$
+                        }
+                    }
+                }
+
                 // } else if ("TCOORD".equals(type)) {
                 // html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 // // TODO
@@ -307,7 +315,8 @@ public class SRReader {
         return null;
     }
 
-    private static void addContent(StringBuilder html, SRDocumentContent c, Map<String, SRImageReference> map, String level) {
+    private static void addContent(StringBuilder html, SRDocumentContent c, Map<String, SRImageReference> map,
+        String level) {
         Sequence cts = c.getContent();
         if (cts != null) {
             boolean continuity = "CONTINUOUS".equals(c.getContinuityOfContent()); //$NON-NLS-1$

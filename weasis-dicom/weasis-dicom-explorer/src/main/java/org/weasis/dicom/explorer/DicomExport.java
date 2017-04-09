@@ -149,17 +149,21 @@ public class DicomExport extends AbstractWizardDialog {
             if (!openSeriesSet.isEmpty() && rootNode instanceof DefaultMutableTreeNode) {
                 List<TreePath> selectedSeriesPathsList = new ArrayList<>();
 
-                for (Enumeration<DefaultMutableTreeNode> enumTreeNode =
-                    ((DefaultMutableTreeNode) rootNode).breadthFirstEnumeration(); enumTreeNode.hasMoreElements();) {
+                if (rootNode instanceof DefaultMutableTreeNode) {
+                    Enumeration<?> enumTreeNode = ((DefaultMutableTreeNode) rootNode).breadthFirstEnumeration();
+                    while (enumTreeNode.hasMoreElements()) {
+                        Object child = enumTreeNode.nextElement();
+                        if (child instanceof DefaultMutableTreeNode) {
+                            DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) child;
+                            if (treeNode.getLevel() != 3) { // 3 stands for Series Level
+                                continue;
+                            }
 
-                    DefaultMutableTreeNode treeNode = enumTreeNode.nextElement();
-                    if (treeNode.getLevel() != 3) { // 3 stands for Series Level
-                        continue;
-                    }
-
-                    Object userObject = treeNode.getUserObject();
-                    if (userObject instanceof DicomSeries && openSeriesSet.contains(userObject)) {
-                        selectedSeriesPathsList.add(new TreePath(treeNode.getPath()));
+                            Object userObject = treeNode.getUserObject();
+                            if (userObject instanceof DicomSeries && openSeriesSet.contains(userObject)) {
+                                selectedSeriesPathsList.add(new TreePath(treeNode.getPath()));
+                            }
+                        }
                     }
                 }
 

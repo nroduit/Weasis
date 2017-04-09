@@ -12,7 +12,6 @@ package org.weasis.core.ui.editor;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 
@@ -26,7 +25,6 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.util.FileUtil;
 
-
 // TODO required to change the static ref
 //@org.osgi.service.component.annotations.Component(immediate = false, property = {
 //    CommandProcessor.COMMAND_SCOPE + "=image", CommandProcessor.COMMAND_FUNCTION + "=get",
@@ -37,30 +35,15 @@ public class FileModel extends AbstractFileModel {
     public static final File IMAGE_CACHE_DIR =
         AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "image"); //$NON-NLS-1$
 
-    public File getFile(String path) {
+    private File getFile(String url) {
         File outFile = null;
         try {
-            URL url = new URL(path);
-
-            HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-            httpCon.setRequestMethod("GET"); //$NON-NLS-1$
-            // Connect to server.
-            httpCon.connect();
-
-            // Make sure response code is in the 200 range.
-            if (httpCon.getResponseCode() / 100 != 2) {
-                return null;
-            }
-
-            outFile = File.createTempFile("img_", FileUtil.getExtension(path), IMAGE_CACHE_DIR); // $NON-NLS-2$ //$NON-NLS-1$
-                                                                                                  // //$NON-NLS-3$
+            outFile = File.createTempFile("img_", FileUtil.getExtension(url), IMAGE_CACHE_DIR); // $NON-NLS-2$ //$NON-NLS-1$
             LOGGER.debug("Start to download image {} to {}.", url, outFile.getName()); //$NON-NLS-1$
-            if (FileUtil.writeFile(httpCon, outFile) == 0) {
-                return null;
-            }
-            
+            FileUtil.writeStreamWithIOException(new URL(url).openConnection(), outFile);
         } catch (IOException e) {
             LOGGER.error("Dowloading image", e); //$NON-NLS-1$
+            return null;
         }
         return outFile;
     }
@@ -69,7 +52,7 @@ public class FileModel extends AbstractFileModel {
     public void get(String[] argv) throws IOException {
         final String[] usage = { "Load images remotely or locally", "Usage: image:get ([-f file]... [-u url]...)", //$NON-NLS-1$ //$NON-NLS-2$
             "  -f --file=FILE     open an image from a file", // $NON-NLS-1$ //$NON-NLS-1$
-            "  -u --url=URL       open an image from an URL",  //$NON-NLS-1$
+            "  -u --url=URL       open an image from an URL", //$NON-NLS-1$
             "  -? --help          show help" }; // $NON-NLS-1$ //$NON-NLS-1$
 
         final Option opt = Options.compile(usage).parse(argv);

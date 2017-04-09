@@ -50,7 +50,7 @@ public class ThresholdToBinDescriptor extends OperationDescriptorImpl implements
     /**
      * The default parameter values for the "Sample" operation when using a ParameterBlockJAI.
      */
-    private static final Object[] paramDefaults = { new Double(0), new Double(128) };
+    private static final Object[] paramDefaults = { 0.0, 128.0 };
     private static final String supportedModes[] = { "rendered" }; //$NON-NLS-1$
 
     /** Constructor. */

@@ -18,8 +18,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.net.URL;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -136,7 +136,7 @@ public final class FileUtil {
             deleteFile(dir);
         }
     }
-    
+
     public static void getAllFilesInDirectory(File directory, List<File> files) {
         File[] fList = directory.listFiles();
         for (File f : fList) {
@@ -148,15 +148,17 @@ public final class FileUtil {
         }
     }
 
-
-    private static void deleteFile(File fileOrDirectory) {
+    private static boolean deleteFile(File fileOrDirectory) {
         try {
             if (!fileOrDirectory.delete()) {
                 LOGGER.warn("Cannot delete {}", fileOrDirectory.getPath()); //$NON-NLS-1$
+                return false;
             }
         } catch (Exception e) {
             LOGGER.error("Cannot delete", e); //$NON-NLS-1$
+            return false;
         }
+        return true;
     }
 
     public static boolean delete(File fileOrDirectory) {
@@ -172,16 +174,7 @@ public final class FileUtil {
                 }
             }
         }
-        try {
-            if (!fileOrDirectory.delete()) {
-                LOGGER.warn("Cannot delete {}", fileOrDirectory.getPath()); //$NON-NLS-1$
-                return false;
-            }
-        } catch (Exception e) {
-            LOGGER.error("Cannot delete", e); //$NON-NLS-1$
-            return false;
-        }
-        return true;
+        return deleteFile(fileOrDirectory);
     }
 
     public static void recursiveDelete(File rootDir) {
@@ -273,13 +266,50 @@ public final class FileUtil {
         return false;
     }
 
-    public static int writeFile(URLConnection httpCon, File outFilename) {
-        try (InputStream input = httpCon.getInputStream();
-                        FileOutputStream outputStream = new FileOutputStream(outFilename)) {
-            return writeStream(input, outputStream);
+    /**
+     * Write URL content into a file
+     * 
+     * @param urlConnection
+     * @param outFile
+     * @throws StreamIOException
+     */
+    public static void writeStreamWithIOException(URLConnection urlConnection, File outFile) throws StreamIOException {
+        try (InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection);
+                        FileOutputStream outputStream = new FileOutputStream(outFile)) {
+            byte[] buf = new byte[FILE_BUFFER];
+            int offset;
+            while ((offset = urlInputStream.read(buf)) > 0) {
+                outputStream.write(buf, 0, offset);
+            }
+            outputStream.flush();
+        } catch (StreamIOException e) {
+            throw e;
         } catch (IOException e) {
-            LOGGER.error("Write url into file", e); //$NON-NLS-1$
-            return 0;
+            FileUtil.delete(outFile);
+            throw new StreamIOException(e);
+        }
+    }
+
+    /**
+     * Write inputStream content into a file
+     * 
+     * @param inputStream
+     * @param outFile
+     * @throws StreamIOException
+     */
+    public static void writeStreamWithIOException(InputStream inputStream, File outFile) throws StreamIOException {
+        try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
+            byte[] buf = new byte[FILE_BUFFER];
+            int offset;
+            while ((offset = inputStream.read(buf)) > 0) {
+                outputStream.write(buf, 0, offset);
+            }
+            outputStream.flush();
+        } catch (IOException e) {
+            FileUtil.delete(outFile);
+            throw new StreamIOException(e);
+        } finally {
+            FileUtil.safeClose(inputStream);
         }
     }
 
@@ -288,67 +318,55 @@ public final class FileUtil {
      * @param out
      * @return bytes transferred. O = error, -1 = all bytes has been transferred, other = bytes transferred before
      *         interruption
+     * @throws StreamIOException
      */
-    public static int writeFile(URL url, File outFilename) {
-        try (InputStream input = url.openStream(); FileOutputStream outputStream = new FileOutputStream(outFilename)) {
-            return writeStream(input, outputStream);
-        } catch (IOException e) {
-            LOGGER.error("Write url into file", e); //$NON-NLS-1$
-            return 0;
-        }
-    }
-
-    /**
-     * @param inputStream
-     * @param out
-     * @return bytes transferred. O = error, -1 = all bytes has been transferred, other = bytes transferred before
-     *         interruption
-     */
-    public static int writeStream(InputStream inputStream, OutputStream out) {
-        if (inputStream == null || out == null) {
-            return 0;
-        }
-        try {
+    public static int writeStream(InputStream inputStream, File outFile) throws StreamIOException {
+        try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
             byte[] buf = new byte[FILE_BUFFER];
             int offset;
             while ((offset = inputStream.read(buf)) > 0) {
-                out.write(buf, 0, offset);
+                outputStream.write(buf, 0, offset);
             }
-            out.flush();
+            outputStream.flush();
             return -1;
+        } catch (SocketTimeoutException e) {
+            FileUtil.delete(outFile);
+            throw new StreamIOException(e);
         } catch (InterruptedIOException e) {
-            LOGGER.error("Interruption when writing file", e); //$NON-NLS-1$
+            FileUtil.delete(outFile);
+            // Specific for SeriesProgressMonitor
+            LOGGER.error("Interruption when writing file: {}", e.getMessage()); //$NON-NLS-1$
             return e.bytesTransferred;
         } catch (IOException e) {
-            LOGGER.error("Error when writing file", e); //$NON-NLS-1$
-            return 0;
+            FileUtil.delete(outFile);
+            throw new StreamIOException(e);
         } finally {
             FileUtil.safeClose(inputStream);
-            FileUtil.safeClose(out);
         }
     }
 
-    public static int writeFile(ImageInputStream inputStream, OutputStream out) {
-        if (inputStream == null || out == null) {
-            return 0;
-        }
-        try {
+    public static int writeFile(ImageInputStream inputStream, File outFile) throws StreamIOException {
+        try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
             byte[] buf = new byte[FILE_BUFFER];
             int offset;
             while ((offset = inputStream.read(buf)) > 0) {
-                out.write(buf, 0, offset);
+                outputStream.write(buf, 0, offset);
             }
-            out.flush();
+            outputStream.flush();
             return -1;
+        } catch (SocketTimeoutException e) {
+            FileUtil.delete(outFile);
+            throw new StreamIOException(e);
         } catch (InterruptedIOException e) {
-            LOGGER.error("Interruption when writing image", e); //$NON-NLS-1$
+            FileUtil.delete(outFile);
+            // Specific for SeriesProgressMonitor
+            LOGGER.error("Interruption when writing image", e.getMessage()); //$NON-NLS-1$
             return e.bytesTransferred;
         } catch (IOException e) {
-            LOGGER.error("Error when writing image", e); //$NON-NLS-1$
-            return 0;
+            FileUtil.delete(outFile);
+            throw new StreamIOException(e);
         } finally {
             FileUtil.safeClose(inputStream);
-            FileUtil.safeClose(out);
         }
     }
 

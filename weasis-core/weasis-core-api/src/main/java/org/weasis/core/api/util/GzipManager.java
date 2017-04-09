@@ -140,12 +140,13 @@ public class GzipManager {
     }
 
     public static boolean gzipUncompressToFile(byte[] bytes, File outFilename) {
-        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-                        FileOutputStream outputStream = new FileOutputStream(outFilename)) {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
             if (isGzip(bytes)) {
-                return gzipUncompress(inputStream, outputStream);
+                try (FileOutputStream outputStream = new FileOutputStream(outFilename)) {
+                    return gzipUncompress(inputStream, outputStream);
+                }
             }
-            return FileUtil.writeStream(inputStream, outputStream) == -1;
+            return FileUtil.writeStream(inputStream, outFilename) == -1;
         } catch (IOException e) {
             LOGGER.error(ERROR_CTX, e);
             return false;

@@ -85,7 +85,7 @@
 						<instructions>
 							<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
 							<Bundle-Version>${project.version}</Bundle-Version>
-							<Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
+							<Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
 							<!-- Using <_exportcontents> requires to configure <Export-Package>, 
 								there is no default export (All packages, except any containing 'impl' or 
 								'internal' -->
@@ -204,13 +204,13 @@
 		<dependency>
 			<groupId>org.apache.sling</groupId>
 			<artifactId>org.apache.sling.commons.log</artifactId>
-			<version>3.0.2-r2</version>
+			<version>3.0.2-r3</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.5</version>
+			<version>1.7.25</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -240,7 +240,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>docking-frames</artifactId>
-			<version>1.1.2-P18a</version>
+			<version>1.1.2-P19</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

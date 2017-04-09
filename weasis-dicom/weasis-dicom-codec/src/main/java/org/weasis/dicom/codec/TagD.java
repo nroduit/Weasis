@@ -103,11 +103,11 @@ public class TagD extends TagW {
     }
 
     public enum Level {
-        PATIENT(org.weasis.dicom.codec.Messages.getString("TagD.pat")), //$NON-NLS-1$
-        STUDY(org.weasis.dicom.codec.Messages.getString("TagD.study")), //$NON-NLS-1$
-        SERIES(org.weasis.dicom.codec.Messages.getString("TagD.series")), //$NON-NLS-1$
-        INSTANCE(org.weasis.dicom.codec.Messages.getString("TagD.instance")), //$NON-NLS-1$
-        FRAME(org.weasis.dicom.codec.Messages.getString("TagD.frame")); //$NON-NLS-1$
+        PATIENT("Patient"), 
+        STUDY("Study"), 
+        SERIES("Series"), 
+        INSTANCE("Instance"),
+        FRAME("Frame"); 
 
         private final String tag;
 

@@ -11,17 +11,11 @@
 package org.weasis.dicom.explorer.wado;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -51,7 +45,6 @@ import javax.xml.validation.Validator;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -64,8 +57,10 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.NetworkUtil;
+import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -75,7 +70,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.Messages;
@@ -183,8 +177,14 @@ public class DownloadManager {
         if (series != null) {
             DownloadManager.TASKS.remove(series);
             if (dicomModel != null) {
-                dicomModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, series));
+                if (series.isCancelled()) {
+                    dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_CANCEL, dicomModel, null, series));
+                } else {
+                    dicomModel.firePropertyChange(
+                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, series));
+                }
+
             }
             if (DownloadManager.TASKS.isEmpty()) {
                 // When all loadseries are ended, reset to default the number of simultaneous download (series)
@@ -236,7 +236,7 @@ public class DownloadManager {
         void handle(LoadSeries loadSeries);
     }
 
-    public static List<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) {
+    public static List<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) throws DownloadException {
         ArrayList<LoadSeries> seriesList = new ArrayList<>();
         XMLStreamReader xmler = null;
         InputStream stream = null;
@@ -244,9 +244,7 @@ public class DownloadManager {
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
 
             String path = uri.getPath();
-
-            URL url = uri.toURL();
-            URLConnection urlConnection = url.openConnection();
+            URLConnection urlConnection = uri.toURL().openConnection();
 
             if (BundleTools.SESSION_TAGS_MANIFEST.size() > 0) {
                 for (Iterator<Entry<String, String>> iter =
@@ -255,23 +253,23 @@ public class DownloadManager {
                     urlConnection.setRequestProperty(element.getKey(), element.getValue());
                 }
             }
+            urlConnection.setUseCaches(false);
 
-            LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
-            logHttpError(urlConnection);
+            LOGGER.info("Downloading XML manifest: {}", path); //$NON-NLS-1$
+            InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection);
 
             if (path.endsWith(".gz")) { //$NON-NLS-1$
-                stream = new BufferedInputStream(new GZIPInputStream(urlConnection.getInputStream()));
+                stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
             } else if (path.endsWith(".xml")) { //$NON-NLS-1$
-                stream = urlConnection.getInputStream();
+                stream = urlInputStream;
             } else {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                if (FileUtil.writeStream(urlConnection.getInputStream(), new FileOutputStream(outFile)) == -1) {
-                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
-                        stream = new BufferedInputStream(new GZIPInputStream(new FileInputStream(outFile)));
-                    } else {
-                        stream = new FileInputStream(outFile);
-                    }
+                FileUtil.writeStreamWithIOException(urlInputStream, outFile);
+                if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
+                    stream = new BufferedInputStream(new GZIPInputStream(new FileInputStream(outFile)));
+                } else {
+                    stream = new FileInputStream(outFile);
                 }
             }
 
@@ -280,7 +278,7 @@ public class DownloadManager {
                 tempFile = new File(path);
             } else {
                 tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                FileUtil.writeStream(stream, new FileOutputStream(tempFile));
+                FileUtil.writeStreamWithIOException(stream, tempFile);
             }
             xmler = xmlif.createXMLStreamReader(new FileInputStream(tempFile));
 
@@ -344,33 +342,33 @@ public class DownloadManager {
                         break;
                 }
             }
-
+        } catch (StreamIOException e) {
+            throw new DownloadException(getErrorMessage(uri), e); // rethrow network issue
         } catch (Exception e) {
-            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + uri.toString(); //$NON-NLS-1$//$NON-NLS-2$
-
-            LOGGER.error("{}", message, e); //$NON-NLS-1$
-
+            String message = getErrorMessage(uri);
+            LOGGER.error("{}", message , e); //$NON-NLS-1$
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
             GuiExecutor.instance().execute(() -> {
-                PluginTool explorer = null;
-                DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                if (dicomExplorer instanceof PluginTool) {
-                    explorer = (PluginTool) dicomExplorer;
-                }
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
-                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, null,
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
+                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS), null,
                     JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
                 if (layer != null) {
                     layer.hideUI();
                 }
             });
-
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
         }
         return seriesList;
+    }
+
+    private static String getErrorMessage(URI uri) {
+        StringBuilder buf = new StringBuilder(Messages.getString("DownloadManager.error_load_xml")); //$NON-NLS-1$
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(uri.toString());
+        return buf.toString();
     }
 
     private static void readArcQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
@@ -425,19 +423,12 @@ public class DownloadManager {
                         final String message = TagUtil.getTagAttribute(xmler, "description", null); //$NON-NLS-1$
                         if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
                             String severity = TagUtil.getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
-                            final int messageType =
-                                "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE //$NON-NLS-1$
-                                    : "INFO" //$NON-NLS-1$
-                                        .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
-                                            : JOptionPane.WARNING_MESSAGE;
+                            final int messageType = "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE //$NON-NLS-1$
+                                : "INFO" //$NON-NLS-1$
+                                    .equals(severity) ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE;
 
                             GuiExecutor.instance().execute(() -> {
-                                PluginTool explorer = null;
-                                DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                                if (dicomExplorer instanceof PluginTool) {
-                                    explorer = (PluginTool) dicomExplorer;
-                                }
-                                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(explorer);
+                                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
                                 JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, title,
                                     JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
                                 if (layer != null) {
@@ -478,39 +469,6 @@ public class DownloadManager {
             }
         }
 
-    }
-
-    private static void logHttpError(URLConnection urlConnection) {
-        if (urlConnection instanceof HttpURLConnection) {
-            HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
-            httpURLConnection.setConnectTimeout(5000);
-
-            try {
-                int responseCode = httpURLConnection.getResponseCode();
-                if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
-                    // Following is only intended LOG more info about Http Server Error
-
-                    InputStream errorStream = httpURLConnection.getErrorStream();
-                    if (errorStream != null) {
-                        try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8"); //$NON-NLS-1$
-                                        BufferedReader reader = new BufferedReader(inputStream)) {
-                            StringBuilder stringBuilder = new StringBuilder();
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                stringBuilder.append(line);
-                            }
-                            String errorDescription = stringBuilder.toString();
-                            if (StringUtil.hasText(errorDescription)) {
-                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " [" //$NON-NLS-1$ //$NON-NLS-2$
-                                    + httpURLConnection.getResponseMessage() + "]", errorDescription); //$NON-NLS-1$
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                LOGGER.error("lOG http response message", e); //$NON-NLS-1$
-            }
-        }
     }
 
     private static MediaSeriesGroup readPatient(DicomModel model, ArrayList<LoadSeries> seriesList,
