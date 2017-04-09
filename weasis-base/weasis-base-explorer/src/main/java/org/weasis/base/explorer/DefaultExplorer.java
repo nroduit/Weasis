@@ -19,6 +19,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -47,6 +48,8 @@ import javax.swing.tree.TreeSelectionModel;
 
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.list.IDiskFileList;
 import org.weasis.base.explorer.list.impl.JIThumbnailListPane;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -60,7 +63,9 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 
+@SuppressWarnings("serial")
 public class DefaultExplorer extends PluginTool implements DataExplorerView {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultExplorer.class);
 
     private static final JIExplorerContext treeContext = new JIExplorerContext();
 
@@ -124,14 +129,20 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
 
     protected void iniLastPath() {
-        Path prefDir;
+        Path prefDir = null;
         Preferences prefs =
             BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
-        if (prefs == null) {
-            prefDir = Paths.get(System.getProperty("user.home")); //$NON-NLS-1$
-        } else {
+        if (prefs != null) {
             Preferences p = prefs.node(PREFERENCE_NODE);
-            prefDir = Paths.get(p.get(P_LAST_DIR, System.getProperty("user.home"))); //$NON-NLS-1$
+            try {
+                prefDir = Paths.get(p.get(P_LAST_DIR, System.getProperty("user.home"))); //$NON-NLS-1$
+            } catch (InvalidPathException e) {
+                LOGGER.error("Get last dir path", e);
+            }
+        }
+
+        if (prefDir == null) {
+            prefDir = Paths.get(System.getProperty("user.home")); //$NON-NLS-1$
         }
 
         if (Files.isReadable(prefDir) && Files.isDirectory(prefDir)) {
@@ -148,7 +159,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         if (dir != null) {
             Preferences prefs =
                 BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
-            if (prefs != null) {
+            if (prefs != null && Files.isReadable(dir)) {
                 Preferences p = prefs.node(PREFERENCE_NODE);
                 BundlePreferences.putStringPreferences(p, P_LAST_DIR, dir.toString());
             }
