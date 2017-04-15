@@ -93,11 +93,16 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SimpleTagable;
 import org.weasis.core.api.media.data.SoftHashMap;
+import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.codec.display.CornerDisplay;
+import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.codec.display.ModalityInfoData;
+import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -209,6 +214,12 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         tagManager.addTag(Tag.MIMETypeOfEncapsulatedDocument, Level.INSTANCE);
         tagManager.addTag(Tag.PixelDataProviderURL, Level.INSTANCE);
 
+        for (Entry<Modality, ModalityInfoData> entry : ModalityView.getModalityViewEntries()) {
+            readTagsInModalityView(entry.getValue().getCornerInfo(CornerDisplay.TOP_LEFT).getInfos());
+            readTagsInModalityView(entry.getValue().getCornerInfo(CornerDisplay.TOP_RIGHT).getInfos());
+            readTagsInModalityView(entry.getValue().getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos());
+        }
+
         // TODO init with a profile
         DicomMediaUtils.enableAnonymizationProfile(true);
     }
@@ -260,7 +271,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     static final DicomImageReaderSpi dicomImageReaderSpi = new DicomImageReaderSpi();
-    
+
     private static final SoftHashMap<DicomMediaIO, DicomMetaData> HEADER_CACHE =
         new SoftHashMap<DicomMediaIO, DicomMetaData>() {
 
@@ -334,6 +345,22 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     public DicomMediaIO(Attributes dcmItems) throws URISyntaxException {
         this(new URI("data:" + Objects.requireNonNull(dcmItems).getString(Tag.SOPInstanceUID))); //$NON-NLS-1$
         this.dcmMetadata = new DicomMetaData(null, Objects.requireNonNull(dcmItems));
+    }
+
+    private static void readTagsInModalityView(TagView[] views) {
+        for (TagView tagView : views) {
+            if (tagView != null) {
+                for (TagW tag : tagView.getTag()) {
+                    if (tag != null) {
+                        if (!DicomMediaIO.tagManager.contains(tag, Level.PATIENT)
+                            && !DicomMediaIO.tagManager.contains(tag, Level.STUDY)
+                            && !DicomMediaIO.tagManager.contains(tag, Level.SERIES)) {
+                            DicomMediaIO.tagManager.addTag(tag, Level.INSTANCE);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override

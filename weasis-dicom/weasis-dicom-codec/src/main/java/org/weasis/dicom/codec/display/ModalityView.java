@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -106,6 +108,10 @@ public class ModalityView {
             mdata = DEFAULT_MODALITY_VIEW;
         }
         return mdata;
+    }
+
+    public static Set<Entry<Modality, ModalityInfoData>> getModalityViewEntries() {
+        return MODALITY_VIEW_MAP.entrySet();
     }
 
     private static Modality getModdality(String name) {
