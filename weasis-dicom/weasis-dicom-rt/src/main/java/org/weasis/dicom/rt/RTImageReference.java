@@ -3,11 +3,13 @@ package org.weasis.dicom.rt;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.dicom.codec.macro.SOPInstanceReference;
+
+
 
 public class RTImageReference {
-    private ImageSOPInstanceReference imageSOPInstanceReference;
+    private SOPInstanceReference imageSOPInstanceReference;
     private List<Graphic> graphics;
     private final String nodeLevel;
 
@@ -19,17 +21,17 @@ public class RTImageReference {
     public void addGraphic(Graphic g) {
         if (g != null) {
             if (graphics == null) {
-                graphics = new ArrayList<Graphic>();
+                graphics = new ArrayList<>();
             }
             graphics.add(g);
         }
     }
 
-    public ImageSOPInstanceReference getImageSOPInstanceReference() {
+    public SOPInstanceReference getImageSOPInstanceReference() {
         return imageSOPInstanceReference;
     }
 
-    public void setImageSOPInstanceReference(ImageSOPInstanceReference imageSOPInstanceReference) {
+    public void setImageSOPInstanceReference(SOPInstanceReference imageSOPInstanceReference) {
         this.imageSOPInstanceReference = imageSOPInstanceReference;
     }
 

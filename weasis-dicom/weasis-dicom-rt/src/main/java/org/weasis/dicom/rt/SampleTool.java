@@ -10,35 +10,37 @@
  ******************************************************************************/
 package org.weasis.dicom.rt;
 
-import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.util.ArrayList;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.JViewport;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.*;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.dicom.codec.DicomImageElement;
 
 import bibliothek.gui.dock.common.CLocation;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.image.*;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.display.OverlayOp;
-import org.weasis.dicom.codec.display.ShutterOp;
-import org.weasis.core.ui.editor.SeriesViewerListener;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
 public class SampleTool extends PluginTool implements SeriesViewerListener {
 
@@ -97,54 +99,7 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
         renderer.setClosedIcon(null);
         renderer.setLeafIcon(null);
         tree.setCellRenderer(renderer);
-        // Register event handler
-        tree.addTreeCheckingListener(new TreeCheckingListener() {
 
-                 @Override
-                 public void valueChanged(TreeCheckingEvent e) {
-                     if (!initPathSelection) {
-                         TreePath path = e.getPath();
-                         Object source = e.getSource();
-                         boolean selected = e.isCheckedPath();
-                         Object selObject = path.getLastPathComponent();
-                         Object parent = null;
-                         if (path.getParentPath() != null) {
-                             parent = path.getParentPath().getLastPathComponent();
-                         }
-
-                         ImageViewerPlugin<DicomImageElement> container =
-                                 org.weasis.dicom.viewer2d.EventManager.getInstance().getSelectedView2dContainer();
-                         ArrayList<DefaultView2d<DicomImageElement>> views = null;
-                         if (container != null) {
-                             if (applyAllViews.isSelected()) {
-                                 views = container.getImagePanels();
-                             } else {
-                                 views = new ArrayList<DefaultView2d<DicomImageElement>>(1);
-                                 DefaultView2d<DicomImageElement> view = container.getSelectedImagePane();
-                                 if (view != null) {
-                                     views.add(view);
-                                 }
-                             }
-                         }
-                         if (views != null) {
-                             if (rootNode.equals(parent)) {
-                                 sendPropertyChangeEvent(views, ActionW.IMAGE_PIX_PADDING.cmd(), selected);
-//                                 if (image.equals(parent)) {
-//                                     if (selObject != null) {
-//                                         if (DICOM_IMAGE_OVERLAY.equals(selObject.toString())) {
-//                                             sendPropertyChangeEvent(views, ActionW.IMAGE_OVERLAY.cmd(), selected);
-//                                         } else if (DICOM_SHUTTER.equals(selObject.toString())) {
-//                                             sendPropertyChangeEvent(views, ActionW.IMAGE_SHUTTER.cmd(), selected);
-//                                         } else if (DICOM_PIXEL_PADDING.equals(selObject.toString())) {
-//                                             sendPropertyChangeEvent(views, ActionW.IMAGE_PIX_PADDING.cmd(), selected);
-//                                         }
-//                                     }
-                             }
-                         }
-                     }
-                 }
-             }
-        );
 
         JPanel panel = new JPanel();
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
@@ -177,11 +132,11 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
     }
 
 
-    public void initTreeValues(DefaultView2d view) {
-        if (view != null) {
+    public void initTreeValues(ViewCanvas<?> viewCanvas) {
+        if (viewCanvas != null) {
             initPathSelection = true;
             // Image node
-            OpManager disOp = view.getDisplayOpManager();
+            OpManager disOp = viewCanvas.getDisplayOpManager();
 //            initPathSelection(getTreePath(image), view.getImageLayer().isVisible());
 //            iniDicomView(disOp, OverlayOp.OP_NAME, OverlayOp.P_SHOW, 0);
 //            iniDicomView(disOp, ShutterOp.OP_NAME, ShutterOp.P_SHOW, 1);
@@ -277,41 +232,6 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
         } else if (SeriesViewerEvent.EVENT.TOOGLE_INFO.equals(e)) {
             TreeCheckingModel model = tree.getCheckingModel();
             //model.toggleCheckingPath(new TreePath(dicomInfo.getPath()));
-        } else if (SeriesViewerEvent.EVENT.ADD_LAYER.equals(e)) {
-            Object obj = event.getSharedObject();
-            if (obj instanceof AbstractLayer.Identifier) {
-                DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
-                DefaultMutableTreeNode node = new DefaultMutableTreeNode(obj, true);
-//                drawings.add(node);
-//                dtm.nodesWereInserted(drawings, new int[] { drawings.getIndex(node) });
-//                if (event.getSeriesViewer() instanceof ImageViewerPlugin && node.getUserObject() instanceof AbstractLayer.Identifier) {
-//                    DefaultView2d<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
-//                    if (pane != null) {
-//                        AbstractLayer l = pane.getLayerModel().getLayer((AbstractLayer.Identifier) node.getUserObject());
-//                        if (l != null && l.isVisible()) {
-//                            tree.addCheckingPath(getTreePath(node));
-//                        }
-//                    }
-//                }
-            }
-        } else if (SeriesViewerEvent.EVENT.REMOVE_LAYER.equals(e)) {
-            Object obj = event.getSharedObject();
-            if (obj instanceof AbstractLayer.Identifier) {
-                AbstractLayer.Identifier id = (AbstractLayer.Identifier) obj;
-//                Enumeration en = drawings.children();
-//                while (en.hasMoreElements()) {
-//                    Object node = en.nextElement();
-//                    if (node instanceof DefaultMutableTreeNode
-//                            && id.equals(((DefaultMutableTreeNode) node).getUserObject())) {
-//                        DefaultMutableTreeNode n = (DefaultMutableTreeNode) node;
-//                        TreeNode parent = n.getParent();
-//                        int index = parent.getIndex(n);
-//                        n.removeFromParent();
-//                        DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
-//                        dtm.nodesWereRemoved(parent, new int[] { index }, new TreeNode[] { n });
-//                    }
-//                }
-            }
         }
     }
 
@@ -324,9 +244,9 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
 
     //region Private Methods
 
-    private void sendPropertyChangeEvent(ArrayList<DefaultView2d<DicomImageElement>> views, String cmd, boolean selected) {
-        for (DefaultView2d<DicomImageElement> v : views) {
-            v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
+    private void sendPropertyChangeEvent(List<ViewCanvas<DicomImageElement>> views, String cmd, boolean selected) {
+        for (ViewCanvas<DicomImageElement> v : views) {
+        //    v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
         }
     }
 

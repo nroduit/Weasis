@@ -1,11 +1,8 @@
 package org.weasis.dicom.rt;
 
-import java.util.HashMap;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Code;
 import org.dcm4che3.data.Tag;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 
@@ -13,10 +10,6 @@ public class RTSpecialElement extends DicomSpecialElement {
 
     public RTSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO);
-    }
-
-    public HashMap<TagW, Object> geTags() {
-        return tags;
     }
 
     @Override
