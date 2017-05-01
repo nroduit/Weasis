@@ -296,6 +296,9 @@ public class WeasisLauncher {
                 }
                 // Allow export feature for portable version
                 System.setProperty("weasis.export.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                System.setProperty("weasis.export.dicom.send", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                System.setProperty("weasis.import.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                System.setProperty("weasis.import.dicom.qr", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (Exception e) {
                 e.printStackTrace();
             }

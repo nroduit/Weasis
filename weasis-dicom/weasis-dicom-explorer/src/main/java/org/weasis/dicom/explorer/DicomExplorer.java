@@ -177,10 +177,15 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         thumnailView.setViewportView(patientContainer);
 
         this.btnImport = new JButton(new DefaultAction(BUTTON_NAME, event -> {
-            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
-            DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
-            dialog.showPage(BUTTON_NAME);
-            ColorLayerUI.showCenterScreen(dialog, layer);
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
+                DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
+                dialog.showPage(BUTTON_NAME);
+                ColorLayerUI.showCenterScreen(dialog, layer);
+            } else {
+                JOptionPane.showMessageDialog((Component) event.getSource(),
+                    Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
+            }
         }));
         this.btnExport = new JButton(new DefaultAction(BUTTON_NAME, event -> {
             if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$

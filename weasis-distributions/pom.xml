@@ -400,6 +400,12 @@
 									<version>${project.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.dicom</groupId>
+									<artifactId>weasis-dicom-qr</artifactId>
+									<version>${project.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
 
 								<!-- ===================================== -->
 								<!-- Weasis Acquisition bundles -->
