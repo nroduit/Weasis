@@ -30,6 +30,10 @@ public class DicomQrFactory implements DicomImportFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomQrFactory.class);
 
     public static final Properties IMPORT_PERSISTENCE = new Properties();
+    
+//    public static final ArrayList<SearchParameters> SEARCH_ITEMS = new ArrayList<>();
+
+    private static final String PREFERENCE_NODE = "qr.prefs";
 
     @Override
     public ImportDicom createDicomImportPage(Hashtable<String, Object> properties) {
@@ -46,6 +50,8 @@ public class DicomQrFactory implements DicomImportFactory {
         FileUtil.readProperties(
             new File(BundlePreferences.getDataFolder(context.getBundleContext()), "import.properties"), //$NON-NLS-1$
             IMPORT_PERSISTENCE);
+        
+ //       SEARCH_ITEMS.clear();
     }
 
     @Deactivate
@@ -54,7 +60,21 @@ public class DicomQrFactory implements DicomImportFactory {
         FileUtil.storeProperties(
             new File(BundlePreferences.getDataFolder(context.getBundleContext()), "import.properties"), //$NON-NLS-1$
             IMPORT_PERSISTENCE, null);
-
+        
+//        Preferences prefs = BundlePreferences.getDefaultPreferences(context.getBundleContext());
+//        if (prefs != null) {
+//            Preferences p = prefs.node(DicomQrFactory.PREFERENCE_NODE);
+//            // Forget the Selection Graphic
+//            for (int i = 1; i < SEARCH_ITEMS.size(); i++) {
+//                SearchParameters item = SEARCH_ITEMS.get(i);
+//                
+//                List<DicomParam> list = item.getParameters();
+//                if (list != null && !list.isEmpty()) {
+//                    Preferences gpref = p.node(item.toString());
+//
+//                }
+//            }
+//        }
     }
 
 }
