@@ -513,6 +513,13 @@ public class WeasisLauncher {
 
                 EventQueue.invokeLater(() -> {
                     JTextPane jTextPane1 = new JTextPane();
+                    HTMLEditorKit kit = new HTMLEditorKit();
+                    StyleSheet ss = kit.getStyleSheet();
+                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
+                        + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+                        + ";color:#" //$NON-NLS-1$
+                        + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+                        + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
                     jTextPane1.setContentType("text/html"); //$NON-NLS-1$
                     jTextPane1.setEditable(false);
                     jTextPane1.addHyperlinkListener(new HyperlinkListener() {
@@ -547,12 +554,6 @@ public class WeasisLauncher {
                         }
                     });
 
-                    StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
-                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-                        + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-                        + ";color:#" //$NON-NLS-1$
-                        + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-                        + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
                     message.append("<BR>"); //$NON-NLS-1$
                     String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
                     message.append(String.format("<a href=\"%s", //$NON-NLS-1$
