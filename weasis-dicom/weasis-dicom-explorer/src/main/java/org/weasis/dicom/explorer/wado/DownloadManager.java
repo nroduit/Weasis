@@ -202,7 +202,7 @@ public class DownloadManager {
                         removeLoadSeries(loading, dicomModel);
                         removeSeriesInQueue(loading);
                         if (StateValue.STARTED.equals(loading.getState())) {
-                            loading.cancel(true);
+                            loading.cancel();
                         }
                         // Ensure to stop downloading
                         series.setSeriesLoader(null);
@@ -429,8 +429,8 @@ public class DownloadManager {
 
                             GuiExecutor.instance().execute(() -> {
                                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
-                                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, title,
-                                    JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                                JOptionPane.showMessageDialog(ColorLayerUI.getContentPane(layer), message, title,
+                                     messageType);
                                 if (layer != null) {
                                     layer.hideUI();
                                 }

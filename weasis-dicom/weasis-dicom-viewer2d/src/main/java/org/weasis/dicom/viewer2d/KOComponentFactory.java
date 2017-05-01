@@ -26,6 +26,7 @@ import javax.swing.JPopupMenu;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -70,15 +71,18 @@ public final class KOComponentFactory {
             public void showPopup(Component invoker, int x, int y) {
 
                 final EventManager evtMgr = EventManager.getInstance();
-                ComboItemListener<Object> koSelectionAction = ((ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION));
+                ComboItemListener<?> koSelectionAction =
+                    ((ComboItemListener<?>) evtMgr.getAction(ActionW.KO_SELECTION));
                 JPopupMenu popupMenu = new JPopupMenu();
 
                 popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
                 popupMenu.addSeparator();
 
-                GroupRadioMenu<Object> groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
-                for (RadioMenuItem item : groupRadioMenu.getRadioMenuItemListCopy()) {
-                    popupMenu.add(item);
+                GroupPopup groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
+                if (groupRadioMenu instanceof GroupRadioMenu) {
+                    for (RadioMenuItem item : ((GroupRadioMenu<?>) groupRadioMenu).getRadioMenuItemListCopy()) {
+                        popupMenu.add(item);
+                    }
                 }
                 popupMenu.addSeparator();
 

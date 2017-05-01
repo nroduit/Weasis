@@ -109,8 +109,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     protected void initialize(boolean afirst) {
         if (afirst) {
-            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
-            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
+            AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
+            AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
             String desc = SendDicomFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
             if (StringUtil.hasText(desc)) {
                 ComboBoxModel<AbstractDicomNode> model = comboNode.getModel();
@@ -204,8 +204,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                     CStore.process(new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
                 if (state.getStatus() != Status.Success) {
                     LOGGER.error("Dicom send error: {}", state.getMessage()); //$NON-NLS-1$
-                    GuiExecutor.instance().execute(() -> JOptionPane.showOptionDialog(exportTree, state.getMessage(),
-                        null, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null));
+                    GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(exportTree, state.getMessage(),
+                        null, JOptionPane.ERROR_MESSAGE));
                 }
             } else if (selectedItem instanceof DicomWebNode) {
                 postDicom((DicomWebNode) selectedItem, files);
@@ -265,8 +265,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                                 GraphicModel grModel = (GraphicModel) dcm.getTagValue(TagW.PresentationModel);
                                 if (grModel != null && grModel.hasSerializableGraphics()) {
                                     String path = LocalExport.buildPath(dcm, false, false, false, node);
-                                    LocalExport.buildAndWritePR(dcm, false, new File(writeDir, path), null,
-                                        node, seriesInstanceUID);
+                                    LocalExport.buildAndWritePR(dcm, false, new File(writeDir, path), null, node,
+                                        seriesInstanceUID);
                                 }
                             }
                         }

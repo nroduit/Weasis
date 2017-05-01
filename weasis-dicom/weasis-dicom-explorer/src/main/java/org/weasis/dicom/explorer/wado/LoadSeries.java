@@ -54,8 +54,8 @@ import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
@@ -156,7 +156,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     @Override
     public boolean stop() {
         if (!isDone()) {
-            boolean val = cancel(true);
+            boolean val = cancel();
             dicomSeries.setSeriesLoader(this);
             return val;
         }
@@ -931,7 +931,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     public LoadSeries cancelAndReplace(LoadSeries s) {
         LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
             s.getConcurrentDownloads(), s.writeInCache);
-        s.cancel(true);
+        s.cancel();
         taskResume.setPriority(s.getPriority());
         Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
         if (thumbnail != null) {
