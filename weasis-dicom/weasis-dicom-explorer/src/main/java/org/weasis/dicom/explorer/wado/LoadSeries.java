@@ -43,7 +43,6 @@ import org.dcm4che3.util.SafeClose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
@@ -82,7 +81,7 @@ import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.ThumbnailMouseAndKeyAdapter;
 
-public class LoadSeries extends ExplorerTask implements SeriesImporter {
+public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesImporter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadSeries.class);
     public static final String CONCURRENT_DOWNLOADS_IN_SERIES = "download.concurrent.series.images"; //$NON-NLS-1$
@@ -111,12 +110,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         this.dicomModel = dicomModel;
         this.dicomSeries = dicomSeries;
         this.writeInCache = writeInCache;
-        final List<DicomInstance> sopList =
-            (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
-        // Trick to keep progressBar with a final modifier to be instantiated in EDT (required by substance)
-        final CircularProgressBar[] bar = new CircularProgressBar[1];
-        GuiExecutor.instance().invokeAndWait(() -> bar[0] = new CircularProgressBar(0, sopList.size()));
-        this.progressBar = bar[0];
+        this.progressBar = getBar();
         if (!writeInCache) {
             progressBar.setVisible(false);
         }
@@ -175,6 +169,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     protected void done() {
         if (!isStopped()) {
             // Ensure to stop downloading and must be set before reusing LoadSeries to download again
+            progressBar.setIndeterminate(false);
             this.dicomSeries.setSeriesLoader(null);
             DownloadManager.removeLoadSeries(this, dicomModel);
 
@@ -320,7 +315,10 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
             ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader"); //$NON-NLS-1$
         ArrayList<Callable<Boolean>> tasks = new ArrayList<>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
-        GuiExecutor.instance().execute(() -> progressBar.setValue(0));
+        GuiExecutor.instance().execute(() -> {
+            progressBar.setMaximum(sopList.size());
+            progressBar.setValue(0);
+        });
         for (int k = 0; k < sopList.size(); k++) {
             DicomInstance instance = sopList.get(dindex[k]);
             if (isCancelled()) {

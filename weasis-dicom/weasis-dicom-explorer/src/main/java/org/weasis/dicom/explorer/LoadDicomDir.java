@@ -16,7 +16,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
-public class LoadDicomDir extends ExplorerTask {
+public class LoadDicomDir extends ExplorerTask<Boolean, String> {
 
     private final List<LoadSeries> seriesList;
     private final DicomModel dicomModel;

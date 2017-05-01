@@ -14,6 +14,7 @@ import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -94,8 +95,10 @@ public class RetrieveTreeModel {
     }
 
     public static synchronized DefaultTreeModel buildModel(DicomModel dicomModel) {
-        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(DicomExplorer.ALL_PATIENTS);
-        for (MediaSeriesGroup pt : dicomModel.getChildren(MediaSeriesGroupNode.rootNode)) {
+        Collection<MediaSeriesGroup> patients = dicomModel.getChildren(MediaSeriesGroupNode.rootNode);
+        DefaultMutableTreeNode rootNode =
+            new DefaultMutableTreeNode(patients.isEmpty() ? "No patient found" : DicomExplorer.ALL_PATIENTS);
+        for (MediaSeriesGroup pt : patients) {
             DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);
             for (MediaSeriesGroup study : dicomModel.getChildren(pt)) {
                 DefaultMutableTreeNode studyNode = new ToolTipStudyNode(study, true);

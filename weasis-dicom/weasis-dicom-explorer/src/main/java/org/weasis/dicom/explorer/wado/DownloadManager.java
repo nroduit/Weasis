@@ -61,6 +61,7 @@ import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
+import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -100,9 +101,10 @@ public class DownloadManager {
     // Executor with simultaneous tasks
     private static final BlockingQueue<Runnable> PRIORITY_QUEUE =
         new PriorityBlockingQueue<>(10, new PriorityTaskComparator());
-    public static final ThreadPoolExecutor CONCURRENT_EXECUTOR = new ThreadPoolExecutor(
-        BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
-        BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS, PRIORITY_QUEUE);
+    public static final ThreadPoolExecutor CONCURRENT_EXECUTOR =
+        new ThreadPoolExecutor(BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
+            BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS,
+            PRIORITY_QUEUE, ThreadUtil.getThreadFactory("Series Downloader"));
 
     public static class PriorityTaskComparator implements Comparator<Runnable>, Serializable {
 
@@ -346,13 +348,14 @@ public class DownloadManager {
             throw new DownloadException(getErrorMessage(uri), e); // rethrow network issue
         } catch (Exception e) {
             String message = getErrorMessage(uri);
-            LOGGER.error("{}", message , e); //$NON-NLS-1$
+            LOGGER.error("{}", message, e); //$NON-NLS-1$
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
             GuiExecutor.instance().execute(() -> {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
-                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS), null,
-                    JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer),
+                    StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS), null, JOptionPane.DEFAULT_OPTION,
+                    messageType, null, null, null);
                 if (layer != null) {
                     layer.hideUI();
                 }
@@ -430,7 +433,7 @@ public class DownloadManager {
                             GuiExecutor.instance().execute(() -> {
                                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
                                 JOptionPane.showMessageDialog(ColorLayerUI.getContentPane(layer), message, title,
-                                     messageType);
+                                    messageType);
                                 if (layer != null) {
                                     layer.hideUI();
                                 }

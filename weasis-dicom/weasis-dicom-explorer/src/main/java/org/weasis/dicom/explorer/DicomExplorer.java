@@ -940,7 +940,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
 
     public Set<Series> getSelectedPatientOpenSeries() {
-        return getPatientOpenSeries(selectedPatient.patient);
+        return getPatientOpenSeries(selectedPatient == null ? null :selectedPatient.patient);
     }
 
     public Set<Series> getPatientOpenSeries(MediaSeriesGroup patient) {
@@ -1324,11 +1324,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     }
                 } else if (ObservableEvent.BasicAction.LOADING_START.equals(action)) {
                     if (newVal instanceof ExplorerTask) {
-                        addTaskToGlobalProgression((ExplorerTask) newVal);
+                        addTaskToGlobalProgression((ExplorerTask<?, ?>) newVal);
                     }
                 } else if (ObservableEvent.BasicAction.LOADING_STOP.equals(action) || ObservableEvent.BasicAction.LOADING_CANCEL.equals(action)) {
                     if (newVal instanceof ExplorerTask) {
-                        removeTaskToGlobalProgression((ExplorerTask) newVal);
+                        removeTaskToGlobalProgression((ExplorerTask<?, ?>) newVal);
                     }
                 }
             } else if (evt.getSource() instanceof SeriesViewer) {

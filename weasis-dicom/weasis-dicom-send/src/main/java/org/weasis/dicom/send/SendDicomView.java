@@ -22,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
@@ -50,6 +51,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
@@ -64,6 +66,8 @@ import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.op.CStore;
+import org.weasis.dicom.param.AdvancedParams;
+import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
@@ -79,8 +83,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
+    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Send task");
 
-    private JPanel panel;
+    private final JPanel panel = new JPanel();
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public SendDicomView(DicomModel dicomModel, CheckTreeModel treeModel) {
@@ -93,7 +98,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     public void initGUI() {
         setLayout(new BorderLayout());
-        panel = new JPanel();
+
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEFT);
 
@@ -141,6 +146,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     @Override
     public void closeAdditionalWindow() {
         applyChange();
+        executor.shutdown();
     }
 
     @Override
@@ -150,7 +156,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     @Override
     public void exportDICOM(final CheckTreeModel model, JProgressBar info) throws IOException {
 
-        ExplorerTask task = new ExplorerTask(getTitle(), false, new CircularProgressBar(0, 100), false) {
+        ExplorerTask<Boolean, String> task = new ExplorerTask<Boolean, String>(getTitle(), false) {
 
             @Override
             protected Boolean doInBackground() throws Exception {
@@ -164,11 +170,10 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
             }
 
         };
-        task.execute();
-
+        executor.execute(task);
     }
 
-    private boolean sendDicomFiles(final CheckTreeModel model, final ExplorerTask t) throws IOException {
+    private boolean sendDicomFiles(final CheckTreeModel model, final ExplorerTask<Boolean, String> t) throws IOException {
         dicomModel
             .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, t));
         File exportDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "send")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -187,25 +192,28 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
             final CircularProgressBar progressBar = t.getBar();
             DicomProgress dicomProgress = new DicomProgress();
             dicomProgress.addProgressListener(p -> {
-                if (t.isCancelled()) {
-                    p.cancel();
-                }
                 GuiExecutor.instance().execute(() -> {
                     int c = p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
                     int r = p.getNumberOfRemainingSuboperations();
                     progressBar.setValue((c * 100) / (c + r));
                 });
             });
+            t.addCancelListener(dicomProgress);
 
             Object selectedItem = comboNode.getSelectedItem();
             if (selectedItem instanceof DefaultDicomNode) {
                 final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
+                AdvancedParams params = new AdvancedParams();
+                ConnectOptions connectOptions = new ConnectOptions();
+                connectOptions.setConnectTimeout(3000);
+                connectOptions.setAcceptTimeout(5000);
+                params.setConnectOptions(connectOptions);
                 final DicomState state =
-                    CStore.process(new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
-                if (state.getStatus() != Status.Success) {
+                    CStore.process(params, new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
+                if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
                     LOGGER.error("Dicom send error: {}", state.getMessage()); //$NON-NLS-1$
                     GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(exportTree, state.getMessage(),
-                        null, JOptionPane.ERROR_MESSAGE));
+                        getTitle(), JOptionPane.ERROR_MESSAGE));
                 }
             } else if (selectedItem instanceof DicomWebNode) {
                 postDicom((DicomWebNode) selectedItem, files);
@@ -217,8 +225,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         return true;
     }
 
-    private void writeDicom(ExplorerTask task, File writeDir, CheckTreeModel model) throws IOException {
-        synchronized (model) {
+    private void writeDicom(ExplorerTask<Boolean, String> task, File writeDir, CheckTreeModel model) throws IOException {
+        synchronized (this) {
             ArrayList<String> uids = new ArrayList<>();
             TreePath[] paths = model.getCheckingPaths();
             for (TreePath treePath : paths) {
@@ -312,7 +320,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         } catch (Exception e) {
             LOGGER.error("STOWRS: error when posting data", e); //$NON-NLS-1$
         } finally {
-            Optional.ofNullable(httpPost).ifPresent(h -> h.disconnect());
+            Optional.ofNullable(httpPost).ifPresent(HttpURLConnection::disconnect);
         }
 
     }

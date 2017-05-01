@@ -15,18 +15,15 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,8 +52,6 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.DropDownButton;
@@ -65,6 +60,7 @@ import org.weasis.core.api.gui.util.GroupCheckBoxMenu;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagUtil;
@@ -72,33 +68,25 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LocalUtil;
-import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.ImportDicom;
-import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.RetrieveType;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
-import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.op.CFind;
-import org.weasis.dicom.op.CGet;
-import org.weasis.dicom.op.CMove;
 import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomParam;
-import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
-import org.weasis.dicom.qr.manisfest.ManifestBuilder;
 import org.weasis.dicom.tool.DicomListener;
 
 import com.github.lgooddatepicker.components.DatePicker;
@@ -180,13 +168,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     private static final String LAST_SEL_NODE = "lastSelNode"; //$NON-NLS-1$
     private static final String LAST_CALLING_NODE = "lastCallingNode"; //$NON-NLS-1$
     private static final String LAST_RETRIEVE_TYPE = "lastRetrieveType"; //$NON-NLS-1$
-    private static final File tempDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "qr")); //$NON-NLS-1$ //$NON-NLS-2$
+    static final File tempDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "qr")); //$NON-NLS-1$ //$NON-NLS-2$
 
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
-    private final JPanel panelBase = new JPanel();
+    private final JPanel basePanel = new JPanel();
     private final JPanel panelGroup = new JPanel();
-    private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
+    private final JComboBox<AbstractDicomNode> comboDestinationNode = new JComboBox<>();
     private final JTextField tfSearch = new JTextField();
     private final DicomModel dicomModel = new DicomModel();
     private final RetrieveTree tree = new RetrieveTree(dicomModel);
@@ -233,9 +221,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     private final ActionListener destNodeListener = evt -> applySelectedArchive();
     private final DatePicker startDatePicker = buildDatePicker();
     private final DatePicker endDatePicker = buildDatePicker();
-    JComboBox<RetrieveType> comboDicomRetrieveType = new JComboBox<>(RetrieveType.values());
-    JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
+    private final JComboBox<RetrieveType> comboDicomRetrieveType = new JComboBox<>(RetrieveType.values());
+    private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
     private final DicomListener dicomListener;
+    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Q/R task");
 
     public DicomQrView() {
         super(Messages.getString("DicomQrView.title")); //$NON-NLS-1$
@@ -256,13 +245,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     public void initGUI() {
         setLayout(new BorderLayout());
-        panelBase.setLayout(new BoxLayout(panelBase, BoxLayout.Y_AXIS));
-        panelBase.add(getArchivePanel());
-        panelBase.add(getCallingNodePanel());
-        panelBase.add(getSearchPanel());
-        panelBase.add(getCtrlSearchPanel());
+        basePanel.setLayout(new BoxLayout(basePanel, BoxLayout.Y_AXIS));
+        basePanel.add(getArchivePanel());
+        basePanel.add(getCallingNodePanel());
+        basePanel.add(getSearchPanel());
+        basePanel.add(getCtrlSearchPanel());
 
-        add(panelBase, BorderLayout.NORTH);
+        add(basePanel, BorderLayout.NORTH);
     }
 
     public JPanel getArchivePanel() {
@@ -272,9 +261,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         sPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
         JLabel lblDest = new JLabel(Messages.getString("DicomQrView.arc") + StringUtil.COLON); //$NON-NLS-1$
         sPanel.add(lblDest);
-        JMVUtils.setPreferredWidth(comboNode, 185, 185);
-        AbstractDicomNode.addTooltipToComboList(comboNode);
-        sPanel.add(comboNode);
+        JMVUtils.setPreferredWidth(comboDestinationNode, 185, 185);
+        AbstractDicomNode.addTooltipToComboList(comboDestinationNode);
+        sPanel.add(comboDestinationNode);
 
         sPanel.add(Box.createHorizontalStrut(10));
         JLabel lblTetrieve = new JLabel("Retrieve" + StringUtil.COLON);
@@ -435,8 +424,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
         if (p.isEmpty()) {
             String message = "Do you really want to execute a query with empty parameters ?";
-            int response = JOptionPane.showOptionDialog(this, message, getTitle(), JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE, null, null, null);
+            int response = JOptionPane.showOptionDialog(WinUtil.getParentDialog(this), message, getTitle(),
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, null, null);
             if (response != 0) {
                 return;
             }
@@ -461,7 +450,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         addReturnTags(p, new DicomParam(Tag.NumberOfStudyRelatedSeries));
         addReturnTags(p, new DicomParam(Tag.NumberOfStudyRelatedInstances));
 
-        AbstractDicomNode selectedItem = (AbstractDicomNode) comboNode.getSelectedItem();
+        AbstractDicomNode selectedItem = (AbstractDicomNode) comboDestinationNode.getSelectedItem();
         AbstractDicomNode callingNode = (AbstractDicomNode) comboCallingNode.getSelectedItem();
         if (selectedItem instanceof DefaultDicomNode && callingNode instanceof DefaultDicomNode) {
             final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
@@ -476,7 +465,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                 displayResult(state);
             } else {
                 LOGGER.error("Dicom cfind error: {}", state.getMessage()); //$NON-NLS-1$
-                GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(panelBase, state.getMessage(), null,
+                GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(basePanel, state.getMessage(), null,
                     JOptionPane.ERROR_MESSAGE));
             }
         } else if (selectedItem instanceof DicomWebNode) {
@@ -577,11 +566,11 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
             AbstractDicomNode.UsageType.RETRIEVE);
         restoreNodeSelection(comboCallingNode.getModel(), LAST_CALLING_NODE);
 
-        comboNode.removeActionListener(destNodeListener);
-        comboNode.removeAllItems();
-        AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.RETRIEVE);
+        comboDestinationNode.removeActionListener(destNodeListener);
+        comboDestinationNode.removeAllItems();
+        AbstractDicomNode.loadDicomNodes(comboDestinationNode, AbstractDicomNode.Type.DICOM, UsageType.RETRIEVE);
         // AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.RETRIEVE);
-        restoreNodeSelection(comboNode.getModel(), LAST_SEL_NODE);
+        restoreNodeSelection(comboDestinationNode.getModel(), LAST_SEL_NODE);
         String lastType = DicomQrFactory.IMPORT_PERSISTENCE.getProperty(LAST_RETRIEVE_TYPE);
         if (lastType != null) {
             try {
@@ -591,11 +580,11 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
             }
         }
         applySelectedArchive();
-        comboNode.addActionListener(destNodeListener);
+        comboDestinationNode.addActionListener(destNodeListener);
     }
 
     private void applySelectedArchive() {
-        Object selectedItem = comboNode.getSelectedItem();
+        Object selectedItem = comboDestinationNode.getSelectedItem();
         boolean dcmOption = selectedItem instanceof DefaultDicomNode;
         comboDicomRetrieveType.setEnabled(dcmOption);
         comboCallingNode.setEnabled(dcmOption);
@@ -635,7 +624,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     }
 
     public void applyChange() {
-        nodeSelectionPersistence((AbstractDicomNode) comboNode.getSelectedItem(), LAST_SEL_NODE);
+        nodeSelectionPersistence((AbstractDicomNode) comboDestinationNode.getSelectedItem(), LAST_SEL_NODE);
         nodeSelectionPersistence((AbstractDicomNode) comboCallingNode.getSelectedItem(), LAST_CALLING_NODE);
         RetrieveType type = (RetrieveType) comboDicomRetrieveType.getSelectedItem();
         if (type != null) {
@@ -669,6 +658,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     @Override
     public void closeAdditionalWindow() {
         applyChange();
+        executor.shutdown();
     }
 
     @Override
@@ -692,195 +682,34 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     @Override
     public void importDICOM(DicomModel explorerDcmModel, JProgressBar info) {
-        ExplorerTask task = new ExplorerTask(AbstractDicomNode.UsageType.RETRIEVE.toString(), false,
-            new CircularProgressBar(0, 100), false) {
-
-            @Override
-            protected Boolean doInBackground() throws Exception {
-                return retrieveDICOM(explorerDcmModel, this);
-            }
-
-            @Override
-            protected void done() {
-                explorerDcmModel.firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, explorerDcmModel, null, this));
-            }
-        };
-        task.execute();
-    }
-
-    public boolean retrieveDICOM(DicomModel explorerDcmModel, final ExplorerTask task) {
-        explorerDcmModel.firePropertyChange(
-            new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, explorerDcmModel, null, task));
-
-        String errorMessage = null;
-        final CircularProgressBar progressBar = task.getBar();
-        DicomProgress progress = new DicomProgress();
-        progress.addProgressListener(p -> {
-            GuiExecutor.instance().execute(() -> {
-                int c = p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
-                int r = p.getNumberOfRemainingSuboperations();
-                int t = c + r;
-                if (t > 0) {
-                    progressBar.setValue((c * 100) / t);
-                }
-            });
-        });
-        
-        task.addCancelListener(progress);
-
         List<String> studies = getCheckedStudies(tree.getCheckboxTree().getCheckingPaths());
-
-        DicomParam[] dcmParams = { new DicomParam(Tag.StudyInstanceUID, studies.toArray(new String[studies.size()])) };
-
-        Object selectedItem = comboNode.getSelectedItem();
-        if (selectedItem instanceof DefaultDicomNode) {
-            final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
-            DefaultDicomNode callingNode = (DefaultDicomNode) comboCallingNode.getSelectedItem();
-            if (callingNode == null) {
-                errorMessage = "No calling DICOM node configured for retrieve";
-            } else {
-                final DicomState state;
-                RetrieveType type = (RetrieveType) comboDicomRetrieveType.getSelectedItem();
-                AdvancedParams params = new AdvancedParams();
-                ConnectOptions connectOptions = new ConnectOptions();
-                connectOptions.setConnectTimeout(3000);
-                connectOptions.setAcceptTimeout(5000);
-                params.setConnectOptions(connectOptions);
-                if (RetrieveType.CGET == type) {
-                    progressBar.setIndeterminate(true);
-                    File sopClass = ResourceUtil.getResource("store-tcs.properties");
-                    URL url = null;
-                    if(sopClass.canRead()) {
-                        try {
-                            url = sopClass.toURI().toURL();
-                        } catch (MalformedURLException e) {
-                            LOGGER.error("SOP Class url conversion", e);
-                        }
-                    }
-                    state = CGet.process(params, callingNode.getDicomNode(), node.getDicomNode(), progress, tempDir,
-                        url, dcmParams);
-                } else if (RetrieveType.CMOVE == type) {
-                    try {
-                        if (dicomListener == null) {
-                            errorMessage = "Cannot start a DICOM listener";
-                        } else {
-                            dicomListener.setParams(params);
-                            if (dicomListener.isRunning()) {
-                                errorMessage = "A DICOM C-Move already running";
-                            } else {
-                                dicomListener.start(callingNode.getDicomNode());
-                            }
-                        }
-                    } catch (Exception e) {
-                        dicomListener.stop();
-                        errorMessage = String.format("Cannot a start DICOM listener: %s.", e.getMessage());
-                        LOGGER.error("Start DICOM listener", e);
-                    }
-
-                    if (errorMessage != null) {
-                        state = new DicomState(Status.UnableToProcess, errorMessage, null);
-                    } else {
-                        state = CMove.process(null, callingNode.getDicomNode(), node.getDicomNode(),
-                            callingNode.getAeTitle(), progress, dcmParams);
-                        dicomListener.stop();
-                    }
-                } else if (RetrieveType.WADO == type) {
-                    List<AbstractDicomNode> webNodes = AbstractDicomNode.loadDicomNodes(AbstractDicomNode.Type.WEB,
-                        AbstractDicomNode.UsageType.RETRIEVE);
-                    String host = getHostname(node.getDicomNode().getHostname());
-                    List<URL> wadoURLs = new ArrayList<>();
-                    for (AbstractDicomNode n : webNodes) {
-                        if (n instanceof DicomWebNode) {
-                            DicomWebNode wn = (DicomWebNode) n;
-                            URL url = wn.getUrl();
-                            if (DicomWebNode.WebType.WADO == wn.getWebType() && url != null
-                                && host.equals(getHostname(url.getHost()))) {
-                                wadoURLs.add(url);
-                            }
-                        }
-                    }
-                    if (wadoURLs.isEmpty()) {
-                        GuiExecutor.instance()
-                            .execute(() -> JOptionPane.showMessageDialog(panelBase,
-                                "No URL matchs with DICOM query hostname. Add a new WEB node.",
-                                RetrieveType.WADO.toString(), JOptionPane.ERROR_MESSAGE));
-                        return false;
-                    }
-                    if (wadoURLs.size() > 1) {
-                        GuiExecutor.instance().invokeAndWait(() -> {
-                            Object[] options = wadoURLs.toArray();
-                            Object response = JOptionPane.showInputDialog(panelBase,
-                                "Several URLs match, please select one", RetrieveType.WADO.toString(),
-                                JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-
-                            if (response != null) {
-                                wadoURLs.clear();
-                                wadoURLs.add((URL) response);
-                            }
-                        });
-                    }
-
-                    WadoParameters wadoParameters =
-                        new WadoParameters(wadoURLs.get(0).toString(), false, null, null, null);
-                    ManifestBuilder manifest = new ManifestBuilder();
-                    manifest.fillSeries(params, callingNode.getDicomNode(), node.getDicomNode(), dicomModel, studies);
-                    String wadoXmlGenerated = manifest.xmlManifest(wadoParameters, null);
-                    if (wadoXmlGenerated == null) {
-                        state = new DicomState(Status.UnableToProcess, "Cannot build WADO manifest", null);
-                    } else {
-                        List<String> xmlFiles = new ArrayList<>(1);
-                        try {
-                            File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                            FileUtil.writeStreamWithIOException(
-                                new ByteArrayInputStream(wadoXmlGenerated.getBytes(StandardCharsets.UTF_8)), tempFile);
-                            xmlFiles.add(tempFile.getPath());
-
-                        } catch (Exception e) {
-                            LOGGER.info("ungzip manifest", e); //$NON-NLS-1$
-                        }
-
-                        DicomModel.LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(xmlFiles, explorerDcmModel));
-                        return true;
-                    }
-                } else {
-                    state = new DicomState(Status.UnableToProcess, "Not supported retrieve type", null);
-                }
-
-                if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
-                    errorMessage = state.getMessage();
-                    if (!StringUtil.hasText(errorMessage)) {
-                        DicomState.buildMessage(state, null, null);
-                    }
-                    if (!StringUtil.hasText(errorMessage)) {
-                        errorMessage = "Unexpected DICOM error";
-                    }
-                    LOGGER.error("Dicom retrieve error: {}", errorMessage); //$NON-NLS-1$
-                }
-                DicomModel.LOADING_EXECUTOR
-                    .execute(new LoadLocalDicom(new File[] { tempDir }, false, explorerDcmModel));
-            }
-
-        } else if (selectedItem instanceof DicomWebNode) {
-            throw new IllegalAccessError("Not implemented yet");
-        } else {
-            errorMessage = "No calling DICOM node configured for retrieve";
+        if (!studies.isEmpty()) {
+            executor.execute(new RetrieveTask(studies, explorerDcmModel, this));
         }
-
-        if (errorMessage != null) {
-            final String mes = errorMessage;
-            final String errorTitle = StringUtil.getEmpty2NullObject(comboDicomRetrieveType.getSelectedItem());
-            GuiExecutor.instance()
-                .execute(() -> JOptionPane.showMessageDialog(panelBase, mes, errorTitle, JOptionPane.ERROR_MESSAGE));
-        }
-
-        return errorMessage == null;
     }
 
-    private static String getHostname(String host) {
-        if ("127.0.0.1".equals(host) || "::1".equals(host)) {
-            return "localhost";
-        }
-        return host;
+    public JComboBox<AbstractDicomNode> getComboDestinationNode() {
+        return comboDestinationNode;
     }
+
+    public JComboBox<RetrieveType> getComboDicomRetrieveType() {
+        return comboDicomRetrieveType;
+    }
+
+    public JComboBox<AbstractDicomNode> getComboCallingNode() {
+        return comboCallingNode;
+    }
+
+    public DicomListener getDicomListener() {
+        return dicomListener;
+    }
+
+    public JPanel getBasePanel() {
+        return basePanel;
+    }
+
+    public DicomModel getDicomModel() {
+        return dicomModel;
+    }
+
 }

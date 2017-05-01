@@ -16,9 +16,10 @@ import java.util.List;
 import javax.swing.SwingWorker;
 
 import org.weasis.core.api.gui.task.CircularProgressBar;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.dicom.param.CancelListener;
 
-public abstract class ExplorerTask extends SwingWorker<Boolean, String> {
+public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
     private final String message;
     private final boolean globalLoadingManager;
     private final CircularProgressBar bar;
@@ -32,12 +33,16 @@ public abstract class ExplorerTask extends SwingWorker<Boolean, String> {
     public ExplorerTask(String message, boolean globalLoadingManager, CircularProgressBar bar, boolean subTask) {
         this.message = message;
         this.globalLoadingManager = globalLoadingManager;
-        this.bar = bar;
+        // Trick to keep progressBar with a final modifier to be instantiated in EDT (required by substance)
+        final CircularProgressBar[] tmp = new CircularProgressBar[1];
+        GuiExecutor.instance().invokeAndWait(() -> tmp[0] = new CircularProgressBar(0, 100));
+        this.bar = tmp[0];
         this.subTask = subTask;
         this.cancelListeners = new ArrayList<>();
     }
 
     public boolean cancel() {
+        stopProgress();
         fireProgress();
         return this.cancel(true);
     }
@@ -57,7 +62,10 @@ public abstract class ExplorerTask extends SwingWorker<Boolean, String> {
     public boolean isSubTask() {
         return subTask;
     }
-    
+
+    public void stopProgress() {
+        bar.setIndeterminate(false);
+    }
 
     public void addCancelListener(CancelListener listener) {
         if (listener != null && !cancelListeners.contains(listener)) {
@@ -69,6 +77,10 @@ public abstract class ExplorerTask extends SwingWorker<Boolean, String> {
         if (listener != null) {
             cancelListeners.remove(listener);
         }
+    }
+
+    public void removeAllCancelListeners() {
+        cancelListeners.clear();
     }
 
     private void fireProgress() {

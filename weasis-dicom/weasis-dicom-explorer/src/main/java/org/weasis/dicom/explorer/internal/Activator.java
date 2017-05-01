@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer.internal;
 
 import java.io.File;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -22,6 +23,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.wado.DicomManager;
+import org.weasis.dicom.explorer.wado.DownloadManager;
 
 public class Activator implements BundleActivator {
 
@@ -47,5 +49,7 @@ public class Activator implements BundleActivator {
             // Remove image in viewers, in image cache and close the image stream
             ((DicomModel) dexp.getDataExplorerModel()).dispose();
         }
+        DownloadManager.CONCURRENT_EXECUTOR.awaitTermination(5, TimeUnit.SECONDS);
+        DicomModel.LOADING_EXECUTOR.awaitTermination(5, TimeUnit.SECONDS);
     }
 }

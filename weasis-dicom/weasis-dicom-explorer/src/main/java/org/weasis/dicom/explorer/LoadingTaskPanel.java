@@ -28,11 +28,11 @@ import org.weasis.dicom.explorer.wado.DownloadManager;
 public class LoadingTaskPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    private final ExplorerTask task;
+    private final ExplorerTask<?, ?> task;
     private final boolean globalLoadingManager;
     private final JLabel message = new JLabel();
 
-    public LoadingTaskPanel(ExplorerTask task) {
+    public LoadingTaskPanel(ExplorerTask<?, ?> task) {
         this.task = task;
         this.globalLoadingManager = task.isGlobalLoadingManager();
         init();
@@ -102,7 +102,6 @@ public class LoadingTaskPanel extends JPanel {
             JButton cancelButton =
                 new JButton(new ImageIcon(UIManager.class.getResource("/icon/22x22/process-stop.png"))); //$NON-NLS-1$
             cancelButton.addActionListener(e -> {
-                // TODO set indeterminate false
                 message.setText(Messages.getString("LoadingTaskPanel.abording")); //$NON-NLS-1$
                 if (task != null) {
                     task.cancel();
@@ -112,11 +111,8 @@ public class LoadingTaskPanel extends JPanel {
             this.add(cancelButton);
             if (task != null) {
                 CircularProgressBar globalProgress = task.getBar();
-                if (globalProgress == null) {
-                    globalProgress = new CircularProgressBar(0, 100);
-                    globalProgress.setIndeterminate(true);
-                }
                 this.add(globalProgress);
+                globalProgress.setIndeterminate(true); 
             }
         }
         if (task != null) {
@@ -134,5 +130,4 @@ public class LoadingTaskPanel extends JPanel {
     public ExplorerTask getTask() {
         return task;
     }
-
 }
