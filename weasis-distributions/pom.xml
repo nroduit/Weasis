@@ -710,7 +710,7 @@
 										<path>jre/windows</path>
 										<minVersion>1.8.0</minVersion>
 										<initialHeapSize>64</initialHeapSize>
-										<maxHeapSize>512</maxHeapSize>
+										<maxHeapSize>768</maxHeapSize>
 										<!-- Optional, defaults to 64/32; Allows to select between 64-bit 
 											and 32-bit runtimes: 1) "64" Use only 64-bit runtimes. 2) "64/32" Use 64-bit 
 											runtimes if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes 
