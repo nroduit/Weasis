@@ -108,6 +108,10 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
         imageListPane.repaintList();
         imageListPane.revalidate();
         imageListPane.repaint();
+        refreshInfoGUI();
+    }
+    
+    protected void refreshInfoGUI() {
         imageInfo.refreshGUI();
     }
 

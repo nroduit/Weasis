@@ -25,7 +25,7 @@ import org.weasis.dicom.codec.TagD;
 
 public class Global extends AbstractTagable {
 
-    private static final Integer PatientDicomGroupNumber = Integer.parseInt("0010", 16); //$NON-NLS-1$
+    private static final Integer patientDicomGroupNumber = Integer.parseInt("0010", 16); //$NON-NLS-1$
 
     protected boolean allowFullEdition = true;
 
@@ -67,7 +67,7 @@ public class Global extends AbstractTagable {
 
                     Optional.ofNullable(nodeList.item(i))
                         .ifPresent(node -> Optional.ofNullable(TagD.get(node.getNodeName())).ifPresent(tag -> {
-                            if (TagUtils.groupNumber(tag.getId()) != PatientDicomGroupNumber) {
+                            if (TagUtils.groupNumber(tag.getId()) != patientDicomGroupNumber) {
                                 tag.readValue(node.getTextContent(), this);
                             }
                         }));
@@ -90,7 +90,7 @@ public class Global extends AbstractTagable {
      * @return
      */
     public boolean containsSamePatientTagValues(Document xmlDoc) {
-        return containsSameTagValues(xmlDoc, PatientDicomGroupNumber);
+        return containsSameTagValues(xmlDoc, patientDicomGroupNumber);
     }
 
     /**

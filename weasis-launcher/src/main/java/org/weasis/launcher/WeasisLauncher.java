@@ -448,7 +448,8 @@ public class WeasisLauncher {
         FileUtil.storeProperties(sourceIdProps, localSourceProp, null);
     }
 
-    private static void showMessage(final WeasisFrame mainFrame, Map<String, String> serverProp, final Properties l_prop) {
+    private static void showMessage(final WeasisFrame mainFrame, Map<String, String> serverProp,
+        final Properties l_prop) {
         String versionOld = serverProp.get("prev." + P_WEASIS_VERSION); //$NON-NLS-1$
         String versionNew = serverProp.get(P_WEASIS_VERSION);
         // First time launch
@@ -718,7 +719,7 @@ public class WeasisLauncher {
             // Extended properties, add or override existing properties
             props = readProperties(propURI, props);
         }
-        
+
         // Perform variable substitution for system properties and
         // convert to dictionary.
         Map<String, String> map = new HashMap<>();
@@ -1043,7 +1044,8 @@ public class WeasisLauncher {
                 // Set look and feels
                 boolean substance = look.startsWith("org.pushingpixels"); //$NON-NLS-1$
                 if (substance) {
-                    JFrame.setDefaultLookAndFeelDecorated(true);
+                    // Keep system window for the main frame
+                    // JFrame.setDefaultLookAndFeelDecorated(true);
                     JDialog.setDefaultLookAndFeelDecorated(true);
                 }
                 look = setLookAndFeel(look);
