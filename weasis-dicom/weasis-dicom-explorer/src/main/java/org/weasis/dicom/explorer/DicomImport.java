@@ -14,8 +14,6 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -23,13 +21,15 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 
 public class DicomImport extends AbstractWizardDialog {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomImport.class);
 
     private boolean cancelVeto = false;
     private final DicomModel dicomModel;
@@ -40,37 +40,27 @@ public class DicomImport extends AbstractWizardDialog {
         this.dicomModel = dicomModel;
 
         final JButton importandClose = new JButton(Messages.getString("DicomImport.impAndClose0")); //$NON-NLS-1$
-        importandClose.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                importSelection();
-                cancel();
-            }
+        importandClose.addActionListener(e -> {
+            importSelection();
+            cancel();
         });
-        final GridBagConstraints gridBagConstraints_0 = new GridBagConstraints();
-        gridBagConstraints_0.insets = new Insets(10, 15, 10, 0);
-        gridBagConstraints_0.anchor = GridBagConstraints.EAST;
-        gridBagConstraints_0.gridy = 0;
-        gridBagConstraints_0.gridx = 0;
-        gridBagConstraints_0.weightx = 1.0;
-        jPanelButtom.add(importandClose, gridBagConstraints_0);
+        final GridBagConstraints gridBagConstraints0 = new GridBagConstraints();
+        gridBagConstraints0.insets = new Insets(10, 15, 10, 0);
+        gridBagConstraints0.anchor = GridBagConstraints.EAST;
+        gridBagConstraints0.gridy = 0;
+        gridBagConstraints0.gridx = 0;
+        gridBagConstraints0.weightx = 1.0;
+        jPanelButtom.add(importandClose, gridBagConstraints0);
 
         final JButton importButton = new JButton();
-        importButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                importSelection();
-            }
-        });
+        importButton.addActionListener(e -> importSelection());
         importButton.setText(Messages.getString("DicomImport.imp")); //$NON-NLS-1$
-        final GridBagConstraints gridBagConstraints_1 = new GridBagConstraints();
-        gridBagConstraints_1.insets = new Insets(10, 15, 10, 0);
-        gridBagConstraints_1.anchor = GridBagConstraints.EAST;
-        gridBagConstraints_1.gridy = 0;
-        gridBagConstraints_1.gridx = 1;
-        jPanelButtom.add(importButton, gridBagConstraints_1);
+        final GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
+        gridBagConstraints1.insets = new Insets(10, 15, 10, 0);
+        gridBagConstraints1.anchor = GridBagConstraints.EAST;
+        gridBagConstraints1.gridy = 0;
+        gridBagConstraints1.gridx = 1;
+        jPanelButtom.add(importButton, gridBagConstraints1);
 
         initializePages();
         pack();
@@ -96,8 +86,8 @@ public class DicomImport extends AbstractWizardDialog {
                     }
                 }
             }
-        } catch (InvalidSyntaxException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.error("init import pages", e);
         }
 
         InsertableUtil.sortInsertable(list);

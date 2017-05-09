@@ -13,6 +13,8 @@ package org.weasis.dicom.explorer.pref.node;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -52,8 +54,9 @@ public abstract class AbstractDicomNode {
     protected static final String T_TSUID = "tsuid"; //$NON-NLS-1$
 
     public enum Type {
-        DICOM("DICOM Node", "dicomNodes.xml"), PRINTER("DICOM Printer", "dicomPrinterNodes.xml"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        WEB("WEB Node", "dicomWebNodes.xml"); //$NON-NLS-1$ //$NON-NLS-2$
+        DICOM("DICOM Node", "dicomNodes.xml"), DICOM_CALLING("DICOM calling Node", "dicomCallingNodes.xml"),
+        PRINTER("DICOM Printer", "dicomPrinterNodes.xml"), WEB("WEB Node", "dicomWebNodes.xml"),
+        WEB_QIDO("WEB QIDO-RS/WADO-RS Node", "dicomWebQidoNodes.xml");
 
         final String title;
         final String filename;
@@ -74,11 +77,27 @@ public abstract class AbstractDicomNode {
     }
 
     public enum UsageType {
-        STORAGE(Messages.getString("AbstractDicomNode.storage")), RETRIEVE(Messages.getString("AbstractDicomNode.retrieve")), BOTH(Messages.getString("AbstractDicomNode.both")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        STORAGE(Messages.getString("AbstractDicomNode.storage")), //$NON-NLS-1$
+        RETRIEVE(Messages.getString("AbstractDicomNode.retrieve")), BOTH(Messages.getString("AbstractDicomNode.both")); //$NON-NLS-1$ //$NON-NLS-2$
 
         final String title;
 
         UsageType(String title) {
+            this.title = title;
+        }
+
+        @Override
+        public String toString() {
+            return title;
+        }
+    }
+
+    public enum RetrieveType {
+        CMOVE("C-MOVE"), CGET("C-GET"), WADO("WADO"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+        String title;
+
+        RetrieveType(String title) {
             this.title = title;
         }
 
@@ -167,13 +186,22 @@ public abstract class AbstractDicomNode {
     }
 
     public static void loadDicomNodes(JComboBox<AbstractDicomNode> comboBox, Type type, UsageType usage) {
+        List<AbstractDicomNode> list = loadDicomNodes(type, usage);
+        for (AbstractDicomNode node : list) {
+            comboBox.addItem(node);
+        }
+    }
+
+    public static List<AbstractDicomNode> loadDicomNodes(Type type, UsageType usage) {
+        List<AbstractDicomNode> list = new ArrayList<>();
         // Load nodes from resources
-        loadDicomNodes(comboBox, ResourceUtil.getResource(type.getFilename()), type, false, usage);
+        loadDicomNodes(list, ResourceUtil.getResource(type.getFilename()), type, false, usage);
 
         // Load nodes from local data
         final BundleContext context = FrameworkUtil.getBundle(AbstractDicomNode.class).getBundleContext();
-        loadDicomNodes(comboBox, new File(BundlePreferences.getDataFolder(context), type.getFilename()), type, true,
-            usage);
+        loadDicomNodes(list, new File(BundlePreferences.getDataFolder(context), type.getFilename()), type, true, usage);
+
+        return list;
     }
 
     public static void saveDicomNodes(JComboBox<? extends AbstractDicomNode> comboBox, Type type) {
@@ -204,7 +232,7 @@ public abstract class AbstractDicomNode {
         }
     }
 
-    private static void loadDicomNodes(JComboBox<AbstractDicomNode> comboBox, File prefs, Type type, boolean local,
+    private static void loadDicomNodes(List<AbstractDicomNode> list, File prefs, Type type, boolean local,
         UsageType usage) {
         if (prefs.canRead()) {
             XMLStreamReader xmler = null;
@@ -216,7 +244,7 @@ public abstract class AbstractDicomNode {
                     eventType = xmler.next();
                     switch (eventType) {
                         case XMLStreamConstants.START_ELEMENT:
-                            readDicomNodes(xmler, comboBox, type, local, usage);
+                            readDicomNodes(xmler, list, type, local, usage);
                             break;
                         default:
                             break;
@@ -230,15 +258,15 @@ public abstract class AbstractDicomNode {
         }
     }
 
-    private static void readDicomNodes(XMLStreamReader xmler, JComboBox<AbstractDicomNode> comboBox, Type type,
-        boolean local, UsageType usage) throws XMLStreamException {
+    private static void readDicomNodes(XMLStreamReader xmler, List<AbstractDicomNode> list, Type type, boolean local,
+        UsageType usage) throws XMLStreamException {
         String key = xmler.getName().getLocalPart();
         if (T_NODES.equals(key)) {
             while (xmler.hasNext()) {
                 int eventType = xmler.next();
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
-                        readDicomNode(xmler, comboBox, type, local, usage);
+                        readDicomNode(xmler, list, type, local, usage);
                         break;
                     default:
                         break;
@@ -247,8 +275,8 @@ public abstract class AbstractDicomNode {
         }
     }
 
-    private static void readDicomNode(XMLStreamReader xmler, JComboBox<AbstractDicomNode> comboBox, Type type,
-        boolean local, UsageType usage) throws XMLStreamException {
+    private static void readDicomNode(XMLStreamReader xmler, List<AbstractDicomNode> list, Type type, boolean local,
+        UsageType usage) throws XMLStreamException {
         String key = xmler.getName().getLocalPart();
         if (T_NODE.equals(key)) {
             try {
@@ -276,7 +304,7 @@ public abstract class AbstractDicomNode {
                 node.setLocal(local);
                 node.setType(t);
 
-                comboBox.addItem(node);
+                list.add(node);
             } catch (Exception e) {
                 LOGGER.error("Cannot read DicomNode: {}", e); //$NON-NLS-1$
             }

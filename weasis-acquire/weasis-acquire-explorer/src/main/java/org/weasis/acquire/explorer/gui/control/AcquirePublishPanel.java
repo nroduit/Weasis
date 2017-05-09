@@ -11,6 +11,7 @@
 package org.weasis.acquire.explorer.gui.control;
 
 import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -64,42 +65,39 @@ public class AcquirePublishPanel extends JPanel {
     public void publishDirDicom(File exportDirDicom, DicomNode destinationNode) {
 
         SwingWorker<DicomState, File> publishDicomTask = new PublishDicomTask(exportDirDicom, destinationNode);
-        publishDicomTask.addPropertyChangeListener(evt -> {
-            if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
-                int progress = (Integer) evt.getNewValue();
-                progressBar.setValue(progress);
-
-            } else if ("state" == evt.getPropertyName()) { //$NON-NLS-1$
-
-                if (StateValue.STARTED == evt.getNewValue()) {
-                    publishBtn.setEnabled(false);
-                    progressBar.setVisible(true);
-                    progressBar.setValue(0);
-
-                } else if (StateValue.DONE == evt.getNewValue()) {
-                    try {
-                        final DicomState dicomState = publishDicomTask.get();
-
-                        if (dicomState.getStatus() != Status.Success) {
-                            LOGGER.error("Dicom send error: {}", dicomState.getMessage()); //$NON-NLS-1$
-                            JOptionPane.showOptionDialog(WinUtil.getParentWindow(AcquirePublishPanel.this),
-                                String.format("DICOM send error: %s", dicomState.getMessage()), null, //$NON-NLS-1$
-                                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null);
-                        }
-                        else if(dicomState.getProgress().getNumberOfFailedSuboperations() > 0){
-                            LOGGER.error("{} dicom send operations failed", dicomState.getProgress().getNumberOfFailedSuboperations()); //$NON-NLS-1$
-                            JOptionPane.showOptionDialog(WinUtil.getParentWindow(AcquirePublishPanel.this),
-                                String.format("DICOM send error: %d operations", dicomState.getProgress().getNumberOfFailedSuboperations()), null, //$NON-NLS-1$
-                                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null);
-                        }
-                    } catch (InterruptedException | ExecutionException doNothing) {
-                    }
-                    publishBtn.setEnabled(true);
-                    progressBar.setVisible(false);
-                }
-            }
-        });
+        publishDicomTask.addPropertyChangeListener(this::publishChanged);
 
         PUBLISH_DICOM.execute(publishDicomTask);
+    }
+    
+    private void publishChanged(PropertyChangeEvent evt) {
+        if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
+            int progress = (Integer) evt.getNewValue();
+            progressBar.setValue(progress);
+
+        } else if ("state" == evt.getPropertyName()) { //$NON-NLS-1$
+            if (StateValue.STARTED == evt.getNewValue()) {
+                publishBtn.setEnabled(false);
+                progressBar.setVisible(true);
+                progressBar.setValue(0);
+            } else if (StateValue.DONE == evt.getNewValue()) {
+                try {
+                    SwingWorker<DicomState, File> publishDicomTask = (SwingWorker<DicomState, File>) evt.getSource();
+                    final DicomState dicomState = publishDicomTask.get();
+                    if (dicomState.getStatus() != Status.Success && dicomState.getStatus() != Status.Cancel) {
+                        LOGGER.error("Dicom send error: {}", dicomState.getMessage()); //$NON-NLS-1$
+                        JOptionPane.showMessageDialog(WinUtil.getParentWindow(AcquirePublishPanel.this),
+                            dicomState.getMessage(), null, // $NON-NLS-1$
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (InterruptedException e) {
+                    LOGGER.warn("Retrieving task Interruption"); //$NON-NLS-1$
+                } catch (ExecutionException e) {
+                    LOGGER.error("Retrieving task", e); //$NON-NLS-1$
+                }
+                publishBtn.setEnabled(true);
+                progressBar.setVisible(false);
+            }
+        }
     }
 }

@@ -229,6 +229,10 @@ public class AcquireTabPanel extends JPanel {
         imageList.refreshGUI();
         serieList.refreshGUI();
     }
+    
+    public void refreshInfoGUI() {
+        imageList.refreshInfoGUI();
+    }
 
     public void moveElements(SeriesGroup seriesGroup, List<AcquireImageInfo> medias) {
         removeImages(selected.getSerie(), medias);

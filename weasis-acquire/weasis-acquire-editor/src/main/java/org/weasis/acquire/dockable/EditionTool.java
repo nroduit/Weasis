@@ -127,6 +127,8 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
                     AcquireActionButton button = topPanel.getSelected();
                     button.getAcquireAction().validate(old, oldView);
                 }
+                // Commit current editable
+                centralPanel.stopEditing();
             }
         }
     }

@@ -124,7 +124,7 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.pushingpixels</groupId>
+			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>substance</artifactId>
 			<version>7.0.1</version>
 		</dependency>

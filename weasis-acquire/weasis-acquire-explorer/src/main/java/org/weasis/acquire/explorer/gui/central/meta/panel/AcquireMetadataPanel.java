@@ -11,9 +11,12 @@
 package org.weasis.acquire.explorer.gui.central.meta.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import javax.swing.AbstractCellEditor;
@@ -37,20 +40,24 @@ import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableMo
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
-import org.weasis.dicom.codec.enums.BodyPartExaminated;
 
+import com.github.lgooddatepicker.components.DatePickerSettings;
+import com.github.lgooddatepicker.components.DatePickerSettings.DateArea;
 import com.github.lgooddatepicker.tableeditors.DateTableEditor;
 import com.github.lgooddatepicker.tableeditors.TimeTableEditor;
 
 @SuppressWarnings("serial")
 public abstract class AcquireMetadataPanel extends JPanel implements TableModelListener {
-    protected String title;
-    protected JLabel label = new JLabel();
-    protected JTable table;
-    protected JScrollPane tableScroll;
+    protected final String title;
+    protected final  JLabel label = new JLabel();
+    protected final JTable table;
+    protected final  JScrollPane tableScroll;
     protected AcquireImageInfo imageInfo;
     protected TitledBorder titleBorder;
 
@@ -80,6 +87,13 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
 
     public String getDisplayText() {
         return title;
+    }
+
+    public void stopEditing() {
+        TableCellEditor editor = table.getCellEditor();
+        if (editor != null) {
+            editor.stopCellEditing();
+        }
     }
 
     @Override
@@ -121,7 +135,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         JPanel tableContainer = new JPanel(new BorderLayout());
         int cheight =
             (height + table.getRowMargin()) * table.getRowCount() + table.getRowHeight() + table.getRowMargin();
-        tableContainer.setPreferredSize(new Dimension(table.getColumnModel().getTotalColumnWidth(), cheight));
+        tableContainer.setPreferredSize(new Dimension(150, cheight));
         tableContainer.add(table.getTableHeader(), BorderLayout.PAGE_START);
         tableContainer.add(table, BorderLayout.CENTER);
         tableScroll.setViewportView(tableContainer);
@@ -144,23 +158,49 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
             int row, int column) {
             Component val = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-            Object tag = table.getModel().getValueAt(row, 0);
+            AcquireMetadataTableModel model = (AcquireMetadataTableModel) table.getModel();
+            if (model.isCellEditable(row, column)) {
+                Color c = model.isValueRequired(row) && isEmptyValue(value) ? Color.RED : getForeground();
+                setBorder(BorderFactory.createDashedBorder(c, 2, 2));
+            }
+
+            Object tag = model.getValueAt(row, 0);
             if (tag instanceof TagW) {
                 setValue(((TagW) tag).getFormattedTagValue(value, null));
             }
             return val;
         }
+
+        private boolean isEmptyValue(Object value) {
+            if (value == null) {
+                return true;
+            }
+            if (value instanceof String) {
+                return !StringUtil.hasText((String) value);
+            }
+            return false;
+        }
+
     }
 
     @SuppressWarnings("serial")
     public static class AcquireImageCellEditor extends AbstractCellEditor implements TableCellEditor {
-        private static final JComboBox<BodyPartExaminated> bodyPartsCombo =
-            new JComboBox<>(BodyPartExaminated.values());
+        // TODO more anatomy: http://dicom.nema.org/medical/dicom/2016c/output/chtml/part03/sect_10.5.html
+        private static final JComboBox<String> bodyPartsCombo =
+            new JComboBox<>(getBodyPartValues("weasis.acquire.meta.body.part"));
         private static final JComboBox<TagD.Sex> sexCombo = new JComboBox<>(TagD.Sex.values());
-        private static final JComboBox<Modality> modalityCombo = new JComboBox<>(Modality.getAllModalitiesExceptDefault());
+        private static final JComboBox<Modality> modalityCombo =
+            new JComboBox<>(Modality.getAllModalitiesExceptDefault());
+        private static final JComboBox<String> studyDescCombo =
+            new JComboBox<>(getValues("weasis.acquire.meta.study.description", null));
+        private static final JComboBox<String> seriesDescCombo =
+            new JComboBox<>(getValues("weasis.acquire.meta.series.description", null));
         static {
-            bodyPartsCombo.setMaximumRowCount(15);
-            modalityCombo.setMaximumRowCount(15);
+            initCombo(bodyPartsCombo);
+            initCombo(sexCombo);
+            initCombo(modalityCombo);
+            initCombo(studyDescCombo);
+            initCombo(seriesDescCombo);
         }
 
         private Optional<TableCellEditor> editor;
@@ -169,12 +209,11 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         public Object getCellEditorValue() {
             return editor.map(e -> convertValue(e.getCellEditorValue())).orElse(null);
         }
-        
+
         private Object convertValue(Object val) {
-            if(val instanceof TagD.Sex){
+            if (val instanceof TagD.Sex) {
                 return ((TagD.Sex) val).getValue();
-            }
-            else if(val instanceof Modality){
+            } else if (val instanceof Modality) {
                 return ((Modality) val).name();
             }
             return val;
@@ -197,16 +236,15 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
             if (tagID == Tag.BodyPartExamined) {
                 cellEditor = new DefaultCellEditor(bodyPartsCombo);
             } else if (tagID == Tag.PatientSex) {
-                sexCombo.setSelectedItem(TagD.Sex.getSex(value == null ? null : value.toString()));
                 cellEditor = new DefaultCellEditor(sexCombo);
             } else if (tagID == Tag.Modality) {
-                modalityCombo.setSelectedItem(Modality.getModality(value == null ? null : value.toString()));
                 cellEditor = new DefaultCellEditor(modalityCombo);
+            } else if (tagID == Tag.StudyDescription) {
+                cellEditor = getCellEditor(studyDescCombo);
+            } else if (tagID == Tag.SeriesDescription) {
+                cellEditor = getCellEditor(seriesDescCombo);
             } else if (date) {
-                DateTableEditor teditor = new DateTableEditor(false, true, true);
-                teditor.getDatePickerSettings().setFontInvalidDate(FontTools.getFont11()); // Default size
-                teditor.getDatePickerSettings().setFontValidDate(FontTools.getFont11()); // Default size
-                teditor.getDatePickerSettings().setFontVetoedDate(FontTools.getFont11());// Default size
+                DateTableEditor teditor = buildDatePicker();
                 JMVUtils.setPreferredHeight(teditor.getDatePicker().getComponentToggleCalendarButton(),
                     table.getRowHeight(row));
                 cellEditor = teditor;
@@ -225,6 +263,98 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
             Component c = cellEditor.getTableCellEditorComponent(table, value, isSelected, row, column);
             c.setFont(FontTools.getFont11()); // Default size
             return c;
+        }
+
+        private static DefaultCellEditor getCellEditor(JComboBox<?> combo) {
+            if (combo.getItemCount() == 0) {
+                return new DefaultCellEditor(new JTextField());
+            } else {
+                return new DefaultCellEditor(combo);
+            }
+        }
+
+        private static void initCombo(JComboBox<?> combo) {
+            // Set before tooltip, otherwise update UI => remove selection listener
+            combo.setFont(FontTools.getFont11());
+            combo.setMaximumRowCount(15);
+            JMVUtils.setPreferredWidth(combo, 80);
+            // Update UI before adding the Tooltip feature in the combobox list
+            combo.updateUI();
+            JMVUtils.addTooltipToComboList(combo);
+        }
+
+        private DateTableEditor buildDatePicker() {
+            DateTableEditor d = new DateTableEditor(false, true, true);
+            DatePickerSettings settings = d.getDatePickerSettings();
+            settings.setFontInvalidDate(FontTools.getFont11());
+            settings.setFontValidDate(FontTools.getFont11());
+            settings.setFontVetoedDate(FontTools.getFont11());
+            Color btnBack = d.getDatePicker().getBackground();
+            JTextField tfSearch = new JTextField();
+            settings.setColor(DateArea.BackgroundOverallCalendarPanel, tfSearch .getBackground());
+            settings.setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
+            settings.setColor(DateArea.CalendarBackgroundNormalDates, btnBack);
+
+            // settings.setColor(DateArea.CalendarDefaultBackgroundHighlightedDates, tfSearch.getForeground());
+            // settings.setColor(DateArea.CalendarDefaultTextHighlightedDates, Color.ORANGE);
+            // settings.setColor(DateArea.CalendarBackgroundVetoedDates, Color.MAGENTA);
+            settings.setColor(DateArea.BackgroundClearLabel, btnBack);
+            settings.setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
+            settings.setColor(DateArea.BackgroundTodayLabel, btnBack);
+            settings.setColor(DateArea.BackgroundTopLeftLabelAboveWeekNumbers, btnBack);
+            settings.setColor(DateArea.BackgroundMonthAndYearMenuLabels, btnBack);
+
+            settings.setColor(DateArea.CalendarTextNormalDates, tfSearch.getForeground());
+            settings.setColor(DateArea.CalendarTextWeekdays, tfSearch.getForeground());
+            settings.setColor(DateArea.CalendarTextWeekNumbers, tfSearch.getForeground());
+
+            settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter());
+            settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter());
+            return d;
+        }
+
+        public static String[] getBodyPartValues(String property) {
+            String values = BundleTools.SYSTEM_PREFERENCES.getProperty(property, null);
+            if (values == null || !StringUtil.hasText(values)) {
+                return new String[] { "ABDOMEN", "ABDOMENPELVIS", "ADRENAL", "ANKLE", "AORTA", "ARM", "AXILLA", "BACK",
+                    "BLADDER", "BRAIN", "BREAST", "BRONCHUS", "BUTTOCK", "CALCANEUS", "CALF", "CAROTID", "CEREBELLUM",
+                    "CERVIX", "CHEEK", "CHEST", "CHESTABDOMEN", "CHESTABDPELVIS", "CIRCLEOFWILLIS", "CLAVICLE",
+                    "COCCYX", "COLON", "CORNEA", "CORONARYARTERY", "CSPINE", "CTSPINE", "DUODENUM", "EAR", "ELBOW",
+                    "ESOPHAGUS", "EXTREMITY", "EYE", "EYELID", "FACE", "FEMUR", "FINGER", "FOOT", "GALLBLADDER", "HAND",
+                    "HEAD", "HEADNECK", "HEART", "HIP", "HUMERUS", "IAC", "ILEUM", "ILIUM", "JAW", "JEJUNUM", "KIDNEY",
+                    "KNEE", "LARYNX", "LEG", "LIVER", "LSPINE", "LSSPINE", "LUNG", "MAXILLA", "MEDIASTINUM", "MOUTH",
+                    "NECK", "NECKCHEST", "NECKCHESTABDOMEN", "NECKCHESTABDPELV", "NOSE", "ORBIT", "OVARY", "PANCREAS",
+                    "PAROTID", "PATELLA", "PELVIS", "PENIS", "PHARYNX", "PROSTATE", "RADIUS", "RADIUSULNA", "RECTUM",
+                    "RIB", "SCALP", "SCAPULA", "SCLERA", "SCROTUM", "SHOULDER", "SKULL", "SPINE", "SPLEEN", "SSPINE",
+                    "STERNUM", "STOMACH", "SUBMANDIBULAR", "TESTIS", "THIGH", "THUMB", "THYMUS", "THYROID", "TIBIA",
+                    "TIBIAFIBULA", "TLSPINE", "TMJ", "TOE", "TONGUE", "TRACHEA", "TSPINE", "ULNA", "URETER", "URETHRA",
+                    "UTERUS", "VAGINA", "VULVA", "WHOLEBODY", "WRIST", "ZYGOMA" };
+            }
+            String[] val = values.split(",");
+            List<String> list = new ArrayList<>(val.length);
+            for (String s : val) {
+                String v = s.trim();
+                // VR must be CS
+                if (StringUtil.hasText(v) && v.length() <= 16) {
+                    list.add(v);
+                }
+            }
+            return list.toArray(new String[list.size()]);
+        }
+
+        public static String[] getValues(String property, String defaultValues) {
+            String values = BundleTools.SYSTEM_PREFERENCES.getProperty(property, defaultValues);
+            if (values == null) {
+                return new String[0];
+            }
+            String[] val = values.split(",");
+            List<String> list = new ArrayList<>(val.length);
+            for (String s : val) {
+                if (StringUtil.hasText(s)) {
+                    list.add(s.trim());
+                }
+            }
+            return list.toArray(new String[list.size()]);
         }
     }
 }

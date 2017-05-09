@@ -281,7 +281,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
 
-            final ExplorerTask task = new ExplorerTask(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
+            final ExplorerTask<Boolean, String> task = new ExplorerTask<Boolean, String>(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
 
                 @Override
                 protected Boolean doInBackground() throws Exception {

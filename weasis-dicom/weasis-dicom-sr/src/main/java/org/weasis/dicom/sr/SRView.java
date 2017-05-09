@@ -29,13 +29,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -86,6 +85,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         panel.setLayout(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         htmlPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        htmlPanel.setEditorKit(JMVUtils.buildHTMLEditorKit(htmlPanel));
         htmlPanel.setContentType("text/html"); //$NON-NLS-1$
         htmlPanel.setEditable(false);
         htmlPanel.addHyperlinkListener(e -> {
@@ -104,13 +104,6 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 }
             }
         });
-        HTMLEditorKit kit = new HTMLEditorKit();
-        StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-            + Integer.toHexString((htmlPanel.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
-            + Integer.toHexString((htmlPanel.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
-        htmlPanel.setEditorKit(kit);
         setPreferredSize(new Dimension(1024, 1024));
         setSeries(series);
     }

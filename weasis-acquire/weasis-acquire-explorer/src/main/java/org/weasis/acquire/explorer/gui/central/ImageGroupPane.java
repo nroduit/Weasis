@@ -115,6 +115,7 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
         if (selected) {
             EventManager.getInstance()
                 .fireSeriesViewerListeners(new SeriesViewerEvent(this, null, null, EVENT.SELECT_VIEW));
+            tabbedPane.refreshGUI();
         }
     }
 

@@ -33,8 +33,6 @@ import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 
 import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -96,16 +94,9 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
         jPanelInfoSys.setLayout(borderLayout2);
 
         jPanelAbout.setLayout(gridBagLayout1);
+        jTextPane1.setEditorKit(JMVUtils.buildHTMLEditorKit(jTextPane1));
         jTextPane1.setContentType("text/html"); //$NON-NLS-1$
         jTextPane1.setEditable(false);
-        HTMLEditorKit kit = new HTMLEditorKit();
-        StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-            + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-            + ";color:#" //$NON-NLS-1$
-            + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
-        jTextPane1.setEditorKit(kit);
 
         jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
         final StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); //$NON-NLS-1$
