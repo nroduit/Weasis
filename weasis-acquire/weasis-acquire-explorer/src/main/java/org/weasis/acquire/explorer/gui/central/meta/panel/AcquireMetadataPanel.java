@@ -48,15 +48,16 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 
 import com.github.lgooddatepicker.components.DatePickerSettings;
+import com.github.lgooddatepicker.components.DatePickerSettings.DateArea;
 import com.github.lgooddatepicker.tableeditors.DateTableEditor;
 import com.github.lgooddatepicker.tableeditors.TimeTableEditor;
 
 @SuppressWarnings("serial")
 public abstract class AcquireMetadataPanel extends JPanel implements TableModelListener {
-    protected String title;
-    protected JLabel label = new JLabel();
-    protected JTable table;
-    protected JScrollPane tableScroll;
+    protected final String title;
+    protected final  JLabel label = new JLabel();
+    protected final JTable table;
+    protected final  JScrollPane tableScroll;
     protected AcquireImageInfo imageInfo;
     protected TitledBorder titleBorder;
 
@@ -288,6 +289,25 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
             settings.setFontInvalidDate(FontTools.getFont11());
             settings.setFontValidDate(FontTools.getFont11());
             settings.setFontVetoedDate(FontTools.getFont11());
+            Color btnBack = d.getDatePicker().getBackground();
+            JTextField tfSearch = new JTextField();
+            settings.setColor(DateArea.BackgroundOverallCalendarPanel, tfSearch .getBackground());
+            settings.setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
+            settings.setColor(DateArea.CalendarBackgroundNormalDates, btnBack);
+
+            // settings.setColor(DateArea.CalendarDefaultBackgroundHighlightedDates, tfSearch.getForeground());
+            // settings.setColor(DateArea.CalendarDefaultTextHighlightedDates, Color.ORANGE);
+            // settings.setColor(DateArea.CalendarBackgroundVetoedDates, Color.MAGENTA);
+            settings.setColor(DateArea.BackgroundClearLabel, btnBack);
+            settings.setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
+            settings.setColor(DateArea.BackgroundTodayLabel, btnBack);
+            settings.setColor(DateArea.BackgroundTopLeftLabelAboveWeekNumbers, btnBack);
+            settings.setColor(DateArea.BackgroundMonthAndYearMenuLabels, btnBack);
+
+            settings.setColor(DateArea.CalendarTextNormalDates, tfSearch.getForeground());
+            settings.setColor(DateArea.CalendarTextWeekdays, tfSearch.getForeground());
+            settings.setColor(DateArea.CalendarTextWeekNumbers, tfSearch.getForeground());
+
             settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter());
             settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter());
             return d;

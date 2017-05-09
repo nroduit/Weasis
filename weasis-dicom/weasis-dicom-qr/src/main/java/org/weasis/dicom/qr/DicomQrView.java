@@ -390,14 +390,23 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         Color btnBack = d.getComponentToggleCalendarButton().getBackground();
         d.getSettings().setColor(DateArea.BackgroundOverallCalendarPanel, tfSearch.getBackground());
         d.getSettings().setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
-        d.getSettings().setColor(DateArea.BackgroundMonthAndYearMenuButtons, btnBack);
-        d.getSettings().setColor(DateArea.CalendarDefaultBackgroundHighlightedDates, tfSearch.getForeground());
-        // d.getSettings().setColor(DateArea.CalendarBackgroundVetoedDates, Color.MAGENTA);
-        d.getSettings().setColor(DateArea.BackgroundClearButton, btnBack);
-        d.getSettings().setColor(DateArea.BackgroundTodayButton, btnBack);
-        d.getSettings().setColor(DateArea.BackgroundTopLeftLabelAboveWeekNumbers, btnBack);
+        d.getSettings().setColor(DateArea.CalendarBackgroundNormalDates, btnBack);
 
-        d.getSettings().setColorBackgroundWeekNumberLabels(Color.ORANGE, true);
+        // d.getSettings().setColor(DateArea.CalendarDefaultBackgroundHighlightedDates, tfSearch.getForeground());
+        // d.getSettings().setColor(DateArea.CalendarDefaultTextHighlightedDates, Color.ORANGE);
+        // d.getSettings().setColor(DateArea.CalendarBackgroundVetoedDates, Color.MAGENTA);
+        d.getSettings().setColor(DateArea.BackgroundClearLabel, btnBack);
+        d.getSettings().setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
+        d.getSettings().setColor(DateArea.BackgroundTodayLabel, btnBack);
+        d.getSettings().setColor(DateArea.BackgroundTopLeftLabelAboveWeekNumbers, btnBack);
+        d.getSettings().setColor(DateArea.BackgroundMonthAndYearMenuLabels, btnBack);
+
+        d.getSettings().setColor(DateArea.CalendarTextNormalDates, tfSearch.getForeground());
+        d.getSettings().setColor(DateArea.CalendarTextWeekdays, tfSearch.getForeground());
+        d.getSettings().setColor(DateArea.CalendarTextWeekNumbers, tfSearch.getForeground());
+
+        // d.getSettings().setColorBackgroundWeekdayLabels(Color.ORANGE, true);
+        // d.getSettings().setColorBackgroundWeekNumberLabels(Color.ORANGE, true);
 
         // d.getSettings().setVisibleNextMonthButton(false);
         // d.getSettings().setVisibleNextYearButton(false);
