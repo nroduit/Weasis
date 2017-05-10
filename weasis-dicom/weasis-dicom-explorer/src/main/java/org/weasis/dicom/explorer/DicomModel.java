@@ -324,7 +324,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 for (MediaSeries<? extends MediaElement> s : seriesList) {
                     if (s != base) {
                         base.addAll((Collection) s.getMedias(null, null));
-                        removeSeries(s);
+                        removeSeriesWithoutDisposingMedias(s);
                     }
                 }
                 // Force to sort the new merged media list
@@ -383,6 +383,18 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             if (specialElementList.isEmpty()) {
                 removeSeries(dicomSeries);
             }
+        }
+    }
+
+    public void removeSeriesWithoutDisposingMedias(MediaSeriesGroup dicomSeries) {
+        if (dicomSeries != null) {
+            // remove first series in UI (Dicom Explorer, Viewer using this series)
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, dicomSeries));
+            // remove in the data model
+            MediaSeriesGroup studyGroup = getParent(dicomSeries, DicomModel.study);
+            removeHierarchyNode(studyGroup, dicomSeries);
+            LOGGER.info("Remove Series (no dispose): {}", dicomSeries); //$NON-NLS-1$
         }
     }
 
