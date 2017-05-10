@@ -144,7 +144,10 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (columnIndex == 1) {
             TagW tag = tagsToDisplay()[rowIndex];
-            tagable.ifPresent(t -> t.setTag(tag, aValue));
+            tagable.ifPresent(t -> {
+                t.setTag(tag, aValue);
+                fireTableCellUpdated(rowIndex, columnIndex);
+            });
         }
     }
 
