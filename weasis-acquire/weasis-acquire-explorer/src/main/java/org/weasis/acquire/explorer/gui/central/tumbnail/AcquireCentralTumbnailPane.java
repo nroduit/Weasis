@@ -174,7 +174,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
             if (files != null) {
                 for (File file : files) {
                     MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
-                    if (reader != null) {
+                    if (reader != null && !reader.getMediaFragmentMimeType().contains("dicom")) {
                         MediaElement[] medias = reader.getMediaElement();
                         if (medias != null) {
                             for (MediaElement mediaElement : medias) {
