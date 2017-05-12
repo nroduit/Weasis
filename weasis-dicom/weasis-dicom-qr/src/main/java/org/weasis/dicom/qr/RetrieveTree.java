@@ -107,7 +107,7 @@ public class RetrieveTree extends JPanel {
             }
 
         }
-        throw new IllegalStateException("CheckboxTree cannot be null");
+        throw new IllegalStateException("CheckboxTree cannot be null"); //$NON-NLS-1$
     }
 
 }

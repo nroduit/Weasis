@@ -33,7 +33,7 @@ public class Study implements XmlDescription {
 
     public Study(String studyInstanceUID) {
         if (studyInstanceUID == null) {
-            throw new IllegalArgumentException("studyInstanceUID cannot be null!");
+            throw new IllegalArgumentException("studyInstanceUID cannot be null!"); //$NON-NLS-1$
         }
         this.studyInstanceUID = studyInstanceUID;
         seriesList = new ArrayList<>();
@@ -101,9 +101,9 @@ public class Study implements XmlDescription {
     public String toXml() {
         StringBuilder result = new StringBuilder();
         if (studyInstanceUID != null) {
-            result.append("\n<");
+            result.append("\n<"); //$NON-NLS-1$
             result.append(TagUtil.Level.STUDY);
-            result.append(" ");
+            result.append(" "); //$NON-NLS-1$
             TagUtil.addXmlAttribute(Tag.StudyInstanceUID, studyInstanceUID, result);
             TagUtil.addXmlAttribute(Tag.StudyDescription, studyDescription, result);
             TagUtil.addXmlAttribute(Tag.StudyDate, studyDate, result);
@@ -111,7 +111,7 @@ public class Study implements XmlDescription {
             TagUtil.addXmlAttribute(Tag.AccessionNumber, accessionNumber, result);
             TagUtil.addXmlAttribute(Tag.StudyID, studyID, result);
             TagUtil.addXmlAttribute(Tag.ReferringPhysicianName, referringPhysicianName, result);
-            result.append(">");
+            result.append(">"); //$NON-NLS-1$
             Collections.sort(seriesList, new Comparator<Series>() {
 
                 @Override
@@ -139,9 +139,9 @@ public class Study implements XmlDescription {
                 result.append(s.toXml());
             }
 
-            result.append("\n</");
+            result.append("\n</"); //$NON-NLS-1$
             result.append(TagUtil.Level.STUDY);
-            result.append(">");
+            result.append(">"); //$NON-NLS-1$
         }
         return result.toString();
     }

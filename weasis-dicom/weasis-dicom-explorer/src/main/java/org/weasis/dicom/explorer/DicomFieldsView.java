@@ -349,7 +349,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                             doc.insertString(doc.getLength(), tag.getDisplayedName(), null);
                             doc.insertString(doc.getLength(),
                                 StringUtil.COLON_AND_SPACE + tag.getFormattedTagValue(val, null) + "\n", //$NON-NLS-1$
-                                doc.getStyle("bold"));
+                                doc.getStyle("bold")); //$NON-NLS-1$
                             break;
                         }
                     } catch (BadLocationException e) {

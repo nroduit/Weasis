@@ -123,7 +123,7 @@ public class AcquirePublishDialog extends JDialog {
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public AcquirePublishDialog(AcquirePublishPanel publishPanel) {
-        super(WinUtil.getParentWindow(publishPanel), "Publication", ModalityType.APPLICATION_MODAL); 
+        super(WinUtil.getParentWindow(publishPanel), Messages.getString("AcquirePublishDialog.publication"), ModalityType.APPLICATION_MODAL);  //$NON-NLS-1$
         this.publishPanel = publishPanel;
 
         setContentPane(initContent());
@@ -264,7 +264,7 @@ public class AcquirePublishDialog extends JDialog {
             }
         }
         if (!publishable) {
-            JOptionPane.showMessageDialog(this, "Please fill up all the required metada before publishing.\nThey are in table cells marked with red border.", 
+            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.pub_warn_msg"),  //$NON-NLS-1$
                 this.getTitle(), JOptionPane.ERROR_MESSAGE); 
             return;
         }

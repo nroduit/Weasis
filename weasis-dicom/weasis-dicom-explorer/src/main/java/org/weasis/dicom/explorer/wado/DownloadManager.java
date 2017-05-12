@@ -104,7 +104,7 @@ public class DownloadManager {
     public static final ThreadPoolExecutor CONCURRENT_EXECUTOR =
         new ThreadPoolExecutor(BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
             BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS,
-            PRIORITY_QUEUE, ThreadUtil.getThreadFactory("Series Downloader"));
+            PRIORITY_QUEUE, ThreadUtil.getThreadFactory("Series Downloader")); //$NON-NLS-1$
 
     public static class PriorityTaskComparator implements Comparator<Runnable>, Serializable {
 

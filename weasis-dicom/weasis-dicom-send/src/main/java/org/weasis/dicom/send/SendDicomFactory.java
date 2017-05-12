@@ -36,7 +36,7 @@ public class SendDicomFactory implements DicomExportFactory {
 
     @Override
     public ExportDicom createDicomExportPage(Hashtable<String, Object> properties) {
-        if (properties != null && BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom.send", true)) {
+        if (properties != null && BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom.send", true)) { //$NON-NLS-1$
             DicomModel dicomModel = (DicomModel) properties.get(DicomModel.class.getName());
             CheckTreeModel treeModel = (CheckTreeModel) properties.get(CheckTreeModel.class.getName());
             if (dicomModel != null && treeModel != null) {

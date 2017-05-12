@@ -34,11 +34,11 @@ public class DicomQrFactory implements DicomImportFactory {
 
     // public static final ArrayList<SearchParameters> SEARCH_ITEMS = new ArrayList<>();
 
-    private static final String PREFERENCE_NODE = "qr.prefs";
+    private static final String PREFERENCE_NODE = "qr.prefs"; //$NON-NLS-1$
 
     @Override
     public ImportDicom createDicomImportPage(Hashtable<String, Object> properties) {
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom.qr", true)) {
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom.qr", true)) { //$NON-NLS-1$
             return new DicomQrView();
         }
         return null;

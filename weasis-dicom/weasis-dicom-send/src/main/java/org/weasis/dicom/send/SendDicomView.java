@@ -83,7 +83,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
-    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Send task");
+    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Send task"); //$NON-NLS-1$
 
     private final JPanel panel = new JPanel();
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();

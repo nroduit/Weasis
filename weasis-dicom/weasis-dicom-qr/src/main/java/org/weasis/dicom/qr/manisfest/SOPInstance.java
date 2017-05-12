@@ -23,7 +23,7 @@ public class SOPInstance implements XmlDescription {
 
     public SOPInstance(String sopInstanceUID) {
         if (sopInstanceUID == null) {
-            throw new IllegalArgumentException("sopInstanceIUID is null");
+            throw new IllegalArgumentException("sopInstanceIUID is null"); //$NON-NLS-1$
         }
         this.sopInstanceUID = sopInstanceUID;
     }
@@ -59,15 +59,15 @@ public class SOPInstance implements XmlDescription {
     @Override
     public String toXml() {
         StringBuilder result = new StringBuilder();
-        result.append("\n<");
+        result.append("\n<"); //$NON-NLS-1$
         result.append(TagUtil.Level.INSTANCE);
-        result.append(" ");
+        result.append(" "); //$NON-NLS-1$
         TagUtil.addXmlAttribute(Tag.SOPInstanceUID, sopInstanceUID, result);
         // file_tsuid DICOM Transfer Syntax UID (0002,0010)
         TagUtil.addXmlAttribute(Tag.TransferSyntaxUID, transferSyntaxUID, result);
         TagUtil.addXmlAttribute(Tag.InstanceNumber, instanceNumber, result);
         TagUtil.addXmlAttribute(TagUtil.DirectDownloadFile, directDownloadFile, result);
-        result.append("/>");
+        result.append("/>"); //$NON-NLS-1$
 
         return result.toString();
     }

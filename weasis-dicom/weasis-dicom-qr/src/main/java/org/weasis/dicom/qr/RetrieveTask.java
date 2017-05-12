@@ -82,7 +82,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
             final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
             DefaultDicomNode callingNode = (DefaultDicomNode) dicomQrView.getComboCallingNode().getSelectedItem();
             if (callingNode == null) {
-                errorMessage = "No calling DICOM node configured for retrieve";
+                errorMessage = Messages.getString("RetrieveTask.no_calling_node"); //$NON-NLS-1$
             } else {
                 final DicomState state;
                 RetrieveType type = (RetrieveType) dicomQrView.getComboDicomRetrieveType().getSelectedItem();
@@ -92,13 +92,13 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                 connectOptions.setAcceptTimeout(5000);
                 params.setConnectOptions(connectOptions);
                 if (RetrieveType.CGET == type) {
-                    File sopClass = ResourceUtil.getResource("store-tcs.properties");
+                    File sopClass = ResourceUtil.getResource("store-tcs.properties"); //$NON-NLS-1$
                     URL url = null;
                     if (sopClass.canRead()) {
                         try {
                             url = sopClass.toURI().toURL();
                         } catch (MalformedURLException e) {
-                            LOGGER.error("SOP Class url conversion", e);
+                            LOGGER.error("SOP Class url conversion", e); //$NON-NLS-1$
                         }
                     }
                     state = CGet.process(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(), progress,
@@ -107,19 +107,20 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     DicomListener dicomListener = dicomQrView.getDicomListener();
                     try {
                         if (dicomListener == null) {
-                            errorMessage = "Cannot start a DICOM listener";
+                            errorMessage = Messages.getString("RetrieveTask.msg_start_listener"); //$NON-NLS-1$
                         } else {
                             dicomListener.setParams(params);
                             if (dicomListener.isRunning()) {
-                                errorMessage = "A DICOM C-Move already running";
+                                errorMessage = Messages.getString("RetrieveTask.msg_running_listener"); //$NON-NLS-1$
                             } else {
                                 dicomListener.start(callingNode.getDicomNode());
                             }
                         }
                     } catch (Exception e) {
                         dicomListener.stop();
-                        errorMessage = String.format("Cannot a start DICOM listener: %s.", e.getMessage());
-                        LOGGER.error("Start DICOM listener", e);
+                        String msg = Messages.getString("RetrieveTask.msg_start_listener"); //$NON-NLS-1$
+                        errorMessage = String.format("%s: %s.", msg, e.getMessage()); //$NON-NLS-1$
+                        LOGGER.error("Start DICOM listener", e); //$NON-NLS-1$
                     }
 
                     if (errorMessage != null) {
@@ -147,7 +148,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     if (wadoURLs.isEmpty()) {
                         GuiExecutor.instance()
                             .execute(() -> JOptionPane.showMessageDialog(dicomQrView.getBasePanel(),
-                                "No URL matchs with DICOM query hostname. Add a new WEB node.",
+                                Messages.getString("RetrieveTask.no_wado_url_match"), //$NON-NLS-1$
                                 RetrieveType.WADO.toString(), JOptionPane.ERROR_MESSAGE));
                         return null;
                     }
@@ -155,7 +156,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         GuiExecutor.instance().invokeAndWait(() -> {
                             Object[] options = wadoURLs.toArray();
                             Object response = JOptionPane.showInputDialog(dicomQrView.getBasePanel(),
-                                "Several URLs match, please select one", RetrieveType.WADO.toString(),
+                                Messages.getString("RetrieveTask.several_wado_urls"), RetrieveType.WADO.toString(), //$NON-NLS-1$
                                 JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 
                             if (response != null) {
@@ -168,10 +169,12 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     WadoParameters wadoParameters =
                         new WadoParameters(wadoURLs.get(0).toString(), false, null, null, null);
                     ManifestBuilder manifest = new ManifestBuilder();
-                    manifest.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(), dicomQrView.getDicomModel(), studies);
+                    manifest.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(),
+                        dicomQrView.getDicomModel(), studies);
                     String wadoXmlGenerated = manifest.xmlManifest(wadoParameters, null);
                     if (wadoXmlGenerated == null) {
-                        state = new DicomState(Status.UnableToProcess, "Cannot build WADO manifest", null);
+                        state = new DicomState(Status.UnableToProcess,
+                            Messages.getString("RetrieveTask.msg_build_manifest"), null); //$NON-NLS-1$
                     } else {
                         List<String> xmlFiles = new ArrayList<>(1);
                         try {
@@ -187,7 +190,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         return new LoadRemoteDicomManifest(xmlFiles, explorerDcmModel);
                     }
                 } else {
-                    state = new DicomState(Status.UnableToProcess, "Not supported retrieve type", null);
+                    state = new DicomState(Status.UnableToProcess, Messages.getString("RetrieveTask.msg_retrieve_type"), //$NON-NLS-1$
+                        null);
                 }
 
                 if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
@@ -196,25 +200,27 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         DicomState.buildMessage(state, null, null);
                     }
                     if (!StringUtil.hasText(errorMessage)) {
-                        errorMessage = "Unexpected DICOM error";
+                        errorMessage = Messages.getString("RetrieveTask.msg_unexpected_error"); //$NON-NLS-1$
                     }
                     LOGGER.error("Dicom retrieve error: {}", errorMessage); //$NON-NLS-1$
                 }
 
-                loadingTask = new LoadLocalDicom(new File[] { new File(DicomQrView.tempDir.getPath()) }, false, explorerDcmModel);
+                loadingTask =
+                    new LoadLocalDicom(new File[] { new File(DicomQrView.tempDir.getPath()) }, false, explorerDcmModel);
             }
 
         } else if (selectedItem instanceof DicomWebNode) {
-            throw new IllegalAccessError("Not implemented yet");
+            throw new IllegalAccessError("Not implemented yet"); //$NON-NLS-1$
         } else {
-            errorMessage = "No calling DICOM node configured for retrieve";
+            errorMessage = Messages.getString("RetrieveTask.no_calling_node"); //$NON-NLS-1$
         }
 
         if (errorMessage != null) {
             final String mes = errorMessage;
-            final String errorTitle = StringUtil.getEmpty2NullObject(dicomQrView.getComboDicomRetrieveType().getSelectedItem());
-            GuiExecutor.instance()
-                .execute(() -> JOptionPane.showMessageDialog(dicomQrView.getBasePanel(), mes, errorTitle, JOptionPane.ERROR_MESSAGE));
+            final String errorTitle =
+                StringUtil.getEmpty2NullObject(dicomQrView.getComboDicomRetrieveType().getSelectedItem());
+            GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(dicomQrView.getBasePanel(), mes,
+                errorTitle, JOptionPane.ERROR_MESSAGE));
         }
 
         return loadingTask;
@@ -227,19 +233,19 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
             new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, explorerDcmModel, null, this));
         try {
             ExplorerTask<Boolean, String> task = get();
-            if(task != null) {
+            if (task != null) {
                 DicomModel.LOADING_EXECUTOR.execute(task);
             }
-       } catch (InterruptedException e) {
-           LOGGER.warn("Retrieving task Interruption"); //$NON-NLS-1$
-       } catch (ExecutionException e) {
-           LOGGER.error("Retrieving task", e); //$NON-NLS-1$
-       }
+        } catch (InterruptedException e) {
+            LOGGER.warn("Retrieving task Interruption"); //$NON-NLS-1$
+        } catch (ExecutionException e) {
+            LOGGER.error("Retrieving task", e); //$NON-NLS-1$
+        }
     }
 
     private static String getHostname(String host) {
-        if ("127.0.0.1".equals(host) || "127.0.1.1".equals(host) || "::1".equals(host)) {
-            return "localhost";
+        if ("127.0.0.1".equals(host) || "127.0.1.1".equals(host) || "::1".equals(host)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            return "localhost"; //$NON-NLS-1$
         }
         return host;
     }

@@ -97,7 +97,7 @@ public class RetrieveTreeModel {
     public static synchronized DefaultTreeModel buildModel(DicomModel dicomModel) {
         Collection<MediaSeriesGroup> patients = dicomModel.getChildren(MediaSeriesGroupNode.rootNode);
         DefaultMutableTreeNode rootNode =
-            new DefaultMutableTreeNode(patients.isEmpty() ? "No patient found" : DicomExplorer.ALL_PATIENTS);
+            new DefaultMutableTreeNode(patients.isEmpty() ? Messages.getString("RetrieveTreeModel.no_pat") : DicomExplorer.ALL_PATIENTS); //$NON-NLS-1$
         for (MediaSeriesGroup pt : patients) {
             DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);
             for (MediaSeriesGroup study : dicomModel.getChildren(pt)) {
@@ -140,9 +140,9 @@ public class RetrieveTreeModel {
             toolTips.append("<html>"); //$NON-NLS-1$
             s.getTagEntrySetIterator().forEachRemaining(i -> {
                 TagW tag = i.getKey();
-                toolTips.append("<b>");
+                toolTips.append("<b>"); //$NON-NLS-1$
                 toolTips.append(tag.getDisplayedName());
-                toolTips.append("</b>");
+                toolTips.append("</b>"); //$NON-NLS-1$
                 toolTips.append(StringUtil.COLON_AND_SPACE);
                 toolTips.append(tag.getFormattedTagValue(i.getValue(), null));
                 toolTips.append("<br>"); //$NON-NLS-1$

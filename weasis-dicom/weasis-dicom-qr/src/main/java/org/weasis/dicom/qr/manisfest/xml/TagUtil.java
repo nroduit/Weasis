@@ -24,11 +24,11 @@ import org.weasis.core.api.util.EscapeChars;
 public class TagUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(TagUtil.class);
 
-    private static final String DELIM_START = "${";
-    private static final String DELIM_STOP = "}";
+    private static final String DELIM_START = "${"; //$NON-NLS-1$
+    private static final String DELIM_STOP = "}"; //$NON-NLS-1$
 
     public enum Level {
-        PATIENT("Patient"), STUDY("Study"), SERIES("Series"), INSTANCE("Instance");
+        PATIENT("Patient"), STUDY("Study"), SERIES("Series"), INSTANCE("Instance"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
         private final String tag;
 
@@ -42,10 +42,10 @@ public class TagUtil {
         }
     }
 
-    public static final String WadoCompressionRate = "WadoCompressionRate";
-    public static final String WadoTransferSyntaxUID = "WadoTransferSyntaxUID";
-    public static final String DirectDownloadFile = "DirectDownloadFile";
-    public static final String DirectDownloadThumbnail = "DirectDownloadThumbnail";
+    public static final String WadoCompressionRate = "WadoCompressionRate"; //$NON-NLS-1$
+    public static final String WadoTransferSyntaxUID = "WadoTransferSyntaxUID"; //$NON-NLS-1$
+    public static final String DirectDownloadFile = "DirectDownloadFile"; //$NON-NLS-1$
+    public static final String DirectDownloadThumbnail = "DirectDownloadThumbnail"; //$NON-NLS-1$
 
     private TagUtil() {
     }
@@ -81,7 +81,7 @@ public class TagUtil {
         String variable = val.substring(startDelim + DELIM_START.length(), stopDelim);
 
         if (map.get(variable) != null) {
-            throw new IllegalArgumentException("recursive variable reference: " + variable);
+            throw new IllegalArgumentException("recursive variable reference: " + variable); //$NON-NLS-1$
         }
         String substValue = System.getProperty(variable);
         if (substValue == null) {
@@ -101,12 +101,12 @@ public class TagUtil {
         if (value != null) {
             String key = ElementDictionary.getStandardElementDictionary().keywordOf(tagID);
             if (key == null) {
-                LOGGER.error("Cannot find keyword of tagID {}", TagUtils.toString(tagID));
+                LOGGER.error("Cannot find keyword of tagID {}", TagUtils.toString(tagID)); //$NON-NLS-1$
             } else {
                 result.append(key);
-                result.append("=\"");
+                result.append("=\""); //$NON-NLS-1$
                 result.append(EscapeChars.forXML(value));
-                result.append("\" ");
+                result.append("\" "); //$NON-NLS-1$
             }
         }
     }
@@ -114,33 +114,33 @@ public class TagUtil {
     public static void addXmlAttribute(String tag, String value, StringBuilder result) {
         if (tag != null && value != null) {
             result.append(tag);
-            result.append("=\"");
+            result.append("=\""); //$NON-NLS-1$
             result.append(EscapeChars.forXML(value));
-            result.append("\" ");
+            result.append("\" "); //$NON-NLS-1$
         }
     }
 
     public static void addXmlAttribute(String tag, Boolean value, StringBuilder result) {
         if (tag != null && value != null) {
             result.append(tag);
-            result.append("=\"");
-            result.append(value ? "true" : "false");
-            result.append("\" ");
+            result.append("=\""); //$NON-NLS-1$
+            result.append(value ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            result.append("\" "); //$NON-NLS-1$
         }
     }
 
     public static void addXmlAttribute(String tag, List<String> value, StringBuilder result) {
         if (tag != null && value != null) {
             result.append(tag);
-            result.append("=\"");
+            result.append("=\""); //$NON-NLS-1$
             int size = value.size();
             for (int i = 0; i < size - 1; i++) {
-                result.append(EscapeChars.forXML(value.get(i)) + ",");
+                result.append(EscapeChars.forXML(value.get(i)) + ","); //$NON-NLS-1$
             }
             if (size > 0) {
                 result.append(EscapeChars.forXML(value.get(size - 1)));
             }
-            result.append("\" ");
+            result.append("\" "); //$NON-NLS-1$
         }
     }
 }

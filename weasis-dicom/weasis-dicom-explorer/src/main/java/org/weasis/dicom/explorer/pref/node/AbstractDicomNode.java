@@ -54,9 +54,9 @@ public abstract class AbstractDicomNode {
     protected static final String T_TSUID = "tsuid"; //$NON-NLS-1$
 
     public enum Type {
-        DICOM("DICOM Node", "dicomNodes.xml"), DICOM_CALLING("DICOM calling Node", "dicomCallingNodes.xml"),
-        PRINTER("DICOM Printer", "dicomPrinterNodes.xml"), WEB("WEB Node", "dicomWebNodes.xml"),
-        WEB_QIDO("WEB QIDO-RS/WADO-RS Node", "dicomWebQidoNodes.xml");
+        DICOM(Messages.getString("AbstractDicomNode.dcm_node"), "dicomNodes.xml"), DICOM_CALLING(Messages.getString("AbstractDicomNode.dcm_calling_node"), "dicomCallingNodes.xml"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        PRINTER(Messages.getString("AbstractDicomNode.dcm_printer"), "dicomPrinterNodes.xml"), WEB(Messages.getString("AbstractDicomNode.dcm_web_node"), "dicomWebNodes.xml"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        WEB_QIDO(Messages.getString("AbstractDicomNode.dcm_rs_node"), "dicomWebQidoNodes.xml"); //$NON-NLS-1$ //$NON-NLS-2$
 
         final String title;
         final String filename;

@@ -156,14 +156,14 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
         if (values == null) {
             return new TagW[0];
         }
-        String[] val = values.split(",");
+        String[] val = values.split(","); //$NON-NLS-1$
         List<TagW> list = new ArrayList<>(val.length);
         for (String s : val) {
             TagW tag = TagD.get(s.trim());
             if (tag != null) {
                 list.add(tag);
             } else if (StringUtil.hasText(s)) {
-                LOGGER.warn("Cannot find the tag named {}", s.trim());
+                LOGGER.warn("Cannot find the tag named {}", s.trim()); //$NON-NLS-1$
             }
         }
         return list.toArray(new TagW[list.size()]);

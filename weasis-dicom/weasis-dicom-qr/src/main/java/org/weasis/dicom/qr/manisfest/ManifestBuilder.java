@@ -24,23 +24,23 @@ import org.weasis.dicom.qr.manisfest.xml.TagUtil;
 
 public class ManifestBuilder {
     // Manifest 2.5
-    public static final String TAG_DOCUMENT_ROOT = "manifest";
+    public static final String TAG_DOCUMENT_ROOT = "manifest"; //$NON-NLS-1$
     public static final String SCHEMA =
-        "xmlns=\"http://www.weasis.org/xsd/2.5\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"";
-    public static final String TAG_ARC_QUERY = "arcQuery";
-    public static final String ARCHIVE_ID = "arcId";
-    public static final String BASE_URL = "baseUrl";
+        "xmlns=\"http://www.weasis.org/xsd/2.5\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""; //$NON-NLS-1$
+    public static final String TAG_ARC_QUERY = "arcQuery"; //$NON-NLS-1$
+    public static final String ARCHIVE_ID = "arcId"; //$NON-NLS-1$
+    public static final String BASE_URL = "baseUrl"; //$NON-NLS-1$
 
     // Manifest 1
-    public static final String TAG_HTTP_TAG = "httpTag";
-    public static final String ADDITIONNAL_PARAMETERS = "additionnalParameters";
-    public static final String OVERRIDE_TAGS = "overrideDicomTagsList";
-    public static final String WEB_LOGIN = "webLogin";
+    public static final String TAG_HTTP_TAG = "httpTag"; //$NON-NLS-1$
+    public static final String ADDITIONNAL_PARAMETERS = "additionnalParameters"; //$NON-NLS-1$
+    public static final String OVERRIDE_TAGS = "overrideDicomTagsList"; //$NON-NLS-1$
+    public static final String WEB_LOGIN = "webLogin"; //$NON-NLS-1$
 
-    public static final String TAG_DOCUMENT_MSG = "Message";
-    public static final String MSG_ATTRIBUTE_TITLE = "title";
-    public static final String MSG_ATTRIBUTE_DESC = "description";
-    public static final String MSG_ATTRIBUTE_LEVEL = "severity";
+    public static final String TAG_DOCUMENT_MSG = "Message"; //$NON-NLS-1$
+    public static final String MSG_ATTRIBUTE_TITLE = "title"; //$NON-NLS-1$
+    public static final String MSG_ATTRIBUTE_DESC = "description"; //$NON-NLS-1$
+    public static final String MSG_ATTRIBUTE_LEVEL = "severity"; //$NON-NLS-1$
 
     private final StringBuilder manifest;
     private final List<Patient> patients;
@@ -51,7 +51,7 @@ public class ManifestBuilder {
     }
 
     public String getCharsetEncoding() {
-        return "UTF-8";
+        return "UTF-8"; //$NON-NLS-1$
     }
 
     public String xmlManifest(WadoParameters wadoParameters, ViewerMessage message) {
@@ -59,37 +59,37 @@ public class ManifestBuilder {
             return null;
         }
 
-        manifest.append("<?xml version=\"1.0\" encoding=\"" + getCharsetEncoding() + "\" ?>");
-        manifest.append("\n<");
+        manifest.append("<?xml version=\"1.0\" encoding=\"" + getCharsetEncoding() + "\" ?>"); //$NON-NLS-1$ //$NON-NLS-2$
+        manifest.append("\n<"); //$NON-NLS-1$
         manifest.append(TAG_DOCUMENT_ROOT);
-        manifest.append(" ");
+        manifest.append(" "); //$NON-NLS-1$
         manifest.append(SCHEMA);
-        manifest.append(">");
+        manifest.append(">"); //$NON-NLS-1$
 
-        manifest.append("\n<");
+        manifest.append("\n<"); //$NON-NLS-1$
         manifest.append(TAG_ARC_QUERY);
-        manifest.append(" ");
+        manifest.append(" "); //$NON-NLS-1$
 
-        TagUtil.addXmlAttribute(ARCHIVE_ID, "localWadoRetrieve", manifest);
+        TagUtil.addXmlAttribute(ARCHIVE_ID, "localWadoRetrieve", manifest); //$NON-NLS-1$
         TagUtil.addXmlAttribute(BASE_URL, wadoParameters.getWadoURL(), manifest);
         TagUtil.addXmlAttribute(WEB_LOGIN, wadoParameters.getWebLogin(), manifest);
         TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
             manifest);
         TagUtil.addXmlAttribute(ADDITIONNAL_PARAMETERS, wadoParameters.getAdditionnalParameters(), manifest);
         TagUtil.addXmlAttribute(OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(), manifest);
-        manifest.append(">");
+        manifest.append(">"); //$NON-NLS-1$
 
         buildHttpTags(wadoParameters.getHttpTaglist());
         buildViewerMessage(message);
         buildPatient();
 
-        manifest.append("\n</");
+        manifest.append("\n</"); //$NON-NLS-1$
         manifest.append(TAG_ARC_QUERY);
-        manifest.append(">");
+        manifest.append(">"); //$NON-NLS-1$
 
-        manifest.append("\n</");
+        manifest.append("\n</"); //$NON-NLS-1$
         manifest.append(TAG_DOCUMENT_ROOT);
-        manifest.append(">\n"); // Requires end of line
+        manifest.append(">\n"); // Requires end of line //$NON-NLS-1$
 
         return manifest.toString();
     }
@@ -106,26 +106,26 @@ public class ManifestBuilder {
     private void buildHttpTags(List<HttpTag> list) {
         if (list != null) {
             for (WadoParameters.HttpTag tag : list) {
-                manifest.append("\n<");
+                manifest.append("\n<"); //$NON-NLS-1$
                 manifest.append(TAG_HTTP_TAG);
-                manifest.append(" key=\"");
+                manifest.append(" key=\""); //$NON-NLS-1$
                 manifest.append(tag.getKey());
-                manifest.append("\" value=\"");
+                manifest.append("\" value=\""); //$NON-NLS-1$
                 manifest.append(tag.getValue());
-                manifest.append("\" />");
+                manifest.append("\" />"); //$NON-NLS-1$
             }
         }
     }
 
     private void buildViewerMessage(ViewerMessage message) {
         if (message != null) {
-            manifest.append("\n<");
+            manifest.append("\n<"); //$NON-NLS-1$
             manifest.append(TAG_DOCUMENT_MSG);
-            manifest.append(" ");
+            manifest.append(" "); //$NON-NLS-1$
             TagUtil.addXmlAttribute(MSG_ATTRIBUTE_TITLE, message.title, manifest);
             TagUtil.addXmlAttribute(MSG_ATTRIBUTE_DESC, message.message, manifest);
             TagUtil.addXmlAttribute(MSG_ATTRIBUTE_LEVEL, message.level.name(), manifest);
-            manifest.append("/>");
+            manifest.append("/>"); //$NON-NLS-1$
         }
     }
 

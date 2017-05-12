@@ -42,7 +42,7 @@ public class Patient implements XmlDescription {
 
     public Patient(String patientID, String issuerOfPatientID) {
         if (patientID == null) {
-            throw new IllegalArgumentException("PaientID cannot be null!");
+            throw new IllegalArgumentException("PaientID cannot be null!"); //$NON-NLS-1$
         }
         this.patientID = patientID;
         this.issuerOfPatientID = issuerOfPatientID;
@@ -105,12 +105,12 @@ public class Patient implements XmlDescription {
             this.patientSex = null;
         } else {
             String val = patientSex.toUpperCase(Locale.getDefault());
-            this.patientSex = val.startsWith("M") ? "M" : val.startsWith("F") ? "F" : "O";
+            this.patientSex = val.startsWith("M") ? "M" : val.startsWith("F") ? "F" : "O"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
         }
     }
 
     public void setPatientName(String patientName) {
-        this.patientName = patientName == null ? "" : patientName.replace("^", " ").trim();
+        this.patientName = patientName == null ? "" : patientName.replace("^", " ").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     public void addStudy(Study study) {
@@ -127,9 +127,9 @@ public class Patient implements XmlDescription {
     public String toXml() {
         StringBuilder result = new StringBuilder();
         if (patientID != null && patientName != null) {
-            result.append("\n<");
+            result.append("\n<"); //$NON-NLS-1$
             result.append(TagUtil.Level.PATIENT);
-            result.append(" ");
+            result.append(" "); //$NON-NLS-1$
 
             TagUtil.addXmlAttribute(Tag.PatientID, patientID, result);
             TagUtil.addXmlAttribute(Tag.IssuerOfPatientID, issuerOfPatientID, result);
@@ -137,19 +137,19 @@ public class Patient implements XmlDescription {
             TagUtil.addXmlAttribute(Tag.PatientBirthDate, patientBirthDate, result);
             TagUtil.addXmlAttribute(Tag.PatientBirthTime, patientBirthTime, result);
             TagUtil.addXmlAttribute(Tag.PatientSex, patientSex, result);
-            result.append(">");
+            result.append(">"); //$NON-NLS-1$
 
             Collections.sort(studiesList, getStudyComparator());
             for (Study s : studiesList) {
                 result.append(s.toXml());
             }
-            result.append("\n</");
+            result.append("\n</"); //$NON-NLS-1$
             result.append(TagUtil.Level.PATIENT);
-            result.append(">");
+            result.append(">"); //$NON-NLS-1$
         }
 
         String ptXml = result.toString();
-        LOGGER.debug("Patient toXml [{}]", ptXml);
+        LOGGER.debug("Patient toXml [{}]", ptXml); //$NON-NLS-1$
         return ptXml;
     }
 

@@ -87,7 +87,7 @@ public class DicomImport extends AbstractWizardDialog {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("init import pages", e);
+            LOGGER.error("init import pages", e); //$NON-NLS-1$
         }
 
         InsertableUtil.sortInsertable(list);

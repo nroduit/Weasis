@@ -36,7 +36,7 @@ public class Series implements XmlDescription {
 
     public Series(String seriesInstanceUID) {
         if (seriesInstanceUID == null) {
-            throw new IllegalArgumentException("seriesInstanceUID is null");
+            throw new IllegalArgumentException("seriesInstanceUID is null"); //$NON-NLS-1$
         }
         this.seriesInstanceUID = seriesInstanceUID;
         sopInstancesList = new ArrayList<>();
@@ -78,12 +78,12 @@ public class Series implements XmlDescription {
         try {
             setWadoCompression(Integer.parseInt(wadoCompression));
         } catch (NumberFormatException e) {
-            LOGGER.warn("Invalid compression value: {}", wadoCompression);
+            LOGGER.warn("Invalid compression value: {}", wadoCompression); //$NON-NLS-1$
         }
     }
 
     public void setSeriesDescription(String s) {
-        seriesDescription = s == null ? "" : s;
+        seriesDescription = s == null ? "" : s; //$NON-NLS-1$
     }
 
     public void addSOPInstance(SOPInstance s) {
@@ -135,9 +135,9 @@ public class Series implements XmlDescription {
     public String toXml() {
         StringBuilder result = new StringBuilder();
         if (seriesInstanceUID != null) {
-            result.append("\n<");
+            result.append("\n<"); //$NON-NLS-1$
             result.append(TagUtil.Level.SERIES);
-            result.append(" ");
+            result.append(" "); //$NON-NLS-1$
             TagUtil.addXmlAttribute(Tag.SeriesInstanceUID, seriesInstanceUID, result);
             TagUtil.addXmlAttribute(Tag.SeriesDescription, seriesDescription, result);
             TagUtil.addXmlAttribute(Tag.SeriesNumber, seriesNumber, result);
@@ -146,14 +146,14 @@ public class Series implements XmlDescription {
             TagUtil.addXmlAttribute(TagUtil.WadoTransferSyntaxUID, wadoTransferSyntaxUID, result);
             TagUtil.addXmlAttribute(TagUtil.WadoCompressionRate,
                 wadoCompression < 1 ? null : Integer.toString(wadoCompression), result);
-            result.append(">");
+            result.append(">"); //$NON-NLS-1$
             sortByInstanceNumber();
             for (SOPInstance s : sopInstancesList) {
                 result.append(s.toXml());
             }
-            result.append("\n</");
+            result.append("\n</"); //$NON-NLS-1$
             result.append(TagUtil.Level.SERIES);
-            result.append(">");
+            result.append(">"); //$NON-NLS-1$
         }
         return result.toString();
     }

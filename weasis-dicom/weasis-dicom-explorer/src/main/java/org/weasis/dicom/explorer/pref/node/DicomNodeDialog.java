@@ -190,7 +190,7 @@ public class DicomNodeDialog extends JDialog {
             
             if (typeNode == AbstractDicomNode.Type.DICOM_CALLING) {
                 portTf.setValue(11113);
-                hostnameTf.setText("localhost");
+                hostnameTf.setText("localhost"); //$NON-NLS-1$
             }
         }
 

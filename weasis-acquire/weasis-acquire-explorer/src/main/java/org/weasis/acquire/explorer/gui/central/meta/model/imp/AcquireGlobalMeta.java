@@ -18,11 +18,11 @@ import org.weasis.core.api.media.data.TagW;
 public class AcquireGlobalMeta extends AcquireMetadataTableModel {
     private static final long serialVersionUID = 8912202268139591519L;
 
-    private static final TagW[] TAGS_TO_DISPLAY = getTags("weasis.acquire.meta.global.display",
-        "PatientID,PatientName,PatientBirthDate,PatientSex,AccessionNumber,StudyDescription");
-    private static final TagW[] TAGS_EDITABLE = getTags("weasis.acquire.meta.global.edit", "StudyDescription");
-    private static final TagW[] TAGS_TO_PUBLISH = getTags("weasis.acquire.meta.global.required",
-        "PatientID,PatientName,StudyDescription");
+    private static final TagW[] TAGS_TO_DISPLAY = getTags("weasis.acquire.meta.global.display", //$NON-NLS-1$
+        "PatientID,PatientName,PatientBirthDate,PatientSex,AccessionNumber,StudyDescription"); //$NON-NLS-1$
+    private static final TagW[] TAGS_EDITABLE = getTags("weasis.acquire.meta.global.edit", "StudyDescription"); //$NON-NLS-1$ //$NON-NLS-2$
+    private static final TagW[] TAGS_TO_PUBLISH = getTags("weasis.acquire.meta.global.required", //$NON-NLS-1$
+        "PatientID,PatientName,StudyDescription"); //$NON-NLS-1$
 
     public AcquireGlobalMeta() {
         super(AcquireManager.GLOBAL, TAGS_TO_DISPLAY, TAGS_EDITABLE, TAGS_TO_PUBLISH);

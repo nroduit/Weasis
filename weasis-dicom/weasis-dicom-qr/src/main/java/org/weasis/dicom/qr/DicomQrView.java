@@ -98,38 +98,38 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomQrView.class);
 
     public enum Period {
-        ALL("All dates", null),
+        ALL(Messages.getString("DicomQrView.all_dates"), null), //$NON-NLS-1$
 
-        TODAY("Today", LocalDate.now()),
+        TODAY(Messages.getString("DicomQrView.today"), LocalDate.now()), //$NON-NLS-1$
 
-        YESTERDAY("Yesterday", LocalDate.now().minusDays(1)),
+        YESTERDAY(Messages.getString("DicomQrView.yesterday"), LocalDate.now().minusDays(1)), //$NON-NLS-1$
 
-        BEFORE_YESTERDAY("Day before yesterday", LocalDate.now().minusDays(2)),
+        BEFORE_YESTERDAY(Messages.getString("DicomQrView.day_before_yest"), LocalDate.now().minusDays(2)), //$NON-NLS-1$
 
-        CUR_WEEK("This week", LocalDate.now().with(WeekFields.of(LocalUtil.getLocaleFormat()).dayOfWeek(), 1),
+        CUR_WEEK(Messages.getString("DicomQrView.this_week"), LocalDate.now().with(WeekFields.of(LocalUtil.getLocaleFormat()).dayOfWeek(), 1), //$NON-NLS-1$
                         LocalDate.now()),
 
-        CUR_MONTH("This month", LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()), LocalDate.now()),
+        CUR_MONTH(Messages.getString("DicomQrView.this_month"), LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()), LocalDate.now()), //$NON-NLS-1$
 
-        CUR_YEAR("This year", LocalDate.now().with(TemporalAdjusters.firstDayOfYear()), LocalDate.now()),
+        CUR_YEAR(Messages.getString("DicomQrView.this_year"), LocalDate.now().with(TemporalAdjusters.firstDayOfYear()), LocalDate.now()), //$NON-NLS-1$
 
-        LAST_DAY("Last 24 hours", LocalDate.now().minusDays(1), LocalDate.now()),
+        LAST_DAY(Messages.getString("DicomQrView.last_24h"), LocalDate.now().minusDays(1), LocalDate.now()), //$NON-NLS-1$
 
-        LAST_2_DAYS("Last 2 days", LocalDate.now().minusDays(2), LocalDate.now()),
+        LAST_2_DAYS(Messages.getString("DicomQrView.last_2_d"), LocalDate.now().minusDays(2), LocalDate.now()), //$NON-NLS-1$
 
-        LAST_3_DAYS("Last 3 days", LocalDate.now().minusDays(3), LocalDate.now()),
+        LAST_3_DAYS(Messages.getString("DicomQrView.last_3_d"), LocalDate.now().minusDays(3), LocalDate.now()), //$NON-NLS-1$
 
-        LAST_WEEK("Last week", LocalDate.now().minusWeeks(1), LocalDate.now()),
+        LAST_WEEK(Messages.getString("DicomQrView.last_w"), LocalDate.now().minusWeeks(1), LocalDate.now()), //$NON-NLS-1$
 
-        LAST_2_WEEKS("Last 2 weeks", LocalDate.now().minusWeeks(2), LocalDate.now()),
+        LAST_2_WEEKS(Messages.getString("DicomQrView.last_2_w"), LocalDate.now().minusWeeks(2), LocalDate.now()), //$NON-NLS-1$
 
-        LAST_MONTH("Last month", LocalDate.now().minusMonths(1), LocalDate.now()),
+        LAST_MONTH(Messages.getString("DicomQrView.last_m"), LocalDate.now().minusMonths(1), LocalDate.now()), //$NON-NLS-1$
 
-        LAST_3_MONTHS("Last 3 months", LocalDate.now().minusMonths(3), LocalDate.now()),
+        LAST_3_MONTHS(Messages.getString("DicomQrView.last_3_m"), LocalDate.now().minusMonths(3), LocalDate.now()), //$NON-NLS-1$
 
-        LAST_6_MONTHS("Last 6 months", LocalDate.now().minusMonths(6), LocalDate.now()),
+        LAST_6_MONTHS(Messages.getString("DicomQrView.last_6_m"), LocalDate.now().minusMonths(6), LocalDate.now()), //$NON-NLS-1$
 
-        LAST_YEAR("Last year", LocalDate.now().minusYears(1), LocalDate.now());
+        LAST_YEAR(Messages.getString("DicomQrView.last_year"), LocalDate.now().minusYears(1), LocalDate.now()); //$NON-NLS-1$
 
         private final String displayName;
         private final LocalDate start;
@@ -185,7 +185,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         Tag.PerformingPhysicianName, Tag.NameOfPhysiciansReadingStudy));
     private final GroupCheckBoxMenu groupMod = new GroupCheckBoxMenu();
     private final DropDownButton modButton =
-        new DropDownButton("search_mod", new DropDownLabel("Modalities", panelGroup), groupMod) {
+        new DropDownButton("search_mod", new DropDownLabel(Messages.getString("DicomQrView.modalities"), panelGroup), groupMod) { //$NON-NLS-1$ //$NON-NLS-2$
             @Override
             protected JPopupMenu getPopupMenu() {
                 JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
@@ -209,7 +209,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         }
     };
     private final DropDownButton dateButton =
-        new DropDownButton("search_date", new DropDownLabel("Dates", panelGroup), groupDate) {
+        new DropDownButton("search_date", new DropDownLabel(Messages.getString("DicomQrView.dates"), panelGroup), groupDate) { //$NON-NLS-1$ //$NON-NLS-2$
             @Override
             protected JPopupMenu getPopupMenu() {
                 JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
@@ -224,12 +224,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     private final JComboBox<RetrieveType> comboDicomRetrieveType = new JComboBox<>(RetrieveType.values());
     private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
     private final DicomListener dicomListener;
-    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Q/R task");
+    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Q/R task"); //$NON-NLS-1$
 
     public DicomQrView() {
         super(Messages.getString("DicomQrView.title")); //$NON-NLS-1$
         initGUI();
-        tree.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Result",
+        tree.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("DicomQrView.result"), //$NON-NLS-1$
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, FontTools.getFont12Bold(), Color.GRAY)));
         add(tree, BorderLayout.CENTER);
         initialize(true);
@@ -238,7 +238,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         try {
             dcmListener = new DicomListener(tempDir);
         } catch (IOException e) {
-            LOGGER.error("Cannot creast DICOM listener", e);
+            LOGGER.error("Cannot creast DICOM listener", e); //$NON-NLS-1$
         }
         dicomListener = dcmListener;
     }
@@ -266,9 +266,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         sPanel.add(comboDestinationNode);
 
         sPanel.add(Box.createHorizontalStrut(10));
-        JLabel lblTetrieve = new JLabel("Retrieve" + StringUtil.COLON);
+        JLabel lblTetrieve = new JLabel(Messages.getString("DicomQrView.retrieve") + StringUtil.COLON); //$NON-NLS-1$
         sPanel.add(lblTetrieve);
-        comboDicomRetrieveType.setToolTipText("Select the retrieve type");
+        comboDicomRetrieveType.setToolTipText(Messages.getString("DicomQrView.msg_sel_type")); //$NON-NLS-1$
         sPanel.add(comboDicomRetrieveType);
         return sPanel;
     }
@@ -278,7 +278,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         sPanel.setAlignmentY(Component.TOP_ALIGNMENT);
         sPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         sPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-        final JLabel lblDest = new JLabel("Calling Node" + StringUtil.COLON);
+        final JLabel lblDest = new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON); //$NON-NLS-1$
         sPanel.add(lblDest);
 
         JMVUtils.setPreferredWidth(comboCallingNode, 185, 185);
@@ -286,12 +286,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         sPanel.add(comboCallingNode);
 
         sPanel.add(Box.createHorizontalStrut(10));
-        final JButton btnGerenralOptions = new JButton("More Options");
+        final JButton btnGerenralOptions = new JButton(Messages.getString("DicomQrView.more_opt")); //$NON-NLS-1$
         btnGerenralOptions.setAlignmentX(Component.LEFT_ALIGNMENT);
         sPanel.add(btnGerenralOptions);
         btnGerenralOptions.addActionListener(e -> {
             PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(this));
-            dialog.showPage(org.weasis.dicom.explorer.Messages.getString("DicomNodeListView.node_list"));
+            dialog.showPage(org.weasis.dicom.explorer.Messages.getString("DicomNodeListView.node_list")); //$NON-NLS-1$
             JMVUtils.showCenterScreen(dialog);
             initNodeList();
         });
@@ -304,12 +304,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         panel5.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel5.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 10));
         panel5.add(Box.createHorizontalStrut(350));
-        JButton clearBtn = new JButton("Clear");
-        clearBtn.setToolTipText("Clear the search parameters");
+        JButton clearBtn = new JButton(Messages.getString("DicomQrView.clear")); //$NON-NLS-1$
+        clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search")); //$NON-NLS-1$
         clearBtn.addActionListener(e -> clearItems());
         panel5.add(clearBtn);
-        JButton searchBtn = new JButton("Search");
-        searchBtn.setToolTipText("Make a DICOM query");
+        JButton searchBtn = new JButton(Messages.getString("DicomQrView.search")); //$NON-NLS-1$
+        searchBtn.setToolTipText(Messages.getString("DicomQrView.tips_dcm_query")); //$NON-NLS-1$
         searchBtn.addActionListener(e -> cfind());
         panel5.add(searchBtn);
         return panel5;
@@ -320,16 +320,16 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         sPanel.setAlignmentY(Component.TOP_ALIGNMENT);
         sPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         sPanel.setLayout(new BoxLayout(sPanel, BoxLayout.Y_AXIS));
-        sPanel.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Search",
+        sPanel.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("DicomQrView.search"), //$NON-NLS-1$
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, FontTools.getFont12Bold(), Color.GRAY)));
 
         panelGroup.setLayout(new FlowLayout(FlowLayout.LEFT, 7, 3));
 
         List<Object> list = Stream.of(Modality.values()).collect(Collectors.toList());
-        list.set(0, "All modalities");
+        list.set(0, Messages.getString("DicomQrView.all_mod")); //$NON-NLS-1$
         groupMod.setModel(list, true, true);
 
-        modButton.setToolTipText("Select modality types");
+        modButton.setToolTipText(Messages.getString("DicomQrView.select_mod")); //$NON-NLS-1$
         panelGroup.add(modButton);
         panelGroup.add(Box.createHorizontalStrut(10));
 
@@ -341,9 +341,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         groupDate.setModel(dataModel);
 
         panelGroup.add(dateButton);
-        panelGroup.add(new JLabel("From"));
+        panelGroup.add(new JLabel(Messages.getString("DicomQrView.from"))); //$NON-NLS-1$
         panelGroup.add(startDatePicker);
-        panelGroup.add(new JLabel("To"));
+        panelGroup.add(new JLabel(Messages.getString("DicomQrView.to"))); //$NON-NLS-1$
         panelGroup.add(endDatePicker);
         sPanel.add(panelGroup);
 
@@ -357,13 +357,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         comboTags.updateUI();
         JMVUtils.addTooltipToComboList(comboTags);
 
-        StringBuilder buf = new StringBuilder("<html>");
-        buf.append("This field supports two wildcard characters: * and ?");
-        buf.append("<br>&nbsp&nbsp&nbsp");
-        buf.append("* matches zero or more non-space characters");
-        buf.append("<br>&nbsp&nbsp&nbsp");
-        buf.append("? matches exactly one non-space character");
-        buf.append("</html>");
+        StringBuilder buf = new StringBuilder("<html>"); //$NON-NLS-1$
+        buf.append(Messages.getString("DicomQrView.tips_wildcard")); //$NON-NLS-1$
+        buf.append("<br>&nbsp&nbsp&nbsp"); //$NON-NLS-1$
+        buf.append(Messages.getString("DicomQrView.tips_star")); //$NON-NLS-1$
+        buf.append("<br>&nbsp&nbsp&nbsp"); //$NON-NLS-1$
+        buf.append(Messages.getString("DicomQrView.tips_question")); //$NON-NLS-1$
+        buf.append("</html>"); //$NON-NLS-1$
         tfSearch.setToolTipText(buf.toString());
         JMVUtils.setPreferredWidth(tfSearch, 370, 100);
         panel4.add(tfSearch);
@@ -432,7 +432,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         dicomModel.dispose();
 
         if (p.isEmpty()) {
-            String message = "Do you really want to execute a query with empty parameters ?";
+            String message = Messages.getString("DicomQrView.msg_empty_query"); //$NON-NLS-1$
             int response = JOptionPane.showOptionDialog(WinUtil.getParentDialog(this), message, getTitle(),
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, null, null);
             if (response != 0) {
@@ -478,7 +478,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                     JOptionPane.ERROR_MESSAGE));
             }
         } else if (selectedItem instanceof DicomWebNode) {
-            throw new IllegalAccessError("Not implemented yet");
+            throw new IllegalAccessError("Not implemented yet"); //$NON-NLS-1$
         }
     }
 
@@ -493,10 +493,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         if (items != null) {
             for (int i = 0; i < items.size(); i++) {
                 Attributes item = items.get(i);
-                LOGGER.trace("===========================================");
-                LOGGER.trace("CFind Item {}", (i + 1));
-                LOGGER.trace("===========================================");
-                LOGGER.trace("{}", item.toString(100, 150));
+                LOGGER.trace("==========================================="); //$NON-NLS-1$
+                LOGGER.trace("CFind Item {}", (i + 1)); //$NON-NLS-1$
+                LOGGER.trace("==========================================="); //$NON-NLS-1$
+                LOGGER.trace("{}", item.toString(100, 150)); //$NON-NLS-1$
 
                 String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(item.getString(Tag.PatientID),
                     item.getString(Tag.IssuerOfPatientID), item.getString(Tag.PatientName));
@@ -507,11 +507,11 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                         @Override
                         public String toString() {
                             StringBuilder buf = new StringBuilder(getDisplayValue(this, Tag.PatientName));
-                            buf.append(" [");
+                            buf.append(" ["); //$NON-NLS-1$
                             buf.append(getDisplayValue(this, Tag.PatientID));
-                            buf.append("] ");
+                            buf.append("] "); //$NON-NLS-1$
                             buf.append(getDisplayValue(this, Tag.PatientBirthDate));
-                            buf.append(" ");
+                            buf.append(" "); //$NON-NLS-1$
                             buf.append(getDisplayValue(this, Tag.PatientSex));
                             return buf.toString();
                         }
@@ -528,13 +528,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                             @Override
                             public String toString() {
                                 StringBuilder buf = new StringBuilder(getDisplayValue(this, Tag.StudyDescription));
-                                buf.append(" [");
+                                buf.append(" ["); //$NON-NLS-1$
                                 buf.append(getDisplayValue(this, Tag.ModalitiesInStudy));
-                                buf.append("] ");
+                                buf.append("] "); //$NON-NLS-1$
                                 LocalDateTime studyDate = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, this);
                                 if (studyDate != null) {
                                     buf.append(TagUtil.formatDateTime(studyDate));
-                                    buf.append(" ");
+                                    buf.append(" "); //$NON-NLS-1$
                                 }
                                 buf.append(getDisplayValue(this, Tag.AccessionNumber));
                                 return buf.toString();
@@ -604,7 +604,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     }
 
     private SearchParameters buildCurrentSearchParameters() {
-        SearchParameters p = new SearchParameters("current");
+        SearchParameters p = new SearchParameters(Messages.getString("DicomQrView.custom")); //$NON-NLS-1$
         // Get value in text field
         String sTagValue = tfSearch.getText();
         TagW item = (TagW) comboTags.getSelectedItem();
@@ -625,7 +625,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         if (sDate != null || eDate != null) {
             StringBuilder range = new StringBuilder();
             range.append(TagD.formatDicomDate(sDate));
-            range.append("-");
+            range.append("-"); //$NON-NLS-1$
             range.append(TagD.formatDicomDate(eDate));
             p.getParameters().add(new DicomParam(Tag.StudyDate, range.toString()));
         }
