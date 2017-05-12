@@ -468,7 +468,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
             connectOptions.setConnectTimeout(3000);
             connectOptions.setAcceptTimeout(5000);
             params.setConnectOptions(connectOptions);
-            final DicomState state = CFind.process(params, ((DefaultDicomNode) callingNode).getDicomNode(),
+            final DicomState state = CFind.process(params, ((DefaultDicomNode) callingNode).getDicomNodeWithOnlyAET(),
                 node.getDicomNode(), p.toArray(new DicomParam[p.size()]));
             if (state.getStatus() == Status.Success) {
                 displayResult(state);

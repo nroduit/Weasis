@@ -101,7 +101,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                             LOGGER.error("SOP Class url conversion", e);
                         }
                     }
-                    state = CGet.process(params, callingNode.getDicomNode(), node.getDicomNode(), progress,
+                    state = CGet.process(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(), progress,
                         DicomQrView.tempDir, url, dcmParams);
                 } else if (RetrieveType.CMOVE == type) {
                     DicomListener dicomListener = dicomQrView.getDicomListener();
@@ -139,7 +139,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                             DicomWebNode wn = (DicomWebNode) n;
                             URL url = wn.getUrl();
                             if (DicomWebNode.WebType.WADO == wn.getWebType() && url != null
-                                && host.equals(getHostname(url.getHost()))) {
+                                && getHostname(url.getHost()).contains(host)) {
                                 wadoURLs.add(url);
                             }
                         }
@@ -168,7 +168,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     WadoParameters wadoParameters =
                         new WadoParameters(wadoURLs.get(0).toString(), false, null, null, null);
                     ManifestBuilder manifest = new ManifestBuilder();
-                    manifest.fillSeries(params, callingNode.getDicomNode(), node.getDicomNode(), dicomQrView.getDicomModel(), studies);
+                    manifest.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(), dicomQrView.getDicomModel(), studies);
                     String wadoXmlGenerated = manifest.xmlManifest(wadoParameters, null);
                     if (wadoXmlGenerated == null) {
                         state = new DicomState(Status.UnableToProcess, "Cannot build WADO manifest", null);
