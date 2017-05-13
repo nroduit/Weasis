@@ -50,6 +50,7 @@ import org.dcm4che3.util.DateUtils;
 import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
@@ -103,11 +104,11 @@ public class TagD extends TagW {
     }
 
     public enum Level {
-        PATIENT("Patient"), 
-        STUDY("Study"), 
-        SERIES("Series"), 
-        INSTANCE("Instance"),
-        FRAME("Frame"); 
+        PATIENT("Patient"),  //$NON-NLS-1$
+        STUDY("Study"),  //$NON-NLS-1$
+        SERIES("Series"),  //$NON-NLS-1$
+        INSTANCE("Instance"), //$NON-NLS-1$
+        FRAME("Frame");  //$NON-NLS-1$
 
         private final String tag;
 

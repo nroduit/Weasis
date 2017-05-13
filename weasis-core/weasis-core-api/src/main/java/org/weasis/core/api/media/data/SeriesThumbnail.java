@@ -305,59 +305,75 @@ public class SeriesThumbnail extends Thumbnail
 
     @Override
     protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
-        setBorder(series.isSelected() ? series.isFocused() ? onMouseOverBorderFocused : onMouseOverBorder
-            : outMouseOverBorder);
-        if (series.isOpen()) {
-            g2d.setPaint(Color.green);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.fillArc(x + 2, y + 2, 7, 7, 0, 360);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-        }
-        g2d.setPaint(Color.ORANGE);
-        Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
-        g2d.setFont(FontTools.getFont10());
-        int hbleft = y + height - 2;
-        if (splitNb != null) {
-            g2d.drawString("#" + splitNb + " [" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        } else {
-            g2d.drawString("[" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$
-        }
-
-        // To avoid concurrency issue
-        final JProgressBar bar = progressBar;
-        if (bar != null) {
-            if (series.getFileSize() > 0.0) {
-                g2d.drawString(FileUtil.formatSize(series.getFileSize()), x + 2, hbleft - 12);
+        if (dragPressed == null) {
+            setBorder(series.isSelected() ? series.isFocused() ? onMouseOverBorderFocused : onMouseOverBorder
+                : outMouseOverBorder);
+            if (series.isOpen()) {
+                g2d.setPaint(Color.BLACK);
+                g2d.fillRect(x, y, 11, 11);
+                g2d.setPaint(Color.GREEN);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.fillArc(x + 2, y + 2, 7, 7, 0, 360);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
             }
-            if (bar.isVisible()) {
-                // Draw in the bottom right corner of thumbnail
-                int shiftx = thumbnailSize - bar.getWidth();
-                int shifty = thumbnailSize - bar.getHeight();
-                g2d.translate(shiftx, shifty);
-                bar.paint(g2d);
 
-                // Draw in the top right corner
-                SeriesImporter seriesLoader = series.getSeriesLoader();
-                if (seriesLoader != null) {
-                    boolean stopped = seriesLoader.isStopped();
+            g2d.setFont(FontTools.getFont10());
+            int fontHeight = (int) (FontTools.getAccurateFontHeight(g2d) + 1.5f);
+            Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
+            if (splitNb != null) {
+                String nb = "#" + splitNb; //$NON-NLS-1$
+                int w = g2d.getFontMetrics().stringWidth(nb);
+                g2d.setPaint(Color.BLACK);
+                int sx = x + width - 2 - w;
+                g2d.fillRect(sx - 2, y, w + 4, fontHeight);
+                g2d.setPaint(Color.ORANGE);
+                g2d.drawString(nb, sx, y + fontHeight - 3);
+            }
 
-                    g2d.translate(-shiftx, -shifty);
-                    shiftx = thumbnailSize - stopButton.width;
-                    shifty = 5;
+            String nbImg = "[" + series.size(null) + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+            int hbleft = y + height - 3;
+            int w = g2d.getFontMetrics().stringWidth(nbImg);
+            g2d.setPaint(Color.BLACK);
+            g2d.fillRect(x, y + height - fontHeight, w + 4, fontHeight);
+            g2d.setPaint(Color.ORANGE);
+            g2d.drawString(nbImg, x + 2, hbleft);
+
+            // To avoid concurrency issue
+            final JProgressBar bar = progressBar;
+            if (bar != null) {
+                if (series.getFileSize() > 0.0) {
+                    g2d.drawString(FileUtil.formatSize(series.getFileSize()), x + 2, hbleft - 12);
+                }
+                if (bar.isVisible()) {
+                    // Draw in the bottom right corner of thumbnail
+                    int shiftx = thumbnailSize - bar.getWidth();
+                    int shifty = thumbnailSize - bar.getHeight();
                     g2d.translate(shiftx, shifty);
-                    g2d.setColor(Color.RED);
-                    g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
-                    g2d.fill(stopButton);
+                    bar.paint(g2d);
 
-                    g2d.translate(-shiftx, -shifty);
-                    shiftx = shiftx - 3 * BUTTON_SIZE_HALF;
-                    shifty = 5;
-                    g2d.translate(shiftx, shifty);
-                    g2d.setColor(Color.GREEN);
-                    g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
-                    g2d.fill(startButton);
+                    // Draw in the top right corner
+                    SeriesImporter seriesLoader = series.getSeriesLoader();
+                    if (seriesLoader != null) {
+                        boolean stopped = seriesLoader.isStopped();
 
-                    g2d.translate(-shiftx, -shifty);
+                        g2d.translate(-shiftx, -shifty);
+                        shiftx = thumbnailSize - stopButton.width;
+                        shifty = 5;
+                        g2d.translate(shiftx, shifty);
+                        g2d.setColor(Color.RED);
+                        g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
+                        g2d.fill(stopButton);
+
+                        g2d.translate(-shiftx, -shifty);
+                        shiftx = shiftx - 3 * BUTTON_SIZE_HALF;
+                        shifty = 5;
+                        g2d.translate(shiftx, shifty);
+                        g2d.setColor(Color.GREEN);
+                        g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
+                        g2d.fill(startButton);
+
+                        g2d.translate(-shiftx, -shifty);
+                    }
                 }
             }
         }

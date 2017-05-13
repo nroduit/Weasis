@@ -39,6 +39,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
+import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.WProperties;
@@ -334,7 +335,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     private DropDownButton buildSynchButton() {
-        GroupRadioMenu menu = null;
+        GroupPopup menu = null;
         ActionState synch = eventManager.getAction(ActionW.SYNCH);
         SynchView synchView = SynchView.DEFAULT_STACK;
         if (synch instanceof ComboItemListener) {

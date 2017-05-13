@@ -43,7 +43,7 @@ public class AutoProcessor {
     /**
      * The property name used for the bundle directory.
      **/
-    public static final String AUTO_DEPLOY_DIR_PROPERY = "felix.auto.deploy.dir"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_DIR_PROPERTY = "felix.auto.deploy.dir"; //$NON-NLS-1$
     /**
      * The default name used for the bundle directory.
      **/
@@ -51,11 +51,11 @@ public class AutoProcessor {
     /**
      * The property name used to specify auto-deploy actions.
      **/
-    public static final String AUTO_DEPLOY_ACTION_PROPERY = "felix.auto.deploy.action"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_ACTION_PROPERTY = "felix.auto.deploy.action"; //$NON-NLS-1$
     /**
      * The property name used to specify auto-deploy start level.
      **/
-    public static final String AUTO_DEPLOY_STARTLEVEL_PROPERY = "felix.auto.deploy.startlevel"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_STARTLEVEL_PROPERTY = "felix.auto.deploy.startlevel"; //$NON-NLS-1$
     /**
      * The name used for the auto-deploy install action.
      **/
@@ -93,10 +93,10 @@ public class AutoProcessor {
      *            The system bundle context.
      * @param weasisLoader
      **/
-    public static void process(Map configMap, BundleContext context, WeasisLoader weasisLoader) {
-        configMap = (configMap == null) ? new HashMap() : configMap;
-        processAutoDeploy(configMap, context, weasisLoader);
-        processAutoProperties(configMap, context, weasisLoader);
+    public static void process(Map<String, String> configMap, BundleContext context, WeasisLoader weasisLoader) {
+        Map<String, String> map = (configMap == null) ? new HashMap<>() : configMap;
+        processAutoDeploy(map, context, weasisLoader);
+        processAutoProperties(map, context, weasisLoader);
     }
 
     /**
@@ -104,11 +104,11 @@ public class AutoProcessor {
      * Processes bundles in the auto-deploy directory, performing the specified deploy actions.
      * </p>
      */
-    private static void processAutoDeploy(Map configMap, BundleContext context, WeasisLoader weasisLoader) {
+    private static void processAutoDeploy(Map<String, String> configMap, BundleContext context, WeasisLoader weasisLoader) {
         // Determine if auto deploy actions to perform.
-        String action = (String) configMap.get(AUTO_DEPLOY_ACTION_PROPERY);
+        String action = configMap.get(AUTO_DEPLOY_ACTION_PROPERTY);
         action = (action == null) ? "" : action; //$NON-NLS-1$
-        List actionList = new ArrayList();
+        List<String> actionList = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(action, ","); //$NON-NLS-1$
         while (st.hasMoreTokens()) {
             String s = st.nextToken().trim().toLowerCase();
@@ -119,7 +119,7 @@ public class AutoProcessor {
         }
 
         // Perform auto-deploy actions.
-        if (actionList.size() > 0) {
+        if (!actionList.isEmpty()) {
             // Retrieve the Start Level service, since it will be needed
             // to set the start level of the installed bundles.
             StartLevel sl = (StartLevel) context
@@ -127,28 +127,28 @@ public class AutoProcessor {
 
             // Get start level for auto-deploy bundles.
             int startLevel = sl.getInitialBundleStartLevel();
-            if (configMap.get(AUTO_DEPLOY_STARTLEVEL_PROPERY) != null) {
+            if (configMap.get(AUTO_DEPLOY_STARTLEVEL_PROPERTY) != null) {
                 try {
-                    startLevel = Integer.parseInt(configMap.get(AUTO_DEPLOY_STARTLEVEL_PROPERY).toString());
+                    startLevel = Integer.parseInt(configMap.get(AUTO_DEPLOY_STARTLEVEL_PROPERTY).toString());
                 } catch (NumberFormatException ex) {
                     // Ignore and keep default level.
                 }
             }
 
             // Get list of already installed bundles as a map.
-            Map installedBundleMap = new HashMap();
+            Map<String, Bundle> installedBundleMap = new HashMap<>();
             Bundle[] bundles = context.getBundles();
             for (int i = 0; i < bundles.length; i++) {
                 installedBundleMap.put(bundles[i].getLocation(), bundles[i]);
             }
 
             // Get the auto deploy directory.
-            String autoDir = (String) configMap.get(AUTO_DEPLOY_DIR_PROPERY);
+            String autoDir = configMap.get(AUTO_DEPLOY_DIR_PROPERTY);
             autoDir = (autoDir == null) ? AUTO_DEPLOY_DIR_VALUE : autoDir;
             // Look in the specified bundle directory to create a list
             // of all JAR files to install.
             File[] files = new File(autoDir).listFiles();
-            List jarList = new ArrayList();
+            List<File> jarList = new ArrayList<>();
             if (files != null) {
                 Arrays.sort(files);
                 for (int i = 0; i < files.length; i++) {
@@ -159,20 +159,20 @@ public class AutoProcessor {
             }
             weasisLoader.setMax(jarList.size());
             // Install bundle JAR files and remember the bundle objects.
-            final List startBundleList = new ArrayList();
+            final List<Bundle> startBundleList = new ArrayList<>();
             for (int i = 0; i < jarList.size(); i++) {
                 // Look up the bundle by location, removing it from
                 // the map of installed bundles so the remaining bundles
                 // indicate which bundles may need to be uninstalled.
-                File jar = (File) jarList.get(i);
-                Bundle b = (Bundle) installedBundleMap.remove((jar).toURI().toString());
+                File jar = jarList.get(i);
+                Bundle b = installedBundleMap.remove((jar).toURI().toString());
                 try {
                     weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + jar.getName()); //$NON-NLS-1$
 
                     // If the bundle is not already installed, then install it
                     // if the 'install' action is present.
                     if ((b == null) && actionList.contains(AUTO_DEPLOY_INSTALL_VALUE)) {
-                        b = installBundle(context, ((File) jarList.get(i)).toURI().toString());
+                        b = installBundle(context, jarList.get(i).toURI().toString());
                     }
                     // If the bundle is already installed, then update it
                     // if the 'update' action is present.
@@ -200,9 +200,9 @@ public class AutoProcessor {
             // Uninstall all bundles not in the auto-deploy directory if
             // the 'uninstall' action is present.
             if (actionList.contains(AUTO_DEPLOY_UNINSTALL_VALUE)) {
-                for (Iterator it = installedBundleMap.entrySet().iterator(); it.hasNext();) {
-                    Map.Entry entry = (Map.Entry) it.next();
-                    Bundle b = (Bundle) entry.getValue();
+                for ( Iterator<Entry<String, Bundle>> it = installedBundleMap.entrySet().iterator(); it.hasNext();) {
+                    Entry<String, Bundle> entry = it.next();
+                    Bundle b = entry.getValue();
                     if (b.getBundleId() != 0) {
                         try {
                             b.uninstall();
@@ -218,7 +218,7 @@ public class AutoProcessor {
             if (actionList.contains(AUTO_DEPLOY_START_VALUE)) {
                 for (int i = 0; i < startBundleList.size(); i++) {
                     try {
-                        ((Bundle) startBundleList.get(i)).start();
+                        startBundleList.get(i).start();
 
                     } catch (BundleException ex) {
                         printError(ex, "Auto-deploy start: "); //$NON-NLS-1$
@@ -233,7 +233,7 @@ public class AutoProcessor {
      * Processes the auto-install and auto-start properties from the specified configuration properties.
      * </p>
      */
-    private static void processAutoProperties(Map configMap, BundleContext context, WeasisLoader weasisLoader) {
+    private static void processAutoProperties(Map<String, String> configMap, BundleContext context, WeasisLoader weasisLoader) {
         // Retrieve the Start Level service, since it will be needed
         // to set the start level of the installed bundles.
         StartLevel sl = (StartLevel) context
@@ -268,7 +268,7 @@ public class AutoProcessor {
                 System.err.println("Invalid start level: " + key); //$NON-NLS-1$
             }
             boolean canBeStarted = key.startsWith(AUTO_START_PROP);
-            StringTokenizer st = new StringTokenizer((String) configMap.get(key), "\" ", true); //$NON-NLS-1$
+            StringTokenizer st = new StringTokenizer(configMap.get(key), "\" ", true); //$NON-NLS-1$
             for (String location = nextLocation(st); location != null; location = nextLocation(st)) {
                 String bundleName = getBundleNameFromLocation(location);
                 if (!"System Bundle".equals(bundleName)) { //$NON-NLS-1$

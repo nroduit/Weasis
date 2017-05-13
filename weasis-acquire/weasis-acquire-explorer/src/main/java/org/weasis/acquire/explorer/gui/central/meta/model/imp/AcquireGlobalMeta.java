@@ -10,47 +10,25 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer.gui.central.meta.model.imp;
 
-import java.util.Optional;
-
-import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.dicom.codec.TagD;
 
 public class AcquireGlobalMeta extends AcquireMetadataTableModel {
     private static final long serialVersionUID = 8912202268139591519L;
 
-    private static final AcquireGlobalMeta instance = new AcquireGlobalMeta();
+    private static final TagW[] TAGS_TO_DISPLAY = getTags("weasis.acquire.meta.global.display", //$NON-NLS-1$
+        "PatientID,PatientName,PatientBirthDate,PatientSex,AccessionNumber,StudyDescription"); //$NON-NLS-1$
+    private static final TagW[] TAGS_EDITABLE = getTags("weasis.acquire.meta.global.edit", "StudyDescription"); //$NON-NLS-1$ //$NON-NLS-2$
+    private static final TagW[] TAGS_TO_PUBLISH = getTags("weasis.acquire.meta.global.required", //$NON-NLS-1$
+        "PatientID,PatientName,StudyDescription"); //$NON-NLS-1$
 
-    private static final TagW[] TAGS_TO_DISPLAY = TagD.getTagFromIDs(Tag.PatientID, Tag.PatientName,
-        Tag.PatientBirthDate, Tag.PatientSex, Tag.AccessionNumber, Tag.StudyID, Tag.StudyDescription);
-
-    private static final TagW[] TAGS_EDITABLE = TagD.getTagFromIDs(Tag.StudyDescription);
-
-    private static final TagW[] TAGS_TO_PUBLISH = TagD.getTagFromIDs(Tag.PatientID, Tag.PatientName,
-        Tag.PatientBirthDate, Tag.PatientSex, Tag.AccessionNumber, Tag.StudyID, Tag.StudyDescription);
-
-    private AcquireGlobalMeta() {
-        super(AcquireManager.GLOBAL);
+    public AcquireGlobalMeta() {
+        super(AcquireManager.GLOBAL, TAGS_TO_DISPLAY, TAGS_EDITABLE, TAGS_TO_PUBLISH);
     }
 
-    public static AcquireGlobalMeta getInstance() {
-        return instance;
-    }
-
-    @Override
-    protected Optional<TagW[]> tagsToDisplay() {
-        return Optional.of(TAGS_TO_DISPLAY);
-    }
-
-    @Override
-    protected Optional<TagW[]> tagsEditable() {
-        return AcquireManager.GLOBAL.isAllowFullEdition() ? Optional.of(TAGS_TO_DISPLAY) : Optional.of(TAGS_EDITABLE);
-    }
-
-    @Override
-    protected Optional<TagW[]> tagsToPublish() {
-        return Optional.of(TAGS_TO_PUBLISH);
+    public static boolean isPublishable(TagReadable tagMaps) {
+        return hasNonNullValues(TAGS_TO_PUBLISH, tagMaps);
     }
 }

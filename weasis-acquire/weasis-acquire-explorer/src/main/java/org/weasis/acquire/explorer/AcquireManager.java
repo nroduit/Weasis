@@ -519,7 +519,6 @@ public class AcquireManager {
      * @return
      */
     private static Document getPatientContextFromUri(URI uri) {
-        // TODO could be more secure to limit the loading buffer size !!!
         byte[] byteArray = getURIContent(Objects.requireNonNull(uri));
         String uriPath = uri.getPath();
 

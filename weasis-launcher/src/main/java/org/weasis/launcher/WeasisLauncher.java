@@ -24,9 +24,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Timer;
@@ -110,7 +112,6 @@ public class WeasisLauncher {
      */
     public static final String CONFIG_DIRECTORY = "conf"; //$NON-NLS-1$
 
-    private static HostActivator m_activator = null;
     static volatile Felix m_felix = null;
     static volatile ServiceTracker m_tracker = null;
     static volatile boolean frameworkLoaded = false;
@@ -295,6 +296,9 @@ public class WeasisLauncher {
                 }
                 // Allow export feature for portable version
                 System.setProperty("weasis.export.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                System.setProperty("weasis.export.dicom.send", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                System.setProperty("weasis.import.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                System.setProperty("weasis.import.dicom.qr", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -303,22 +307,22 @@ public class WeasisLauncher {
         System.out.println();
         System.out.println("***** Starting Configuration *****"); //$NON-NLS-1$
         // Read configuration properties.
-        Properties serverProp = WeasisLauncher.loadConfigProperties();
+        Map<String, String> serverProp = WeasisLauncher.loadConfigProperties();
         // If no configuration properties were found, then create
         // an empty properties object.
         if (serverProp == null) {
             System.err.println("Cannot start, no " + CONFIG_PROPERTIES_FILE_VALUE + " found."); //$NON-NLS-1$ //$NON-NLS-2$
-            serverProp = new Properties();
+            serverProp = new HashMap<>();
         }
 
         // If there is a passed in bundle auto-deploy directory, then
         // that overwrites anything in the config file.
         if (bundleDir != null) {
-            serverProp.setProperty(AutoProcessor.AUTO_DEPLOY_DIR_PROPERY, bundleDir);
+            serverProp.put(AutoProcessor.AUTO_DEPLOY_DIR_PROPERTY, bundleDir);
         }
 
-        String profileName = serverProp.getProperty(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
-        serverProp.setProperty(P_WEASIS_PROFILE, profileName);
+        String profileName = serverProp.getOrDefault(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
+        serverProp.put(P_WEASIS_PROFILE, profileName);
 
         // Define the sourceID for the temp and cache directory. The portable version will always have the same
         // sourceID.
@@ -327,10 +331,10 @@ public class WeasisLauncher {
                 .hashCode());
         System.setProperty("weasis.source.id", sourceID); //$NON-NLS-1$
 
-        cacheDir = serverProp.getProperty(Constants.FRAMEWORK_STORAGE) + "-" + sourceID; //$NON-NLS-1$
+        cacheDir = serverProp.get(Constants.FRAMEWORK_STORAGE) + "-" + sourceID; //$NON-NLS-1$
         // If there is a passed in bundle cache directory, then
         // that overwrites anything in the config file.
-        serverProp.setProperty(Constants.FRAMEWORK_STORAGE, cacheDir);
+        serverProp.put(Constants.FRAMEWORK_STORAGE, cacheDir);
 
         // Load local properties and clean if necessary the previous version
         WeasisLoader loader = loadProperties(serverProp);
@@ -352,13 +356,6 @@ public class WeasisLauncher {
         System.out.println(""); //$NON-NLS-1$
 
         int exitStatus = 0;
-        // Create host activator
-        m_activator = new HostActivator();
-
-        List list = new ArrayList();
-        list.add(m_activator);
-        serverProp.put(FelixConstants.SYSTEMBUNDLE_ACTIVATORS_PROP, list);
-
         try {
             // Now create an instance of the framework with our configuration properties.
             m_felix = new Felix(serverProp);
@@ -367,11 +364,11 @@ public class WeasisLauncher {
 
             // Use the system bundle context to process the auto-deploy
             // and auto-install/auto-start properties.
-            loader.setFelix(serverProp, m_activator.getBundleContext());
+            loader.setFelix(serverProp, m_felix.getBundleContext());
             loader.writeLabel(
                 String.format(Messages.getString("WeasisLauncher.starting"), System.getProperty(P_WEASIS_NAME))); //$NON-NLS-1$
             m_tracker =
-                new ServiceTracker(m_activator.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", //$NON-NLS-1$
+                new ServiceTracker(m_felix.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", //$NON-NLS-1$
                     null);
             m_tracker.open();
 
@@ -405,7 +402,7 @@ public class WeasisLauncher {
                 m_tracker.close();
             });
 
-            String mainUI = serverProp.getProperty("weasis.main.ui", ""); //$NON-NLS-1$ //$NON-NLS-2$
+            String mainUI = serverProp.getOrDefault("weasis.main.ui", ""); //$NON-NLS-1$ //$NON-NLS-2$
             mainUI = mainUI.trim();
             if (!"".equals(mainUI)) { //$NON-NLS-1$
                 boolean uiStarted = false;
@@ -451,12 +448,13 @@ public class WeasisLauncher {
         FileUtil.storeProperties(sourceIdProps, localSourceProp, null);
     }
 
-    private static void showMessage(final WeasisFrame mainFrame, Properties s_prop, final Properties l_prop) {
-        String versionOld = s_prop.getProperty("prev." + P_WEASIS_VERSION); //$NON-NLS-1$
-        String versionNew = s_prop.getProperty(P_WEASIS_VERSION);
+    private static void showMessage(final WeasisFrame mainFrame, Map<String, String> serverProp,
+        final Properties l_prop) {
+        String versionOld = serverProp.get("prev." + P_WEASIS_VERSION); //$NON-NLS-1$
+        String versionNew = serverProp.get(P_WEASIS_VERSION);
         // First time launch
         if (versionOld == null) {
-            String val = getGeneralProperty("weasis.show.disclaimer", "true", s_prop, l_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+            String val = getGeneralProperty("weasis.show.disclaimer", "true", serverProp, l_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
             if (Boolean.valueOf(val)) {
 
                 EventQueue.invokeLater(() -> {
@@ -489,7 +487,7 @@ public class WeasisLauncher {
                 });
             }
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
-            String val = getGeneralProperty("weasis.show.release", "true", s_prop, l_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+            String val = getGeneralProperty("weasis.show.release", "true", serverProp, l_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
             if (Boolean.valueOf(val)) {
                 Version vOld = getVersion(versionOld);
                 Version vNew = getVersion(versionNew);
@@ -512,13 +510,20 @@ public class WeasisLauncher {
                     }
 
                 }
-                final String releaseNotesUrl = s_prop.getProperty("weasis.releasenotes"); //$NON-NLS-1$
+                final String releaseNotesUrl = serverProp.get("weasis.releasenotes"); //$NON-NLS-1$
                 final StringBuilder message = new StringBuilder("<P>"); //$NON-NLS-1$
                 message.append(String.format(Messages.getString("WeasisLauncher.change.version"), //$NON-NLS-1$
                     System.getProperty(P_WEASIS_NAME), versionOld, versionNew));
 
                 EventQueue.invokeLater(() -> {
                     JTextPane jTextPane1 = new JTextPane();
+                    HTMLEditorKit kit = new HTMLEditorKit();
+                    StyleSheet ss = kit.getStyleSheet();
+                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
+                        + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+                        + ";color:#" //$NON-NLS-1$
+                        + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+                        + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
                     jTextPane1.setContentType("text/html"); //$NON-NLS-1$
                     jTextPane1.setEditable(false);
                     jTextPane1.addHyperlinkListener(new HyperlinkListener() {
@@ -553,12 +558,6 @@ public class WeasisLauncher {
                         }
                     });
 
-                    StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
-                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-                        + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-                        + ";color:#" //$NON-NLS-1$
-                        + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-                        + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
                     message.append("<BR>"); //$NON-NLS-1$
                     String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
                     message.append(String.format("<a href=\"%s", //$NON-NLS-1$
@@ -703,7 +702,7 @@ public class WeasisLauncher {
      *
      * @return A <tt>Properties</tt> instance or <tt>null</tt> if there was an error.
      **/
-    public static Properties loadConfigProperties() {
+    public static Map<String, String> loadConfigProperties() {
         URI propURI = getPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
         // Read the properties file
         Properties props = null;
@@ -720,14 +719,17 @@ public class WeasisLauncher {
             // Extended properties, add or override existing properties
             props = readProperties(propURI, props);
         }
+
+        // Perform variable substitution for system properties and
+        // convert to dictionary.
+        Map<String, String> map = new HashMap<>();
         if (props != null) {
-            // Perform variable substitution for system properties.
-            for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
+            for (Enumeration<?> e = props.propertyNames(); e.hasMoreElements();) {
                 String name = (String) e.nextElement();
-                props.setProperty(name, Util.substVars(props.getProperty(name), name, null, props));
+                map.put(name, Util.substVars(props.getProperty(name), name, null, props));
             }
         }
-        return props;
+        return map;
     }
 
     public static URI getPropertiesURI(String configProp, String configFile) {
@@ -794,12 +796,12 @@ public class WeasisLauncher {
         return props;
     }
 
-    private static String getGeneralProperty(String key, String defaultValue, Properties serverProp,
+    private static String getGeneralProperty(String key, String defaultValue, Map<String, String> serverProp,
         Properties localProp, boolean storeInLocalPref, boolean serviceProperty) {
         String value = localProp.getProperty(key, null);
         String defaultVal = System.getProperty(key, null);
         if (defaultVal == null) {
-            defaultVal = serverProp.getProperty(key, defaultValue);
+            defaultVal = serverProp.getOrDefault(key, defaultValue);
         }
 
         if (value == null) {
@@ -810,8 +812,8 @@ public class WeasisLauncher {
             }
         }
         if (serviceProperty) {
-            serverProp.setProperty(key, value);
-            serverProp.setProperty("def." + key, defaultVal); //$NON-NLS-1$
+            serverProp.put(key, value);
+            serverProp.put("def." + key, defaultVal); //$NON-NLS-1$
         }
         System.out.println(key + ": " + value); //$NON-NLS-1$
         return value;
@@ -860,16 +862,16 @@ public class WeasisLauncher {
         }
     }
 
-    public static WeasisLoader loadProperties(Properties s_prop) {
+    public static WeasisLoader loadProperties(Map<String, String> serverProp) {
         System.out.println("Operating system: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
 
-        String dir = new File(s_prop.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
+        String dir = new File(serverProp.get(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty(P_WEASIS_PATH, dir);
 
-        String weasisName = s_prop.getProperty(P_WEASIS_NAME, "Weasis");//$NON-NLS-1$
+        String weasisName = serverProp.getOrDefault(P_WEASIS_NAME, "Weasis");//$NON-NLS-1$
         System.setProperty(P_WEASIS_NAME, weasisName);
 
-        String profileName = s_prop.getProperty(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
+        String profileName = serverProp.getOrDefault(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
         System.setProperty(P_WEASIS_PROFILE, profileName);
 
         String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
@@ -916,7 +918,7 @@ public class WeasisLauncher {
         if (portable != null) {
             System.out.println("Starting portable version"); //$NON-NLS-1$
             System.setProperty("weasis.portable.dicom.directory", //$NON-NLS-1$
-                s_prop.getProperty("weasis.portable.dicom.directory")); //$NON-NLS-1$
+                serverProp.get("weasis.portable.dicom.directory")); //$NON-NLS-1$
         }
 
         File profileProps = new File(prefDir, APP_PROPERTY_FILE);
@@ -927,25 +929,25 @@ public class WeasisLauncher {
         // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension of config)
         // 4) default value
 
-        final String lang = getGeneralProperty("locale.lang.code", "en", s_prop, lProp, true, false); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("locale.format.code", "system", s_prop, lProp, true, false); //$NON-NLS-1$ //$NON-NLS-2$
+        final String lang = getGeneralProperty("locale.lang.code", "en", serverProp, lProp, true, false); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("locale.format.code", "system", serverProp, lProp, true, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
-        getGeneralProperty("org.apache.sling.commons.log.level", "INFO", s_prop, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.level", "INFO", serverProp, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         // Empty string make the file log writer disable
         String logActivatation =
-            getGeneralProperty("org.apache.sling.commons.log.file.activate", "false", s_prop, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+            getGeneralProperty("org.apache.sling.commons.log.file.activate", "false", serverProp, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         if ("true".equalsIgnoreCase(logActivatation)) { //$NON-NLS-1$
             String logFile = dir + File.separator + "log" + File.separator + "default.log"; //$NON-NLS-1$ //$NON-NLS-2$
-            s_prop.setProperty("org.apache.sling.commons.log.file", logFile); //$NON-NLS-1$
+            serverProp.put("org.apache.sling.commons.log.file", logFile); //$NON-NLS-1$
             lProp.remove("org.apache.sling.commons.log.file"); //$NON-NLS-1$
         }
 
-        getGeneralProperty("org.apache.sling.commons.log.file.number", "5", s_prop, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", s_prop, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("org.apache.sling.commons.log.stack.limit", "3", s_prop, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.file.number", "5", serverProp, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", serverProp, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.stack.limit", "3", serverProp, lProp, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("org.apache.sling.commons.log.pattern", //$NON-NLS-1$
-            "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}", s_prop, lProp, false, true); //$NON-NLS-1$
+            "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}", serverProp, lProp, false, true); //$NON-NLS-1$
 
         URI translationModules = null;
         if (portable != null) {
@@ -998,14 +1000,14 @@ public class WeasisLauncher {
             nativeLook = "weasis.look." + sysSpec.substring(0, index); //$NON-NLS-1$
             look = System.getProperty(nativeLook, null);
             if (look == null) {
-                look = s_prop.getProperty(nativeLook, null);
+                look = serverProp.get(nativeLook);
             }
 
         }
         if (look == null) {
             look = System.getProperty("weasis.look", null); //$NON-NLS-1$
             if (look == null) {
-                look = s_prop.getProperty("weasis.look", null); //$NON-NLS-1$
+                look = serverProp.get("weasis.look"); //$NON-NLS-1$
             }
         }
 
@@ -1022,7 +1024,7 @@ public class WeasisLauncher {
         if (look == null) {
             look = getAvailableLookAndFeel(look);
         }
-        s_prop.setProperty("weasis.look", look); //$NON-NLS-1$
+        serverProp.put("weasis.look", look); //$NON-NLS-1$
 
         // If look is in local prefs, use it
         if (localLook != null) {
@@ -1042,8 +1044,8 @@ public class WeasisLauncher {
                 // Set look and feels
                 boolean substance = look.startsWith("org.pushingpixels"); //$NON-NLS-1$
                 if (substance) {
-                    // TODO should be true: bug with docking-frame
-                    JFrame.setDefaultLookAndFeelDecorated(false);
+                    // Keep system window for the main frame
+                    // JFrame.setDefaultLookAndFeelDecorated(true);
                     JDialog.setDefaultLookAndFeelDecorated(true);
                 }
                 look = setLookAndFeel(look);
@@ -1087,15 +1089,15 @@ public class WeasisLauncher {
         String versionOld = localSourceProp.getProperty(P_WEASIS_VERSION);
         System.out.println("Last running version: " + versionOld); //$NON-NLS-1$
         if (versionOld != null) {
-            s_prop.setProperty("prev." + P_WEASIS_VERSION, versionOld); //$NON-NLS-1$
+            serverProp.put("prev." + P_WEASIS_VERSION, versionOld); //$NON-NLS-1$
         }
-        String versionNew = s_prop.getProperty(P_WEASIS_VERSION);
+        String versionNew = serverProp.get(P_WEASIS_VERSION);
         System.out.println("Current version: " + versionNew); //$NON-NLS-1$
         String cleanCacheAfterCrash = localSourceProp.getProperty("weasis.clean.cache"); //$NON-NLS-1$
 
         boolean update = false;
         // Loads the resource files
-        String resPath = s_prop.getProperty("weasis.resources.url", //$NON-NLS-1$
+        String resPath = serverProp.getOrDefault("weasis.resources.url", //$NON-NLS-1$
             System.getProperty("weasis.codebase.url", "") + "/resources.zip"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         File cacheDir = null;
         try {
@@ -1123,7 +1125,7 @@ public class WeasisLauncher {
             }
         }
         System.out.println("weasis.resources.path: " + cacheDir.getPath()); //$NON-NLS-1$
-        s_prop.setProperty("weasis.resources.path", cacheDir.getPath()); //$NON-NLS-1$
+        serverProp.put("weasis.resources.path", cacheDir.getPath()); //$NON-NLS-1$
 
         // Splash screen that shows bundles loading
         final WeasisLoader loader = new WeasisLoader(cacheDir, mainFrame, lProp);
@@ -1141,9 +1143,9 @@ public class WeasisLauncher {
         FileUtil.storeProperties(profileProps, lProp, null);
 
         // Clean cache if Weasis has crashed during the previous launch
-        boolean cleanCache = Boolean.parseBoolean(s_prop.getProperty("weasis.clean.previous.version")); //$NON-NLS-1$
+        boolean cleanCache = Boolean.parseBoolean(serverProp.get("weasis.clean.previous.version")); //$NON-NLS-1$
         if (cleanCacheAfterCrash != null && "true".equals(cleanCacheAfterCrash)) { //$NON-NLS-1$
-            s_prop.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+            serverProp.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
             localSourceProp.remove("weasis.clean.cache"); //$NON-NLS-1$
             update = true;
             System.out.println("Clean plug-in cache because Weasis has crashed during the previous launch"); //$NON-NLS-1$
@@ -1152,7 +1154,7 @@ public class WeasisLauncher {
         else if (cleanCache && versionNew != null) {
             if (!versionNew.equals(versionOld)) {
                 System.out.println(String.format("Clean previous Weasis version: %s", versionOld)); //$NON-NLS-1$
-                s_prop.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+                serverProp.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
                 System.out.println("Clean plug-in cache because the version has changed"); //$NON-NLS-1$
             }
         }
@@ -1290,18 +1292,18 @@ public class WeasisLauncher {
         try {
             if (m_felix != null) {
                 m_felix.stop();
-                // wait asynchronous stop (max 7 seconds to stop all bundles)
+                // wait asynchronous stop (max 30 seconds to stop all bundles)
                 m_felix.waitForStop(30000);
             }
         } catch (Exception ex) {
             System.err.println("Error stopping framework: " + ex); //$NON-NLS-1$
         } finally {
-
+            storeRemotePreferences();
             cleanImageCache();
 
             // If System.exit() hangs call Runtime.getRuntime().halt(1) to kill the application
             Timer timer = new Timer();
-            timer.schedule(new HaltTask(), 7000);
+            timer.schedule(new HaltTask(), 15000);
         }
     }
 
@@ -1311,7 +1313,7 @@ public class WeasisLauncher {
             try {
                 REMOTE_PREFS.store();
                 System.out.println("End of storing remote preferences."); //$NON-NLS-1$
-            } catch (Exception e) {
+            } catch (Throwable e) { // should garanty the clean cache after
                 System.out.println("Cannot store preferences remotely: " + e.getMessage()); //$NON-NLS-1$
             }
         }

@@ -12,15 +12,19 @@ package org.weasis.acquire.explorer.core.bean;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
+import org.weasis.acquire.explorer.gui.central.SeriesDataListener;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.util.StringUtil;
 
 public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGroup> {
     public enum Type {
@@ -30,6 +34,7 @@ public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGro
     private final Type type;
     private String name;
     private LocalDateTime date;
+    private final List<SeriesDataListener> listenerList = new ArrayList<>();
 
     public static final SeriesGroup DATE_SERIE = new SeriesGroup(LocalDateTime.now());
 
@@ -61,6 +66,7 @@ public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGro
         // Default Modality if not overridden
         tags.put(TagD.get(Tag.Modality), "XC"); //$NON-NLS-1$
         tags.put(TagD.get(Tag.SeriesInstanceUID), UIDUtils.createUID());
+        tags.put(TagD.get(Tag.SeriesDescription), getDisplayName());
         updateDicomTags();
     }
 
@@ -86,6 +92,10 @@ public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGro
     }
 
     public String getDisplayName() {
+        String desc = TagD.getTagValue(this, Tag.SeriesDescription, String.class);
+        if (StringUtil.hasText(desc)) {
+            return desc;
+        }
         switch (type) {
             case NAME:
                 return name;
@@ -206,6 +216,24 @@ public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGro
         assert this.equals(that) : "compareTo inconsistent with equals."; //$NON-NLS-1$
 
         return EQUAL;
+    }
+
+    public void addLayerChangeListener(SeriesDataListener listener) {
+        if (listener != null && !listenerList.contains(listener)) {
+            listenerList.add(listener);
+        }
+    }
+
+    public void removeLayerChangeListener(SeriesDataListener listener) {
+        if (listener != null) {
+            listenerList.remove(listener);
+        }
+    }
+
+    public void fireDataChanged() {
+        for (SeriesDataListener l : listenerList) {
+            l.handleSeriesChanged();
+        }
     }
 
 }

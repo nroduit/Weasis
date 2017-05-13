@@ -14,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.swing.JScrollPane;
@@ -36,11 +37,7 @@ public class ExportTree extends JScrollPane {
     }
 
     public ExportTree(final CheckTreeModel checkTreeModel) {
-        if (checkTreeModel == null) {
-            throw new IllegalArgumentException();
-        }
-
-        this.checkTreeModel = checkTreeModel;
+        this.checkTreeModel = Objects.requireNonNull(checkTreeModel);
 
         checkboxTree = new CheckboxTree(checkTreeModel.getModel()) {
             @Override
