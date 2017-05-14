@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -44,17 +44,17 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
 public class SampleTool extends PluginTool implements SeriesViewerListener {
 
-    //region Finals
+    // region Finals
 
     public static final String BUTTON_NAME = "RT Tool";
-    public static final int DockableWidth = javax.swing.UIManager.getLookAndFeel() != null ? javax.swing.UIManager
-            .getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205; //$NON-NLS-1$
+    public static final int DockableWidth = javax.swing.UIManager.getLookAndFeel() != null
+        ? javax.swing.UIManager.getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205; //$NON-NLS-1$
     protected final ImageViewerEventManager eventManager;
     private final JScrollPane rootPane;
 
-    //endregion
+    // endregion
 
-    //region Members
+    // region Members
 
     private final CheckboxTree tree;
     private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
@@ -63,9 +63,9 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
     private final JCheckBox applyAllViews = new JCheckBox(Messages.getString("RTTool.btn_apply_all"), true);
     private JPanel panel_foot;
 
-    //endregion
+    // endregion
 
-    //region Constructors
+    // region Constructors
 
     public SampleTool(ImageViewerEventManager eventManager) {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
@@ -79,9 +79,9 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
         this.initTree();
     }
 
-    //endregion
+    // endregion
 
-    //region Methods
+    // region Methods
 
     public void initTree() {
         this.tree.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
@@ -100,7 +100,6 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
         renderer.setLeafIcon(null);
         tree.setCellRenderer(renderer);
 
-
         JPanel panel = new JPanel();
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEFT);
@@ -111,7 +110,8 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
         add(new JScrollPane(tree), BorderLayout.CENTER);
 
         panel_foot = new JPanel();
-        panel_foot.setUI(new javax.swing.plaf.PanelUI() { });
+        panel_foot.setUI(new javax.swing.plaf.PanelUI() {
+        });
         panel_foot.setOpaque(true);
         panel_foot.setBackground(JMVUtils.TREE_BACKROUND);
         add(panel_foot, BorderLayout.SOUTH);
@@ -128,88 +128,86 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
         DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
         this.tree.setModel(model);
 
-
     }
-
 
     public void initTreeValues(ViewCanvas<?> viewCanvas) {
         if (viewCanvas != null) {
             initPathSelection = true;
             // Image node
             OpManager disOp = viewCanvas.getDisplayOpManager();
-//            initPathSelection(getTreePath(image), view.getImageLayer().isVisible());
-//            iniDicomView(disOp, OverlayOp.OP_NAME, OverlayOp.P_SHOW, 0);
-//            iniDicomView(disOp, ShutterOp.OP_NAME, ShutterOp.P_SHOW, 1);
-//            iniDicomView(disOp, WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
-//
-//            // Annotations node
-//            AnnotationsLayer layer = view.getInfoLayer();
-//            if (layer != null) {
-//                initPathSelection(getTreePath(dicomInfo), layer.isVisible());
-//                Enumeration en = dicomInfo.children();
-//                while (en.hasMoreElements()) {
-//                    Object node = en.nextElement();
-//                    if (node instanceof TreeNode) {
-//                        TreeNode checkNode = (TreeNode) node;
-//                        initPathSelection(getTreePath(checkNode), layer.getDisplayPreferences(node.toString()));
-//                    }
-//                }
-//            }
-//
-//            // Drawings node
-//            Boolean draw = (Boolean) view.getActionValue(ActionW.DRAW.cmd());
-//            initPathSelection(getTreePath(drawings), draw == null ? true : draw);
-//            Enumeration en = drawings.children();
-//            while (en.hasMoreElements()) {
-//                Object node = en.nextElement();
-//                if (node instanceof DefaultMutableTreeNode
-//                        && ((DefaultMutableTreeNode) node).getUserObject() instanceof AbstractLayer.Identifier) {
-//                    DefaultMutableTreeNode checkNode = (DefaultMutableTreeNode) node;
-//                    AbstractLayer l = view.getLayerModel().getLayer((AbstractLayer.Identifier) checkNode.getUserObject());
-//                    if (l == null) {
-//                        // Remove from display if the layer does not exist any more
-//                        TreeNode parent = checkNode.getParent();
-//                        int index = parent.getIndex(checkNode);
-//                        checkNode.removeFromParent();
-//                        DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
-//                        dtm.nodesWereRemoved(parent, new int[] { index }, new TreeNode[] { checkNode });
-//                    } else {
-//                        initPathSelection(getTreePath(checkNode), l.isVisible());
-//                    }
-//                }
-//            }
-//            ImageElement img = view.getImage();
-//            if (img != null) {
-//                Panner<?> panner = view.getPanner();
-//                if (panner != null) {
-//
-//                    // int cps = panel_foot.getComponentCount();
-//                    // if (cps > 0) {
-//                    // Component cp = panel_foot.getComponent(0);
-//                    // if (cp != panner) {
-//                    // if (cp instanceof Thumbnail) {
-//                    // ((Thumbnail) cp).removeMouseAndKeyListener();
-//                    // }
-//                    // panner.registerListeners();
-//                    // panel_foot.removeAll();
-//                    // panel_foot.add(panner);
-//                    // panner.revalidate();
-//                    // panner.repaint();
-//                    // }
-//                    // } else {
-//                    // panner.registerListeners();
-//                    // panel_foot.add(panner);
-//                    // }
-//                }
-//            }
+            // initPathSelection(getTreePath(image), view.getImageLayer().isVisible());
+            // iniDicomView(disOp, OverlayOp.OP_NAME, OverlayOp.P_SHOW, 0);
+            // iniDicomView(disOp, ShutterOp.OP_NAME, ShutterOp.P_SHOW, 1);
+            // iniDicomView(disOp, WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
+            //
+            // // Annotations node
+            // AnnotationsLayer layer = view.getInfoLayer();
+            // if (layer != null) {
+            // initPathSelection(getTreePath(dicomInfo), layer.isVisible());
+            // Enumeration en = dicomInfo.children();
+            // while (en.hasMoreElements()) {
+            // Object node = en.nextElement();
+            // if (node instanceof TreeNode) {
+            // TreeNode checkNode = (TreeNode) node;
+            // initPathSelection(getTreePath(checkNode), layer.getDisplayPreferences(node.toString()));
+            // }
+            // }
+            // }
+            //
+            // // Drawings node
+            // Boolean draw = (Boolean) view.getActionValue(ActionW.DRAW.cmd());
+            // initPathSelection(getTreePath(drawings), draw == null ? true : draw);
+            // Enumeration en = drawings.children();
+            // while (en.hasMoreElements()) {
+            // Object node = en.nextElement();
+            // if (node instanceof DefaultMutableTreeNode
+            // && ((DefaultMutableTreeNode) node).getUserObject() instanceof AbstractLayer.Identifier) {
+            // DefaultMutableTreeNode checkNode = (DefaultMutableTreeNode) node;
+            // AbstractLayer l = view.getLayerModel().getLayer((AbstractLayer.Identifier) checkNode.getUserObject());
+            // if (l == null) {
+            // // Remove from display if the layer does not exist any more
+            // TreeNode parent = checkNode.getParent();
+            // int index = parent.getIndex(checkNode);
+            // checkNode.removeFromParent();
+            // DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
+            // dtm.nodesWereRemoved(parent, new int[] { index }, new TreeNode[] { checkNode });
+            // } else {
+            // initPathSelection(getTreePath(checkNode), l.isVisible());
+            // }
+            // }
+            // }
+            // ImageElement img = view.getImage();
+            // if (img != null) {
+            // Panner<?> panner = view.getPanner();
+            // if (panner != null) {
+            //
+            // // int cps = panel_foot.getComponentCount();
+            // // if (cps > 0) {
+            // // Component cp = panel_foot.getComponent(0);
+            // // if (cp != panner) {
+            // // if (cp instanceof Thumbnail) {
+            // // ((Thumbnail) cp).removeMouseAndKeyListener();
+            // // }
+            // // panner.registerListeners();
+            // // panel_foot.removeAll();
+            // // panel_foot.add(panner);
+            // // panner.revalidate();
+            // // panner.repaint();
+            // // }
+            // // } else {
+            // // panner.registerListeners();
+            // // panel_foot.add(panner);
+            // // }
+            // }
+            // }
 
             initPathSelection = false;
         }
     }
 
-    //endregion
+    // endregion
 
-    //region Overrides
+    // region Overrides
 
     @Override
     public Component getToolComponent() {
@@ -231,7 +229,7 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
             initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
         } else if (SeriesViewerEvent.EVENT.TOOGLE_INFO.equals(e)) {
             TreeCheckingModel model = tree.getCheckingModel();
-            //model.toggleCheckingPath(new TreePath(dicomInfo.getPath()));
+            // model.toggleCheckingPath(new TreePath(dicomInfo.getPath()));
         }
     }
 
@@ -240,16 +238,15 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
         // TODO Auto-generated method stub
     }
 
-    //endregion
+    // endregion
 
-    //region Private Methods
+    // region Private Methods
 
     private void sendPropertyChangeEvent(List<ViewCanvas<DicomImageElement>> views, String cmd, boolean selected) {
         for (ViewCanvas<DicomImageElement> v : views) {
-        //    v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
+            // v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
         }
     }
-
 
     private static void expandTree(JTree tree, DefaultMutableTreeNode start) {
         for (Enumeration children = start.children(); children.hasMoreElements();) {
@@ -265,6 +262,6 @@ public class SampleTool extends PluginTool implements SeriesViewerListener {
         return;
     }
 
-    //endregion
+    // endregion
 
 }

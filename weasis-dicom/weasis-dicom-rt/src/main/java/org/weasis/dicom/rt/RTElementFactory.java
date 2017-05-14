@@ -8,7 +8,7 @@ import org.weasis.dicom.codec.DicomSpecialElementFactory;
 public class RTElementFactory implements DicomSpecialElementFactory {
 
     public static final String SERIES_RT_MIMETYPE = "rt/dicom"; //$NON-NLS-1$
-    
+
     private static final String[] modalities = { "RTPLAN", "RTSTRUCT", "RTDOSE" }; //$NON-NLS-1$
 
     @Override

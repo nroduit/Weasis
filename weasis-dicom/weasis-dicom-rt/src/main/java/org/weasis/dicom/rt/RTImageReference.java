@@ -6,8 +6,6 @@ import java.util.List;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.dicom.codec.macro.SOPInstanceReference;
 
-
-
 public class RTImageReference {
     private SOPInstanceReference imageSOPInstanceReference;
     private List<Graphic> graphics;
@@ -44,4 +42,3 @@ public class RTImageReference {
     }
 
 }
-

@@ -1,10 +1,10 @@
 package org.weasis.dicom.rt;
 
-import org.weasis.core.api.util.FileUtil;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+
+import org.weasis.core.api.util.FileUtil;
 
 public class RawImage {
     private File file;

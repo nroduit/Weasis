@@ -40,7 +40,7 @@ public class Plan {
         return this.rxDose;
     }
 
-    public void  setRxDose(Float value) {
+    public void setRxDose(Float value) {
         this.rxDose = value;
     }
 

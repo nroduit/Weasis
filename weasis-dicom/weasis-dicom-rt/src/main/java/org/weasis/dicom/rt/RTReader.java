@@ -51,8 +51,7 @@ public class RTReader {
 
             // MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
             // if (patient == null) {
-            MediaSeriesGroup patient =
-                new MediaSeriesGroupNode(TagD.getUID(Level.PATIENT), patientPseudoUID, null);
+            MediaSeriesGroup patient = new MediaSeriesGroupNode(TagD.getUID(Level.PATIENT), patientPseudoUID, null);
             DicomMediaUtils.writeMetaData(patient, dcmItems);
             patient.getTagEntrySetIterator().forEachRemaining(e -> tags.put(e.getKey(), e.getValue()));
             // dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
@@ -61,8 +60,7 @@ public class RTReader {
             String studyUID = (String) TagD.getUID(Level.STUDY).getValue(dcmItems);
             // MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
             // if (study == null) {
-            MediaSeriesGroup study =
-                new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, null);
+            MediaSeriesGroup study = new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, null);
             DicomMediaUtils.writeMetaData(study, dcmItems);
 
             study.getTagEntrySetIterator().forEachRemaining(e -> tags.put(e.getKey(), e.getValue()));
@@ -115,7 +113,7 @@ public class RTReader {
 
     /**
      * Get ROIs
-     * 
+     *
      * @return Map of ROIs
      */
     public Map<Integer, Structure> getStructures() {
@@ -374,7 +372,7 @@ public class RTReader {
 
     /**
      * Parses an array of xyz points and returns a array of 3d point maps.
-     * 
+     *
      * @param array
      *            array of strings representing x,y,z coordinates
      * @return array of 3d point maps
@@ -396,7 +394,7 @@ public class RTReader {
 
     /**
      * Parses an array of rgb values and returns a color map
-     * 
+     *
      * @param array
      *            array of strings representing r,g,b parts
      * @return color map
@@ -415,7 +413,7 @@ public class RTReader {
 
     /**
      * Calculates the structure plane thickness
-     * 
+     *
      * @return structure plane thickness
      */
     private float calculatePlaneThickness(Map<Float, ArrayList<Contour>> planesMap) {
