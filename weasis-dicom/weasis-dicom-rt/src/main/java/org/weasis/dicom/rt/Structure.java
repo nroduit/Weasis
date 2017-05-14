@@ -1,5 +1,17 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Weasis Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *     Tomas Skripcak  - initial API and implementation
+ ******************************************************************************/
 package org.weasis.dicom.rt;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -11,10 +23,10 @@ public class Structure {
     private int roiNumber;
     private String roiName;
     private String rtRoiInterpretedType;
-    private float thickness;
+    private double thickness;
 
-    private Map<Character, Float> color;
-    private Map<Float, ArrayList<Contour>> planes;
+    private Color color;
+    private Map<Double, ArrayList<Contour>> planes;
 
     public int getRoiNumber() {
         return this.roiNumber;
@@ -40,28 +52,33 @@ public class Structure {
         this.rtRoiInterpretedType = value;
     }
 
-    public float getThickness() {
+    public double getThickness() {
         return this.thickness;
     }
 
-    public void setThickness(float value) {
+    public void setThickness(double value) {
         this.thickness = value;
     }
 
-    public Map<Character, Float> getColor() {
+    public Color getColor() {
         return this.color;
     }
 
-    public void setColor(Map<Character, Float> color) {
+    public void setColor(Color color) {
         this.color = color;
     }
 
-    public Map<Float, ArrayList<Contour>> getPlanes() {
+    public Map<Double, ArrayList<Contour>> getPlanes() {
         return this.planes;
     }
 
-    public void setPlanes(Map<Float, ArrayList<Contour>> contours) {
+    public void setPlanes(Map<Double, ArrayList<Contour>> contours) {
         this.planes = contours;
+    }
+
+    @Override
+    public String toString() {
+        return getRoiName();
     }
 
 }

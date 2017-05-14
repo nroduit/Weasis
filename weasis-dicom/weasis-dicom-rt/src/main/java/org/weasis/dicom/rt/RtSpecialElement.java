@@ -10,22 +10,12 @@
  ******************************************************************************/
 package org.weasis.dicom.rt;
 
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
+import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSpecialElement;
 
-public class Messages {
-    private static final String BUNDLE_NAME = "org.weasis.dicom.rt.messages"; //$NON-NLS-1$
+public class RtSpecialElement extends DicomSpecialElement {
 
-    private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
-
-    private Messages() {
-    }
-
-    public static String getString(String key) {
-        try {
-            return RESOURCE_BUNDLE.getString(key);
-        } catch (MissingResourceException e) {
-            return '!' + key + '!';
-        }
+    public RtSpecialElement(DicomMediaIO mediaIO) {
+        super(mediaIO);
     }
 }
