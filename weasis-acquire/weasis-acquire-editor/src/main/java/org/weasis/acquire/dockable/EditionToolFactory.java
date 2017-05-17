@@ -86,6 +86,7 @@ public class EditionToolFactory implements InsertableFactory {
                 }
             });
             toolPane = new EditionTool(getType());
+            EventManager.getInstance().addSeriesViewerListener(toolPane);
         }
         return toolPane;
     }
@@ -93,6 +94,7 @@ public class EditionToolFactory implements InsertableFactory {
     @Override
     public void dispose(Insertable tool) {
         if (toolPane != null) {
+            EventManager.getInstance().removeSeriesViewerListener(toolPane);
             toolPane = null;
         }
     }
