@@ -1,3 +1,9 @@
+# IntelliJ project files
+*.iml
+*.iws
+*.ipr
+.idea/
+
 # Ignore the eclipse configuration files
 .classpath
 .project
