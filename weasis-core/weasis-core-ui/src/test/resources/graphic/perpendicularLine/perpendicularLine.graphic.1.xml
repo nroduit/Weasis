@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<perpendicularLine fill="false" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Length : 80.7 pix</label>
+	</label>
+	<pts>
+		<pt x="1131.5" y="980.0" />
+		<pt x="1330.5" y="1178.0" />
+		<pt x="1355.5" y="1089.0" />
+		<pt x="1298.5635365776284" y="1146.2240213184443" />
+	</pts>
+</perpendicularLine>

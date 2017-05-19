@@ -1,27 +1,29 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JPanel;
 
 import org.weasis.core.api.gui.Insertable;
 
+@SuppressWarnings("serial")
 public abstract class AbstractItemDialogPage extends JPanel implements PageProps, Insertable {
     protected static final AtomicInteger keyGenerator = new AtomicInteger(0);
     private final String key;
     private final String title;
-    private java.util.List<PageProps> subPageList;
+    private List<PageProps> subPageList;
     private int pagePosition;
 
     public AbstractItemDialogPage(String title) {
@@ -54,7 +56,7 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
 
     public void addSubPage(PageProps subPage) {
         if (subPageList == null) {
-            subPageList = new ArrayList<PageProps>();
+            subPageList = new ArrayList<>();
         }
         subPageList.add(subPage);
     }
@@ -69,7 +71,7 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
     @Override
     public PageProps[] getSubPages() {
         if (subPageList == null) {
-            return null;
+            return new PageProps[0];
         }
         final PageProps[] subPages = new PageProps[subPageList.size()];
         subPageList.toArray(subPages);

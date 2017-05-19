@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.viewer2d.mip;
 
 import java.awt.image.BufferedImage;
@@ -44,15 +54,16 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 
 public class SeriesBuilder {
-    public static final File MPR_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
-        AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
+    public static final File MPR_CACHE_DIR =
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
 
     private SeriesBuilder() {
     }
@@ -74,7 +85,7 @@ public class SeriesBuilder {
             ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
             if (sequence instanceof SliderCineListener) {
                 SliderCineListener cineAction = (SliderCineListener) sequence;
-                curImg = cineAction.getValue() - 1;
+                curImg = cineAction.getSliderValue() - 1;
             }
 
             int minImg = fullSeries ? extend : curImg;
@@ -85,29 +96,27 @@ public class SeriesBuilder {
 
             DicomImageElement img = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, sortFilter);
             final Attributes attributes = ((DcmMediaReader) img.getMediaReader()).getDicomObject();
-            final int[] COPIED_ATTRS =
-                { Tag.SpecificCharacterSet, Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate, Tag.PatientBirthTime,
-                    Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence, Tag.PatientWeight,
-                    Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
+            final int[] COPIED_ATTRS = { Tag.SpecificCharacterSet, Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate,
+                Tag.PatientBirthTime, Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence,
+                Tag.PatientWeight, Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
 
-                    Tag.StudyID, Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments,
-                    Tag.AccessionNumber, Tag.ModalitiesInStudy,
+                Tag.StudyID, Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.StudyComments, Tag.AccessionNumber,
+                Tag.ModalitiesInStudy,
 
-                    Tag.Modality, Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName,
-                    Tag.InstitutionName, Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer,
-                    Tag.ManufacturerModelName, Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined,
-                    Tag.FrameOfReferenceUID, Tag.ModalityLUTSequence, Tag.VOILUTSequence };
+                Tag.Modality, Tag.SeriesDate, Tag.SeriesTime, Tag.RetrieveAETitle, Tag.ReferringPhysicianName,
+                Tag.InstitutionName, Tag.InstitutionalDepartmentName, Tag.StationName, Tag.Manufacturer,
+                Tag.ManufacturerModelName, Tag.SeriesNumber, Tag.KVP, Tag.Laterality, Tag.BodyPartExamined,
+                Tag.FrameOfReferenceUID, Tag.ModalityLUTSequence, Tag.VOILUTSequence };
 
             Arrays.sort(COPIED_ATTRS);
             final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
-            cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MIP]");
-            cpTags.setString(Tag.ImageType, VR.CS, new String[] { "DERIVED", "SECONDARY", "PROJECTION IMAGE" });
-            String imageType = DicomMediaUtils.getStringFromDicomElement(cpTags, Tag.ImageType);
+            cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MIP]"); //$NON-NLS-1$ //$NON-NLS-2$
+            cpTags.setString(Tag.ImageType, VR.CS, new String[] { "DERIVED", "SECONDARY", "PROJECTION IMAGE" }); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             String seriesUID = UIDUtils.createUID();
 
             for (int index = minImg; index <= maxImg; index++) {
                 Iterator<DicomImageElement> iter = medias.iterator();
-                final List<ImageElement> sources = new ArrayList<ImageElement>();
+                final List<ImageElement> sources = new ArrayList<>();
                 int startIndex = index - extend;
                 if (startIndex < 0) {
                     startIndex = 0;
@@ -163,47 +172,48 @@ public class SeriesBuilder {
                     rawIO.setBaseAttributes(cpTags);
 
                     // Tags with same values for all the Series
-                    rawIO.setTag(TagW.TransferSyntaxUID, UID.ImplicitVRLittleEndian);
-                    rawIO.setTag(TagW.Columns, curImage.getWidth());
-                    rawIO.setTag(TagW.Rows, curImage.getHeight());
-                    rawIO.setTag(TagW.BitsAllocated, imgRef.getBitsAllocated());
-                    rawIO.setTag(TagW.BitsStored, imgRef.getBitsStored());
+                    rawIO.setTag(TagD.get(Tag.TransferSyntaxUID), UID.ImplicitVRLittleEndian);
+                    rawIO.setTag(TagD.get(Tag.Columns), curImage.getWidth());
+                    rawIO.setTag(TagD.get(Tag.Rows), curImage.getHeight());
+                    rawIO.setTag(TagD.get(Tag.BitsAllocated), imgRef.getBitsAllocated());
+                    rawIO.setTag(TagD.get(Tag.BitsStored), imgRef.getBitsStored());
 
-                    rawIO.setTag(TagW.SliceThickness, getThickness(sources.get(0), sources.get(sources.size() - 1)));
+                    rawIO.setTag(TagD.get(Tag.SliceThickness),
+                        getThickness(sources.get(0), sources.get(sources.size() - 1)));
                     double[] loc = (double[]) imgRef.getTagValue(TagW.SlicePosition);
                     if (loc != null) {
                         rawIO.setTag(TagW.SlicePosition, loc);
-                        rawIO.setTag(TagW.SliceLocation, (float) (loc[0] + loc[1] + loc[2]));
+                        rawIO.setTag(TagD.get(Tag.SliceLocation), loc[0] + loc[1] + loc[2]);
                     }
 
-                    rawIO.setTag(TagW.SeriesInstanceUID, seriesUID);
+                    rawIO.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
 
                     // Mandatory tags
                     TagW[] mtagList =
-                        { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientPseudoUID,
-                            TagW.StudyInstanceUID, TagW.StudyID, TagW.SOPClassUID, TagW.StudyDate, TagW.StudyTime,
-                            TagW.AccessionNumber };
-                    rawIO.copyTags(mtagList, imgRef, true);
+                        TagD.getTagFromIDs(Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate, Tag.StudyInstanceUID,
+                            Tag.StudyID, Tag.SOPClassUID, Tag.StudyDate, Tag.StudyTime, Tag.AccessionNumber);
+                    rawIO.copyTags(mtagList, img, true);
+                    rawIO.setTag(TagW.PatientPseudoUID, img.getTagValue(TagW.PatientPseudoUID));
 
-                    TagW[] tagList =
-                        { TagW.PhotometricInterpretation, TagW.PixelRepresentation, TagW.Units, TagW.SamplesPerPixel,
-                            TagW.MonoChrome, TagW.Modality };
-                    rawIO.copyTags(tagList, imgRef, true);
+                    TagW[] tagList = TagD.getTagFromIDs(Tag.PhotometricInterpretation, Tag.PixelRepresentation,
+                        Tag.Units, Tag.SamplesPerPixel, Tag.Modality);
+                    rawIO.copyTags(tagList, img, true);
+                    rawIO.setTag(TagW.MonoChrome, img.getTagValue(TagW.MonoChrome));
 
-                    TagW[] tagList2 =
-                        { TagW.ImageOrientationPatient, TagW.ImagePositionPatient, TagW.SmallestImagePixelValue,
-                            TagW.LargestImagePixelValue, TagW.ModalityLUTData, TagW.ModalityLUTType,
-                            TagW.ModalityLUTExplanation, TagW.RescaleSlope, TagW.RescaleIntercept, TagW.RescaleType,
-                            TagW.VOILUTsData, TagW.VOILUTsExplanation, TagW.PixelPaddingValue,
-                            TagW.PixelPaddingRangeLimit, TagW.WindowWidth, TagW.WindowCenter,
-                            TagW.WindowCenterWidthExplanation, TagW.VOILutFunction, TagW.PixelSpacing,
-                            TagW.ImagerPixelSpacing, TagW.PixelSpacingCalibrationDescription, TagW.PixelAspectRatio };
+                    TagW[] tagList2 = { TagW.ModalityLUTData, TagW.ModalityLUTType, TagW.ModalityLUTExplanation,
+                        TagW.VOILUTsData, TagW.VOILUTsExplanation };
+                    rawIO.copyTags(tagList2, img, false);
+
+                    tagList2 = TagD.getTagFromIDs(Tag.ImageOrientationPatient, Tag.ImagePositionPatient,
+                        Tag.RescaleSlope, Tag.RescaleIntercept, Tag.RescaleType, Tag.PixelPaddingValue,
+                        Tag.PixelPaddingRangeLimit, Tag.WindowWidth, Tag.WindowCenter, Tag.WindowCenterWidthExplanation,
+                        Tag.VOILUTFunction, Tag.PixelSpacing, Tag.ImagerPixelSpacing, Tag.NominalScannedPixelSpacing,
+                        Tag.PixelSpacingCalibrationDescription, Tag.PixelAspectRatio);
                     rawIO.copyTags(tagList2, imgRef, false);
 
                     // Image specific tags
-                    rawIO.setTag(TagW.SOPInstanceUID, UIDUtils.createUID());
-                    rawIO.setTag(TagW.InstanceNumber, index + 1);
-                    rawIO.setTag(TagW.ImageType, imageType);
+                    rawIO.setTag(TagD.get(Tag.SOPInstanceUID), UIDUtils.createUID());
+                    rawIO.setTag(TagD.get(Tag.InstanceNumber), index + 1);
 
                     dicom = new DicomImageElement(rawIO, 0) {
                         @Override
@@ -216,7 +226,7 @@ public class SeriesBuilder {
                     dicoms.add(dicom);
 
                     if (taskMonitor != null && taskMonitor.isCanceled()) {
-                        throw new TaskInterruptionException("Rebuilding MIP series has been canceled!");
+                        throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
                     }
                     final int progress = index - minImg;
                     GuiExecutor.instance().execute(new Runnable() {
@@ -225,10 +235,10 @@ public class SeriesBuilder {
                         public void run() {
                             if (taskMonitor != null) {
                                 taskMonitor.setProgress(progress);
-                                StringBuilder buf = new StringBuilder("Image");
+                                StringBuilder buf = new StringBuilder(Messages.getString("SeriesBuilder.image")); //$NON-NLS-1$
                                 buf.append(StringUtil.COLON_AND_SPACE);
                                 buf.append(progress);
-                                buf.append("/");
+                                buf.append("/"); //$NON-NLS-1$
                                 buf.append(taskMonitor.getMaximum());
                                 taskMonitor.setNote(buf.toString());
                             }
@@ -246,12 +256,12 @@ public class SeriesBuilder {
         if (p1 != null && p2 != null) {
             double diff = Math.abs((p2[0] + p2[1] + p2[2]) - (p1[0] + p1[1] + p1[2]));
 
-            Double t1 = (Double) firstDcm.getTagValue(TagW.SliceThickness);
+            Double t1 = TagD.getTagValue(firstDcm, Tag.SliceThickness, Double.class);
             if (t1 != null) {
                 diff += t1 / 2;
             }
 
-            t1 = (Double) lastDcm.getTagValue(TagW.SliceThickness);
+            t1 = TagD.getTagValue(lastDcm, Tag.SliceThickness, Double.class);
             if (t1 != null) {
                 diff += t1 / 2;
             }
@@ -289,9 +299,8 @@ public class SeriesBuilder {
             if (dataBuffer instanceof DataBufferByte) {
                 bytesOut = ((DataBufferByte) dataBuffer).getData();
             } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-                short[] data =
-                    dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                        : ((DataBufferUShort) dataBuffer).getData();
+                short[] data = dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
+                    : ((DataBufferUShort) dataBuffer).getData();
                 bytesOut = new byte[data.length * 2];
                 for (int i = 0; i < data.length; i++) {
                     bytesOut[i * 2] = (byte) (data[i] & 0xFF);

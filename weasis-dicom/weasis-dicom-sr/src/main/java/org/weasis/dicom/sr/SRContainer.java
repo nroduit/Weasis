@@ -1,20 +1,30 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.sr;
 
 import java.awt.BorderLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -32,28 +42,28 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ForcedAcceptPrintService;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
@@ -62,16 +72,18 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
 
     public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
+
     static {
         SYNCH_LIST.add(SynchView.NONE);
     }
 
-    public static final List<GridBagLayoutModel> LAYOUT_LIST = Collections
-        .synchronizedList(new ArrayList<GridBagLayoutModel>());
+    public static final List<GridBagLayoutModel> LAYOUT_LIST =
+        Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
 
     public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1", //$NON-NLS-1$
-        "1x1", 1, 1, SRView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ 
+        "1x1", 1, 1, SRView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$
             .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
+
     static {
         LAYOUT_LIST.add(VIEWS_1x1);
     }
@@ -81,12 +93,12 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>(1));
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>(1));
-    private static volatile boolean INI_COMPONENTS = false;
+    private static volatile boolean initComponents = false;
     static final ImageViewerEventManager<DicomImageElement> SR_EVENT_MANAGER =
         new ImageViewerEventManager<DicomImageElement>() {
 
             @Override
-            public boolean updateComponentsListener(DefaultView2d<DicomImageElement> defaultView2d) {
+            public boolean updateComponentsListener(ViewCanvas<DicomImageElement> defaultView2d) {
                 // Do nothing
                 return true;
             }
@@ -101,6 +113,20 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                 this.selectedView2dContainer = selectedView2dContainer;
             }
 
+            @Override
+            public void keyTyped(KeyEvent e) {
+                // Do nothing
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                // Do nothing
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                // Do nothing
+            }
         };
 
     protected SRView srview;
@@ -112,8 +138,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public SRContainer(GridBagLayoutModel layoutModel, String uid) {
         super(SR_EVENT_MANAGER, layoutModel, uid, SRFactory.NAME, SRFactory.ICON, null);
         setSynchView(SynchView.NONE);
-        if (!INI_COMPONENTS) {
-            INI_COMPONENTS = true;
+        if (!initComponents) {
+            initComponents = true;
             // Add standard toolbars
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             String bundleName = context.getBundle().getSymbolicName();
@@ -122,13 +148,13 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(SrToolBar.class), key, true)) {
-                TOOLBARS.add(new SrToolBar<DicomImageElement>(10));
+                TOOLBARS.add(new SrToolBar(10));
             }
         }
     }
 
     @Override
-    public void setSelectedImagePaneFromFocus(DefaultView2d<DicomImageElement> defaultView2d) {
+    public void setSelectedImagePaneFromFocus(ViewCanvas<DicomImageElement> defaultView2d) {
         setSelectedImagePane(defaultView2d);
     }
 
@@ -164,7 +190,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
             if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
                 dicomView.getDataExplorerModel().firePropertyChange(
-                    new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, getGroupID()));
+                    new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
             }
 
         } else {
@@ -174,16 +200,12 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     @Override
     public void close() {
-        super.close();
         SRFactory.closeSeriesViewer(this);
+        super.close();
 
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                if (srview != null) {
-                    srview.dispose();
-                }
+        GuiExecutor.instance().execute(() -> {
+            if (srview != null) {
+                srview.dispose();
             }
         });
     }
@@ -194,38 +216,33 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             ObservableEvent event = (ObservableEvent) evt;
             ObservableEvent.BasicAction action = event.getActionCommand();
             Object newVal = event.getNewValue();
-            // if (ObservableEvent.BasicAction.Update.equals(action)) {
-            // if (newVal instanceof Series) {
-            // Series series = (Series) newVal;
-            // if (srview != null && srview.getSeries() != series) {
-            // srview.setSeries(series);
-            // }
-            // }
-            // }
-            if (ObservableEvent.BasicAction.Remove.equals(action)) {
-                if (newVal instanceof DicomSeries) {
-                    if (srview != null && srview.getSeries() == newVal) {
-                        close();
-                    }
-                } else if (newVal instanceof MediaSeriesGroup) {
+
+            if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
+                if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
-                    if (TagW.PatientPseudoUID.equals(group.getTagID())) {
+                    if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
+                            handleFocusAfterClosing();
                         }
                     }
                     // Study Group
-                    else if (TagW.StudyInstanceUID.equals(group.getTagID())) {
+                    else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
-                            for (MediaSeriesGroup s : model.getChildren(group)) {
-                                if (srview != null && srview.getSeries() == s) {
-                                    close();
-                                    break;
-                                }
+                            if (srview != null && group.equals(model.getParent(srview.getSeries(), DicomModel.study))) {
+                                close();
+                                handleFocusAfterClosing();
                             }
+                        }
+                    }
+                    // Series Group
+                    else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
+                        if (srview != null && srview.getSeries() == newVal) {
+                            close();
+                            handleFocusAfterClosing();
                         }
                     }
                 }
@@ -234,25 +251,25 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     @Override
-    public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+    public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
         return 0;
     }
 
     @Override
-    public boolean isViewType(Class defaultClass, String type) {
+    public boolean isViewType(Class<?> defaultClass, String type) {
         if (defaultClass != null) {
             try {
-                Class clazz = Class.forName(type);
+                Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Checking view type", e); //$NON-NLS-1$
             }
         }
         return false;
     }
 
     @Override
-    public DefaultView2d<DicomImageElement> createDefaultView(String classType) {
+    public ViewCanvas<DicomImageElement> createDefaultView(String classType) {
         return null;
     }
 
@@ -260,7 +277,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public JComponent createUIcomponent(String clazz) {
         try {
             // FIXME use classloader.loadClass or injection
-            Class cl = Class.forName(clazz);
+            Class<?> cl = Class.forName(clazz);
             JComponent component = (JComponent) cl.newInstance();
             if (component instanceof SeriesViewerListener) {
                 eventManager.addSeriesViewerListener((SeriesViewerListener) component);
@@ -269,14 +286,9 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                 srview = (SRView) component;
             }
             return component;
-        } catch (Exception e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
         }
-        return null;
-    }
-
-    @Override
-    public synchronized WtoolBar getStatusBar() {
         return null;
     }
 
@@ -286,25 +298,11 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     @Override
-    public List<Action> getExportActions() {
-        return null;
-    }
-
-    @Override
     public List<Action> getPrintActions() {
-        ArrayList<Action> actions = new ArrayList<Action>(1);
         final String title = Messages.getString("SRContainer.print_layout"); //$NON-NLS-1$
-        AbstractAction printStd =
-            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(ActionEvent action) {
-                    printCurrentView();
-                }
-            };
-        actions.add(printStd);
-
-        return actions;
+        return Arrays.asList(
+            new DefaultAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), //$NON-NLS-1$
+                event -> printCurrentView()));
     }
 
     void displayHeader() {
@@ -312,13 +310,14 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             JFrame frame = new JFrame(org.weasis.dicom.explorer.Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
             frame.setSize(500, 630);
             DicomFieldsView view = new DicomFieldsView();
-            view.changingViewContentEvent(new SeriesViewerEvent(this, srview.getSeries(), DicomModel
-                .getFirstSpecialElement(srview.getSeries(), DicomSpecialElement.class), EVENT.SELECT));
+            view.changingViewContentEvent(new SeriesViewerEvent(this, srview.getSeries(),
+                DicomModel.getFirstSpecialElement(srview.getSeries(), DicomSpecialElement.class), EVENT.SELECT));
             JPanel panel = new JPanel();
             panel.setLayout(new BorderLayout());
             panel.add(view);
             frame.getContentPane().add(panel);
-            frame.setVisible(true);
+            frame.setAlwaysOnTop(true);
+            JMVUtils.showCenterScreen(frame, srview);
         }
     }
 
@@ -341,12 +340,10 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                     if (e.getMessage().indexOf("accepting job") != -1) { //$NON-NLS-1$
                         // recommend prompting the user at this point if they want to force it
                         // so they'll know there may be a problem.
-                        int response =
-                            JOptionPane
-                                .showConfirmDialog(
-                                    null,
-                                    org.weasis.core.ui.Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
-                                    org.weasis.core.ui.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                        int response = JOptionPane.showConfirmDialog(null,
+                            org.weasis.core.ui.Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
+                            org.weasis.core.ui.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, //$NON-NLS-1$
+                            JOptionPane.WARNING_MESSAGE);
 
                         if (response == 0) {
                             try {
@@ -355,15 +352,22 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                                 pj.print(aset);
                                 LOGGER.info("Bypass Printer is not accepting job"); //$NON-NLS-1$
                             } catch (PrinterException ex) {
-                                AuditLog.logError(LOGGER, e, "Printer exception"); //$NON-NLS-1$
+                                LOGGER.error("Printer exception", ex); //$NON-NLS-1$
                             }
                         }
                     } else {
-                        AuditLog.logError(LOGGER, e, "Print exception"); //$NON-NLS-1$
+                        LOGGER.error("Print exception", e); //$NON-NLS-1$
                     }
                 }
             }
         }
+    }
+
+    public Series<?> getSeries() {
+        if (srview != null) {
+            return srview.getSeries();
+        }
+        return null;
     }
 
     @Override
@@ -375,7 +379,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     @Override
     public void addSeriesList(List<MediaSeries<DicomImageElement>> seriesList, boolean removeOldSeries) {
-        if (seriesList != null && seriesList.size() > 0) {
+        if (seriesList != null && !seriesList.isEmpty()) {
             addSeries(seriesList.get(0));
         }
     }

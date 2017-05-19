@@ -1,14 +1,27 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.base.explorer;
 
 import java.awt.Component;
-import java.io.File;
+import java.nio.file.Path;
 
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-public class TreeRenderer extends DefaultTreeCellRenderer {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    private static final long serialVersionUID = 4497513932673068084L;
+@SuppressWarnings("serial")
+public class TreeRenderer extends DefaultTreeCellRenderer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TreeRenderer.class);
 
     @Override
     public Component getTreeCellRendererComponent(final JTree tree, final Object value, final boolean isSelected,
@@ -16,16 +29,15 @@ public class TreeRenderer extends DefaultTreeCellRenderer {
         final Component component =
             super.getTreeCellRendererComponent(tree, value, isSelected, isExpanded, leaf, row, hasFocus);
 
-        if ((value != null) && (value instanceof TreeNode)) {
+        if (value != null && value instanceof TreeNode) {
             final TreeNode treeNode = (TreeNode) value;
-
-            final File selectedDir = (File) treeNode.getUserObject();
+            final Path selectedDir = treeNode.getNodePath();
 
             try {
-                setIcon(JIUtility.getSystemIcon(selectedDir));
+                setIcon(JIUtility.getSystemIcon(selectedDir.toFile()));
                 setText(treeNode.toString());
-            } catch (final Exception exp) {
-                // exp.printStackTrace();
+            } catch (Exception e) {
+                LOGGER.error("", e); //$NON-NLS-1$
             }
         }
 

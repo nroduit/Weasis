@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
 import java.io.IOException;
@@ -6,8 +16,6 @@ import java.io.InterruptedIOException;
 
 import org.weasis.core.api.gui.task.SeriesProgressMonitor;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.dicom.codec.TransferSyntax;
-import org.weasis.dicom.codec.utils.DicomImageUtils;
 
 public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
 
@@ -23,7 +31,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
     }
 
     @Override
-    public int read(byte b[]) throws IOException {
+    public int read(byte[] b) throws IOException {
         int nr = super.read(b);
         if (wadoRequest) {
             /*
@@ -44,7 +52,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
     }
 
     @Override
-    public int read(byte b[], int off, int len) throws IOException {
+    public int read(byte[] b, int off, int len) throws IOException {
         int nr = super.read(b, off, len);
         if (wadoRequest) {
             if (nread < header.length) {
@@ -64,8 +72,8 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
         if (b == null) {
             return;
         }
-        int byteOffset = 0;
-        if (b.length > 132 && new String(b, 128, 4).equals("DICM")) { //$NON-NLS-1$
+        int byteOffset;
+        if (b.length > 132 && "DICM".equals(new String(b, 128, 4))) { //$NON-NLS-1$
             byteOffset = 132;
         } else {
             InterruptedIOException exc = new InterruptedIOException("Not a DICOM file"); //$NON-NLS-1$
@@ -74,42 +82,42 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
             progress.nread = 0;
             throw exc;
         }
-        if (!DicomImageUtils.hasPlatformNativeImageioCodecs()) {
-            int endByteOffset = b.length - 1;
-            while (byteOffset < endByteOffset) {
-                int group = extractUnsigned16(b, byteOffset);
-                int element = extractUnsigned16(b, byteOffset + 2);
-                byteOffset += 4;
-                if ((group == 0x0002 && element > 0x0010) || group > 0x0002) {
-                    break;
-                }
-                byte[] vr = { b[byteOffset], b[byteOffset + 1] };
-                byteOffset += 2;
 
-                int vl;
-                if (isShortValueLengthVR(vr)) {
-                    vl = extractUnsigned16(b, byteOffset);
-                    byteOffset += 2;
-                } else {
-                    // 2 reserved bytes
-                    // cast to int (should not be a big number in meta information)
-                    vl = (int) extractUnsigned32(b, byteOffset + 2);
-                    byteOffset += 6;
-                }
-                // (0x0002, 0x0010) Transfer Syntax UID
-                if (element == 0x0010 && vl != 0 && byteOffset + vl < b.length) {
-                    String tsuid = new String(b, byteOffset, vl);
-                    if (TransferSyntax.requiresNativeImageioCodecs(tsuid)) {
-                        InterruptedIOException exc = new InterruptedIOException("TSUID not supported by OS"); //$NON-NLS-1$
-                        exc.bytesTransferred = Integer.MIN_VALUE;
-                        progress.series.setFileSize(progress.series.getFileSize() - progress.nread);
-                        progress.nread = 0;
-                        throw exc;
-                    }
-                    break;
-                }
-                byteOffset += vl;
+        int endByteOffset = b.length - 1;
+        while (byteOffset < endByteOffset) {
+            int group = extractUnsigned16(b, byteOffset);
+            int element = extractUnsigned16(b, byteOffset + 2);
+            byteOffset += 4;
+            if ((group == 0x0002 && element > 0x0010) || group > 0x0002) {
+                break;
             }
+            byte[] vr = { b[byteOffset], b[byteOffset + 1] };
+            byteOffset += 2;
+
+            int vl;
+            if (isShortValueLengthVR(vr)) {
+                vl = extractUnsigned16(b, byteOffset);
+                byteOffset += 2;
+            } else {
+                // 2 reserved bytes
+                // cast to int (should not be a big number in meta information)
+                vl = (int) extractUnsigned32(b, byteOffset + 2);
+                byteOffset += 6;
+            }
+            // (0x0002, 0x0010) Transfer Syntax UID
+            if (element == 0x0010 && vl != 0 && byteOffset + vl < b.length) {
+                String tsuid = new String(b, byteOffset, vl);
+                if (!DicomManager.getInstance().containsImageioCodec(tsuid)) {
+                    InterruptedIOException exc =
+                        new InterruptedIOException("No image decoder found for the syntax " + tsuid); //$NON-NLS-1$
+                    exc.bytesTransferred = Integer.MIN_VALUE;
+                    progress.series.setFileSize(progress.series.getFileSize() - progress.nread);
+                    progress.nread = 0;
+                    throw exc;
+                }
+                break;
+            }
+            byteOffset += vl;
         }
     }
 
@@ -135,10 +143,10 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
 
     static final boolean isShortValueLengthVR(byte[] vr) {
         return vr[0] == 'A' && (vr[1] == 'E' || vr[1] == 'S' || vr[1] == 'T') || vr[0] == 'C' && vr[1] == 'S'
-            || vr[0] == 'D' && (vr[1] == 'A' || vr[1] == 'S' || vr[1] == 'T') || vr[0] == 'F'
-            && (vr[1] == 'D' || vr[1] == 'L') || vr[0] == 'I' && vr[1] == 'S' || vr[0] == 'L'
-            && (vr[1] == 'O' || vr[1] == 'T') || vr[0] == 'P' && vr[1] == 'N' || vr[0] == 'S'
-            && (vr[1] == 'H' || vr[1] == 'L' || vr[1] == 'S' || vr[1] == 'T') || vr[0] == 'T' && vr[1] == 'M'
-            || vr[0] == 'U' && (vr[1] == 'I' || vr[1] == 'L' || vr[1] == 'S');
+            || vr[0] == 'D' && (vr[1] == 'A' || vr[1] == 'S' || vr[1] == 'T')
+            || vr[0] == 'F' && (vr[1] == 'D' || vr[1] == 'L') || vr[0] == 'I' && vr[1] == 'S'
+            || vr[0] == 'L' && (vr[1] == 'O' || vr[1] == 'T') || vr[0] == 'P' && vr[1] == 'N'
+            || vr[0] == 'S' && (vr[1] == 'H' || vr[1] == 'L' || vr[1] == 'S' || vr[1] == 'T')
+            || vr[0] == 'T' && vr[1] == 'M' || vr[0] == 'U' && (vr[1] == 'I' || vr[1] == 'L' || vr[1] == 'S');
     }
 }

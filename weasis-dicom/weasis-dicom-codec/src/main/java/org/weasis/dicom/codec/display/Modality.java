@@ -1,20 +1,23 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.dicom.codec.display;
 
+import java.util.Arrays;
+
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.Messages;
 
 public enum Modality {
 
-    Default(Messages.getString("Modality.default")), //$NON-NLS-1$
+    DEFAULT(Messages.getString("Modality.default")), //$NON-NLS-1$
 
     AU("Audio"), //$NON-NLS-1$
 
@@ -110,18 +113,26 @@ public enum Modality {
 
     @Override
     public String toString() {
-        return description;
+        StringBuilder buf = new StringBuilder(this.name());
+        buf.append(" - "); //$NON-NLS-1$
+        buf.append(description);
+        return buf.toString();
     }
 
     public static Modality getModality(String modality) {
-        Modality v = Modality.Default;
-        if (modality != null) {
+        Modality v = Modality.DEFAULT;
+        if (StringUtil.hasText(modality)) {
             try {
                 v = Modality.valueOf(modality);
             } catch (Exception e) {
-                // System.err.println("Modality not supported: " + modality);
+                // return DEFAULT if unknown
             }
         }
         return v;
+    }
+    
+    public static Modality[] getAllModalitiesExceptDefault() {
+        Modality[] vals = Modality.values();
+        return Arrays.copyOfRange(vals, 1, vals.length);
     }
 }

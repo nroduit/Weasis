@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse  License v1.0
+ * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import java.awt.geom.AffineTransform;
@@ -19,18 +19,11 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
 
-public interface ImageLayer<E extends ImageElement> {
+public interface ImageLayer<E extends ImageElement> extends MeasurableLayer {
 
     RandomIter getReadIterator();
 
     E getSourceImage();
-
-    /**
-     * Returns the source image for display. All preprocessing operations has been applied to this image.
-     * 
-     * @return the source image for display
-     */
-    RenderedImage getSourceRenderedImage();
 
     RenderedImage getDisplayImage();
 
@@ -47,4 +40,9 @@ public interface ImageLayer<E extends ImageElement> {
     boolean isEnableDispOperations();
 
     void setEnableDispOperations(boolean enabled);
+    
+    // Duplicate of Layer interface
+    void setVisible(Boolean visible);
+
+    Boolean getVisible();
 }

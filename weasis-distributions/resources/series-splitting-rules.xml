@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configuration of the rules for splitting series in the DICOM Explorer. 
+	The "DEFAULT" modality configuration will be applied on all the modalities 
+	without configuration (or unknown) -->
+<modalities>
+	<!-- <modality> attributes: name is a mandatory attribute, extend is optional. -->
+	<!-- the "extend" attribute allows to inherit the values of a previous declared 
+		modality (must be declared before in the xml file) -->
+
+	<!-- <splittingTags> contains the list of attributes which allows to split 
+		into subseries when the image values are different -->
+
+	<!-- <multiframeSplittingTags> contains the list of attributes which allows 
+		to split multiframe file into subseries when the frame values are different -->
+
+	<!-- DICOM Attributes (see http://dicom.nema.org/medical/dicom/current/output/chtml/part06/chapter_6.html) 
+		or available in the class TagW (see https://github.com/nroduit/Weasis/blob/master/weasis-core/weasis-core-api/src/main/java/org/weasis/core/api/media/data/TagW.java), -->
+	<!-- When the value of an attribute is different, the new image goes into 
+		a new sub-series -->
+	<!-- An attribute can have conditions when the values are different. -->
+	
+	<!-- Conditions can be grouped by "allOf" (AND) or "anyOf (OR). Mandatory 
+		as root element and can be recursive -->
+	<!-- The new image is split in a new sub-series When all the conditions 
+		matches -->
+		
+	<!-- Condition must have a DICOM Attributes and when the type is [equals, notEquals, equalsIgnoreCase, notEqualsIgnoreCase] 
+		the value can be multiple (with '\' as a character separator) or when the 
+		type is [contains, notContains, containsIgnoreCase, notContainsIgnoreCase] only one value is accepted  -->
+
+	<!-- Uncomment to override the configuration which is already defined in 
+		Weasis source code -->
+
+	<!--
+	<modality name="DEFAULT">
+		<splittingTags>
+			<ImageType />
+			<SOPClassUID />
+			<ContrastBolusAgent />
+		</splittingTags>
+		<multiframeSplittingTags>
+			<ImageType />
+			<SOPInstanceUID />
+			<FrameType />
+			<FrameAcquisitionNumber />
+			<StackID />
+		</multiframeSplittingTags>
+	</modality>
+
+	<modality name="CT" extend="DEFAULT">
+		<splittingTags>
+			<ConvolutionKernel />
+			<GantryDetectorTilt />
+			<ImageOrientationPlane>
+				<conditions type="allOf">
+					<condition tag="ImageType" type="notContainsIgnoreCase">PROJECTION</condition>
+				</conditions>
+			</ImageOrientationPlane>
+		</splittingTags>
+	</modality>
+
+	<modality name="PT" extend="DEFAULT">
+		<splittingTags>
+			<ConvolutionKernel />
+			<GantryDetectorTilt />
+		</splittingTags>
+	</modality>
+
+	<modality name="MR" extend="DEFAULT">
+		<splittingTags>
+			<ScanningSequence />
+			<SequenceVariant />
+			<ScanOptions />
+			<RepetitionTime />
+			<EchoTime />
+			<InversionTime />
+			<FlipAngle />
+			<ImageOrientationPlane>
+				<conditions type="allOf">
+					<condition tag="ImageType" type="notContainsIgnoreCase">PROJECTION</condition>
+				</conditions>
+			</ImageOrientationPlane>
+		</splittingTags>
+	</modality>
+	 -->
+</modalities>

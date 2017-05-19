@@ -1,43 +1,46 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse  License v1.0
+ * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.media.data;
 
+import java.io.File;
 import java.net.URI;
-import java.util.HashMap;
+import java.util.Map;
+
+import javax.media.jai.PlanarImage;
 
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 
-public interface MediaReader<E> {
+public interface MediaReader extends Tagable {
 
     void reset();
 
     URI getUri();
 
-    MediaElement<?>[] getMediaElement();
+    FileCache getFileCache();
 
-    MediaSeries<? extends MediaElement<E>> getMediaSeries();
+    MediaElement[] getMediaElement();
+
+    MediaSeries<MediaElement> getMediaSeries();
 
     boolean delegate(DataExplorerModel explorerModel);
 
-    MediaElement<E> getPreview();
+    MediaElement getPreview();
 
-    E getMediaFragment(MediaElement<E> media) throws Exception;
+    PlanarImage getImageFragment(MediaElement media) throws Exception;
 
     int getMediaElementNumber();
 
-    URI getMediaFragmentURI(Object key);
+    String getMediaFragmentMimeType();
 
-    String getMediaFragmentMimeType(Object key);
-
-    HashMap<TagW, Object> getMediaFragmentTags(Object key);
+    Map<TagW, Object> getMediaFragmentTags(Object key);
 
     void close();
 
@@ -45,7 +48,10 @@ public interface MediaReader<E> {
 
     String[] getReaderDescription();
 
+    @Override
     Object getTagValue(TagW tag);
 
     void replaceURI(URI uri);
+
+    boolean buildFile(File ouptut);
 }

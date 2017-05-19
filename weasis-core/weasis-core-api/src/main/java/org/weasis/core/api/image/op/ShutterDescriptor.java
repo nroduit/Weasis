@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.image.op;
 
 import java.awt.RenderingHints;
@@ -38,7 +48,7 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
         { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String[] paramNames = { "roi", "color" }; //$NON-NLS-1$ //$NON-NLS-2$
-    private static final Class[] paramClasses = { ROIShape.class, Byte[].class };
+    private static final Class<?>[] paramClasses = { ROIShape.class, Byte[].class };
     private static final Object[] paramDefaults = { null, null };
 
     public ShutterDescriptor() {
@@ -62,10 +72,9 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
 
         TiledImage image;
         if (ImageUtil.isBinary(source1.getSampleModel())) {
-            image =
-                new TiledImage(source1.getMinX(), source1.getMinY(), source1.getWidth(), source1.getHeight(),
-                    source1.getTileGridXOffset(), source1.getTileGridYOffset(), LayoutUtil.createBinarySampelModel(),
-                    LayoutUtil.createBinaryIndexColorModel());
+            image = new TiledImage(source1.getMinX(), source1.getMinY(), source1.getWidth(), source1.getHeight(),
+                source1.getTileGridXOffset(), source1.getTileGridYOffset(), LayoutUtil.createBinarySampelModel(),
+                LayoutUtil.createBinaryIndexColorModel());
         } else {
             // rgb cannot be null or have less than one value
             Byte[] rgb = (Byte[]) paramBlock.getObjectParameter(1);
@@ -95,7 +104,7 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
     }
 
     public boolean validateSources(ParameterBlock parameterblock) {
-        return (parameterblock.getRenderedSource(0) != null);
+        return parameterblock.getRenderedSource(0) != null;
     }
 
     public static RenderedOp create(RenderedImage source0, ROIShape roi, Byte[] bandValues, RenderingHints hints) {

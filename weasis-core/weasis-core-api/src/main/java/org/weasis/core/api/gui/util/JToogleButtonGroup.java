@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.event.ActionEvent;
@@ -23,14 +23,14 @@ import javax.swing.Icon;
 import javax.swing.JToggleButton;
 import javax.swing.event.ListDataEvent;
 
-public class JToogleButtonGroup implements ActionListener, ComboBoxModelAdapter {
+public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapter<T> {
 
     protected final List<JToggleButton> itemList;
-    protected final HashMap<JToggleButton, Object> map = new HashMap<JToggleButton, Object>();
-    protected ComboBoxModel dataModel;
+    protected final HashMap<JToggleButton, Object> map = new HashMap<>();
+    protected ComboBoxModel<T> dataModel;
 
     public JToogleButtonGroup() {
-        this.itemList = new ArrayList<JToggleButton>();
+        this.itemList = new ArrayList<>();
     }
 
     private void init() {
@@ -45,14 +45,6 @@ public class JToogleButtonGroup implements ActionListener, ComboBoxModelAdapter 
             }
             JToggleButton b = new JToggleButton(icon);
             b.setToolTipText(object.toString());
-            // b.setMargin(new Insets(2, 2, 2, 2));
-            // // b.setUI(new VLButtonUI());
-            // b.setBorder(null);
-            // b.setRolloverEnabled(true);
-            // b.setContentAreaFilled(false);
-            // b.setOpaque(false);
-            // b.setBorderPainted(false);
-
             map.put(b, object);
             b.setSelected(object == selectedItem);
             group.add(b);
@@ -62,12 +54,12 @@ public class JToogleButtonGroup implements ActionListener, ComboBoxModelAdapter 
     }
 
     @Override
-    public void setModel(ComboBoxModel dataModel) {
+    public void setModel(ComboBoxModel<T> dataModel) {
         boolean changeListener = dataModel != null && dataModel != this.dataModel;
         if (this.dataModel != null) {
             this.dataModel.removeListDataListener(this);
         }
-        this.dataModel = dataModel == null ? new DefaultComboBoxModel() : dataModel;
+        this.dataModel = dataModel == null ? new DefaultComboBoxModel<>() : dataModel;
         init();
         if (changeListener) {
             this.dataModel.addListDataListener(this);
@@ -85,14 +77,12 @@ public class JToogleButtonGroup implements ActionListener, ComboBoxModelAdapter 
 
     @Override
     public void intervalAdded(ListDataEvent e) {
-        // TODO Auto-generated method stub
-
+        // Do nothing
     }
 
     @Override
     public void intervalRemoved(ListDataEvent e) {
-        // TODO Auto-generated method stub
-
+        // Do nothing
     }
 
     @Override
@@ -103,7 +93,7 @@ public class JToogleButtonGroup implements ActionListener, ComboBoxModelAdapter 
                 dataModel.setSelectedItem(map.get(item));
             }
         }
-    };
+    }
 
     public void setSelected(Object selected) {
         if (selected != null) {

@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.op;
 
 import java.awt.RenderingHints;
@@ -26,7 +26,7 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.registry.RenderableRegistryMode;
 import javax.media.jai.registry.RenderedRegistryMode;
 
-import com.sun.media.jai.opimage.RIFUtil;
+import org.weasis.core.api.image.util.JAIUtil;
 
 public class RectifySignedShortDataDescriptor extends OperationDescriptorImpl implements RenderedImageFactory {
 
@@ -35,17 +35,18 @@ public class RectifySignedShortDataDescriptor extends OperationDescriptorImpl im
      */
     private static final String[][] resources = { { "GlobalName", "RectifySignedShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "LocalName", "RectifySignedShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "RectifySignedShortData" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Description", "Operation to read correctly signed images (9-15 bits) (Workaround for imageio codecs issue" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Description", //$NON-NLS-1$
+            "Operation to read correctly signed images (9-15 bits) (Workaround for imageio codecs issue" }, //$NON-NLS-1$
 
-    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "arg0Desc", "Number of signifative bits" } }; //$NON-NLS-1$ //$NON-NLS-2$
+        { "arg0Desc", "Number of signifative bits" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final Class[] paramClasses = { int[].class };
 
@@ -64,7 +65,7 @@ public class RectifySignedShortDataDescriptor extends OperationDescriptorImpl im
 
     /**
      * Validates the input source and parameter.
-     * 
+     *
      * <p>
      * In addition to the standard checks performed by the superclass method, this method checks that the source image
      * has an integral data type and that "shift" has length at least 1.
@@ -99,10 +100,10 @@ public class RectifySignedShortDataDescriptor extends OperationDescriptorImpl im
     @Override
     public RenderedImage create(ParameterBlock args, RenderingHints renderHints) {
         // Get ImageLayout from renderHints if any.
-        ImageLayout layout = RIFUtil.getImageLayoutHint(renderHints);
+        ImageLayout layout = JAIUtil.getImageLayoutHint(renderHints);
 
-        return new RectifySignedShortDataOpImage(args.getRenderedSource(0), renderHints, layout, (int[]) args
-            .getObjectParameter(0));
+        return new RectifySignedShortDataOpImage(args.getRenderedSource(0), renderHints, layout,
+            (int[]) args.getObjectParameter(0));
     }
 
     public static RenderedOp create(RenderedImage source0, int[] constants, RenderingHints hints) {

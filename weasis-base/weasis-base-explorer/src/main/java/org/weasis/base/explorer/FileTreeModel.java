@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.base.explorer;
 
 import java.beans.PropertyChangeListener;
@@ -16,6 +26,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 
+@SuppressWarnings("serial")
 public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel {
 
     private final PropertyChangeSupport propertyChange;
@@ -30,15 +41,18 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
         propertyChange = new PropertyChangeSupport(this);
     }
 
+    @Override
     public void addPropertyChangeListener(PropertyChangeListener propertychangelistener) {
         propertyChange.addPropertyChangeListener(propertychangelistener);
     }
 
+    @Override
     public void removePropertyChangeListener(PropertyChangeListener propertychangelistener) {
         propertyChange.removePropertyChangeListener(propertychangelistener);
 
     }
 
+    @Override
     public void firePropertyChange(final ObservableEvent event) {
         if (event == null) {
             throw new NullPointerException();
@@ -46,12 +60,7 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
         if (SwingUtilities.isEventDispatchThread()) {
             propertyChange.firePropertyChange(event);
         } else {
-            SwingUtilities.invokeLater(new Runnable() {
-
-                public void run() {
-                    propertyChange.firePropertyChange(event);
-                }
-            });
+            SwingUtilities.invokeLater(() -> propertyChange.firePropertyChange(event));
         }
     }
 

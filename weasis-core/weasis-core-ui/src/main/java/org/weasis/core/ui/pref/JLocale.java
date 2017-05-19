@@ -1,14 +1,23 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.ui.pref;
 
 import java.util.Locale;
+import java.util.Objects;
 
 public class JLocale {
     private final Locale locale;
 
     JLocale(Locale l) {
-        if (l == null) {
-            throw new IllegalArgumentException("locale cannot be null"); //$NON-NLS-1$
-        }
+        Objects.nonNull(l);
         locale = l;
     }
 
@@ -20,5 +29,4 @@ public class JLocale {
     public Locale getLocale() {
         return locale;
     }
-
 }

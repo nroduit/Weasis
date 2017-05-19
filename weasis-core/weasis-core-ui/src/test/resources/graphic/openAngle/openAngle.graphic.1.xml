@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<openAngle fill="false" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffffff00" />
+	<label>
+		<label>Angle : 28.7 deg</label>
+	</label>
+	<pts>
+		<pt x="1961.5" y="1514.0" />
+		<pt x="2014.5" y="1476.0" />
+		<pt x="1967.5" y="1569.0" />
+		<pt x="2131.5" y="1549.0" />
+	</pts>
+</openAngle>

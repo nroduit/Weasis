@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<pixelInfo labelHeight="13.125" labelWidth="112.53125"
+	lineABvalid="true" fill="false" showLabel="true" thickness="2.0"
+	ptsNumber="2" uuid="test.graphic-abcd-123-efg45.1">
+	<paint rgb="ffafaf" />
+	<pts>
+		<pt x="1665.5" y="987.0" />
+		<pt x="1601.5" y="1037.0" />
+	</pts>
+	<labelBounds x="1539.234375" y="1024.4375" width="124.53125"
+		height="25.125" />
+	<labels>
+		<label> R=144 G=116 B=101</label>
+	</labels>
+	<anchor x="1665.5" y="987.0" />
+	<box x="1601.5" y="1037.0" />
+</pixelInfo>

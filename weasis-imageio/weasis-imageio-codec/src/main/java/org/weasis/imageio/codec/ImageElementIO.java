@@ -1,20 +1,29 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.imageio.codec;
 
 import java.awt.RenderingHints;
+import java.awt.image.RenderedImage;
+import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.Consumer;
+import java.util.Objects;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -27,11 +36,14 @@ import javax.media.jai.PlanarImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
@@ -39,23 +51,26 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.StringUtil;
 
-public class ImageElementIO implements MediaReader<PlanarImage> {
+public class ImageElementIO implements MediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageElementIO.class);
 
-    protected URI uri;
+    public static final File CACHE_UNCOMPRESSED_DIR =
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "uncompressed"); //$NON-NLS-1$
 
-    protected final String mimeType;
+    protected URI uri;
+    private final FileCache fileCache;
+
+    protected String mimeType;
 
     private ImageElement image = null;
 
     private final Codec codec;
 
     public ImageElementIO(URI media, String mimeType, Codec codec) {
-        if (media == null) {
-            throw new IllegalArgumentException("media uri is null"); //$NON-NLS-1$
-        }
-        this.uri = media;
+        this.uri = Objects.requireNonNull(media);
+        this.fileCache = new FileCache(this);
         if (mimeType == null) {
             this.mimeType = MimeInspector.UNKNOWN_MIME_TYPE;
         } else if ("image/x-ms-bmp".equals(mimeType)) { //$NON-NLS-1$
@@ -67,41 +82,66 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public PlanarImage getMediaFragment(MediaElement<PlanarImage> media) throws Exception {
-        if (media != null && media.getFile() != null) {
-            ImageReader reader = getDefaultReader(mimeType);
-            if (reader == null) {
-                LOGGER.info("Cannot find a reader for the mime type: {}", mimeType); //$NON-NLS-1$
-                return null;
-            }
-            PlanarImage img;
-            RenderingHints hints = LayoutUtil.createTiledLayoutHints();
-            if ("it.geosolutions.imageio.plugins.jp2k.JP2KKakaduImageReader".equals(reader.getClass().getName())) { //$NON-NLS-1$
-                ParameterBlockJAI pb = new ParameterBlockJAI("ImageReadMT"); //$NON-NLS-1$
-                pb.setParameter("Input", media.getFile()); //$NON-NLS-1$
-                pb.setParameter("ImageChoice", 0); //$NON-NLS-1$
-                pb.setParameter("ReadMetadata", true); //$NON-NLS-1$
-                pb.setParameter("ReadThumbnails", false); //$NON-NLS-1$
-                pb.setParameter("VerifyInput", true); //$NON-NLS-1$
-                pb.setParameter("Listeners", null); // java.util.EventListener[] //$NON-NLS-1$
-                pb.setParameter("Locale", null); // java.util.Locale //$NON-NLS-1$
-                pb.setParameter("ReadParam", reader.getDefaultReadParam()); // javax.imageio.ImageReadParam //$NON-NLS-1$
-                pb.setParameter("Reader", reader); // javax.imageio.ImageReader //$NON-NLS-1$
-                img = JAI.create("ImageReadMT", pb, hints); //$NON-NLS-1$
-            } else {
-                ImageInputStream in = new FileImageInputStream(new RandomAccessFile(media.getFile(), "r")); //$NON-NLS-1$
-                // hints.add(new RenderingHints(JAI.KEY_TILE_CACHE, null));
-                ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
-                pb.setParameter("Input", in); //$NON-NLS-1$
-                pb.setParameter("Reader", reader); //$NON-NLS-1$
-                img = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
-            }
+    public PlanarImage getImageFragment(MediaElement media) throws Exception {
+        Objects.requireNonNull(media);
+        FileCache cache = media.getFileCache();
 
-            // to avoid problem with alpha channel and png encoded in 24 and 32 bits
-            img = PlanarImage.wrapRenderedImage(ImageFiler.getReadableImage(img));
+        Path imgCachePath = null;
+        File file;
+        if (cache.isRequireTransformation()) {
+            file = cache.getTransformedFile();
+            if (file == null) {
+                String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes());
+                imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".tif"); //$NON-NLS-1$
+                if (Files.isReadable(imgCachePath)) {
+                    file = imgCachePath.toFile();
+                    cache.setTransformedFile(file);
+                    this.mimeType = "image/tiff"; //$NON-NLS-1$
+                    imgCachePath = null;
+                } else {
+                    file = cache.getOriginalFile().get();
+                }
+            }
+        } else {
+            file = cache.getOriginalFile().get();
+        }
+
+        if (file != null) {
+            PlanarImage img = readImage(file, imgCachePath == null);
+
+            if (imgCachePath != null) {
+                File rawFile = uncompress(imgCachePath, img);
+                if( rawFile != null){
+                    file = rawFile;
+                }
+                cache.setTransformedFile(file);
+                img = readImage(file, true);
+            }
             return img;
         }
         return null;
+    }
+
+    private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
+        ImageReader reader = getDefaultReader(mimeType);
+        if (reader == null) {
+            LOGGER.info("Cannot find a reader for the mime type: {}", mimeType); //$NON-NLS-1$
+            return null;
+        }
+        PlanarImage img;
+        RenderingHints hints = createTiledLayout ? LayoutUtil.createTiledLayoutHints() : null;
+        ImageInputStream in = new FileImageInputStream(new RandomAccessFile(file, "r")); //$NON-NLS-1$
+        ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
+        pb.setParameter("Input", in); //$NON-NLS-1$
+        pb.setParameter("Reader", reader); //$NON-NLS-1$
+        img = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
+
+        // to avoid problem with alpha channel and png encoded in 24 and 32 bits
+        img = PlanarImage.wrapRenderedImage(ImageFiler.getReadableImage(img));
+
+        image.setTag(TagW.ImageWidth, img.getWidth());
+        image.setTag(TagW.ImageHeight, img.getHeight());
+        return img;
     }
 
     @Override
@@ -115,13 +155,12 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public MediaElement<PlanarImage> getPreview() {
+    public MediaElement getPreview() {
         return getSingleImage();
     }
 
     @Override
     public boolean delegate(DataExplorerModel explorerModel) {
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -135,21 +174,22 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public MediaSeries<ImageElement> getMediaSeries() {
+    public MediaSeries<MediaElement> getMediaSeries() {
         String sUID = null;
         MediaElement element = getSingleImage();
         if (element != null) {
-            sUID = (String) element.getTagValue(TagW.SeriesInstanceUID);
+            sUID = (String) element.getTagValue(TagW.get("SeriesInstanceUID")); //$NON-NLS-1$
         }
         if (sUID == null) {
             sUID = uri == null ? "unknown" : uri.toString(); //$NON-NLS-1$
         }
-        MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, TagW.FileName) { //$NON-NLS-1$
+        MediaSeries<MediaElement> series =
+            new Series<MediaElement>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) { // $NON-NLS-1$
 
                 @Override
                 public String getMimeType() {
                     synchronized (this) {
-                        for (ImageElement img : medias) {
+                        for (MediaElement img : medias) {
                             return img.getMimeType();
                         }
                     }
@@ -159,11 +199,11 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
                 @Override
                 public void addMedia(MediaElement media) {
                     if (media instanceof ImageElement) {
-                        this.add((ImageElement) media);
+                        this.add(media);
                         DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
                         if (model != null) {
-                            model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                                new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
+                            model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
+                                new SeriesEvent(SeriesEvent.Action.ADD_IMAGE, this, media)));
                         }
                     }
                 }
@@ -190,18 +230,13 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public String getMediaFragmentMimeType(Object key) {
+    public String getMediaFragmentMimeType() {
         return mimeType;
     }
 
     @Override
-    public HashMap<TagW, Object> getMediaFragmentTags(Object key) {
-        return new HashMap<TagW, Object>();
-    }
-
-    @Override
-    public URI getMediaFragmentURI(Object key) {
-        return uri;
+    public Map<TagW, Object> getMediaFragmentTags(Object key) {
+        return new HashMap<>();
     }
 
     @Override
@@ -233,7 +268,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     @Override
     public Object getTagValue(TagW tag) {
         MediaElement element = getSingleImage();
-        if (element != null) {
+        if (tag != null && element != null) {
             return element.getTagValue(tag);
         }
         return null;
@@ -241,7 +276,57 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
 
     @Override
     public void replaceURI(URI uri) {
-        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
 
+    @Override
+    public void setTag(TagW tag, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean containTagKey(TagW tag) {
+        return false;
+    }
+
+    @Override
+    public void setTagNoNull(TagW tag, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public FileCache getFileCache() {
+        return fileCache;
+    }
+
+    private File uncompress(Path imgCachePath, RenderedImage img) {
+        /*
+         * Make an image cache with its thumbnail when the image size is larger than a tile size and if not DICOM file
+         */
+        if (img != null && (img.getWidth() > ImageFiler.TILESIZE || img.getHeight() > ImageFiler.TILESIZE)
+            && !mimeType.contains("dicom")) { //$NON-NLS-1$
+            File outFile = imgCachePath.toFile();
+            if (ImageFiler.writeTIFF(outFile, img, true, true, false)) {
+                this.mimeType = "image/tiff"; //$NON-NLS-1$
+                return outFile;
+            } else {
+                try {
+                    Files.deleteIfExists(outFile.toPath());
+                } catch (IOException e) {
+                    LOGGER.error("Deleting temp tiff file", e); //$NON-NLS-1$
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean buildFile(File ouptut) {
+        return false;
     }
 }

@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Component;
@@ -38,8 +48,8 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -55,11 +65,11 @@ public class KeyObjectToolBar extends WtoolBar {
     public static final ImageIcon KO_FILTER_ICON = new ImageIcon(View2d.class.getResource("/icon/32x32/synch-KO.png")); //$NON-NLS-1$
     public static final ImageIcon KO_FILTER_ICON_SELECTED;
 
-    public static final ImageIcon KO_ALL_STAR_ICON = new ImageIcon(
-        View2d.class.getResource("/icon/32x32/star_bw_all.png")); //$NON-NLS-1$
+    public static final ImageIcon KO_ALL_STAR_ICON =
+        new ImageIcon(View2d.class.getResource("/icon/32x32/star_bw_all.png")); //$NON-NLS-1$
 
-    public static final ImageIcon KO_EDIT_SELECTION_ICON = new ImageIcon(
-        View2d.class.getResource("/icon/32x32/edit-KO.png")); //$NON-NLS-1$
+    public static final ImageIcon KO_EDIT_SELECTION_ICON =
+        new ImageIcon(View2d.class.getResource("/icon/32x32/edit-KO.png")); //$NON-NLS-1$
 
     static {
         ImageFilter imageFilter = new SelectedImageFilter(new float[] { 1.0f, 0.78f, 0.0f }); // ORANGE
@@ -145,7 +155,7 @@ public class KeyObjectToolBar extends WtoolBar {
             public void actionPerformed(ActionEvent e) {
 
                 ImageViewerPlugin<DicomImageElement> selectedView2dContainer;
-                DefaultView2d<DicomImageElement> selectedView2d;
+                ViewCanvas<DicomImageElement> selectedView2d;
                 MediaSeries<DicomImageElement> selectedDicomSeries;
 
                 if ((selectedView2dContainer = evtMgr.getSelectedView2dContainer()) == null) {
@@ -197,9 +207,8 @@ public class KeyObjectToolBar extends WtoolBar {
 
                 Object[] message = { Messages.getString("KeyObjectToolBar.k0_list"), scrollList }; //$NON-NLS-1$
 
-                final JOptionPane pane =
-                    new JOptionPane(message, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null,
-                        new JButton[] { deleteBtn, createBtn }, createBtn);
+                final JOptionPane pane = new JOptionPane(message, JOptionPane.QUESTION_MESSAGE,
+                    JOptionPane.YES_NO_OPTION, null, new JButton[] { deleteBtn, createBtn }, createBtn);
 
                 deleteBtn.addActionListener(new ActionListener() {
                     @Override
@@ -241,7 +250,7 @@ public class KeyObjectToolBar extends WtoolBar {
 
                 if (list.getModel().getSize() > 0) {
                     Object selectedItem = koSelectionAction.getSelectedItem();
-                    if (selectedItem.equals(ActionState.NONE)) {
+                    if (selectedItem.equals(ActionState.NoneLabel.NONE)) {
                         selectedItem = null;
                     }
                     // list.setSelectedValue(selectedItem, true);
@@ -280,9 +289,8 @@ public class KeyObjectToolBar extends WtoolBar {
 
                         } else if (selectedValue.equals(copyBtn)) {
                             System.out.println("Copy selected KeyObject : " + list.getSelectedValue().toString()); //$NON-NLS-1$
-                            newDicomKO =
-                                KOManager.createNewDicomKeyObject((MediaElement<?>) list.getSelectedValue(),
-                                    selectedView2dContainer);
+                            newDicomKO = KOManager.createNewDicomKeyObject((MediaElement) list.getSelectedValue(),
+                                selectedView2dContainer);
                         }
 
                         if (newDicomKO != null) {

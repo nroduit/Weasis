@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.ui.docking;
 
 import java.awt.Component;
@@ -19,8 +19,6 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
-import bibliothek.gui.dock.common.event.CDockableLocationEvent;
-import bibliothek.gui.dock.common.event.CDockableLocationListener;
 import bibliothek.gui.dock.common.location.CBaseLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 
@@ -30,7 +28,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
     public enum POSITION {
         NORTH, EAST, SOUTH, WEST
-    };
+    }
 
     private final Type type;
 
@@ -57,13 +55,9 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         this.dockable.setTitleText(toolName);
         this.dockable.setExternalizable(false);
         this.dockable.setMaximizable(false);
-        this.dockable.addCDockableLocationListener(new CDockableLocationListener() {
-
-            @Override
-            public void changed(CDockableLocationEvent event) {
-                if (event.isLocationChanged()) {
-                    changeToolWindowAnchor(event.getNewLocation());
-                }
+        this.dockable.addCDockableLocationListener(event -> {
+            if (event.isLocationChanged()) {
+                changeToolWindowAnchor(event.getNewLocation());
             }
         });
         // this.dockable.setResizeRequest(new RequestDimension(getDockableWidth(), true), false);
@@ -125,65 +119,57 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
     @Override
     public void showDockable() {
-        GuiExecutor.instance().execute(new Runnable() {
+        GuiExecutor.instance().execute(this::updateVisibleState);
+    }
 
-            @Override
-            public void run() {
-                if (!dockable.isVisible()) {
-                    UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
-                    Component component = getToolComponent();
-                    if (dockable.getFocusComponent() == component) {
-                        UIManager.DOCKING_CONTROL.addDockable(dockable);
-                        dockable.setExtendedMode(defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode);
-                    } else {
-                        dockable.add(component);
-                        dockable.setFocusComponent(component);
+    private void updateVisibleState() {
+        if (!dockable.isVisible()) {
+            UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+            Component component = getToolComponent();
+            if (dockable.getFocusComponent() == component) {
+                UIManager.DOCKING_CONTROL.addDockable(dockable);
+                dockable.setExtendedMode(defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode);
+            } else {
+                dockable.add(component);
+                dockable.setFocusComponent(component);
 
-                        UIManager.DOCKING_CONTROL.addDockable(dockable);
-                        // dockable.setDefaultLocation(ExtendedMode.MINIMIZED,
-                        POSITION pos = defaultPosition == null ? POSITION.EAST : defaultPosition;
-                        ExtendedMode mode = defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode;
-                        CBaseLocation base = CLocation.base(UIManager.BASE_AREA);
+                UIManager.DOCKING_CONTROL.addDockable(dockable);
+                // dockable.setDefaultLocation(ExtendedMode.MINIMIZED,
+                POSITION pos = defaultPosition == null ? POSITION.EAST : defaultPosition;
+                ExtendedMode mode = defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode;
+                CBaseLocation base = CLocation.base(UIManager.BASE_AREA);
 
-                        CLocation minimizeLocation =
-                            pos == POSITION.EAST ? base.minimalEast() : pos == POSITION.WEST ? base.minimalWest()
-                                : pos == POSITION.NORTH ? base.minimalNorth() : base.minimalSouth();
-                        dockable.setDefaultLocation(ExtendedMode.MINIMIZED, minimizeLocation);
+                CLocation minimizeLocation = pos == POSITION.EAST ? base.minimalEast() : pos == POSITION.WEST
+                    ? base.minimalWest() : pos == POSITION.NORTH ? base.minimalNorth() : base.minimalSouth();
+                dockable.setDefaultLocation(ExtendedMode.MINIMIZED, minimizeLocation);
 
-                        double w = UIManager.BASE_AREA.getWidth();
-                        if (w > 0) {
-                            double ratio = dockableWidth / w;
-                            if (ratio > 0.9) {
-                                ratio = 0.9;
-                            }
-                            // Set default size and position for NORMALIZED mode
-                            CLocation normalizedLocation =
-                                pos == POSITION.EAST ? base.normalEast(ratio) : pos == POSITION.WEST ? base
-                                    .normalWest(ratio) : pos == POSITION.NORTH ? base.normalNorth(ratio) : base
-                                    .normalSouth(ratio);
-                            dockable.setDefaultLocation(ExtendedMode.NORMALIZED, normalizedLocation);
-                        }
-                        // Set default size for FlapLayout
-                        dockable.setMinimizedSize(new Dimension(dockableWidth, 50));
-                        dockable.setExtendedMode(mode);
+                double w = UIManager.BASE_AREA.getWidth();
+                if (w > 0) {
+                    double ratio = dockableWidth / w;
+                    if (ratio > 0.9) {
+                        ratio = 0.9;
                     }
-                    dockable.setVisible(true);
-                    UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+                    // Set default size and position for NORMALIZED mode
+                    CLocation normalizedLocation =
+                        pos == POSITION.EAST ? base.normalEast(ratio) : pos == POSITION.WEST ? base.normalWest(ratio)
+                            : pos == POSITION.NORTH ? base.normalNorth(ratio) : base.normalSouth(ratio);
+                    dockable.setDefaultLocation(ExtendedMode.NORMALIZED, normalizedLocation);
                 }
+                // Set default size for FlapLayout
+                dockable.setMinimizedSize(new Dimension(dockableWidth, 50));
+                dockable.setExtendedMode(mode);
             }
-        });
+            dockable.setVisible(true);
+            UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+        }
     }
 
     @Override
     public void closeDockable() {
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
-                UIManager.DOCKING_CONTROL.removeDockable(dockable);
-                UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
-            }
+        GuiExecutor.instance().execute(() -> {
+            UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+            UIManager.DOCKING_CONTROL.removeDockable(dockable);
+            UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
         });
     }
 

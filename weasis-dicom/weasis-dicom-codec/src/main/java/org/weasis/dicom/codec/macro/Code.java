@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.codec.macro;
 
 import java.util.ArrayList;
@@ -19,14 +29,12 @@ public class Code extends Module {
         this(new Attributes());
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////
-
     public static Collection<Code> toCodeMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
             return null;
         }
 
-        ArrayList<Code> list = new ArrayList<Code>(seq.size());
+        ArrayList<Code> list = new ArrayList<>(seq.size());
 
         for (Attributes attr : seq) {
             list.add(new Code(attr));
@@ -34,8 +42,6 @@ public class Code extends Module {
 
         return list;
     }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////
 
     public String getCodeValue() {
         return dcmItems.getString(Tag.CodeValue);

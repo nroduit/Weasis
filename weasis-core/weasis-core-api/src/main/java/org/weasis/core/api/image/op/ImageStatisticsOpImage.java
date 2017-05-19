@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.op;
 
 import java.awt.Rectangle;
@@ -60,7 +60,7 @@ public class ImageStatisticsOpImage extends StatisticsOpImage {
 
     @Override
     protected String[] getStatisticsNames() {
-        return new String[] { "statistics" }; //$NON-NLS-1$ 
+        return new String[] { "statistics" }; //$NON-NLS-1$
     }
 
     @Override

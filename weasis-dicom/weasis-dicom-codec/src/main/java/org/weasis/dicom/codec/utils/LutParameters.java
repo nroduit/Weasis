@@ -1,18 +1,30 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.codec.utils;
 
 public class LutParameters {
-    private final float intercept;
-    private final float slope;
+    private final double intercept;
+    private final double slope;
     private final Integer paddingMinValue;
     private final Integer paddingMaxValue;
     private final int bitsStored;
     private final boolean signed;
     private final boolean applyPadding;
     private final boolean outputSigned;
+    private final int bitsOutput;
     private final boolean inversePaddingMLUT;
 
-    public LutParameters(float intercept, float slope, boolean applyPadding, Integer paddingMinValue,
-        Integer paddingMaxValue, int bitsStored, boolean signed, boolean outputSigned, boolean inversePaddingMLUT) {
+    public LutParameters(double intercept, double slope, boolean applyPadding, Integer paddingMinValue,
+        Integer paddingMaxValue, int bitsStored, boolean signed, boolean outputSigned, int bitsOutput,
+        boolean inversePaddingMLUT) {
         this.intercept = intercept;
         this.slope = slope;
         this.paddingMinValue = paddingMinValue;
@@ -21,40 +33,88 @@ public class LutParameters {
         this.signed = signed;
         this.applyPadding = applyPadding;
         this.outputSigned = outputSigned;
+        this.bitsOutput = bitsOutput;
         this.inversePaddingMLUT = inversePaddingMLUT;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof LutParameters) {
-            LutParameters p = (LutParameters) obj;
-            return p.intercept == intercept && p.slope == slope && p.applyPadding == applyPadding
-                && p.paddingMinValue == paddingMinValue && p.paddingMaxValue == paddingMaxValue
-                && p.bitsStored == bitsStored && p.signed == signed && p.isOutputSigned() == outputSigned
-                && p.isInversePaddingMLUT() == inversePaddingMLUT;
+        if (this == obj) {
+            return true;
         }
-        return false;
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        LutParameters other = (LutParameters) obj;
+        if (applyPadding != other.applyPadding) {
+            return false;
+        }
+        if (bitsOutput != other.bitsOutput) {
+            return false;
+        }
+        if (bitsStored != other.bitsStored) {
+            return false;
+        }
+        if (Double.doubleToLongBits(intercept) != Double.doubleToLongBits(other.intercept)) {
+            return false;
+        }
+        if (inversePaddingMLUT != other.inversePaddingMLUT) {
+            return false;
+        }
+        if (outputSigned != other.outputSigned) {
+            return false;
+        }
+        if (paddingMaxValue == null) {
+            if (other.paddingMaxValue != null) {
+                return false;
+            }
+        } else if (!paddingMaxValue.equals(other.paddingMaxValue)) {
+            return false;
+        }
+        if (paddingMinValue == null) {
+            if (other.paddingMinValue != null) {
+                return false;
+            }
+        } else if (!paddingMinValue.equals(other.paddingMinValue)) {
+            return false;
+        }
+        if (signed != other.signed) {
+            return false;
+        }
+        if (Double.doubleToLongBits(slope) != Double.doubleToLongBits(other.slope)) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     public int hashCode() {
-        int hash =
-            (signed ? 2 : 3) + (applyPadding ? 4 : 5) + (outputSigned ? 6 : 7) + (inversePaddingMLUT ? 8 : 9)
-                + bitsStored * 10 + Float.floatToIntBits(intercept) * 25 + Float.floatToIntBits(intercept) * 31;
-        if (paddingMinValue != null) {
-            hash += paddingMinValue * 14;
-        }
-        if (paddingMaxValue != null) {
-            hash += paddingMaxValue * 19;
-        }
-        return hash;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (applyPadding ? 1231 : 1237);
+        result = prime * result + bitsOutput;
+        result = prime * result + bitsStored;
+        long temp;
+        temp = Double.doubleToLongBits(intercept);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + (inversePaddingMLUT ? 1231 : 1237);
+        result = prime * result + (outputSigned ? 1231 : 1237);
+        result = prime * result + ((paddingMaxValue == null) ? 0 : paddingMaxValue.hashCode());
+        result = prime * result + ((paddingMinValue == null) ? 0 : paddingMinValue.hashCode());
+        result = prime * result + (signed ? 1231 : 1237);
+        temp = Double.doubleToLongBits(slope);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        return result;
     }
 
-    public float getIntercept() {
+    public double getIntercept() {
         return intercept;
     }
 
-    public float getSlope() {
+    public double getSlope() {
         return slope;
     }
 
@@ -80,6 +140,10 @@ public class LutParameters {
 
     public boolean isOutputSigned() {
         return outputSigned;
+    }
+
+    public int getBitsOutput() {
+        return bitsOutput;
     }
 
     public boolean isInversePaddingMLUT() {

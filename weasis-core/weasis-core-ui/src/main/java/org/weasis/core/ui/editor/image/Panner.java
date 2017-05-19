@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Color;
@@ -7,18 +17,18 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
-import java.io.File;
 
 import javax.swing.event.MouseInputAdapter;
 
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Thumbnail;
 
 /**
- * 
- * 
+ *
+ *
  * @author Nicolas Roduit
  */
 public final class Panner<E extends ImageElement> extends Thumbnail {
@@ -32,21 +42,16 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
     private boolean updatingImageDisplay;
 
     public Panner(DefaultView2d<E> view) {
-        super((File) null, 156);
+        super(156);
         this.view = view;
-        // this.canvas = imageFrame.getImageCanvas();
-        // this.imageSource = MergeImgOp.formatIfBinary(imageFrame.getSource());
-
         setForeground(JMVUtils.TREE_SELECTION_BACKROUND);
         slider = new Rectangle(0, 0, 0, 0);
         panArea = new Rectangle(0, 0, 0, 0);
     }
 
     @Override
-    protected void init(MediaElement<?> media, boolean keepMediaCache) {
-        super.init(media, keepMediaCache);
-
-        // setBorder(outMouseOverBorder);
+    protected void init(MediaElement media, boolean keepMediaCache, OpManager opManager) {
+        super.init(media, keepMediaCache, opManager);
     }
 
     @Override
@@ -91,7 +96,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
             if (img != null) {
                 thumbnailPath = null;
                 readable = true;
-                buildThumbnail(img, false);
+                buildThumbnail(img, false, view.getImageLayer().getPreprocessing());
                 updateImageSize();
             }
         }
@@ -131,9 +136,8 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
         final double vs = view.getViewModel().getViewScale();
         int width = view.getWidth() - 1;
         int height = view.getHeight() - 1;
-        final Rectangle2D va =
-            new Rectangle2D.Double(view.getViewModel().getModelOffsetX(), view.getViewModel().getModelOffsetY(), width
-                / vs, height / vs);
+        final Rectangle2D va = new Rectangle2D.Double(view.getViewModel().getModelOffsetX(),
+            view.getViewModel().getModelOffsetY(), width / vs, height / vs);
         slider.x = panArea.x + (int) Math.round(panArea.width * (va.getX() - ma.getX()) / ma.getWidth());
         slider.y = panArea.y + (int) Math.round(panArea.height * (va.getY() - ma.getY()) / ma.getHeight());
         slider.width = (int) Math.round(panArea.width * va.getWidth() / ma.getWidth());
@@ -143,7 +147,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
 
     public void moveToOrigin() {
         if (view != null) {
-            view.setOrigin(0, 0);
+            view.setOrigin(0d, 0d);
         }
     }
 

@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.op;
 
 import java.awt.RenderingHints;
@@ -33,7 +33,7 @@ import com.sun.media.jai.util.ImageUtil;
 
 /**
  * The Class FormatBinaryDescriptor.
- * 
+ *
  * @author Nicolas Roduit
  */
 public class FormatBinaryDescriptor extends OperationDescriptorImpl implements RenderedImageFactory {
@@ -71,9 +71,8 @@ public class FormatBinaryDescriptor extends OperationDescriptorImpl implements R
             return null;
         }
         RenderedImage imgSource = paramBlock.getRenderedSource(0);
-        ColorModel cm =
-            new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 }, false, false,
-                Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+        ColorModel cm = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 8 }, false,
+            false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
         byte[] table_data = new byte[] { (byte) 0x00, (byte) 0xff };
         if (imgSource.getColorModel() instanceof IndexColorModel) {
             IndexColorModel icm = (IndexColorModel) imgSource.getColorModel();

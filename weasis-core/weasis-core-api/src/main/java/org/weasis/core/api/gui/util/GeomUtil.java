@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.Shape;
@@ -9,9 +19,12 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 public final class GeomUtil {
+    
+    private GeomUtil() {
+    }
 
     public static boolean isLineValid(Point2D ptA, Point2D ptB) {
-        return (ptA != null && ptB != null && !ptA.equals(ptB));
+        return ptA != null && ptB != null && !ptA.equals(ptB);
     }
 
     /**
@@ -40,7 +53,7 @@ public final class GeomUtil {
      * Compute angle into image system basis where positive angle are defined in a ClockWise orientation<br>
      * Note : angle should be computed with "Math.atan2(ptB.getY() - ptA.getY(), ptB.getX() - ptA.getX())" in an
      * ortho-normal basis system where positive angle is defined in a CounterClockWise orientation.
-     * 
+     *
      * @return angle of AB line segment in radiant<br>
      *         0 is returned if any argument is invalid
      */
@@ -63,11 +76,11 @@ public final class GeomUtil {
      * @return angle in the range of [ -pi ; pi ]
      */
     public static double getSmallestRotationAngleRad(double angle) {
-        angle = angle % (2 * Math.PI);
-        if (Math.abs(angle) > Math.PI) {
-            angle -= Math.signum(angle) * (2.0 * Math.PI);
+        double a  = angle % (2 * Math.PI);
+        if (Math.abs(a) > Math.PI) {
+            a -= Math.signum(a) * (2.0 * Math.PI);
         }
-        return angle;
+        return a;
     }
 
     /**
@@ -76,11 +89,11 @@ public final class GeomUtil {
      * @return angle in the range of [ -180 ; 180 ]
      */
     public static double getSmallestRotationAngleDeg(double angle) {
-        angle = angle % 360.0;
-        if (Math.abs(angle) > 180.0) {
-            angle -= Math.signum(angle) * 360.0;
+        double a  = angle % 360.0;
+        if (Math.abs(a) > 180.0) {
+            a -= Math.signum(a) * 360.0;
         }
-        return angle;
+        return a;
     }
 
     /**
@@ -89,11 +102,11 @@ public final class GeomUtil {
      * @return angle in the range of [ -pi ; pi ]
      */
     public static double getSmallestAngleRad(double angle) {
-        angle = angle % Math.PI;
-        if (Math.abs(angle) > (Math.PI / 2.0)) {
-            angle -= Math.signum(angle) * Math.PI;
+        double a = angle % Math.PI;
+        if (Math.abs(a) > (Math.PI / 2.0)) {
+            a -= Math.signum(a) * Math.PI;
         }
-        return angle;
+        return a;
     }
 
     /**
@@ -102,11 +115,11 @@ public final class GeomUtil {
      * @return angle in the range of [ -90 ; 90 ]
      */
     public static double getSmallestAngleDeg(double angle) {
-        angle = angle % 180.0;
-        if (Math.abs(angle) > 90.0) {
-            angle -= Math.signum(angle) * 180.0;
+        double a = angle % 180.0;
+        if (Math.abs(a) > 90.0) {
+            a -= Math.signum(a) * 180.0;
         }
-        return angle;
+        return a;
     }
 
     /**
@@ -197,7 +210,7 @@ public final class GeomUtil {
 
     /**
      * Let ptA,ptB,ptC,ptD be 2-space position vectors. .......
-     * 
+     *
      * @return null if segment lines are parallel
      */
     public static Point2D.Double getIntersectPoint(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
@@ -207,20 +220,17 @@ public final class GeomUtil {
 
         Point2D.Double ptP = null;
 
-        double denominator =
-            (ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY()) - (ptB.getY() - ptA.getY())
-                * (ptD.getX() - ptC.getX());
+        double denominator = (ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY())
+            - (ptB.getY() - ptA.getY()) * (ptD.getX() - ptC.getX());
 
-        if (denominator != 0) {
-            double numerator =
-                (ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX()) - (ptA.getX() - ptC.getX())
-                    * (ptD.getY() - ptC.getY());
+        if (MathUtil.isDifferentFromZero(denominator)) {
+            double numerator = (ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX())
+                - (ptA.getX() - ptC.getX()) * (ptD.getY() - ptC.getY());
 
             double r = numerator / denominator;
 
-            ptP =
-                new Point2D.Double(ptA.getX() + r * (ptB.getX() - ptA.getX()), ptA.getY() + r
-                    * (ptB.getY() - ptA.getY()));
+            ptP = new Point2D.Double(ptA.getX() + r * (ptB.getX() - ptA.getX()),
+                ptA.getY() + r * (ptB.getY() - ptA.getY()));
         }
 
         return ptP;
@@ -241,21 +251,27 @@ public final class GeomUtil {
             return null;
         }
 
-        Point2D p = null;
-        Line2D lineRect = new Line2D.Double(rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMinY());
-        if (line.intersectsLine(lineRect)) {
-            p = GeomUtil.getIntersectPoint(line, lineRect);
-        } else if (line.intersectsLine(lineRect =
-            new Line2D.Double(rect.getMinX(), rect.getMaxY(), rect.getMaxX(), rect.getMaxY()))) {
-            p = GeomUtil.getIntersectPoint(line, lineRect);
-        } else if (line.intersectsLine(lineRect =
-            new Line2D.Double(rect.getMinX(), rect.getMinY(), rect.getMinX(), rect.getMaxY()))) {
-            p = GeomUtil.getIntersectPoint(line, lineRect);
-        } else if (line.intersectsLine(lineRect =
-            new Line2D.Double(rect.getMaxX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()))) {
-            p = GeomUtil.getIntersectPoint(line, lineRect);
+        Point2D p = lineIntersection(line, new Line2D.Double(rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMinY()));
+        if (p == null) {
+            p = lineIntersection(line,
+                new Line2D.Double(rect.getMinX(), rect.getMaxY(), rect.getMaxX(), rect.getMaxY()));
+            if (p == null) {
+                p = lineIntersection(line,
+                    new Line2D.Double(rect.getMinX(), rect.getMinY(), rect.getMinX(), rect.getMaxY()));
+                if (p == null) {
+                    p = lineIntersection(line,
+                        new Line2D.Double(rect.getMaxX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()));
+                }
+            }
         }
         return p;
+    }
+
+    private static Point2D lineIntersection(Line2D line1, Line2D line2) {
+        if (line1.intersectsLine(line2)) {
+            return GeomUtil.getIntersectPoint(line1, line2);
+        }
+        return null;
     }
 
     /**
@@ -265,13 +281,8 @@ public final class GeomUtil {
         if (ptA == null || ptB == null || ptC == null || ptD == null) {
             throw new IllegalArgumentException("All the points must not be null"); //$NON-NLS-1$
         }
-
-        if (((ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY()) - (ptB.getY() - ptA.getY())
-            * (ptD.getX() - ptC.getX())) == 0) {
-            return true;
-        }
-
-        return false;
+        return MathUtil.isEqualToZero((ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY())
+            - (ptB.getY() - ptA.getY()) * (ptD.getX() - ptC.getX()));
     }
 
     /**
@@ -279,10 +290,8 @@ public final class GeomUtil {
      */
     public static boolean lineColinear(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
         if (lineParallel(ptA, ptB, ptC, ptD)) {
-            if (((ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX()) - (ptA.getX() - ptC.getX())
-                * (ptD.getY() - ptC.getY())) == 0) {
-                return true;
-            }
+            return MathUtil.isEqualToZero((ptA.getY() - ptC.getY()) * (ptD.getX() - ptC.getX())
+                - (ptA.getX() - ptC.getX()) * (ptD.getY() - ptC.getY()));
         }
         return false;
     }
@@ -313,7 +322,7 @@ public final class GeomUtil {
 
     /**
      * Find a point at a given perpendicular distance from a line
-     * 
+     *
      * @param ptA
      *            Start of line segment
      * @param ptB
@@ -343,7 +352,7 @@ public final class GeomUtil {
     }
 
     /**
-     * 
+     *
      * @param ptA
      *            Start of line segment
      * @param ptB
@@ -370,7 +379,7 @@ public final class GeomUtil {
     }
 
     /**
-     * 
+     *
      * @param ptList
      * @return
      */
@@ -414,7 +423,7 @@ public final class GeomUtil {
 
         double denom = 2 * (c1 * (cy - by) - c2 * (cx - bx));
 
-        if (denom == 0.0) {
+        if (MathUtil.isEqualToZero(denom)) {
             return null; // a, b, c must be collinear
         }
 
@@ -428,7 +437,7 @@ public final class GeomUtil {
      * Extract scaling from AffineTransform<br>
      * Let assume that the AffineTransform is a composite of scales, translates, and rotates. <br>
      * No independent shear has to be applied and scaling must be uniform along the two axes.
-     * 
+     *
      * @param transform
      *            current AffineTransform
      */
@@ -438,7 +447,7 @@ public final class GeomUtil {
         if (transform != null) {
             double sx = transform.getScaleX();
             double shx = transform.getShearX();
-            if (sx != 0 || shx != 0) {
+            if (MathUtil.isDifferentFromZero(sx) || MathUtil.isDifferentFromZero(shx)) {
                 scalingFactor = Math.sqrt(sx * sx + shx * shx);
             }
         }
@@ -450,7 +459,7 @@ public final class GeomUtil {
      * Extract rotation Angle from a given AffineTransform Matrix.<br>
      * This function handle cases of mirror image flip about some axis. This changes right handed coordinate system into
      * a left handed system. Hence, returned angle has an opposite value.
-     * 
+     *
      * @param transform
      * @return angle in the range of [ -PI ; PI ]
      */
@@ -471,22 +480,10 @@ public final class GeomUtil {
         return angleRad;
     }
 
-    // public static double extractRotationAngleLegacy(AffineTransform transform) {
-    // double rotationAngle = 0.0;
-    //
-    // if ((transform != null)) {
-    // Point2D pt1 = new Point2D.Double(1, 0);
-    // Point2D pt2 = transform.deltaTransform(pt1, null);
-    // rotationAngle = GeomUtil.getAngleRad(pt2, new Point2D.Double(0, 0), pt1);
-    // }
-    //
-    // return rotationAngle;
-    // }
-
     /**
-     * 
+     *
      * Do a scaling transformation around the anchor point
-     * 
+     *
      * @param shape
      * @param scalingFactor
      * @param anchorPoint
@@ -494,13 +491,13 @@ public final class GeomUtil {
      * @return null if either shape is null or scaling factor is zero
      */
     public static Shape getScaledShape(final Shape shape, double scalingFactor, Point2D anchorPoint) {
-        if (shape == null || scalingFactor == 0) {
+        if (shape == null || MathUtil.isEqualToZero(scalingFactor)) {
             return null;
         }
 
         AffineTransform scaleTransform = new AffineTransform(); // Identity transformation.
 
-        if (scalingFactor != 1) {
+        if (MathUtil.isDifferent(scalingFactor, 1.0)) {
             if (anchorPoint != null) {
                 scaleTransform.translate(anchorPoint.getX(), anchorPoint.getY());
             }
@@ -521,7 +518,7 @@ public final class GeomUtil {
     public static Rectangle2D getScaledRectangle(final Rectangle2D rect, double scalingFactor) {
         Rectangle2D newRect = null;
 
-        if (rect != null && scalingFactor != 1) {
+        if (rect != null && MathUtil.isDifferent(scalingFactor, 1.0)) {
             double resizedWidth = rect.getWidth() * scalingFactor;
             double resizedHeight = rect.getHeight() * scalingFactor;
 
@@ -567,7 +564,7 @@ public final class GeomUtil {
         path.lineTo(ptI3.getX(), ptI3.getY());
         path.lineTo(ptO.getX(), ptO.getY());
         path.lineTo(ptI2.getX() - (ptI3.getX() - ptI2.getX()), ptI2.getY() - (ptI3.getY() - ptI2.getY()));
-        path.closePath();
+        path.lineTo(ptI2.getX(), ptI2.getY());
 
         return path;
     }
@@ -589,7 +586,7 @@ public final class GeomUtil {
             return;
         }
 
-        if (growingSize != 0) {
+        if (MathUtil.isDifferentFromZero(growingSize)) {
             double newX = rect.getX() - growingSize;
             double newY = rect.getY() - growingSize;
             double newWidth = rect.getWidth() + (2.0 * growingSize);

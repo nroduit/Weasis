@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image;
 
 import java.awt.Color;
@@ -19,8 +19,6 @@ import java.awt.image.renderable.ParameterBlock;
 import javax.media.jai.JAI;
 import javax.media.jai.LookupTableJAI;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -28,20 +26,19 @@ import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageToolkit;
 
 public class PseudoColorOp extends AbstractOp {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PseudoColorOp.class);
 
     public static final String OP_NAME = Messages.getString("PseudoColorOperation.title"); //$NON-NLS-1$
 
     /**
      * Set the lookup table (Required parameter).
-     * 
+     *
      * org.weasis.core.api.image.op.ByteLut value.
      */
     public static final String P_LUT = ActionW.LUT.cmd();
 
     /**
      * Whether the LUT must be inverted (Optional parameter).
-     * 
+     *
      * Boolean value. Default value is false.
      */
 
@@ -51,15 +48,22 @@ public class PseudoColorOp extends AbstractOp {
         setName(OP_NAME);
     }
 
+    public PseudoColorOp(PseudoColorOp op) {
+        super(op);
+    }
+
+    @Override
+    public PseudoColorOp copy() {
+        return new PseudoColorOp(this);
+    }
+
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
         ByteLut lutTable = (ByteLut) params.get(P_LUT);
 
-        if (lutTable == null) {
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
-        } else {
+        if (lutTable != null) {
             boolean invert = JMVUtils.getNULLtoFalse(params.get(P_LUT_INVERSE));
             byte[][] lut = invert ? lutTable.getInvertedLutTable() : lutTable.getLutTable();
             if (lut == null) {
@@ -77,7 +81,7 @@ public class PseudoColorOp extends AbstractOp {
             }
         }
 
-        params.put(OUTPUT_IMG, result);
+        params.put(Param.OUTPUT_IMG, result);
     }
 
     public static BufferedImage getLUT(byte[][] lut) {

@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
 import java.awt.BorderLayout;
@@ -16,7 +16,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.util.Enumeration;
 
@@ -26,8 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.JViewport;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -35,6 +33,7 @@ import javax.swing.tree.TreePath;
 
 import org.weasis.core.api.Messages;
 
+@SuppressWarnings("serial")
 public abstract class AbstractWizardDialog extends JDialog {
 
     protected String settingTitle;
@@ -54,25 +53,15 @@ public abstract class AbstractWizardDialog extends JDialog {
     public AbstractWizardDialog(Window window, String title, ModalityType modal, Dimension pageSize) {
         super(window, title, modal);
         this.settingTitle = title;
-        try {
-            jScrollPanePage.setPreferredSize(pageSize);
-            jbInit();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        jScrollPanePage.setPreferredSize(pageSize);
+        jbInit();
     }
 
-    private void jbInit() throws Exception {
+    private void jbInit() {
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         jPanelMain.setLayout(borderLayout2);
 
-        jButtonClose.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cancel();
-            }
-        });
+        jButtonClose.addActionListener(e -> cancel());
         jButtonClose.setText(Messages.getString("AbstractWizardDialog.close")); //$NON-NLS-1$
 
         jPanelRootPanel.setLayout(borderLayout3);
@@ -113,22 +102,24 @@ public abstract class AbstractWizardDialog extends JDialog {
 
     private boolean selectPage(String title, DefaultMutableTreeNode root) {
         if (title != null) {
-            for (Enumeration children = root.children(); children.hasMoreElements();) {
-                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-                Object object = dtm.getUserObject();
-                if (object instanceof PageProps) {
-                    PageProps page = (PageProps) object;
-                    if (page.getTitle().equals(title)) {
-                        TreePath tp = new TreePath(dtm.getPath());
-                        if (!dtm.isLeaf()) {
-                            tree.expandPath(tp);
+            Enumeration<?> children = root.children();
+            while (children.hasMoreElements()) {
+                Object child = children.nextElement();
+                if (child instanceof DefaultMutableTreeNode) {
+                    DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+                    Object object = dtm.getUserObject();
+                    if (object instanceof PageProps) {
+                        PageProps page = (PageProps) object;
+                        if (page.getTitle().equals(title)) {
+                            TreePath tp = new TreePath(dtm.getPath());
+                            if (!dtm.isLeaf()) {
+                                tree.expandPath(tp);
+                            }
+                            tree.setSelectionPath(tp);
+                            return true;
                         }
-                        tree.setSelectionPath(tp);
-                        return true;
                     }
-                }
-                if (dtm.getChildCount() > 0) {
-                    if (selectPage(title, dtm)) {
+                    if (dtm.getChildCount() > 0 && selectPage(title, dtm)) {
                         return true;
                     }
                 }
@@ -139,10 +130,11 @@ public abstract class AbstractWizardDialog extends JDialog {
 
     public AbstractItemDialogPage getCurrentPage() {
         Object object = null;
-        try {
-            object = jScrollPanePage.getViewport().getComponent(0);
-        } catch (Exception ex) {
+        JViewport viewPort = jScrollPanePage.getViewport();
+        if (viewPort != null && viewPort.getComponentCount() > 0) {
+            object = viewPort.getComponent(0);
         }
+
         if (object instanceof AbstractItemDialogPage) {
             return (AbstractItemDialogPage) object;
         }
@@ -166,18 +158,23 @@ public abstract class AbstractWizardDialog extends JDialog {
     protected void iniTree() {
 
         // fill up tree
-        Enumeration children = pagesRoot.children();
-        while (children.hasMoreElements()) {
-            PageProps[] subpages = null;
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) children.nextElement();
-            Object object = node.getUserObject();
-            if (object instanceof AbstractItemDialogPage) {
-                subpages = ((AbstractItemDialogPage) object).getSubPages();
-            }
 
-            if (subpages != null) {
-                for (int j = 0; j < subpages.length; j++) {
-                    node.add(new DefaultMutableTreeNode(subpages[j]));
+        Enumeration<?> children = pagesRoot.children();
+        while (children.hasMoreElements()) {
+            Object child = children.nextElement();
+            if (child instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) child;
+                PageProps[] subpages = null;
+
+                Object object = node.getUserObject();
+                if (object instanceof AbstractItemDialogPage) {
+                    subpages = ((AbstractItemDialogPage) object).getSubPages();
+                }
+
+                if (subpages != null) {
+                    for (int j = 0; j < subpages.length; j++) {
+                        node.add(new DefaultMutableTreeNode(subpages[j]));
+                    }
                 }
             }
         }
@@ -191,35 +188,31 @@ public abstract class AbstractWizardDialog extends JDialog {
         renderer.setClosedIcon(null);
         renderer.setLeafIcon(null);
         tree.setCellRenderer(renderer);
-        tree.addTreeSelectionListener(new TreeSelectionListener() {
-
-            @Override
-            public void valueChanged(TreeSelectionEvent e) {
-                if (e.getNewLeadSelectionPath() != null) {
-                    DefaultMutableTreeNode object =
-                        (DefaultMutableTreeNode) e.getNewLeadSelectionPath().getLastPathComponent();
-                    if (object.getUserObject() instanceof AbstractItemDialogPage) {
-                        rowslection((AbstractItemDialogPage) object.getUserObject());
-                    }
+        tree.addTreeSelectionListener(e -> {
+            if (e.getNewLeadSelectionPath() != null) {
+                DefaultMutableTreeNode object =
+                    (DefaultMutableTreeNode) e.getNewLeadSelectionPath().getLastPathComponent();
+                if (object.getUserObject() instanceof AbstractItemDialogPage) {
+                    rowslection((AbstractItemDialogPage) object.getUserObject());
                 }
             }
         });
-        // Dimension dim = tree.getPreferredSize().getSize();
-        // dim.width += 5;
-        // jScrollPane1.setPreferredSize(dim);
-
         expandTree(tree, pagesRoot, 2);
     }
 
     public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {
         if (maxDeep > 1) {
-            for (Enumeration children = start.children(); children.hasMoreElements();) {
-                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-                if (!dtm.isLeaf()) {
-                    TreePath tp = new TreePath(dtm.getPath());
-                    tree.expandPath(tp);
+            Enumeration<?> children = start.children();
+            while (children.hasMoreElements()) {
+                Object child = children.nextElement();
+                if (child instanceof DefaultMutableTreeNode) {
+                    DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+                    if (!dtm.isLeaf()) {
+                        TreePath tp = new TreePath(dtm.getPath());
+                        tree.expandPath(tp);
 
-                    expandTree(tree, dtm, maxDeep - 1);
+                        expandTree(tree, dtm, maxDeep - 1);
+                    }
                 }
             }
         }
@@ -227,38 +220,34 @@ public abstract class AbstractWizardDialog extends JDialog {
     }
 
     public void closeAllPages() {
-        Enumeration children = pagesRoot.children();
+        Enumeration<?> children = pagesRoot.children();
         while (children.hasMoreElements()) {
-            DefaultMutableTreeNode page = (DefaultMutableTreeNode) children.nextElement();
-            Object object = page.getUserObject();
-            if (object instanceof AbstractItemDialogPage) {
-                try {
+            Object child = children.nextElement();
+            if (child instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode page = (DefaultMutableTreeNode) child;
+
+                Object object = page.getUserObject();
+                if (object instanceof AbstractItemDialogPage) {
                     ((AbstractItemDialogPage) object).closeAdditionalWindow();
-                } catch (Exception ex) {
-                    continue;
                 }
             }
         }
     }
 
     protected void resetAlltoDefault() {
-        Enumeration children = pagesRoot.children();
+        Enumeration<?> children = pagesRoot.children();
         while (children.hasMoreElements()) {
-            PageProps[] subpages = null;
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) children.nextElement();
-            Object object = node.getUserObject();
-            if (object instanceof AbstractItemDialogPage) {
-                try {
-                    AbstractItemDialogPage page = ((AbstractItemDialogPage) object);
-                    subpages = page.getSubPages();
-                    if (subpages != null) {
-                        for (int j = 0; j < subpages.length; j++) {
-                            subpages[j].resetoDefaultValues();
-                        }
+            Object child = children.nextElement();
+            if (child instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) child;
+                Object object = node.getUserObject();
+                if (object instanceof AbstractItemDialogPage) {
+                    AbstractItemDialogPage page = (AbstractItemDialogPage) object;
+                    PageProps[] subpages = page.getSubPages();
+                    for (int j = 0; j < subpages.length; j++) {
+                        subpages[j].resetoDefaultValues();
                     }
                     page.resetoDefaultValues();
-                } catch (Exception ex) {
-                    continue;
                 }
             }
         }

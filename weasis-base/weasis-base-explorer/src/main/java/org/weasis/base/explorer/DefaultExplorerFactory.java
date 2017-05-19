@@ -1,21 +1,24 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.base.explorer;
 
 import java.util.Hashtable;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 
-@Component(immediate = false)
-@Service
-@Properties(value = { @Property(name = "service.name", value = "Media Explorer"),
-    @Property(name = "service.description", value = "Explore supported media files in tree view") })
+@org.osgi.service.component.annotations.Component(service = DataExplorerViewFactory.class, immediate = false)
 public class DefaultExplorerFactory implements DataExplorerViewFactory {
 
     private DefaultExplorer explorer = null;
@@ -33,14 +36,15 @@ public class DefaultExplorerFactory implements DataExplorerViewFactory {
         return explorer;
     }
 
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+    
     @Activate
     protected void activate(ComponentContext context) {
         if (model == null) {
             model = JIUtility.createTreeModel();
-            // Dictionary<String, Object> dict = new Hashtable<String, Object>();
-            //            dict.put(CommandProcessor.COMMAND_SCOPE, "image"); //$NON-NLS-1$
-            // dict.put(CommandProcessor.COMMAND_FUNCTION, FileTreeModel.functions);
-            // context.getBundleContext().registerService(FileTreeModel.class.getName(), model, dict);
         }
     }
 
@@ -49,8 +53,6 @@ public class DefaultExplorerFactory implements DataExplorerViewFactory {
         if (explorer != null) {
             explorer.saveLastPath();
         }
-        explorer = null;
-        model = null;
     }
 
 }

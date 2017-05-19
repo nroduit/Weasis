@@ -1,22 +1,26 @@
 /*******************************************************************************
- * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2016 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 package org.weasis.core.api.image.util;
 
 import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
+import java.util.Hashtable;
 
 import javax.media.jai.BorderExtenderConstant;
 import javax.media.jai.Interpolation;
@@ -25,27 +29,26 @@ import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedOp;
 
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.media.data.ImageElement;
 
 /**
  * An image manipulation toolkit.
- * 
+ *
  */
 public class ImageToolkit {
-
     public static final RenderingHints NOCACHE_HINT = new RenderingHints(JAI.KEY_TILE_CACHE, null);
+
+    private ImageToolkit() {
+    }
 
     /**
      * Load an image.
-     * 
+     *
      * NOTE: Encapsulate a mechanism to close properly the image (see closeLoadImageStream())
      */
     public static RenderedOp loadImage(File file) {
         return JAI.create("LoadImage", file); //$NON-NLS-1$
-    }
-
-    private static RenderedImage getFileloadOp(RenderedImage image) {
-        return getImageOp(image, "LoadImage"); //$NON-NLS-1$
     }
 
     public static RenderedImage getImageOp(RenderedImage image, String opName) {
@@ -71,9 +74,30 @@ public class ImageToolkit {
         return null;
     }
 
+    public static BufferedImage convertRenderedImage(RenderedImage img) {
+        if (img instanceof BufferedImage) {
+            return (BufferedImage) img;
+        }
+        ColorModel cm = img.getColorModel();
+        int width = img.getWidth();
+        int height = img.getHeight();
+        WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
+        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+        Hashtable<String, Object> properties = new Hashtable<>();
+        String[] keys = img.getPropertyNames();
+        if (keys != null) {
+            for (int i = 0; i < keys.length; i++) {
+                properties.put(keys[i], img.getProperty(keys[i]));
+            }
+        }
+        BufferedImage result = new BufferedImage(cm, raster, isAlphaPremultiplied, properties);
+        img.copyData(raster);
+        return result;
+    }
+
     /**
      * Convert index color mapped image content to a full 24-bit 16-million color RGB image.
-     * 
+     *
      * @param image
      *            the source image to convert.
      * @return a full RGB color image as RenderedOp.
@@ -110,7 +134,7 @@ public class ImageToolkit {
 
     /**
      * Scale an image up/down to the desired width and height. The aspect ratio of the image will not be maintained.
-     * 
+     *
      * @param image
      *            the source image to scale
      * @param scaleWidth
@@ -127,7 +151,7 @@ public class ImageToolkit {
     /**
      * Scale an image up/down to the desired width and height, while maintaining the image's aspect ratio (if
      * requested).
-     * 
+     *
      * @param image
      *            the source image to scale
      * @param scaleWidth
@@ -173,7 +197,7 @@ public class ImageToolkit {
     /**
      * Resize an image to the new dimensions - no scaling is performed on the image, but the canvas size is changed. Any
      * empty areas are filled with white.
-     * 
+     *
      * @param image
      *            the source image to resize
      * @param toWidth
@@ -188,23 +212,24 @@ public class ImageToolkit {
         int width = image.getWidth();
         int height = image.getHeight();
 
+        RenderedOp resImage = image;
         if (width > toWidth || height > toHeight) {
-            image = cropImage(image, Math.min(width, toWidth), Math.min(height, toHeight));
+            resImage = cropImage(resImage, Math.min(width, toWidth), Math.min(height, toHeight));
         }
 
         if (width < toWidth || height < toHeight) {
             int w = Math.max((toWidth - width) / 2, 0);
             int h = Math.max((toHeight - height) / 2, 0);
 
-            image = borderImage(image, w, w, h, h, color);
+            resImage = borderImage(resImage, w, w, h, h, color);
         }
 
-        return image;
+        return resImage;
     }
 
     /**
      * Crop down an image to smaller dimensions. Used by resizeImage() when an image dimension is smaller.
-     * 
+     *
      * @param image
      *            the source image to crop
      * @param toWidth
@@ -233,7 +258,7 @@ public class ImageToolkit {
     /**
      * Add a colored border edge around an image, with the margin defined as left, right, top and bottom. Used by
      * resizeImage() when an image dimension is larger.
-     * 
+     *
      * @param image
      *            the source image to add borders to
      * @param left
@@ -258,7 +283,7 @@ public class ImageToolkit {
         params.add(top); // top pad
         params.add(btm); // bottom pad
 
-        double fill[] = { color };
+        double[] fill = { color };
         params.add(new BorderExtenderConstant(fill));// type
         params.add(color); // fill color
 
@@ -268,7 +293,7 @@ public class ImageToolkit {
     /**
      * Apply window/level to the image source. Note: this method cannot be used with a DicomImageElement as image
      * parameter.
-     * 
+     *
      * @param image
      * @param source
      * @param window
@@ -276,8 +301,8 @@ public class ImageToolkit {
      * @param pixelPadding
      * @return
      */
-    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, float window,
-        float level, boolean pixelPadding) {
+    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, double window,
+        double level, boolean pixelPadding) {
         if (image == null || source == null) {
             return null;
         }
@@ -287,15 +312,16 @@ public class ImageToolkit {
             return null;
         }
         int datatype = sampleModel.getDataType();
-        if (datatype == DataBuffer.TYPE_BYTE && window == 255.0f && (level == 127.5f || level == 127.0f)) {
+        if (datatype == DataBuffer.TYPE_BYTE && MathUtil.isEqual(window, 255.0)
+            && (MathUtil.isEqual(level, 127.5) || MathUtil.isEqual(level, 127.0))) {
             return source;
         }
 
         // Get pixel values of Min and Max (values must not be rescaled rescaled, works only for ImageElement not for
         // DicomImageElement class)
-        int minValue = (int) image.getMinValue(pixelPadding);
-        int maxValue = (int) image.getMaxValue(pixelPadding);
-        int tableLength = (maxValue - minValue + 1);
+        int minValue = (int) image.getMinValue(null, pixelPadding);
+        int maxValue = (int) image.getMaxValue(null, pixelPadding);
+        int tableLength = maxValue - minValue + 1;
 
         double low = level - window / 2.0;
         double high = level + window / 2.0;
@@ -306,13 +332,13 @@ public class ImageToolkit {
         }
 
         double slope = 255.0 / range;
-        double y_int = 255.0 - slope * high;
+        double yInt = 255.0 - slope * high;
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
             byte[][] lut = new byte[1][tableLength];
 
             for (int i = 0; i < tableLength; i++) {
-                int value = (int) (slope * (i + minValue) + y_int);
+                int value = (int) (slope * (i + minValue) + yInt);
 
                 if (value > 255) {
                     value = 255;
@@ -334,7 +360,7 @@ public class ImageToolkit {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(source);
             pb.add(new double[] { slope });
-            pb.add(new double[] { y_int });
+            pb.add(new double[] { yInt });
             result = JAI.create("rescale", pb, null); //$NON-NLS-1$
 
             // produce a byte image
@@ -347,7 +373,8 @@ public class ImageToolkit {
         return result;
     }
 
-    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, boolean pixelPadding) {
+    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source,
+        boolean pixelPadding) {
         return getDefaultRenderedImage(image, source, image.getDefaultWindow(pixelPadding),
             image.getDefaultLevel(pixelPadding), true);
     }
