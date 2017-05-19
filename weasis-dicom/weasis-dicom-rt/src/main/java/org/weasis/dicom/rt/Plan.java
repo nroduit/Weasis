@@ -9,18 +9,18 @@
  *     Tomas Skripcak  - initial API and implementation
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
+
 package org.weasis.dicom.rt;
 
 import java.util.Date;
 
-/**
- * Created by toskrip on 2/1/15.
- */
 public class Plan {
 
     private String label;
     private Date date;
     private String name;
+    private String description;
+    private String geometry;
     private Double rxDose;
 
     public String getLabel() {
@@ -47,12 +47,28 @@ public class Plan {
         this.name = name;
     }
 
+    public String getDescription() {
+        return this.description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getGeometry() {
+        return this.geometry;
+    }
+
+    public void setGeometry(String geometry) {
+        this.geometry = geometry;
+    }
+
     public Double getRxDose() {
         return this.rxDose;
     }
 
-    public void setRxDose(Double rxDose2) {
-        this.rxDose = rxDose2;
+    public void setRxDose(Double rxDose) {
+        this.rxDose = rxDose;
     }
 
 }

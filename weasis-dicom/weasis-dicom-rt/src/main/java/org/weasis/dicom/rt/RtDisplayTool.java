@@ -8,6 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
+
 package org.weasis.dicom.rt;
 
 import java.awt.BorderLayout;
@@ -197,7 +198,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             if (dicom instanceof DicomImageElement) {
                 GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
                 List<Contour> contours =
-                    rt.getCoutourMap().get(TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class));
+                    rt.getContourMap().get(TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class));
                 if (contours != null) {
                     GraphicModel modelList = (GraphicModel) dicom.getTagValue(TagW.PresentationModel);
                     // After getting a new image iterator, update the measurements
