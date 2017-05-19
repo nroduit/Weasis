@@ -319,7 +319,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                             buf.append(","); //$NON-NLS-1$
                         }
                         buf.append(" ["); //$NON-NLS-1$
-                        buf.append((int) rates[i]);
+                        buf.append( Math.round(rates[i]));
                         buf.append(":1"); //$NON-NLS-1$
                         buf.append(']');
                     }

@@ -73,7 +73,7 @@ public class PrSerializer {
 
     public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,
         String seriesInstanceUID, String sopInstanceUID) {
-        return writePresentation(model, parentAttributes, outputFile,seriesInstanceUID, sopInstanceUID, null);
+        return writePresentation(model, parentAttributes, outputFile, seriesInstanceUID, sopInstanceUID, null);
     }
 
     public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,
@@ -120,7 +120,11 @@ public class PrSerializer {
                         p.x -= offset.getX();
                         p.y -= offset.getY();
                     }
+                    GraphicLabel label = g.getGraphicLabel();
                     graphic.buildShape();
+                    if (label != null) {
+                        graphic.setLabel(label);
+                    }
                     xmlModel.addGraphic(graphic);
                 } else
                     xmlModel.addGraphic(g);

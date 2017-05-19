@@ -14,6 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.swing.ButtonGroup;
@@ -24,7 +25,7 @@ import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.event.ListDataEvent;
 
-public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T> {
+public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T>, GroupPopup {
 
     protected final List<RadioMenuItem> itemList;
     protected final ButtonGroup group;
@@ -60,6 +61,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
         return new ArrayList<>(itemList);
     }
 
+    @Override
     public JPopupMenu createJPopupMenu() {
         JPopupMenu popupMouseButtons = new JPopupMenu();
         for (int i = 0; i < itemList.size(); i++) {
@@ -68,6 +70,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
         return popupMouseButtons;
     }
 
+    @Override
     public JMenu createMenu(String title) {
         JMenu menu = new JMenu(title);
         for (int i = 0; i < itemList.size(); i++) {
@@ -120,20 +123,17 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
 
     public int getSelectedIndex() {
         Object sObject = dataModel.getSelectedItem();
-        int i, c;
-        Object obj;
 
-        for (i = 0, c = dataModel.getSize(); i < c; i++) {
-            obj = dataModel.getElementAt(i);
-            if (obj != null && obj.equals(sObject)) {
+        for (int i = 0; i < dataModel.getSize(); i++) {
+            if (Objects.equals(dataModel.getElementAt(i), sObject)) {
                 return i;
             }
         }
         return -1;
     }
 
-    public Object getSelectedItem() {
-        return dataModel.getSelectedItem();
+    public T getSelectedItem() {
+        return (T) dataModel.getSelectedItem();
     }
 
     public ComboBoxModel<T> getModel() {

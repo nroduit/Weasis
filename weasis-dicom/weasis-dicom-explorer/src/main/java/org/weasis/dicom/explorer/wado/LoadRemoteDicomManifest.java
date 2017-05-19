@@ -43,7 +43,7 @@ import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
 import org.weasis.dicom.explorer.wado.DownloadManager.PriorityTaskComparator;
 
-public class LoadRemoteDicomManifest extends ExplorerTask {
+public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadRemoteDicomManifest.class);
 
     private final DicomModel dicomModel;
@@ -120,7 +120,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
             buf.append(Messages.getString("LoadRemoteDicomManifest.cannot_download")); //$NON-NLS-1$
         } else { // xml manifest
             buf.append(StringUtil.getTruncatedString(e.getMessage(), 130, Suffix.THREE_PTS));
-            if(e.getCause() instanceof StreamIOException) {
+            if (e.getCause() instanceof StreamIOException) {
                 String serverMessage = e.getCause().getMessage();
                 if (StringUtil.hasText(serverMessage)) {
                     buf.append("\n"); //$NON-NLS-1$
@@ -133,6 +133,11 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
         buf.append("\n\n"); //$NON-NLS-1$
         buf.append(Messages.getString("LoadRemoteDicomManifest.download_again")); //$NON-NLS-1$
         return buf.toString();
+    }
+
+    @Override
+    protected void done() {
+        DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();
     }
 
     @Override
@@ -155,7 +160,6 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
         // Add listener to know when download of series ends
         dicomModel.addPropertyChangeListener(propertyChangeListener);
 
-        DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();
         return true;
     }
 

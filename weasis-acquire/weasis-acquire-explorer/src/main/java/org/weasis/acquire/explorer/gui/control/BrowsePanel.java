@@ -145,7 +145,6 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
                     break;
             }        
         });
-
     }
 
     private void addUsbDevice(USBStorageDevice storageDevice) {

@@ -104,6 +104,10 @@ public class DefaultDicomNode extends AbstractDicomNode {
         return new DicomNode(aeTitle, hostname, port);
     }
 
+    public DicomNode getDicomNodeWithOnlyAET() {
+        return new DicomNode(aeTitle);
+    }
+
     @Override
     public void saveDicomNode(XMLStreamWriter writer) throws XMLStreamException {
         super.saveDicomNode(writer);

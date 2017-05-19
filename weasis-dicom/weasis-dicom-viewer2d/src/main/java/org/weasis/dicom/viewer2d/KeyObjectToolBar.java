@@ -43,7 +43,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
-import org.weasis.core.api.gui.util.GroupRadioMenu;
+import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -110,7 +110,7 @@ public class KeyObjectToolBar extends WtoolBar {
 
         // --------------------------------------------------------------------------------------------------
         final ComboItemListener koSelectionAction = (ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION);
-        GroupRadioMenu koSelectionMenu = koSelectionAction.createGroupRadioMenu();
+        GroupPopup koSelectionMenu = koSelectionAction.createGroupRadioMenu();
 
         final DropDownButton koSelectionButton =
             new DropDownButton(ActionW.KO_SELECTION.cmd(), buildKoSelectionIcon(), koSelectionMenu) {

@@ -35,8 +35,6 @@ import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -180,16 +178,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbcTxtpnNote.fill = GridBagConstraints.HORIZONTAL;
         gbcTxtpnNote.gridx = 0;
         gbcTxtpnNote.gridy = 3;
-        txtpnNote.setEditable(false);
+        txtpnNote.setEditorKit(JMVUtils.buildHTMLEditorKit(txtpnNote));
         txtpnNote.setContentType("text/html"); //$NON-NLS-1$
-
-        HTMLEditorKit kit = new HTMLEditorKit();
-        StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-            + Integer.toHexString((txtpnNote.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
-            + Integer.toHexString((txtpnNote.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
-        txtpnNote.setEditorKit(kit);
+        txtpnNote.setEditable(false);
         txtpnNote.setText(getText());
         add(txtpnNote, gbcTxtpnNote);
 

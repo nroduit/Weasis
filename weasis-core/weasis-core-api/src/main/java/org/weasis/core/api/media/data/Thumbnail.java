@@ -291,6 +291,8 @@ public class Thumbnail extends JLabel {
                                 image.removeImageFromCache();
                             }
                         }
+                    } else {
+                        readable = false;
                     }
                 }
             } else {
@@ -345,7 +347,7 @@ public class Thumbnail extends JLabel {
             if (temp != null) {
                 temp.flush();
             }
-            if(thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())){
+            if (thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())) {
                 FileUtil.delete(thumbnailPath);
             }
         }
