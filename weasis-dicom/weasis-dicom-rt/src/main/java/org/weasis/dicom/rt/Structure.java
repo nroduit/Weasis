@@ -22,7 +22,9 @@ public class Structure {
 
     private int roiNumber;
     private String roiName;
+    private int observationNumber;
     private String rtRoiInterpretedType;
+    private String roiObservationLabel;
     private double thickness;
 
     private Color color;
@@ -44,12 +46,28 @@ public class Structure {
         this.roiName = name;
     }
 
+    public int getObservationNumber() {
+        return this.observationNumber;
+    }
+
+    public void setObservationNumber(int observationNumber) {
+        this.observationNumber = observationNumber;
+    }
+
     public String getRtRoiInterpretedType() {
         return this.rtRoiInterpretedType;
     }
 
     public void setRtRoiInterpretedType(String value) {
         this.rtRoiInterpretedType = value;
+    }
+
+    public String getRoiObservationLabel() {
+        return this.roiObservationLabel;
+    }
+
+    public void setRoiObservationLabel(String roiObservationLabel) {
+        this.roiObservationLabel = roiObservationLabel;
     }
 
     public double getThickness() {
