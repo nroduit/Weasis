@@ -18,4 +18,5 @@ public class RtSpecialElement extends DicomSpecialElement {
     public RtSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO);
     }
+    
 }
