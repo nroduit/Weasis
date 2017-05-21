@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
@@ -51,6 +52,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.explorer.DicomModel;
@@ -285,8 +287,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     MediaSeriesGroup patient = dicomModel.getParent(dcmSeries, DicomModel.patient);
                     if (patient != null) {
                         String frameOfReferenceUID = TagD.getTagValue(dcmSeries, Tag.FrameOfReferenceUID, String.class);
-                        List<RtSpecialElement> list =
-                            getRelatedSpecialElements(dicomModel, patient, frameOfReferenceUID, RtSpecialElement.class);
+                        List<MediaElement> list =
+                            getRelatedSpecialElements(dicomModel, patient, frameOfReferenceUID);
                         if (!list.isEmpty() && (rtSet == null || !rtSet.getRtElements().equals(list))) {
                             rtSet = new RtSet(list);
                         }
@@ -323,12 +325,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         // TODO Auto-generated method stub
     }
 
-    private void sendPropertyChangeEvent(List<ViewCanvas<DicomImageElement>> views, String cmd, boolean selected) {
-        for (ViewCanvas<DicomImageElement> v : views) {
-            // v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
-        }
-    }
-
     private static void expandTree(JTree tree, DefaultMutableTreeNode start) {
         for (Enumeration children = start.children(); children.hasMoreElements();) {
             DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
@@ -341,18 +337,26 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         return;
     }
 
-    private static <E> List<E> getRelatedSpecialElements(DicomModel model, MediaSeriesGroup patient,
-        String frameOfReferenceUID, Class<E> clazz) {
-        List<E> specialElementList = new ArrayList<>();
+    private static List<MediaElement> getRelatedSpecialElements(DicomModel model, MediaSeriesGroup patient,
+        String frameOfReferenceUID) {
+        List<MediaElement> specialElementList = new ArrayList<>();
         if (StringUtil.hasText(frameOfReferenceUID)) {
             for (MediaSeriesGroup st : model.getChildren(patient)) {
                 for (MediaSeriesGroup s : model.getChildren(st)) {
                     String frameUID = TagD.getTagValue(s, Tag.FrameOfReferenceUID, String.class);
-                    if (frameOfReferenceUID.equals(frameUID)
-                        || "RTSTRUCT".equals(TagD.getTagValue(s, Tag.Modality, String.class))) {
-                        List<E> list = DicomModel.getSpecialElements(s, clazz);
+                    String modality = TagD.getTagValue(s, Tag.Modality, String.class);
+                    if (frameOfReferenceUID.equals(frameUID) || "RTSTRUCT".equals(modality)) {
+                        List<RtSpecialElement> list = DicomModel.getSpecialElements(s, RtSpecialElement.class);
                         if (!list.isEmpty()) {
                             specialElementList.addAll(list);
+                        }
+
+                        if ("RTDOSE".equals(modality) && s instanceof DicomSeries) {
+                            for (DicomImageElement media : ((DicomSeries) s).getMedias(null, null)) {
+                                if ("RTDOSE".equals(TagD.getTagValue(media, Tag.Modality))) {
+                                    specialElementList.add(media);
+                                }
+                            }
                         }
                     }
                 }
