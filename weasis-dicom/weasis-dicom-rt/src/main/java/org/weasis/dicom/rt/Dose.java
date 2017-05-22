@@ -12,19 +12,26 @@
 
 package org.weasis.dicom.rt;
 
+import org.weasis.core.api.media.data.MediaElement;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
-public class Dose {
+public class Dose extends HashMap<Integer, Dvh> {
+    private static final long serialVersionUID = 1L;
 
     private String sopInstanceUid;
+    private String comment;
     private String doseUnit;
     private String doseType;
     private String doseSummationType;
     private double doseGridScaling;
     private double doseMax;
+    private String referencedPlanUid;
 
-    private Plan rtPlan;
-    private List<Dvh> rtDvhs;
+    private List<MediaElement> images = new ArrayList<>();
+    private List<IsoDose> isoDoses = new ArrayList<>();
 
     public String getSopInstanceUid() {
         return sopInstanceUid;
@@ -32,6 +39,14 @@ public class Dose {
 
     public void setSopInstanceUid(String sopInstanceUid) {
         this.sopInstanceUid = sopInstanceUid;
+    }
+
+    public String getComment() {
+        return this.comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     public String getDoseUnit() {
@@ -74,28 +89,27 @@ public class Dose {
         this.doseMax = doseMax;
     }
 
-    public Plan getRtPlan() {
-        return rtPlan;
+    public String getReferencedPlanUid() {
+        return this.referencedPlanUid;
     }
 
-    public void setRtPlan(Plan rtPlan) {
-        this.rtPlan = rtPlan;
+    public void setReferencedPlanUid(String referencedPlanUid) {
+        this.referencedPlanUid = referencedPlanUid;
     }
 
-    public List<Dvh> getRtDvhs() {
-        return rtDvhs;
+    public List<MediaElement> getImages() {
+        return this.images;
     }
 
-    public void setRtDvhs(List<Dvh> rtDvhs) {
-        this.rtDvhs = rtDvhs;
+    public void setImages(List<MediaElement> images) {
+        this.images = images;
     }
 
-    public int getRtDvhsCount() {
-        if (this.rtDvhs != null) {
-            return this.rtDvhs.size();
-        }
-
-        return 0;
+    public List<IsoDose> getIsoDoses() {
+        return this.isoDoses;
     }
-    
+
+    public void setIsoDoses(List<IsoDose> isoDoses) {
+        this.isoDoses = isoDoses;
+    }
 }

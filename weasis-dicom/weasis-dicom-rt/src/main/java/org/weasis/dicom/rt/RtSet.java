@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
@@ -32,6 +33,7 @@ import org.dcm4che3.data.UID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -48,6 +50,7 @@ public class RtSet {
 
     private final Map<RtSpecialElement, Plan> plans = new HashMap<>();
     private final Map<RtSpecialElement, StructureSet> structures = new HashMap<>();
+    private final List<Dose> doses = new ArrayList<>();
 
     private final Map<String, ArrayList<Contour>> contourMap = new HashMap<>();
 
@@ -64,6 +67,22 @@ public class RtSet {
                 initPlan((RtSpecialElement) rt);
             } else if (UID.RTDoseStorage.equals(sopUID)) {
                 initDose(rt);
+            }
+        }
+
+        // Plans and doses are loaded
+        if (!plans.isEmpty() && !doses.isEmpty()) {
+            // Init iso doses for each dose
+            for (Dose dose : doses) {
+                 Map<RtSpecialElement, Plan> collect = plans.entrySet().stream()
+	                        .filter(map -> map.getValue().getSopInstanceUid().equals(dose.getReferencedPlanUid()))
+	                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                 if (dose.getIsoDoses().isEmpty()) {
+                     dose.setIsoDoses(
+                             calculateIsoDoses(collect.entrySet().stream().findFirst().get().getValue(), dose)
+                     );
+                 }
             }
         }
     }
@@ -105,7 +124,7 @@ public class RtSet {
 
                 // Get the RGB color triplet for the current ROI if it exists
                 String[] valColors = roiContourSeq.getStrings(Tag.ROIDisplayColor);
-                int[] rgb = null;
+                int[] rgb;
                 if (valColors != null && valColors.length == 3) {
                     rgb = new int[] { Integer.parseInt(valColors[0]), Integer.parseInt(valColors[1]),
                         Integer.parseInt(valColors[2]) };
@@ -149,11 +168,7 @@ public class RtSet {
                         for (Attributes images : contour.getSequence(Tag.ContourImageSequence)) {
                             String sopUID = images.getString(Tag.ReferencedSOPInstanceUID);
                             if (StringUtil.hasText(sopUID)) {
-                                ArrayList<Contour> pls = contourMap.get(sopUID);
-                                if (pls == null) {
-                                    pls = new ArrayList<>();
-                                    contourMap.put(sopUID, pls);
-                                }
+                                ArrayList<Contour> pls = contourMap.computeIfAbsent(sopUID, k -> new ArrayList<>());
                                 pls.add(plane);
                             }
                         }
@@ -163,7 +178,7 @@ public class RtSet {
 
                         // If there are no contour on specific z position
                         if (!planes.containsKey(z)) {
-                            planes.put(z, new ArrayList<Contour>());
+                            planes.put(z, new ArrayList<>());
                             planes.get(z).add(plane);
                         }
 
@@ -216,18 +231,38 @@ public class RtSet {
         Attributes dcmItems = ((DcmMediaReader) rtElement.getMediaReader()).getDicomObject();
         if (dcmItems != null) {
 
-            Dose rtDose = new Dose();
+            String sopInstanceUID = dcmItems.getString(Tag.SOPInstanceUID);
 
-            rtDose.setSopInstanceUid(dcmItems.getString(Tag.SOPInstanceUID));
+            Dose rtDose;
+            if (!doses.isEmpty()) {
+                rtDose = doses.stream()
+                        .filter(i -> i.getSopInstanceUid().equals(sopInstanceUID))
+                        .findFirst().get();
+            }
+            else {
+                rtDose= new Dose();
+                doses.add(rtDose);
+            }
+
+            rtDose.setSopInstanceUid(sopInstanceUID);
+            rtDose.setComment(dcmItems.getString(Tag.DoseComment));
             rtDose.setDoseUnit(dcmItems.getString(Tag.DoseUnits));
             rtDose.setDoseType(dcmItems.getString(Tag.DoseType));
             rtDose.setDoseSummationType(dcmItems.getString(Tag.DoseSummationType));
             rtDose.setDoseGridScaling(dcmItems.getDouble(Tag.DoseGridScaling, 0.0));
+            if (rtDose.getDoseMax() < ((ImageElement) rtElement).getMaxValue(null, false)) {
+                rtDose.setDoseMax(((ImageElement) rtElement).getMaxValue(null, false));
+            }
+
+            // Referenced Plan
+            for (Attributes refRtPlanSeq : dcmItems.getSequence(Tag.ReferencedRTPlanSequence)) {
+                rtDose.setReferencedPlanUid(refRtPlanSeq.getString(Tag.ReferencedSOPInstanceUID));
+            }
 
             // Check whether DVH is included
             Sequence dvhSeq = dcmItems.getSequence(Tag.DVHSequence);
             if (dvhSeq != null) {
-                List<Dvh> dvhs = new ArrayList<>();
+                
                 for (Attributes dvhAttributes : dvhSeq) {
 
                     // Need to refer to delineated contour
@@ -341,12 +376,13 @@ public class RtSet {
                         rtDvh.setDvhMaximumDose(dvhAttributes.getDouble(Tag.DVHMaximumDose, -1.0));
                         rtDvh.setDvhMeanDose(dvhAttributes.getDouble(Tag.DVHMeanDose, -1.0));
 
-                        dvhs.add(rtDvh);
+                        rtDose.put(rtDvh.getReferencedRoiNumber(), rtDvh);
                     }
                 }
-
-                rtDose.setRtDvhs(dvhs);
             }
+
+            // Add dose image
+            rtDose.getImages().add(rtElement);
         }
     }
 
@@ -355,6 +391,7 @@ public class RtSet {
         Attributes dcmItems = rtElement.getMediaReader().getDicomObject();
         if (dcmItems != null) {
             Plan plan = new Plan();
+            plan.setSopInstanceUid(dcmItems.getString(Tag.SOPInstanceUID));
             plan.setLabel(dcmItems.getString(Tag.RTPlanLabel));
             plan.setName(dcmItems.getString(Tag.RTPlanName));
             plan.setDescription(dcmItems.getString(Tag.RTPlanDescription));
@@ -476,4 +513,78 @@ public class RtSet {
         return interpolatedY;
     }
 
+    /**
+     * Calculate ISO dose levels
+     *
+     * @return list of ISO doses for specified plan dose
+     */
+    private static List<IsoDose> calculateIsoDoses(Plan plan, Dose dose) {
+
+        int doseMaxLevel = (int) ((dose.getDoseMax() * dose.getDoseGridScaling() * 100000) * (100 / plan.getRxDose()));
+
+        // Max and standard levels 102, 100, 98, 95, 90, 80, 70, 50, 30
+        List<IsoDose> isoDoses = new ArrayList<>();
+        isoDoses.add(new IsoDose(
+                doseMaxLevel,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 120, 0, 0 }),
+                "Max",
+                plan.getRxDose())
+        );
+        isoDoses.add(new IsoDose(
+                102,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 170, 0, 0 }),
+                "",
+                plan.getRxDose())
+        );
+        isoDoses.add(new IsoDose(
+                100,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 238, 69, 0 }),
+                "",
+                plan.getRxDose())
+        );
+        isoDoses.add(new IsoDose(
+                98,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 255, 165, 0 }),
+                "",
+                plan.getRxDose())
+        );
+        isoDoses.add(new IsoDose(
+                95,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 255, 255, 0 }),
+                "",
+                plan.getRxDose())
+        );
+        isoDoses.add(new IsoDose(
+                90,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 255, 0 }),
+                "",
+                plan.getRxDose())
+        );
+        isoDoses.add(new IsoDose(
+                80,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 139, 0 }),
+                "",
+                plan.getRxDose())
+        );
+        isoDoses.add(new IsoDose(
+                70,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 255, 255 }),
+                "",
+                plan.getRxDose())
+        );
+        isoDoses.add(new IsoDose(
+                50,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 0, 255 }),
+                "",
+                plan.getRxDose())
+        );
+        isoDoses.add(new IsoDose(
+                30,
+                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 0, 128 }),
+                "",
+                plan.getRxDose())
+        );
+
+        return isoDoses;
+    }
 }

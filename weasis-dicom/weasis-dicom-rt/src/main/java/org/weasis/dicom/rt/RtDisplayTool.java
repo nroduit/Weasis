@@ -184,7 +184,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         return list;
     }
 
-    private static boolean constainsStructure(List<StructureLayer> list, Structure s) {
+    private static boolean containsStructure(List<StructureLayer> list, Structure s) {
         for (StructureLayer structure : list) {
             if (structure.getStructure().getRoiNumber() == s.getRoiNumber()
                 && structure.getStructure().getRoiName().equals(s.getRoiName())) {
@@ -214,7 +214,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     for (Contour c : contours) {
                         StructureLayer structLayer = c.getStructure();
                         Structure struct = structLayer.getStructure();
-                        if (constainsStructure(list, struct)) {
+                        if (containsStructure(list, struct)) {
                             Graphic graphic = c.getGraphic(geometry);
                             if (graphic != null) {
                                 graphic.setLineThickness((float) struct.getThickness());
