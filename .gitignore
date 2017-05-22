@@ -1,10 +1,16 @@
-# IntelliJ project files 
+# IntelliJ project files
 *.iml
 *.iws
 *.ipr
 .idea/
+./weasis-dicom/weasis-dicom-codec/*.iml
+./weasis-dicom/weasis-dicom-explorer/*.iml
+./weasis-dicom/weasis-dicom-parent/*.iml
+./weasis-dicom/weasis-dicom-sr/*.iml
+./weasis-dicom/weasis-dicom-viewer2d/*.iml
+./weasis-dicom/*.iml
 
-# eclipse project file
+# Ignore the eclipse configuration files
 .settings/
 .classpath
 .project
@@ -33,6 +39,9 @@ gen-cpp/
 
 # crash file
 hs_err*.log
+
+# Other source repository archive directories (protects when importing)
+.svn/
 
 # bndTools
 /generated/
