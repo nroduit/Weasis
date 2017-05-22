@@ -16,12 +16,21 @@ import java.util.Date;
 
 public class Plan {
 
+    private String sopInstanceUid;
     private String label;
     private Date date;
     private String name;
     private String description;
     private String geometry;
     private Double rxDose;
+
+    public String getSopInstanceUid() {
+        return this.sopInstanceUid;
+    }
+
+    public void setSopInstanceUid(String sopInstanceUid) {
+        this.sopInstanceUid = sopInstanceUid;
+    }
 
     public String getLabel() {
         return this.label;
