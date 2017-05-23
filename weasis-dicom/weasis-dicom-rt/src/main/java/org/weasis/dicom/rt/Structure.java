@@ -7,8 +7,9 @@
  * 
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- *     Tomas Skripcak  - initial API and implementation
+ *     Tomas Skripcak - initial API and implementation
  ******************************************************************************/
+
 package org.weasis.dicom.rt;
 
 import java.awt.Color;

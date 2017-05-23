@@ -199,8 +199,15 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             ImageElement dicom = v.getImage();
             if (dicom instanceof DicomImageElement) {
                 GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
+
+                // List of detected contours from RtSet
                 List<Contour> contours =
                     rt.getContourMap().get(TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class));
+
+                // List of detected doses from RtSet
+                Dose dose = rt.getFirstDose();
+
+                // Contours layer
                 if (contours != null) {
                     GraphicModel modelList = (GraphicModel) dicom.getTagValue(TagW.PresentationModel);
                     // After getting a new image iterator, update the measurements
@@ -211,6 +218,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                         modelList.deleteByLayerType(LayerType.DICOM_RT);
                     }
 
+                    // Check which contours should be rendered
                     for (Contour c : contours) {
                         StructureLayer structLayer = c.getStructure();
                         Structure struct = structLayer.getStructure();
@@ -232,6 +240,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                         }
                     }
                     v.getJComponent().repaint();
+                }
+
+                // TODO: Dose layer
+                if (dose != null) {
+                    dose.getDosePlaneBySlice(geometry.getTLHC().getZ());
                 }
             }
         }

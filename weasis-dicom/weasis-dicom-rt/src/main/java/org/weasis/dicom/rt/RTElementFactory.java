@@ -8,6 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
+
 package org.weasis.dicom.rt;
 
 import org.weasis.dicom.codec.DicomMediaIO;
