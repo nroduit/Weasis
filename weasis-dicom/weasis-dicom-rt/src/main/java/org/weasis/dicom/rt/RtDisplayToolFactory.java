@@ -22,10 +22,6 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.dicom.viewer2d.EventManager;
 
-/**
- * Created by toskrip on 2/4/15.
- */
-
 @org.osgi.service.component.annotations.Component(service = InsertableFactory.class, immediate = false, property = {
     "org.weasis.dicom.viewer2d.View2dContainer=true" })
 public class RtDisplayToolFactory implements InsertableFactory {

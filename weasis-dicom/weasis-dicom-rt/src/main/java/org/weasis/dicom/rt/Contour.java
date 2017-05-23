@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  * 
  * Contributors:
- *     Tomas Skripcak  - initial API and implementation
+ *     Tomas Skripcak - initial API and implementation
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
 package org.weasis.dicom.rt;
