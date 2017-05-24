@@ -27,9 +27,14 @@ public class Structure {
     private String rtRoiInterpretedType;
     private String roiObservationLabel;
     private double thickness;
+    private double volume;
 
     private Color color;
     private Map<Double, ArrayList<Contour>> planes;
+
+    public Structure() {
+        this.volume = -1.0;
+    }
 
     public int getRoiNumber() {
         return this.roiNumber;
@@ -77,6 +82,14 @@ public class Structure {
 
     public void setThickness(double value) {
         this.thickness = value;
+    }
+
+    public double getVolume() {
+        // If volume is not initialised -> calculate
+        if (this.volume < 0) {
+            //TODO: calcluate
+        }
+        return this.volume;
     }
 
     public Color getColor() {

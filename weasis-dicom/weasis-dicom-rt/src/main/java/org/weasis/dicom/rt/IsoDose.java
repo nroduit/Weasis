@@ -13,13 +13,17 @@
 package org.weasis.dicom.rt;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class IsoDose {
 
     private int level;
     private String name;
-    private Color color;
     private double absoluteDose;
+
+    private Color color;
+    private Map<Double, ArrayList<Contour>> planes;
 
     public IsoDose(int level, Color color, String name, double planDose) {
         this.level = level;
@@ -55,7 +59,15 @@ public class IsoDose {
     public double getAbsoluteDose() {
         return this.absoluteDose;
     }
-    
+
+    public Map<Double, ArrayList<Contour>> getPlanes() {
+        return this.planes;
+    }
+
+    public void setPlanes(Map<Double, ArrayList<Contour>> contours) {
+        this.planes = contours;
+    }
+
     public String getLabel() {
         return this.level + " % / " + String.format("%.6g", this.absoluteDose) + " cGy [" + this.name + "]";
     }
