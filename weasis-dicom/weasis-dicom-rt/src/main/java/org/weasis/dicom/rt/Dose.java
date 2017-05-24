@@ -223,7 +223,7 @@ public class Dose extends HashMap<Integer, Dvh> {
         MediaElement lowerPlane = this.images.get(lowerBoundaryIndex);
         
         // A simple linear interpolation
-        //dosePlane = fractionalDistance * upperPlane + (1.0 - fractionalDistance) * lowerPlane;
+        //TODO: dosePlane = fractionalDistance * upperPlane + (1.0 - fractionalDistance) * lowerPlane;
 
         return dosePlane;
     }

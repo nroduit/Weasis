@@ -500,6 +500,14 @@ public class RtSet {
         return contourMap;
     }
 
+    public Plan getFirstPlan() {
+        if (!plans.isEmpty()) {
+            return this.plans.entrySet().iterator().next().getValue();
+        }
+
+        return null;
+    }
+
     public Dose getFirstDose() {
         if (!this.doses.isEmpty()) {
             return this.doses.get(0);
@@ -523,6 +531,10 @@ public class RtSet {
         }
 
         return interpolatedY;
+    }
+
+    public static double calculatePercentualDvhDose(double dvhDose, double planDose) {
+        return 100 * dvhDose / planDose;
     }
 
     /**
