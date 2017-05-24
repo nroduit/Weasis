@@ -14,6 +14,7 @@ package org.weasis.dicom.rt;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -82,6 +83,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private DefaultMutableTreeNode nodeStructure;
     private RtSet rtSet;
     private RtSpecialElement selectedStructure;
+    private DicomImageElement selectedDosePlane;
 
     public RtDisplayTool() {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
@@ -199,8 +201,18 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             ImageElement dicom = v.getImage();
             if (dicom instanceof DicomImageElement) {
                 GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
+
+                // List of detected contours from RtSet
                 List<Contour> contours =
                     rt.getContourMap().get(TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class));
+
+                // List of detected doses from RtSet
+                Dose dose = rt.getFirstDose();
+
+                // List of detected plans from RtSet
+                Plan plan = rt.getFirstPlan();
+
+                // Contours layer
                 if (contours != null) {
                     GraphicModel modelList = (GraphicModel) dicom.getTagValue(TagW.PresentationModel);
                     // After getting a new image iterator, update the measurements
@@ -211,22 +223,39 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                         modelList.deleteByLayerType(LayerType.DICOM_RT);
                     }
 
+                    // Check which contours should be rendered
                     for (Contour c : contours) {
                         StructureLayer structLayer = c.getStructure();
                         Structure struct = structLayer.getStructure();
                         if (containsStructure(list, struct)) {
+                            // Structure data
+                            // TODO: struct.getVolume()
+
+                            // Structure DVH data
+                            Dvh structureDvh = dose.get(struct.getRoiNumber());
+                            if (structureDvh != null) {
+                                RtSet.calculatePercentualDvhDose(structureDvh.getDvhMinimumDose(), plan.getRxDose());
+                                RtSet.calculatePercentualDvhDose(structureDvh.getDvhMaximumDose(), plan.getRxDose());
+                                RtSet.calculatePercentualDvhDose(structureDvh.getDvhMeanDose(), plan.getRxDose());
+                            }
+
+                            // Structure graphics
                             Graphic graphic = c.getGraphic(geometry);
                             if (graphic != null) {
+                                
                                 graphic.setLineThickness((float) struct.getThickness());
                                 graphic.setPaint(struct.getColor());
                                 graphic.setLayerType(LayerType.DICOM_RT);
+
                                 // graphic.setLabelVisible(labelVisible);
                                 // graphic.setClassID(classID);
                                 // graphic.setFilled(filled);
+                                
                                 graphic.setLayer(structLayer.getLayer());
                                 for (PropertyChangeListener listener : modelList.getGraphicsListeners()) {
                                     graphic.addPropertyChangeListener(listener);
                                 }
+                                
                                 modelList.addGraphic(graphic);
                             }
                         }
@@ -274,6 +303,23 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         } finally {
             initPathSelection = false;
         }
+
+        // Update selected dose plane
+        ImageElement dicom = viewCanvas.getImage();
+        if (dicom instanceof DicomImageElement) {
+            GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
+
+            // List of detected doses from RtSet
+            Dose dose = rt.getFirstDose();
+
+            if (dose != null) {
+                MediaElement dosePlane = dose.getDosePlaneBySlice(geometry.getTLHC().getZ());
+                if (dosePlane != null) {
+                    selectedDosePlane = ((DicomImageElement) dosePlane);
+                }
+            }
+        }
+
         showGraphic(rt, getStructureSelection(), viewCanvas);
 
     }
@@ -318,8 +364,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         if (SeriesViewerEvent.EVENT.SELECT.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
             initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
         }
+        
+        // TODO: dose information for mouse pointing pixel
+        //selectedDosePlane.getImage().getData().getPixel(100, 100, (double[]) null)
     }
-
+    
     @Override
     protected void changeToolWindowAnchor(CLocation clocation) {
         // TODO Auto-generated method stub

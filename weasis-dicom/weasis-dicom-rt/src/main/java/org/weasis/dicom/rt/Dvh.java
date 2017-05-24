@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- *     Tomas Skripcak  - initial API and implementation
+ *     Tomas Skripcak - initial API and implementation
  ******************************************************************************/
 
 package org.weasis.dicom.rt;
@@ -29,6 +29,14 @@ public class Dvh {
     private double dvhMaximumDose;
     private double dvhMeanDose;
     private double[] dvhData;
+    private double[] scaledDvhData;
+
+    public Dvh() {
+        // Initial -> need to be calculated later
+        this.dvhMinimumDose = -1.0;
+        this.dvhMaximumDose = -1.0;
+        this.dvhMeanDose = -1.0;
+    }
 
     public int getReferencedRoiNumber() {
         return referencedRoiNumber;
@@ -87,6 +95,9 @@ public class Dvh {
     }
 
     public double getDvhMinimumDose() {
+        if (this.dvhMinimumDose < 0) {
+            this.dvhMinimumDose = this.calculateDvhMin();
+        }
         return dvhMinimumDose;
     }
 
@@ -95,6 +106,9 @@ public class Dvh {
     }
 
     public double getDvhMaximumDose() {
+        if (this.dvhMaximumDose < 0) {
+            this.dvhMaximumDose = this.calculateDvhMax();
+        }
         return dvhMaximumDose;
     }
 
@@ -103,6 +117,9 @@ public class Dvh {
     }
 
     public double getDvhMeanDose() {
+        if (this.dvhMeanDose < 0) {
+            this.dvhMeanDose = this.calculateDvhMean();
+        }
         return dvhMeanDose;
     }
 
@@ -116,6 +133,111 @@ public class Dvh {
 
     public void setDvhData(double[] dvhData) {
         this.dvhData = dvhData;
+    }
+
+    public double[] getScaledDvhData() {
+        if (this.scaledDvhData == null) {
+            this.scaledDvhData = new double[this.dvhData.length];
+
+            for (int i = 0; i < this.scaledDvhData.length; i++) {
+                this.scaledDvhData[i] = this.dvhData[i] * this.dvhDoseScaling;
+            }
+        }
+
+        return this.scaledDvhData;
+    }
+
+    /**
+     * Return minimal dose received by 100% of ROI volume (derived from cumulative DVH)
+     */
+    public double calculateDvhMin() {
+
+        // ROI volume (always receives at least 0 dose)
+        double minDose = 0.0;
+
+        // Each i - bin is 1 cGy
+        for (int i = 1; i < this.getScaledDvhData().length - 1; i++) {
+            // If bin (dose level) found that was received by less then 100% of ROI volume
+            if (this.dvhData[i] < this.dvhData[0]) {
+                minDose = (2 * i - 1) / 2.0;
+                break;
+            }
+        }
+
+        return minDose;
+    }
+
+    /**
+     * Return maximum dose received by any % of ROI volume (derived from cumulative DVH)
+     */
+    public double calculateDvhMax() {
+
+        double[] dDvh = this.calculateDDvh();
+
+        double maxDose = 0.0;
+
+        // Detect the increase from the right (each i - bin is 1 cGy)
+        for (int i = dDvh.length - 1; i >= 0; i--) {
+            // If bin (dose level) found that was received by more then 0 % of ROI volume
+            if (dDvh[i] > 0.0) {
+                maxDose = i + 1;
+                break;
+            }
+        }
+
+        return maxDose;
+    }
+
+    /**
+     * Return median dose received by half of ROI volume (derived from cumulative DVH)
+     */
+    public double calculateDvhMedian() {
+        double medianDose = 0.0;
+
+        // From left to right (each i - bin is 1 cGy)
+        for (int i = 1; i < this.getScaledDvhData().length - 1; i++) {
+            // If bin (dose level) found that was received by less than half of ROI volume
+            if (this.getScaledDvhData()[i] < (this.getScaledDvhData()[0] / 2.0)) {
+                medianDose = (2 * i - 1) / 2.0;
+                break;
+            }
+        }
+
+        return medianDose;
+    }
+
+    /**
+     * Return mean dose to ROI derived from cumulative DVH
+     */
+    public double calculateDvhMean() {
+
+        double[] dDvh = this.calculateDDvh();
+
+        double totalDose = 0.0;
+
+        // From left to right (each i - bin is 1 cGy)
+        for (int i = 1; i < dDvh.length; i++) {
+            totalDose += dDvh[i] * i;
+        }
+
+        // Mean dose = total dose / 100 % of ROI volume
+        return totalDose/this.getScaledDvhData()[0];
+    }
+
+    /**
+     * Return dDVH from this DVH array (dDVH is the negative "slope" of the cDVH)
+     * @return dDVH array
+     */
+    private double[] calculateDDvh() {
+
+        double[] dDvh = new double[this.getScaledDvhData().length];
+
+        for (int i = 0; i < this.getScaledDvhData().length - 1; i++) {
+            dDvh[i] = this.getScaledDvhData()[i] - this.getScaledDvhData()[i + 1];
+        }
+        dDvh[this.getScaledDvhData().length] = this.getScaledDvhData()[this.getScaledDvhData().length];
+
+        return dDvh;
     }
 
 }
