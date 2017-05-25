@@ -1028,7 +1028,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void changeZoomInterpolation(Integer interpolation) {
         Integer val = (Integer) getDisplayOpManager().getParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION);
-        boolean update = val == null || val != interpolation;
+        boolean update = val == null || !val.equals(interpolation);
         if (update) {
             getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
             if (lens != null) {

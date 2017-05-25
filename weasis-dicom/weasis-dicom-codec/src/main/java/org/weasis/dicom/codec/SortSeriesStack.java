@@ -28,7 +28,7 @@ public final class SortSeriesStack {
             if (val1 == null || val2 == null) {
                 return 0;
             }
-            return val1 < val2 ? -1 : (val1 == val2 ? 0 : 1);
+            return val1 < val2 ? -1 : (val1.equals(val2) ? 0 : 1);
         }
 
         @Override
