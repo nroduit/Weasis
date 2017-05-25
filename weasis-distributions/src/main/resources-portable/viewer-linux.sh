@@ -66,4 +66,4 @@ echo user arguments: ${userParameters[@]}
 # If the correct Java version is detected, launch weasis from current path
 curPath=$(dirname "`readlink -f "$0"`")
 echo "Weasis launcher directory: $curPath"
-$JAVACMD -Xms64m -Xmx512m -Dgosh.args="-sc telnetd -p 17179 start" -Dweasis.portable.dir="$curPath" -classpath "$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}
+$JAVACMD -Xms64m -Xmx768m -Dgosh.args="-sc telnetd -p 17179 start" -Dweasis.portable.dir="$curPath" -classpath "$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}

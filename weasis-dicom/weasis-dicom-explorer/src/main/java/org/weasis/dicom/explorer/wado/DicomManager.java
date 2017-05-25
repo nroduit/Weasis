@@ -71,7 +71,7 @@ public class DicomManager {
     }
     
     public boolean containsImageioCodec(String tsuid) {
-        if (!allImageCodecs && tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) {
+        if (!allImageCodecs && tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) { //$NON-NLS-1$
             return DicomImageUtils.hasImageReader(tsuid);
         }
         return true;

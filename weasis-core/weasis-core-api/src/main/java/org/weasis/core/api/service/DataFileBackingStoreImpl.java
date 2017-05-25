@@ -164,7 +164,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
             }
 
             catch (XMLStreamException e) {
-                LOGGER.error("Preferences file is corrupted: ", file.getAbsolutePath()); //$NON-NLS-1$
+                LOGGER.error("Cannot read Preferences file", e); //$NON-NLS-1$
                 throw new BackingStoreException("Unable to load preferences.", e); //$NON-NLS-1$
             } catch (FileNotFoundException e) {
                 throw new BackingStoreException("Unable to load preferences.", e); //$NON-NLS-1$

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
+import java.util.Objects;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComboBox;
@@ -51,14 +52,11 @@ import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.text.DefaultFormatterFactory;
-import javax.swing.text.MutableAttributeSet;
-import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
-import javax.swing.text.TabSet;
-import javax.swing.text.TabStop;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -274,18 +272,21 @@ public class JMVUtils {
             return new Dimension(30, 30);
         }
     }
-
-    public static void addStylesToDocument(StyledDocument doc, Color textColor) {
+    
+    public static HTMLEditorKit buildHTMLEditorKit(JComponent component) {
+        Objects.requireNonNull(component);
+        HTMLEditorKit kit = new HTMLEditorKit();
+        StyleSheet ss = kit.getStyleSheet();
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
+            + Integer.toHexString((component.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
+            + Integer.toHexString((component.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
+        return kit;
+    }
+    
+    public static void addStylesToHTML(StyledDocument doc) {
         // Initialize some styles.
-        final MutableAttributeSet def = new SimpleAttributeSet();
-        Style style = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
-        Style regular = doc.addStyle("regular", style); //$NON-NLS-1$
-        StyleConstants.setFontFamily(def, "SansSerif"); //$NON-NLS-1$
-        StyleConstants.setForeground(def, textColor == null ? UIManager.getColor("text") : textColor); //$NON-NLS-1$
-        TabStop[] tabs = new TabStop[1];
-        tabs[0] = new TabStop(25.0f, TabStop.ALIGN_LEFT, TabStop.LEAD_NONE);
-        StyleConstants.setTabSet(def, new TabSet(tabs));
-        doc.setParagraphAttributes(0, Integer.MAX_VALUE, def, true);
+        Style regular = doc.getStyle("default"); //$NON-NLS-1$;
         Style s = doc.addStyle("title", regular); //$NON-NLS-1$
         StyleConstants.setFontSize(s, 16);
         StyleConstants.setBold(s, true);

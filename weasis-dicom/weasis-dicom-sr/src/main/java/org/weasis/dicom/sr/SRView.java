@@ -12,6 +12,7 @@ package org.weasis.dicom.sr;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.beans.PropertyChangeListener;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,13 +29,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -46,6 +48,12 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.imp.XmlGraphicModel;
+import org.weasis.core.ui.model.layer.GraphicLayer;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -77,6 +85,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         panel.setLayout(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         htmlPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        htmlPanel.setEditorKit(JMVUtils.buildHTMLEditorKit(htmlPanel));
         htmlPanel.setContentType("text/html"); //$NON-NLS-1$
         htmlPanel.setEditable(false);
         htmlPanel.addHyperlinkListener(e -> {
@@ -95,13 +104,6 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 }
             }
         });
-        HTMLEditorKit kit = new HTMLEditorKit();
-        StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-            + Integer.toHexString((htmlPanel.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
-            + Integer.toHexString((htmlPanel.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
-        htmlPanel.setEditorKit(kit);
         setPreferredSize(new Dimension(1024, 1024));
         setSeries(series);
     }
@@ -218,6 +220,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                                 ref.getReferencedSOPInstanceUID(), ref.getReferencedSOPClassUID());
                             SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
                             if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
+                                addGraphicstoView(s.getMedia(0, null, null), imgRef);
                                 String uid = UUID.randomUUID().toString();
                                 Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
                                 props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
@@ -241,6 +244,67 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                     }
 
                 }
+            }
+        }
+    }
+
+    private void addGraphicstoView(MediaElement mediaElement, SRImageReference imgRef) {
+        if (mediaElement instanceof ImageElement && imgRef.getGraphics() != null && !imgRef.getGraphics().isEmpty()) {
+
+            GraphicModel modelList = (GraphicModel) mediaElement.getTagValue(TagW.PresentationModel);
+            // After getting a new image iterator, update the measurements
+            if (modelList == null) {
+                modelList = new XmlGraphicModel((ImageElement) mediaElement);
+                mediaElement.setTag(TagW.PresentationModel, modelList);
+            }
+
+            String layerName = "SCOORD [DICOM]";//$NON-NLS-1$
+            GraphicLayer layer = null;
+            for (GraphicLayer l : modelList.getLayers()) {
+                if (layerName.equals(l.getName())) {
+                    layer = l;
+                    break;
+                }
+            }
+
+            boolean addLayer = layer == null;
+
+            if (addLayer) {
+                layer = new DefaultLayer(LayerType.DICOM_SR);
+                layer.setName(layerName);
+                layer.setSerializable(false);
+                layer.setLocked(true);
+                layer.setSelectable(false);
+                layer.setLevel(305);
+            }
+
+            if (!addLayer) { 
+                List<Graphic> models = modelList.getModels();
+                int size = 0;
+                synchronized (models ) {
+                    for (Graphic g : models) {
+                        boolean sr = layer.equals(g.getLayer());
+                        if (sr) {
+                            size ++;
+                        }
+                    }
+                }
+                
+                if(imgRef.getGraphics().size() == size) {
+                    return;
+                }
+                
+                if(size > 0) {
+                    modelList.deleteByLayer(layer);
+                }
+            }
+
+            for (Graphic graphic : imgRef.getGraphics()) {
+                graphic.setLayer(layer);
+                for (PropertyChangeListener listener : modelList.getGraphicsListeners()) {
+                    graphic.addPropertyChangeListener(listener);
+                }
+                modelList.addGraphic(graphic);
             }
         }
     }
@@ -294,7 +358,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         if (model != null && study != null) {
             TagW sopTag = TagD.getUID(Level.INSTANCE);
             synchronized (model) {
-                for (MediaSeriesGroup seq: model.getChildren(study)) {
+                for (MediaSeriesGroup seq : model.getChildren(study)) {
                     if (seq instanceof Series) {
                         Series<?> s = (Series<?>) seq;
                         if (s.hasMediaContains(sopTag, sopUID)) {

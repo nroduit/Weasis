@@ -13,7 +13,7 @@
 	<fileSets>
 		<fileSet>
 			<directory>resources</directory>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory></outputDirectory>
 		</fileSet>
 	</fileSets>
 </assembly>

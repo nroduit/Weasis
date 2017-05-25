@@ -468,6 +468,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             initActionWState();
             setActionsInView(ActionW.KO_SELECTION.cmd(), ko);
             setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
+            // Set the image spatial unit
+            setActionsInView(ActionW.SPATIAL_UNIT.cmd(), m.getPixelSpacingUnit());
             disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), preset);
             resetZoom();
             resetPan();

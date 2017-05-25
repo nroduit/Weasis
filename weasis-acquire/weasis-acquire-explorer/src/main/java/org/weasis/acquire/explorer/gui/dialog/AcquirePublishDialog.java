@@ -43,8 +43,12 @@ import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.DicomizeTask;
 import org.weasis.acquire.explorer.Messages;
+import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireGlobalMeta;
+import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireImageMeta;
+import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSerieMeta;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
 import org.weasis.acquire.explorer.util.ImageInfoHelper;
@@ -119,7 +123,7 @@ public class AcquirePublishDialog extends JDialog {
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public AcquirePublishDialog(AcquirePublishPanel publishPanel) {
-        super(WinUtil.getParentWindow(publishPanel), "", ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
+        super(WinUtil.getParentWindow(publishPanel), Messages.getString("AcquirePublishDialog.publication"), ModalityType.APPLICATION_MODAL);  //$NON-NLS-1$
         this.publishPanel = publishPanel;
 
         setContentPane(initContent());
@@ -242,7 +246,26 @@ public class AcquirePublishDialog extends JDialog {
 
         if (toPublish.isEmpty()) {
             JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.select_one_msg"), //$NON-NLS-1$
-                "", JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+                this.getTitle(), JOptionPane.ERROR_MESSAGE); 
+            return;
+        }
+
+        boolean publishable = AcquireGlobalMeta.isPublishable(AcquireManager.GLOBAL);
+        if (publishable) {
+            for (AcquireImageInfo info : toPublish) {
+                publishable = AcquireSerieMeta.isPublishable(info.getSeries());
+                if (!publishable) {
+                    break;
+                }
+                publishable = AcquireImageMeta.isPublishable(info.getImage());
+                if (!publishable) {
+                    break;
+                }
+            }
+        }
+        if (!publishable) {
+            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.pub_warn_msg"),  //$NON-NLS-1$
+                this.getTitle(), JOptionPane.ERROR_MESSAGE); 
             return;
         }
 
@@ -250,7 +273,7 @@ public class AcquirePublishDialog extends JDialog {
         if (!overSizedSelected.isEmpty()) {
             Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();
             for (AcquireImageInfo imgInfo : overSizedSelected) {
-                // caculate zoom ration
+                // calculate zoom ration
                 Double ratio = ImageInfoHelper.calculateRatio(imgInfo, resolution);
 
                 imgInfo.getCurrentValues().setRatio(ratio);
@@ -339,7 +362,7 @@ public class AcquirePublishDialog extends JDialog {
     public void clearAndHide() {
         Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();
         dispose();
-        
+
         Preferences prefs =
             BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
         if (prefs != null) {

@@ -122,6 +122,11 @@ public class Activator implements BundleActivator, ServiceListener {
                         loggingProperties.put(loggerKey, loggerVal[0]);
                         logConfiguration.update(loggingProperties);
                     }
+                    else {
+                        Dictionary loggingProperties = logConfiguration.getProperties();
+                        loggingProperties.remove(AuditLog.LOG_FILE);
+                        logConfiguration.update(loggingProperties);
+                    }
                 }
             }
         }

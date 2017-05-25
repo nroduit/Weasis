@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-imageio-parent</artifactId>
 		<groupId>org.weasis.imageio</groupId>
-		<version>2.5.3-SNAPSHOT</version>
+		<version>2.5.4-SNAPSHOT</version>
 		<relativePath>../weasis-imageio-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -36,10 +36,10 @@
 						<Embed-Dependency>*;scope=compile;inline=com.sun.media.imageio.**|com.sun.media.imageioimpl.**|com.sun.medialib.**|jj2000.**</Embed-Dependency>
 						
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
-						<Specification-Version>1.2.5</Specification-Version>
+						<Specification-Version>1.2.7</Specification-Version>
 						<Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
 						<Implementation-Title>weasis.thirdparty.com.sun.media.imageio</Implementation-Title>
-						<Implementation-Version>1.2.5</Implementation-Version>
+						<Implementation-Version>1.2.7</Implementation-Version>
 						<Implementation-Vendor>Sun Microsystems, Inc.</Implementation-Vendor>
 						<Extension-Name>weasis.thirdparty.com.sun.media.imageio</Extension-Name>
 						<Sealed>true</Sealed>
@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>jai_imageio</artifactId>
-			<version>1.2.5</version>
+			<version>1.2.7</version>
 		</dependency>
 	</dependencies>
 </project>

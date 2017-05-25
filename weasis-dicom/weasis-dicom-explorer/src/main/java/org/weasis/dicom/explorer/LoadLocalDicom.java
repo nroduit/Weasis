@@ -42,7 +42,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 
-public class LoadLocalDicom extends ExplorerTask {
+public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
 
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadLocalDicom.class);
     private final File[] files;

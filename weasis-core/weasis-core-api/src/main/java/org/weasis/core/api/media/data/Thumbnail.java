@@ -284,6 +284,8 @@ public class Thumbnail extends JLabel {
                                 image.removeImageFromCache();
                             }
                         }
+                    } else {
+                        readable = false;
                     }
                 }
             } else {

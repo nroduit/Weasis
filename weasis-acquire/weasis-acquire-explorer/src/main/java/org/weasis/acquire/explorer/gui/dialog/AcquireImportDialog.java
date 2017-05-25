@@ -96,7 +96,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
 
     private JPanel initPanel() {
         JPanel panel = new JPanel();
-        panel.setBorder(new EmptyBorder(0, 0, 20, 10));
+        panel.setBorder(new EmptyBorder(10, 10, 20, 15));
         panel.setLayout(new GridBagLayout());
 
         JLabel question = new JLabel(Messages.getString("AcquireImportDialog.grp_msg") + StringUtil.COLON); //$NON-NLS-1$
@@ -132,7 +132,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         installFocusListener(spinner);
 
         c = new GridBagConstraints();
-        c.insets = new Insets(0, 2, 0, 0);
+        c.insets = new Insets(5, 2, 0, 0);
         c.gridx = 2;
         c.gridy = 2;
         c.gridwidth = GridBagConstraints.REMAINDER;
@@ -160,6 +160,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
             }
         });
         c = new GridBagConstraints();
+        c.insets = new Insets(5, 2, 0, 0);
         c.gridx = 1;
         c.gridy = 3;
         c.gridwidth = 2;

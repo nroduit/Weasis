@@ -29,7 +29,7 @@ public class DicomWebNode extends AbstractDicomNode {
     private static final String T_WEB_TYPE = "webtype"; //$NON-NLS-1$
 
     public enum WebType {
-        WADO("WADO"), WADORS("WADO-RS"), STOWRS("STOW-RS"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        STOWRS("STOW-RS"), WADO("WADO"), WADORS("WADO-RS"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ 
 
         String title;
 
@@ -43,7 +43,6 @@ public class DicomWebNode extends AbstractDicomNode {
         }
     }
 
-    // For WADO, WADO-RS and STOW
     private URL url;
     private WebType webType;
 

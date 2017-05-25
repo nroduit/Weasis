@@ -34,7 +34,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
 
-public class LoadRemoteDicomURL extends ExplorerTask {
+public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadRemoteDicomURL.class);
 
     private final URL[] urls;

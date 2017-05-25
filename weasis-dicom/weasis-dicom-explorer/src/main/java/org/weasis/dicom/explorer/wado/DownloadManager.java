@@ -61,6 +61,7 @@ import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
+import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -100,9 +101,10 @@ public class DownloadManager {
     // Executor with simultaneous tasks
     private static final BlockingQueue<Runnable> PRIORITY_QUEUE =
         new PriorityBlockingQueue<>(10, new PriorityTaskComparator());
-    public static final ThreadPoolExecutor CONCURRENT_EXECUTOR = new ThreadPoolExecutor(
-        BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
-        BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS, PRIORITY_QUEUE);
+    public static final ThreadPoolExecutor CONCURRENT_EXECUTOR =
+        new ThreadPoolExecutor(BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
+            BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS,
+            PRIORITY_QUEUE, ThreadUtil.getThreadFactory("Series Downloader")); //$NON-NLS-1$
 
     public static class PriorityTaskComparator implements Comparator<Runnable>, Serializable {
 
@@ -202,7 +204,7 @@ public class DownloadManager {
                         removeLoadSeries(loading, dicomModel);
                         removeSeriesInQueue(loading);
                         if (StateValue.STARTED.equals(loading.getState())) {
-                            loading.cancel(true);
+                            loading.cancel();
                         }
                         // Ensure to stop downloading
                         series.setSeriesLoader(null);
@@ -343,17 +345,17 @@ public class DownloadManager {
                 }
             }
         } catch (StreamIOException e) {
-            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + StringUtil.getTruncatedString(uri.toString(), 100, Suffix.THREE_PTS);  //$NON-NLS-1$//$NON-NLS-2$
-            throw new DownloadException(message, e); // rethrow network issue
+            throw new DownloadException(getErrorMessage(uri), e); // rethrow network issue
         } catch (Exception e) {
-            final String message = Messages.getString("DownloadManager.error_load_xml") + "\n" + StringUtil.getTruncatedString(uri.toString(), 100, Suffix.THREE_PTS); //$NON-NLS-1$//$NON-NLS-2$
+            String message = getErrorMessage(uri);
             LOGGER.error("{}", message, e); //$NON-NLS-1$
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
             GuiExecutor.instance().execute(() -> {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
-                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, null,
-                    JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer),
+                    StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS), null, JOptionPane.DEFAULT_OPTION,
+                    messageType, null, null, null);
                 if (layer != null) {
                     layer.hideUI();
                 }
@@ -363,6 +365,13 @@ public class DownloadManager {
             FileUtil.safeClose(stream);
         }
         return seriesList;
+    }
+
+    private static String getErrorMessage(URI uri) {
+        StringBuilder buf = new StringBuilder(Messages.getString("DownloadManager.error_load_xml")); //$NON-NLS-1$
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(uri.toString());
+        return buf.toString();
     }
 
     private static void readArcQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
@@ -423,8 +432,8 @@ public class DownloadManager {
 
                             GuiExecutor.instance().execute(() -> {
                                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(UIManager.BASE_AREA);
-                                JOptionPane.showOptionDialog(ColorLayerUI.getContentPane(layer), message, title,
-                                    JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                                JOptionPane.showMessageDialog(ColorLayerUI.getContentPane(layer), message, title,
+                                    messageType);
                                 if (layer != null) {
                                     layer.hideUI();
                                 }
