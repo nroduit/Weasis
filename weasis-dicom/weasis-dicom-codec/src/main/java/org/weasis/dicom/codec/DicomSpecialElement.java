@@ -80,7 +80,7 @@ public class DicomSpecialElement extends MediaElement {
                 Integer val2 = TagD.getTagValue(m2, Tag.SeriesNumber, Integer.class);
                 if (val1 != null && val2 != null) {
                     // inverse number
-                    int comp = val1 > val2 ? -1 : (val1 == val2 ? 0 : 1);
+                    int comp = val1 > val2 ? -1 : (val1.equals(val2) ? 0 : 1);
                     if (comp != 0) {
                         return comp;
                     }

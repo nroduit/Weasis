@@ -1061,7 +1061,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 popupMenu.add(new JSeparator());
                             }
                         } else if (graphicMouseHandler.getDragSequence() != null
-                            && absgraph.getPtsNumber() == Graphic.UNDEFINED) {
+                            && absgraph.getPtsNumber().equals(Graphic.UNDEFINED)) {
                             final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                             item2.addActionListener(e -> {
                                 MouseEventDouble event =
