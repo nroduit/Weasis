@@ -12,12 +12,12 @@
 
 package org.weasis.dicom.rt;
 
-import org.weasis.core.api.media.data.MediaElement;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+import org.weasis.core.api.media.data.MediaElement;
 
 public class Dose extends HashMap<Integer, Dvh> {
     private static final long serialVersionUID = 1L;

@@ -75,15 +75,13 @@ public class RtSet {
         if (!plans.isEmpty() && !doses.isEmpty()) {
             // Init iso doses for each dose
             for (Dose dose : doses) {
-                 Map<RtSpecialElement, Plan> collect = plans.entrySet().stream()
-	                        .filter(map -> map.getValue().getSopInstanceUid().equals(dose.getReferencedPlanUid()))
-	                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                Map<RtSpecialElement, Plan> collect = plans.entrySet().stream()
+                    .filter(map -> map.getValue().getSopInstanceUid().equals(dose.getReferencedPlanUid()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-                 if (dose.getIsoDoses().isEmpty()) {
-                     dose.setIsoDoses(
-                             calculateIsoDoses(collect.entrySet().stream().findFirst().get().getValue(), dose)
-                     );
-                 }
+                if (dose.getIsoDoses().isEmpty()) {
+                    dose.setIsoDoses(calculateIsoDoses(collect.entrySet().stream().findFirst().get().getValue(), dose));
+                }
             }
         }
     }
@@ -236,13 +234,10 @@ public class RtSet {
 
             Dose rtDose;
             if (!doses.isEmpty()) {
-                rtDose = doses.stream()
-                        .filter(i -> i.getSopInstanceUid().equals(sopInstanceUID))
-                        .findFirst().get();
-            }
-            else {
-                rtDose= new Dose();
-                
+                rtDose = doses.stream().filter(i -> i.getSopInstanceUid().equals(sopInstanceUID)).findFirst().get();
+            } else {
+                rtDose = new Dose();
+
                 rtDose.setSopInstanceUid(sopInstanceUID);
                 rtDose.setImagePositionPatient(dcmItems.getDoubles(Tag.ImagePositionPatient));
                 rtDose.setComment(dcmItems.getString(Tag.DoseComment));
@@ -318,7 +313,8 @@ public class RtSet {
                                     double[] cumVolume = new double[dose.length];
                                     double[] cumDose = new double[dose.length];
                                     for (int k = 0; k < dose.length; k++) {
-                                        cumVolume[k] = DoubleStream.of(Arrays.copyOfRange(volume, k, dose.length)).sum();
+                                        cumVolume[k] =
+                                            DoubleStream.of(Arrays.copyOfRange(volume, k, dose.length)).sum();
                                         cumDose[k] = DoubleStream.of(Arrays.copyOfRange(dose, 0, k)).sum() * 100;
                                     }
 
@@ -548,67 +544,16 @@ public class RtSet {
 
         // Max and standard levels 102, 100, 98, 95, 90, 80, 70, 50, 30
         List<IsoDose> isoDoses = new ArrayList<>();
-        isoDoses.add(new IsoDose(
-                doseMaxLevel,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 120, 0, 0 }),
-                "Max",
-                plan.getRxDose())
-        );
-        isoDoses.add(new IsoDose(
-                102,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 170, 0, 0 }),
-                "",
-                plan.getRxDose())
-        );
-        isoDoses.add(new IsoDose(
-                100,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 238, 69, 0 }),
-                "",
-                plan.getRxDose())
-        );
-        isoDoses.add(new IsoDose(
-                98,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 255, 165, 0 }),
-                "",
-                plan.getRxDose())
-        );
-        isoDoses.add(new IsoDose(
-                95,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 255, 255, 0 }),
-                "",
-                plan.getRxDose())
-        );
-        isoDoses.add(new IsoDose(
-                90,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 255, 0 }),
-                "",
-                plan.getRxDose())
-        );
-        isoDoses.add(new IsoDose(
-                80,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 139, 0 }),
-                "",
-                plan.getRxDose())
-        );
-        isoDoses.add(new IsoDose(
-                70,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 255, 255 }),
-                "",
-                plan.getRxDose())
-        );
-        isoDoses.add(new IsoDose(
-                50,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 0, 255 }),
-                "",
-                plan.getRxDose())
-        );
-        isoDoses.add(new IsoDose(
-                30,
-                PresentationStateReader.getRGBColor(255, null, new int[] { 0, 0, 128 }),
-                "",
-                plan.getRxDose())
-        );
-
+        isoDoses.add(new IsoDose(doseMaxLevel, new Color(120, 0, 0), "Max", plan.getRxDose()));
+        isoDoses.add(new IsoDose(102, new Color(170, 0, 0), "", plan.getRxDose()));
+        isoDoses.add(new IsoDose(100, new Color(238, 69, 0), "", plan.getRxDose()));
+        isoDoses.add(new IsoDose(98, new Color(255, 165, 0), "", plan.getRxDose()));
+        isoDoses.add(new IsoDose(95, new Color(255, 255, 0), "", plan.getRxDose()));
+        isoDoses.add(new IsoDose(90, new Color(0, 255, 0), "", plan.getRxDose()));
+        isoDoses.add(new IsoDose(80, new Color(0, 139, 0), "", plan.getRxDose()));
+        isoDoses.add(new IsoDose(70, new Color(0, 255, 255), "", plan.getRxDose()));
+        isoDoses.add(new IsoDose(50, new Color(0, 0, 255), "", plan.getRxDose()));
+        isoDoses.add(new IsoDose(30, new Color(0, 0, 128), "", plan.getRxDose()));
         return isoDoses;
     }
 }

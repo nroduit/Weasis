@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.dicom.rt;
 
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 
@@ -19,4 +21,14 @@ public class RtSpecialElement extends DicomSpecialElement {
         super(mediaIO);
     }
     
+    @Override
+    protected void initLabel() {
+        Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
+        String clabel = dicom.getString(Tag.StructureSetLabel);
+        if (clabel == null) {
+            super.initLabel();
+        } else {
+            label = clabel;
+        }
+    }
 }
