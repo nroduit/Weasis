@@ -488,11 +488,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         SimpleOpManager opManager = (SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd());
         imageLayer.setPreprocessing(opManager);
-        if(opManager == null && spatialTransformation){
+        if (opManager == null && spatialTransformation) {
             // Reset preprocessing cache
             imageLayer.getDisplayOpManager().setFirstNode(imageLayer.getSourceRenderedImage());
         }
-        
+
         if (pr != null) {
             imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ApplyPR, series, m, actionsInView));
             ImageOpNode rotation = imageLayer.getDisplayOpManager().getNode(RotationOp.OP_NAME);
@@ -1061,7 +1061,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 popupMenu.add(new JSeparator());
                             }
                         } else if (graphicMouseHandler.getDragSequence() != null
-                            && absgraph.getPtsNumber() == Graphic.UNDEFINED) {
+                            && Objects.equals(absgraph.getPtsNumber(), Graphic.UNDEFINED)) {
                             final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                             item2.addActionListener(e -> {
                                 MouseEventDouble event =
