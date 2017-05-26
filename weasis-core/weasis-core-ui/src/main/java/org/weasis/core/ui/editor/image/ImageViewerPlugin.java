@@ -188,7 +188,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
      *
      * @return the layoutModel
      */
-    public GridBagLayoutModel getLayoutModel() {
+    public synchronized GridBagLayoutModel getLayoutModel() {
         return layoutModel;
     }
 

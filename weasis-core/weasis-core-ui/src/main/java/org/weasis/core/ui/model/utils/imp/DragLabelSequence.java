@@ -34,8 +34,8 @@ public class DragLabelSequence implements Draggable {
 
     @Override
     public void drag(MouseEventDouble evt) {
-        Double deltaX = evt.getImageX() - lastPoint.getX();
-        Double deltaY = evt.getImageY() - lastPoint.getY();
+        double deltaX = evt.getImageX() - lastPoint.getX();
+        double deltaY = evt.getImageY() - lastPoint.getY();
 
         if (MathUtil.isDifferentFromZero(deltaX) || MathUtil.isDifferentFromZero(deltaY)) {
             lastPoint.setLocation(evt.getImageX(), evt.getImageY());

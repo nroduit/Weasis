@@ -878,7 +878,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     /** paint routine */
     @Override
-    public synchronized void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {
         if (g instanceof Graphics2D) {
             draw((Graphics2D) g);
         }
@@ -970,17 +970,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         affineTransform.setToScale(viewScale, viewScale);
 
         OpManager dispOp = getDisplayOpManager();
-        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
         Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
 
         if (rotationAngle != null && rotationAngle > 0) {
-            if (flip != null && flip) {
+            if (flip) {
                 rotationAngle = 360 - rotationAngle;
             }
             affineTransform.rotate(Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0,
                 modelArea.getHeight() / 2.0);
         }
-        if (flip != null && flip) {
+        if (flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
             // case FlipMode.TOP_BOTTOM:

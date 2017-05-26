@@ -184,7 +184,7 @@ public class GraphicsPane extends JComponent implements Canvas {
     }
 
     public void zoom(double centerX, double centerY, double viewScale) {
-        Double vScale = cropViewScale(viewScale);
+        double vScale = cropViewScale(viewScale);
         double viewportWidth = getWidth() - 1.0;
         double viewportHeight = getHeight() - 1.0;
         double modelOffsetX = centerX - 0.5 * viewportWidth / vScale;

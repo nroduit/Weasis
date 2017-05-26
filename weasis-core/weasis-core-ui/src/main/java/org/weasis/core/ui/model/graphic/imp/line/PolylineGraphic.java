@@ -178,7 +178,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
     protected Double getPerimeter(List<Point2D.Double> handlePointList) {
         if (handlePointList.size() > 1) {
-            Double perimeter = 0d;
+            double perimeter = 0d;
             Point2D.Double pLast = handlePointList.get(0);
             for (Point2D.Double p2 : handlePointList) {
                 perimeter += pLast.distance(p2);

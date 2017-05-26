@@ -116,11 +116,11 @@ public class ShutterOp extends AbstractOp {
         RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
         RenderedImage result = source;
 
-        Boolean shutter = (Boolean) params.get(P_SHOW);
+        boolean shutter = JMVUtils.getNULLtoFalse((Boolean) params.get(P_SHOW));
         Area area = (Area) params.get(P_SHAPE);
         Object pr = params.get(P_PR_ELEMENT);
 
-        if (shutter != null && shutter && area != null) {
+        if (shutter && area != null) {
             Byte[] color = getShutterColor();
             if (isBlack(color)) {
                 result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(), null);

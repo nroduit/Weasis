@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 import java.util.Objects;
 
 import javax.imageio.ImageIO;
@@ -200,7 +199,7 @@ public class ImageElementIO implements MediaReader {
                 public void addMedia(MediaElement media) {
                     if (media instanceof ImageElement) {
                         this.add(media);
-                        DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                        DataExplorerModel model = (DataExplorerModel) this.getTagValue(TagW.ExplorerModel);
                         if (model != null) {
                             model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
                                 new SeriesEvent(SeriesEvent.Action.ADD_IMAGE, this, media)));

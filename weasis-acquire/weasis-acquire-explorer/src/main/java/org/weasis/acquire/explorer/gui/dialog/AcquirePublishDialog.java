@@ -356,8 +356,8 @@ public class AcquirePublishDialog extends JDialog {
         return acqImg -> {
             PlanarImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
 
-            Integer width = img.getWidth();
-            Integer height = img.getHeight();
+            int width = img.getWidth();
+            int height = img.getHeight();
 
             return width > Resolution.ULTRA_HD.maxSize || height > Resolution.ULTRA_HD.maxSize;
         };

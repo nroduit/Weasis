@@ -13,6 +13,7 @@ package org.weasis.core.api.image.util;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
@@ -228,25 +229,25 @@ public class ImageFiler extends AbstractBufferHandler {
         return getThumbnailInTiff(img.getFile());
     }
 
-    public static RenderedImage getThumbnailInTiff(File file) {
-        RenderedImage thumbnail = null;
+    public static BufferedImage getThumbnailInTiff(File file) {
+        BufferedImage thumbnail = null;
         if (file != null) {
-            try {
-                String mimeType = MimeInspector.getMimeType(file);
-                if (mimeType != null && ("image/tiff".equals(mimeType) || "image/x-tiff".equals(mimeType))) { //$NON-NLS-1$ //$NON-NLS-2$
-                    ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
+            String mimeType = MimeInspector.getMimeType(file);
+            if (mimeType != null && ("image/tiff".equals(mimeType) || "image/x-tiff".equals(mimeType))) { //$NON-NLS-1$ //$NON-NLS-2$
+                try (FileSeekableStream inputStream = new FileSeekableStream(file)) {
+                    ImageDecoder dec = ImageCodec.createImageDecoder("tiff", inputStream, null); //$NON-NLS-1$
                     int count = dec.getNumPages();
                     if (count == 2) {
                         RenderedImage src2 = dec.decodeAsRenderedImage(1);
                         if (src2.getWidth() <= Thumbnail.MAX_SIZE) {
-                            thumbnail = src2;
+                            thumbnail = PlanarImage.wrapRenderedImage(src2).getAsBufferedImage();
                         }
                     }
-                }
 
-            } catch (IOException ex) {
-                LOGGER.error("Cannot read thumbnail", ex); //$NON-NLS-1$
-                return null;
+                } catch (IOException ex) {
+                    LOGGER.error("Cannot read thumbnail", ex); //$NON-NLS-1$
+                    return null;
+                }
             }
         }
         return thumbnail;
@@ -441,33 +442,6 @@ public class ImageFiler extends AbstractBufferHandler {
             if (ImageFiler.writeTIFF(imgCacheFile, img, true, false, false)) {
                 return imgCacheFile;
             }
-        }
-        return null;
-    }
-
-    public static RenderedImage readTiledCacheImage(File file) {
-        try {
-            ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
-            return dec.decodeAsRenderedImage();
-
-        } catch (IOException e) {
-            LOGGER.error("", e); //$NON-NLS-1$
-        }
-        return null;
-    }
-
-    public static RenderedImage readThumbnailCacheImage(File file) {
-        try {
-            ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null); //$NON-NLS-1$
-            int count = dec.getNumPages();
-            if (count == 2) {
-                RenderedImage src2 = dec.decodeAsRenderedImage(1);
-                if (src2.getWidth() <= Thumbnail.MAX_SIZE) {
-                    return src2;
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("", e); //$NON-NLS-1$
         }
         return null;
     }
