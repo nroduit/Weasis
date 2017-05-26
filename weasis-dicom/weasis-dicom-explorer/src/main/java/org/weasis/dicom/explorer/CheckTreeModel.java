@@ -160,8 +160,6 @@ public class CheckTreeModel {
             DefaultMutableTreeNode prVirtualNode = new ToolTipTreeNode(prSeries, false);
             studyNode.insert(prVirtualNode, index + 1);
         }
-
-        return;
     }
 
     public static DefaultTreeModel buildModel(DicomModel dicomModel) {

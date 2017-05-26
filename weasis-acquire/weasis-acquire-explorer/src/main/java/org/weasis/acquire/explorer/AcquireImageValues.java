@@ -234,10 +234,7 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
         if (rotation != other.rotation) {
             return false;
         }
-        if (!Objects.equals(ratio, other.ratio)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(ratio, other.ratio);
     }
 
     @Override

@@ -90,8 +90,6 @@ public class RetrieveTreeModel {
         int index = Collections.binarySearch(children, seriesNode, DicomSorter.SERIES_COMPARATOR);
         index = index < 0 ? -(index + 1) : index;
         studyNode.insert(seriesNode, index);
-
-        return;
     }
 
     public static synchronized DefaultTreeModel buildModel(DicomModel dicomModel) {

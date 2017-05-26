@@ -11,7 +11,7 @@ REQUIRED_TEXT_VERSION=1.8
 
 # Extract major version number for comparisons from the required version string.
 # In order to do that, remove leading "1." if exists, and minor and security versions.
-REQUIRED_MAJOR_VERSION=`echo $REQUIRED_TEXT_VERSION | sed -e 's/^1\.//' -e 's/\..*//'`
+REQUIRED_MAJOR_VERSION=$(echo $REQUIRED_TEXT_VERSION | sed -e 's/^1\.//' -e 's/\..*//')
 
 # Aux functions:
 die ( ) {
@@ -41,11 +41,11 @@ Also, make sure it's accesible from the PATH or set the JAVA_HOME variable to ma
 fi
 
 # Then, get the installed version
-INSTALLED_VERSION=`$JAVACMD -version 2>&1 | awk '/version [0-9]*/ {print $3;}'`
+INSTALLED_VERSION=$($JAVACMD -version 2>&1 | awk '/version [0-9]*/ {print $3;}')
 echo "Found java $INSTALLED_VERSION"
 
 # Remove double quotes, remove leading "1." if it exists and remove everything apart from the major version number.
-INSTALLED_MAJOR_VERSION=`echo $INSTALLED_VERSION | sed -e 's/"//' -e 's/^1\.//' -e 's/\..*//'`
+INSTALLED_MAJOR_VERSION=$(echo $INSTALLED_VERSION | sed -e 's/"//' -e 's/^1\.//' -e 's/\..*//')
 
 if (( INSTALLED_MAJOR_VERSION < REQUIRED_MAJOR_VERSION ))
 then
@@ -64,6 +64,6 @@ done
 echo user arguments: ${userParameters[@]}
 
 # If the correct Java version is detected, launch weasis from current path
-curPath=$(dirname "`readlink -f "$0"`")
+curPath=$(dirname "$(readlink -f "$0")")
 echo "Weasis launcher directory: $curPath"
 $JAVACMD -Xms64m -Xmx768m -Dgosh.args="-sc telnetd -p 17179 start" -Dweasis.portable.dir="$curPath" -classpath "$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}
