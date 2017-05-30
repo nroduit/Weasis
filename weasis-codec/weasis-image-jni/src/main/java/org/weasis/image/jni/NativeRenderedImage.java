@@ -64,7 +64,8 @@ public class NativeRenderedImage extends SimpleRenderedImage {
 
     @Override
     public synchronized Raster getTile(int tileX, int tileY) {
-        if (currentTile != null && currentTileGrid.x == tileX && currentTileGrid.y == tileY) {
+        if (currentTile != null && currentTileGrid != null && currentTileGrid.x == tileX
+            && currentTileGrid.y == tileY) {
             return currentTile;
         }
 

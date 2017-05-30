@@ -869,7 +869,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     /** paint routine */
     @Override
-    public synchronized void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {
         if (g instanceof Graphics2D) {
             draw((Graphics2D) g);
         }
@@ -1064,7 +1064,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void changeZoomInterpolation(Integer interpolation) {
         Integer val = (Integer) getDisplayOpManager().getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION);
-        boolean update = val == null || val != interpolation;
+        boolean update = !Objects.equals(val, interpolation);
         if (update) {
             getDisplayOpManager().setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION, interpolation);
             if (lens != null) {

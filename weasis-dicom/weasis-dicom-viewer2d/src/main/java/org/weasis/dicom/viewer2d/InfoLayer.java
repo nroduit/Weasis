@@ -1429,7 +1429,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     }
 
     protected void drawExtendedActions(Graphics2D g2d, Point2D.Float[] positions) {
-        if (view2DPane.getViewButtons().size() > 0) {
+        if (!view2DPane.getViewButtons().isEmpty()) {
             int space = 5;
             int height = 0;
             for (ViewButton b : view2DPane.getViewButtons()) {
@@ -1477,7 +1477,6 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 }
             }
         }
-        return;
     }
 
 }

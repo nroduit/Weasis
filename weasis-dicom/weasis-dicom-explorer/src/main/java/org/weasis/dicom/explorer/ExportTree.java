@@ -119,7 +119,6 @@ public class ExportTree extends JScrollPane {
                 }
             }
         }
-        return;
     }
 
 }

@@ -13,6 +13,7 @@ package org.weasis.dicom.viewer2d.mip;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -227,7 +228,7 @@ public class MipView extends View2d {
 
         public MipProcess(String name, TaskMonitor taskMonitor) {
             super(name);
-            this.taskMonitor = taskMonitor;
+            this.taskMonitor = Objects.requireNonNull(taskMonitor);
         }
 
     }

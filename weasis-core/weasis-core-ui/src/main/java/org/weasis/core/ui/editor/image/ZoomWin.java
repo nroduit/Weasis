@@ -248,16 +248,16 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         affineTransform.setToScale(viewScale, viewScale);
 
         OpManager dispOp = getDisplayOpManager();
-        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
         Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
         if (rotationAngle != null && rotationAngle > 0) {
-            if (flip != null && flip) {
+            if (flip) {
                 rotationAngle = 360 - rotationAngle;
             }
             affineTransform.rotate(rotationAngle * Math.PI / 180.0, modelArea.getWidth() / 2.0,
                 modelArea.getHeight() / 2.0);
         }
-        if (flip != null && flip) {
+        if (flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
             // case FlipMode.TOP_BOTTOM:

@@ -119,8 +119,8 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
         AffineTransform invTransform = new AffineTransform(); // Identity transformation.
         Point2D anchorPt = new Point2D.Double(labelBounds.getX(), labelBounds.getY());
 
-        Double scale = GeomUtil.extractScalingFactor(transform);
-        Double angleRad = GeomUtil.extractAngleRad(transform);
+        double scale = GeomUtil.extractScalingFactor(transform);
+        double angleRad = GeomUtil.extractAngleRad(transform);
 
         invTransform.translate(anchorPt.getX(), anchorPt.getY());
 

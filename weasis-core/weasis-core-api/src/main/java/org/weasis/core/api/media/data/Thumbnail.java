@@ -156,7 +156,7 @@ public class Thumbnail extends JLabel {
         ImageIcon icon = new ImageIcon() {
 
             @Override
-            public void paintIcon(Component c, Graphics g, int x, int y) {
+            public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
                 Graphics2D g2d = (Graphics2D) g;
                 int width = thumbnailSize;
                 int height = thumbnailSize;

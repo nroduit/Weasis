@@ -45,7 +45,7 @@ public class ImageInfoHelper {
             ImageElement imgElt = imgInfo.getImage();
             Integer width = (Integer) imgElt.getTagValue(TagW.ImageWidth);
             Integer height = (Integer) imgElt.getTagValue(TagW.ImageHeight);
-            Double currentImageSize = (double) Math.max(width, height);
+            double currentImageSize = Math.max(width, height);
             return BigDecimal.valueOf(expectedImageSize / currentImageSize).setScale(5, RoundingMode.HALF_UP)
                 .doubleValue();
         } catch (NullPointerException e) {

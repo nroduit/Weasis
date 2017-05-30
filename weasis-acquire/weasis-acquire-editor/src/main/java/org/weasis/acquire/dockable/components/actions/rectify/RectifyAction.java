@@ -126,17 +126,17 @@ public class RectifyAction extends AbstractAcquireAction {
 
     private static void buildAffineTransform(AffineTransform transform, OpManager dispOp, Rectangle2D modelArea,
         Point offset) {
-        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
         Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
 
         if (rotationAngle != null && rotationAngle != 0) {
             rotationAngle = (rotationAngle + 720) % 360;
-            if (flip != null && flip) {
+            if (flip) {
                 rotationAngle = 360 - rotationAngle;
             }
             transform.rotate(Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0, modelArea.getHeight() / 2.0);
         }
-        if (flip != null && flip) {
+        if (flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
             // case FlipMode.TOP_BOTTOM:

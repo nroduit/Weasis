@@ -71,11 +71,11 @@ public class AcquirePublishPanel extends JPanel {
     }
     
     private void publishChanged(PropertyChangeEvent evt) {
-        if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
+        if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
             int progress = (Integer) evt.getNewValue();
             progressBar.setValue(progress);
 
-        } else if ("state" == evt.getPropertyName()) { //$NON-NLS-1$
+        } else if ("state".equals(evt.getPropertyName())) { //$NON-NLS-1$
             if (StateValue.STARTED == evt.getNewValue()) {
                 publishBtn.setEnabled(false);
                 progressBar.setVisible(true);

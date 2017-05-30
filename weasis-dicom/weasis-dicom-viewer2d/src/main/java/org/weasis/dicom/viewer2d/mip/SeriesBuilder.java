@@ -216,24 +216,18 @@ public class SeriesBuilder {
 
                     dicoms.add(dicom);
 
-                    if (taskMonitor != null && taskMonitor.isCanceled()) {
+                    if (taskMonitor.isCanceled()) {
                         throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
                     }
                     final int progress = index - minImg;
-                    GuiExecutor.instance().execute(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (taskMonitor != null) {
-                                taskMonitor.setProgress(progress);
-                                StringBuilder buf = new StringBuilder(Messages.getString("SeriesBuilder.image")); //$NON-NLS-1$
-                                buf.append(StringUtil.COLON_AND_SPACE);
-                                buf.append(progress);
-                                buf.append("/"); //$NON-NLS-1$
-                                buf.append(taskMonitor.getMaximum());
-                                taskMonitor.setNote(buf.toString());
-                            }
-                        }
+                    GuiExecutor.instance().execute(() -> {
+                        taskMonitor.setProgress(progress);
+                        StringBuilder buf = new StringBuilder(Messages.getString("SeriesBuilder.image")); //$NON-NLS-1$
+                        buf.append(StringUtil.COLON_AND_SPACE);
+                        buf.append(progress);
+                        buf.append("/"); //$NON-NLS-1$
+                        buf.append(taskMonitor.getMaximum());
+                        taskMonitor.setNote(buf.toString());
                     });
                 }
 

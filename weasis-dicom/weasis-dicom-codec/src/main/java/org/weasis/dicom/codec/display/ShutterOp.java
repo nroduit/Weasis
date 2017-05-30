@@ -107,11 +107,11 @@ public class ShutterOp extends AbstractOp {
         PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
         PlanarImage result = source;
 
-        Boolean shutter = (Boolean) params.get(P_SHOW);
+        boolean shutter = JMVUtils.getNULLtoFalse((Boolean) params.get(P_SHOW));
         Area area = (Area) params.get(P_SHAPE);
         Object pr = params.get(P_PR_ELEMENT);
 
-        if (shutter != null && shutter && area != null) {
+        if (shutter && area != null) {
             result = ImageProcessor.applyShutter(ImageCV.toMat(source), area, getShutterColor());
         }
 
