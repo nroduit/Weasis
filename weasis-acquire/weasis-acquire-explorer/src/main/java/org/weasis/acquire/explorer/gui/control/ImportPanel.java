@@ -75,11 +75,11 @@ public class ImportPanel extends JPanel {
         ImportTask imporTask = new ImportTask(toImport, searchedSeries, maxRangeInMinutes);
 
         imporTask.addPropertyChangeListener(evt -> {
-            if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
+            if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
                 int progress = (Integer) evt.getNewValue();
                 progressBar.setValue(progress);
 
-            } else if ("state" == evt.getPropertyName()) { //$NON-NLS-1$
+            } else if ("state".equals(evt.getPropertyName())) { //$NON-NLS-1$
 
                 if (StateValue.STARTED == evt.getNewValue()) {
                     importBtn.setEnabled(false);

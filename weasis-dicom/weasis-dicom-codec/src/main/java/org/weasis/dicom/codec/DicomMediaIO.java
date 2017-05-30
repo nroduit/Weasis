@@ -23,7 +23,6 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -33,6 +32,7 @@ import java.lang.ref.Reference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,10 +53,6 @@ import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageInputStreamImpl;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.AndConstDescriptor;
-import javax.media.jai.operator.NullDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
@@ -65,6 +61,7 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.image.Overlays;
+import org.dcm4che3.image.PaletteColorModel;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
@@ -77,19 +74,22 @@ import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
-import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
+import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.image.cv.FileRawImage;
+import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.LayoutUtil;
+import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SimpleTagable;
 import org.weasis.core.api.media.data.SoftHashMap;
@@ -110,13 +110,14 @@ import org.weasis.dicom.codec.utils.OverlayUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageioimpl.common.SignedDataImageParam;
-import com.sun.media.jai.util.ImageUtil;
 
 public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaIO.class);
 
     public static final File DICOM_EXPORT_DIR = AppProperties.buildAccessibleTempDirectory("dicom"); //$NON-NLS-1$
+    public static final File CACHE_UNCOMPRESSED_DIR =
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "dcm-rawcv"); //$NON-NLS-1$
 
     public static final String MIMETYPE = "application/dicom"; //$NON-NLS-1$
     public static final String IMAGE_MIMETYPE = "image/dicom"; //$NON-NLS-1$
@@ -743,13 +744,37 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     @Override
     public PlanarImage getImageFragment(MediaElement media) throws Exception {
-        if (media != null && media.getKey() instanceof Integer && isReadableDicom()) {
+        if (Objects.requireNonNull(media).getKey() instanceof Integer && isReadableDicom()) {
             int frame = (Integer) media.getKey();
             if (frame >= 0 && frame < numberOfFrame && hasPixel) {
-                // read as tiled rendered image
                 LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", //$NON-NLS-1$
                     frame, TagD.getTagValue(this, Tag.SOPInstanceUID));
-                return getValidImage(readAsRenderedImage(frame, null), media);
+
+                FileCache cache = media.getFileCache();
+
+                Path imgCachePath = null;
+                File file = cache.getTransformedFile();
+                if (file == null) {
+                    String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes());
+                    imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv"); //$NON-NLS-1$
+                    if (Files.isReadable(imgCachePath)) {
+                        file = imgCachePath.toFile();
+                        cache.setTransformedFile(file);
+                        imgCachePath = null;
+                    }
+                }
+
+                if (file == null && imgCachePath != null) {
+                    PlanarImage mat = getValidImage(readAsRenderedImage(frame, null), media);   
+                    try {
+                        new FileRawImage(imgCachePath.toFile()).write(mat);
+                    } catch (Exception e) {
+                        FileUtil.delete(imgCachePath.toFile());
+                        throw e;
+                    }
+                    return mat;
+                }
+                return new FileRawImage(file).read();
             }
         }
         return null;
@@ -758,21 +783,17 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     private PlanarImage getValidImage(RenderedImage buffer, MediaElement media) {
         PlanarImage img = null;
         if (buffer != null) {
-            // Bug fix: CLibImageReader and J2KImageReaderCodecLib (imageio libs) do not handle negative values
-            // for short data. They convert signed short to unsigned short.
+            RenderedImage image = ImageFiler.getReadableImage(buffer);
+
             if (dataType == DataBuffer.TYPE_SHORT && buffer.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
-                img = RectifyUShortToShortDataDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
-            } else if (ImageUtil.isBinary(buffer.getSampleModel())) {
-                ParameterBlock pb = new ParameterBlock();
-                pb.addSource(buffer);
-                // Tile size are set in this operation
-                img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
-            } else if (buffer.getTileWidth() != ImageFiler.TILESIZE || buffer.getTileHeight() != ImageFiler.TILESIZE) {
-                img = ImageFiler.tileImage(buffer);
-            } else {
-                img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
+                image = ImageToolkit.fixSignedShortDataBuffer(image); // sh
             }
 
+            // TODO free memory
+            img = ImageProcessor.toMat(image);
+            if (image.getColorModel() instanceof PaletteColorModel) {
+                img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
+            }
             /*
              * Handle overlay in pixel data: extract the overlay, serialize it in a file and set all values to O in the
              * pixel data.
@@ -784,6 +805,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     Attributes ds = getDicomObject();
                     int[] embeddedOverlayGroupOffsets = Overlays.getEmbeddedOverlayGroupOffsets(ds);
 
+                    // TODO remove if the output image is cache
                     if (embeddedOverlayGroupOffsets.length > 0) {
                         FileOutputStream fileOut = null;
                         ObjectOutput objOut = null;
@@ -808,9 +830,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     }
                 }
                 // Set to 0 all bits outside bitStored
-                img = AndConstDescriptor.create(img, new int[] { overlayBitMask }, null);
+                img = ImageProcessor.bitwiseAnd(ImageCV.toMat(img), overlayBitMask);
             }
-            img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
         }
         return img;
     }
@@ -1206,7 +1227,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     bi = reader.readAsRenderedImage(frameIndex, param);
                 }
             }
-            return validateSignedShortDataBuffer(bi);
+            if (bi != null && dataType == DataBuffer.TYPE_SHORT
+                && bi.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT && (highBit + 1) < bitsAllocated) {
+                ImageToolkit.fixSignedShortDataBuffer(bi, highBit + 1);
+            }
+            return bi;
         } finally {
             /*
              * "readingImage = false" will close the stream of the tiled image. The problem is that
@@ -1246,25 +1271,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         readingImage = true;
 
         return bi;
-    }
-
-    public RenderedImage validateSignedShortDataBuffer(RenderedImage source) {
-        /*
-         * Issue in ComponentColorModel when signed short DataBuffer, only 16 bits is supported see
-         * http://java.sun.com/javase/6/docs/api/java/awt/image/ ComponentColorModel.html Instances of
-         * ComponentColorModel created with transfer types DataBuffer.TYPE_SHORT, DataBuffer.TYPE_FLOAT, and
-         * DataBuffer.TYPE_DOUBLE use all the bits of all sample values. Thus all color/alpha components have 16 bits
-         * when using DataBuffer.TYPE_SHORT, 32 bits when using DataBuffer.TYPE_FLOAT, and 64 bits when using
-         * DataBuffer.TYPE_DOUBLE. When the ComponentColorModel(ColorSpace, int[], boolean, boolean, int, int) form of
-         * constructor is used with one of these transfer types, the bits array argument is ignored.
-         */
-
-        // TODO test with all decoders (works with raw decoder)
-        if (source != null && dataType == DataBuffer.TYPE_SHORT
-            && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT && (highBit + 1) < bitsAllocated) {
-            return RectifySignedShortDataDescriptor.create(source, new int[] { highBit + 1 }, null);
-        }
-        return source;
     }
 
     public boolean isSkipLargePrivate() {

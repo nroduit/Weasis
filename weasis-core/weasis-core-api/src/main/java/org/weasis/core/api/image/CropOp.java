@@ -11,16 +11,13 @@
 package org.weasis.core.api.image;
 
 import java.awt.Rectangle;
-import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
-
-import javax.media.jai.JAI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.cv.ImageCV;
+import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class CropOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(CropOp.class);
@@ -56,31 +53,15 @@ public class CropOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         Rectangle area = (Rectangle) params.get(P_AREA);
 
         if (area != null) {
             area = area
-                .intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight()));
+                .intersection(new Rectangle(0, 0, source.width(), source.height()));
             if (area.width > 1 && area.height > 1) {
-                ParameterBlock pb = new ParameterBlock();
-                pb.addSource(source);
-                pb.add((float) area.x).add((float) area.y);
-                pb.add((float) area.width).add((float) area.height);
-                result = JAI.create("crop", pb, null); //$NON-NLS-1$
-
-                if (JMVUtils.getNULLtoFalse(params.get(P_SHIFT_TO_ORIGIN))) {
-                    float diffw = (float) source.getMinX() - result.getMinX();
-                    float diffh = (float) source.getMinY() - result.getMinY();
-                    if (MathUtil.isDifferentFromZero(diffw) || MathUtil.isDifferentFromZero(diffh)) {
-                        pb = new ParameterBlock();
-                        pb.addSource(result);
-                        pb.add(diffw);
-                        pb.add(diffh);
-                        result = JAI.create("translate", pb, null); //$NON-NLS-1$
-                    }
-                }
+                result = ImageProcessor.crop(ImageCV.toMat(source), area);
             }
         }
         params.put(Param.OUTPUT_IMG, result);

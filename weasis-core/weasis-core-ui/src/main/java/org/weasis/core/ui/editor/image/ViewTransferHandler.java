@@ -10,20 +10,19 @@
  *******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 
-import javax.media.jai.PlanarImage;
-import javax.media.jai.TiledImage;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
 import org.weasis.core.api.gui.model.ViewModel;
-import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
@@ -51,9 +50,9 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
 
         if (comp instanceof DefaultView2d) {
             DefaultView2d view2DPane = (DefaultView2d) comp;
-            PlanarImage imgP = createComponentImage(view2DPane);
+            RenderedImage imgP = createComponentImage(view2DPane);
             if (imgP != null) {
-                image = imgP.getAsBufferedImage();
+                image = ImageToolkit.convertRenderedImage(imgP);
                 return this;
             }
 
@@ -85,8 +84,8 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
         return flavor.equals(DataFlavor.imageFlavor);
     }
 
-    private static PlanarImage createComponentImage(DefaultView2d canvas) {
-        TiledImage img = ImageFiler.getEmptyTiledImage(Color.BLACK, canvas.getWidth(), canvas.getHeight());
+    private static RenderedImage createComponentImage(DefaultView2d canvas) {
+        BufferedImage img = new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_BGR);
         ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(canvas);
         try {
             exportImage.getInfoLayer().setDisplayPreferencesValue(LayerAnnotation.ANONYM_ANNOTATIONS, true);

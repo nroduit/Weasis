@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -55,6 +54,7 @@ import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
 import org.weasis.acquire.explorer.util.ImageInfoHelper;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
@@ -286,11 +286,11 @@ public class AcquirePublishDialog extends JDialog {
         ActionListener taskCancelActionListener = e -> dicomizeTask.cancel(true);
 
         dicomizeTask.addPropertyChangeListener(evt -> {
-            if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
+            if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
                 int progress = (Integer) evt.getNewValue();
                 progressBar.setValue(progress);
 
-            } else if ("state" == evt.getPropertyName()) { //$NON-NLS-1$
+            } else if ("state".equals(evt.getPropertyName())) { //$NON-NLS-1$
 
                 if (StateValue.STARTED == evt.getNewValue()) {
                     resolutionPane.setVisible(false);
@@ -355,11 +355,7 @@ public class AcquirePublishDialog extends JDialog {
     private Predicate<AcquireImageInfo> oversizedImages() {
         return acqImg -> {
             PlanarImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
-
-            Integer width = img.getWidth();
-            Integer height = img.getHeight();
-
-            return width > Resolution.ULTRA_HD.maxSize || height > Resolution.ULTRA_HD.maxSize;
+            return img.width() > Resolution.ULTRA_HD.maxSize || img.height() > Resolution.ULTRA_HD.maxSize;
         };
     }
 

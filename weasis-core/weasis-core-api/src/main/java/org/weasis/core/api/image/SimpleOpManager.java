@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.image.ImageOpNode.Param;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class SimpleOpManager implements OpManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleOpManager.class);
@@ -146,7 +146,7 @@ public class SimpleOpManager implements OpManager {
     }
 
     @Override
-    public void setFirstNode(RenderedImage imgSource) {
+    public void setFirstNode(PlanarImage imgSource) {
         ImageOpNode node = getFirstNode();
         if (node != null) {
             node.setParam(Param.INPUT_IMG, imgSource);
@@ -154,10 +154,10 @@ public class SimpleOpManager implements OpManager {
     }
 
     @Override
-    public RenderedImage getFirstNodeInputImage() {
+    public PlanarImage getFirstNodeInputImage() {
         ImageOpNode node = getFirstNode();
         if (node != null) {
-            return (RenderedImage) node.getParam(Param.INPUT_IMG);
+            return (PlanarImage) node.getParam(Param.INPUT_IMG);
         }
         return null;
     }
@@ -189,10 +189,10 @@ public class SimpleOpManager implements OpManager {
     }
 
     @Override
-    public RenderedImage getLastNodeOutputImage() {
+    public PlanarImage getLastNodeOutputImage() {
         ImageOpNode node = getLastNode();
         if (node != null) {
-            return (RenderedImage) node.getParam(Param.OUTPUT_IMG);
+            return (PlanarImage) node.getParam(Param.OUTPUT_IMG);
         }
         return null;
     }
@@ -210,8 +210,8 @@ public class SimpleOpManager implements OpManager {
     }
 
     @Override
-    public RenderedImage process() {
-        RenderedImage source = getFirstNodeInputImage();
+    public PlanarImage process() {
+        PlanarImage source = getFirstNodeInputImage();
         if (source != null) {
             for (int i = 0; i < operations.size(); i++) {
                 ImageOpNode op = operations.get(i);

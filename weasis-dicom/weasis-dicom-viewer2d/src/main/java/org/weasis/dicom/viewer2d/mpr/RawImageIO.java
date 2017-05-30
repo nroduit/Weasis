@@ -17,9 +17,7 @@ import java.awt.image.BandedSampleModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.PixelInterleavedSampleModel;
-import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -35,9 +33,6 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.NullDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
@@ -48,13 +43,13 @@ import org.dcm4che3.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.LayoutUtil;
+import org.weasis.core.api.image.cv.FileRawImage;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -63,7 +58,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
-import com.sun.media.jai.util.ImageUtil;
 
 public class RawImageIO implements DcmMediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawImageIO.class);
@@ -73,16 +67,15 @@ public class RawImageIO implements DcmMediaReader {
     private static final int[] OFFSETS_0_0_0 = { 0, 0, 0 };
     private static final int[] OFFSETS_0_1_2 = { 0, 1, 2 };
 
-    protected URI uri;
+    protected FileRawImage imageCV;
     private final FileCache fileCache;
 
     private final HashMap<TagW, Object> tags;
     private final Codec codec;
-    private ImageInputStream imageStream;
     private Attributes attributes;
 
-    public RawImageIO(URI media, Codec codec) {
-        this.uri = Objects.requireNonNull(media);
+    public RawImageIO(FileRawImage imageCV, Codec codec) {
+        this.imageCV = Objects.requireNonNull(imageCV);
         this.fileCache = new FileCache(this);
         this.tags = new HashMap<>();
         this.codec = codec;
@@ -97,8 +90,8 @@ public class RawImageIO implements DcmMediaReader {
 
         DicomOutputStream out = null;
         try {
-            File file = new File(uri);
-            BulkData bdl = new BulkData(uri.toString(), 0, (int) file.length(), false);
+            File file = imageCV.getFile();
+            BulkData bdl = new BulkData(file.toURI().toString(), FileRawImage.HEADER_LENGTH, (int) file.length(), false);
             dcm.setValue(Tag.PixelData, VR.OW, bdl);
             File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
             out = new DicomOutputStream(tmpFile);
@@ -133,45 +126,19 @@ public class RawImageIO implements DcmMediaReader {
     @Override
     public PlanarImage getImageFragment(MediaElement media) throws Exception {
         if (media != null && media.getFile() != null) {
-            Integer allocated = TagD.getTagValue(media, Tag.BitsAllocated, Integer.class);
-            Integer sample = TagD.getTagValue(media, Tag.SamplesPerPixel, Integer.class);
-            Integer rows = TagD.getTagValue(media, Tag.Rows, Integer.class);
-            Integer columns = TagD.getTagValue(media, Tag.Columns, Integer.class);
-            ImageParameters h = new ImageParameters(rows, columns, allocated, sample, false);
-            // RawImageReader doesn't need to be disposed
-            ImageReader reader = initRawImageReader(imageStream = ImageIO.createImageInputStream(media.getFile()), h, 1,
-                0, false, TagD.getTagValue(media, Tag.PixelRepresentation, Integer.class));
-
-            RenderedImage buffer = reader.readAsRenderedImage(0, null);
-            PlanarImage img = null;
-            if (buffer != null) {
-                if (ImageUtil.isBinary(buffer.getSampleModel())) {
-                    ParameterBlock pb = new ParameterBlock();
-                    pb.addSource(buffer);
-                    // Tile size are set in this operation
-                    img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
-                } else if (buffer.getTileWidth() != ImageFiler.TILESIZE
-                    || buffer.getTileHeight() != ImageFiler.TILESIZE) {
-                    img = ImageFiler.tileImage(buffer);
-                } else {
-                    img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
-                }
-            }
-            return img;
+            return imageCV.read();
         }
         return null;
     }
 
     @Override
     public URI getUri() {
-        return uri;
+        return imageCV.getFile().toURI();
     }
 
     @Override
     public void reset() {
         // unlock file to be deleted on exit
-        FileUtil.safeClose(imageStream);
-        imageStream = null;
     }
 
     @Override
@@ -272,7 +239,7 @@ public class RawImageIO implements DcmMediaReader {
 
             long[] frameOffsets = new long[frames];
             int frameLen = h.getWidth() * h.getHeight() * h.getSamplesPerPixel() * (h.getBitsPerSample() >> 3);
-            ;
+            
             frameOffsets[0] = pixelDataPos;
             for (int i = 1; i < frameOffsets.length; i++) {
                 frameOffsets[i] = frameOffsets[i - 1] + frameLen;

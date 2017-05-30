@@ -11,25 +11,13 @@
 package org.weasis.imageio.codec;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
 
 import javax.imageio.ImageIO;
-import javax.imageio.spi.ImageReaderSpi;
-import javax.imageio.spi.ImageWriterSpi;
-import javax.media.jai.OperationDescriptorImpl;
-import javax.media.jai.OperationRegistry;
-import javax.media.jai.RegistryElementDescriptor;
-import javax.media.jai.registry.CollectionRegistryMode;
-import javax.media.jai.registry.RenderableRegistryMode;
-import javax.media.jai.registry.RenderedRegistryMode;
 
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
-import org.weasis.core.api.image.util.JAIUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 
@@ -55,21 +43,13 @@ import com.sun.media.imageioimpl.plugins.wbmp.WBMPImageReaderSpi;
 import com.sun.media.imageioimpl.plugins.wbmp.WBMPImageWriterSpi;
 import com.sun.media.imageioimpl.stream.ChannelImageInputStreamSpi;
 import com.sun.media.imageioimpl.stream.ChannelImageOutputStreamSpi;
-import com.sun.media.jai.imageioimpl.ImageReadWriteSpi;
-import com.sun.media.jai.operator.ImageReadDescriptor;
-import com.sun.media.jai.operator.ImageWriteDescriptor;
 
 @org.osgi.service.component.annotations.Component(service = Codec.class, immediate = false)
 public class ImageioCodec implements Codec {
 
     @Override
     public String[] getReaderMIMETypes() {
-        List<String> list = new ArrayList<>();
-        for (String s : ImageIO.getReaderMIMETypes()) {
-            list.add(s);
-        }
-        list.add("image/x-ms-bmp"); //$NON-NLS-1$
-        return list.toArray(new String[list.size()]);
+        return ImageIO.getReaderMIMETypes();
     }
 
     @Override
@@ -115,7 +95,7 @@ public class ImageioCodec implements Codec {
     // ================================================================================
     // OSGI service implementation
     // ================================================================================
-    
+
     @Activate
     protected void activate(ComponentContext context) {
         // Do not use cache. Images must be download locally before reading them.
@@ -126,31 +106,31 @@ public class ImageioCodec implements Codec {
         // and unregister imageio SPI if imageio.jar is also in the jre/lib/ext folder
 
         Class[] jaiCodecs = { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class,
-            J2KImageReaderSpi.class, J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class, BMPImageReaderSpi.class,
-            PNMImageReaderSpi.class, RawImageReaderSpi.class, TIFFImageReaderSpi.class, J2KImageWriterSpi.class,
-            J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class, GIFImageWriterSpi.class,
-            PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
+            J2KImageReaderSpi.class, J2KImageReaderCodecLibSpi.class, WBMPImageReaderSpi.class,
+            // BMPImageReaderSpi.class,
+            // PNMImageReaderSpi.class,
+            RawImageReaderSpi.class,
+            // TIFFImageReaderSpi.class,
+            J2KImageWriterSpi.class, J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class,
+            GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
             ImageioUtil.registerServiceProvider(c);
         }
 
         // Set priority to these codec which have better performance to the one in JRE
-        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageReaderSpi.class, ImageReaderSpi.class,
-            "jpeg"); //$NON-NLS-1$
-        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageWriterSpi.class, ImageWriterSpi.class,
-            "jpeg"); //$NON-NLS-1$
-        ImageioUtil.registerServiceProviderInHighestPriority(CLibPNGImageReaderSpi.class, ImageReaderSpi.class, "png"); //$NON-NLS-1$
-        ImageioUtil.registerServiceProviderInHighestPriority(CLibPNGImageWriterSpi.class, ImageWriterSpi.class, "png"); //$NON-NLS-1$
+//        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageReaderSpi.class, ImageReaderSpi.class,
+//            "jpeg"); //$NON-NLS-1$
+//        ImageioUtil.registerServiceProviderInHighestPriority(CLibJPEGImageWriterSpi.class, ImageWriterSpi.class,
+//            "jpeg"); //$NON-NLS-1$
+//        ImageioUtil.registerServiceProviderInHighestPriority(CLibPNGImageReaderSpi.class, ImageReaderSpi.class, "png"); //$NON-NLS-1$
+//        ImageioUtil.registerServiceProviderInHighestPriority(CLibPNGImageWriterSpi.class, ImageWriterSpi.class, "png"); //$NON-NLS-1$
 
         // TODO Should be in properties?
         // Unregister sun native jpeg codec
         // ImageioUtil.unRegisterServiceProvider(registry, CLibJPEGImageReaderSpi.class);
-
-        // Register the ImageRead and ImageWrite operation for JAI
-        new ImageReadWriteSpi().updateRegistry(JAIUtil.getOperationRegistry());
     }
-    
+
     @Deactivate
     protected void deactivate(ComponentContext context) {
         Class[] jaiCodecs = { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class,
@@ -163,25 +143,6 @@ public class ImageioCodec implements Codec {
 
         for (Class c : jaiCodecs) {
             ImageioUtil.unRegisterServiceProvider(c);
-        }
-
-        OperationRegistry reg = JAIUtil.getOperationRegistry();
-        OperationDescriptorImpl[] desc =
-            new OperationDescriptorImpl[] { new ImageReadDescriptor(), new ImageWriteDescriptor() };
-        for (OperationDescriptorImpl d : desc) {
-            String[] supportedModes =
-                { RenderedRegistryMode.MODE_NAME, RenderableRegistryMode.MODE_NAME, CollectionRegistryMode.MODE_NAME };
-            for (String mode : supportedModes) {
-                Iterator<?> list = reg.getFactoryIterator(mode, d.getName());
-                while (list.hasNext()) {
-                    Object obj = list.next();
-                    reg.unregisterFactory(mode, d.getName(), "com.sun.media.jai", obj); //$NON-NLS-1$
-                }
-            }
-            RegistryElementDescriptor dr = reg.getDescriptor(RenderedRegistryMode.MODE_NAME, d.getName());
-            if (dr != null) {
-                reg.unregisterDescriptor(dr);
-            }
         }
     }
 

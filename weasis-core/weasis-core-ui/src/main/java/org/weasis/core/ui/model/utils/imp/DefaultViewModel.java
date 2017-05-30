@@ -32,6 +32,9 @@ public class DefaultViewModel implements ViewModel {
      * The y-offset in model coordinates of the upper left view pixel
      */
     private double modelOffsetY;
+    
+    private double rotationOffsetX;
+    private double rotationOffsetY;
     /**
      * The current view scale
      */
@@ -54,8 +57,10 @@ public class DefaultViewModel implements ViewModel {
     private boolean enableViewModelChangeListeners;
 
     public DefaultViewModel(double viewScaleMin, double viewScaleMax) {
-        this.modelOffsetX = 0;
-        this.modelOffsetY = 0;
+        this.modelOffsetX = 0.0;
+        this.modelOffsetY = 0.0;
+        this.rotationOffsetX = 0.0;
+        this.rotationOffsetY = 0.0;
         this.viewScale = 1.0;
         this.viewScaleMin = viewScaleMin;
         this.viewScaleMax = viewScaleMax;
@@ -75,15 +80,35 @@ public class DefaultViewModel implements ViewModel {
     public void setEnableViewModelChangeListeners(boolean enableViewModelChangeListeners) {
         this.enableViewModelChangeListeners = enableViewModelChangeListeners;
     }
+    
+    @Override
+    public double getRotationOffsetX() {
+        return rotationOffsetX;
+    }
 
     @Override
+    public double getRotationOffsetY() {
+        return rotationOffsetY;
+    }
+
+    @Override
+    public void setRotationOffset(double rotationOffsetX, double rotationOffsetY) {
+        if (MathUtil.isDifferent(this.rotationOffsetX, rotationOffsetX)
+            || MathUtil.isDifferent(this.rotationOffsetY, rotationOffsetY)) {
+            this.rotationOffsetX = rotationOffsetX;
+            this.rotationOffsetY = rotationOffsetY;
+            fireViewModelChanged();
+        }
+    }
+    
+    @Override
     public double getModelOffsetX() {
-        return modelOffsetX;
+        return modelOffsetX + rotationOffsetX;
     }
 
     @Override
     public double getModelOffsetY() {
-        return modelOffsetY;
+        return modelOffsetY + rotationOffsetY;
     }
 
     @Override

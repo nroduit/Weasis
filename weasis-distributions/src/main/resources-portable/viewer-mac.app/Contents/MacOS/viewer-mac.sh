@@ -17,7 +17,7 @@ function real_path {
     # Dereference symbolic links.
     if [ -h "$FOO" ] && [ -x "/bin/ls" ]
       then IFS=$OIFS
-           set `/bin/ls -l "$FOO"`
+           set $(/bin/ls -l "$FOO")
            while shift ;
            do
              if [ "$1" = "->" ]
@@ -32,22 +32,22 @@ function real_path {
   echo "$FOO"
 }
 
-fullpath=`pwd -P``real_path "$0"`
+fullpath=$(pwd -P)$(real_path "$0")
 echo "Launcher Path: $fullpath"
 
-macospath=`dirname "$fullpath"`
-contentspath=`dirname "$macospath"`
+macospath=$(dirname "$fullpath")
+contentspath=$(dirname "$macospath")
 resourcespath="$contentspath/Resources"
 basepath="$contentspath"
 for i in {1..2} ; do
-	basepath=`dirname "$basepath"`
+	basepath=$(dirname "$basepath")
 done
 echo "Base Path: $basepath"
 
 # JAVA_HOME is often not in env
 if [ -z "$JAVA_HOME" ] ; then
 	if [ -e '/usr/libexec/java_home' ] ; then
-		export JAVA_HOME=`/usr/libexec/java_home`
+		export JAVA_HOME=$(/usr/libexec/java_home)
 	else
 		export JAVA_HOME='/System/Library/Frameworks/JavaVM.framework/Home'
 	fi
@@ -58,8 +58,8 @@ fi
 
 function jversion {
 	if [ -e "$1/bin/java" ] ; then
-		jversion="`$1/bin/java -version 2>&1 | head -1`"
-		jversion=`expr "$jversion" : '.*\"\(.*\)'\".*`
+		jversion="$($1/bin/java -version 2>&1 | head -1)"
+		jversion=$(expr "$jversion" : '.*\"\(.*\)'\".*)
 	else
 		jversion=0
 	fi
@@ -92,7 +92,7 @@ for i in {1..2} ; do
 				echo "JAVA_HOME points to an unavailable installation of Java. Looking for other available installations..."
 			fi
 			# JAVA_HOME is less than 1.8, what's the highest version available?
-			versions="`ls -r /System/Library/Frameworks/JavaVM.framework/Versions | grep '[0-9]'`"
+			versions="$(ls -r /System/Library/Frameworks/JavaVM.framework/Versions | grep '[0-9]')"
 			declare -a versions=($versions)
 			# versions array contains version numbers highest to lowest, so pick the 1st
 			export JAVA_HOME="/System/Library/Frameworks/JavaVM.framework/Versions/${versions[0]}/Home"

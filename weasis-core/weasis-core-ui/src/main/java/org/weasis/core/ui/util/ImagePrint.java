@@ -18,7 +18,6 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
@@ -37,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
 
@@ -184,14 +184,14 @@ public class ImagePrint implements Printable {
         Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
         Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
         Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
-        RenderedImage img = image.getSourceImage();
+        PlanarImage img = image.getSourceImage();
         if (img != null && originCenter != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;
             double canvasWidth;
             double canvasHeight;
             if (bestfit || originSize == null) {
-                canvasWidth = img.getWidth() * image.getImage().getRescaleX();
-                canvasHeight = img.getHeight() * image.getImage().getRescaleY();
+                canvasWidth = img.width() * image.getImage().getRescaleX();
+                canvasHeight = img.height() * image.getImage().getRescaleY();
             } else {
                 canvasWidth = originSize.getWidth() / originZoom;
                 canvasHeight = originSize.getHeight() / originZoom;

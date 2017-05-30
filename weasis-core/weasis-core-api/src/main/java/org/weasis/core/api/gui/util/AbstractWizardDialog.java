@@ -216,7 +216,6 @@ public abstract class AbstractWizardDialog extends JDialog {
                 }
             }
         }
-        return;
     }
 
     public void closeAllPages() {

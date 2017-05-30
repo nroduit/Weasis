@@ -13,6 +13,7 @@ package org.weasis.dicom.viewer2d.mip;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -142,7 +143,7 @@ public class MipView extends View2d {
                 Messages.getString("MipView.monitoring_proc"), Messages.getString("MipView.init"), 0, 2 * extend + 1)) { //$NON-NLS-1$ //$NON-NLS-2$
                 @Override
                 public void run() {
-                    final List<DicomImageElement> dicoms = new ArrayList<DicomImageElement>();
+                    final List<DicomImageElement> dicoms = new ArrayList<>();
                     try {
                         taskMonitor.setMillisToPopup(1250);
                         SeriesBuilder.applyMipParameters(taskMonitor, view, ser, dicoms, mipType, extend, fullSeries);
@@ -213,6 +214,7 @@ public class MipView extends View2d {
             }
             // Close stream
             oldImage.dispose();
+            oldImage.removeImageFromCache();
             // Delete file in cache
             File file = oldImage.getFile();
             if (file != null) {
@@ -226,7 +228,7 @@ public class MipView extends View2d {
 
         public MipProcess(String name, TaskMonitor taskMonitor) {
             super(name);
-            this.taskMonitor = taskMonitor;
+            this.taskMonitor = Objects.requireNonNull(taskMonitor);
         }
 
     }

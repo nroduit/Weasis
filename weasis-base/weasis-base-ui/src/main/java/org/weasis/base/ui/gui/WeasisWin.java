@@ -362,7 +362,7 @@ public class WeasisWin {
         Rectangle screenBound = (Rectangle) props.get(ViewerPluginBuilder.SCREEN_BOUND);
         boolean setInSelection = JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.OPEN_IN_SELECTION));
 
-        if (screenBound == null && factory != null && group != null) {
+        if (screenBound == null && group != null) {
             boolean bestDefaultLayout = JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {

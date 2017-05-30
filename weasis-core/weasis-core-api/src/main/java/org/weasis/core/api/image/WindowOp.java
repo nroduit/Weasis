@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
-
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class WindowOp extends AbstractOp {
 
@@ -64,8 +63,8 @@ public class WindowOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         ImageElement imageElement = (ImageElement) params.get(P_IMAGE_ELEMENT);
 
         if (imageElement != null) {

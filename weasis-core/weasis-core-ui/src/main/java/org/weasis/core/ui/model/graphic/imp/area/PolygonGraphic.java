@@ -362,7 +362,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
             while (!pathIt.isDone()) {
 
-                Integer segType = pathIt.currentSegment(coords);
+                int segType = pathIt.currentSegment(coords);
                 Double lastX = coords[0];
                 Double lastY = coords[1];
 
@@ -448,9 +448,9 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
     protected Point2D getCentroid(List<Line2D.Double> lineSegmentList) {
         if (lineSegmentList != null) {
-            Double area = 0d;
-            Double cx = 0d;
-            Double cy = 0d;
+            double area = 0d;
+            double cx = 0d;
+            double cy = 0d;
 
             for (Line2D.Double line : lineSegmentList) {
                 Point2D.Double p1 = (Point2D.Double) line.getP1();
@@ -500,7 +500,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
     protected Double getAreaValue(List<Line2D.Double> lineSegmentList) {
         if (lineSegmentList != null) {
-            Double area = 0d;
+            double area = 0d;
 
             for (Line2D.Double line : lineSegmentList) {
                 Point2D.Double p1 = (Point2D.Double) line.getP1();
